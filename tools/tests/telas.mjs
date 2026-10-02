@@ -292,6 +292,12 @@ if (!REMOTE) {
   ok(await ev(`document.querySelectorAll('.opp .gitems img').length === 2 && document.querySelectorAll('.opp .relics img').length === 1 && __bal.run.g.opp.relics.includes('feather')`), "review #15: the ghost card shows the rival's items hero by hero and its relics");
   ok(await ev(`!__bal.run.g.history.some(h => h.reach || h.name === 'Reached the Gauntlet') && __bal.run.g.eloStart === __bal.run.g.elo`), 'review #24: reaching the gauntlet no longer moves the Elo');
   await shot('17-gauntlet-opponent'); await noHScroll('gauntlet card'); await noVScroll('gauntlet card');
+  // v62: the owner emptied the tower under a player in the middle of it: the Gauntlet starts over from its gate, no "Try again" loop
+  await ev('__bal.run.g.teamId = 987654321');
+  await click('[data-act=to-duel]'); await sleep(300); await click('[data-act=fight]'); await sleep(1200); await ev('__bal.skipBattle()');
+  for (let k = 0; k < 80 && !(await ev("__bal.run.g.status === 'intro'")); k++) await sleep(100);
+  ok(await ev("__bal.run.g.status === 'intro' && !!document.querySelector('form[data-form=gauntlet]') && !document.querySelector('[data-act=retry-elo]')"), 'v62: a Gauntlet the server no longer knows restarts from its gate (no stuck "Try again")');
+  await ev(`(() => { const f = document.querySelector('form[data-form=gauntlet]'); f.name.value = 'TestBot'; f.querySelector('button').click(); })()`); await sleep(900);
   await click('[data-act=to-duel]'); await sleep(300);
   ok(await ev(`/Rival/.test(document.querySelector('.bhead').textContent) && __bal.run.cur.type === 'gauntlet'`), 'duel deploy screen');
   await shot('18-gauntlet-deploy');

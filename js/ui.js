@@ -999,6 +999,13 @@
     if (b.endAt && now >= b.endAt) { endBattle(); return; }
     requestAnimationFrame(loop);
   }
+  // v62: when the owner empties the tower (or the server no longer knows this gauntlet run) a player in the middle of it would
+  // be stuck on "Try again": the Gauntlet starts over from its gate instead, with the same team
+  const towerGone = e => /Unknown gauntlet run|already over/.test((e && e.message) || '');
+  function resetTower() {
+    run.g = { status: 'intro', history: [] }; run.cur = null; run.phase = 'gauntlet'; ui.result = null; screen = 'run'; save(); render();
+    toast('The Gauntlet was reset. Enter it again with your team.');
+  }
   async function endBattle() {
     const b = battle; battle = null; const W = b.W;
     // review #25: per hero (its summons count for it): damage dealt and taken, kills, standing at the end
@@ -1019,7 +1026,7 @@
       ui.result = Object.assign({ gauntlet: true, win, xp: run.heroes.map(h => ({ uid: h.uid, name: HEROES[h.key].name, gained: 0, from: h.lvl, to: h.lvl })), opp: run.g.opp, floor: run.g.round + 1, pending: true }, extra);
       screen = 'result'; save(); render();
       try { const r = await Net.post('elo', { op: 'result', pid: pid(), ref: refCode(), teamId: run.g.teamId, win, team: Run.teamSnapshot(run), relics: run.relics }); setElo(r, r.over); logGameXp(r); Run.gauntletUpdate(run, r); Object.assign(ui.result, { delta: r.delta, elo: r.elo, ghost: r.ghost, lg: r.lg, pending: false }); ui.climb = win; }
-      catch (e) { Object.assign(ui.result, { pending: false, error: e.message }); }
+      catch (e) { if (towerGone(e)) { resetTower(); return; } Object.assign(ui.result, { pending: false, error: e.message }); }
       save(); render(); return;
     }
     const bossKey = run.cur && run.cur.diff === 'boss' && !run.cur.challenge ? (run.cur.enemies.find(e => B.BOSSES[e.key]) || {}).key : null;
@@ -1559,7 +1566,7 @@
     skip: () => { if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; } skipBattle(); },
     'result-ok': () => { ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
     'to-duel': () => { run.phase = 'deploy'; run.cur = { type: 'gauntlet' }; ui.info = null; save(); render(); window.scrollTo(0, 0); },
-    'retry-elo': () => { if (ui.result && ui.result.gauntlet) { const w = ui.result.win; ui.result.pending = true; render(); Net.post('elo', { op: 'result', pid: pid(), ref: refCode(), teamId: run.g.teamId, win: w, team: Run.teamSnapshot(run), relics: run.relics }).then(r => { setElo(r, r.over); logGameXp(r); Run.gauntletUpdate(run, r); ui.climb = w; Object.assign(ui.result, { delta: r.delta, elo: r.elo, ghost: r.ghost, pending: false, error: null }); save(); render(); }).catch(e => { Object.assign(ui.result, { pending: false, error: e.message }); render(); }); } },
+    'retry-elo': () => { if (ui.result && ui.result.gauntlet) { const w = ui.result.win; ui.result.pending = true; render(); Net.post('elo', { op: 'result', pid: pid(), ref: refCode(), teamId: run.g.teamId, win: w, team: Run.teamSnapshot(run), relics: run.relics }).then(r => { setElo(r, r.over); logGameXp(r); Run.gauntletUpdate(run, r); ui.climb = w; Object.assign(ui.result, { delta: r.delta, elo: r.elo, ghost: r.ghost, pending: false, error: null }); save(); render(); }).catch(e => { if (towerGone(e)) { resetTower(); return; } Object.assign(ui.result, { pending: false, error: e.message }); render(); }); } },
     // v42 (review #51): a bought card flies into the Team button with a coin sound and gets a SOLD stamp; a reroll deals
     // the new cards in with a shuffle
     buy: i => {
