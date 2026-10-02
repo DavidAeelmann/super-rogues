@@ -11,6 +11,7 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
+    ghostBase: 1.15, ghostStep: 0.045, ghostCap: 1.6,   // v62 (review #75): a ghost cannot re-position or swap items like its challenger, so it fights stronger on every floor (x1.15 on floor 1 up to x1.6)
     fightScale: [1, 1.17, 1.37, 1.4, 1.42, 1.85, 1.98, 2.24, 2.42],   // v61 (review #73): tuned by tools/tune-pve.js (medium ~90%, bosses ~55%)
     firstFight: 0.5,  // review #22: the first fight is fought by a single hero: half the usual enemy budget
     suddenDeath: 45, fightCap: 150,     // seconds
@@ -545,8 +546,8 @@
     // friend or foe: if friend heal, if foe, deal damage. Option to have more than 1 ray. Gains mana as more damage or
     // healing is dealt; ultimate is supercharging the beams"
     prism: H({ name: 'Prism', glyph: '🔆', role: 'Channeler', color: '#5fe0ff', fl: ['beam'],
-      hp: 895, atk: 49, armor: 18, mr: 35, as: 1, range: 3, ms: 2, mana: 57, m0: 0, grow: 0.5,
-      abil: 'overcharge', abName: 'Overcharge', abDesc: 'Passive (Beam): no attacks. A beam locks onto the nearest unit in range: it heals a hurt ally for 20% AP per second or burns an enemy for 32% AP per second, and fills mana as it works. Active: for 4s the beams deal and heal double and split into one more beam.',
+      hp: 580, atk: 32, armor: 18, mr: 35, as: 1, range: 3, ms: 2, mana: 88, m0: 0, grow: 0.54,
+      abil: 'overcharge', abName: 'Overcharge', abDesc: 'Passive (Beam): attacks normally, and a beam also locks onto the nearest unit in range: it heals a hurt ally for 20% AP per second or burns an enemy for 32% AP per second, and fills mana as it works. Active: for 4s the beams deal and heal double and split into one more beam.',
       ab: { dmg: 0.32, heal: 0.2, rays: 1, dur: 4, mult: 2, extra: 1, gain: 1, shield: 0 },
       specs: [
         [{ id: 'pri2a', name: 'Twin Beam', desc: 'One more beam at all times.', ab: { rays: 1 } },
@@ -574,6 +575,54 @@
          { id: 'cit4b', name: 'Volley Fire', desc: 'Archers attack 50% faster.', ab: { volley: 0.5 } }],
         [{ id: 'cit5a', name: 'Champion', desc: 'Every third soldier is a champion with double HP and attack.', ab: { champion: 1 } },
          { id: 'cit5b', name: 'Last Bastion', desc: 'When the Citadel falls, its soldiers stay in a frenzy until the end.', ab: { last: 1 } }],
+      ] }),
+    // v62 (review #78, David): "1) At start of fight consume an item held and permanently gain its stats (including dodge,
+    // regenerate etc but not including effects). Ability is a flamethrower burning in an arc in front of him dot. A tanky
+    // character like a firebat. 2) Tom the cook, utility support whose ability to dispense food randomly gives heroes attack
+    // speed, attack, a shield, or health. Possibility to damage enemies later. 3) phoenix hero that when dead leaves an egg,
+    // which if destroyed kills him, but after a few seconds revives the hero (only one egg per combat). Fire phoenix whose
+    // short but still range ability is making a wall of fire on target, line 3 hexes that does dot damage for a time."
+    smolder: H({ name: 'Smolder', glyph: '🌋', role: 'Flamer', color: '#ff6a2a', fl: ['devour'],
+      hp: 990, atk: 40, armor: 32, mr: 22, as: 0.9, range: 1, ms: 2, mana: 61, m0: 20, grow: 1.66,
+      abil: 'flamethrower', abName: 'Flamethrower', abDesc: 'Passive (Devour): at the start of every fight it eats one item it holds and keeps the stats for good (not the effect of the item). Active: a cone of fire up to 2 hexes in front of it hits the enemies there for 30% AP magic damage and burns them for 30% AP per second for 4s.',
+      ab: { dmg: 0.3, burn: 0.3, dur: 4, reach: 2, spread: 1, devour: 1, boost: 1, vuln: 0, heal: 0 },
+      specs: [
+        [{ id: 'smo2a', name: 'Second Helping', desc: 'Eats two items per fight.', ab: { devour: 1 } },
+         { id: 'smo2b', name: 'Napalm', desc: 'The burn lasts 2s longer.', ab: { dur: 2 } }],
+        [{ id: 'smo3a', name: 'Long Nozzle', desc: 'The flames reach 1 hex further.', ab: { reach: 1 } },
+         { id: 'smo3b', name: 'Asbestos', desc: '+25 armor and magic resist.', mods: { armor: 25, mr: 25 } }],
+        [{ id: 'smo4a', name: 'Rich Fuel', desc: 'The items it eats give 50% more.', ab: { boost: 0.5 } },
+         { id: 'smo4b', name: 'Cauterize', desc: 'Heals 4% of its max HP for every enemy the flames hit.', ab: { heal: 0.04 } }],
+        [{ id: 'smo5a', name: 'Inferno', desc: 'The burn does double damage.', ab: { burn: 0.3 } },
+         { id: 'smo5b', name: 'Fire Brand', desc: 'Burning enemies take 20% more damage from everyone.', ab: { vuln: 0.2 } }],
+      ] }),
+    tom: H({ name: 'Tom', glyph: '🍲', role: 'Cook', color: '#e8d9b0',
+      hp: 890, atk: 46, armor: 20, mr: 25, as: 0.9, range: 2, ms: 2, mana: 46, m0: 15, grow: 0.5,
+      abil: 'dishes', abName: 'Daily Special', abDesc: 'Serves 2 dishes to random allies. Each one is a different pick of four: a hot pie that heals 90% AP, spiced jerky (+25% attack for 8s), pepper soup (+30% attack speed for 8s) or a pudding that shields for 110% AP.',
+      ab: { dishes: 2, heal: 0.9, atk: 0.25, as: 0.3, shield: 1.1, big: 0, dur: 8, all: 0, double: 0, mana: 0, pan: 0 },
+      specs: [
+        [{ id: 'tom2a', name: 'Big Portions', desc: 'Every dish is 30% stronger.', ab: { big: 0.3 } },
+         { id: 'tom2b', name: 'Short Order', desc: '-15 max mana.', mods: { manaMax: -15 } }],
+        [{ id: 'tom3a', name: 'Extra Plate', desc: 'One more dish.', ab: { dishes: 1 } },
+         { id: 'tom3b', name: 'Sturdy Apron', desc: '+20% max HP and +20 armor.', mods: { hpPct: 0.2, armor: 20 } }],
+        [{ id: 'tom4a', name: 'Frying Pan', desc: 'Also throws a pan at the nearest enemy: 90% AP magic damage and a 1s stun.', ab: { pan: 0.9 } },
+         { id: 'tom4b', name: "Chef's Kiss", desc: 'Every dish also gives its target 12 mana.', ab: { mana: 12 } }],
+        [{ id: 'tom5a', name: 'Banquet', desc: 'Every ally gets a dish.', ab: { all: 1 } },
+         { id: 'tom5b', name: 'Spice Rack', desc: 'Every dish gives two effects.', ab: { double: 1 } }],
+      ] }),
+    ashwing: H({ name: 'Ashwing', glyph: '🦅', role: 'Pyromancer', color: '#ff8a2a', fl: ['rebirth'],
+      hp: 570, atk: 40, armor: 18, mr: 28, as: 0.9, range: 2, ms: 2, mana: 63, m0: 15, grow: 1.8,
+      abil: 'firewall', abName: 'Wall of Fire', abDesc: 'Passive (Rebirth): once a fight, when it falls it leaves an egg with half its max HP. If the egg lives for 5s the hero is reborn at 60% HP; if the egg is destroyed, the hero is gone. Active: a wall of fire 3 hexes wide on a target up to 3 hexes away burns every enemy on it for 50% AP per second for 4s.',
+      ab: { dps: 0.5, dur: 4, reach: 3, width: 1, burn: 0.2, slow: 0, eggHp: 0.5, hatch: 5, revive: 0.6, burst: 0 },
+      specs: [
+        [{ id: 'ash2a', name: 'Wide Wall', desc: 'The wall is 5 hexes wide.', ab: { width: 1 } },
+         { id: 'ash2b', name: 'Hot Embers', desc: 'The wall does 40% more damage.', ab: { dps: 0.2 } }],
+        [{ id: 'ash3a', name: 'Quick Hatch', desc: 'The egg hatches 2s sooner.', ab: { hatch: -2 } },
+         { id: 'ash3b', name: 'Thick Shell', desc: 'The egg has 50% more HP.', ab: { eggHp: 0.25 } }],
+        [{ id: 'ash4a', name: 'Cinder Rain', desc: 'The wall burns 3s longer.', ab: { dur: 3 } },
+         { id: 'ash4b', name: 'Fire Feathers', desc: '+40 AP.', mods: { ap: 40 } }],
+        [{ id: 'ash5a', name: 'Rebirth Blast', desc: 'When it hatches, enemies within 2 hexes take 150% AP magic damage.', ab: { burst: 1.5 } },
+         { id: 'ash5b', name: 'Eternal Flame', desc: 'Is reborn at full HP.', ab: { revive: 0.4 } }],
       ] }),
   };
   for (const k in B.HEROES) B.HEROES[k].key = k;
@@ -802,6 +851,7 @@
     stellan: 'Drops a falling star on enemies',
   };
   TAGS.prism = 'Beams that heal friends and burn foes'; TAGS.citadel = 'A tower that sends soldiers to fight';   // v60
+  TAGS.smolder = 'Eats an item each fight, burns foes'; TAGS.tom = 'Serves dishes that buff or heal allies'; TAGS.ashwing = 'A fire bird that returns from an egg';   // v62
   for (const k in TAGS) if (B.HEROES[k]) B.HEROES[k].tag = TAGS[k];
   // v59 (review #71, PC boy: "pep up the names"): every hero got a new name; the old one stays as h.was (the Art Lab still
   // recognises picture files named after it)
@@ -917,7 +967,7 @@
     R('quill', "Pathfinder's Quill", 'Every step of the map offers 3 choices instead of 2. Fights pay 2 less gold.', { fl: 'quill' }),
     R('huntmap', "Bounty Hunter's Map", 'One path is always a Hard fight. Hard fights pay double gold; Easy fights pay nothing.', { fl: 'huntmap' }),
     R('anvil', 'Heirloom Anvil', 'After each won fight, a random worn item goes up one rarity. Item shops sell 2 fewer items.', { fl: 'anvil' }),
-    R('cabinet', 'Curio Cabinet', 'All heroes get +3% HP and attack for every relic you own. Relics cost 3 more.', { fl: 'cabinet' }),
+    R('cabinet', 'Curio Cabinet', 'All heroes get +3% HP and attack for every power you own. Powers cost 3 more.', { fl: 'cabinet' }),
     R('solo', 'Lone Crown', 'While you have only one hero: +150% HP and attack, +2 item slots and double XP. The Hero Shop never shows up.', { fl: 'solo' }),
     R('changeling', 'Changeling Mask', 'After each won fight, your lowest-level hero turns into a random new hero of the same level. It keeps its items.', { fl: 'changeling' }),
     R('cursecoin', 'Cursed Doubloon', 'Gain 25 gold now. Every fight after this one, enemies have 5% more HP, and it keeps adding up.', { fl: 'cursecoin' }),
@@ -984,7 +1034,7 @@
     quill: '3 paths to choose from every step.',
     huntmap: 'Hard fights pay double gold.',
     anvil: 'Your gear upgrades after every win.',
-    cabinet: 'Stronger for every relic you own.',
+    cabinet: 'Stronger for every power you own.',
     solo: 'One hero only, but a huge one.',
     changeling: 'Your weakest hero changes after each win.',
     cursecoin: '+25 gold now; enemies grow every fight.',
@@ -1095,7 +1145,7 @@
       { label: 'Small bet: 50% to win {g11} gold', act: 'gamble:5:0.5:{g11}', cost: 5, risk: 'You may lose the 5 gold' },
       { label: 'High stakes: 40% to win {g30} gold', act: 'gamble:12:0.4:{g30}', cost: 12, risk: 'You may lose the 12 gold' },
       { label: 'Bet an item: 50% it goes up one rarity, 50% it is lost', act: 'gambleItem', target: 'item', risk: 'The item may be lost' }] },
-    { id: 'altar', rar: 'uncommon', icon: '🗿', name: 'Cursed Altar', text: 'Three relics rest on a humming altar. Each one asks a different price.', dyn: true },
+    { id: 'altar', rar: 'uncommon', icon: '🗿', name: 'Cursed Altar', text: 'Three powers rest on a humming altar. Each one asks a different price.', dyn: true },
     { id: 'fountain', rar: 'common', icon: '⛲', name: 'Fountain of Vigor', text: 'Clear water that glows faintly.', choices: [
       { label: 'Everyone drinks: +8% max HP to all heroes', act: 'hpAll:0.08' },
       { label: 'One hero bathes: +20% max HP to that hero', act: 'hpHero:0.2', target: 'hero' },
@@ -1117,8 +1167,8 @@
       { label: 'Take the crate: a random item', act: 'item:any' },
       { label: 'Raid the bandit camp now. Win: a rare item', act: 'fight', fight: { kind: 'bandits', name: 'Bandit Camp', win: { item: 'rare' } }, risk: 'A fight: lose it and you get nothing' }] },
     { id: 'shrine', rar: 'uncommon', icon: '🕯️', name: 'Shrine of Sacrifice', text: 'The shrine accepts offerings in exchange for power.', choices: [
-      { label: 'Offer gold: a random relic', act: 'relic', cost: 7 },
-      { label: 'Offer an item (rare or better): a random relic', act: 'relicItem', target: 'item', minRarity: 'rare' },
+      { label: 'Offer gold: a random power', act: 'relic', cost: 7 },
+      { label: 'Offer an item (rare or better): a random power', act: 'relicItem', target: 'item', minRarity: 'rare' },
       { label: 'Pray: +{x10} XP to all heroes', act: 'xpAll:{x10}' }] },
     { id: 'hut', rar: 'common', icon: '🌿', name: 'Herbalist', text: 'A quiet herbalist sorts roots and powders.', choices: [
       { label: 'Healing tonic: in the next fight your heroes regenerate 2% max HP per second', act: 'none', next: { regen: 0.02 } },
@@ -1148,7 +1198,7 @@
       { label: 'Invest 15 gold: get {g19} back after your next won fight', act: 'invest:{g19}', cost: 15 },
       { label: 'Take a loan: +{g10} gold now, pay back {g15} after your next won fight', act: 'loan:{g10}:{g15}', risk: 'You pay back more' }] },
     { id: 'bounty', rar: 'uncommon', icon: '📌', name: 'Bounty Board', text: 'Wanted posters flap in the wind. Big rewards, big dangers.', choices: [
-      { label: 'Hunt the elite pack now. Win: a relic', act: 'fight', fight: { kind: 'pack', name: 'Elite Pack', win: { relic: 1 } }, risk: 'A hard fight with elites' },
+      { label: 'Hunt the elite pack now. Win: a power', act: 'fight', fight: { kind: 'pack', name: 'Elite Pack', win: { relic: 1 } }, risk: 'A hard fight with elites' },
       { label: 'Break the horde now. Win: +{g10} gold', act: 'fight', fight: { kind: 'horde', name: 'The Horde', win: { gold: '{g10}' } }, risk: 'Twice as many enemies' },
       { label: 'Take an easy bounty: +{g5} gold', act: 'gold:{g5}' }] },
     { id: 'alchemist', rar: 'uncommon', icon: '⚗️', name: 'Alchemist', text: 'Bubbling flasks everywhere. "Everything can become something better."', choices: [
@@ -1202,13 +1252,13 @@
   };
   B.SHOP = [
     { id: 'speed4', icon: '⏩', name: '4× battle speed', price: 25, desc: 'Unlocks the 4× speed button in battle. 1× and 2× stay free.' },
-    { id: 'elo', icon: '📊', name: 'Content Elo', price: 20, desc: 'Unlocks the Heroes, Items and Relics tabs of the Ladder: the Elo, fights and win rate of every hero, boss, item and relic.' },
+    { id: 'elo', icon: '📊', name: 'Content Elo', price: 20, desc: 'Unlocks the Heroes, Items and Powers tabs of the Ladder: the Elo, fights and win rate of every hero, boss, item and power.' },
     { id: 'rename', icon: '✎', name: 'Name change', price: 10, desc: 'Pick a new name. Your ghosts take it too. Pay each time you change it.', use: true },
     { id: 'king', icon: '👑', name: 'King Tier', price: 300, king: true, desc: "The Royal board skin, only for Kings. Deeper profiles, yours and everyone else's: most played heroes, best win rate heroes, and the record of their ghosts. A crown next to your name. Includes 4× speed and Content Elo." },
   ];
   // v30 (review #28): two more perks
   B.SHOP.splice(2, 0,
-    { id: 'xp2', icon: '✨', name: 'Double XP', price: 50, desc: 'Every account XP you earn counts twice, so you level up and unlock new heroes, items and relics faster.' },
+    { id: 'xp2', icon: '✨', name: 'Double XP', price: 50, desc: 'Every account XP you earn counts twice, so you level up and unlock new heroes, items and powers faster.' },
     { id: 'skip', icon: '⏭', name: 'Skip fights', price: 100, desc: 'Unlocks the ⏭ button in battle: a fight ends at once with the same result it would have had.' });
   B.SHOP_ITEM = Object.fromEntries(B.SHOP.map(x => [x.id, x]));
   // v30 (review #28, PC boy): account level. 10 XP per level; XP comes from firsts (each hero's first PvE clear, each

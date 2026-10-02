@@ -71,6 +71,11 @@
     citadel: { type: 'tower', body: '#a89a86', trim: '#c9a26a', flag: '#4f7cff' },
     footman: H({ skin: '#e0b48a', body: '#6a7a9a', trim: '#c9a26a', legs: '#3a3a42', bulk: 1, head: 'helm', weapon: 'sword', pauldrons: '#8a92a8' }),
     bowman: H({ skin: '#e0b48a', body: '#4a6a3a', trim: '#c9a26a', legs: '#3a3a2a', bulk: 0.9, head: 'hood', hood: '#3a5a2a', weapon: 'bow', quiver: true }),
+    // v62 (review #78): Smolder, Tom the cook, Ashwing and its egg
+    smolder: H({ skin: '#d9a07a', body: '#5a2a22', trim: '#ff7a3d', legs: '#2a1a18', bulk: 1.35, head: 'helm', pauldrons: '#8a3a2a', cape: '#3a1a14', plume: '#ff5a1a', weapon: 'staff', orb: '#ff7a3d' }),
+    tom: H({ skin: '#e8b090', body: '#f2eee4', trim: '#c8453a', legs: '#3a3a48', bulk: 1.1, head: 'chef', hat: '#ffffff', weapon: 'club', hair: '#6a4a2a' }),
+    ashwing: { type: 'phoenix', body: '#ff8a2a', trim: '#ffd23f', tail: '#ff4a1a' },
+    egg: { type: 'egg', body: '#ffe0b0', trim: '#ff7a3d' },
     // summons
     skeleton: H({ skin: '#e8e2d0', body: '#cfc8b4', trim: '#8a8474', legs: '#cfc8b4', bulk: 0.8, head: 'skull', weapon: 'sword', eyes: '#6effc4', bones: true }),
     turret: { type: 'turret', body: '#d9a441', trim: '#5a4a2a' },
@@ -202,6 +207,9 @@
       c.fillStyle = m.hood; c.beginPath(); c.arc(hx - r * 0.05, hy - r * 0.05, r * 1.2, Math.PI * 0.55, Math.PI * 2.25); c.quadraticCurveTo(hx + r * 0.6, hy + r * 0.4, hx + r * 0.2, hy + r * 1.1); c.closePath(); c.fill();
       c.fillStyle = 'rgba(0,0,0,0.55)'; c.beginPath(); c.arc(hx + r * 0.45, hy + r * 0.1, r * 0.65, 0, TAU); c.fill();
       ball(c, hx + r * 0.3, hy - r * 0.05, r * 0.12, m.eyes || '#ddd'); ball(c, hx + r * 0.7, hy - r * 0.05, r * 0.11, m.eyes || '#ddd');
+    } else if (k === 'chef') {   // v62: a tall white chef's hat
+      poly(c, [[hx - r * 0.95, hy - r * 0.6], [hx + r * 1.0, hy - r * 0.6], [hx + r * 0.85, hy - r * 1.05], [hx - r * 0.8, hy - r * 1.05]], m.hat || '#fff', OUT);
+      for (const [x, y, rr] of [[-0.55, -1.45, 0.55], [0.05, -1.7, 0.65], [0.65, -1.45, 0.55]]) ball(c, hx + r * x, hy + r * y, r * rr, m.hat || '#fff', OUT);
     } else if (k === 'hat') {
       poly(c, [[hx - r * 1.4, hy - r * 0.55], [hx + r * 1.5, hy - r * 0.55], [hx + r * 0.9, hy - r * 0.8], [hx - r * 0.2, hy - r * 2.3 + Math.sin(p.t * 2) * r * 0.1], [hx - r * 0.9, hy - r * 0.8]], m.hat, OUT);
       limb(c, hx - r * 0.95, hy - r * 0.72, hx + r * 0.95, hy - r * 0.72, r * 0.18, m.trim);
@@ -407,7 +415,27 @@
     limb(c, s * 0.2, -s * 1.1, s * 0.2, -s * 1.45, s * 0.03, '#5a4a2a');
     poly(c, [[s * 0.2, -s * 1.45], [s * 0.5 + sway, -s * 1.38], [s * 0.2, -s * 1.3]], p.tint || m.flag);
   }
-  const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower };
+  // v62: a fire bird in the colours of an ember: a body, flapping wing, beak, crest and long tail feathers
+  function phoenix(c, m, S, p) {
+    const s = S * 0.9, flap = Math.sin(p.t * 5) * 0.25 + (p.atk != null ? Math.sin(p.atk * Math.PI) * 0.45 : 0), by = -s * 0.62 - (p.walk != null ? Math.abs(Math.sin(p.walk * TAU)) * s * 0.06 : 0);
+    for (const [dx, dy, col] of [[-0.85, 0.3, m.tail], [-1.0, 0.04, m.body], [-0.85, -0.24, m.trim], [-0.7, 0.12, m.trim]]) limb(c, -s * 0.18, by, -s * 0.18 + s * dx, by + s * dy + Math.sin(p.t * 4 + dx * 6) * s * 0.07, s * 0.11, col);
+    limb(c, -s * 0.04, by + s * 0.22, -s * 0.07, by + s * 0.55, s * 0.05, '#a46a2a'); limb(c, s * 0.12, by + s * 0.22, s * 0.14, by + s * 0.55, s * 0.05, '#a46a2a');
+    c.fillStyle = m.body; c.beginPath(); c.ellipse(0, by, s * 0.34, s * 0.27, 0, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.2; c.stroke();
+    poly(c, [[-s * 0.08, by - s * 0.05], [-s * 0.5, by - s * (0.4 + flap)], [-s * 0.58, by - s * 0.02], [-s * 0.3, by + s * 0.12]], m.trim, OUT);
+    ball(c, s * 0.32, by - s * 0.25, s * 0.16, m.body, OUT);
+    poly(c, [[s * 0.44, by - s * 0.3], [s * 0.66, by - s * 0.22], [s * 0.44, by - s * 0.16]], m.trim, OUT);
+    ball(c, s * 0.37, by - s * 0.29, s * 0.035, '#222');
+    for (const [dx, dy] of [[0.18, -0.52], [0.3, -0.58], [0.4, -0.5]]) limb(c, s * 0.3, by - s * 0.38, s * dx, by + s * dy, s * 0.05, m.tail);
+  }
+  // v62: Ashwing's egg: a warm shell with a flame pattern that rocks as it is about to hatch
+  function egg(c, m, S, p) {
+    const s = S * 1.0; c.save(); c.rotate(Math.sin(p.t * 6) * 0.06);
+    const g = c.createRadialGradient(-s * 0.1, -s * 0.5, s * 0.05, 0, -s * 0.38, s * 0.4); g.addColorStop(0, '#fff3d6'); g.addColorStop(0.6, m.body); g.addColorStop(1, '#c98a4a');
+    c.fillStyle = g; c.beginPath(); c.ellipse(0, -s * 0.38, s * 0.26, s * 0.36, 0, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.3; c.stroke();
+    poly(c, [[-s * 0.2, -s * 0.2], [-s * 0.1, -s * 0.4], [0, -s * 0.22], [s * 0.1, -s * 0.44], [s * 0.2, -s * 0.2]], m.trim, OUT);
+    c.restore();
+  }
+  const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg };
 
   // ------------------------------------------------------------------ public
   function get(key) { return M[key] || M.grunt; }

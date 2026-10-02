@@ -185,7 +185,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const W = Run.gauntletWorld(run);
   const ghost = W.units.filter(u => u.side === 1), mine = W.units.filter(u => u.side === 0);
   const exp = Run.heroDef({ relics }, other.heroes[0]);
-  ok(ghost.length === 2 && Math.round(ghost.find(u => u.key === 'bastion').maxHp) === Math.round(exp.hp) && ghost.find(u => u.key === 'bastion').m.hp >= 200 + 150, 'ghost heroes wear their items and stat relics (Warmog + Giant Tooth)');
+  ok(ghost.length === 2 && Math.round(ghost.find(u => u.key === 'bastion').maxHp) === Math.round(exp.hp * Run.ghostMul(0)) && ghost.find(u => u.key === 'bastion').m.hp >= 200 + 150, 'ghost heroes wear their items and stat relics (Warmog + Giant Tooth)');
   ok(mine.every(u => u.st.slowU > W.t) && ghost.every(u => u.buffs.some(b => b.s === 'asPct' && b.v === 0.3)) && !mine.some(u => u.buffs.some(b => b.s === 'asPct' && b.v === 0.3)), "the ghost's team relics work for the ghost: its Frost Sigil slows us, its War Horn speeds up its own heroes");
   for (const u of ghost) u.hp = 5;  // so a ghost hero surely dies
   let phoenix = 0; for (let k = 0; k < 20 * 90 && !W.over; k++) { Sim.step(W); for (const f of W.fx) if (f.k === 'text' && f.text === 'ASHEN PLUME' && W.byId[f.id] && W.byId[f.id].side === 1) phoenix = 1; }
@@ -402,7 +402,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     for (const kind of ['heroShop', 'itemShop', 'relicShop']) { r.fightNo = 9; if (Run.makeShop ? false : false) {} }
   }
   ok(!seenLocked, 'level 1: the 3 new heroes and the level relics never show up at the start');
-  const r0 = Run.newRun(7); ok(Object.keys(B.HEROES).length === 38 && (r0.locked || []).length === 0, 'without a lock list (bots, old saves) everything is open');
+  const r0 = Run.newRun(7); ok(Object.keys(B.HEROES).length === 41 && (r0.locked || []).length === 0, 'without a lock list (bots, old saves) everything is open');
   for (const k of ['buzzwell', 'coralie', 'stellan']) {
     const run = Run.newRun(11); Run.pickStart(run, [k]); Run.addHero(run, 'bastion');
     run.heroes.forEach(h => { h.lvl = 5; h.specs = B.HEROES[h.key].specs.map(p => p[1].id); });
@@ -678,7 +678,9 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   let W = Sim.create({ mode: 'fight', seed: 3, heroes: [{ def: def('prism'), c: 3, r: 6 }, { def: def('bastion'), c: 3, r: 5 }], enemies: [{ def: Sim.mobScaleDef('brute', 1), c: 3, r: 3 }] });
   const pr = W.units.find(u => u.key === 'prism'), tank = W.units.find(u => u.key === 'bastion'), foe = W.units.find(u => u.side === 1);
   for (let i = 0; i < 60; i++) Sim.step(W);
-  ok(pr.atkN === 0 && foe.dmgTaken > 0 && pr.mana > 0, 'v60 Prism: never attacks; its beam burns the enemy in range and fills its mana');
+  ok(foe.dmgTaken > 0 && pr.mana > 0, 'v60 Prism: its beam burns the enemy in range and fills its mana');
+  for (let i = 0; i < 60; i++) Sim.step(W);
+  ok(pr.atkN > 0, 'v62 (review #79) Prism also attacks the foe in range between beam ticks');
   tank.hp = tank.maxHp * 0.5; const h0 = tank.hp; for (let i = 0; i < 20; i++) Sim.step(W);
   ok(tank.hp > h0 || (pr.beams || []).some(b => b.heal), 'v60 Prism: a hurt ally next to it gets healed by the beam');
   W = Sim.create({ mode: 'fight', seed: 4, heroes: [{ def: def('citadel', 3), c: 3, r: 7 }], enemies: [{ def: Sim.mobScaleDef('grunt', 1), c: 3, r: 1 }, { def: Sim.mobScaleDef('grunt', 1), c: 5, r: 1 }] });
@@ -687,7 +689,65 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   let maxMana = 0; for (let i = 0; i < 20 * 20 && !W.over; i++) { Sim.step(W); maxMana = Math.max(maxMana, cit.mana); }
   ok(cit.c === at0.c && cit.r === at0.r && cit.atkN === 0, 'v60 Citadel: never moves and never attacks');
   ok(W.units.filter(u => u.garrison === cit.id).length >= 2 && maxMana > 0, 'v60 Citadel: more soldiers march out, and their hits fill its mana');
-  ok(Object.values(HEROES).length === 38 && HEROES.prism.tag && HEROES.citadel.tag, 'v60: 38 heroes, the two new ones with their short line');
+  ok(Object.values(HEROES).length === 41 && HEROES.prism.tag && HEROES.citadel.tag, 'v60: 41 heroes, the new ones with their short line');
+}
+// ---- v62 (review #78, David): Smolder (eats an item), Tom (dishes) and Ashwing (egg and wall of fire)
+{
+  const run = Run.newRun(11); Run.pickStart(run, ['smolder'], null); Run.addHero(run, 'bastion');
+  const sm = run.heroes[0]; sm.items.push('longsword', 'chainmail');
+  run.cur = Run.makeFight(run, 'easy', 1); run.fightNo = 1; run.phase = 'deploy';
+  Run.fightWorld(run, true);
+  ok(sm.items.length === 2 && !run.devoured, 'v62 Smolder: a preview does not eat anything');
+  Run.fightWorld(run);
+  ok(sm.items.length === 1 && sm.items[0] === 'chainmail' && sm.bonus.atk === 15 && run.devoured.length === 1 && /ate Tempered Blade/.test(run.devoured[0].msg), 'v62 Smolder: at the start of a fight it eats the first item it holds and keeps its stats (+15 attack)');
+  sm.items = ['boots']; Run.fightWorld(run); ok(Object.keys(sm.bonus).length >= 1 && sm.items.length === 0, 'v62 Smolder: another item goes next fight, and the stats pile up');
+  const run2 = Run.newRun(12); Run.pickStart(run2, ['smolder'], null); run2.heroes[0].items = ['longsword']; run2.heroes[0].specs.push('smo4a');
+  run2.cur = Run.makeFight(run2, 'easy', 1); run2.phase = 'deploy'; Run.fightWorld(run2);
+  ok(run2.heroes[0].bonus.atk === 22.5, 'v62 Smolder: Rich Fuel gives 50% more of what it eats');
+  const def = (k, lvl, specs) => Run.heroDef({ relics: [], heroes: [], bag: [] }, { key: k, lvl: lvl || 2, specs: specs || [], items: [], bonus: {}, uid: 7 });
+  let W = Sim.create({ mode: 'fight', seed: 3, heroes: [{ def: def('smolder'), c: 3, r: 6 }], enemies: [{ def: Sim.mobScaleDef('brute', 1), c: 3, r: 5 }, { def: Sim.mobScaleDef('brute', 1), c: 4, r: 5 }] });
+  const s = W.units.find(u => u.key === 'smolder'); s.mana = s.maxMana;
+  for (let i = 0; i < 12; i++) Sim.step(W);
+  ok(W.units.filter(u => u.side === 1 && u.dots.some(d => d.k === 'burn')).length === 2, 'v62 Smolder: the flamethrower burns the enemies in front of it');
+  // Tom
+  W = Sim.create({ mode: 'fight', seed: 5, heroes: [{ def: def('tom'), c: 3, r: 6 }, { def: def('bastion'), c: 2, r: 6 }, { def: def('kestrel'), c: 4, r: 6 }], enemies: [{ def: Sim.mobScaleDef('brute', 1), c: 3, r: 0 }] });
+  const tom = W.units.find(u => u.key === 'tom'); tom.mana = tom.maxMana; for (const u of W.units) if (u.side === 0 && u !== tom) u.hp = u.maxHp * 0.5;
+  for (let i = 0; i < 4; i++) Sim.step(W);
+  const fed = W.units.filter(u => u.side === 0 && (u.buffs.length || u.shield > 0 || u.hp > u.maxHp * 0.5 + 1));
+  ok(fed.length >= 1 && tom.mana < tom.maxMana, 'v62 Tom: his special serves dishes (a heal, a buff or a shield) to his allies');
+  W = Sim.create({ mode: 'fight', seed: 5, heroes: [{ def: def('tom', 5, ['tom5a']), c: 3, r: 6 }, { def: def('bastion'), c: 2, r: 6 }, { def: def('kestrel'), c: 4, r: 6 }], enemies: [{ def: Sim.mobScaleDef('brute', 1), c: 3, r: 0 }] });
+  const tom2 = W.units.find(u => u.key === 'tom'); tom2.mana = tom2.maxMana; for (const u of W.units) if (u.side === 0) u.hp = u.maxHp * 0.5;
+  for (let i = 0; i < 4; i++) Sim.step(W);
+  ok(W.units.filter(u => u.side === 0 && (u.buffs.length || u.shield > 0 || u.hp > u.maxHp * 0.5 + 1)).length === 3, 'v62 Tom: Banquet serves every ally');
+  // Ashwing: the egg
+  const sniper = { kind: 'mob', key: 'grunt', name: 'Sniper', glyph: 'x', hp: 99999, atk: 5000, armor: 0, mr: 0, as: 1, range: 9, ms: 0, mana: 0, m0: 0, fl: [], m: {}, ap: 100 };
+  const egg = kill => {
+    const w = Sim.create({ mode: 'fight', seed: 1, heroes: [{ def: def('ashwing'), c: 3, r: 5 }, { def: def('bastion', 5), c: 3, r: 7 }], enemies: [{ def: sniper, c: 3, r: 0 }] });
+    const a = w.units.find(x => x.key === 'ashwing'), sn = w.units.find(x => x.side === 1); let laid = 0, back = 0, eggs = 0;
+    for (let i = 0; i < 20 * 30 && !w.over; i++) {
+      Sim.step(w);
+      if (!laid && a.dead) { laid = w.t; eggs = w.units.filter(x => x.egg && !x.dead).length; if (!kill) sn.nextAtk = 1e9; }
+      if (laid && !back && !a.dead) back = w.t;
+    }
+    return { laid, eggs, back, a, w };
+  };
+  let e = egg(false);
+  ok(e.eggs === 1 && e.back - e.laid === 100 && Math.round(e.a.hp) === Math.round(e.a.maxHp * 0.6), 'v62 Ashwing: it falls, leaves an egg, and is reborn at 60% HP after 5s');
+  e = egg(true);
+  ok(e.eggs === 1 && !e.back && e.a.dead && e.w.winner === 1, 'v62 Ashwing: if the egg is destroyed the hero stays dead (and the heroes lose)');
+  W = Sim.create({ mode: 'fight', seed: 2, heroes: [{ def: def('ashwing'), c: 3, r: 6 }], enemies: [{ def: Object.assign({}, Sim.mobScaleDef('grunt', 1), { hp: 9999 }), c: 3, r: 4 }] });
+  const aw = W.units.find(u => u.key === 'ashwing'); aw.mana = aw.maxMana; Sim.step(W); Sim.step(W);
+  ok(W.zones.length === 3 && W.zones.every(z => z.r === 4 && z.rad === 0) && new Set(W.zones.map(z => z.c)).size === 3, 'v62 Ashwing: the wall of fire is a line of 3 hexes across the target');
+}
+// ---- v62 (review #75): the Gauntlet ghost fights stronger on higher floors and carries what its player had
+{
+  ok(Run.ghostMul(0) === CFG.ghostBase && Run.ghostMul(5) > Run.ghostMul(0) && Run.ghostMul(99) === CFG.ghostCap, 'v62: a ghost gets stronger each floor, up to the cap');
+  const a = Run.newRun(41); Run.pickStart(a, ['bastion'], null); a.relics = ['snowball', 'packrat']; a.snow = 3; a.bag = ['dagger', 'dagger'];
+  const snap = Run.teamSnapshot(a);
+  ok(Math.abs(snap[0].bonus.atkPct - (0.04 * 3 + 0.03 * 2)) < 1e-9 && !a.heroes[0].bonus.atkPct, 'v62: the Snowball and Pack Rat bonuses go into the ghost (and not into the run itself)');
+  const api = require('../../api/elo.js');
+  const t = api.cleanTeam([{ key: 'bastion', lvl: 3, specs: [], items: [], bonus: { atkPct: 0.2, ap: 40, asPct: 0.1, crit: 0.06, manaStart: 10, hp: 90, dodge: 0.04, regen: 0.01, bogus: 5 }, pos: { c: 3, r: 6 } }]);
+  ok(t && t[0].bonus.atkPct === 0.2 && t[0].bonus.ap === 40 && t[0].bonus.asPct === 0.1 && t[0].bonus.crit === 0.06 && t[0].bonus.manaStart === 10 && t[0].bonus.hp === 90 && t[0].bonus.dodge === 0.04 && t[0].bonus.regen === 0.01 && !('bogus' in t[0].bonus), 'v62: a stored ghost keeps every event and Devour bonus (and nothing made up)');
 }
 console.log(`motor: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

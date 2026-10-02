@@ -341,6 +341,7 @@
     u.dead = true; u.hp = 0; u.deathT = W.t; u.anim = null;
     if (W.occ[Hx.key(u.c, u.r)] === u.id) W.occ[Hx.key(u.c, u.r)] = 0;
     if (u.side === 1 && !u.suicide) W.kills++;
+    if (u.fl.has('rebirth') && !u.once.egg && !u.suicide) layEgg(W, u);   // v62 (review #78): Ashwing
     if (src && src.side !== u.side) src.kb = (src.kb || 0) + 1;  // review #25: kills per unit, for the after-battle screen
     // on-death effects
     if (u.m.onDeathHeal) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) heal(W, a, a.maxHp * u.m.onDeathHeal, true);
@@ -1108,7 +1109,7 @@
   }
 
   // ------------------------------------------------------------------ v60 (review #72, PC boy): Prism and Citadel
-  // Prism: no attacks; every 0.25s each beam locks onto the nearest unit in range (a hurt ally, else an enemy), heals or
+  // Prism: (v62, review #79: it also attacks normally) every 0.25s each beam locks onto the nearest unit in range (a hurt ally, else an enemy), heals or
   // burns it, and the work fills mana. Overcharge doubles the beams and adds more for a few seconds.
   function beamAct(W, u) {
     const ab = u.ab, over = u.st.overU > W.t, rays = ab.rays + (over ? ab.extra : 0), R = Math.max(1, u.range);
@@ -1127,6 +1128,8 @@
     u.beams = ts.map(t => ({ id: t.id, heal: t.side === u.side, over }));
     if (!over && u.maxMana) u.mana = Math.min(u.maxMana, u.mana + work / 12 * ab.gain);
     u.busy = W.t + 5;
+    const tgt = W.t >= u.nextAtk ? pickTarget(W, u) : null;   // v62 (review #79): between beam ticks it attacks the nearest foe in range
+    if (tgt && Hx.dist(u, tgt) <= u.range) { startAttack(W, u, tgt); u.busy = W.t + 5; }
   }
   // Citadel: never moves or attacks; it sends out a soldier every few seconds (footman, archer, by turns), up to a cap;
   // its soldiers' hits fill its mana (onHit); Call to Arms sends every soldier into a frenzy and one more marches out
@@ -1147,6 +1150,67 @@
       u.nextSpawn = W.t + sec(Math.max(2, ab.every));
     }
     u.busy = W.t + 4;
+  }
+  // ------------------------------------------------------------------ v62 (review #78, David): Smolder, Tom and Ashwing
+  // Smolder: a cone of fire in front of it (the target and the enemies next to the target, up to 'reach' hexes away) that
+  // hits and burns. Its Devour (eating an item at the start of a fight) lives in run.js.
+  A.flamethrower = (W, u) => {
+    const ab = u.ab, t = pickTarget(W, u); if (!t || Hx.dist(u, t) > ab.reach) return false;
+    const es = enemies(W, u).filter(e => targetable(W, e) && Hx.dist(u, e) <= ab.reach && Hx.dist(e, t) <= ab.spread);
+    fxRing(W, t.c, t.r, ab.spread, '#ff6a2a', 14);
+    for (const e of es) {
+      deal(W, u, e, ab.dmg * apOf(u), 'magic', { ability: true });
+      dot(W, e, 'burn', ab.burn * apOf(u), ab.dur, u);
+      if (ab.vuln) { e.st.vulnU = Math.max(e.st.vulnU || 0, W.t + sec(ab.dur)); e.st.vulnP = Math.max(e.st.vulnP || 0, ab.vuln); }
+    }
+    if (ab.heal && es.length) heal(W, u, u.maxHp * ab.heal * es.length, true);
+    return true;
+  };
+  // Tom: serves dishes to random allies, each a different pick of four (heal, attack, attack speed, shield)
+  A.dishes = (W, u) => {
+    const ab = u.ab, k = 1 + ab.big, pool = allies(W, u).filter(a => a.kind === 'hero').sort(() => W.rng() - 0.5);
+    const n = ab.all ? pool.length : ab.dishes;
+    const serve = (a, kind) => {
+      if (kind === 0) { heal(W, a, ab.heal * apOf(u) * k, true); fxText(W, a, 'HOT PIE', '#ff9d6a'); }
+      else if (kind === 1) { buff(a, 'atkPct', ab.atk * k, ab.dur, W); fxText(W, a, 'JERKY', '#ff6a5a'); }
+      else if (kind === 2) { buff(a, 'asPct', ab.as * k, ab.dur, W); fxText(W, a, 'PEPPER SOUP', '#ffd23f'); }
+      else { shield(W, a, ab.shield * apOf(u) * k, 6); fxText(W, a, 'PUDDING', '#9fd8ff'); }
+    };
+    for (let i = 0; i < n && pool.length; i++) {
+      const a = pool[i % pool.length], kind = Math.floor(W.rng() * 4);
+      serve(a, kind); if (ab.double) serve(a, (kind + 1 + Math.floor(W.rng() * 3)) % 4);
+      if (ab.mana) a.mana = Math.min(a.maxMana, a.mana + ab.mana);
+      fxRing(W, a.c, a.r, 0, '#ffe066', 8);
+    }
+    if (ab.pan) { const t = pickTarget(W, u); if (t) { deal(W, u, t, ab.pan * apOf(u), 'magic', { ability: true }); cc(W, t, 'stun', 1); fxText(W, t, 'PAN!', '#e8d9b0'); } }
+    return true;
+  };
+  // Ashwing: a wall of fire, a line across the target's row, that burns whoever stands on it
+  A.firewall = (W, u) => {
+    const ab = u.ab, t = pickTarget(W, u); if (!t || Hx.dist(u, t) > ab.reach) return false;
+    for (let dc = -ab.width; dc <= ab.width; dc++) {
+      const c = t.c + dc; if (!Hx.inside(c, t.r) || W.occ[Hx.key(c, t.r)] === BLOCK) continue;
+      W.zones.push({ c, r: t.r, rad: 0, until: W.t + sec(ab.dur), dps: ab.dps * apOf(u), side: u.side, src: u.id, color: '#ff6a2a' });
+      fxRing(W, c, t.r, 0, '#ff6a2a', 14);
+      for (const e of enemies(W, u)) if (e.c === c && e.r === t.r) { dot(W, e, 'burn', ab.burn * apOf(u), 3, u); if (ab.slow) slow(W, e, ab.slow, ab.dur); }
+    }
+    return true;
+  };
+  // the egg Ashwing leaves when it falls: it hatches after a few seconds and the hero rises, unless the egg is destroyed first
+  function layEgg(W, u) {
+    u.once.egg = 1;
+    const ab = u.ab, d = { key: 'egg', name: 'Phoenix Egg', glyph: '🥚', color: u.color, kind: 'summon', owner: u.id, hp: u.maxHp * ab.eggHp, atk: 0, armor: 15, mr: 15, as: 1, range: 1, ms: 0, size: 0.8, fl: ['egg'] };
+    const e = spawn(W, d, u.side, u.c, u.r); if (!e) return;
+    e.egg = 1; e.heroId = u.id; e.hatchAt = W.t + sec(ab.hatch); fxText(W, u, 'EGG', '#ffb347');
+  }
+  function eggAct(W, e) {
+    if (W.t < e.hatchAt) return;
+    const hero = W.byId[e.heroId]; e.suicide = 1; die(W, e, null);
+    if (!hero || !hero.dead || W.over) return;
+    if (reviveAt(W, hero, hero.ab.revive, 'REBORN') && hero.ab.burst) {
+      fxRing(W, hero.c, hero.r, 2, '#ff6a2a', 16);
+      for (const x of enemies(W, hero)) if (Hx.dist(x, hero) <= 2) deal(W, hero, x, hero.ab.burst * apOf(hero), 'magic', { ability: true });
+    }
   }
   A.overcharge = (W, u) => {
     const ab = u.ab; u.st.overU = W.t + sec(ab.dur); fxText(W, u, 'OVERCHARGE', '#5fe0ff'); fxRing(W, u.c, u.r, 1, '#5fe0ff', 14);
@@ -1177,6 +1241,7 @@
       }
       u.castFail = W.t + 10;
     }
+    if (u.egg) { eggAct(W, u); return; }                  // v62: Ashwing's egg
     if (u.fl.has('beam')) { beamAct(W, u); return; }      // v60: Prism
     if (u.fl.has('tower')) { towerAct(W, u); return; }    // v60: Citadel
     const tgt = pickTarget(W, u);
@@ -1247,7 +1312,7 @@
     for (const u of list) if (!u.dead) act(W, u);
     if (W.t % 40 === 0) { W.fx = W.fx.filter(f => f.t1 > W.t - 20); if (W.units.length > 120) W.units = W.units.filter(u => !u.dead || W.t - u.deathT < 40 || u.kind === 'hero'); }
     // end conditions
-    let heroes = W.units.some(u => !u.dead && u.side === 0 && u.kind === 'hero');
+    let heroes = W.units.some(u => !u.dead && u.side === 0 && (u.kind === 'hero' || u.egg));   // v62: a pending egg is a hero still in the fight
     // v50 (review #62): the Phoenix Egg: the whole team rises once, and the egg is used up (run.js takes it away)
     if (!heroes && W.fl.phoenix && !W.once.phoenix) {
       W.once.phoenix = 1; W.used = Object.assign(W.used || {}, { phoenix: 1 });

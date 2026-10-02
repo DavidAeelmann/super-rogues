@@ -238,7 +238,25 @@
     });
   }
   // preview = the static board shown while deploying (no rng used, no start-of-fight effects)
+  // v62 (review #78, David): Smolder eats an item it holds at the start of every fight and keeps its stats for good (the
+  // numbers, not the item's effect). The first item it holds goes first; Second Helping eats two, Rich Fuel gives 50% more.
+  const DEVOUR = ['hp', 'atk', 'ap', 'armor', 'mr', 'hpPct', 'atkPct', 'asPct', 'crit', 'critDmg', 'ls', 'dodge', 'regen', 'manaRegen', 'manaStart'];
+  function devour(run) {
+    const out = [];
+    for (const h of run.heroes) {
+      if (!(B.HEROES[h.key].fl || []).includes('devour') || !h.items.length) continue;
+      const d = heroDef(run, h);
+      for (let i = 0; i < d.ab.devour && h.items.length; i++) {
+        const id = h.items.shift(), it = B.ITEM[id] || {}, got = {};
+        for (const k of DEVOUR) if (typeof (it.mods || {})[k] === 'number') { got[k] = it.mods[k] * d.ab.boost; h.bonus[k] = (h.bonus[k] || 0) + got[k]; }
+        out.push({ uid: h.uid, key: h.key, id, got, msg: B.HEROES[h.key].name + ' ate ' + it.name + ': ' + (Object.keys(got).length ? modsText(got) : 'nothing it could keep') + ' for good.' });
+      }
+    }
+    run.devoured = out;
+    return out;
+  }
   function fightWorld(run, preview, o) {
+    if (!preview) devour(run);
     const f = run.cur, team = f.solo ? run.heroes.filter(h => h.uid === f.solo) : run.heroes;   // v44: a duel = one hero
     for (const h of run.heroes) if (h.pos && blockedAt(run, h.pos.c, h.pos.r)) h.pos = null;
     for (const h of run.heroes) if (!h.pos) autoPlace(run, h);
@@ -323,11 +341,20 @@
   }
 
   // ------------------------------------------------------------------ PvP gauntlet (reviews #3 #4): matchmaking + Elo live in api/elo.js
+  // v62 (review #75): the Snowball and Pack Rat bonuses depend on the run (wins, bag), which a ghost does not carry, so they
+  // are written into the heroes' bonus; the ghost then fights with what its player really had
   function teamSnapshot(run) {
     for (const h of run.heroes) if (!h.pos) autoPlace(run, h);
-    return run.heroes.map(h => ({ key: h.key, lvl: h.lvl, specs: h.specs.slice(), items: h.items.slice(), bonus: Object.assign({}, h.bonus), pos: { c: h.pos.c, r: h.pos.r } }));
+    const x = (has(run, 'snowball') ? 0.04 * (run.snow || 0) : 0) + (has(run, 'packrat') ? 0.03 * Math.min(10, (run.bag || []).length) : 0);
+    return run.heroes.map(h => {
+      const bonus = Object.assign({}, h.bonus);
+      if (x) { bonus.atkPct = (bonus.atkPct || 0) + x; bonus.hpPct = (bonus.hpPct || 0) + x; }
+      return { key: h.key, lvl: h.lvl, specs: h.specs.slice(), items: h.items.slice(), bonus, pos: { c: h.pos.c, r: h.pos.r } };
+    });
   }
+  const ghostMul = round => Math.min(C.ghostCap, C.ghostBase + C.ghostStep * Math.max(0, round || 0));
   function gauntletWorld(run, preview) {
+    if (!preview) devour(run);
     const o = run.g.opp, ghost = { relics: o.relics || [], heroes: o.team || [], bag: [] };
     if (!run.g.map) run.g.map = gauntletMap(run, o, run.g.round);
     for (const h of run.heroes) if (h.pos && blockedAt(run, h.pos.c, h.pos.r)) h.pos = null;
@@ -338,7 +365,7 @@
       mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: 7, relics: run.relics, enemyRelics: o.relics || [],
       heroes: run.heroes.map(h => ({ def: heroDef(run, h), c: h.pos.c, r: h.pos.r })),
       // their formation, mirrored so it faces ours: rows 4..7 -> 3..0
-      enemies: o.team.map(h => { const d = heroDef(ghost, h); d.uid = 0; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
+      enemies: o.team.map(h => { const d = heroDef(ghost, h), gm = ghostMul(run.g.round); d.uid = 0; d.hp *= gm; d.atk *= gm; d.ap *= gm; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
     });
   }
   // apply an api/elo.js answer to the run
@@ -610,7 +637,7 @@
       if (nid && (rnd(run) < 0.5 || (has(run, 'loaded') && rnd(run) < 0.5))) { msg = 'Luck! ' + iname(it.id) + ' became ' + iname(nid) + '.'; it.set(nid); got('item', nid); } else { msg = 'You lost ' + iname(it.id) + '.'; it.drop(); }
     }
     else if (a === 'gamble') { if (rnd(run) < +y || (has(run, 'loaded') && rnd(run) < +y)) { run.gold += +z; msg = 'You won ' + z + ' gold!'; got('gold', +z); } else msg = 'You lost the bet.'; }
-    else if (a === 'relic') { const r = randomRelic(run); msg = r ? 'You gained ' + r.name + '.' : 'You already own every relic.'; if (r) got('relic', r.id); }
+    else if (a === 'relic') { const r = randomRelic(run); msg = r ? 'You gained ' + r.name + '.' : 'You already own every power.'; if (r) got('relic', r.id); }
     else if (a === 'relicPick') { if (run.relics.includes(x) || !B.RELIC[x]) { run.gold += ch.cost || 0; msg = 'You already own it. Your gold is returned.'; } else { gainRelic(run, x); msg = 'You gained ' + B.RELIC[x].name + '.'; got('relic', x); } }
     else if (a === 'relicBlood') {
       hero.bonus.hpPct = (hero.bonus.hpPct || 0) - (+x);
@@ -666,7 +693,7 @@
     if (has(run, 'xmap')) { const id = randomItem(run); run.bag.push(id); got('item', id); msg += ' The Treasure Map finds ' + iname(id) + '.'; }   // v50
     run.cur.done = msg; run.cur.gains = gains; return msg;
   }
-  const MOD_NAME = { hpPct: ['max HP', 1], atkPct: ['attack', 1], asPct: ['attack speed', 1], crit: ['crit chance', 1], ap: ['AP', 0], atk: ['attack', 0], armor: ['armor', 0], mr: ['magic resist', 0], manaStart: ['starting mana', 0], cleanseOnce: ['ignores the first crowd control', -1] };
+  const MOD_NAME = { hp: ['max HP', 0], dodge: ['dodge', 1], ls: ['lifesteal', 1], regen: ['regen per second', 1], critDmg: ['crit damage', 1], manaRegen: ['mana per second', 0], hpPct: ['max HP', 1], atkPct: ['attack', 1], asPct: ['attack speed', 1], crit: ['crit chance', 1], ap: ['AP', 0], atk: ['attack', 0], armor: ['armor', 0], mr: ['magic resist', 0], manaStart: ['starting mana', 0], cleanseOnce: ['ignores the first crowd control', -1] };
   function modsText(m) {
     return Object.keys(m).map(k => { const d = MOD_NAME[k] || [k, 0]; return d[1] < 0 ? d[0] : (m[k] > 0 ? '+' : '') + (d[1] ? Math.round(m[k] * 100) + '%' : m[k]) + ' ' + d[0]; }).join(', ');
   }
@@ -768,7 +795,7 @@
 
   B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
-    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, gauntletWorld, gauntletUpdate, canEquip, setCounts, setBonuses, seqOf, bossFight,
+    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, ghostMul, devour, gauntletWorld, gauntletUpdate, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };
   if (typeof module !== 'undefined') module.exports = B.Run;
 })(typeof window !== 'undefined' ? window : globalThis);

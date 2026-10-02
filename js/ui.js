@@ -194,6 +194,9 @@
     charge: ab => [['P', ab.dmg, 'to the enemies hit']],
     radiance: ab => [['H', ab.heal, 'the weakest ally'], ['H', ab.splash, 'allies next to it'], ab.smite && ['M', ab.smite, 'smite']],
     volley: ab => [['P', ab.dmg, `per arrow, ${ab.count} arrows, can crit`]],
+    flamethrower: ab => [['M', ab.dmg, 'to every enemy in the flames'], ['B', ab.burn, `burn, for ${ab.dur}s`], ab.heal && ['Z', `heals ${pct(ab.heal)} of its max HP for every enemy hit`], ab.vuln && ['Z', `burning enemies take ${pct(ab.vuln)} more damage`], ['Z', `Devour: eats ${ab.devour} item${ab.devour > 1 ? 's' : ''} at the start of a fight, ${pct(ab.boost)} of its stats`]],   // v62
+    dishes: ab => [['Z', d => `hot pie: heals ${Math.round(ab.heal * (1 + ab.big) * d.ap)}; jerky: +${pct(ab.atk * (1 + ab.big))} attack and pepper soup: +${pct(ab.as * (1 + ab.big))} attack speed for ${ab.dur}s; pudding: a ${Math.round(ab.shield * (1 + ab.big) * d.ap)} shield`], ['Z', `${ab.all ? 'every ally' : ab.dishes + ' random allies'} get a dish${ab.double ? ', two effects each' : ''}`], ab.pan && ['M', ab.pan, 'to the nearest enemy (pan), 1s stun']],   // v62
+    firewall: ab => [['M', ab.dps, `per second to enemies on the wall, ${ab.dur}s, ${2 * ab.width + 1} hexes wide`], ['B', ab.burn, 'burn on those standing on it']],   // v62
     overcharge: ab => [['M', ab.dmg, 'per second to the enemy in a beam'], ['H', ab.heal, 'per second to the hurt ally in a beam'], ['Z', `Overcharge: x${ab.mult} for ${ab.dur}s and +${ab.extra} beam`]],   // v60
     garrison: ab => [['Z', d => `footman: ${Math.round(ab.fhp * (1 + ab.vet) * d.ap)} HP and ${Math.round(ab.fatk * (1 + ab.vet) * d.ap)} attack; archer: ${Math.round(ab.ahp * (1 + ab.vet) * d.ap)} HP and ${Math.round(ab.aatk * (1 + ab.vet) * d.ap)} attack`]],   // v60
     raise: ab => [['Z', d => `each skeleton: ${Math.round(3 * d.ap * ab.hpMul)} HP (${pct(3 * ab.hpMul)} AP) and ${Math.round(0.3 * d.ap)} attack (30% AP)`], ab.explode && ['M', ab.explode, 'when a skeleton dies, 1 hex']],
@@ -262,8 +265,8 @@
   const RANK = id => B.RARITIES.findIndex(r => r.id === ITEM[id].tier);
   const DOLL = ['helmet', 'trinket', 'weapon', 'offhand', 'gloves', 'armor', 'boots'];
   const NODE_ICON = { F: I('swords'), X: I('help'), B: I('skull'), S: I('cart'), G: I('trophy') };  // v29: friendlier icons; v49: the icon set
-  const SHOP_NAME = { heroShop: 'Hero Shop', itemShop: 'Item Shop', relicShop: 'Relic Shop' };
-  const SHOP_DESC = { heroShop: 'Recruit new heroes.', itemShop: 'Buy items to equip.', relicShop: 'Team-wide relics.' };
+  const SHOP_NAME = { heroShop: 'Hero Shop', itemShop: 'Item Shop', relicShop: 'Power Shop' };
+  const SHOP_DESC = { heroShop: 'Recruit new heroes.', itemShop: 'Buy items to equip.', relicShop: 'Team-wide powers.' };
   // v42 (review #51): each event has its own picture (map card and a big medallion on the event screen; icon in data.js)
   const evIcon = id => (EVENT[id] && EVENT[id].icon) || '❓';
   const EV_RAR = { uncommon: 'Uncommon', rare: '★ Rare event' };
@@ -304,6 +307,7 @@
     header();
     const m = $('#screen');
     const key = screenKey();
+    if (key !== ui.lastKey) ui.info = null;   // v62 (review #77): the unit / boss description of the screen before does not follow you to the next one
     if (screen === 'title' || !run) m.innerHTML = titleHTML();
     else if (screen === 'battle') { m.innerHTML = battleHTML(); mountBoard(); }
     else if (screen === 'result') m.innerHTML = resultHTML();
@@ -422,14 +426,14 @@
   // review #22 (David): the game starts with 1 hero and 1 relic: pick one of each (3 offered).
   // v45 (review #56): two short steps instead of one busy screen. Step 1: tap a hero (its ability shows under the three,
   // no stat table), then Next. Step 2: the three relics with what they do written on them, then Start.
-  const stepsHTML = s => `<ol class="ssteps">${['Hero', 'Relic', 'Fight!'].map((t, i) => `<li class="${i + 1 < s ? 'done' : i + 1 === s ? 'on' : ''}"><i>${i + 1 < s ? '✓' : i + 1}</i>${t}</li>`).join('')}</ol>`;
+  const stepsHTML = s => `<ol class="ssteps">${['Hero', 'Power', 'Fight!'].map((t, i) => `<li class="${i + 1 < s ? 'done' : i + 1 === s ? 'on' : ''}"><i>${i + 1 < s ? '✓' : i + 1}</i>${t}</li>`).join('')}</ol>`;
   function startHTML() {
     const relics = run.relicOffer || [], n = ui.startPick.length;
     if (ui.startStep === 2 && n === CFG.startHeroes && relics.length) {
       const rsel = ui.startRelic && relics.includes(ui.startRelic) ? ui.startRelic : null;
-      return `<section class="start s2">${stepsHTML(2)}<h2 class="sc">Pick a relic</h2><p class="ssub">A bonus for your whole team, all game long.</p>
+      return `<section class="start s2">${stepsHTML(2)}<h2 class="sc">Pick a power</h2><p class="ssub">A bonus for your whole team, all game long.</p>
         <div class="srelics big">${relics.map(id => `<button class="srelic ${rsel === id ? 'on' : ''}" data-act="start-relic" data-arg="${id}">${ico('relic', id, 44)}<span class="srt"><b class="relic">${esc(RELIC[id].name)}</b><small class="srd">${esc(RELIC[id].short)}</small></span>${rsel === id ? '<span class="chk">✓</span>' : ''}</button>`).join('')}</div>
-        <div class="bar"><button data-act="start-back">◀ Back</button><button class="primary big" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a relic'}</button></div></section>`;
+        <div class="bar"><button data-act="start-back">◀ Back</button><button class="primary big" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a power'}</button></div></section>`;
     }
     const f = run.startOffer.includes(ui.focus) ? ui.focus : ui.startPick[0] || null, h = f && HEROES[f];
     return `<section class="start s1">${stepsHTML(1)}<h2 class="sc">Pick your first hero</h2><p class="ssub">You can buy 2 more heroes later.</p>
@@ -438,7 +442,7 @@
           <span class="rod"></span><img src="${por(k, 120, true)}" alt=""><b>${esc(d.name)}</b><i>${d.role}</i>${on ? '<span class="chk">✓</span>' : ''}</button>`; }).join('')}</div>
       ${h ? `<div class="card detail"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
         <p class="htag">${esc(h.tag || h.abName)}</p><button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>'}
-      ${(run.locked || []).length ? `<p class="center"><span class="lockpill" title="More heroes, items and relics unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : ''}
+      ${(run.locked || []).length ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : ''}
       <div class="bar"><button class="primary big" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${n === CFG.startHeroes ? (relics.length ? 'Next ▶' : 'Start the game!') : 'Tap a hero'}</button></div></section>`;
   }
 
@@ -502,7 +506,7 @@
       break;
     }
     return `<div class="party"><div class="bph"><b>Your team</b><span class="dim small">${run.bag.length ? `<a href="#" data-act="team" class="bagnote">${I('bag')} ${run.bag.length} to equip</a>` : `${run.heroes.length}/${Run.teamMax(run)}`}</span></div>
-      <div class="pgrid">${heroes}</div>${run.relics.length ? `<div class="relicline"><b>Relics</b>${run.relics.map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 26)}</button>`).join('')}</div>` : ''}${boss}</div>`;
+      <div class="pgrid">${heroes}</div>${run.relics.length ? `<div class="relicline"><b>Powers</b>${run.relics.map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 26)}</button>`).join('')}</div>` : ''}${boss}</div>`;
   }
 
   // v49 (review #61, David: "On level-up, make choices feel impactful with concise effects/playstyle tags and transform the
@@ -574,7 +578,7 @@
     const out = [];
     if (w.gold) out.push('+' + w.gold + ' gold');
     if (w.item) out.push((/^[aeiou]/.test(w.item) ? 'an ' : 'a ') + w.item + ' item');
-    if (w.relic) out.push('a relic');
+    if (w.relic) out.push('a power');
     if (w.boost) out.push('+' + Math.round((w.boost.hpPct || 0) * 100) + '% HP and attack for good');
     if (w.xp) out.push('+' + w.xp + ' XP');
     return out.join(', ');
@@ -663,7 +667,7 @@
     const starRow = r.win ? `<div class="rstars" aria-label="${stars} of 3 stars">${[0, 1, 2].map(i => `<i class="st ${i < (fx.stars || 0) ? 'lit' : ''} ${i < stars ? 'earn' : ''}">★</i>`).join('')}${stars === 3 ? `<b class="flawless ${fx.stars >= 3 ? 'on' : ''}">Flawless!</b>` : ''}</div>` : '';
     const chips = [];
     if (r.win && !r.gauntlet) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
-    if (r.relic && RELIC[r.relic]) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f">${ico('relic', r.relic, 26)}<b>${esc(RELIC[r.relic].name)}</b><em>relic</em></span>`);
+    if (r.relic && RELIC[r.relic]) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f">${ico('relic', r.relic, 26)}<b>${esc(RELIC[r.relic].name)}</b><em>power</em></span>`);
     if (r.bank) chips.push(`<span class="rw ${r.bank > 0 ? 'rw-pos' : 'rw-neg'}"><i>🏦</i><b>${r.bank > 0 ? '+' : ''}${r.bank}</b><em>${r.bank > 0 ? 'investment' : 'loan paid'}</em></span>`);
     // v50 (review #62): what the run relics did after this fight
     if (r.phoenix) chips.push(`<span class="rw rw-prize" style="--tier:#ff7a3d">${ico('relic', 'phoenix', 26)}<b>Phoenix Egg</b><em>hatched, gone</em></span>`);
@@ -796,7 +800,7 @@
     return `<section class="gauntlet g2"><h2 class="sc">${I('trophy')} Floor ${g.round + 1}</h2>
       <div class="gwrap">${towerHTML(g, 'near')}
       <div class="card opp vsc"><div class="vsme">${run.heroes.map(h => img(h.key, 40, 'por')).join('')}<b>You</b></div><div class="vsb">VS</div>
-        <div class="row"><b class="sc">${I('ghost')} ${plink(o.name, o.code)}</b><span class="grow"></span><span class="elo">⚜ ${o.elo}</span></div>
+        <div class="row"><b class="sc">${I('ghost')} ${plink(o.name, o.code)}</b><span class="grow"></span><span class="elo">⚜ ${o.elo} · +${Math.round((Run.ghostMul(g.round) - 1) * 100)}%</span></div>
         <p class="small vsline" title="${esc(def.trim())}">${o.status === 'champion' ? 'The reigning champion: beat it and the crown is yours.' : (o.own ? 'Your own old ghost. ' : '') + 'It lost on this floor (went ' + o.wins + '-1).'}</p>${teamRow(o.team, o.relics)}</div></div>
       <div class="bar"><button data-act="team">Team & items</button><button class="primary big" data-act="to-duel">Prepare the duel</button></div></section>`;
   }
@@ -805,7 +809,7 @@
     let body = '';
     if (s.kind === 'hero') { const h = HEROES[s.id]; body = `<div class="srow">${img(s.id, 48, 'por big')}<div><div class="ctitle">${esc(h.name)}</div><div class="tier">${h.role}</div></div></div><p class="htag">${esc(h.tag || h.abName)}</p><div class="hfoot"><span class="rangeline">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span><button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')} More</button></div>`; }
     else if (s.kind === 'item') { const it = ITEM[s.id]; body = `<div class="srow">${ico('item', s.id, 52, 'ico big')}<div><div class="ctitle" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}</div></div><div class="small">${fmt(it.desc)}</div>${setInfo(it)}`; }
-    else { const r = RELIC[s.id]; body = `<div class="srow">${ico('relic', s.id, 52, 'ico big')}<div><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">relic</div></div></div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<div class="hfoot"><span></span><button class="hdet" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button></div>` : ''}`; }
+    else { const r = RELIC[s.id]; body = `<div class="srow">${ico('relic', s.id, 52, 'ico big')}<div><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div></div></div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<div class="hfoot"><span></span><button class="hdet" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button></div>` : ''}`; }
     // review #44: a stripe in the rarity colour (hero colour for heroes, gold for relics) makes the rarity readable at a glance
     const rc = s.kind === 'item' ? TIER_COLOR[ITEM[s.id].tier] : s.kind === 'hero' ? HEROES[s.id].color : '#ffd23f';
     // v42 (review #51): epic, set, legendary and mythic items shine; a bought card gets a SOLD stamp
@@ -824,7 +828,7 @@
     if (!G || !G.length) return '';
     const one = g => {
       if (g.kind === 'item') { const it = ITEM[g.v]; return it ? `<div class="gain" style="--tier:${TIER_COLOR[it.tier]}">${ico('item', g.v, 56)}<b style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</b><span>${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}</span></div>` : ''; }
-      if (g.kind === 'relic') { const r = RELIC[g.v]; return r ? `<div class="gain" style="--tier:#ffd23f">${ico('relic', g.v, 56)}<b class="relic">${esc(r.name)}</b><span>relic</span></div>` : ''; }
+      if (g.kind === 'relic') { const r = RELIC[g.v]; return r ? `<div class="gain" style="--tier:#ffd23f">${ico('relic', g.v, 56)}<b class="relic">${esc(r.name)}</b><span>power</span></div>` : ''; }
       if (g.kind === 'hero') return `<div class="gain" style="--tier:${HEROES[g.v].color}">${img(g.v, 56, 'por')}<b>${esc(HEROES[g.v].name)}</b><span>joins the team</span></div>`;
       if (g.kind === 'gold') return `<div class="gain gg"><i class="bigcoin"></i><b>+${g.v}</b><span>gold</span></div>`;
       if (g.kind === 'bank') return `<div class="gain gg"><i class="gicon">🏦</i><b>+${g.v}</b><span>after your next win</span></div>`;
@@ -966,9 +970,11 @@
     const gau = run.cur && run.cur.type === 'gauntlet';
     const W = worldFor(false);
     save();
+    const ate = (run.devoured || []).map(x => x.msg).join(' ');   // v62: Smolder's meal
     battle = { W, acc: 0, last: performance.now(), endAt: 0, gau };
     store.set('balance.tips.deploy', (store.get('balance.tips.deploy', 0) | 0) + 1);
     ui.info = null; screen = 'battle'; render();
+    if (ate) toast(ate);
     requestAnimationFrame(loop);
   }
   function loop(now) {
@@ -1042,12 +1048,12 @@
   function clearLeftovers() {
     const now = performance.now();
     clearTimeout(xpToast.h);
-    if (toast.t && now - toast.t > 350) { const t = $('#toast'); if (t) t.classList.remove('on'); }
+    if (toast.t && (toast.info || now - toast.t > 350)) { const t = $('#toast'); if (t) t.classList.remove('on'); }   // v62: an info bubble (boss, formation) never outlives its screen
     if (ui.modal && ui.modal !== 'artlab' && now - (ui.modalT || 0) > 350) closeModal();
   }
   function openModal(html) { ui.modalT = performance.now(); const m = $('#modal'); m.innerHTML = `<div class="sheet">${html}</div>`; m.hidden = false; ui.modal = true; }
   function closeModal() { if (ui.modal === 'artlab' && B.ArtLab) B.ArtLab.closed(); const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; clearInterval(ui.sugTimer); }
-  function toast(msg) { toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }
+  function toast(msg, info) { toast.info = !!info; toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }
 
   // v54 (review #66, David: "Equipping items ... is still difficult and unintuitive. Theres so many tiny slots. Cant you
   // think of a cooler inventory system that a 14yo kid will understand? Intuitive drag drop, easy, satisfying, any child
@@ -1247,7 +1253,7 @@
       <div id="sugStatus"></div>
       <p class="small">Write each change and tap <b>Add</b>. Got 5 ideas? Add all 5, then tap <b>Send for review</b>. Claude reviews the whole list and ships it. A bar at the top of the page tells you when it is ready: press F5 and play the new version.</p>
       <form data-form="draft" class="stack">
-        <textarea name="text" maxlength="1500" rows="3" placeholder="A bug, a rebalance, a new hero, item or relic, a UI change, a full restructure... One change per note. Any language is fine."></textarea>
+        <textarea name="text" maxlength="1500" rows="3" placeholder="A bug, a rebalance, a new hero, item or power, a UI change, a full restructure... One change per note. Any language is fine."></textarea>
         <button>+ Add to my list</button>
       </form>
       <h3>My list</h3><div id="drafts">${draftsHTML()}</div>
@@ -1281,7 +1287,7 @@
     btn.disabled = false;
   }
   // review #14 (David): a tab per kind of content with its own Elo, to balance heroes, items and relics
-  const LADDER_TABS = [['player', 'Player'], ['players', 'Ranking'], ['hero', 'Heroes'], ['item', 'Items'], ['relic', 'Relics']];
+  const LADDER_TABS = [['player', 'Player'], ['players', 'Ranking'], ['hero', 'Heroes'], ['item', 'Items'], ['relic', 'Powers']];
   const CONTENT_TABS = ['hero', 'item', 'relic'];
   // review #21 (David: "a player tab with scrolling banners for the leagues and the path between tiers")
   function playerTabHTML(me) {
@@ -1328,8 +1334,8 @@
     const name = id => `<td class="who">${pic(id)}<span${kind === 'item' ? ` style="color:${TIER_COLOR[ITEM[id].tier]}"` : B.BOSSES[id] ? ' class="bossname"' : ''}>${B.BOSSES[id] ? '👹 ' : ''}${esc(def(id).name)}</span></td>`;
     const rows = rated.map((id, i) => { const r = by[id]; return `<tr><td>${i + 1}</td>${name(id)}<td><b>${r.elo}</b></td><td>${r.games}</td><td>${Math.round(100 * r.wins / r.games)}%</td></tr>`; }).join('')
       + rest.map(id => `<tr class="unrated"><td></td>${name(id)}<td colspan="3">${noFight(id) ? 'no combat effect' : 'not played yet'}</td></tr>`).join('');
-    return `<p class="dim small">📊 Content Elo unlocked. Every ${kind} has its own Elo, apart from the players, to guide balance. It only counts in fights where it acted: heroes on the board, equipped items and relics with a combat effect. Losing a game is a loss against 1000, reaching the Gauntlet a win against 1000, and a duel is a game against the other team's ${kind === 'hero' ? 'heroes' : kind + 's'}.${kind === 'hero' ? ' ☠ Bosses have their own Elo: it rises when they beat a player and falls when they lose (against that player\'s Elo), and never changes the player\'s.' : ''}</p>
-      <table class="tbl ctbl"><tr><th>#</th><th>${kind === 'hero' ? 'Hero' : kind === 'item' ? 'Item' : 'Relic'}</th><th>Elo</th><th>Fights</th><th>Won</th></tr>${rows}</table>`;
+    return `<p class="dim small">📊 Content Elo unlocked. Every ${kind === 'relic' ? 'power' : kind} has its own Elo, apart from the players, to guide balance. It only counts in fights where it acted: heroes on the board, equipped items and powers with a combat effect. Losing a game is a loss against 1000, reaching the Gauntlet a win against 1000, and a duel is a game against the other team's ${kind === 'hero' ? 'heroes' : kind + 's'}.${kind === 'hero' ? ' ☠ Bosses have their own Elo: it rises when they beat a player and falls when they lose (against that player\'s Elo), and never changes the player\'s.' : ''}</p>
+      <table class="tbl ctbl"><tr><th>#</th><th>${kind === 'hero' ? 'Hero' : kind === 'item' ? 'Item' : 'Power'}</th><th>Elo</th><th>Fights</th><th>Won</th></tr>${rows}</table>`;
   }
   async function openScores(tab) {
     tab = ui.ladderTab = tab || ui.ladderTab || 'players';
@@ -1352,7 +1358,7 @@
         if (!hasPerk('elo')) await loadAcct();
         if (!hasPerk('elo')) {
           if (ui.modal && ui.ladderTab === tab) openModal(head + `<div class="klock"><span class="hi">📊</span><b>Content Elo is a Crown Shop unlock</b>
-            <p class="small">Every hero, boss, item and relic has its own Elo, fights and win rate, to guide balance. Unlock the Heroes, Items and Relics tabs for 👑 ${B.SHOP_ITEM.elo.price} (the King Tier includes it).</p>
+            <p class="small">Every hero, boss, item and power has its own Elo, fights and win rate, to guide balance. Unlock the Heroes, Items and Powers tabs for 👑 ${B.SHOP_ITEM.elo.price} (the King Tier includes it).</p>
             <button class="primary" data-act="shop">👑 Crown Shop</button></div>`);
           return;
         }
@@ -1439,7 +1445,7 @@
   // rules fold under them
   const HOWTO = `<div class="shead"><b>How to play</b><button data-act="close">✕</button></div>
     <ol class="howbasics">
-      <li>${I('user')}<span><b>Pick a hero and a relic.</b> Buy up to 2 more heroes in the Hero Shop.</span></li>
+      <li>${I('user')}<span><b>Pick a hero and a power.</b> Buy up to 2 more heroes in the Hero Shop.</span></li>
       <li>${I('map')}<span><b>Every day, pick a path:</b> a fight, a shop or an event.</span></li>
       <li>${I('shield')}<span><b>Before a fight, drag your heroes onto the board.</b> Tanks in front, ranged behind.</span></li>
       <li>${I('swords')}<span><b>The fight plays by itself.</b> Win for gold and XP. Heroes level up and use their power when the blue bar is full.</span></li>
@@ -1447,21 +1453,21 @@
     </ol>
     <details class="howmore"><summary>All the rules</summary>
     <ol class="small howto">
-      <li>Start with 1 hero and 1 relic (3 of each offered). Each hero has a unique ability that fires when its blue mana bar is full. Recruit up to 3 heroes in the Hero Shop.</li>
+      <li>Start with 1 hero and 1 power (3 of each offered). Each hero has a unique ability that fires when its blue mana bar is full. Recruit up to 3 heroes in the Hero Shop.</li>
       <li>Every step offers 2 options: easy/medium/hard fights, or a shop/event. Fights 4 and 8 are bosses.</li>
-      <li>❓ Events: trades, bets, relics and items to pick, and <b>challenges</b> (optional fights that start right away: win for a reward; lose and only that reward is gone, the game goes on). Some choices only open with the right hero in your team.</li>
+      <li>❓ Events: trades, bets, powers and items to pick, and <b>challenges</b> (optional fights that start right away: win for a reward; lose and only that reward is gone, the game goes on). Some choices only open with the right hero in your team.</li>
       <li>Before each fight, place heroes in the 4 blue rows. Then the battle plays itself.</li>
-      <li>⚑ Formation relics reward where you place your heroes (next to each other, alone, in the front or back row, in one line, next to terrain). While deploying, the line above the board shows who gets what.</li>
+      <li>⚑ Formation powers reward where you place your heroes (next to each other, alone, in the front or back row, in one line, next to terrain). While deploying, the line above the board shows who gets what.</li>
       <li>🗺 Every fight after the first is on a map with terrain: 🌳 trees, 🪨 boulders, ⛰️ ridges and 💧 ponds block the way (nobody can stand on them or walk through; arrows and spells fly over). Units pushed into a tree, boulder or ridge are slammed and stunned. Bosses fight at the Standing Stones.</li>
       <li>How abilities scale: every ability names its stat. <b>AD</b> = attack (⚔). <b>AP</b> = ability power (✦): 100 at Lv 1, grows every level (each hero at its own pace), more from items. <span class="kw-atk">Physical</span> abilities deal a % of AD; <span class="kw-ap">magic</span> abilities deal a % of AP, of AD, or of both added together (like "40% AD + 20% AP"); heals scale with AP; shields are a % of max HP. AP never multiplies AD. Tap a hero (in battle or in Team) to see its numbers.</li>
       <li>Heroes earn XP for every second they stay alive. Level ups raise stats and let you pick a specialization. From Lv 3, each level adds an item slot. Lv 5 is rare.</li>
       <li>Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
-      <li>Win fights for gold. Spend it in hero, item and relic shops. Your team holds up to 3 heroes. Lose a single fight and the game ends (and costs 2 league points). Heroes always heal after a fight.</li>
-      <li>After the second boss and a last shop, your team enters the Gauntlet as a ghost and climbs a tower of other players' ghosts, one floor per win: each floor holds the ghosts that lost there. One loss ends it and your ghost stays on that floor. The top floor holds the one champion: beat it (or reach a floor nobody reached) and you are the champion until someone beats your ghost. Each duel is an Elo game; your Elo only moves in duels. The ghost keeps its own Elo and record.</li>
+      <li>Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes. Lose a single fight and the game ends (and costs 2 league points). Heroes always heal after a fight.</li>
+      <li>After the second boss and a last shop, your team enters the Gauntlet as a ghost and climbs a tower of other players' ghosts, one floor per win: each floor holds the ghosts that lost there, and the higher the floor the stronger they fight (+15% on floor 1, up to +60%). One loss ends it and your ghost stays on that floor. The top floor holds the one champion: beat it (or reach a floor nobody reached) and you are the champion until someone beats your ghost. Each duel is an Elo game; your Elo only moves in duels. The ghost keeps its own Elo and record.</li>
       <li>Leagues: +1 point per duel won, -2 when a game ends before the Gauntlet; 10 points move you up a league. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
-      <li>👑 Crowns: earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Spend them in the Crown Shop: 4× battle speed, Content Elo (the Elo of every hero, item and relic), name changes, and the King Tier (Royal board, deeper profiles).</li>
+      <li>👑 Crowns: earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Spend them in the Crown Shop: 4× battle speed, Content Elo (the Elo of every hero, item and power), name changes, and the King Tier (Royal board, deeper profiles).</li>
       <li>Tap any player's name to open their profile: league, Elo, best Gauntlet and champion titles.</li>
-      <li>✨ Account level: every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for reaching the Gauntlet, +${B.GAME_XP.duel} per duel won, +${B.GAME_XP.champion} for the crown), plus bonuses the first time you clear PvE with each hero (+${B.ACCOUNT.heroClear}), reach each Gauntlet floor (+${B.ACCOUNT.floor}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and levels 2 to 19 each unlock a new hero, item or relic (see the road on the title or in Ladder → Player).</li>
+      <li>✨ Account level: every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for reaching the Gauntlet, +${B.GAME_XP.duel} per duel won, +${B.GAME_XP.champion} for the crown), plus bonuses the first time you clear PvE with each hero (+${B.ACCOUNT.heroClear}), reach each Gauntlet floor (+${B.ACCOUNT.floor}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and levels 2 to 19 each unlock a new hero, item or power (see the road on the title or in Ladder → Player).</li>
     </ol></details>`;
 
 
@@ -1568,7 +1574,7 @@
     'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
     'give-up-yes': () => { run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },
-    'form-info': t => toast(t),
+    'form-info': t => toast(t, true),
     'g-rules': () => openModal(`<div class="shead"><b>${I('trophy')} How the Gauntlet works</b><button data-act="close" aria-label="Close">✕</button></div><ol class="howbasics">
       <li>${I('ghost')}<span><b>Your team becomes a ghost</b> and enters the tower.</span></li>
       <li>${I('swords')}<span><b>Every floor holds ghosts that fell there.</b> You duel one of them.</span></li>
@@ -1687,5 +1693,5 @@
   render();
   bootNotice();
   // test hook (headless Chrome tests drive the game through this)
-  window.__bal = { get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
+  window.__bal = { get ui() { return ui; }, get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
 })();

@@ -90,7 +90,7 @@ function cleanTeam(team) {
     const items = (Array.isArray(h.items) ? h.items : []).filter(id => D.ITEM[id] && !types.has(D.ITEM[id].type) && types.add(D.ITEM[id].type)).slice(0, 5);
     const bonus = {};
     // event bonuses (review #17 added magic resist, crowd-control immunity and a max-HP price that can go negative)
-    for (const [k, lo, hi] of [['hpPct', -0.5, 1], ['atk', 0, 60], ['armor', 0, 80], ['mr', 0, 80], ['cleanseOnce', 0, 1]]) { const v = Number(h.bonus && h.bonus[k]); if (v) bonus[k] = Math.max(lo, Math.min(hi, v)); }
+    for (const [k, lo, hi] of [['hpPct', -0.5, 1.5], ['atkPct', 0, 1.5], ['hp', 0, 2500], ['atk', 0, 200], ['ap', 0, 300], ['asPct', 0, 1], ['crit', 0, 0.8], ['critDmg', 0, 2], ['ls', 0, 0.5], ['dodge', 0, 0.5], ['regen', 0, 0.1], ['manaRegen', 0, 10], ['manaStart', 0, 60], ['armor', 0, 200], ['mr', 0, 200], ['cleanseOnce', 0, 1]]) { const v = Number(h.bonus && h.bonus[k]); if (v) bonus[k] = Math.max(lo, Math.min(hi, v)); }
     const c = Math.max(0, Math.min(7, Math.round(Number(h.pos && h.pos.c)))), r = Math.max(4, Math.min(7, Math.round(Number(h.pos && h.pos.r))));
     out.push({ key: h.key, lvl, specs, items, bonus, pos: { c: Number.isFinite(c) ? c : 3, r: Number.isFinite(r) ? r : 6 } });
   }

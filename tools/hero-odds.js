@@ -8,7 +8,8 @@
 // Lv 1.3, p x (1 + 0.05 g)) moves toward the average early win rate, its strength late (about Lv 3, p x (1 + 0.3 g)) toward the
 // average late one; p and g follow from the two (g stays within 0.5..1.8: early and late heroes keep their identity). The knobs are printed;
 // they are written to js/data.js by hand (p into hp / atk / mana, g as grow).
-// Usage: node tools/hero-odds.js [rounds=0: just measure] [teams=60]      ONLY=a,b measures just those heroes
+// Usage: node tools/hero-odds.js [rounds=0: just measure] [teams=60]      ONLY=a,b measures just those heroes (v62: with ONLY the
+// tuning aims at TARGET=early,late win rates, default 62,56 = what the whole roster averages, instead of at their own mean)
 const { team, play } = require('./_team.js');
 const ROUNDS = +(process.argv[2] || 0), T = +(process.argv[3] || 60);
 const keys = Object.keys(B.HEROES), EARLY = [[3, 'hard'], [4, 'boss']], LATE = [[6, 'hard'], [7, 'hard'], [8, 'boss']];
@@ -35,7 +36,7 @@ for (let r = 0; r <= ROUNDS; r++) {
   console.log(`round ${r}: mean ${mean.toFixed(1)}%  spread ${r1(res[sorted[sorted.length - 1]].all)}..${r1(res[sorted[0]].all)}  early->late ${slope.toFixed(1)} (sd ${sd.toFixed(1)})`);
   console.log('  ' + sorted.map(k => `${B.HEROES[k].name} ${r1(res[k].all)} (${r1(res[k].e)}->${r1(res[k].l)})`).join(', '));
   if (r === ROUNDS) break;
-  const damp = 1 + r / 3, me = avg(ks.map(k => res[k].e)), ml = avg(ks.map(k => res[k].l));
+  const T = (process.env.TARGET || '62,56').split(',').map(Number), damp = 1 + r / 3, me = process.env.ONLY ? T[0] : avg(ks.map(k => res[k].e)), ml = process.env.ONLY ? T[1] : avg(ks.map(k => res[k].l));
   for (const k of ks) {
     const g0 = BASE[k].grow * G[k], step = d => Math.abs(d) > 3 ? Math.exp(clamp(-d / 100 * 0.9 / damp, 0.1)) : 1;
     const E = P[k] * (1 + 0.05 * g0) * step(res[k].e - me), L = P[k] * (1 + 0.3 * g0) * step(res[k].l - ml);

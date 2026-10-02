@@ -74,8 +74,10 @@ await click('[data-act=close]'); await sleep(100);
 // new game, pick 1 hero and 1 relic (review #22), in two steps (v45, review #56)
 // v52 (review #64): a message and a sheet from the screen before do not stay over the next screen
 await ev(`__bal.ACT['form-info']('a leftover message')`); await click('#top [data-act=home-menu]'); await sleep(450);
+await ev(`__bal.ui.info = 99`);
 await click('[data-act=new-run]'); await sleep(200);
 ok(await ev(`document.getElementById('modal').hidden && !document.getElementById('toast').classList.contains('on')`), 'v52: the toast and the sheet from the screen before are gone once the screen changes');
+ok(await ev(`__bal.ui.info === null`), 'v62 (review #77): the unit / boss description of the screen before does not follow you to the next screen');
 const picks = await ev(`[...document.querySelectorAll('[data-act=start-pick]')].length`);
 ok(picks === 3, 'start offers 3 heroes side by side');
 // v49 (review #60): a game only counts once its hero and relic are picked: back on the landing it is Play, not Continue

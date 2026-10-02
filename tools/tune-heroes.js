@@ -5,7 +5,7 @@ const root = require('path').join(__dirname, '..'), ROUNDS = +(process.argv[2] |
 for (const f of ['hex', 'data', 'sim', 'run']) require(root + '/js/' + f + '.js');
 const { Run, Sim } = B; const keys = Object.keys(B.HEROES);
 const BASE = Object.fromEntries(keys.map(k => [k, { hp: B.HEROES[k].hp, atk: B.HEROES[k].atk, mana: B.HEROES[k].mana }]));
-const AP = new Set(['prism', 'citadel', 'buzzwell', 'coralie', 'stellan', 'pyra', 'glacia', 'lumen', 'morrow', 'tempest', 'seraph', 'bramble', 'echo', 'vey', 'sprocket', 'vesper', 'azgul', 'pip']);
+const AP = new Set(['smolder', 'tom', 'ashwing', 'prism', 'citadel', 'buzzwell', 'coralie', 'stellan', 'pyra', 'glacia', 'lumen', 'morrow', 'tempest', 'seraph', 'bramble', 'echo', 'vey', 'sprocket', 'vesper', 'azgul', 'pip']);
 const LOAD = { 2: { items: ['longsword', 'chainmail', 'rod', 'boots', 'buckler', 'fang'], ap: ['rod', 'boots'], relics: ['whetset'] },
                3: { items: ['bloodthirster', 'warmog', 'deathcap', 'b_greaves', 'guardplate', 'infinity'], ap: ['deathcap', 'b_greaves', 'bluecrystal'], relics: ['whetset', 'standard'] } };
 const FIGHTS = [['boss', 4, 2], ['boss', 8, 3]];  // hard fights are cleared ~95% by everyone: the bosses are where heroes fail
