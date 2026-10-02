@@ -185,7 +185,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const W = Run.gauntletWorld(run);
   const ghost = W.units.filter(u => u.side === 1), mine = W.units.filter(u => u.side === 0);
   const exp = Run.heroDef({ relics }, other.heroes[0]);
-  ok(ghost.length === 2 && Math.round(ghost.find(u => u.key === 'bastion').maxHp) === Math.round(exp.hp * Run.ghostMul(0)) && ghost.find(u => u.key === 'bastion').m.hp >= 200 + 150, 'ghost heroes wear their items and stat relics (Warmog + Giant Tooth)');
+  ok(ghost.length === 2 && Math.round(ghost.find(u => u.key === 'bastion').maxHp) === Math.round(exp.hp) && ghost.find(u => u.key === 'bastion').m.hp >= 200 + 150, 'ghost heroes wear their items and stat relics (Warmog + Giant Tooth)');
   ok(mine.every(u => u.st.slowU > W.t) && ghost.every(u => u.buffs.some(b => b.s === 'asPct' && b.v === 0.3)) && !mine.some(u => u.buffs.some(b => b.s === 'asPct' && b.v === 0.3)), "the ghost's team relics work for the ghost: its Frost Sigil slows us, its War Horn speeds up its own heroes");
   for (const u of ghost) u.hp = 5;  // so a ghost hero surely dies
   let phoenix = 0; for (let k = 0; k < 20 * 90 && !W.over; k++) { Sim.step(W); for (const f of W.fx) if (f.k === 'text' && f.text === 'ASHEN PLUME' && W.byId[f.id] && W.byId[f.id].side === 1) phoenix = 1; }
@@ -739,9 +739,15 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const aw = W.units.find(u => u.key === 'ashwing'); aw.mana = aw.maxMana; Sim.step(W); Sim.step(W);
   ok(W.zones.length === 3 && W.zones.every(z => z.r === 4 && z.rad === 0) && new Set(W.zones.map(z => z.c)).size === 3, 'v62 Ashwing: the wall of fire is a line of 3 hexes across the target');
 }
-// ---- v62 (review #75): the Gauntlet ghost fights stronger on higher floors and carries what its player had
+// ---- v62 (reviews #75 #80): the Gauntlet ghost carries everything its player had (no artificial scaling)
 {
-  ok(Run.ghostMul(0) === CFG.ghostBase && Run.ghostMul(5) > Run.ghostMul(0) && Run.ghostMul(99) === CFG.ghostCap, 'v62: a ghost gets stronger each floor, up to the cap');
+  ok(!CFG.ghostBase && !Run.ghostMul, 'v62 (review #80): ghosts are not scaled up artificially');
+  {
+    const d = (k, l) => Run.heroDef({ relics: [], heroes: [], bag: [] }, { key: k, lvl: l, specs: [], items: [], bonus: {}, uid: 1 });
+    const W = Sim.create({ mode: 'fight', seed: 1, relics: [], enemyRelics: ['phoenix'], heroes: [{ def: d('bastion', 5), c: 3, r: 5 }], enemies: [{ def: d('vex', 1), c: 3, r: 2 }] });
+    Sim.run(W, 20 * 120);
+    ok(W.once.phoenix1 === 1, 'v62 (review #80): a ghost with the Phoenix Egg relic rises once, like a player');
+  }
   const a = Run.newRun(41); Run.pickStart(a, ['bastion'], null); a.relics = ['snowball', 'packrat']; a.snow = 3; a.bag = ['dagger', 'dagger'];
   const snap = Run.teamSnapshot(a);
   ok(Math.abs(snap[0].bonus.atkPct - (0.04 * 3 + 0.03 * 2)) < 1e-9 && !a.heroes[0].bonus.atkPct, 'v62: the Snowball and Pack Rat bonuses go into the ghost (and not into the run itself)');

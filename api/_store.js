@@ -28,6 +28,8 @@ const SCHEMA = [
   // v15 (review #14): an Elo for every hero, item and relic, apart from the players (balance data)
   `create table if not exists ratings (kind text not null, id text not null, elo real not null default 1000, games int not null default 0,
      wins int not null default 0, updated bigint, primary key (kind, id))`,
+  // v62 (review #81, David): how many times each fight of a run (number + difficulty, bosses = 'boss') was played and won, all players together
+  `create table if not exists fstats (n int not null, diff text not null, played int not null default 0, won int not null default 0, primary key (n, diff))`,
   // v27 (owner): Crowns. players.gems = the Crown balance (the old column `crowns` keeps counting champion titles);
   // season / sreach = the season the row is in and the best league reached (and paid) in it; peak_league = best ever,
   // last_league = where the last season ended; perks = JSON array of Crown Shop unlocks; ref = the pid of the player
@@ -135,6 +137,8 @@ function memStore() {
       for (const r of rows) { const x = R[r.kind + ':' + r.id] = R[r.kind + ':' + r.id] || { kind: r.kind, id: r.id, elo: 1000, games: 0, wins: 0 }; x.elo += r.delta; x.games++; x.wins += r.win; }
     },
     async listRatings() { return Object.values(M.ratings || {}).map(pubRating); },
+    async addFights(rows) { const F = M.fstats = M.fstats || {}; for (const r of rows) { const x = F[r.n + ':' + r.diff] = F[r.n + ':' + r.diff] || { n: r.n, diff: r.diff, played: 0, won: 0 }; x.played++; x.won += r.win; } },
+    async listFights() { return Object.values(M.fstats || {}).map(x => Object.assign({}, x)); },
   };
 }
 
@@ -243,6 +247,12 @@ function pgStore() {
         [rows.map(r => r.kind), rows.map(r => r.id), rows.map(r => r.delta), rows.map(r => r.win), Date.now()]);
     },
     async listRatings() { return (await q('select kind, id, elo, games, wins from ratings')).map(pubRating); },
+    async addFights(rows) {
+      if (!rows.length) return;
+      await q(`insert into fstats (n, diff, played, won) select n, d, 1, w from unnest($1::int[], $2::text[], $3::int[]) as u(n, d, w)
+        on conflict (n, diff) do update set played = fstats.played + 1, won = fstats.won + excluded.won`, [rows.map(r => r.n), rows.map(r => r.diff), rows.map(r => r.win)]);
+    },
+    async listFights() { return (await q('select n, diff, played, won from fstats order by n, diff')).map(r => ({ n: Number(r.n), diff: r.diff, played: Number(r.played), won: Number(r.won) })); },
   };
 }
 

@@ -800,7 +800,7 @@
     return `<section class="gauntlet g2"><h2 class="sc">${I('trophy')} Floor ${g.round + 1}</h2>
       <div class="gwrap">${towerHTML(g, 'near')}
       <div class="card opp vsc"><div class="vsme">${run.heroes.map(h => img(h.key, 40, 'por')).join('')}<b>You</b></div><div class="vsb">VS</div>
-        <div class="row"><b class="sc">${I('ghost')} ${plink(o.name, o.code)}</b><span class="grow"></span><span class="elo">⚜ ${o.elo} · +${Math.round((Run.ghostMul(g.round) - 1) * 100)}%</span></div>
+        <div class="row"><b class="sc">${I('ghost')} ${plink(o.name, o.code)}</b><span class="grow"></span><span class="elo">⚜ ${o.elo}</span></div>
         <p class="small vsline" title="${esc(def.trim())}">${o.status === 'champion' ? 'The reigning champion: beat it and the crown is yours.' : (o.own ? 'Your own old ghost. ' : '') + 'It lost on this floor (went ' + o.wins + '-1).'}</p>${teamRow(o.team, o.relics)}</div></div>
       <div class="bar"><button data-act="team">Team & items</button><button class="primary big" data-act="to-duel">Prepare the duel</button></div></section>`;
   }
@@ -1034,7 +1034,7 @@
     if (run.phase === 'over') {  // review #3: a lost fight ends the run = Elo loss (review #14: against 1000; the fight's pieces lose too)
       ui.result.pending = true; render();
       run.xpWait = true;   // v46: the game's XP (fights won, the boss beaten) comes back with the answer
-      try { const r = await Net.post('elo', Object.assign({ op: 'fail', pid: pid(), ref: refCode(), game: { fights: run.won, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; Object.assign(ui.result, { lg: r.lg }); }  // review #24: no Elo before the gauntlet
+      try { const r = await Net.post('elo', Object.assign({ op: 'fail', pid: pid(), ref: refCode(), flog: run.flog, game: { fights: run.won, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; Object.assign(ui.result, { lg: r.lg }); }  // review #24: no Elo before the gauntlet
       catch (e) { ui.result.error = e.message; run.xpErr = true; }
       run.xpWait = false;
       ui.result.pending = false; save(); render();
@@ -1463,7 +1463,7 @@
       <li>Heroes earn XP for every second they stay alive. Level ups raise stats and let you pick a specialization. From Lv 3, each level adds an item slot. Lv 5 is rare.</li>
       <li>Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
       <li>Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes. Lose a single fight and the game ends (and costs 2 league points). Heroes always heal after a fight.</li>
-      <li>After the second boss and a last shop, your team enters the Gauntlet as a ghost and climbs a tower of other players' ghosts, one floor per win: each floor holds the ghosts that lost there, and the higher the floor the stronger they fight (+15% on floor 1, up to +60%). One loss ends it and your ghost stays on that floor. The top floor holds the one champion: beat it (or reach a floor nobody reached) and you are the champion until someone beats your ghost. Each duel is an Elo game; your Elo only moves in duels. The ghost keeps its own Elo and record.</li>
+      <li>After the second boss and a last shop, your team enters the Gauntlet as a ghost and climbs a tower of other players' ghosts, one floor per win: each floor holds the ghosts that lost there. One loss ends it and your ghost stays on that floor. The top floor holds the one champion: beat it (or reach a floor nobody reached) and you are the champion until someone beats your ghost. Each duel is an Elo game; your Elo only moves in duels. The ghost keeps its own Elo and record.</li>
       <li>Leagues: +1 point per duel won, -2 when a game ends before the Gauntlet; 10 points move you up a league. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
       <li>👑 Crowns: earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Spend them in the Crown Shop: 4× battle speed, Content Elo (the Elo of every hero, item and power), name changes, and the King Tier (Royal board, deeper profiles).</li>
       <li>Tap any player's name to open their profile: league, Elo, best Gauntlet and champion titles.</li>
@@ -1658,7 +1658,7 @@
         const r = await Net.post('player', { op: 'rename', pid: pid(), name }); setAcct(r); toast(`You are now ${r.name}`); refreshShop();
       } else if (kind === 'gauntlet') {
         const name = f.name.value.trim(); if (!acct.account || isDefaultName(acct.name)) store.set('balance.name', name);
-        const r = await Net.post('elo', { op: 'enter', pid: pid(), ref: refCode(), name, team: Run.teamSnapshot(run), relics: run.relics, reached: run.lastFight, game: { fights: run.won } });
+        const r = await Net.post('elo', { op: 'enter', pid: pid(), ref: refCode(), name, team: Run.teamSnapshot(run), relics: run.relics, reached: run.lastFight, flog: run.flog, game: { fights: run.won } });
         setElo(r); logGameXp(r); Run.gauntletUpdate(run, r); save(); render(); window.scrollTo(0, 0);
       }
     } catch (err) { toast(err.message); if (btn) btn.disabled = false; }

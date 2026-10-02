@@ -1320,7 +1320,14 @@
       fx(W, { k: 'banner', text: 'The Phoenix Egg hatches!', t1: W.t + 50 });
       heroes = W.units.some(u => !u.dead && u.side === 0 && u.kind === 'hero');
     }
-    const foes = W.units.some(u => !u.dead && u.side === 1);
+    let foes = W.units.some(u => !u.dead && u.side === 1);
+    // v62 (review #80): a ghost that had the Phoenix Egg gets it too: its whole team rises once
+    if (!foes && W.fl1.phoenix && !W.once.phoenix1) {
+      W.once.phoenix1 = 1;
+      for (const u of W.units) if (u.dead && u.side === 1 && u.kind === 'hero') reviveAt(W, u, 0.5, 'REBORN');
+      fx(W, { k: 'banner', text: 'The Phoenix Egg hatches!', t1: W.t + 50 });
+      foes = W.units.some(u => !u.dead && u.side === 1);
+    }
     if (!heroes) { W.over = true; W.winner = 1; }
     else if (W.mode === 'fight' && !foes) { W.over = true; W.winner = 0; }
     else if (W.mode === 'fight' && W.t >= sec(B.CFG.fightCap)) { W.over = true; W.winner = 1; W.timeout = true; }

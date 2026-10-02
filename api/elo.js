@@ -48,6 +48,22 @@ function usedIn(team, relics) {
   }
   return [...out.values()];
 }
+// v62 (review #81): the fights of a finished run, [fight number, difficulty, won], checked and capped
+const DIFFS = ['easy', 'medium', 'hard', 'boss'];
+function cleanFlog(x) {
+  if (!Array.isArray(x)) return [];
+  const seen = new Set(), out = [];
+  for (const r of x.slice(0, 14)) {
+    if (!Array.isArray(r)) continue;
+    const n = Math.round(Number(r[0])), diff = String(r[1]);
+    if (!(n >= 1 && n <= 12) || !DIFFS.includes(diff)) continue;
+    out.push({ n, diff, win: r[2] ? 1 : 0 });
+  }
+  return out;
+}
+async function logFights(st, req, flog) {
+  try { const rows = cleanFlog(flog); if (rows.length && (await allowRated(st, ipHash(req)))) await st.addFights(rows); } catch (e) { console.error('fstats', e); }
+}
 async function allowRated(st, iph) {
   const k = 'rated:' + iph, hour = Math.floor(Date.now() / 3600e3);
   let c = null; try { c = JSON.parse(await st.getKV(k)); } catch (_) {}
@@ -179,6 +195,7 @@ module.exports = async (req, res) => {
       const lg = leaguePoints(p, D.LEAGUE_RULES.pveLoss);
       await save({});
       const used = cleanTeam(b.team); if (used) { await rateContent(st, ipHash(req), [{ used: usedIn(used, relicList(b.relics)), score: 0 }]); await P.heroGames(st, pid, used, false); }
+      await logFights(st, req, b.flog);
       await P.xpGame(st, p, b.game, xp);   // v46 (review #57): XP for the game, by how far it went
       return send(res, 200, me({ lg }));
     }
@@ -195,6 +212,7 @@ module.exports = async (req, res) => {
       const rt = b.reached && cleanTeam(b.reached.team);
       await rateContent(st, ipHash(req), [{ used: rt ? usedIn(rt, relicList(b.reached.relics)) : usedIn(team, relics), score: 1 }]);
       await P.heroGames(st, pid, rt || team, true);
+      await logFights(st, req, b.flog);
       await P.xpGame(st, p, { fights: b.game && b.game.fights, reached: true }, xp);   // v46: the PvE part of the game
       await P.xpClear(st, p, rt || team, xp); await P.xpFloor(st, p, 1, xp);   // v30: first PvE clears, floor 1
       const opp = await nextOpponent(st, 0, pid, id), peak = await peakOf(st, id);
@@ -251,5 +269,6 @@ module.exports = async (req, res) => {
 module.exports.eloAfter = eloAfter;
 module.exports.usedIn = usedIn;
 module.exports.cleanTeam = cleanTeam;
+module.exports.cleanFlog = cleanFlog;
 module.exports.leaguePoints = leaguePoints;
 module.exports.nextOpponent = nextOpponent;

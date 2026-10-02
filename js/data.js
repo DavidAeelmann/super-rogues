@@ -11,7 +11,6 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
-    ghostBase: 1.15, ghostStep: 0.045, ghostCap: 1.6,   // v62 (review #75): a ghost cannot re-position or swap items like its challenger, so it fights stronger on every floor (x1.15 on floor 1 up to x1.6)
     fightScale: [1, 1.17, 1.37, 1.4, 1.42, 1.85, 1.98, 2.24, 2.42],   // v61 (review #73): tuned by tools/tune-pve.js (medium ~90%, bosses ~55%)
     firstFight: 0.5,  // review #22: the first fight is fought by a single hero: half the usual enemy budget
     suddenDeath: 45, fightCap: 150,     // seconds

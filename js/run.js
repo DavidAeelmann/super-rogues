@@ -287,6 +287,7 @@
     const res = { win, gold: 0, xp: [], boss: f.diff === 'boss', timeout: !!W.timeout };
     // review #14: the team as it fought (before level ups), sent to api/elo.js to rate its heroes, items and relics
     run.lastFight = { team: teamSnapshot(run), relics: run.relics.slice() };
+    if (!f.challenge && !f.solo) (run.flog = run.flog || []).push([f.fightNo, f.diff, win ? 1 : 0]);   // v62 (review #81): for the balance dashboard
     for (const u of W.units) {
       if (u.kind !== 'hero' || !u.uid) continue;
       const h = run.heroes.find(x => x.uid === u.uid); if (!h) continue;
@@ -352,7 +353,6 @@
       return { key: h.key, lvl: h.lvl, specs: h.specs.slice(), items: h.items.slice(), bonus, pos: { c: h.pos.c, r: h.pos.r } };
     });
   }
-  const ghostMul = round => Math.min(C.ghostCap, C.ghostBase + C.ghostStep * Math.max(0, round || 0));
   function gauntletWorld(run, preview) {
     if (!preview) devour(run);
     const o = run.g.opp, ghost = { relics: o.relics || [], heroes: o.team || [], bag: [] };
@@ -365,7 +365,7 @@
       mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: 7, relics: run.relics, enemyRelics: o.relics || [],
       heroes: run.heroes.map(h => ({ def: heroDef(run, h), c: h.pos.c, r: h.pos.r })),
       // their formation, mirrored so it faces ours: rows 4..7 -> 3..0
-      enemies: o.team.map(h => { const d = heroDef(ghost, h), gm = ghostMul(run.g.round); d.uid = 0; d.hp *= gm; d.atk *= gm; d.ap *= gm; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
+      enemies: o.team.map(h => { const d = heroDef(ghost, h); d.uid = 0; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
     });
   }
   // apply an api/elo.js answer to the run
@@ -795,7 +795,7 @@
 
   B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
-    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, ghostMul, devour, gauntletWorld, gauntletUpdate, canEquip, setCounts, setBonuses, seqOf, bossFight,
+    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, gauntletWorld, gauntletUpdate, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };
   if (typeof module !== 'undefined') module.exports = B.Run;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Balance dashboard</title>
+<style>
+:root { --bg: #11141c; --card: #1a1f2b; --line: #2b3243; --ink: #e8ecf5; --dim: #8e98ad; --good: #4cc38a; --mid: #e0b84a; --bad: #e0614d; }
+@media (prefers-color-scheme: light) { :root { --bg: #f4f5f8; --card: #fff; --line: #d9dce5; --ink: #1c2230; --dim: #6a7388; } }
+* { box-sizing: border-box; }
+body { margin: 0; font-size: 13.5px; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 16px; max-width: 920px; margin-inline: auto; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 22px 0 8px; }
+p.sub, .note { color: var(--dim); font-size: 12.5px; margin: 0 0 8px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 5px 4px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--dim); font-weight: 600; font-size: 12px; }
+th.s { cursor: pointer; user-select: none; }
+th.on::after { content: ' ▾'; }
+tr:last-child td { border-bottom: 0; }
+.bar { display: inline-block; vertical-align: middle; width: 38px; height: 7px; border-radius: 4px; background: var(--line); margin-right: 6px; overflow: hidden; }
+.bar i { display: block; height: 100%; }
+.low { opacity: .5; }
+.dim { color: var(--dim); }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
+.tabs button { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer; }
+.tabs button.on { border-color: var(--good); }
+</style>
+</head>
+<body>
+<h1>Balance dashboard</h1>
+<p class="sub" id="meta">Loading...</p>
+
+<h2>Progression: clear rate of every fight</h2>
+<p class="note">All players together, one row per fight of a run (fights 4 and 8 are the bosses). Reached = times the fight was played, clear = share won. Only runs that have ended are counted.</p>
+<div class="card"><table id="prog"></table></div>
+
+<h2>Heroes, items, powers and bosses</h2>
+<p class="note">Fights the piece was in (games) and the share of them won, plus its content Elo. Click a column to sort. Faded rows have fewer than 20 games: too few to trust.</p>
+<div class="tabs" id="tabs"></div>
+<div class="card"><table id="cont"></table></div>
+
+<script src="js/stats.js"></script>
+</body>
+</html>
