@@ -50,7 +50,8 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 | `api/_http.js` | small helpers for the server files | never |
 | `tools/` | balance and test scripts, the watcher, the deploy script | see section 5 |
 | `art/` | the hero pictures (webp) | add pictures |
-| `CLAUDE.md` | the history of every version and the working rules of the assistant | read it for why something is the way it is |
+| `CLAUDE.md` | the permanent working rules of the assistant (design principles, conventions, how to test and publish, what never to break) | read it to know how to work on the game |
+| `CHANGELOG.md` | the history of every version, newest on top (search it, do not read it all) | read it for why something is the way it is |
 
 ## 3. "I want to..." recipes
 
@@ -107,3 +108,43 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 - The server never trusts the browser: a team sent as a ghost is cleaned by `cleanTeam`; keep that list of allowed fields.
 - No screen may need scrolling on a phone (390 x 740 and 360 x 640) and no text may be cut off. The Chrome tests check it.
 - After any change: run `node tools/tests/motor.js` at least; before publishing run everything.
+
+## 7. Appendix: the older detailed file map (Portuguese, kept for its details such as server limits)
+
+Some numbers in it (hero counts, etc.) are older than the code; trust the code and the tables above when they differ.
+
+| Arquivo | O quê |
+|---|---|
+| `js/hex.js` | grade 8x8 (terreno por luta: `B.MAPS` no data.js, `Run.mapOf`), pointy-top "odd-r"; linha 0 = topo (inimigo), linhas 4-7 = deploy do jogador |
+| `js/data.js` | TODO o conteúdo: `CFG` (economia, XP, sequência de nós, time máx 3), 36 heróis (habilidade + 4 pares de spec; 3 liberados por nível de conta; 6 com escala passiva; habilidade em % de AD e/ou AP, v28), 120 itens com tipo e raridade (`TYPES`, `RARITIES`, `SETS`), 35 relíquias, 14 mobs, 2 chefes, elites, 12 eventos |
+| `js/sim.js` | motor de combate puro e determinístico (20 ticks/s). Roda no navegador e no Node |
+| `js/run.js` | máquina de estados da run (mapa, lutas, lojas, eventos, XP, itens). JSON puro, salvo no localStorage |
+| `js/models.js` | modelos 2.5D desenhados em código (humanoide, fera, bomba, golem, serpente, espectro, torre) com poses parado/andando/ataque/habilidade/morte; `portrait()` gera os retratos dos menus |
+| `js/splash.js` | splash art de cada unidade (fora da luta): pose heroica com o modelo em modo `detail`, luz na cor do herói, raios, bokeh, névoa, luz de contorno e brilho; `B.Splash.image(key, w, h, 'bust'|'full')`, cache em data: URL |
+| `js/icons.js` | ícones de itens e relíquias desenhados em código (~60 desenhos; cada item/relíquia mapeado em `IT`/`RE`), moldura na cor da raridade (lendário com brilho, mítico com moldura dupla), `B.Icons.slot(tipo)` = espaço vazio, cache em data: URL |
+| `js/art.js` | arte em IMAGEM (v31, Art Lab): splash (recorte busto/banner por foco x/y + zoom) e 4 poses de batalha (parado/andando/ataque/habilidade; o movimento entre elas é feito em código). `OFFICIAL` lista a arte publicada em `art/<herói>/`; o teste do Art Lab fica só no aparelho (`localStorage balance.artlab`). Sem arte = modelo desenhado. `cutSheet` recorta a folha de poses (fundo = cor mais comum na borda) |
+| `js/artlab.js` | tela do Art Lab (botão no fim do menu inicial e link na caixa de sugestões): escolher herói, subir splash e folha de poses, ver nas cartas e numa luta de teste, "Use in my game" (só o aparelho) e **Send for review** (vai junto com um lote normal) |
+| `js/sfx.js` | v42: sons do jogo sintetizados com Web Audio (sem arquivo de áudio, CSP igual): `B.Sfx.play('coin')`; liga/desliga (🔊 no topo do menu e da batalha, guardado em `balance.sound`); sons repetidos (golpe, cura, contagem) têm intervalo mínimo |
+| `js/juice.js` | v42: efeitos de recompensa em DOM numa camada fixa `#fx`: confete, moedas voando até o ouro do topo, número contando, "bump", "+6" subindo, cópia voando (item comprado → Team). Sem animação se o sistema pedir menos movimento |
+| `js/uiicons.js` | v49: o conjunto de ícones da interface (SVG em código, traço redondo de 2,2, cor do texto): `B.UI.i(nome, classe)`, e a marca do logo `B.UI.mark()` (estrela de máscara). Use no lugar de emoji em botões, topo, trilha, lojas, lutas e menus |
+| `js/render.js` | canvas 2.5D: tabuleiro achatado (K=0.6) com espessura, unidades pelos modelos, barras, efeitos. Interpola posição entre hexes |
+| `js/ui.js` | telas DOM + loop da batalha. Sem handler inline (CSP): todo botão tem `data-act` |
+| `js/net.js` | cliente JSON de `/api` |
+| `api/suggest.js` | GET fila pública (agrupada por envio) + status do revisor; POST `{items: [...até 10], name}` = 1 envio (lote). v31: pode levar `art` (herói, splash, poses em data: URL PNG/JPG/WEBP; splash ≤ 900 KB, pose ≤ 300 KB; 6 envios de arte por IP/dia, 60 no total/dia), guardado na tabela `art`, NUNCA servido de volta. Limite por IP: 3 envios/10 min, 12 envios e 40 mudanças/dia; fila máx 300 |
+| `api/elo.js` | Elo por jogador (id aleatório guardado no navegador) + Gauntlet PvP: `fail`, `enter`, `result` (Elo 1v1 K=32 contra o Elo do fantasma; o Elo do jogador só mexe nos duelos desde a v26), `boss`; GET = ladder, `?peak=1`. Elo de conteúdo (lote 14): cada herói/item/relíquia/chefe tem Elo próprio (K=16, tabela `ratings`), só o que agiu na luta (`usedIn`); a leitura (`?ratings=1`) virou desbloqueio da loja (v27) |
+| `api/player.js` | v27: loja de Coroas (`buy`), troca de nome paga (`rename`), perfil público (`profile`; Rei vê mais), `me` (carteira, sem criar jogador), `ratings` (só com Content Elo) |
+| `api/_player.js` | v27: temporadas, pagamento de Coroas por liga (`payLeagues`, atômico via `sreach`), indicação (`linkRef`, 1% mín. 1), jogos por herói (`phero`), visões do perfil |
+| `api/_store.js` | Neon em produção, memória no dev/teste. Tabelas `suggestions`, `kv`, `scores`, `players`, `teams`, `ratings`, `phero` |
+| `tools/vigia.js` | vigia em segundo plano (checa a cada 20 s): sai, e me acorda, assim que chega um envio novo |
+| `tools/sugestoes.js` | fila do meu lado: listar (por lote; avisa "📎 arte"), `lendo`, `feito`, `recusa`, `status`, `pausa`/`retoma`, `arte <lote>` (salva as imagens em `art-inbox/`, fora do git) |
+| `tools/sim-run.js`, `tools/boss-matrix.js`, `tools/tune-heroes.js`, `tools/audit-abilities.js`, `tools/challenge-odds.js` | robô joga runs inteiras / todos os times de 3 contra os 2 chefes / vitória contra chefe por herói e ajuste automático (v34) |
+| `tools/relic-odds.js` | v50, refeito na v61: quanto vale cada relíquia de luta (os mesmos times de `_team.js` jogam Hard 3, Hard 6 e chefe 8 sem e com ela; mede o ganho de "margem" x100 e de vitórias). `node tools/relic-odds.js [times=60] [ids|all]` |
+| `tools/_team.js` | v61: o time típico da luta N de uma run (heróis aleatórios: 1, 2, depois 3; o nível que o XP dá; itens da loja daquele ponto com Auto-equip; relíquias de luta) e `fight()` = vitória + margem (-1..1: vida que sobrou de quem venceu). Base de todas as ferramentas abaixo |
+| `tools/pve-odds.js` | v61: vitória em cada luta da run (1..8, fácil/médio/difícil, chefes 4 e 8). Metas: fácil ~99%, médio ~90%, difícil ~60%, chefe ~55%. `node tools/pve-odds.js [times=60] [semente=9000]` (outra semente = times novos) |
+| `tools/tune-pve.js` | v61: afina a curva PvE (`CFG.fightScale` por luta = médio e chefe; `DIFF.easy.mul` / `DIFF.hard.mul` por luta) até as metas; imprime os valores para colar no data.js. `node tools/tune-pve.js [rodadas=8] [times=80]` |
+| `tools/limpar-gauntlet.js` | v62: PARA O DONO: faz backup e apaga todos os fantasmas da torre (`--dry` só conta). Eu não rodo (o modo automático barra) |
+| `tools/hero-odds.js` | v61: cada herói em times aleatórios (Hard 3 e chefe 4 = começo; Hard 6, Hard 7 e chefe 8 = fim); com rodadas, afina força p (vida/ataque x p, mana / p) e crescimento g (`grow`, 0,5..1,8) para cada um ficar na média no começo e no fim. `node tools/hero-odds.js [rodadas=0] [times=60]`, `ONLY=a,b` |
+| `tools/item-odds.js` | v61: quanto vale cada item (os mesmos times sem e com ele, vestido no herói que mais combina, como item a mais), listado por raridade, e os conjuntos completos. `node tools/item-odds.js [times=60]`, `ONLY=a,b` |
+| `tools/boss-odds.js` | v52: chance de vencer cada chefe de cada posição (times aleatórios um pouco abaixo de uma run típica: posição 1 na luta 4 com Lv 2 e 1 item, posição 2 na luta 8 com Lv 4 e 3 itens; mesmas sementes). `node tools/boss-odds.js [times=80]` |
+| `tools/tests/quadros.mjs` | v55: tira uma sequência de quadros da luta no celular (120 ms entre eles) para ver se o movimento está liso (`.saida/quadros.json`, montar a tira com PIL). `node tools/tests/quadros.mjs [quadros=12]` |
+| `tools/tests/` | `motor.js`, `api.js`, `telas.mjs` (Chrome de verdade, run inteira no celular 390x740, checa que cada tela cabe), `dispositivos.mjs` (5 aparelhos), `vitrine.mjs` (fotos de todas as telas no celular e em 3 PCs, v29), `galeria.mjs` / `icones.mjs` / `splash.mjs` (fotos de modelos, ícones e splash) |

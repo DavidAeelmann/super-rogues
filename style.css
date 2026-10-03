@@ -2138,6 +2138,8 @@ button.danger { background: linear-gradient(180deg, #ff7a7a, var(--c-danger)) !i
 .xpbar.shine { position: relative; overflow: hidden; }
 .xpbar.shine::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -40%; background: linear-gradient(90deg, #fff0, #ffffffcc, #fff0); animation: xpshine 1s ease-out .2s 2; }
 @keyframes xpshine { to { left: 110%; } }
+/* v62 (review #94): the line under DEFEAT (so close! / you were wrecked!), where the stars are on a win */
+.losetag { margin: 2px 0 0; font: 700 19px/1.2 var(--fun, system-ui); color: #ffd6d6; text-align: center; text-shadow: 0 2px 0 #0006; }
 /* v62 (review #83): the mini tutorial prompts sit over the board and never move the layout */
 .tutmove { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 6; background: #000c; color: #fff; border: 2px solid #fff; border-radius: 999px; padding: 8px 14px; font: 700 15px/1.2 var(--fun, system-ui); white-space: nowrap; max-width: 96%; animation: tutsway 1.3s ease-in-out infinite; }
 @keyframes tutsway { 0%, 100% { transform: translate(-50%, -50%) translateX(-10px); } 50% { transform: translate(-50%, -50%) translateX(10px); } }

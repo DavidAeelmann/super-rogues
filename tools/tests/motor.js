@@ -763,5 +763,24 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   for (let i = 0; i < 20 * 60; i++) { Sim.step(W); if (i % 40 === 0) { cit.mana = cit.maxMana; } most = Math.max(most, W.units.filter(u => !u.dead && u.garrison === cit.id).length); }
   ok(most === 5, 'v62 Citadel: soldiers cap at 5 even with Bigger Garrison and Call to Arms (most seen: ' + most + ')');
 }
+// ---- v62 (review #93): a hero class the team is missing is always on offer in the hero shop
+{
+  const every = B.CLASSES.every(c => Object.keys(HEROES).some(k => B.heroClass(k) === c));
+  ok(every && B.heroClass('bastion') === 'tank' && B.heroClass('lumen') === 'support' && B.heroClass('vex') === 'damage', 'v62: every hero is a tank, a support or a damage dealer');
+  let bad = 0, trials = 0;
+  for (let s = 1; s <= 60; s++) {
+    const r = Run.newRun(s * 7919); const dmg = Object.keys(HEROES).filter(k => B.heroClass(k) === 'damage');
+    Run.pickStart(r, [dmg[s % dmg.length]], null);
+    for (let rr = 0; rr < 3; rr++) {   // rerolling keeps the promise
+      r.cur = { type: 'shop', kind: 'heroShop', stock: null, rerolls: 0 }; r.cur.stock = Run.stockFor ? Run.stockFor(r, 'heroShop') : [];
+      const classes = new Set(r.cur.stock.map(x => B.heroClass(x.id)));
+      trials++; if (!classes.has('tank') || !classes.has('support') || r.cur.stock.length !== 4) bad++;
+    }
+  }
+  ok(trials === 180 && bad === 0, 'v62: a team of one damage hero always sees a tank and a support in the hero shop (' + bad + ' misses of ' + trials + ')');
+  const r2 = Run.newRun(5); Run.pickStart(r2, ['bastion'], null); Run.addHero(r2, 'lumen'); Run.addHero(r2, 'vex');
+  const st = Run.stockFor(r2, 'heroShop'); ok(st.length === 4 && st.every(x => !r2.heroes.some(h => h.key === x.id)), 'v62: with all three classes the shop is just random heroes you do not own');
+  ok(Run.lossTag(0.05) === 'SO CLOSE!' && Run.lossTag(0.2) === 'Almost had them!' && Run.lossTag(0.4) === 'A hard fight.' && Run.lossTag(0.7) === 'They were stronger.' && Run.lossTag(0.95) === 'You were wrecked!' && /Time ran out/.test(Run.lossTag(0.9, true)), 'v62 (review #94): the defeat line depends on how narrow the loss was');
+}
 console.log(`motor: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

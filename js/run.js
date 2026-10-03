@@ -335,6 +335,16 @@
   }
   // WHAT (important): everything that happens when a fight ends: record it for the dashboard, give XP, pay gold, run power effects, then go to the next day or end the run on a loss.
   // Returns a "res" object the result screen reads (win, gold, xp, prize...). A lost normal fight ends the whole run; a lost challenge does not.
+  // WHAT: v62 (review #94, David: "a fun indicator when you lose, like so close! or you were wrecked!, depending how narrow the loss was").
+  // left = the share (0 to 1) of the enemies' total max HP still standing when the fight was lost. Returns the line the defeat screen shows.
+  function lossTag(left, timeout) {
+    if (timeout) return left < 0.35 ? 'Time ran out. SO close!' : 'Time ran out!';
+    if (left <= 0.08) return 'SO CLOSE!';
+    if (left <= 0.25) return 'Almost had them!';
+    if (left <= 0.5) return 'A hard fight.';
+    if (left <= 0.8) return 'They were stronger.';
+    return 'You were wrecked!';
+  }
   function finishFight(run, W) {
     const f = run.cur, win = W.winner === 0;
     const res = { win, gold: 0, xp: [], boss: f.diff === 'boss', timeout: !!W.timeout };
@@ -522,8 +532,12 @@
   // WHAT: the raw stock: 4 heroes you do not own, 4 items (6 with the Faded Chart), or 4 powers you do not own, with their prices.
   function stockBase(run, kind) {
     if (kind === 'heroShop') {
-      const have = new Set(run.heroes.map(h => h.key));
-      return pickN(run, heroKeysOf(run).filter(k => !have.has(k)), 4).map(k => ({ kind: 'hero', id: k, price: Math.max(1, C.heroCost - seal(run)) }));
+      // v62 (review #93): a class (tank / support / damage) the team does not have yet is always on offer: one hero of each missing class first, then random heroes
+      const have = new Set(run.heroes.map(h => h.key)), mine = new Set(run.heroes.map(h => B.heroClass(h.key))), pool = heroKeysOf(run).filter(k => !have.has(k)), must = [];
+      for (const cl of B.CLASSES) if (!mine.has(cl)) { const cand = pool.filter(k => B.heroClass(k) === cl); if (cand.length) must.push(pick(run, cand)); }
+      const keys = must.concat(pickN(run, pool.filter(k => !must.includes(k)), Math.max(0, 4 - must.length)));
+      if (keys.length > 1 && keys.length % 2) { const drop = keys.filter(k => !must.includes(k)).pop(); if (drop) keys.splice(keys.indexOf(drop), 1); }   // shops always show an even number of products
+      return pickN(run, keys, keys.length).map(k => ({ kind: 'hero', id: k, price: Math.max(1, C.heroCost - seal(run)) }));
     }
     // v58 (review #70, "Reduce shop products from six to four choices"): 4 items (6 with the Faded Chart)
     if (kind === 'itemShop') return Array.from({ length: (run.relics.includes('treasure') ? 6 : 4) - (has(run, 'anvil') ? 2 : 0) }, () => { const id = randomItem(run); return { kind: 'item', id, price: Math.max(1, C.itemCost[B.ITEM[id].tier] - seal(run)) }; });
@@ -905,7 +919,7 @@
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
   B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
-    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, gauntletWorld, gauntletUpdate, canEquip, setCounts, setBonuses, seqOf, bossFight,
+    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };
   if (typeof module !== 'undefined') module.exports = B.Run;
 })(typeof window !== 'undefined' ? window : globalThis);

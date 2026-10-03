@@ -1253,6 +1253,13 @@
   ];
   B.EVENT = {}; for (const e of B.EVENTS) B.EVENT[e.id] = e;
   B.EVENT_RARITY = { common: 1, uncommon: 0.7, rare: 0.3 };
+  // v62 (review #93, David): "There are supports, damage and tanks. While you don't have one of one class, the hero shop always
+  // offers one." Every hero belongs to one of three classes: tanks soak damage, supports heal / buff / control, the rest deal damage.
+  B.CLASSES = ['tank', 'support', 'damage'];
+  B.CLASS_OF = {};
+  for (const k of 'bastion brakk bramble seraph barley grok imhotep leonidas citadel smolder'.split(' ')) B.CLASS_OF[k] = 'tank';
+  for (const k of 'lumen echo vey buzzwell coralie tom prism glacia grimhook sprocket'.split(' ')) B.CLASS_OF[k] = 'support';
+  B.heroClass = key => B.CLASS_OF[key] || 'damage';
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
   const HEALER_ROLES = ['Healer', 'Paladin', 'Bard', 'Beekeeper', 'Tidecaller'];

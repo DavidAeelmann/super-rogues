@@ -759,6 +759,7 @@
     const meta = [r.time != null ? `<span title="Time">⏱ ${clock(r.time)}</span>` : '', r.foes ? `<span title="Enemies down">💥 ${foesDown}/${r.foes.length}</span>` : '', `<span title="Heroes standing">♥ ${hs.filter(o => o.s.alive).length}/${hs.length}</span>`, r.timeout ? '<span>time ran out</span>' : ''].filter(Boolean).join('');
     const stars = r.stars || 0;
     const starRow = r.win ? `<div class="rstars" aria-label="${stars} of 3 stars">${[0, 1, 2].map(i => `<i class="st ${i < (fx.stars || 0) ? 'lit' : ''} ${i < stars ? 'earn' : ''}">★</i>`).join('')}${stars === 3 ? `<b class="flawless ${fx.stars >= 3 ? 'on' : ''}">Flawless!</b>` : ''}</div>` : '';
+    const loseTag = !r.win && r.left != null ? `<p class="losetag">${esc(Run.lossTag(r.left, r.timeout))}</p>` : '';   // v62 (review #94): takes the place of the stars of a win
     const chips = [];
     if (r.win && !r.gauntlet) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
     if (r.relic && RELIC[r.relic]) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f">${ico('relic', r.relic, 26)}<b>${esc(RELIC[r.relic].name)}</b><em>power</em></span>`);
@@ -793,7 +794,7 @@
     const gh = r.gauntlet && r.ghost ? `<p class="small dim ghostline">👻 ${plink(r.ghost.name, r.opp.code)}'s ghost: Elo <b>${r.ghost.elo}</b> (${r.ghost.delta >= 0 ? '+' : ''}${r.ghost.delta})</p>` : '';
     const lostRun = !r.win && !r.gauntlet ? `<p class="small dim center">${r.challenge ? 'The challenge beat you. No reward, but the game goes on.' : 'Game over.'}</p>` : '';
     return `<section class="result v2 ${ui.rmore ? 'more' : ''}"><div class="rhead ${r.win ? 'win' : 'lose'}"><span class="rays"></span><h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Victory' : 'Defeat'}</h2>
-        ${starRow}<p class="rwhat">${what}</p><p class="rmeta">${meta}</p></div>
+        ${starRow}${loseTag}<p class="rwhat">${what}</p><p class="rmeta">${meta}</p></div>
       ${eloLine(r)}${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}${promo}${lostRun}
       <div class="rheroes">${heroes}</div>${foes}${gh}${bl}
       <div class="bar"><button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button><button class="primary big" data-act="result-ok" ${r.pending ? 'disabled' : ''}>Continue</button></div></section>`;
@@ -1140,7 +1141,8 @@
     const foes = W.units.filter(u => u.side === 1 && u.kind !== 'summon').map(u => ({ key: u.key, dead: !!u.dead, boss: !!u.boss, elite: !!u.elite }));
     const hs = W.units.filter(u => u.side === 0 && u.kind === 'hero'), hpLeft = hs.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, hs.reduce((a, u) => a + u.maxHp, 0));
     const stars = W.winner === 0 ? 1 + (hs.every(u => !u.dead) ? 1 : 0) + (hs.every(u => !u.dead) && hpLeft >= 0.6 ? 1 : 0) : 0;
-    const extra = { stats, dmg, foes, time: W.t / Sim.TPS, stars };
+    const fu = W.units.filter(u => u.side === 1 && u.kind !== 'summon'), left = fu.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, fu.reduce((a, u) => a + u.maxHp, 0));   // v62 (review #94): how much of the enemy was left
+    const extra = { stats, dmg, foes, time: W.t / Sim.TPS, stars, left };
     if (b.gau) {
       const win = W.winner === 0;
       ui.result = Object.assign({ gauntlet: true, win, xp: run.heroes.map(h => ({ uid: h.uid, name: HEROES[h.key].name, gained: 0, from: h.lvl, to: h.lvl })), opp: run.g.opp, floor: run.g.round + 1, pending: true }, extra);
