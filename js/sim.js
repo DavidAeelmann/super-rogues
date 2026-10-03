@@ -1142,11 +1142,13 @@
     if (s) { s.garrison = u.id; if (!archer && ab.shields) { s.shield = s.maxHp * ab.shields; s.shieldU = W.t + sec(30); } fxText(W, s, champ ? 'CHAMPION' : 'TO ARMS', '#ffe066'); }
     return s;
   }
+  const GARRISON_CAP = 5;   // v62 (review #87): never more than 5 soldiers out at once, not even with Call to Arms
+  const garrisonSize = (W, u) => W.units.filter(v => !v.dead && v.garrison === u.id).length;
   function towerAct(W, u) {
     const ab = u.ab;
     if (W.t >= (u.nextSpawn || 0)) {
-      const mine = W.units.filter(v => !v.dead && v.garrison === u.id).length;
-      if (mine < ab.max) soldier(W, u);
+      const mine = garrisonSize(W, u);
+      if (mine < Math.min(ab.max, GARRISON_CAP)) soldier(W, u);
       u.nextSpawn = W.t + sec(Math.max(2, ab.every));
     }
     u.busy = W.t + 4;
@@ -1220,7 +1222,8 @@
   A.garrison = (W, u) => {
     const ab = u.ab;
     for (const s of W.units) if (!s.dead && s.garrison === u.id) { buff(s, 'asPct', 0.5, sec(ab.frenzy), W); buff(s, 'atkPct', 0.25, sec(ab.frenzy), W); heal(W, s, s.maxHp * 0.3, true); fxText(W, s, 'FRENZY', '#ff7a3d'); }
-    soldier(W, u); fxRing(W, u.c, u.r, 2, '#ffcf5a', 14);
+    if (garrisonSize(W, u) < GARRISON_CAP) soldier(W, u);
+    fxRing(W, u.c, u.r, 2, '#ffcf5a', 14);
     return true;
   };
 

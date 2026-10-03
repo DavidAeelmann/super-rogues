@@ -61,8 +61,19 @@ function cleanFlog(x) {
   }
   return out;
 }
-async function logFights(st, req, flog) {
-  try { const rows = cleanFlog(flog); if (rows.length && (await allowRated(st, ipHash(req)))) await st.addFights(rows); } catch (e) { console.error('fstats', e); }
+// v62 (review #82: "make sure runs are being measured correctly"): a run is counted ONCE (a key per player + run, so a retry or a
+// give-up after a defeat does not double it) and has its own hourly allowance, apart from the rated fights
+async function logFights(st, req, pid, runId, flog) {
+  try {
+    const rows = cleanFlog(flog); if (!rows.length) return;
+    const id = String(runId == null ? '' : runId).replace(/[^0-9a-z-]/gi, '').slice(0, 14);
+    if (id) { const k = 'fl:' + pid + ':' + id; if (await st.getKV(k)) return; await st.setKV(k, '1'); }
+    const k2 = 'flog:' + ipHash(req), hour = Math.floor(Date.now() / 3600e3);
+    let c = null; try { c = JSON.parse(await st.getKV(k2)); } catch (_) {}
+    const n = c && c.h === hour ? c.n : 0; if (n >= 120) return;
+    await st.setKV(k2, JSON.stringify({ h: hour, n: n + 1 }));
+    await st.addFights(rows);
+  } catch (e) { console.error('fstats', e); }
 }
 async function allowRated(st, iph) {
   const k = 'rated:' + iph, hour = Math.floor(Date.now() / 3600e3);
@@ -80,7 +91,9 @@ async function rateContent(st, iph, sides) {
       sides = sides.map(s => ({ score: s.score, used: s.used.filter(u => !both.has(u.kind + ':' + u.id)) }));
     }
     if (!sides.some(s => s.used.length) || !(await allowRated(st, iph))) return;
-    const cur = await st.getRatings([...new Set(sides.flatMap(s => s.used.map(u => u.kind + ':' + u.id)))]);
+    const keys = sides.flatMap(s => s.used.map(u => u.kind + ':' + u.id));
+    if (sides.length === 2) for (const s of sides) for (const u of s.used) if (u.kind === 'hero') keys.push('pvp:' + u.id);   // v62 (review #82): the duels also rate each hero on its own (kind 'pvp')
+    const cur = await st.getRatings([...new Set(keys)]);
     const r = u => cur[u.kind + ':' + u.id] ?? PVE;
     const avg = (used, kind) => { const v = used.filter(u => u.kind === kind).map(r); return v.length ? v.reduce((x, y) => x + y, 0) / v.length : PVE; };
     const rows = [];
@@ -88,6 +101,11 @@ async function rateContent(st, iph, sides) {
       const other = sides.length === 2 ? sides[1 - i] : null;
       for (const u of s.used) rows.push({ kind: u.kind, id: u.id, delta: KC * (s.score - expect(r(u), other ? avg(other.used, u.kind) : PVE)), win: s.score });
     });
+    if (sides.length === 2) {
+      const hv = i => sides[i].used.filter(u => u.kind === 'hero'), rp = u => cur['pvp:' + u.id] ?? PVE;
+      const ap = i => { const v = hv(i).map(rp); return v.length ? v.reduce((x, y) => x + y, 0) / v.length : PVE; };
+      sides.forEach((s, i) => { for (const u of hv(i)) rows.push({ kind: 'pvp', id: u.id, delta: KC * (s.score - expect(rp(u), ap(1 - i))), win: s.score }); });
+    }
     await st.addRatings(rows);
   } catch (e) { console.error('ratings', e); }
 }
@@ -180,6 +198,11 @@ module.exports = async (req, res) => {
 
     if (b.op === 'hello') return send(res, 200, me({}));
 
+    if (b.op === 'flog') {  // v62 (review #82): a game given up reports the fights it played (no league points either way)
+      await logFights(st, req, pid, b.runId, b.flog);
+      return send(res, 200, { ok: true });
+    }
+
     if (b.op === 'boss') {  // review #20: a boss fight moves the boss's Elo only
       const key = String(b.boss || ''); if (!D.BOSSES[key]) return send(res, 400, { error: 'Unknown boss' });
       if (!(await allowRated(st, ipHash(req)))) return send(res, 200, me({ boss: null }));
@@ -195,7 +218,7 @@ module.exports = async (req, res) => {
       const lg = leaguePoints(p, D.LEAGUE_RULES.pveLoss);
       await save({});
       const used = cleanTeam(b.team); if (used) { await rateContent(st, ipHash(req), [{ used: usedIn(used, relicList(b.relics)), score: 0 }]); await P.heroGames(st, pid, used, false); }
-      await logFights(st, req, b.flog);
+      await logFights(st, req, pid, b.runId, b.flog);
       await P.xpGame(st, p, b.game, xp);   // v46 (review #57): XP for the game, by how far it went
       return send(res, 200, me({ lg }));
     }
@@ -212,11 +235,13 @@ module.exports = async (req, res) => {
       const rt = b.reached && cleanTeam(b.reached.team);
       await rateContent(st, ipHash(req), [{ used: rt ? usedIn(rt, relicList(b.reached.relics)) : usedIn(team, relics), score: 1 }]);
       await P.heroGames(st, pid, rt || team, true);
-      await logFights(st, req, b.flog);
+      await logFights(st, req, pid, b.runId, b.flog);
       await P.xpGame(st, p, { fights: b.game && b.game.fights, reached: true }, xp);   // v46: the PvE part of the game
       await P.xpClear(st, p, rt || team, xp); await P.xpFloor(st, p, 1, xp);   // v30: first PvE clears, floor 1
       const opp = await nextOpponent(st, 0, pid, id), peak = await peakOf(st, id);
-      if (!opp) { await st.updateTeam(id, { wins: 0, status: 'champion', opp: null }); await st.demoteChampions(id); p.crowns++; await save({}); return send(res, 200, me({ teamId: id, round: 0, wins: 0, peak, champion: true, over: true })); }
+      // v62 (review #84, PC boy): an empty tower is not a dead end: a fallback "Gauntlet Champion" ghost stands there and the entry
+      // counts as an immediate 1-0 win for the player (the stored ghost keeps 0 wins, so the tower's floors do not move)
+      if (!opp) { await st.updateTeam(id, { wins: 0, status: 'champion', opp: null }); await st.demoteChampions(id); p.crowns++; p.best = Math.max(p.best, 1); await save({}); return send(res, 200, me({ teamId: id, round: 0, wins: 1, peak, champion: true, over: true, fallback: true })); }
       await st.updateTeam(id, { wins: 0, status: 'running', opp: opp.id, faced: [opp.id] }); await save({});
       return send(res, 200, me({ teamId: id, round: 0, wins: 0, peak, opponent: oppView(opp, pid) }));
     }

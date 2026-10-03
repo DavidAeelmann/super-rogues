@@ -16,10 +16,11 @@ module.exports = async (req, res) => {
       const r = by[kind + ':' + id] || { games: 0, wins: 0, elo: 1000 };
       return { id, name: table[id].name, games: r.games, wins: r.wins, elo: r.elo };
     });
+    // pvp = the Gauntlet duels only (a hero's own Elo and record there); heroes = every fight it was in, duels included
     const items = Object.fromEntries(D.ITEMS.map(i => [i.id, i])), relics = Object.fromEntries(D.RELICS.map(r => [r.id, r]));
     res.setHeader('Cache-Control', 'public, max-age=30');
     res.statusCode = 200; res.setHeader('Content-Type', 'application/json; charset=utf-8'); res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.end(JSON.stringify({ fights, heroes: rows('hero', D.HEROES), items: rows('item', items), relics: rows('relic', relics), bosses: rows('boss', D.BOSSES), at: Date.now() }));
+    res.end(JSON.stringify({ fights, heroes: rows('hero', D.HEROES), items: rows('item', items), relics: rows('relic', relics), pvp: rows('pvp', D.HEROES), bosses: rows('boss', D.BOSSES), at: Date.now() }));
   } catch (e) {
     console.error('stats', e);
     return send(res, 500, { error: 'Server error' });

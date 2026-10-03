@@ -263,7 +263,7 @@
     ctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
     ctx.clearRect(0, 0, v.w, v.h);
     if (S.shake > 0.2 && !o.deploy) { ctx.translate((Math.random() - 0.5) * S.shake, (Math.random() - 0.5) * S.shake); S.shake *= Math.pow(0.02, dt); } else S.shake = 0;
-    const bd = backdrop(v); if (bd) ctx.drawImage(bd, -12, -12, v.w + 24, v.h + 24); else { ctx.fillStyle = royal() ? '#1a1228' : '#9fd4ff'; ctx.fillRect(0, 0, v.w, v.h); }
+    const boss = W && W.units.find(u => u.boss && u.side === 1), bd = backdrop(v, boss ? boss.key : null); if (bd) ctx.drawImage(bd, -12, -12, v.w + 24, v.h + 24); else { ctx.fillStyle = royal() ? '#1a1228' : '#9fd4ff'; ctx.fillRect(0, 0, v.w, v.h); }
     drawBoard(v, o, W);
     if (!W) return;
     for (const z of W.zones) if (z.until > W.t) for (const h of Hx.within(z.c, z.r, z.rad)) {
@@ -352,9 +352,37 @@
 
   // ------------------------------------------------------------------ v42 (review #51, David: "looks amateur"): a painted
   // sky behind the board instead of a flat gradient (soft light, clouds, two rows of hills), drawn once per board size
-  function backdrop(v) {
+  // v62 (review #90, David: "a slightly different texture in the background for the boss fights, depending on the boss"): each boss
+  // tints the sky and adds its own scenery over the usual backdrop: war banners and blood for the Gorewarden, ash and dead trees
+  // for the Sovereign, swamp fog and reeds for the Mire Witch, cracks and floating rubble for the Colossus
+  function bossBackdrop(g, key, W, H, top, size, rnd) {
+    const tint = (c, a) => { g.globalAlpha = a; g.fillStyle = c; g.fillRect(0, 0, W, H); g.globalAlpha = 1; };
+    if (key === 'gorewarden') {
+      tint('#8a1020', 0.34);
+      for (let i = 0; i < 9; i++) { const x = (i + 0.5) / 9 * W + (rnd() - 0.5) * 20, h = size * (0.7 + rnd() * 0.9); g.strokeStyle = '#2a0a0e'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, top + size * 0.9); g.lineTo(x, top + size * 0.9 - h); g.stroke(); g.fillStyle = i % 2 ? '#b01828' : '#5a0d16'; g.beginPath(); g.moveTo(x, top + size * 0.9 - h); g.lineTo(x + size * 0.5, top + size * 0.9 - h + size * 0.18); g.lineTo(x, top + size * 0.9 - h + size * 0.38); g.closePath(); g.fill(); }
+      g.fillStyle = '#5a0d16'; for (let i = 0; i < 26; i++) { g.globalAlpha = 0.25 + rnd() * 0.4; g.beginPath(); g.arc(rnd() * W, top * 0.4 + rnd() * (H - top * 0.4), 1 + rnd() * 3, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1;
+    } else if (key === 'hollowking') {
+      tint('#3c3550', 0.4);
+      g.fillStyle = 'rgba(230,225,245,0.55)'; g.beginPath(); g.arc(W * 0.22, top * 0.42, size * 0.55, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#150f22'; g.lineCap = 'round';
+      for (let i = 0; i < 6; i++) { const x = (i + 0.4 + rnd() * 0.4) / 6 * W, y = top + size * 0.95, h = size * (0.9 + rnd() * 0.9); g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - h); g.stroke(); g.lineWidth = 1.6; for (let k = 0; k < 3; k++) { const yy = y - h * (0.35 + k * 0.2); g.beginPath(); g.moveTo(x, yy); g.lineTo(x + (k % 2 ? 1 : -1) * size * 0.4, yy - size * 0.3); g.stroke(); } }
+      g.fillStyle = '#d8d3e6'; for (let i = 0; i < 70; i++) { g.globalAlpha = 0.2 + rnd() * 0.5; g.fillRect(rnd() * W, rnd() * H, 1.4, 1.4 + rnd() * 1.6); } g.globalAlpha = 1;
+    } else if (key === 'mirewitch') {
+      tint('#1f5a2a', 0.36);
+      g.strokeStyle = '#173a1c'; g.lineWidth = 2; for (let i = 0; i < 28; i++) { const x = rnd() * W, y = top + size * (0.8 + rnd() * 0.5), h = size * (0.5 + rnd() * 0.7); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (rnd() - 0.5) * 8, y - h * 0.5, x + (rnd() - 0.5) * 14, y - h); g.stroke(); }
+      for (let i = 0; i < 6; i++) { const y = top * (0.5 + i * 0.28) + rnd() * 20; const gr = g.createLinearGradient(0, y - size * 0.5, 0, y + size * 0.5); gr.addColorStop(0, 'rgba(190,255,200,0)'); gr.addColorStop(0.5, 'rgba(190,255,200,0.28)'); gr.addColorStop(1, 'rgba(190,255,200,0)'); g.fillStyle = gr; g.fillRect(0, y - size * 0.5, W, size); }
+      for (let i = 0; i < 14; i++) { const x = rnd() * W, y = top * 0.4 + rnd() * (H - top * 0.4); const gl = g.createRadialGradient(x, y, 0, x, y, 7); gl.addColorStop(0, 'rgba(180,255,120,0.9)'); gl.addColorStop(1, 'rgba(180,255,120,0)'); g.fillStyle = gl; g.fillRect(x - 7, y - 7, 14, 14); }
+    } else if (key === 'colossus') {
+      tint('#6a5a3a', 0.32);
+      g.strokeStyle = 'rgba(40,30,16,0.55)'; g.lineWidth = 1.6;
+      for (let i = 0; i < 9; i++) { let x = rnd() * W, y = rnd() * H * 0.9; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 5; k++) { x += (rnd() - 0.5) * size * 0.9; y += rnd() * size * 0.55; g.lineTo(x, y); } g.stroke(); }
+      for (let i = 0; i < 7; i++) { const x = rnd() * W, y = top * (0.25 + rnd() * 0.6), s = size * (0.18 + rnd() * 0.3); g.fillStyle = i % 2 ? '#7d7466' : '#5e574c'; g.beginPath(); g.moveTo(x - s, y); g.lineTo(x - s * 0.3, y - s * 0.8); g.lineTo(x + s * 0.8, y - s * 0.4); g.lineTo(x + s, y + s * 0.5); g.lineTo(x - s * 0.2, y + s * 0.8); g.closePath(); g.fill(); g.strokeStyle = '#2a251c'; g.lineWidth = 1; g.stroke(); }
+      g.fillStyle = '#ffcf5a'; for (let i = 0; i < 22; i++) { g.globalAlpha = 0.25 + rnd() * 0.6; g.beginPath(); g.arc(rnd() * W, rnd() * H, 0.8 + rnd() * 1.6, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1;
+    }
+  }
+  function backdrop(v, boss) {
     const R = royal();
-    if (v.bd && v.bd.R === R) return v.bd.c;
+    if (v.bd && v.bd.R === R && v.bd.boss === (boss || null)) return v.bd.c;
     if (typeof document === 'undefined') return null;
     const c = document.createElement('canvas'), W = v.w + 24, H = v.h + 24, top = v.top + 12;
     c.width = Math.round(W * v.dpr); c.height = Math.round(H * v.dpr);
@@ -380,7 +408,8 @@
     };
     if (R) { hills(top + v.size * 0.4, v.size * 1.2, '#1d1430', 3); hills(top + v.size * 0.9, v.size * 0.8, '#150f24', 5); }
     else { hills(top + v.size * 0.3, v.size * 1.3, '#9ccbe8', 3); hills(top + v.size * 0.7, v.size * 0.9, '#7fc48a', 5); hills(top + v.size * 1.2, v.size * 0.6, '#5fb06c', 7); }
-    v.bd = { R, c }; return c;
+    if (boss) bossBackdrop(g, boss, W, H, top, v.size, rnd);
+    v.bd = { R, boss: boss || null, c }; return c;
   }
   // v42: the end of a fight. The last blow plays on in slow motion under a big VICTORY / DEFEAT, with confetti on a win
   function drawEnd(v, W, e, S, dt) {

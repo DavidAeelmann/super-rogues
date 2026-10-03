@@ -1,12 +1,13 @@
 // v61 (review #73): tunes the PvE curve toward the targets: easy ~99% (free), medium ~90% (easy), hard ~60% (hard),
-// bosses ~55% (hard but beatable). Knobs: the fight scale of each fight number (CFG.fightScale: the medium fight and the
+// bosses ~55% (hard but beatable); v62: gentler targets for fights 1-4 (see TARGETS). Knobs: the fight scale of each fight number (CFG.fightScale: the medium fight and the
 // boss of that number) and one strength factor per difficulty AND fight number (DIFF.easy.mul / DIFF.hard.mul, arrays
 // indexed by fight number). Measures with tools/pve-odds.js teams. Prints the new values; they are written to js/data.js
 // by hand. Usage: node tools/tune-pve.js [rounds=8] [teams=80]
 const { team, play } = require('./_team.js');
 const { CFG, DIFF } = B;
 const ROUNDS = +(process.argv[2] || 8), N = +(process.argv[3] || 80);
-const TARGET = { easy: 99, medium: 90, hard: 60, boss: 55 };
+// v62 (review #86, David: "slightly easier, especially in the first few fights"): the first three fights and the first boss are gentler
+const TARGETS = n => n <= 3 ? { easy: 99, medium: 95, hard: 72 } : n === 4 ? { boss: 62 } : { easy: 99, medium: 91, hard: 62, boss: 57 };
 const arr = v => Array.isArray(v) ? v.slice() : Array(CFG.fightScale.length).fill(v || 1);
 DIFF.easy.mul = arr(DIFF.easy.mul); DIFF.hard.mul = arr(DIFF.hard.mul);
 function rate(n, diff) {
@@ -19,7 +20,7 @@ const step = (miss, k, r) => Math.exp(Math.max(-0.2, Math.min(0.2, miss / 100 * 
 const r2 = x => Math.round(x * 100) / 100;
 for (let r = 0; r < ROUNDS; r++) {
   for (let n = 1; n <= 8; n++) {
-    const boss = n === 4 || n === 8;
+    const boss = n === 4 || n === 8, TARGET = TARGETS(n);
     CFG.fightScale[n] *= step(rate(n, boss ? 'boss' : 'medium') - (boss ? TARGET.boss : TARGET.medium), boss ? 0.8 : 1.6, r);
     if (boss) continue;
     DIFF.easy.mul[n] *= step(rate(n, 'easy') - TARGET.easy, 2.5, r);

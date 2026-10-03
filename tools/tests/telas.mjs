@@ -74,6 +74,7 @@ await click('[data-act=close]'); await sleep(100);
 // new game, pick 1 hero and 1 relic (review #22), in two steps (v45, review #56)
 // v52 (review #64): a message and a sheet from the screen before do not stay over the next screen
 await ev(`__bal.ACT['form-info']('a leftover message')`); await click('#top [data-act=home-menu]'); await sleep(450);
+ok(await ev(`(() => { const s = document.querySelector('#modal .sheet'), r = document.querySelector('#modal .mrow.sub[data-act=stats]'); return !!r && /Balance stats/.test(r.textContent) && s.getBoundingClientRect().bottom <= innerHeight && s.scrollHeight <= s.clientHeight + 1; })()`), 'v62 (review #82): the menu has Balance stats as a sub item under Ladder, and the whole menu still fits the screen');
 await ev(`__bal.ui.info = 99`);
 await click('[data-act=new-run]'); await sleep(200);
 ok(await ev(`document.getElementById('modal').hidden && !document.getElementById('toast').classList.contains('on')`), 'v52: the toast and the sheet from the screen before are gone once the screen changes');
@@ -180,6 +181,7 @@ while (steps++ < 80) {
     if (fightsSeen === 1) {
       await shot('04-deploy'); await noHScroll('deploy'); await noVScroll('deploy');
       ok(await ev(`[...document.querySelectorAll('.foes .fo')].every(f => !!f.querySelector('.fw')) && document.querySelectorAll('.foes .fo, .foes .fs').length >= 1`), 'v52: before a fight, only enemies with abilities get a card; plain ones are small chips');
+      ok(await ev(`!!document.querySelector('.tutmove') && /Try moving your hero/.test(document.querySelector('.tutmove').textContent) && !document.querySelector('.tutspeed')`), 'v62 (review #83): the very first deploy screen asks the player to try moving a hero');
       // drag a hero to another blue hex with real pointer events
       const moved = await ev(`(async () => {
         const cv = document.querySelector('#board'), h = __bal.run.heroes[0], tgt = { c: h.pos.c === 0 ? 1 : 0, r: 6 };
@@ -188,6 +190,7 @@ while (steps++ < 80) {
         fire('pointerdown', a); fire('pointermove', b); fire('pointerup', b);
         return __bal.run.heroes[0].pos.c === tgt.c && __bal.run.heroes[0].pos.r === tgt.r; })()`);
       ok(moved, 'drag a hero to a new hex while deploying');
+      ok(await ev(`!document.querySelector('.tutmove') && localStorage.getItem('balance.tut.moved') === 'true'`), 'v62 (review #83): moving a hero ends the prompt for good (balance.tut.moved)');
     }
     if (st.diff === 'boss') sawBoss++;
     await click('[data-act=fight]');
@@ -199,6 +202,9 @@ while (steps++ < 80) {
       }
       await sleep(900); await shot('05-battle'); await noHScroll('battle'); await noVScroll('battle');
       ok(await ev(`/4×🔒/.test(document.querySelector('.speed').textContent) && !!document.querySelector('.speed [data-arg="2"]')`), 'v27: 2× speed is free, 4× is locked (Crown Shop)');
+      ok(await ev(`!!document.querySelector('.tutspeed') && /speed up the fight/.test(document.querySelector('.tutspeed').textContent)`), 'v62 (review #83): once a hero has moved, the first battle hints at the speed buttons');
+      await ev(`document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))`);
+      ok(await ev(`!document.querySelector('.tutspeed') && localStorage.getItem('balance.tut.speedDismissed') === 'true'`), 'v62 (review #83): a tap during the battle dismisses the speed hint for good');
       await click('.speed [data-arg="4"]'); ok(await ev(`/Crown Shop/.test(document.querySelector('#toast').textContent)`), 'tapping the locked 4× says where to get it');
       ok(await ev(`!!document.querySelector('.speed .skip.locked')`), 'v30: the skip button is locked (Crown Shop perk)'); await click('.speed .skip'); ok(await ev(`/Skipping fights/.test(document.querySelector('#toast').textContent) && !!__bal.battle`), 'tapping it explains the unlock and the fight goes on');
     }

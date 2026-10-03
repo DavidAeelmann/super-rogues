@@ -11,7 +11,7 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
-    fightScale: [1, 1.17, 1.37, 1.4, 1.42, 1.85, 1.98, 2.24, 2.42],   // v61 (review #73): tuned by tools/tune-pve.js (medium ~90%, bosses ~55%)
+    fightScale: [1, 1.03, 1.28, 1.34, 1.37, 1.78, 1.97, 2.15, 2.33],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62%
     firstFight: 0.5,  // review #22: the first fight is fought by a single hero: half the usual enemy budget
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // review #24: sudden death burns every unit for 1%, 2%, 3%... of max HP per second
@@ -563,7 +563,7 @@
     // charges mana. Ultimate is putting all his units in a frenzy"
     citadel: H({ name: 'Citadel', glyph: '🏰', role: 'Fortress', color: '#c9a26a', fl: ['tower'],
       hp: 1060, atk: 40, armor: 40, mr: 30, as: 0.5, range: 2, ms: 0, mana: 74, m0: 0, grow: 0.62,
-      abil: 'garrison', abName: 'Call to Arms', abDesc: 'Passive (Garrison): cannot move or attack. Every 7s it sends out a soldier, by turns a footman (165% AP as HP, 18% AP as attack) or an archer (100% AP as HP, 16% AP as attack, range 3), up to 3 at once. Its soldiers\' hits fill its mana. Active: every soldier goes into a frenzy for 5s (+50% attack speed, +25% attack) and heals 30%, and one more soldier marches out.',
+      abil: 'garrison', abName: 'Call to Arms', abDesc: 'Passive (Garrison): cannot move or attack. Every 7s it sends out a soldier, by turns a footman (165% AP as HP, 18% AP as attack) or an archer (100% AP as HP, 16% AP as attack, range 3), up to 3 at once. Its soldiers\' hits fill its mana. Active: every soldier goes into a frenzy for 5s (+50% attack speed, +25% attack) and heals 30%, and one more soldier marches out (never more than 5 soldiers at once).',
       ab: { every: 7, max: 3, frenzy: 5, fhp: 1.65, fatk: 0.18, ahp: 1.0, aatk: 0.16, vet: 0, shields: 0, champion: 0, last: 0 },
       specs: [
         [{ id: 'cit2a', name: 'Barracks', desc: 'A soldier every 5s instead of 7s.', ab: { every: -2 } },
@@ -1096,9 +1096,9 @@
     6: ['archer', 'brute', 'skulker', 'shaman', 'bomber', 'hexer', 'golem', 'summoner', 'shieldbearer', 'knight'],
   };
   B.DIFF = {
-    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: [1, 0.62, 1.08, 1.13, 1, 1.19, 1.12, 1.08, 1] },   // v61: mul = strength per fight number (~99%)
+    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: [1, 0.67, 1.08, 1.06, 1, 1.24, 1.07, 1.18, 1] },   // v61: mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
-    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: [1, 0.76, 0.88, 0.9, 1, 0.98, 1, 1.02, 1] },   // v61: ~60%
+    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: [1, 0.79, 0.89, 0.92, 1, 1.01, 1.02, 0.97, 1] },   // v61: ~60% (v62: 72% in fights 1-3)
     horde: { name: 'Horde', budget: 8.4, elites: 0, pool: 2 },   // v44 (review #54): the Bounty Board's horde challenge
   };
 

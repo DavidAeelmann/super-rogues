@@ -755,5 +755,13 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const t = api.cleanTeam([{ key: 'bastion', lvl: 3, specs: [], items: [], bonus: { atkPct: 0.2, ap: 40, asPct: 0.1, crit: 0.06, manaStart: 10, hp: 90, dodge: 0.04, regen: 0.01, bogus: 5 }, pos: { c: 3, r: 6 } }]);
   ok(t && t[0].bonus.atkPct === 0.2 && t[0].bonus.ap === 40 && t[0].bonus.asPct === 0.1 && t[0].bonus.crit === 0.06 && t[0].bonus.manaStart === 10 && t[0].bonus.hp === 90 && t[0].bonus.dodge === 0.04 && t[0].bonus.regen === 0.01 && !('bogus' in t[0].bonus), 'v62: a stored ghost keeps every event and Devour bonus (and nothing made up)');
 }
+// ---- v62 (review #87): the Citadel never has more than 5 soldiers out, not even with Call to Arms
+{
+  const def = (specs) => Run.heroDef({ relics: [], heroes: [], bag: [] }, { key: 'citadel', lvl: 5, specs, items: [], bonus: {}, uid: 7 });
+  const W = Sim.create({ mode: 'fight', seed: 9, heroes: [{ def: def(['cit2a', 'cit3b']), c: 3, r: 7 }], enemies: [{ def: Object.assign({}, Sim.mobScaleDef('grunt', 1), { hp: 999999, atk: 1 }), c: 3, r: 0 }] });
+  const cit = W.units.find(u => u.key === 'citadel'); let most = 0;
+  for (let i = 0; i < 20 * 60; i++) { Sim.step(W); if (i % 40 === 0) { cit.mana = cit.maxMana; } most = Math.max(most, W.units.filter(u => !u.dead && u.garrison === cit.id).length); }
+  ok(most === 5, 'v62 Citadel: soldiers cap at 5 even with Bigger Garrison and Call to Arms (most seen: ' + most + ')');
+}
 console.log(`motor: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

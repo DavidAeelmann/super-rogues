@@ -21,7 +21,7 @@
     }).join('') : '<tr><td colspan="7" class="low">Nothing yet</td></tr>');
 
   // heroes, items, powers (relics), bosses
-  const TABS = [['heroes', 'Heroes'], ['items', 'Items'], ['relics', 'Powers'], ['bosses', 'Bosses']];
+  const TABS = [['heroes', 'Heroes'], ['pvp', 'PvP heroes'], ['items', 'Items'], ['relics', 'Powers'], ['bosses', 'Bosses']];
   let tab = 'heroes', key = 'rate', dir = -1;
   const rows = () => data[tab].map(r => Object.assign({ rate: r.games ? r.wins / r.games : -1 }, r)).sort((a, b) => key === 'name' ? dir * a.name.localeCompare(b.name) : dir * ((a[key] > b[key]) - (a[key] < b[key])) || a.name.localeCompare(b.name));
   function draw() {

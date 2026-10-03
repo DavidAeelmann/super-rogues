@@ -92,7 +92,7 @@ function memStore() {
     // v27: a name given later only replaces the default one ("Player xxxx"); after that, renaming costs crowns
     async upsertPlayer(pid, name, iph, fallback) { const P = M.players = M.players || {}; if (!P[pid]) P[pid] = { pid, code: codeOf(pid), name: name || fallback, elo: 1000, runs: 0, crowns: 0, best: 0, league: 0, lp: 0, gems: 0, season: 0, sreach: 0, peak_league: 0, last_league: -1, perks: '[]', ref: null, ref_gems: 0, axp: 0, cleared: '[]', pfloor: 0, bosses: '[]', xpv: 0, iph, created: Date.now() }; else if (name && P[pid].name === fallback) P[pid].name = name; return Object.assign({}, P[pid]); },
     async setPlayer(pid, f) { for (const x of ['elo', 'runs', 'crowns', 'best', 'league', 'lp', 'season', 'sreach', 'peak_league', 'last_league']) if (f[x] != null) M.players[pid][x] = f[x]; M.players[pid].updated = Date.now(); },
-    async topPlayers(n) { return Object.values(M.players || {}).sort((a, b) => b.elo - a.elo).slice(0, n).map(pubPlayer); },
+    async topPlayers(n) { return Object.values(M.players || {}).filter(p => p.runs > 0).sort((a, b) => b.elo - a.elo).slice(0, n).map(pubPlayer); },   // v62 (review #85): only players who finished a first run
     async getPlayerByCode(code) { const p = Object.values(M.players || {}).find(x => x.code === code); return p ? Object.assign({}, p) : null; },
     async addGems(pid, n, fromRef) { const p = M.players && M.players[pid]; if (!p) return null; p.gems += n; if (fromRef) p.ref_gems += n; return p.gems; },
     async spend(pid, price, perksOld, perksNew, name) { const p = M.players && M.players[pid]; if (!p || p.gems < price || p.perks !== perksOld) return null; p.gems -= price; p.perks = perksNew; if (name) p.name = name; return p.gems; },
@@ -176,7 +176,7 @@ function pgStore() {
     },
     // never the Crown balance (only addGems / spend move it, atomically) nor perks, name or ref
     async setPlayer(pid, f) { await q('update players set elo=$2, runs=$3, crowns=$4, best=$5, updated=$6, league=$7, lp=$8, season=$9, sreach=$10, peak_league=$11, last_league=$12 where pid=$1', [pid, f.elo, f.runs, f.crowns, f.best, Date.now(), f.league | 0, f.lp | 0, f.season | 0, f.sreach | 0, f.peak_league | 0, f.last_league == null ? -1 : f.last_league]); },
-    async topPlayers(n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks from players order by elo desc limit $1', [n])).map(pubPlayer); },
+    async topPlayers(n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks from players where runs > 0 order by elo desc limit $1', [n])).map(pubPlayer); },   // v62 (review #85)
     async getPlayerByCode(code) { const r = await q('select * from players where code=$1', [code]); return r.length ? num(r[0]) : null; },
     async addGems(pid, n, fromRef) { const r = await q(`update players set gems = gems + $2${fromRef ? ', ref_gems = ref_gems + $2' : ''} where pid=$1 returning gems`, [pid, n]); return r.length ? Number(r[0].gems) : null; },
     async spend(pid, price, perksOld, perksNew, name) {

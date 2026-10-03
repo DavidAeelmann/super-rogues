@@ -82,7 +82,7 @@ main section { padding: 4px 14px; }
 /* board */
 .deploy { padding: 4px 8px; }
 .bhead { font-weight: 700; margin: 8px 4px; min-height: 22px; }
-.boardwrap { width: 100%; display: flex; justify-content: center; touch-action: none; }
+.boardwrap { width: 100%; display: flex; justify-content: center; touch-action: none; position: relative; }
 #board { display: block; touch-action: none; border-radius: 10px; background: #14171f; }
 .info { min-height: 64px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; margin-top: 8px; font-size: 13px; }
 
@@ -394,7 +394,7 @@ button.big { min-height: 44px; font-size: 15px; }
 .info { min-height: 0; padding: 6px 8px; margin-top: 6px; font-size: 12px; }
 .info.mini.empty { display: none; }
 .info .hrow .por { width: 30px; height: 30px; }
-.hud { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+.hud { display: flex; align-items: center; gap: 6px; margin: 4px 0; position: relative; }
 .hud-l { flex: 1; display: flex; align-items: baseline; gap: 8px; font-family: var(--serif); color: #f3e6c4; min-width: 0; white-space: nowrap; overflow: hidden; }
 .hud-l b { overflow: hidden; text-overflow: ellipsis; }
 .clock { font-size: 12px; color: var(--dim); } .clock.sd { color: #ff6b6b; font-weight: 700; animation: pulse-red 1s ease-in-out infinite; }
@@ -1834,6 +1834,7 @@ body.desk .logo-big .mark { width: 96px; height: 96px; } body.desk .logo-big .w1
 .mrow > svg.ui { width: 26px; height: 26px; color: #ffd23f; }
 .mrow span { flex: 1; min-width: 0; display: grid; gap: 1px; } .mrow b { font: 600 17px/1.2 var(--fun); } .mrow small { font: 600 13px/1.3 'Nunito', system-ui, sans-serif; color: #ffffffb3; }
 .mrow .chev { width: 18px; height: 18px; opacity: .6; }
+.mrow.sub { min-height: 40px; padding: 4px 12px 4px 38px; } .mrow.sub b { font-size: 15px; } .mrow.sub > svg.ui { width: 20px; height: 20px; }   /* v62 (review #82): a sub item under Ladder */
 .mlist .mrow + .mrow { border-top: 1px solid #ffffff14 !important; border-radius: 0; }
 .giveupask { display: grid; justify-items: center; text-align: center; gap: 6px; padding: 6px 0 4px; }
 .giveupask svg.ui.big { width: 54px; height: 54px; color: #fff; } .giveupask p { margin: 0; font-size: 15px; }
@@ -2128,4 +2129,10 @@ button.danger { background: linear-gradient(180deg, #ff7a7a, var(--c-danger)) !i
 .xpbar.shine { position: relative; overflow: hidden; }
 .xpbar.shine::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -40%; background: linear-gradient(90deg, #fff0, #ffffffcc, #fff0); animation: xpshine 1s ease-out .2s 2; }
 @keyframes xpshine { to { left: 110%; } }
+/* v62 (review #83): the mini tutorial prompts sit over the board and never move the layout */
+.tutmove { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 6; background: #000c; color: #fff; border: 2px solid #fff; border-radius: 999px; padding: 8px 14px; font: 700 15px/1.2 var(--fun, system-ui); white-space: nowrap; max-width: 96%; animation: tutsway 1.3s ease-in-out infinite; }
+@keyframes tutsway { 0%, 100% { transform: translate(-50%, -50%) translateX(-10px); } 50% { transform: translate(-50%, -50%) translateX(10px); } }
+.tutspeed { position: absolute; right: 0; top: 100%; z-index: 6; pointer-events: none; background: #4f7cff; color: #fff; border-radius: 8px; padding: 4px 10px; font: 700 13px/1.2 var(--fun, system-ui); white-space: nowrap; animation: tutblink .9s ease-in-out infinite alternate; box-shadow: 0 2px 10px #0008; }
+@keyframes tutblink { from { opacity: 1; } to { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .tutmove, .tutspeed { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .rstars .st.slam, .rw-gold.glow, .xpbar.shine::after, .rhead.rflash::before { animation: none; } }

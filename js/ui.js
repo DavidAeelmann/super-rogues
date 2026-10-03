@@ -307,7 +307,7 @@
     header();
     const m = $('#screen');
     const key = screenKey();
-    if (key !== ui.lastKey) ui.info = null;   // v62 (review #77): the unit / boss description of the screen before does not follow you to the next one
+    if (key !== ui.lastKey) { ui.info = null; ui.gsel = null; ui.heroInfo = 0; ui.selUid = 0; ui.confirmBuy = null; ui.rmore = false; }   // v62 (reviews #77 #89): what was open on the screen before (unit / boss / item descriptions, selections) does not follow you to the next one
     if (screen === 'title' || !run) m.innerHTML = titleHTML();
     else if (screen === 'battle') { m.innerHTML = battleHTML(); mountBoard(); }
     else if (screen === 'result') m.innerHTML = resultHTML();
@@ -371,6 +371,7 @@
       ${row('my-profile', 'user', 'Profile', esc(acct.account && acct.name ? acct.name : 'You'))}
       ${row('shop', 'crown', 'Crown Shop', (acct.crowns | 0) + ' crown' + ((acct.crowns | 0) === 1 ? '' : 's'))}
       ${row('scores', 'trophy', 'Ladder', 'Top players and leagues')}
+      <button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span>${I('arrow', 'chev')}</button>
       ${row('art-lab', 'palette', 'Art Lab', 'Your art on the heroes')}
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
       ${row('suggest', 'bulb', 'Suggest a change', 'Help build the game')}</div>`;
@@ -557,6 +558,30 @@
       ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}">${img(g.key, 34, 'por')}<div><b>${nm(g)}${g.ranged ? ' ' + I('bow') : ''}${g.elite ? ` <span class="elt">★ ${esc(g.elite)}</span>` : ''}</b><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div></div>`).join('')}</div>` : ''}
       ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">★</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
   }
+  // v62 (review #83, PC boy): a mini tutorial. 1) the first game: an animated "Try moving your hero" over the board on every deploy
+  // screen until a hero is moved (balance.tut.moved); the game it first showed in (balance.tut.run) is the only one it nags in.
+  // 2) once that is done, a flashing "speed up" hint under the speed buttons in battle until the player taps anywhere in a
+  // battle (balance.tut.speedDismissed). Players who had already played before this existed (they saw the deploy tip 3 times)
+  // are not taught what they know.
+  function tutVeteran() {
+    if (store.get('balance.tut.run', null) == null && !store.get('balance.tut.moved', false) && (store.get('balance.tips.deploy', 0) | 0) >= 3) { store.set('balance.tut.moved', true); store.set('balance.tut.speedDismissed', true); }
+  }
+  function tutMoveOn() {
+    if (!run) return false;
+    tutVeteran();
+    if (store.get('balance.tut.moved', false)) return false;
+    const first = store.get('balance.tut.run', null);
+    if (first == null) { store.set('balance.tut.run', run.seed); return true; }
+    return first === run.seed;
+  }
+  const tutSpeedOn = () => { tutVeteran(); return !!store.get('balance.tut.moved', false) && !store.get('balance.tut.speedDismissed', false); };
+  function tutMoved() { if (!store.get('balance.tut.moved', false)) store.set('balance.tut.moved', true); const e = document.querySelector('.tutmove'); if (e) e.remove(); }
+  function tutSpeedDisarm() { if (tutSpeedDisarm.h) { document.removeEventListener('pointerdown', tutSpeedDisarm.h, true); tutSpeedDisarm.h = null; } }
+  function tutSpeedArm() {
+    tutSpeedDisarm(); if (!tutSpeedOn()) return;
+    tutSpeedDisarm.h = () => { store.set('balance.tut.speedDismissed', true); const e = document.querySelector('.tutspeed'); if (e) e.remove(); tutSpeedDisarm(); };
+    document.addEventListener('pointerdown', tutSpeedDisarm.h, true);
+  }
   function deployHTML() {
     const gau = run.cur && run.cur.type === 'gauntlet';
     const f = run.cur;
@@ -566,7 +591,7 @@
       ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
         : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
       ${run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
-      <div class="boardwrap"><canvas id="board"></canvas></div>
+      <div class="boardwrap"><canvas id="board"></canvas>${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}</div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
       <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big" data-act="fight">${gau ? 'Duel!' : 'Fight!'}</button></div>
@@ -600,7 +625,7 @@
   function battleHTML() {
     return `<section class="deploy battle">
       <div class="hud"><div id="bhud" class="hud-l"></div>
-        <div class="speed">${[1, 2, 4].map(x => x === 4 && !hasPerk('speed4') ? `<button class="locked" data-act="speed" data-arg="4" title="4× speed: a Crown Shop unlock">4×🔒</button>` : `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div></div>
+        ${tutSpeedOn() ? '<div class="tutspeed" aria-hidden="true">⬆ Click here to speed up the fight.</div>' : ''}<div class="speed">${[1, 2, 4].map(x => x === 4 && !hasPerk('speed4') ? `<button class="locked" data-act="speed" data-arg="4" title="4× speed: a Crown Shop unlock">4×🔒</button>` : `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div></div>
       <div class="boardwrap"><canvas id="board"></canvas></div>
       <div class="bpanel"><div class="teamstrip v2" id="tstrip"></div>
         <div class="bph"><b>Enemies</b><span id="ecount" class="dim small"></span></div><div class="estrip" id="estrip"></div></div>
@@ -957,9 +982,9 @@
   function onUp(e) {
     if (battle) return;
     const { h } = evHex(e); const d = ui.drag; ui.drag = null;
-    if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(run, d.uid, h.c, h.r); ui.selUid = 0; save(); } }
+    if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(run, d.uid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); } }
     else if (d) ui.selUid = ui.selUid === d.uid ? 0 : d.uid;
-    else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); }
+    else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); }
     preview = worldFor(true);
     const fl = $('#formline'); if (fl) fl.innerHTML = formHTML(preview);
     drawPreview();
@@ -974,6 +999,7 @@
     battle = { W, acc: 0, last: performance.now(), endAt: 0, gau };
     store.set('balance.tips.deploy', (store.get('balance.tips.deploy', 0) | 0) + 1);
     ui.info = null; screen = 'battle'; render();
+    tutSpeedArm();
     if (ate) toast(ate);
     requestAnimationFrame(loop);
   }
@@ -1007,6 +1033,7 @@
     toast('The Gauntlet was reset. Enter it again with your team.');
   }
   async function endBattle() {
+    tutSpeedDisarm();
     const b = battle; battle = null; const W = b.W;
     // review #25: per hero (its summons count for it): damage dealt and taken, kills, standing at the end
     const stats = {}, dmg = {};
@@ -1041,7 +1068,7 @@
     if (run.phase === 'over') {  // review #3: a lost fight ends the run = Elo loss (review #14: against 1000; the fight's pieces lose too)
       ui.result.pending = true; render();
       run.xpWait = true;   // v46: the game's XP (fights won, the boss beaten) comes back with the answer
-      try { const r = await Net.post('elo', Object.assign({ op: 'fail', pid: pid(), ref: refCode(), flog: run.flog, game: { fights: run.won, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; Object.assign(ui.result, { lg: r.lg }); }  // review #24: no Elo before the gauntlet
+      try { const r = await Net.post('elo', Object.assign({ op: 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, game: { fights: run.won, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; Object.assign(ui.result, { lg: r.lg }); }  // review #24: no Elo before the gauntlet
       catch (e) { ui.result.error = e.message; run.xpErr = true; }
       run.xpWait = false;
       ui.result.pending = false; save(); render();
@@ -1580,7 +1607,7 @@
     sound: () => { if (!B.Sfx) return; B.Sfx.toggle(); for (const b of document.querySelectorAll('.sndbtn')) { b.innerHTML = I(B.Sfx.on ? 'sound' : 'mute'); b.setAttribute('aria-label', 'Sound ' + (B.Sfx.on ? 'on' : 'off')); } if (ui.modal === 'home') { openModal(homeMenuHTML()); ui.modal = 'home'; } },
     'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
-    'give-up-yes': () => { run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },
+    'give-up-yes': () => { if (run && run.flog && run.flog.length) Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog }).catch(() => {}); run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },
     'form-info': t => toast(t, true),
     'g-rules': () => openModal(`<div class="shead"><b>${I('trophy')} How the Gauntlet works</b><button data-act="close" aria-label="Close">✕</button></div><ol class="howbasics">
       <li>${I('ghost')}<span><b>Your team becomes a ghost</b> and enters the tower.</span></li>
@@ -1616,7 +1643,8 @@
     'sug-refresh': () => loadQueue(),
     scores: () => openScores(),
     'player-tab': () => openScores('player'),
-    'relic-info': id => { const r = RELIC[id]; if (r) toast(r.name + ': ' + r.desc); },
+    stats: () => { window.open('stats.html', '_blank', 'noopener'); },
+    'relic-info': id => { const r = RELIC[id]; if (r) toast(r.name + ': ' + r.desc, true); },
     'ladder-tab': k => openScores(k),
     shop: () => openShop(),
     profile: code => openProfile(code),
@@ -1665,7 +1693,7 @@
         const r = await Net.post('player', { op: 'rename', pid: pid(), name }); setAcct(r); toast(`You are now ${r.name}`); refreshShop();
       } else if (kind === 'gauntlet') {
         const name = f.name.value.trim(); if (!acct.account || isDefaultName(acct.name)) store.set('balance.name', name);
-        const r = await Net.post('elo', { op: 'enter', pid: pid(), ref: refCode(), name, team: Run.teamSnapshot(run), relics: run.relics, reached: run.lastFight, flog: run.flog, game: { fights: run.won } });
+        const r = await Net.post('elo', { op: 'enter', pid: pid(), ref: refCode(), name, team: Run.teamSnapshot(run), relics: run.relics, reached: run.lastFight, runId: run.seed, flog: run.flog, game: { fights: run.won } });
         setElo(r); logGameXp(r); Run.gauntletUpdate(run, r); save(); render(); window.scrollTo(0, 0);
       }
     } catch (err) { toast(err.message); if (btn) btn.disabled = false; }

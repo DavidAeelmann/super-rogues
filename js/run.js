@@ -377,6 +377,7 @@
     if (r.peak != null) g.peak = r.peak;
     if (r.lg) { g.lgGain = (g.lgGain || 0) + r.lg.delta; g.lgNow = r.lg; g.lgPromoted = g.lgPromoted || r.lg.promoted; }  // review #21
     g.elo = r.elo; g.teamId = r.teamId; g.wins = r.wins || 0;
+    if (r.fallback) g.history.push({ name: 'Gauntlet Champion (fallback)', elo: 1000, win: true, delta: 0, fallback: true });   // v62 (review #84): nobody was there yet
     if (r.delta != null && g.opp) g.history.push({ name: g.opp.name, code: g.opp.code || null, elo: g.opp.elo, win: !!r.win, delta: r.delta, key: g.opp.team && g.opp.team[0] && g.opp.team[0].key, ghost: r.ghost || null });
     if (r.opponent) { g.opp = r.opponent; g.round = r.round; g.status = 'match'; run.cur = { type: 'gauntlet' }; g.map = gauntletMap(run, g.opp, g.round); }
     if (r.over) { g.status = r.champion ? 'champion' : 'lost'; g.opp = null; run.cur = null; run.phase = 'over'; run.result = 'gauntlet'; }
@@ -702,18 +703,21 @@
   // how strong each challenge is (enemy scale = the fight's own scale x this; the guardian uses the next boss's scale).
   // Tuned with tools/challenge-odds.js for a real risk (random teams, won after fights 3/5/7): bandits ~85%, mimic ~70%,
   // horde ~65%, pack ~60%, duel ~55%, the hoard's guardian ~60% (it only shows up from fight 2 on).
-  const CH = { solo: 1.1, bandits: 1.4, pack: 1.3, horde: 1.0, mimic: 1.6, hoard: 1.0 };
+  // v62 (review #88, David: the elite bounty boards were rarely completable): after the fight scale went up in v61 these
+  // were far too hard (pack 21-35%, horde 15-41%), retuned with tools/challenge-odds.js (_team.js teams): ~85% bandits, ~70% mimic,
+  // ~65% pack and horde, ~55% duel, ~65% hoard; the first fights get an extra ease (`early`) because the team is still tiny
+  const CH = { solo: 0.95, bandits: 1.1, pack: 1.0, horde: 0.8, mimic: 1.45, hoard: 0.9 };
   function startChallenge(run, c, hero, intro) {
-    const n = Math.max(1, run.fightNo || 1), fs = run.fightScale || C.fightScale;
+    const n = Math.max(1, run.fightNo || 1), fs = run.fightScale || C.fightScale, early = n <= 2 ? 0.8 : n <= 3 ? 0.9 : 1;
     let f;
-    if (c.kind === 'solo') f = makeFight(run, 'medium', n, 0, { keys: [n <= 2 ? 'brute' : 'knight'], elites: 1, scaleMul: CH.solo });
-    else if (c.kind === 'bandits') f = makeFight(run, 'medium', n, 0, { elites: 1, scaleMul: CH.bandits });
-    else if (c.kind === 'pack') f = makeFight(run, 'hard', n, 0, { elites: 1, scaleMul: CH.pack });
-    else if (c.kind === 'horde') f = makeFight(run, 'horde', n, 0, { scaleMul: CH.horde });
-    else if (c.kind === 'mimic') f = makeFight(run, 'medium', n, 0, { keys: n <= 1 ? ['golem', 'bomber', 'bomber'] : ['golem', 'knight', 'bomber', 'bomber', 'skulker'], elites: 1, scaleMul: CH.mimic });
+    if (c.kind === 'solo') f = makeFight(run, 'medium', n, 0, { keys: [n <= 2 ? 'brute' : 'knight'], elites: 1, scaleMul: CH.solo * early * (n <= 2 ? 0.75 : 1) });
+    else if (c.kind === 'bandits') f = makeFight(run, 'medium', n, 0, { elites: 1, scaleMul: CH.bandits * early });
+    else if (c.kind === 'pack') f = makeFight(run, 'hard', n, 0, { elites: 1, scaleMul: CH.pack * early });
+    else if (c.kind === 'horde') f = makeFight(run, 'horde', n, 0, { scaleMul: CH.horde * early });
+    else if (c.kind === 'mimic') f = makeFight(run, 'medium', n, 0, { keys: n <= 3 ? ['golem', 'bomber', 'bomber'] : ['golem', 'knight', 'bomber', 'bomber', 'skulker'], elites: 1, scaleMul: CH.mimic * early });
     else {
       const nth = n < bossFight(run, 1) ? 1 : 2;
-      f = makeFight(run, 'boss', n + 1, nth, { scaleMul: CH.hoard }); f.fightNo = n;
+      f = makeFight(run, 'boss', n + 1, nth, { scaleMul: CH.hoard * early }); f.fightNo = n;
     }
     f.gold = c.win.gold || 0;
     f.challenge = { name: c.name, kind: c.kind, win: c.win, intro: intro || '' };
