@@ -1052,7 +1052,9 @@
   }
   // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
   function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid }, extra || {})); }
-  (function idle() { if (screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag) drawPreview(); requestAnimationFrame(idle); })();
+  // v62b: the deploy board only breathes (idle poses, pond ripples), so it repaints about 30 times a second instead of every screen frame
+  let idleAt = 0;
+  (function idle(now) { if (now - idleAt >= 30 && screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag && !document.hidden) { idleAt = now; drawPreview(); } requestAnimationFrame(idle); })(0);
   // WHAT: converts a pointer event into a board hex (c, r).
   function evHex(e) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y) }; }
   function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
@@ -1096,6 +1098,7 @@
   // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
   function loop(now) {
     const b = battle; if (!b) return;
+    if (now - b.last < 12) { requestAnimationFrame(loop); return; }   // v62b: a 120 / 144 Hz screen draws about 60 frames a second, not 144 (the time is not lost, the next frame adds it)
     const dt = Math.min(100, now - b.last); b.last = now;
     const TICK = 1000 / Sim.TPS;
     if (!b.W.over) { b.acc += dt * ui.speed; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }

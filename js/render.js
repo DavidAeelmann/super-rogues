@@ -17,7 +17,7 @@
     const size = cssW / (Math.sqrt(3) * (Hx.COLS + 0.5));
     const flat = Hx.boardSize(size), top = size * 2.4, slab = size * 0.45;
     const w = flat.w, h = top + flat.h * K + slab + 4;
-    const dpr = Math.min(3, G.devicePixelRatio || 1);
+    const dpr = Math.min(2, G.devicePixelRatio || 1);   // v62b: 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -104,8 +104,23 @@
     return (c + r) % 2 ? `hsl(104,46%,${50 + n * 5}%)` : `hsl(96,44%,${56 + n * 5}%)`;
   }
   // WHAT: draws the hex tiles (our half blue, theirs red), the slab edge, the deploy line and the selected / drop highlights.
+  // v62b (review: "the web version still lags"): the ~64 tiles (side faces, grit texture, bevels) never change during a fight, so they are
+  // painted once into an offscreen canvas and copied each frame; it is repainted only when the skin, deploy mode, drop hex or terrain changes
   function drawBoard(v, o, W) {
-    const { ctx, size } = v, th = v.slab, tk = (W && W.tk) || {};
+    const { ctx, size } = v, tk = (W && W.tk) || {};
+    const key = (royal() ? 'r' : 'm') + (o.deploy ? 'd' : 'b') + (o.drop ? o.drop.c + ',' + o.drop.r : '-') + JSON.stringify(tk);
+    if (!v.boardC || v.boardC.key !== key) {
+      if (!v.boardC) { const c = document.createElement('canvas'); c.width = v.canvas.width; c.height = v.canvas.height; v.boardC = { c, key: '' }; }
+      const bc = v.boardC.c, bctx = bc.getContext('2d'); bctx.setTransform(1, 0, 0, 1, 0, 0); bctx.clearRect(0, 0, bc.width, bc.height); bctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+      paintTiles(Object.assign({}, v, { ctx: bctx }), o, tk); v.boardC.key = key;
+    }
+    ctx.drawImage(v.boardC.c, 0, 0, v.w, v.h);
+    for (const k in tk) if (tk[k] === 'pond') drawPond(v, k % Hx.COLS, (k / Hx.COLS) | 0);
+    if (o.deploy) { const y = hexScreen(v, 0, 4).y - size * 0.75 * K; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(v.w, y); ctx.stroke(); ctx.setLineDash([]); }
+  }
+  // WHAT: paints every tile of the board (side faces, top, grit, bevel) onto v.ctx. Called by drawBoard only when the cached picture is stale.
+  function paintTiles(v, o, tk) {
+    const { ctx, size } = v, th = v.slab;
     for (let r = 0; r < Hx.ROWS; r++) for (let c = 0; c < Hx.COLS; c++) {
       const pts = corners(v, c, r, size * 0.985);
       // side faces of the two lower edges (hidden by the next row except at the board's edge)
@@ -124,8 +139,6 @@
       ctx.strokeStyle = royal() ? 'rgba(255,207,90,0.38)' : 'rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.moveTo(top[3].x, top[3].y); ctx.lineTo(top[4].x, top[4].y); ctx.lineTo(top[5].x, top[5].y); ctx.lineTo(top[0].x, top[0].y); ctx.stroke();
       ctx.strokeStyle = royal() ? 'rgba(0,0,0,0.45)' : 'rgba(40,70,20,0.35)'; ctx.beginPath(); ctx.moveTo(top[0].x, top[0].y); ctx.lineTo(top[1].x, top[1].y); ctx.lineTo(top[2].x, top[2].y); ctx.lineTo(top[3].x, top[3].y); ctx.stroke();
     }
-    for (const k in tk) if (tk[k] === 'pond') drawPond(v, k % Hx.COLS, (k / Hx.COLS) | 0);
-    if (o.deploy) { const y = hexScreen(v, 0, 4).y - size * 0.75 * K; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(v.w, y); ctx.stroke(); ctx.setLineDash([]); }
   }
 
   // ------------------------------------------------------------------ terrain (review #39): cartoon trees, boulders,
