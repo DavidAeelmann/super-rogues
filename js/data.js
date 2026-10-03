@@ -1,9 +1,22 @@
 // All game content: heroes (+ specs), items, relics, mobs, bosses, events, economy.
 // "mods" is the shared vocabulary read by run.js (stats) and sim.js (combat hooks). See CLAUDE.md for the full list.
+// 
+// FILE GUIDE (read this first). This file is ONLY DATA (tables of numbers and texts). It is the easiest file to change by hand; nothing here runs the game.
+//   Tables, top to bottom:  B.CFG (prices, pacing, difficulty curve)  >  B.HEROES (41 heroes, each with 4 pairs of level-up powers)  >  B.ITEMS (equipment, by rarity and type), B.TYPES, B.RARITIES, B.SETS
+//   >  TAGS (one short line per hero for shop cards)  >  B.RELICS (the team-wide "Powers", 100 of them), B.FORMATION, SHORT (shorter texts)  >  B.MOBS, B.BOSSES, B.ELITES, B.POOLS, B.DIFF (enemies)
+//   >  B.EVENTS (the ? days)  >  B.LEAGUES, seasons, Crown Shop (B.SHOP), account XP (B.ACCOUNT, B.UNLOCKS)  >  terrain maps (B.TERRAIN, B.MAPS).
+//   RECIPES.  Make fights easier or harder: edit B.CFG.fightScale and B.DIFF, then run "node tools/pve-odds.js" to see the win rates (easy ~99%, medium ~90%, hard ~60%, bosses ~55%).
+//             Change a price or the gold rewards: B.CFG.  Change a hero's power: edit his block here, then "node tools/hero-odds.js" shows his win rate against the others (aim 54-60%).
+//             Add a hero: copy a block in B.HEROES, give it a new key, fill the fields (see the guide above B.HEROES), add its TAGS line (10 to 38 characters), a model in js/models.js, and if the ability is new:
+//             A.<ability> in js/sim.js and an entry in SCALE in js/ui.js. Then update the hero count in tools/tests/motor.js.  Add an item or power: add one line to B.ITEMS (N(...)) or B.RELICS (R(...)).
+//             "mods" is the shared vocabulary of stats (atk, hpPct, asPct, crit, armor...); run.js adds them up (heroMods) and sim.js reacts to the special ones. Read the existing items to see which names exist.
+//   Texts you see in the game for heroes, items, powers and events are all in this file. Renaming something here renames it everywhere (ids stay the same, so saves keep working).
 (function (G) {
   const B = G.B = G.B || {};
 
   // ---------------------------------------------------------------- economy / pacing
+  // WHAT: the main knobs of the whole game. startGold, maxTeam (heroes), heroCost, reroll, itemCost per rarity, relicCost (Powers), gold paid per fight type, XP needed per level, item slots, fightScale (how strong fight 1..8 is),
+  // firstFight (the first fight is half size), sudden death timing, and seq = the order of the 17 days (F fight, X shop or event, B boss, S last shop, G Gauntlet).
   B.CFG = {
     startGold: 10, maxTeam: 3, heroCost: 7, reroll: 2,
     itemCost: { common: 3, uncommon: 4, rare: 5, epic: 8, set: 7, legendary: 10, mythic: 13 }, relicCost: 8,
@@ -24,7 +37,11 @@
 
   // ---------------------------------------------------------------- heroes
   // base stats at level 1. as = attacks/sec, ms = hexes/sec, mana = max mana, m0 = starting mana
+  // HERO ENTRY GUIDE. key: H({ name, glyph (emoji), role, color, hp, atk, armor, mr (magic resist), as (attacks per second), range (hexes), ms (moves per second), mana (cost of the ability), m0 (mana at start), grow (level growth, 0.5 to 1.8),
+  //   abil (id of the function in sim.js), abName, abDesc (the text players read), ab (the numbers the ability function reads), fl (special flags), specs: 4 pairs = the two powers offered at levels 2, 3, 4 and 5 }).
+  //   A spec has { id, name, desc, mods?, ab?, fl? }: mods = stat bonus, ab = adds to the ability numbers, fl = turns on a special behaviour in sim.js.
   const H = (o) => o;
+  // WHAT: all heroes. The key (bastion, vex, pyra...) is the permanent id; the NAME shown to players is the "name" field (bastion is shown as Aegir) and can be changed freely.
   B.HEROES = {
     bastion: H({ name: 'Aegir', glyph: '🛡', role: 'Tank', color: '#4f7cff',
       hp: 865, atk: 40, armor: 45, mr: 30, as: 0.65, range: 1, ms: 2, mana: 99, m0: 30, grow: 0.5,
@@ -627,7 +644,9 @@
   for (const k in B.HEROES) B.HEROES[k].key = k;
 
   // ---------------------------------------------------------------- items (78 first, 120 since v16: see TYPES below)
+  // WHAT: the first generation of items: I(id, name, rarity, mods, description). Below, N(type, ...) is the newer form with an equipment type.
   const I = (id, name, tier, mods, desc) => ({ id, name, tier, mods, desc });
+  // WHAT: every item. mods = the stats it gives. Rarities: common, uncommon, rare, epic, set, legendary, mythic (shop prices in B.CFG.itemCost).
   B.ITEMS = [
     // common
     I('longsword', 'Tempered Blade', 'common', { atk: 15 }, '+15 attack'),
@@ -717,6 +736,7 @@
   // and rarity, like Obsidian Knight"). Every item has a TYPE, which is its equipment slot: a hero wears at most one item
   // of each type (and still up to Run.slots() items in total). And a RARITY, low to high: common, uncommon, rare, epic,
   // set (pieces of a named set: 2 and 3 pieces on the same hero give set bonuses), legendary, mythic.
+  // WHAT: the 7 equipment types (weapon, off-hand, helmet, armor, gloves, boots, trinket). A hero wears one of each type. B.RARITIES gives each rarity its colour.
   B.TYPES = [
     { id: 'weapon', name: 'Weapon' }, { id: 'offhand', name: 'Off-hand' }, { id: 'helmet', name: 'Helmet' }, { id: 'armor', name: 'Armor' },
     { id: 'gloves', name: 'Gloves' }, { id: 'boots', name: 'Boots' }, { id: 'trinket', name: 'Trinket' },
@@ -730,6 +750,7 @@
   ];
   B.RARITY = {}; for (const r of B.RARITIES) B.RARITY[r.id] = r;
   // the first 78 items, sorted into slots (ids never change: saved runs, ghosts and content Elo use them)
+  // WHAT: gives the older items a type.
   const LEGACY_TYPE = {
     weapon: 'longsword dagger rod recurve sling crossbow bloodthirster infinity emberblade frozenhammer executioner giantslayer gunblade shojin frenzyblade berserkeraxe needle lightningrod stormbringer botrk archangel lastwhisper reaper',
     offhand: 'buckler oakshield focus guardplate bluecrystal banner totem zeke mirrorshield morello stoneplate hourglass',
@@ -743,6 +764,7 @@
   // the old commons with two stats are now uncommon
   for (const id of 'gloves cap whetstone amber dagger oakshield candle jerky whistle bandana knuckles'.split(' ')) B.ITEMS.find(i => i.id === id).tier = 'uncommon';
 
+  // WHAT: the item maker used for the newer items: N(type, id, name, rarity, mods, description, setId?). Copy a line to add an item.
   const N = (type, id, name, tier, mods, desc, set) => ({ id, name, type, tier, mods, desc, set });
   B.ITEMS.push(
     // slots that had few items
@@ -799,6 +821,7 @@
     N('weapon', 'comethammer', 'Comet Hammer', 'legendary', { atk: 35, ap: 30, splash: 0.25 }, '+35 attack, +30 AP, attacks splash 25% to adjacent enemies'),
   );
   // set bonuses count the pieces worn by the SAME hero (Run.heroMods)
+  // WHAT: item SETS. Wearing 2 or 3 pieces of a set on one hero gives the bonus. The pieces are the items with that set id.
   B.SETS = {
     obsidian: { name: 'Nightglass Guard', bonus: { 2: { mods: { armor: 25, mr: 25 }, desc: '+25 armor and MR' }, 3: { mods: { shieldStartPct: 0.2, thorns: 0.25, atkPct: 0.15 }, desc: 'Starts fights with a 20% shield, reflects 25% melee damage, +15% attack' } } },
     storm: { name: 'Thunderborn', bonus: { 2: { mods: { asPct: 0.2 }, desc: '+20% attack speed' }, 3: { mods: { chainEvery: 3, chainTargets: 3, chainDmg: 0.5 }, desc: 'Every 3rd attack chains to 3 enemies' } } },
@@ -811,6 +834,7 @@
 
   // v51 (review #63, David: "Heroes in shop simplify description (like throws pies at enemies)"): what each hero does, in a
   // few plain words, for the shop and the start; the full ability and its numbers are one tap away (Details)
+  // WHAT: the ONE short line shown under each hero in shops (10 to 38 characters, a test checks it).
   const TAGS = {
     bastion: 'Shields up and pulls enemies to him',
     vex: 'Teleports to the weakest enemy',
@@ -854,11 +878,14 @@
   for (const k in TAGS) if (B.HEROES[k]) B.HEROES[k].tag = TAGS[k];
   // v59 (review #71, PC boy: "pep up the names"): every hero got a new name; the old one stays as h.was (the Art Lab still
   // recognises picture files named after it)
+  // WHAT: the old names of heroes (the Art Lab still recognises picture files named after them).
   const WAS = {bastion: 'Bjornar', vex: 'Sica', glacia: 'Snezhana', brakk: 'Brutus', lumen: 'Brigid', kestrel: 'Strela', morrow: 'Koschei', tempest: 'Tordis', grimhook: 'Krok', mirage: 'Sarab', rook: 'Gizmund', thorne: 'Ulfrik', seraph: 'Licht', nyx: 'Umbra', bramble: 'Leshy', echo: 'Orfeo', blaze: 'Pólvora', hippolyta: 'Hyppolita', deadshot: 'Sokol', vesper: 'Carmina', kage: 'Kagero', rex: 'Garm', vey: 'Luna', pip: 'Pimples', barley: 'Pivo', azgul: 'Azgoth', grok: 'Kivi', imhotep: 'Khepri', leonidas: 'Leonteus', harlequin: 'Serra', sprocket: 'Mercurio', zephyr: 'Feng', buzzwell: 'Melissa', coralie: 'Nerina', stellan: 'Astrid'};
   for (const k in WAS) if (B.HEROES[k]) B.HEROES[k].was = WAS[k];
 
   // ---------------------------------------------------------------- relics (100) — team-wide
+  // WHAT: the power (relic) maker: R(id, name, description, { mods | fl: 'flagname', ... }). "mods" = plain stat bonus for every hero; "fl" = a flag that sim.js / run.js reads where the effect happens (search for the flag name there).
   const R = (id, name, desc, o) => Object.assign({ id, name, desc }, o);
+  // WHAT: every team-wide Power (called relic in the code, "Power" on screen). 100 of them. Prices: B.CFG.relicCost.
   B.RELICS = [
     R('idol', 'Gilded Effigy', '+3 gold after each won fight.', { gold: 3 }),
     R('drum', 'Clan Drum', 'All heroes +12% attack speed.', { mods: { asPct: 0.12 } }),
@@ -978,6 +1005,7 @@
     R('vow', "Minimalist's Vow", 'Heroes with a free item slot get +30% HP and attack (Auto-equip leaves one free).', { fl: 'vow' }),
   ];
   // what each formation relic gives one hero (n = allies next to it, for the Shieldwall), shown while deploying
+  // WHAT: the text of what each FORMATION power gives a hero, from where he stands (see formation() in sim.js).
   B.FORMATION = {
     shieldwall: n => `+${10 * n} armor & MR`, lonewolf: () => '+25% attack speed, +10% crit', vanguard: () => 'shield 25% HP',
     rearguard: () => '+20% attack & AP', battleline: () => '+15% attack speed & attack', cover: () => '+15% dodge, +15 armor',
@@ -985,6 +1013,7 @@
   };
   // v58 (review #70, David: "Simplify the relic descriptions"): a short line for every relic (what it does, in a few words)
   // for shops, the start and the map; the full rule is one tap away (r.desc)
+  // WHAT: a shorter description for each Power, used on small cards. If a Power has none, its full description is used.
   const SHORT = {
     wind: 'Faster heroes that hit hard on the move.', ironwill: 'Ignore the first crowd control, +80 HP.', spring: 'Slow regen, and healing works better.',   // v61
     beehive: 'Heroes +10 AP; attacks poison.',
@@ -1046,9 +1075,11 @@
   for (const r of B.RELICS) r.short = SHORT[r.id] || r.desc;
   B.RELIC = {}; for (const r of B.RELICS) B.RELIC[r.id] = r;
   // review #14 (David): content Elo only rates what acts in a fight, so these never get a rating
+  // WHAT: items and Powers with no effect in a fight (gold, shop and event tricks). They are left out of the win-rate (Elo) rating.
   B.NONCOMBAT = { item: ['coin', 'charm'], relic: ['idol', 'lens', 'seal', 'dice', 'purse', 'tome', 'treasure', 'bounty', 'ledger', 'deck', 'quill', 'huntmap', 'anvil', 'changeling', 'xmap', 'medal', 'double'] };
 
   // ---------------------------------------------------------------- mobs (stats at fight scale 1)
+  // WHAT: ENEMIES. B.MOBS = the monsters, stats at fight scale 1 (the real strength is these x the fight scale). hp, atk, armor, mr, as, range, ms, cost (how much of a fight's budget it uses), abil, fl.
   const M = (o) => o;
   B.MOBS = {
     grunt: M({ name: 'Grunt', glyph: '👺', hp: 420, atk: 34, armor: 15, mr: 10, as: 0.8, range: 1, ms: 2, cost: 1 }),
@@ -1067,6 +1098,7 @@
     imp: M({ name: 'Imp', glyph: '😈', hp: 180, atk: 18, armor: 0, mr: 0, as: 1.2, range: 1, ms: 3.5, cost: 0.5 }),
   };
   for (const k in B.MOBS) B.MOBS[k].key = k;
+  // WHAT: the four bosses (Gorewarden, The Ashen Sovereign, Mirewitch Morra, the Colossus) with their escort monsters. Their special behaviour is in bossPassives in js/sim.js.
   B.BOSSES = {
     gorewarden: { key: 'gorewarden', name: 'Gorewarden', glyph: '👹', boss: 1, hp: 1800, atk: 45, armor: 40, mr: 30, as: 0.65, range: 1, ms: 1.8, mana: 55, abil: 'cleave',
       desc: 'Cleaves everything around it. Calls the horde at half health and enrages at 25%.', escort: ['grunt', 'grunt', 'archer'] },
@@ -1080,7 +1112,9 @@
     colossus: { key: 'colossus', name: 'The Iron Colossus', glyph: '🗿', boss: 2, slot: 2, hp: 3600, atk: 65, armor: 60, mr: 35, as: 0.55, range: 1, ms: 1.5, mana: 70, abil: 'quake',
       desc: 'Stomps the ground and shoves heroes away (into stones, they are stunned). Vents steam every 8s and takes more damage while it does. Calls shield bearers at 60%, melts down at 30%.', escort: ['knight', 'bomber'] },
   };
+  // WHAT: which bosses can wait in boss slot 1 (fight 4) and slot 2 (fight 8); one is picked per run.
   B.BOSS_SLOTS = [['gorewarden', 'mirewitch'], ['hollowking', 'colossus']];
+  // WHAT: the elite modifiers (armored, swift, enraged, giant) an enemy can get on harder fights.
   B.ELITES = [
     { id: 'vampiric', name: 'Vampiric', mods: { ls: 0.3 } },
     { id: 'armored', name: 'Armored', mods: { armor: 50, mr: 50 } },
@@ -1089,12 +1123,14 @@
     { id: 'giant', name: 'Giant', mods: { hpPct: 0.8 } },
   ];
   // pools by fight number for random formations
+  // WHAT: which monsters can appear from which fight number on (the key is the first fight number it applies to).
   B.POOLS = {
     1: ['grunt', 'wolf', 'archer', 'grunt'],
     2: ['grunt', 'wolf', 'archer', 'brute', 'spitter', 'skulker'],
     5: ['grunt', 'archer', 'brute', 'skulker', 'shaman', 'bomber', 'hexer', 'spitter', 'shieldbearer'],
     6: ['archer', 'brute', 'skulker', 'shaman', 'bomber', 'hexer', 'golem', 'summoner', 'shieldbearer', 'knight'],
   };
+  // WHAT: the three fight difficulties offered on the map. budget = how much enemy there is, elites = how many elites, mul = strength multiplier per fight number (tuned by tools/tune-pve.js).
   B.DIFF = {
     easy: { name: 'Easy', budget: 3.2, elites: 0, mul: [1, 0.67, 1.08, 1.06, 1, 1.24, 1.07, 1.18, 1] },   // v61: mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
@@ -1133,6 +1169,8 @@
   //   fight   a challenge that starts now: { kind: 'solo'|'bandits'|'pack'|'horde'|'mimic'|'hoard', name,
   //           win: { gold, item: rarity, relic: 1, xp, boost: { hpPct, atkPct } (the solo hero) } }
   // Events marked dyn build their choices from an offer rolled when the event opens (run.js eventChoices).
+  // WHAT: EVENTS (the ? days). Each: { id, rar (rarity), icon, name, text, choices: [{ label, act, cost?, req?, target?, fight?, mods?, risk? }] }.
+  //   "act" is a short command read by eventAct in js/run.js (gold:5, xpAll:20, relic, hire:key...). {g10} / {x20} in a label = 10 gold / 20 XP scaled by how far in the run you are. {dyn: true} events build their choices in code (rollOffer / eventChoices).
   B.EVENTS = [
     { id: 'training', rar: 'common', icon: '🎯', name: 'Training Grounds', text: 'Old veterans offer to drill your team.', choices: [
       { label: 'Drill everyone: +{x15} XP to all heroes', act: 'xpAll:{x15}' },
@@ -1218,6 +1256,7 @@
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
   const HEALER_ROLES = ['Healer', 'Paladin', 'Bard', 'Beekeeper', 'Tidecaller'];
+  // WHAT: the hero requirements some event choices have (a tank, a caster, a healer): who qualifies.
   B.EVENT_REQ = {
     melee: { name: 'a melee hero', ok: h => B.HEROES[h.key].range <= 1 },
     ranged: { name: 'a ranged hero', ok: h => B.HEROES[h.key].range >= 2 },
@@ -1229,6 +1268,7 @@
   // ---------------------------------------------------------------- leagues (review #21, David)
   // Everyone starts in Bronze. 10 league points move you up one league; Celestial has no ceiling. +1 for each gauntlet
   // duel won, -2 when a run ends before the gauntlet (a PvE loss). You never drop a league (points stop at 0).
+  // WHAT: LEAGUES from Bronze to Celestial and how points move (B.LEAGUE_RULES). Seasons last B.SEASON.days days.
   B.LEAGUES = [
     { id: 'bronze', name: 'Bronze', color: '#b8733d', hi: '#f3bd88' },
     { id: 'silver', name: 'Silver', color: '#8e9aab', hi: '#eef3fa' },
@@ -1245,6 +1285,7 @@
   B.SEASON = { epoch: Date.UTC(2026, 8, 28), days: 28 };
   B.seasonOf = t => 1 + Math.max(0, Math.floor((t - B.SEASON.epoch) / (B.SEASON.days * 864e5)));
   B.seasonEnds = n => B.SEASON.epoch + n * B.SEASON.days * 864e5;
+  // WHAT: CROWNS (the paid-in-play currency): what each league first reached pays. B.SHOP = the Crown Shop perks and prices.
   B.CROWNS = {
     league: [0, 10, 20, 30, 50, 80],   // crowns for reaching Bronze..Celestial the first time in a season (Bronze is the start)
     referPct: 0.01, referMin: 1,       // a referrer gets 1% (at least 1) of every crown their friend earns by playing
@@ -1268,6 +1309,7 @@
   // each level costs more (level L -> L+1 = base + step x (L-1): 80, 100, 120...), every game pays XP by how far it went
   // (B.GAME_XP, at most perHour games an hour count), and the firsts stay as bonuses, x10 to match the new numbers.
   // Players from before keep their level (api/_player.js xpInit converts their XP once).
+  // WHAT: ACCOUNT LEVEL. XP needed per level (B.ACCOUNT), XP for each thing done in a game (B.GAME_XP), and B.UNLOCKS = which hero / item / power each level unlocks.
   B.ACCOUNT = { base: 80, step: 20, heroClear: 10, floor: 50, boss: 30, crownXp: 2 };
   B.GAME_XP = { played: 10, fight: 8, boss: 25, reached: 30, duel: 20, champion: 50, perHour: 12, maxFights: 14 };
   B.UNLOCKS = [
@@ -1290,6 +1332,7 @@
   // undeployable". Every terrain hex blocks movement and deployment (ranged attacks and spells still fly over it); a
   // push that drives a unit into one slams it (stun + damage). Each map is point-symmetric (c, r) <-> (7-c, 7-r), the
   // same mirror the Gauntlet uses for ghosts, so both sides get the same board.
+  // WHAT: TERRAIN. The kinds of blocked hex (tree, rock, pond...) and, below, the maps (B.MAPS) made of them; B.MAP_ROTATION is the order they are used in.
   B.TERRAIN = {
     tree: { name: 'Tree', icon: '🌳', desc: 'A big leafy tree. Nobody can walk through it or stand on it.' },
     rock: { name: 'Boulder', icon: '🪨', desc: 'A heavy boulder. It blocks the way; units pushed into it are slammed and stunned.' },

@@ -22,12 +22,17 @@
 //   at the time it was stored. A loss ends the run; if nobody ever went further, the player is crowned champion.
 //   ops 'enter' and 'result'. GET: Elo ladder.
 // Fights run in the player's browser (like the rest of the game), so results are trusted: this is a demo.
+// 
+// FILE GUIDE. THE MAIN GAME SERVER FILE: the Gauntlet (PvP against ghosts), Elo, leagues, and the balance data (ratings of heroes, items, powers, bosses; fights played per day). One endpoint, POST /api/elo { op, pid, ... }; ops: hello, boss, fail, flog, enter, result. GET returns the public ranking.
+//   Order: constants -> usedIn (which pieces acted in a fight) -> cleanFlog / logFights (count each run once) -> rateContent (Elo of pieces) -> cleanTeam (never trust a team sent by a browser) -> leaguePoints -> nextOpponent (who you meet on each floor) -> the handler (module.exports = async (req, res)).
+//   The ghosts: after the last shop your team is stored as a "ghost" (table teams); each duel you win takes you up a floor, a loss leaves your ghost on that floor for later players. The index of the whole project is CODEMAP.md.
 const { send, body, sameOrigin, ipHash, clean } = require('./_http');
 const getStore = require('./_store');
 const P = require('./_player');
 require('../js/hex.js'); require('../js/data.js');
 const D = globalThis.B;
 
+// WHAT: Elo constants. K = how much a duel moves a player's Elo (32). KC = the smaller step for heroes, items and powers (16). PVE = the starting rating of everything (1000).
 const K = 32, PVE = 1000;
 const expect = (r, o) => 1 / (1 + Math.pow(10, (o - r) / 400));
 const eloAfter = (r, o, score) => r + K * (score - expect(r, o));
@@ -37,6 +42,7 @@ const KC = 16;          // content plays far more games than a player: a smaller
 const RATED_PER_HOUR = 40;  // rated fights per IP per hour, so nobody can flood the balance data
 // the pieces that acted in a fight: fielded heroes, their equipped items and the team's relics, minus anything with
 // no combat effect (B.NONCOMBAT), Hero's Crest without a 4th hero and Adventurer's Pack when no hero uses the extra slot
+// WHAT: which heroes, items and powers took part in a fight (items and powers with no combat effect are left out), for the Elo of pieces.
 function usedIn(team, relics) {
   const out = new Map(), add = (kind, id) => out.set(kind + ':' + id, { kind, id });
   for (const h of team) { add('hero', h.key); for (const id of h.items) if (!D.NONCOMBAT.item.includes(id)) add('item', id); }
@@ -50,6 +56,7 @@ function usedIn(team, relics) {
 }
 // v62 (review #81): the fights of a finished run, [fight number, difficulty, won], checked and capped
 const DIFFS = ['easy', 'medium', 'hard', 'boss'];
+// WHAT: checks the list of fights a finished run reports ([fight number, difficulty, won]) and keeps only valid ones.
 function cleanFlog(x) {
   if (!Array.isArray(x)) return [];
   const seen = new Set(), out = [];
@@ -63,6 +70,7 @@ function cleanFlog(x) {
 }
 // v62 (review #82: "make sure runs are being measured correctly"): a run is counted ONCE (a key per player + run, so a retry or a
 // give-up after a defeat does not double it) and has its own hourly allowance, apart from the rated fights
+// WHAT: counts the fights of a finished run in the dashboard table, ONCE per run (key = player + run id) and with an hourly limit per visitor.
 async function logFights(st, req, pid, runId, flog) {
   try {
     const rows = cleanFlog(flog); if (!rows.length) return;
@@ -75,6 +83,7 @@ async function logFights(st, req, pid, runId, flog) {
     await st.addFights(rows);
   } catch (e) { console.error('fstats', e); }
 }
+// WHAT: an hourly limit per visitor on rated fights, so nobody can flood the balance data.
 async function allowRated(st, iph) {
   const k = 'rated:' + iph, hour = Math.floor(Date.now() / 3600e3);
   let c = null; try { c = JSON.parse(await st.getKV(k)); } catch (_) {}
@@ -84,6 +93,7 @@ async function allowRated(st, iph) {
 }
 // sides: [{ used, score }] (one side = against a 1000-rated opponent) or two sides (a duel). A piece on both sides of a
 // duel is left out: a mirror says nothing about it. Never breaks the player's own Elo update.
+// WHAT: updates the Elo of every piece (hero, item, power) that took part in a fight; for a duel (two sides) it also rates each hero in its own PvP Elo (kind "pvp").
 async function rateContent(st, iph, sides) {
   try {
     if (sides.length === 2) {
@@ -112,6 +122,7 @@ async function rateContent(st, iph, sides) {
 const relicList = x => [...new Set((Array.isArray(x) ? x : []).filter(id => D.RELIC[id]))].slice(0, 40);
 
 // only well-formed teams made of real game content get stored (they are replayed in other players' browsers)
+// WHAT: SECURITY. Checks a team sent by a browser before it is stored as a ghost: real heroes only, levels capped, powers and items that exist, bonuses only from the allowed list and capped. Anything else is dropped.
 function cleanTeam(team) {
   if (!Array.isArray(team) || team.length < 1 || team.length > 4) return null;
   const out = [];
@@ -132,6 +143,7 @@ function cleanTeam(team) {
 }
 const oppView = (t, pid) => t && { teamId: t.id, name: t.name, code: P.codeOf(t.pid), elo: Math.round(t.elo_at), wins: t.wins, status: t.status, own: t.pid === pid, defW: t.def_w || 0, defL: t.def_l || 0, team: JSON.parse(t.team), relics: JSON.parse(t.relics) };
 // review #21: league points; returns what changed
+// WHAT: moves league points (+1 per duel won, -2 for a game lost before the Gauntlet, 10 points = next league; never drops a league).
 function leaguePoints(p, delta) {
   const R = D.LEAGUE_RULES, top = D.LEAGUES.length - 1, l0 = p.league | 0, lp0 = p.lp | 0;
   p.league = l0; p.lp = Math.max(0, lp0 + delta);
@@ -149,6 +161,7 @@ function leaguePoints(p, delta) {
 // faced comes back only when there is no one else. A gauntlet left unfinished for 6 hours counts as ended. Ghosts keep
 // their own Elo; their player's Elo never moves for them.
 const STALE_MS = 6 * 3600e3;
+// WHAT: who you meet at each floor of the Gauntlet. Floor s = the ghosts that lost with exactly s wins; the top floor holds the one champion; if nobody is there you are crowned.
 async function nextOpponent(st, wins, pid, teamId, faced) {
   const stale = Date.now() - STALE_MS;
   const champ = await st.getChampion(teamId);
@@ -170,6 +183,7 @@ async function nextOpponent(st, wins, pid, teamId, faced) {
 // the tower's height: the champion's wins (its floor is the top one); -1 = no champion yet
 const peakOf = async (st, teamId) => { const c = await st.getChampion(teamId); return c ? c.wins : -1; };
 
+// WHAT: the request handler. GET = the public ranking (or ?peak=1 the tower height). POST = one of the ops below; every op first checks the origin, the player id and rate limits.
 module.exports = async (req, res) => {
   const st = getStore();
   try {

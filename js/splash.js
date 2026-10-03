@@ -2,6 +2,8 @@
 // A painted-look card for every unit, made in code (a hero with a picture uses it instead, see art.js): a hero pose
 // drawn with the detailed model, a coloured light behind it, god rays, bokeh, mist, a rim light on the silhouette and
 // a glow in the hero's colour. The battle keeps the same model at a lower detail, so both stay aligned.
+// 
+// FILE GUIDE. SPLASH CARDS made in code for heroes without a picture: a painted-look card (a pose of the model, a coloured light, rays, bokeh, mist). B.Splash.image(key, w, h, mode) returns an image URL, cached. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   const cache = {};
@@ -25,6 +27,7 @@
     return p;
   }
   // mode 'bust' = square close-up (menus, lists); 'full' = standing figure (banners, title)
+  // WHAT: builds (or returns the cached) splash picture of a unit. A hero with a real picture (js/art.js) uses that instead.
   function image(key, w, h, mode) {
     // a picture made for this hero (official art or the Art Lab test on this device) wins over the painted one
     const art = B.Art && B.Art.splash(key, w, h, mode); if (art) return art;

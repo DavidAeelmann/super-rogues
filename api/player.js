@@ -6,11 +6,14 @@
 //   {op:'buy', pid, item}          a Crown Shop unlock (B.SHOP), paid atomically
 //   {op:'rename', pid, name}       a name change (paid each time); the player's ghosts take the new name
 //   {op:'ratings', pid}            the Elo of every hero, boss, item and relic (needs Content Elo or the King Tier)
+// 
+// FILE GUIDE. THE ACCOUNT ENDPOINT, POST /api/player { op, pid, ... }: me (wallet and progress), profile (anyone's public profile), buy (Crown Shop), rename, ratings (content Elo, needs the unlock). It never creates a player: accounts start when a first game ends (api/elo.js). The index of the whole project is CODEMAP.md.
 const { send, body, sameOrigin, clean } = require('./_http');
 const getStore = require('./_store');
 const P = require('./_player');
 const D = globalThis.B;
 
+// WHAT: the request handler for the ops listed above.
 module.exports = async (req, res) => {
   const st = getStore();
   try {

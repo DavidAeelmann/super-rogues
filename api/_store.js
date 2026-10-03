@@ -1,6 +1,10 @@
 // Storage. Suggestions arrive in BATCHES: a player writes several changes, then presses "Send for review".
 // Production: Neon Postgres (DATABASE_URL, set by the Vercel integration). Local dev and tests: in-memory
 // (tools/dev-server.js sets global.__BAL_MEM = true). Both expose the same functions.
+// 
+// FILE GUIDE. THE DATABASE LAYER. Two stores with the SAME functions: memStore() keeps everything in memory (local server and tests), pgStore() uses the Neon Postgres database (production). The functions are listed once in each, in the same order.
+//   SCHEMA (just below) is the list of "create table if not exists" statements run at start-up; add a table or column there. Tables: suggestions, scores, players, teams (Gauntlet ghosts), ratings (Elo of heroes, items, powers, bosses and PvP heroes), fstats (fights played / won per day), kv (small keys), art.
+//   To add a new thing to save: add its table to SCHEMA, add the functions to BOTH stores, and call them from api/*.js. Only public fields ever leave the server (pub, pubPlayer, pubRating...). The index of the whole project is CODEMAP.md.
 const SCHEMA = [
   `create table if not exists suggestions (id bigserial primary key, name text not null default '', text text not null,
      iph text not null, status text not null default 'new', reply text, created bigint not null, updated bigint)`,
@@ -63,10 +67,12 @@ const SCHEMA = [
 // public id of a player: never the pid itself (the pid is the player's secret key)
 const codeOf = pid => require('crypto').createHash('sha256').update('pub|' + pid).digest('hex').slice(0, 12);
 
+// WHAT: the ghosts a Gauntlet floor can pick from (lost or champion, enough wins, not already faced, not abandoned).
 function poolOf(M, lo, hi, exclude, staleBefore) {
   const ex = new Set(exclude || []);
   return (M.teams || []).filter(t => !ex.has(t.id) && (t.status === 'lost' || (t.status === 'running' && (t.updated || t.created) < (staleBefore || 0))) && t.wins >= lo && (hi == null || t.wins <= hi));
 }
+// WHAT: the in-memory store used by tests and the local server (data lives in global.__BAL_MEMDATA).
 function memStore() {
   const M = global.__BAL_MEMDATA = global.__BAL_MEMDATA || { sug: [], kv: {}, scores: [], id: 0 };
   return {
@@ -142,6 +148,7 @@ function memStore() {
   };
 }
 
+// WHAT: the production store: each function is one SQL query on Neon Postgres.
 function pgStore() {
   const { neon } = require('@neondatabase/serverless');
   const sql = neon(process.env.DATABASE_URL);
@@ -257,8 +264,10 @@ function pgStore() {
 }
 
 // only public fields ever leave the server (never iph)
+// WHAT: the public shape of a suggestion (never the visitor hash). pubPlayer / pubRating / pubScore do the same for players, ratings and scores.
 function pub(s) { return { id: Number(s.id), batch: Number(s.batch || s.id), name: s.name, text: s.text, status: s.status, reply: s.reply || null, created: Number(s.created), updated: s.updated ? Number(s.updated) : null }; }
 // Neon returns bigint/real columns as strings: normalise numbers
+// WHAT: Postgres returns big numbers as text; this turns the known number columns back into numbers.
 function num(r) { for (const k of ['id', 'elo', 'runs', 'crowns', 'best', 'elo_at', 'wins', 'opp', 'def_w', 'def_l', 'league', 'lp', 'created', 'updated', 'gems', 'season', 'sreach', 'peak_league', 'last_league', 'ref_gems', 'axp', 'pfloor', 'xpv']) if (r[k] != null) r[k] = Number(r[k]); return r; }
 // v27: `titles` = champion titles (column crowns); `code` = public id for the profile; `king` = owns the King Tier
 function pubPlayer(p) { return { name: p.name, code: p.code || codeOf(p.pid), elo: Math.round(Number(p.elo)), runs: Number(p.runs), titles: Number(p.crowns), best: Number(p.best), league: Number(p.league) || 0, lp: Number(p.lp) || 0, king: /"king"/.test(p.perks || '') }; }

@@ -1,9 +1,12 @@
 // v62 (review #81, David): the hidden balance dashboard (stats.html, not linked from the game). Overall numbers only.
+// 
+// FILE GUIDE. THE HIDDEN BALANCE DASHBOARD page (stats.html). It loads /api/stats (api/stats.js) and draws: the clear rate of every fight of a run, and tables for heroes, PvP heroes, items, powers and bosses with games, win rate and Elo. Overall numbers only, no player data. The index of the whole project is CODEMAP.md.
 (async () => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const pct = (w, n) => n ? Math.round(1000 * w / n) / 10 : null;
   const col = p => p == null ? 'var(--dim)' : p >= 65 ? 'var(--good)' : p >= 45 ? 'var(--mid)' : 'var(--bad)';
+  // WHAT: one table cell with a colour by win rate (green 65%+, yellow 45%+, red below) and the number of games.
   const cell = (w, n, bar) => { const p = pct(w, n); return p == null ? '<td class="low">-</td>' : `<td style="color:${col(p)}">${bar ? `<span class="bar"><i style="width:${p}%;background:${col(p)}"></i></span>` : ''}${p}% <span class="dim">(${n})</span></td>`; };
   let data;
   try { data = await (await fetch('/api/stats', { cache: 'no-store' })).json(); } catch (e) { $('meta').textContent = 'Could not load the numbers.'; return; }
@@ -21,9 +24,11 @@
     }).join('') : '<tr><td colspan="7" class="low">Nothing yet</td></tr>');
 
   // heroes, items, powers (relics), bosses
+  // WHAT: the tabs of the second table. Add a tab here and the matching list in api/stats.js.
   const TABS = [['heroes', 'Heroes'], ['pvp', 'PvP heroes'], ['items', 'Items'], ['relics', 'Powers'], ['bosses', 'Bosses']];
   let tab = 'heroes', key = 'rate', dir = -1;
   const rows = () => data[tab].map(r => Object.assign({ rate: r.games ? r.wins / r.games : -1 }, r)).sort((a, b) => key === 'name' ? dir * a.name.localeCompare(b.name) : dir * ((a[key] > b[key]) - (a[key] < b[key])) || a.name.localeCompare(b.name));
+  // WHAT: redraws the table for the selected tab and sort column.
   function draw() {
     $('tabs').innerHTML = TABS.map(([k, n]) => `<button data-t="${k}" class="${k === tab ? 'on' : ''}">${n}</button>`).join('');
     const th = (k, n) => `<th class="s ${key === k ? 'on' : ''}" data-k="${k}">${n}</th>`;

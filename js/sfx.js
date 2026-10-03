@@ -2,6 +2,8 @@
 // the CSP stays as it is). One call per moment: B.Sfx.play('coin'). Sounds are on by default and the choice is kept in
 // this browser (balance.sound); the audio starts on the first tap, as browsers require. Busy sounds (hits, heals, the
 // count-up ticks) are throttled so a 4x fight never turns into noise.
+// 
+// FILE GUIDE. SOUNDS, made with Web Audio (no sound files). S below has one recipe per sound name; B.Sfx.play('coin') plays it. Sounds start on the first tap (browsers require it) and the on/off choice is kept in the browser. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   const KEY = 'balance.sound';
@@ -9,6 +11,7 @@
   try { const v = G.localStorage && G.localStorage.getItem(KEY); if (v != null) on = JSON.parse(v) !== false; } catch (_) {}
   let ctx = null, out = null, noiseBuf = null, voices = 0;
   const last = {};
+  // WHAT: the minimum time between two plays of a busy sound (hits, heals) so a big fight is not a wall of noise.
   const GAP = { hit: 0.045, crit: 0.06, heal: 0.09, tick: 0.04, cast: 0.08, ko: 0.05, tap: 0.03, dodge: 0.08 };
 
   function ac() {
@@ -29,6 +32,7 @@
   if (typeof document !== 'undefined') ['pointerdown', 'keydown'].forEach(e => document.addEventListener(e, () => { if (on) ac(); }, { passive: true, capture: true }));
 
   // one oscillator note: frequency (and an optional slide), a quick attack and an exponential fade
+  // WHAT: plays one note (frequency, length, wave shape, volume). noise() plays a burst of noise (hits, explosions).
   function tone(f, dur, o = {}) {
     const c = ctx, t = c.currentTime + (o.at || 0), g = c.createGain(), osc = c.createOscillator();
     osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(f, t);
@@ -54,6 +58,7 @@
   const arp = (notes, step, o) => notes.forEach((n, i) => tone(NOTE(n), o.dur || 0.22, Object.assign({}, o, { at: (o.at || 0) + i * step })));
   const sparkle = (at, n = 5, vol = 0.05) => { for (let i = 0; i < n; i++) tone(NOTE(96 + ((i * 5) % 12)), 0.09, { type: 'sine', vol, at: at + i * 0.045 }); };
 
+  // WHAT: the sound recipes, one per name (hit, crit, coin, win, lose, levelup...). Add one here and call B.Sfx.play(name).
   const S = {
     tap: () => { tone(740, 0.05, { vol: 0.16 }); tone(1110, 0.04, { vol: 0.07, at: 0.012 }); },
     pick: () => { tone(NOTE(72), 0.09, { type: 'triangle', vol: 0.22 }); tone(NOTE(79), 0.14, { type: 'triangle', vol: 0.2, at: 0.06 }); },
@@ -81,6 +86,7 @@
     unlock: () => { arp([79, 83, 86, 91], 0.08, { type: 'triangle', vol: 0.16, dur: 0.3 }); sparkle(0.3, 6); },
   };
 
+  // WHAT: plays a sound by name (respects the on/off switch and the gap).
   function play(name, arg) {
     if (!on || !S[name] || !ac() || ctx.state !== 'running') return;
     const now = ctx.currentTime, gap = GAP[name] || 0.02;

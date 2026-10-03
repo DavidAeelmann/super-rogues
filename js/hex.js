@@ -1,5 +1,8 @@
 // Hex grid 8x8, pointy-top, "odd-r" offset (odd rows shifted right). Row 0 is the TOP (enemy side).
 // Works in the browser (window.B) and in Node (require sets globalThis.B).
+// 
+// FILE GUIDE. THE HEX GRID MATH, used by everything. Board = 8 columns x 8 rows, "odd-r" layout (odd rows shifted right). Row 0 is the TOP = the enemy side; rows 4 to 7 are the player's half.
+//   A hex is { c, r } (column, row). dist() = number of steps between two hexes, neighbors() = the (up to 6) hexes around one, within() = all hexes within a radius, px() = the centre of a hex in pixels. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   const COLS = 8, ROWS = 8;
@@ -7,11 +10,13 @@
 
   function toCube(c, r) { const x = c - (r - (r & 1)) / 2, z = r; return [x, -x - z, z]; }
   function fromCube(x, y, z) { return [x + (z - (z & 1)) / 2, z]; }
+  // WHAT: the distance in hex steps between two hexes (uses cube coordinates).
   function dist(a, b) {
     const [ax, ay, az] = toCube(a.c, a.r), [bx, by, bz] = toCube(b.c, b.r);
     return Math.max(Math.abs(ax - bx), Math.abs(ay - by), Math.abs(az - bz));
   }
   function inside(c, r) { return c >= 0 && c < COLS && r >= 0 && r < ROWS; }
+  // WHAT: the neighbouring hexes that are on the board.
   function neighbors(c, r) {
     const [x, y, z] = toCube(c, r), out = [];
     for (const d of DIRS) { const [nc, nr] = fromCube(x + d[0], y + d[1], z + d[2]); if (inside(nc, nr)) out.push({ c: nc, r: nr }); }
@@ -21,6 +26,7 @@
   function all() { const o = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) o.push({ c, r }); return o; }
   function within(c, r, rad) { return all().filter(h => dist(h, { c, r }) <= rad); }
   // pixel centre of a hex for a given hex "size" (centre to corner)
+  // WHAT: the pixel centre of a hex for a given hex size.
   function px(c, r, size) { const w = Math.sqrt(3) * size; return { x: w * (c + 0.5 * (r & 1)) + w / 2, y: size * 1.5 * r + size }; }
   function boardSize(size) { const w = Math.sqrt(3) * size; return { w: w * (COLS + 0.5), h: size * 1.5 * (ROWS - 1) + size * 2 }; }
 

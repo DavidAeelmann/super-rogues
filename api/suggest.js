@@ -6,14 +6,18 @@
 // Art Lab (owner, 2026-09-29): a POST can carry `art` = {hero, splash, anims: {idle: [frames], move, attack, cast, death},
 // meta}: pictures as data: URLs, checked here, kept in the `art` table for Claude's review and never served back by the
 // API. (The first version sent `poses` = one frame per pose; still accepted.)
+// 
+// FILE GUIDE. THE SUGGESTION BOX endpoint (GET the public queue, POST a batch of up to 10 changes + optional Art Lab pictures). Limits per visitor stop spam. The owner's watcher (tools/vigia.js) wakes the assistant when a batch arrives; the assistant answers through tools/sugestoes.js. The index of the whole project is CODEMAP.md.
 const { send, body, sameOrigin, ipHash, clean } = require('./_http');
 const getStore = require('./_store');
 require('../js/hex.js'); require('../js/data.js');
 const B = globalThis.B;
 const MAX_ITEMS = 10;
 const PIC = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
+// WHAT: reads a number within limits.
 const num = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : d; };
 // the pictures of an Art Lab send, or {error}
+// WHAT: checks an Art Lab picture sent with a suggestion (size, type) and returns it clean or null.
 function artOf(a) {
   if (!a || typeof a !== 'object') return { error: 'Bad art.' };
   const hero = String(a.hero || '');
@@ -38,11 +42,13 @@ function artOf(a) {
   return { hero, splash, poses: JSON.stringify(anims), meta: JSON.stringify(meta) };
 }
 
+// WHAT: the "is the reviewer awake" status shown above the queue.
 async function status(st) {
   const [seen, lastRun, paused] = await Promise.all([st.getKV('seen'), st.getKV('lastRun'), st.getKV('paused')]);
   return { seen: Number(seen) || 0, lastRun: Number(lastRun) || 0, paused: paused === '1', now: Date.now() };
 }
 
+// WHAT: the request handler (GET and POST).
 module.exports = async (req, res) => {
   const st = getStore();
   try {

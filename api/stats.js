@@ -1,11 +1,14 @@
 // v62 (review #81, David): the hidden balance dashboard's numbers. GET only, overall (no player, no name, no id), read-only:
 //   fights: how many times each fight of a run (number + difficulty; bosses = 'boss') was played and won
 //   heroes / items / relics / bosses: fights they were in (games), won, and their content Elo (api/elo.js)
+// 
+// FILE GUIDE. The numbers of the hidden dashboard (stats.html): GET /api/stats returns fights per day and difficulty, and games / wins / Elo of every hero, PvP hero, item, power and boss. Overall numbers only. The index of the whole project is CODEMAP.md.
 const { send } = require('./_http');
 const getStore = require('./_store');
 require('../js/hex.js'); require('../js/data.js');
 const D = globalThis.B;
 
+// WHAT: the GET handler. Lists EVERY hero / item / power / boss, even those with no games yet.
 module.exports = async (req, res) => {
   try {
     if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed' });

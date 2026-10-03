@@ -1,4 +1,13 @@
 /* Balance: mobile-first, barebones on purpose. Placeholder look, fully functional. */
+/* FILE GUIDE (read this first). All the looks of the game. THE LATEST RULE WINS: the file grew version by version, so the same class can be
+   styled in several places and the one lowest in the file is the one you see. When you change a look, search the class name from the end of this
+   file upwards, and change (or add) the LAST rule for it. The class names come from the HTML written in js/ui.js (search the class there).
+   Colours and sizes: the variables in :root just below. Dark theme is the only theme.
+   Rough map of where things are (by line, they drift a little): top = page, buttons, top bar, cards; ~150-340 = portraits, banners, the map, shops;
+   ~430 = coloured game words and stat chips; ~510 = ladder tabs; ~550 = the Items screen (older); ~640-760 = deploy and battle screens (board, hud, speed, hero strip);
+   ~810-920 = start screens and Crown Shop; ~1165-1450 = events, level up, result, Gauntlet; ~1600-1900 = title page, menu rows (.mrow), XP panel, logo;
+   ~1998 = the current Items (gear) screen; ~2057 = the polish pass (safe areas, sizes); the very end = newest additions (tutorial prompts).
+   Rules of the owner that the CSS must keep: no screen scrolls at 390x740 and 360x640, no text is cut off (no ellipsis, no line-clamp), yellow is only for the main button and key rewards. */
 :root {
   --bg: #12141a; --panel: #1b1f29; --panel2: #232836; --line: #2e3445; --text: #e8ebf2; --dim: #9aa3b5;
   --gold: #ffcf5a; --blue: #4f7cff; --red: #e05555; --green: #5fd47a; --purple: #c77dff;

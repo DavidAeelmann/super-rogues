@@ -2,6 +2,8 @@
 // coins that fly into the gold counter, numbers that count up, a bump when something changes, a floating "+6".
 // Everything is drawn in a fixed layer above the page (#fx, never catches taps) and removed when it ends. With
 // "reduce motion" switched on in the system, the effects are skipped and only the final numbers show.
+// 
+// FILE GUIDE. SMALL REWARD EFFECTS on screen: confetti, coins flying to the gold counter, numbers counting up, a bump when something changes, a floating +6. Everything is drawn in a layer above the page that never catches taps. Turned off when the player asked for reduced motion. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   const doc = G.document;
@@ -18,6 +20,7 @@
   const COLORS = ['#ffd23f', '#ff6b7e', '#4aa3ff', '#3ddc84', '#c29bff', '#ffffff', '#ff9a3d'];
 
   // confetti from a point (viewport pixels): pieces thrown up and out, falling with a spin
+  // WHAT: a burst of confetti at a screen point.
   function confetti(x, y, n = 60, o = {}) {
     if (reduced()) return;
     const L = fx(), H = G.innerHeight;
@@ -34,6 +37,7 @@
   const confettiAt = (el, n, o) => { el = el$(el); if (!el) return; const c = center(el); confetti(c.x, c.y, n, o); };
 
   // n coins fly from one element to another along an arc; onEach(i) fires as each one lands
+  // WHAT: coins fly from one element to another (the gold counter).
   function flyCoins(from, to, n = 8, onEach, o = {}) {
     return new Promise(res => {
       const T = el$(to);
@@ -54,6 +58,7 @@
   }
 
   // a number that counts from a to b (ease-out); fmt formats it; tick(i) fires on each visible change
+  // WHAT: animates a number from a to b.
   function countUp(el, a, b, ms = 700, fmt = v => String(v), tick) {
     return new Promise(res => {
       if (!el) return res();
@@ -68,8 +73,10 @@
     });
   }
   // restart a CSS "bump" animation on an element
+  // WHAT: a short pop animation on an element.
   function bump(el, cls = 'bump') { el = el$(el); if (!el || reduced()) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
   // "+6" rising from an element
+  // WHAT: a floating text (like +6) that rises and fades.
   function floater(el, text, cls = '') {
     if (!el || reduced()) return;
     const c = center(el), f = doc.createElement('b'); f.className = 'floater ' + cls; f.textContent = text;

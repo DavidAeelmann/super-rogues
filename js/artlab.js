@@ -1,13 +1,18 @@
 // Art Lab (owner, 2026-09-29: "a part at the bottom where David attaches the pictures and tests how the heroes look").
 // Everything runs in this browser: pick a hero, add a splash picture and a pose sheet, see them on the cards and in a
 // live test fight, keep them on this device, or send them for review (only Claude sees the pictures, never the queue).
+// 
+// FILE GUIDE. THE ART LAB screen (menu > Art Lab): pick a hero, attach a splash picture and a pose sheet, see them on the cards and in a live test fight, keep them on this device or send them for review. It talks to js/art.js (the pictures) and js/ui.js (modals, toasts).
+//   Order: state S -> html() builds the sheet -> splashView / sheetView / previews -> load / readFile / cut / applyMap (process a picture) -> newFight / loop (the test fight) -> actions (buttons) -> bulk upload of many heroes at once -> init. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
+  // WHAT: the current state of the lab (selected hero, the picture definition being edited, the cut sheet, tolerance, the test fight).
   const S = { key: null, def: null, sheet: null, tol: 60, found: 0, bg: '', fight: null, view: null, raf: 0, open: false };
   let U = null; // helpers from ui.js: $, esc, toast, openModal, Net, store, trackBatch
 
   const heroes = () => Object.keys(B.HEROES).sort((a, b) => B.HEROES[a].name.localeCompare(B.HEROES[b].name));
   const pct = v => Math.round(v * 100);
+  // WHAT: the whole Art Lab sheet.
   function html() {
     const H = B.HEROES, k = S.key, e = U.esc;
     return `<div class="artlab">
@@ -41,6 +46,7 @@
     </div>`;
   }
   // only the pictures (while a slider is being dragged the sliders themselves stay in place)
+  // WHAT: previews of the splash picture on a card, a banner and a portrait.
   function splashCards() {
     const k = S.key, sz = [[44, 44, 'bust'], [96, 96, 'bust'], [120, 156, 'full']];
     U.$$('#alSplashView .alcards img').forEach((im, i) => { im.src = B.Splash.image(k, sz[i][0], sz[i][1], sz[i][2]); });
@@ -62,6 +68,7 @@
         <label>Zoom<input type="range" id="alCz" min="50" max="300" value="${pct(cr.z)}"></label></div>` : '<p class="small dim">Loading…</p>';
   }
   const NAMES = { idle: 'Idle', move: 'Walk', attack: 'Attack', cast: 'Ability', death: 'Death' };
+  // WHAT: the pose sheet editor: the cut frames per row and which animation each row is.
   function sheetView() {
     const el = U.$('#alSheetView'); if (!el) return;
     if (!S.key) { el.innerHTML = ''; return; }
@@ -111,6 +118,7 @@ ${sheetFoot(d, note)}`);
         <label class="alchk"><input type="checkbox" id="alFlip" ${d.flip ? 'checked' : ''}> Mirror (use if the hero faces left in the picture)</label></div>`;
   }
   function refresh() { B.Art.preview(S.key, S.def); }
+  // WHAT: selects a hero and loads his current pictures into the editor.
   function load(key) {
     if (S.key && S.key !== key) B.Art.reset(S.key);
     if (!key) { S.key = null; S.def = null; S.sheet = null; S.res = null; S.map = []; return; }
@@ -119,6 +127,7 @@ ${sheetFoot(d, note)}`);
     S.def = saved ? JSON.parse(JSON.stringify(saved)) : null;
     if (S.def) refresh();
   }
+  // WHAT: reads a picture file chosen by the player.
   function readFile(input, done) {
     const f = input.files && input.files[0]; if (!f) return;
     if (!/^image\/(png|jpeg|webp)$/.test(f.type)) { U.toast('Pick a PNG, JPG or WEBP picture'); return; }
@@ -126,6 +135,7 @@ ${sheetFoot(d, note)}`);
     r.onload = () => { const im = new Image(); im.onload = () => done(im); im.onerror = () => U.toast('That picture could not be opened'); im.src = r.result; };
     r.readAsDataURL(f); input.value = '';
   }
+  // WHAT: runs the sheet cutter (js/art.js cutSheet) with the current tolerance.
   function cut() {
     const res = B.Art.cutSheet(S.sheet, S.tol);
     S.found = res.found; S.bg = res.bg; S.rows = res.rows.length; S.dropped = res.dropped; S.cards = !!res.cards;
@@ -140,6 +150,7 @@ ${sheetFoot(d, note)}`);
   }
 
   // the test fight: the hero with its art + a random ally against a medium fight, restarting when it ends
+  // WHAT: the live test fight where the hero's pictures are shown in action; loop() plays it.
   function newFight() {
     const R = B.Run, others = Object.keys(B.HEROES).filter(k => k !== S.key);
     const seed = (Math.random() * 2 ** 31) | 0, run = R.newRun(seed);
@@ -204,6 +215,7 @@ ${sheetFoot(d, note)}`);
     else if (t.classList.contains('alrowsel') && S.res) { S.map[+t.dataset.row] = t.value; applyMap(); sheetView(); }
     else if (t.id === 'alFlip') (S.def = S.def || {}).flip = t.checked;
   }
+  // WHAT: the buttons of the lab (data-act names handled here, called from js/ui.js).
   const actions = {
     'al-restart': () => { S.fight = null; mountBoard(); },
     'al-keep': () => {
@@ -250,6 +262,7 @@ ${sheetFoot(d, note)}`);
   };
   // review #50 (David: "upload the splash art only for several heroes at once"): pictures matched to heroes by file name
   const norm = t => String(t).normalize('NFD').toLowerCase().replace(/[^a-z]/g, '');   // accents come apart in NFD and drop out
+  // WHAT: BULK UPLOAD. Guesses which hero a picture file belongs to from its file name (accents ignored).
   function guessHero(file) {
     const f = norm(file.replace(/\.[a-z0-9]+$/i, '')), H = B.HEROES;
     const names = Object.keys(H).flatMap(k => [[norm(H[k].name), k], [norm(k), k], [norm(H[k].was || ''), k]]).filter(([n]) => n.length >= 3).sort((a, b) => b[0].length - a[0].length);
@@ -279,9 +292,11 @@ ${sheetFoot(d, note)}`);
       r.readAsDataURL(f);
     }
   }
+  // WHAT: connects the lab to the UI toolbox.
   function init(ui) {
     U = ui;
     const m = U.$('#modal'); m.addEventListener('input', onInput); m.addEventListener('change', onChange);
   }
+  // WHAT: the public list.
   B.ArtLab = { init, open, closed, actions, state: S };
 })(typeof window !== 'undefined' ? window : globalThis);

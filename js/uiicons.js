@@ -1,8 +1,11 @@
 // v49 (review #61, David: "Replace emoji icons with a cohesive custom icon set"): the game's own interface icons, one
 // style for all of them (24x24, round 2.2 strokes in the text colour, a few solid shapes). Drawn here as SVG paths, no
 // font or image files. B.UI.i(name, cls) returns the <svg> markup; the logo mark is B.UI.mark().
+// 
+// FILE GUIDE. THE INTERFACE ICONS (menu arrows, trophy, skull, swords...), one SVG path per name in P. I('name') in ui.js calls B.UI.i(name). Add an icon by adding a line to P. mark() is the logo symbol. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
+  // WHAT: icon name -> SVG drawing (24 x 24 grid, round strokes in the text colour).
   const P = {
     play: '<path d="M8 4.8v14.4a.8.8 0 0 0 1.2.7l11.2-7.2a.8.8 0 0 0 0-1.4L9.2 4.1A.8.8 0 0 0 8 4.8z" fill="currentColor" stroke="none"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',

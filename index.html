@@ -10,6 +10,9 @@
 <link rel="preload" href="fonts/fredoka.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
+<!-- The scripts load in this order (defer keeps it): hex (grid math) > data (all content) > sim (fights) > run (rules) > models, icons, art, splash (pictures) > render (board drawing)
+     > net (server calls) > sfx, juice (sound and effects) > uiicons > artlab > ui (the screens and buttons, starts the game). All of them hang their functions on one global object B.
+     The index of the whole project is CODEMAP.md. The hidden balance dashboard is a separate page: stats.html. -->
 <script src="js/hex.js" defer></script>
 <script src="js/data.js" defer></script>
 <script src="js/sim.js" defer></script>

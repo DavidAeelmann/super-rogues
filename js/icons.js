@@ -1,5 +1,8 @@
 // Item and relic icons (review #8), drawn in code like the unit models and cached as data: URLs (the CSP allows
 // images from data:). Each item/relic maps to a glyph drawer + accent colour; the frame colour is the item tier.
+// 
+// FILE GUIDE. ICONS of items and Powers (relics), drawn with code and cached as images. D = the drawers (a sword, a shield, a ring...), IT = which drawer and colour each item uses, RE = the same for Powers. The frame colour is the rarity.
+//   To give a new item or Power an icon: add its id to IT or RE with a drawer name from D. Unknown ids get a gem. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   const TAU = Math.PI * 2;
@@ -11,6 +14,7 @@
   function ring(c, x, y, r, w, col) { c.strokeStyle = ink; c.lineWidth = w + 2; c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); c.strokeStyle = col; c.lineWidth = w; c.stroke(); }
 
   // every drawer paints inside a 100x100 box centred on 0,0; a = accent colour
+  // WHAT: the drawers: one small function per glyph (sword, shield, boot, ring, flame...).
   const D = {
     sword: (c, a) => { path(c, [[-6, 30], [6, 30], [6, -34], [0, -44], [-6, -34]], a || steel); line(c, -20, 30, 20, 30, 7, gold); line(c, 0, 32, 0, 44, 7, leather); orb(c, 0, 47, 5, gold); },
     greatsword: (c, a) => { path(c, [[-9, 26], [9, 26], [9, -38], [0, -48], [-9, -38]], a || steel); line(c, -24, 26, 24, 26, 8, gold); line(c, 0, 28, 0, 44, 8, leather); },
@@ -74,6 +78,7 @@
     idol: (c, a) => { path(c, [[-22, 40], [22, 40], [16, 20], [-16, 20]], a || gold); path(c, [[-14, 20], [14, 20], [18, -6], [-18, -6]], a || gold); orb(c, 0, -20, 15, a || gold); orb(c, -5, -22, 3, '#c43a3a'); orb(c, 5, -22, 3, '#c43a3a'); },
     wind: (c, a) => { c.strokeStyle = a || '#bfe6ff'; c.lineWidth = 6; c.lineCap = 'round'; for (const [y, w] of [[-18, 34], [2, 42], [22, 28]]) { c.beginPath(); c.moveTo(-40, y); c.lineTo(w - 12, y); c.arc(w - 12, y - 8, 8, Math.PI / 2, -Math.PI, true); c.stroke(); } },
   };
+  // WHAT: item id -> [drawer, accent colour].
   const IT = {
     honeycomb: ['amulet', '#ffc21a'], starcloak: ['cloak', '#5a4ab8'], tidepearl: ['gem', '#9ff0ff'], moonslippers: ['boots', '#c9d2ff'], comethammer: ['hammer', '#b8a8ff'],  // v30
     longsword: ['sword'], chainmail: ['armor'], belt: ['belt'], recurve: ['bow'], rod: ['rod'], cloak: ['cloak', '#4a5a6a'], tear: ['drop'], boots: ['boots'], gloves: ['glove'], fang: ['fang'],
@@ -101,7 +106,9 @@
     rg_hood: ['cloak', '#4a6a3a'], rg_quiver: ['bow', '#4a6a3a'], rg_boots: ['boots', '#4a6a3a'],
   };
   // the empty slot of each item type shows this glyph, faded
+  // WHAT: the picture of an empty equipment slot by type.
   const SLOT = { weapon: 'sword', offhand: 'shield', helmet: 'helm', armor: 'armor', gloves: 'glove', boots: 'boots', trinket: 'ring' };
+  // WHAT: Power (relic) id -> [drawer, accent colour].
   const RE = {
     beehive: ['lantern', '#ffc21a'], seashell: ['horn', '#ffb3c8'], kite: ['feather', '#ff8a5c'], compass: ['seal', '#b8a8ff'], teapot: ['vial', '#7ee08e'],  // v30
     snowglobe: ['gem', '#dff4ff'], marbles: ['dice', '#6fb6ff'], fireflies: ['lantern', '#e8ff7a'], pinwheel: ['clover', '#ff8ad8'], horseshoe: ['ring', '#c9c9d9'],
@@ -124,6 +131,7 @@
   const tierColor = t => t === 'relic' ? '#e8b84a' : B.RARITY && B.RARITY[t] ? B.RARITY[t].color : '#9aa3b5';
   const cache = {};
   // kind 'item' | 'relic' | 'slot' (an empty equipment slot: id = item type)
+  // WHAT: renders one icon (kind item / relic / slot, id, size) to an image URL, cached.
   function icon(kind, id, px) {
     const key = kind + ':' + id + ':' + px; if (cache[key]) return cache[key];
     if (typeof document === 'undefined') return '';
@@ -145,5 +153,6 @@
     c.save(); c.translate(px / 2, px / 2); c.scale(px / 120, px / 120); if (slot) c.globalAlpha = 0.28; (D[spec[0]] || D.gem)(c, spec[1]); c.restore();
     return (cache[key] = cv.toDataURL());
   }
+  // WHAT: the public list: B.Icons.item(id, px), B.Icons.relic(id, px), B.Icons.slot(type, px).
   B.Icons = { item: (id, px = 40) => icon('item', id, px), relic: (id, px = 40) => icon('relic', id, px), slot: (type, px = 40) => icon('slot', type, px), drawers: D, IT, RE, SLOT };
 })(typeof window !== 'undefined' ? window : globalThis);

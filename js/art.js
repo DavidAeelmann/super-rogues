@@ -5,14 +5,19 @@
 // frame gets its motion from code (breathing, hop, lunge, cast pulse). Official art ships in art/<hero>/ and is listed
 // in OFFICIAL; the Art Lab keeps a test version on this device only (localStorage) until it is sent for review.
 // A hero without art keeps the drawn model (models.js) and the painted-in-code splash (splash.js).
+// 
+// FILE GUIDE. REAL PICTURES for heroes (instead of the code-drawn models), from the folder art/. OFFICIAL = the pictures shipped with the game. The Art Lab (js/artlab.js) lets a player test his own pictures on this device and send them for review.
+//   A hero can have a splash picture (cards and banners) and an animation sheet for the battle (rows: idle, walk, attack, ability, death). cutSheet / cutCards cut a sheet into frames and remove the background. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
+  // WHAT: the animation names: ANIMS (a sheet has one row per animation); POSES = the older one-row sheets. IDLE_FPS = frames per second of the idle loop.
   const POSES = ['idle', 'move', 'attack', 'cast'];            // the old one-row sheet: one frame per pose
   const ANIMS = ['idle', 'move', 'attack', 'cast', 'death'];   // an animation sheet: one row per animation
   const IDLE_FPS = 5, MAX_FRAMES = 16;
   // key: { splash: 'art/<key>/splash.jpg', crop: { x, y, z }, anims: { idle: ['art/<key>/idle-1.webp', ...], ... },
   //        axs: { idle: [0.5, ...] }, flip, scale }
   const seq = (key, k, n) => Array.from({ length: n }, (_, i) => `art/${key}/${k}-${i + 1}.webp`);
+  // WHAT: the pictures that ship with the game: for each hero key, where its splash and animation frames are (art/<key>/...). Add a hero's art by adding its entry here and the files in art/.
   const OFFICIAL = {
     // review #45 (David): Ulfrik (the "Red-Hand" art). His sheet had 5 rows: idle 5, walk 8, attack 7, a charge 6 and a
     // spin 7 frames; his ability (Crimson Spin) plays the charge and then the spin, so every frame is used
@@ -62,6 +67,7 @@
     harlequin: { splash: 'art/harlequin/splash.jpg', crop: { x: 0.45, y: 0.22, z: 1.2 }, flip: false, scale: 1 },   // Serra
     deadshot: { splash: 'art/deadshot/splash.jpg', crop: { x: 0.45, y: 0.22, z: 1.2 }, flip: false, scale: 1 },   // Sokol
   };
+  // WHAT: the pictures a player is testing on this device (browser memory). live = pictures currently mounted, subs = who listens for changes.
   const LOCAL = 'balance.artlab';
   const live = {}, subs = [], cache = {};
   let ver = 0;
@@ -71,6 +77,7 @@
   const changed = key => subs.forEach(f => { try { f(key); } catch (_) {} });
 
   // animations of a def (the old { poses, ax } format = one frame per pose)
+  // WHAT: the animation frames of a definition, in the shape the renderer needs.
   function animsOf(def) {
     const anims = {}, axs = {};
     if (def && def.anims) {
@@ -81,6 +88,7 @@
     return { anims, axs };
   }
   // decode every picture of a hero's art; it is used once all of them are ready
+  // WHAT: loads a picture definition (official or local) into memory: loads the images, cuts the frames, announces when ready.
   function mount(key, def, from) {
     if (typeof Image === 'undefined' || !def) { delete live[key]; return; }
     const { anims, axs } = animsOf(def);
@@ -101,13 +109,17 @@
     }
   }
   // what a hero shows when nothing is being previewed: this device's test art, else the official art, else nothing
+  // WHAT: drops a hero's local test pictures and goes back to the official ones (or the code-drawn model).
   function reset(key) { const L = lsGet(); if (L[key]) mount(key, L[key], 'local'); else if (OFFICIAL[key]) mount(key, OFFICIAL[key], 'official'); else { delete live[key]; changed(key); } }
+  // WHAT: at start-up, mounts the official pictures and any local ones.
   function boot() { const L = lsGet(); for (const k of new Set(Object.keys(OFFICIAL).concat(Object.keys(L)))) if (B.HEROES && B.HEROES[k]) reset(k); }
 
+  // WHAT: the picture set of a hero if it is loaded, else null (then the code-drawn model is used). sprite() = the same but only when it has an idle animation.
   const get = key => { const a = live[key]; return a && a.ready ? a : null; };
   function sprite(key) { const a = get(key); return a && a.anims.idle && a.anims.idle.length ? a : null; }
 
   // the splash picture cropped for a card: 'bust' = a square around the face (focus x/y, zoom z), 'full' = the whole figure
+  // WHAT: the splash picture of a hero cropped to w x h for cards (mode "full" or "bust").
   function splash(key, w, h, mode) {
     const a = get(key); if (!a || !a.splash || typeof document === 'undefined') return null;
     const id = key + ':' + a.v + ':' + w + 'x' + h + ':' + mode;
@@ -126,6 +138,7 @@
 
   // which animation and frame a pose shows. Looping animations (idle, walk) cycle; one-shot ones (attack, ability,
   // death) run first to last frame over the action. Each frame is held, then blends into the next during its last 40%.
+  // WHAT: which animation frame to show for a pose and how far along it is.
   function frameOf(a, pose) {
     const A = a.anims;
     let k = 'idle', ph = 0, loop = true;
@@ -153,6 +166,7 @@
   }
 
   // the battle figure: feet on the hex; frames from the sheet, plus motion from code where the sheet has one frame
+  // WHAT: draws a hero from his picture frames in a pose (blending between frames).
   function draw(c, a, x, y, S, pose, tint) {
     const d = a.def, fr = frameOf(a, pose), frames = a.anims[fr.k], axs = a.axs[fr.k] || [];
     const axOf = i => clamp(axs[i] != null ? axs[i] : 0.5, 0, 1);
@@ -188,6 +202,7 @@
   // on the border; pixels close to it turn transparent, with soft edges. Figures are found row by row (a row with
   // something in it, then the figures inside it, left to right). Text labels ("IDLE", "WALK") and specks are dropped;
   // a detached bit (a sword tip) joins the nearest figure.
+  // WHAT: cuts a pose sheet picture into separate frames by finding the sprites on the background colour (tol = how different from the background counts as sprite).
   function cutSheet(im, tol = 60) {
     const k = Math.min(1, 2400 / im.naturalWidth, 2400 / im.naturalHeight);
     const W = Math.max(1, Math.round(im.naturalWidth * k)), H = Math.max(1, Math.round(im.naturalHeight * k));
@@ -306,6 +321,7 @@
   // gone; cards are the blocks of that colour, row by row. Each card is keyed on its own colour with its border trimmed,
   // and all the frames of a row keep the same size and place, so the figure moves inside the frame exactly as drawn
   // (a leap stays a leap, a thrown bomb flies). Returns null when the sheet has no cards.
+  // WHAT: the same for splash cards: finds the card pictures inside a sheet.
   function cutCards(px, A, W, H, tol, bgName) {
     const mid = arr => arr.slice().sort((p, q) => p - q)[arr.length >> 1] || 0;
     const q4 = i => (px[i] >> 4) << 8 | (px[i + 1] >> 4) << 4 | px[i + 2] >> 4;
@@ -397,6 +413,7 @@
   // `map` (review #45) says what each row is ('idle', 'move', 'attack', 'cast', 'death' or 'none'); rows given the same
   // animation are joined in order (a charge row + a spin row = one ability)
   function defaultMap(res) { return res.rows.map((_, i) => ANIMS[i] || 'none'); }
+  // WHAT: builds a picture definition from a cut sheet and the row-to-animation map.
   function animsDef(res, map) {
     const o = { anims: {}, axs: {} }, r3 = v => Math.round(v * 1000) / 1000;
     if (res.rows.length === 1) res.rows[0].slice(0, 4).forEach((f, i) => { o.anims[POSES[i]] = [f.url]; o.axs[POSES[i]] = [r3(f.ax)]; });
@@ -407,10 +424,12 @@
     return o;
   }
   // a long ability animation plays for longer (2 ticks per frame) than the drawn model's 14-tick cast
+  // WHAT: how long the cast animation of a hero lasts, in ticks (so a spell lands when the animation does). deathTicks = same for the death animation.
   function castTicks(key) { const a = sprite(key), n = a && a.anims.cast ? a.anims.cast.length : 0; return n > 7 ? Math.min(32, n * 2) : 14; }
   // a death animation keeps the fallen figure on the board a little longer (the drawn model fades in 12 ticks)
   function deathTicks(key) { const a = sprite(key), n = a && a.anims.death ? a.anims.death.length : 0; return n > 1 ? Math.min(30, Math.max(12, n * 2)) : 12; }
   // a picture file -> a data URL no bigger than `max` px on its long side
+  // WHAT: makes a picture smaller before it is stored or sent (keeps the size under the limits).
   function shrink(im, max, type, q) {
     const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), cv = document.createElement('canvas');
     cv.width = Math.max(1, Math.round(im.naturalWidth * k)); cv.height = Math.max(1, Math.round(im.naturalHeight * k));
@@ -418,6 +437,7 @@
     return cv.toDataURL(type || 'image/jpeg', q || 0.9);
   }
 
+  // WHAT: the public list.
   B.Art = {
     POSES, ANIMS, MAX_FRAMES, OFFICIAL, boot, get, sprite, splash, draw, frameOf, cutSheet, animsDef, defaultMap, animsOf, castTicks, deathTicks, shrink, reset,
     preview(key, def) { mount(key, def, 'preview'); },

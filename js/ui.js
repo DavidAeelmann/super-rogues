@@ -1,27 +1,44 @@
 // UI: DOM screens + battle loop. No inline handlers (CSP): every button has data-act, handled by one listener.
+// 
+// FILE GUIDE (read this first). This file draws EVERY screen and reacts to every tap. The rules live in run.js, the fights in sim.js, the drawing of the board in render.js.
+//   How it works: one function render() looks at the state of the game (run.phase, which screen) and writes the HTML of ONE screen into #screen by calling a *HTML() function
+//   (titleHTML, startHTML, mapHTML, deployHTML, battleHTML, resultHTML, shopHTML, eventHTML, gauntletHTML, overHTML...). Buttons never have code inside: each one has data-act="name"
+//   and one listener at the bottom calls ACT[name]. So to change what a button does: find its data-act in the HTML, then the same name in the ACT = { ... } table near the end.
+//   To change a TEXT you see on screen: search for it in this file (or in data.js for names of heroes, items, powers and events).
+//   Rule of the game owner: no screen may need scrolling at 390 x 740 and 360 x 640, and no text may be cut off (the Chrome tests check it: tools/tests/telas.mjs).
+//   Sections, top to bottom: tiny helpers (store, esc, icons) -> account / XP / league -> text helpers (fmt colours keywords, ability scaling) -> header and render() ->
+//   title + start -> map -> level up -> deploy + battle -> result -> Gauntlet -> shop -> event -> game over -> board input -> battle loop -> modals + toast -> gear (items) screen ->
+//   suggestion box -> ladder and profiles -> crown shop -> how to play -> review notice -> ACT table -> boot. The index of the whole project is CODEMAP.md.
 (function () {
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
+  // WHAT: I('name') = the SVG of an interface icon (js/uiicons.js). $ = document.querySelector. esc() makes a text safe to put in HTML: ALWAYS use it for text that came from a player.
   const I = (n, c) => B.UI ? B.UI.i(n, c) : '';   // v49 (review #61): the interface icons (js/uiicons.js)
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // WHAT: the browser's small memory (localStorage), always safe: store.get(key, default), store.set(key, value), store.del(key). Saved game, name, speed and tutorial flags live here.
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
     del(k) { try { localStorage.removeItem(k); } catch (_) {} },
   };
+  // WHAT: the main state of this file. run = the saved game object (null = none); screen = 'title' | 'run' | 'battle' | 'result'; battle = the fight being played; view = the drawn board; preview = the static board shown while deploying.
+  // ui = small screen state that is NOT saved (selected hero, open info, speed, the last result, modal...).
   const SAVE = 'balance.run.v1';
   let run = store.get(SAVE, null);
   let screen = 'title';
   let battle = null, view = null, preview = null;
   const ui = { startPick: [], gsel: null, selUid: 0, info: null, result: null, speed: store.get('balance.speed', 1), drag: null, modal: null };
+  // WHAT: writes the run to the browser memory. Call it after every change of the run.
   const save = () => { if (run) store.set(SAVE, run); };
   // player identity for Elo (reviews #3 #4): a random id kept in this browser
+  // WHAT: this browser's anonymous player id (made once). The server only ever knows players by this, never by name or email.
   function pid() {
     let id = store.get('balance.pid', '');
     if (!/^[a-f0-9]{32}$/.test(id)) { const a = new Uint8Array(16); crypto.getRandomValues(a); id = [...a].map(x => x.toString(16).padStart(2, '0')).join(''); store.set('balance.pid', id); }
     return id;
   }
   const myName = () => store.get('balance.name', '') || '';
+  // WHAT: ACCOUNT. acct = what the server told us about this player (crowns, perks, level, league, Elo). setAcct() copies the server answer in and shows toasts for new XP; hasPerk() = does he own a Crown Shop perk.
   const setElo = (r, quiet) => { if (r && r.elo != null) store.set('balance.elo', r.elo); if (r && r.league != null) store.set('balance.league', { league: r.league, lp: r.lp }); setAcct(r, quiet); };
   // v27 (owner + review #25 by David): the account. Crowns (earned the first time you reach a league each season, and
   // from invited friends), Crown Shop unlocks, the King Tier, profiles and the invite link. The server is the source of
@@ -31,6 +48,7 @@
   const hasPerk = id => B.hasPerk(acct.perks, id);
   const isDefaultName = n => !n || /^Player [a-f0-9]{4}$/.test(n);
   const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account'];
+  // WHAT: copies the server's account answer into acct, remembers it, and shows what XP was earned.
   function setAcct(r, quiet) {
     if (!r || typeof r !== 'object') return;
     for (const k of ACCT_KEYS) if (r[k] != null) acct[k] = r[k];
@@ -41,6 +59,7 @@
   }
   // v30 (review #28, PC boy): account XP and level. A toast for what was earned; a level up names what it unlocked
   const unlockName = u => (u.kind === 'hero' ? HEROES[u.id] : u.kind === 'item' ? ITEM[u.id] : RELIC[u.id]).name;
+  // WHAT: the small "+N XP" message when account XP is earned (and "Level up! New hero: ..." when a level unlocks something).
   function xpToast(list) {
     const n = list.reduce((a, g) => a + g.xp, 0), up = list.filter(g => g.up).pop();
     const u = up && B.UNLOCKS.find(x => x.lvl === up.level);
@@ -55,6 +74,7 @@
   const nextUnlock = lvl => B.UNLOCKS.find(u => u.lvl > lvl) || null;
   const capFirst = t => String(t).charAt(0).toUpperCase() + String(t).slice(1);
   function logGameXp(r) { if (run && r && Array.isArray(r.xp) && r.xp.length) { (run.xpLog = run.xpLog || []).push(...r.xp.map(g => ({ why: g.why, xp: g.xp | 0, k: g.k || 'first' }))); } }
+  // WHAT: the account level card (level, XP bar, what the next level unlocks).
   function levelCardHTML() {
     const L = B.levelProgress(acct.axp || 0), u = nextUnlock(L.lvl);
     return `<button class="lvcard" data-act="player-tab" aria-label="Account level ${L.lvl}: see the rewards">
@@ -72,6 +92,7 @@
     return XP_ORDER.concat(Object.keys(by).filter(k => !XP_ORDER.includes(k))).filter(k => by[k]).map(k => { const c = by[k];
       c.name = XP_NAME[k] || (c.n === 1 ? c.why[0].replace(/ beaten$/, '').replace(/ won$/, '') : k === 'duel' ? c.n + ' duels' : capFirst(k)); return c; });
   }
+  // WHAT: the list of what earned XP at the end of a game, drawn on the game-over screen; animXp counts it up.
   function xpPanelHTML() {
     const log = run.xpLog || [], got = log.reduce((a, g) => a + g.xp, 0), to = acct.axp || 0, from = Math.max(0, to - got);
     const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
@@ -116,16 +137,20 @@
     }
     const nx = el.querySelector('.xpnext'); if (nx) { nx.classList.add('loom'); sfx('star'); }
   }
+  // WHAT: asks the server for this player's account (api/player.js, op "me") and stores it.
   async function loadAcct() { try { setAcct(await Net.post('player', { op: 'me', pid: pid() })); } catch (_) {} }
   const refCode = () => store.get('balance.ref', '') || undefined;
   // the King Tier's Royal board (on by default for Kings; they can switch back to the classic stone)
+  // WHAT: the royal board colours are a King Tier perk; this switches the renderer to them when owned.
   function applySkin() { if (B.Render) B.Render.skin = hasPerk('king') && store.get('balance.skin', 'royal') === 'royal' ? 'royal' : null; }
   // a player's name anywhere in the game opens their profile
+  // WHAT: a player name that opens his profile when tapped. crowns() draws the crown count.
   const plink = (name, code) => code ? `<button class="plink" data-act="profile" data-arg="${esc(code)}" title="Open profile">${esc(name)}</button>` : esc(name);
   const crowns = n => `<span class="crn">👑 ${n | 0}</span>`;
   // review #21 (David): leagues. A shield in the league's colours; pips for Bronze..Platinum, a gem for Diamond, a star
   // for Celestial.
   let embN = 0;
+  // WHAT: LEAGUES (Bronze to Celestial). emblem() draws the badge of a league; leagueLine shows name + points.
   function emblem(i, px) {
     const l = B.LEAGUES[i] || B.LEAGUES[0], g = 'lg' + (++embN);
     const mark = i >= 5 ? '<path d="M32 18 l4 9 10 1 -7.5 6.5 2.5 10 -9-5.5 -9 5.5 2.5-10 -7.5-6.5 10-1z" fill="#fff" opacity=".92"/>'
@@ -143,18 +168,21 @@
     return `${when}<p class="lgline">${emblem(lg.league, 20)}<span class="${d > 0 ? 'win' : d < 0 ? 'lose' : 'dim'}">${d > 0 ? '+' : ''}${d} league point${Math.abs(d) === 1 ? '' : 's'}</span><span class="dim">· ${leagueName(lg.league)} ${leagueProgress(lg)}</span></p>`;
   }
 
+  // WHAT: the one-line description of each monster ability, for the enemy cards.
   const MOB_ABIL = {
     smash: 'Smash: a heavy blow that stuns its target.', mend: 'Mend: heals the weakest ally.', explode: 'Explodes when next to an enemy.',
     wall: 'Shield Wall: shields nearby allies.', curse: 'Curse: damages, silences and slows.', slam: 'Slam: stuns everything adjacent.',
     imps: 'Summons two imps.', cleave: 'Cleave: hits and stuns everything adjacent.', nova: 'Void Nova: stuns everything within 2 hexes.',
   };
   // review #12: every portrait is splash art (bust for small squares, full figure for banners)
+  // WHAT: HERO PICTURES. por(key, px) = the portrait (art from js/splash.js or the code-drawn model from js/models.js); img() wraps it in an <img> tag; ico() draws an item or power icon.
   const por = (key, px = 44, full) => full ? B.Splash.image(key, px, Math.round(px * 1.3), 'full') : B.Splash.image(key, px, px, 'bust');
   const img = (key, px, cls = 'por') => `<img class="${cls}" src="${por(key, px)}" alt="">`;
   const EMBLEM = '<svg class="emblem" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 9v45M20 56h24M9 17h46"/><path d="M9 17 3 35M9 17l6 18M55 17l-6 18M55 17l6 18"/></g><path d="M1 35a8 6 0 0 0 16 0zM47 35a8 6 0 0 0 16 0z" fill="currentColor"/><circle cx="32" cy="8" r="4" fill="currentColor"/></svg>';
   const ico = (kind, id, px = 36, cls = 'ico') => `<img class="${cls}" src="${kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px)}" alt="">`;
   // review #10 (David): readable at a glance. fmt() colours game terms and bolds numbers in any description;
   // durations ("1.5s") are italic. It tokenises the RAW text and escapes every piece, so it is XSS-safe.
+  // WHAT: TEXT COLOURS. fmt(text) wraps numbers and key words (damage, heal, stun, burn, mana...) in coloured spans so descriptions are easy to read. KW is the list of words and their colour class (CSS .kw-*).
   const KW = [
     ['kw-atk', 'attack speed|attacks?|physical|damage|AD'], ['kw-ap', 'magic damage|magic|ability power|abilities|ability|AP'],
     ['kw-def', 'magic resist|armor|MR|shields?|invulnerable|untargetable|dodge'], ['kw-hp', 'max HP|HP|heals?|healing|healed|regenerates?|regen|lifesteal|revives?|resurrect\\w*'],
@@ -164,6 +192,7 @@
   ];
   const KW_RE = new RegExp('([+\\-−]?\\d+(?:\\.\\d+)?(?:%|x|s\\b)?)|\\b(' + KW.map(k => k[1]).join('|') + ')\\b', 'gi');
   const KW_CLS = w => { for (const [c, re] of KW) if (new RegExp('^(?:' + re + ')$', 'i').test(w)) return c; return ''; };
+  // WHAT: turns a plain description into coloured HTML (see KW above). Use it for any ability / item / power text.
   function fmt(text) {
     const t = String(text == null ? '' : text); let out = '', last = 0, m;
     KW_RE.lastIndex = 0;
@@ -175,6 +204,7 @@
     return out + esc(t.slice(last));
   }
   // stat chips: coloured, with a symbol, instead of "HP 600 · ATK 58 · ..."
+  // WHAT: the row of coloured stat chips (health, attack, armor, speed...) shown on hero cards.
   function chips(d, full) {
     const c = (cls, sym, v, tip) => `<span class="stat ${cls}" title="${tip}"><i>${sym}</i>${v}</span>`;
     return `<span class="stats-row">${c('s-hp', '❤', d.hp, 'Health')}${c('s-atk', '⚔', d.atk, 'Attack (AD): physical abilities deal a % of it')}${full ? c('s-ap', '✦', d.ap, 'Ability power (AP): magic abilities, burns and heals deal a % of it. 100 at Lv 1, +30 per level') : ''}${c('s-arm', '⛨', d.armor, 'Armor')}${c('s-mr', '◈', d.mr, 'Magic resist')}${c('s-as', '»', d.as, 'Attacks per second')}${c('s-rng', '➶', d.range, 'Range (hexes)')}${d.crit ? c('s-crit', '✸', d.crit, 'Crit chance') : ''}${d.dodge ? c('s-dodge', '↯', d.dodge, 'Dodge') : ''}</span>`;
@@ -186,6 +216,8 @@
   // damage; A = % of AD as magic damage; B = burn per second, % of AP, for 3s; BA = the same with AD; H = heal, % of AP;
   // X = heal, % of own max HP; S = shield, % of own max HP; D = % of the target's max HP per second; Z = a sentence.
   const lvF = d => 1 + 0.15 * ((d.lvl || 1) - 1);
+  // WHAT: HOW ABILITIES SCALE. One entry per ability id: a function that lists the parts of its damage (P = % of attack as physical, M = % of AP as magic, B = burn, H = heal, S = shield...) so the hero card can say "scales with AD / AP".
+  // When you add an ability to sim.js you must add its entry here, or the hero card shows nothing (the Chrome test "every hero ability explains how it scales" fails).
   const SCALE = {
     bulwark: ab => [['S', ab.shield, 'on himself'], ab.allyShield && ['Z', `allies within 2 hexes get a shield of ${pct(ab.shield * ab.allyShield)} of his max HP`], ab.burst && ['Z', `adjacent enemies take ${pct(ab.burst)} of the shield as magic damage`]],
     shadowstep: ab => [['P', ab.dmg, 'to the weakest enemy, can crit']],
@@ -230,6 +262,7 @@
     starfall: ab => [['MX', [ab.dmg, ab.apdmg], `where the star lands, ${ab.radius} hex, after ${Math.max(0.3, ab.delay)}s`], ab.shards && ['Z', `${ab.shards} shards hit random enemies for 50% of it`], ab.veil && ['Z', `allies within 2 hexes get a shield of ${pct(ab.veil)} of their max HP`]],
   };
   // d = { abil, ab, atk, ap, hp, lvl, name } from Run.heroDef or a unit in the fight
+  // WHAT: runs the SCALE entry of a hero and fills in the numbers for his current level.
   function scaleParts(d) {
     const S = SCALE[d.abil]; if (!S) return [];
     const n = x => Math.round(x);
@@ -244,12 +277,14 @@
     });
   }
   const SCALE_ICON = { P: '⚔', M: '✦', MX: '✦', A: '⚔', B: '🔥', BA: '🔥', H: '✚', X: '✚', S: '🛡', D: '🧪', Z: '•' };
+  // WHAT: draws the "How it scales" list under an ability.
   function scalingHTML(d, compact) {
     const parts = scaleParts(d); if (!parts.length) return '';
     const head = compact ? '' : `<div class="scal-h">How it scales <span class="dim">now: ⚔ ${Math.round(d.atk)} AD · ✦ ${Math.round(d.ap)} AP</span></div>`;
     return `<div class="scal ${compact ? 'compact' : ''}">${head}<ul>${parts.map(p => `<li class="sk-${p.k}"><i>${SCALE_ICON[p.k]}</i><span>${p.t}</span></li>`).join('')}</ul></div>`;
   }
   // "scales with AD · AP · max HP" under a hero's name (shops, start)
+  // WHAT: the small "scales with AD · AP" label on hero cards.
   function scaleTag(key) {
     const h = HEROES[key], S = SCALE[h.abil]; if (!S) return '';
     const ks = new Set(S(h.ab).filter(Boolean).map(p => p[0])), w = [];
@@ -258,6 +293,7 @@
     if (['S', 'X'].some(k => ks.has(k)) || h.abil === 'mirror') w.push('<span class="kw-hp">max HP</span>');
     return w.length ? `<span class="scaletag">scales with ${w.join(' · ')}</span>` : '';
   }
+  // WHAT: item and power labels: rarity colours, the "Rare weapon" tag, the set line, the order of the doll slots, the map node icons, shop names.
   const TIER_COLOR = {}; for (const r of B.RARITIES) TIER_COLOR[r.id] = r.color;
   // itemization v16: "Legendary weapon" under the name, and the set an item belongs to
   const itemTag = it => `<span class="itag" style="color:${TIER_COLOR[it.tier]}">${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}</span>`;
@@ -272,6 +308,7 @@
   const EV_RAR = { uncommon: 'Uncommon', rare: '★ Rare event' };
 
   // ------------------------------------------------------------------ header
+  // WHAT: the top bar (gold, day, Team button, review notice, menu). Called by render() and after gold changes.
   function header() {
     const h = $('#top');
     if (!run || screen === 'title') {
@@ -292,6 +329,7 @@
   }
   // v42 (review #51, David: "more dopamine hits"): sounds (js/sfx.js) with a switch, and a gold counter that counts up or
   // down with a bump and a "+6" whenever the gold changes. After a won fight it waits for the coins to fly in.
+  // WHAT: sound button, sfx() plays a named sound (js/sfx.js), shownGold / animGold animate the gold counter.
   const soundBtn = () => `<button class="sndbtn ibtn" data-act="sound" aria-label="Sound ${B.Sfx && B.Sfx.on ? 'on' : 'off'}" title="Sound">${I(B.Sfx && B.Sfx.on ? 'sound' : 'mute')}</button>`;
   const sfx = (n, a) => { if (B.Sfx) B.Sfx.play(n, a); };
   const shownGold = () => ui.goldHold != null ? ui.goldHold : run.gold;
@@ -303,6 +341,8 @@
   }
 
   // ------------------------------------------------------------------ screens
+  // WHAT (the heart of the UI): decides which screen to show from the state (run.phase, screen) and writes its HTML into #screen. Also plays the entrance animation and clears leftovers when the screen changes.
+  // Call render() after changing the state to redraw. Things that must NOT survive a screen change (open descriptions, selections) are reset right at its top.
   function render() {
     header();
     const m = $('#screen');
@@ -328,12 +368,14 @@
     if (screen === 'title' || !run) startTrailer();
     autoGear();
   }
+  // WHAT: a short name for "which screen is this" (phase + step + status). render() compares it with the previous one to know the screen really changed.
   function screenKey() {
     if (screen === 'title' || !run) return 'title';
     if (screen !== 'run') return screen;
     if (run.pending.length && run.phase !== 'deploy') return 'level:' + run.pending[0].uid + ':' + run.pending[0].lvl;
     return run.phase + (run.phase === 'start' ? ui.startStep || 1 : '') + ':' + run.step + ':' + (run.g ? run.g.round + ':' + run.g.status : '') + ':' + (run.cur && run.cur.pick != null ? 'pick' : '') + (run.cur && run.cur.done ? 'done' : '');
   }
+  // WHAT: sounds and confetti played when a new screen appears (level up, event result).
   function onEnter(key) {
     if (!B.Juice) return;
     if (key.startsWith('level:')) { sfx('levelup'); const el = $('.lufull'); if (el) setTimeout(() => B.Juice.confettiAt(el, 50), 150); }
@@ -348,7 +390,9 @@
   // icons. Just a play button. Beneath it put the board with random teams fighting mobs, refreshing when fight is over.
   // Like a trailer. While old run is on ... small white flag beneath continue game button saying give up. A run doesnt
   // count as started unless hero and relic are chosen"): a game still picking its hero and relic shows Play, not Continue
+  // WHAT: the SUPER ROGUES logo.
   const logoHTML = () => `<h1 class="logo-big" aria-label="Super Rogues">${B.UI ? B.UI.mark('lg') : ''}<span class="wm"><span class="w1">Super</span><span class="w2">${[...'ROGUES'].map((c, k) => `<i style="--k:${k}">${c}</i>`).join('')}</span></span></h1>`;
+  // WHAT: the start page: the logo, the Play / Continue button, the trailer board, the menu button.
   function titleHTML() {
     const has = run && run.phase !== 'over' && run.phase !== 'start';
     return `<section class="title home">
@@ -362,6 +406,7 @@
     </section>`;
   }
   // the menu sheet of the landing: every other place of the game, one tap each
+  // WHAT: the menu sheet opened from the start page (how to play, rewards, profile, crown shop, ladder, balance stats, art lab, sound, suggestions). Add a row here + a data-act in ACT for a new item.
   function homeMenuHTML() {
     const L = B.levelProgress(acct.axp || 0), u = nextUnlock(L.lvl), on = B.Sfx && B.Sfx.on;
     const row = (act, icon, t, s) => `<button class="mrow" data-act="${act}">${I(icon)}<span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span>${I('arrow', 'chev')}</button>`;
@@ -377,6 +422,7 @@
       ${row('suggest', 'bulb', 'Suggest a change', 'Help build the game')}</div>`;
   }
   // the trailer: three random heroes against a random fight, played with no sound; a new one starts when it ends
+  // WHAT: the TRAILER under the start page: three random heroes fight a random fight with no sound; when it ends a new one starts. trailerWorld builds it, trailerLoop plays it.
   const trailer = { W: null, view: null, cv: null, raf: 0, last: 0, acc: 0, overAt: 0, end: null };
   function trailerWorld() {
     const r = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()) });
@@ -407,16 +453,19 @@
   // v47 (review #58, David: "make every decision understandable in under 2 seconds ... showing consequences instead of
   // mechanics ... hide complexity behind taps"): quick views (start, shops) say what an ability does without the
   // "90% AP" formulas; the hero card in Team keeps every number
+  // WHAT: plainAb() shortens an ability description for small cards (removes the exact % numbers).
   const ABTOK = '\\d+(?:\\.\\d+)?% (?:AD|AP)(?: \\+ \\d+(?:\\.\\d+)?% (?:AD|AP))?';
   const AB_RX = [[/, each with [^.;]*? as attack/g, ''], [new RegExp(`(heal(?:s|ing)?(?: \\()?)(?: for)? ?${ABTOK} ?`, 'g'), '$1 '],
     [new RegExp(` (?:for|of) ${ABTOK}(?! (?:as |physical|magic|true|damage|\\+))`, 'g'), ''], [new RegExp(`(?:an extra )?${ABTOK} (?:as )?(?=(?:physical|magic|true|damage)\\b)`, 'g'), m => /^an extra/.test(m) ? 'extra ' : ''],
     [new RegExp(ABTOK, 'g'), 'damage'], [/\s+([.,;)])/g, '$1'], [/\(\s+/g, '('], [/\s{2,}/g, ' ']];
   const plainAb = s => AB_RX.reduce((t, [rx, to]) => t.replace(rx, to), String(s || '')).trim();
+  // WHAT: the ability block of a hero card: name, description, how it scales.
   function abilHTML(h, plain) {
     const d = plain ? plainAb(h.abDesc) : String(h.abDesc || ''), m = d.match(/^Passive(?: \(([^)]+)\))?:\s*(.*?)\s*Active:\s*(.*)$/);
     if (plain && m) return `<b class="abname">${esc(h.abName)}</b> ${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}`;   // quick view: what it does when it fires
     return `<b class="abname">${esc(h.abName)}</b>` + (m ? `<span class="abl"><i class="abk">Passive</i>${m[1] ? `<b>${esc(m[1])}</b>: ` : ''}${fmt(m[2])}</span><span class="abl"><i class="abk act">Active</i>${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}</span>` : ` ${fmt(d)}`);
   }
+  // WHAT: a hero card (portrait, role, short line, details button) used on the start screen.
   function heroCard(key, extra = '') {
     const h = HEROES[key];
     return `<div class="hcard">
@@ -427,7 +476,9 @@
   // review #22 (David): the game starts with 1 hero and 1 relic: pick one of each (3 offered).
   // v45 (review #56): two short steps instead of one busy screen. Step 1: tap a hero (its ability shows under the three,
   // no stat table), then Next. Step 2: the three relics with what they do written on them, then Start.
+  // WHAT: START SCREENS. Step 1 pick a hero, step 2 pick a starting power, step 3 fight. stepsHTML draws the 1-2-3 header; startHTML draws the current step.
   const stepsHTML = s => `<ol class="ssteps">${['Hero', 'Power', 'Fight!'].map((t, i) => `<li class="${i + 1 < s ? 'done' : i + 1 === s ? 'on' : ''}"><i>${i + 1 < s ? '✓' : i + 1}</i>${t}</li>`).join('')}</ol>`;
+  // WHAT: the start flow screens (pick your first hero, pick a power).
   function startHTML() {
     const relics = run.relicOffer || [], n = ui.startPick.length;
     if (ui.startStep === 2 && n === CFG.startHeroes && relics.length) {
@@ -447,22 +498,27 @@
       <div class="bar"><button class="primary big" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${n === CFG.startHeroes ? (relics.length ? 'Next ▶' : 'Start the game!') : 'Tap a hero'}</button></div></section>`;
   }
 
+  // WHAT: the "path" sheet: the days of the run as a track (fight, shop/event, boss, last shop, Gauntlet) with where you are.
   function pathHTML() {
     return `<div class="shead"><b>🗺 Your journey</b><button data-act="close">✕</button></div>${trackHTML()}
       <ul class="plegend"><li>${I('swords')} Fight</li><li>${I('help')} Shop or event</li><li>${I('skull')} Boss</li><li>${I('cart')} Last shop</li><li>${I('trophy')} Gauntlet</li></ul>`;
   }
+  // WHAT: the little progress track shown above the map.
   function trackHTML() {
     return `<div class="track">${Run.seqOf(run).map((t, i) => `<span class="node ${i < run.step ? 'done' : i === run.step ? 'cur' : ''} ${t === 'B' ? 'boss' : ''}" title="${t}">${NODE_ICON[t]}</span>`).join('')}</div>`;
   }
+  // WHAT: the list of enemies of a fight as small chips.
   function enemyList(f) {
     const cnt = {};
     for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); cnt[k] = (cnt[k] || 0) + 1; }
     return Object.keys(cnt).map(k => { const key = k.replace('*', ''), m = B.MOBS[key] || B.BOSSES[key]; return `<span class="en ${k.endsWith('*') ? 'elite' : ''}">${img(key, 22, 'por sm')}${esc(m.name)}${cnt[k] > 1 ? ' ×' + cnt[k] : ''}${k.endsWith('*') ? ' ★' : ''}</span>`; }).join(' ');
   }
+  // WHAT: one big option card of the map (a fight, a shop or an event) with its banner, title, body and reward.
   function bannerHTML(i, kind, emblem, title, body, reward) {
     return `<button class="banner b-${kind}" data-act="choose" data-arg="${i}"><span class="rod"></span><span class="emb">${emblem}</span>
       <span class="bt">${title}</span><span class="bd">${body}</span>${reward ? `<span class="rw">${reward}</span>` : ''}</button>`;
   }
+  // WHAT: draws one option of the map (fight with its difficulty and reward, shop, event).
   function optHTML(o, i) {
     if (o.type === 'fight') {
       if (o.diff === 'boss') { const b = o.enemies.map(e => B.BOSSES[e.key]).find(Boolean); return bannerHTML(i, 'boss', img(b.key, 72, 'por emb-img'), esc(b.name), `<span class="small">${fmt(b.desc)}</span><span class="ens">${enemyList(o)}</span>`, '+' + o.gold + ' gold'); }
@@ -473,6 +529,7 @@
     return '';
   }
   // review #17: what an event did to the next fight, in words
+  // WHAT: text for a "next fight" modifier bought in an event.
   function modText(M) {
     const pc = v => (v > 0 ? '+' : '') + Math.round(v * 100) + '%', out = [];
     if (M.enemyHp) out.push(`enemies ${pc(M.enemyHp)} HP`);
@@ -485,6 +542,7 @@
     if (M.rewardGold) out.push(`win it for +${M.rewardGold} gold`);
     return out.join(', ');
   }
+  // WHAT: THE MAP SCREEN: the day, the next boss info, and the options to choose from (run.opts built by Run.advance).
   function mapHTML() {
     const t = Run.seqOf(run)[run.step];
     const title = t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';
@@ -492,6 +550,7 @@
       </div><aside class="mapside">${partyHTML()}</aside></section>`;
   }
   // review #18: the party under the map (levels, XP, worn items, relics) and the next boss, so each choice is informed
+  // WHAT: the party row (hero portraits with levels and items) shown under the deploy board and on the map.
   function partyHTML() {
     const heroes = run.heroes.map(h => {
       const next = h.lvl < CFG.maxLevel ? CFG.xpLevels[h.lvl + 1] : null, prev = CFG.xpLevels[h.lvl] || 0;
@@ -514,11 +573,13 @@
   // specialization path into a clear branching progression with the current choice highlighted and future nodes
   // subdued"): each power gets up to two playstyle tags read from what it does, and the path is a tree (two branches a
   // level; the ones you took in gold, today's pair glowing, later ones dim) with a fork from the branch you took
+  // WHAT: LEVEL UP. specTags gives each power option small tags (Heal, Summon, ...) read from its description; levelHTML shows the two powers to choose from (js/run.js chooseSpec applies the pick).
   const STYLE = [['Summon', 'ghost', /skeleton|turret|clone|summon|decoy|\bbees?\b|spawn|minion/i], ['Heal', 'heart', /heal|lifesteal|regenerat|revive|rises/i],
     ['Control', 'lock', /stun|root|slow|freez|taunt|blind|pull|push|knock|silence|hypno|charm|fear|longer/i], ['Tank', 'shield', /armor|\bMR\b|max HP|shield|invulnerab|untargetable|less damage|damage taken/i],
     ['Area', 'swords', /radius|every enemy|all enemies|adjacent|within \d+ hex|group|bounce|chain|splash|nearby|around|more enemies|more targets|\d+ targets/i],
     ['Speed', 'bolt', /attack speed|move speed|faster|sooner|dodge|blink|dash|mana|cooldown|twice|range/i], ['Damage', 'sword', /damage|crit|execut|burn|poison|bleed|\battack\b|\bAD\b|\bAP\b|strike|kill|double|\d+% more|more (?:knives|flasks|shots|arrows)/i]];
   const specTags = sp => { const t = STYLE.filter(x => x[2].test(sp.desc)).slice(0, 2); return (t.length ? t : [['Upgrade', 'star']]).map(([n, ic]) => `<span class="ptag pt-${n.toLowerCase()}">${I(ic)}${n}</span>`).join(''); };
+  // WHAT: the level-up screen: pick one of two powers for the hero that levelled.
   function levelHTML() {
     const p = run.pending[0], h = run.heroes.find(x => x.uid === p.uid), d = HEROES[h.key];
     const pair = d.specs[p.lvl - 2];
@@ -538,6 +599,7 @@
   }
 
   // review #18: the enemy roster on the deploy screen, grouped, with what each one does (positioning is the decision here)
+  // WHAT: the enemy roster shown while deploying (bosses and elites get a card, plain monsters small chips).
   function foesHTML(gau, f) {
     const groups = [];
     if (gau) for (const h of run.g.opp.team) groups.push({ key: h.key, n: 1, name: HEROES[h.key].name + ' Lv ' + h.lvl, what: HEROES[h.key].tag || HEROES[h.key].abName, peek: true });   // v53: a few words, More for the rest
@@ -582,6 +644,7 @@
     tutSpeedDisarm.h = () => { store.set('balance.tut.speedDismissed', true); const e = document.querySelector('.tutspeed'); if (e) e.remove(); tutSpeedDisarm(); };
     document.addEventListener('pointerdown', tutSpeedDisarm.h, true);
   }
+  // WHAT: THE DEPLOY SCREEN: the board where you drag your heroes, the formation line, the enemy roster, the Items button and the big Fight button.
   function deployHTML() {
     const gau = run.cur && run.cur.type === 'gauntlet';
     const f = run.cur;
@@ -599,6 +662,7 @@
     </section>`;
   }
   // v44: what a challenge pays
+  // WHAT: text of what a challenge fight pays.
   function winText(w) {
     const out = [];
     if (w.gold) out.push('+' + w.gold + ' gold');
@@ -611,6 +675,7 @@
   // review #40 (David): who gets what from the formation relics, from where the heroes stand right now
   // v42 (review #51, "cut needless text"): one chip per formation relic with how many heroes it reaches; the chip's
   // tooltip and a tap still give the full "who gets what"
+  // WHAT: the chips of formation powers (who gets what from where the heroes stand).
   function formHTML(W) {
     const got = W ? Sim.formation(W, 0) : [];
     return run.relics.filter(id => RELIC[id] && RELIC[id].form).map(id => {
@@ -622,6 +687,7 @@
   // review #18 (David: "another pass of the ui and battle ui ... pretty, functional, visible, engaging"): under the
   // board, a card per hero (HP and shield in numbers, mana bar named after the ability that glows when READY, status
   // badges, live damage with the leader crowned) and the enemy roster with its own HP bars and a count of who is left.
+  // WHAT: THE BATTLE SCREEN layout: top bar with speed buttons, the board canvas, the hero strip and the enemy strip. The numbers update live from the loop below.
   function battleHTML() {
     return `<section class="deploy battle">
       <div class="hud"><div id="bhud" class="hud-l"></div>
@@ -631,6 +697,7 @@
         <div class="bph"><b>Enemies</b><span id="ecount" class="dim small"></span></div><div class="estrip" id="estrip"></div></div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div></section>`;
   }
+  // WHAT: battle strips: dmgBy = damage done per hero, ccHTML = status badges (stun, slow...), stripHTML builds the hero cards and updateStrip refreshes their bars every few frames.
   const kfmt = n => n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(Math.round(n));
   // damage per hero, summons counted for their owner
   function dmgBy(W) { const d = {}; for (const u of W.units) { const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side === 0 && o.kind === 'hero') d[o.id] = (d[o.id] || 0) + (u.dmgDone || 0); } return d; }
@@ -669,6 +736,7 @@
   }
 
 
+  // WHAT: RESULT SCREEN pieces: eloLine, clock (m:ss), resultHTML (win or lose, stars, rewards, XP, details), celebrate (confetti and sounds).
   function eloLine(r) {
     if (r.pending) return '<p class="dim center">Updating your Elo…</p>';
     if (r.error) return `<p class="err center">${esc(r.error)}</p><p class="center"><button data-act="retry-elo">Try again</button></p>`;
@@ -678,6 +746,7 @@
   // review #25 (David #34: "redesign the after battle screen to be more intuitive, pretty and more info"): a banner
   // with what was fought and how long it took, every reward as a chip, then one card per hero (damage dealt with its
   // share, damage taken, kills, fallen or standing, XP) and the enemy line-up with who went down.
+  // WHAT: THE RESULT SCREEN after a fight or a duel: victory / defeat, stars, gold, XP per hero, prizes, Elo change and the Continue button.
   function resultHTML() {
     const r = ui.result, S = r.stats || {};
     const hs = r.xp.map(x => ({ x, h: run.heroes.find(q => q.uid === x.uid), s: S[x.uid] || { dmg: (r.dmg || {})[x.uid] || 0, taken: 0, kills: 0, alive: true } })).filter(o => o.h);
@@ -733,6 +802,7 @@
   // v42 (review #51, David: "more dopamine hits"): the rewards play in order. Confetti, the stars one by one, the gold
   // counting up and flying into the top bar, the XP bars filling, then the level ups and the MVP stamp. Every step is
   // written into r.fx, so a re-render mid-way (the Elo answer arriving) keeps what was already shown.
+  // WHAT: the victory / defeat flourish (stars, confetti, coins flying).
   async function celebrate(r) {
     if (r.fx) return;
     const fx = r.fx = {}, J = B.Juice, live = () => ui.result === r && screen === 'result';
@@ -762,6 +832,7 @@
   }
 
   // ---------------- gauntlet (reviews #3 #4 by David)
+  // WHAT: THE GAUNTLET. teamRow draws a team (heroes, items, powers) in a row; towerHTML the tower of floors with your token; gateForm the name form at the gate; gauntletHTML the intro, the match card and the end.
   function teamRow(team, relics) {
     // review #15: the ghost's items are shown hero by hero (they fight with them, like its relics)
     return `<div class="gteam">${team.map(h => `<div class="gh">${img(h.key, 56)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl}</span>
@@ -772,6 +843,7 @@
   // ghost that won at least k duels; above the last floor (the best ghost so far, `peak`) waits the crown. Your token
   // (your lead hero) stands on the floor you are fighting and climbs one floor, animated, after every win.
   const isReach = h => h.reach || h.name === 'Reached the Gauntlet';
+  // WHAT: the tower of floors (each floor = ghosts that fell there, the champion on top) with where you are.
   function towerHTML(g, mode) {
     const duels = g.history.filter(h => !isReach(h)), reach = g.history.find(isReach);
     const champion = g.status === 'champion', lost = g.status === 'lost';
@@ -801,11 +873,13 @@
     return `<div class="tower ${climb ? 'climb' : ''}">${rows.map((r, i) => r.replace('<div class="floor', `<div style="--n:${i};--rows:${rows.length}" class="floor`)).join('')}</div>`;
   }
   // v27: the ladder name is picked once, here; changing it later is a Crown Shop purchase
+  // WHAT: the form that enters the Gauntlet (asks the name, sends your team to the server as a ghost).
   function gateForm() {
     const named = acct.account && !isDefaultName(acct.name);
     return `<form class="stack" data-form="gauntlet">${named ? `<input type="hidden" name="name" value="${esc(acct.name)}"><p class="small center">You enter as <b>${esc(acct.name)}</b> <span class="dim">(name changes: 👑 Crown Shop)</span></p>`
       : `<input name="name" maxlength="16" placeholder="Your name on the ladder" value="${esc(myName())}" required><p class="small dim center">Pick it well: changing it later costs 👑 ${B.SHOP_ITEM.rename.price}.</p>`}<button class="primary big">Enter the Gauntlet</button></form>`;
   }
+  // WHAT: the Gauntlet screens: intro (gate), the match card (vs a ghost), and the end.
   function gauntletHTML() {
     const g = run.g;
     if (g.status === 'intro') {
@@ -829,6 +903,7 @@
         <p class="small vsline" title="${esc(def.trim())}">${o.status === 'champion' ? 'The reigning champion: beat it and the crown is yours.' : (o.own ? 'Your own old ghost. ' : '') + 'It lost on this floor (went ' + o.wins + '-1).'}</p>${teamRow(o.team, o.relics)}</div></div>
       <div class="bar"><button data-act="team">Team & items</button><button class="primary big" data-act="to-duel">Prepare the duel</button></div></section>`;
   }
+  // WHAT: SHOP. stockCard draws one product (hero, item or power with price); shopHTML draws the whole shop.
   function stockCard(s, i) {
     const dis = s.sold || run.gold < s.price || (s.kind === 'hero' && run.heroes.length >= Run.teamMax(run));
     let body = '';
@@ -841,6 +916,7 @@
     const shine = s.kind === 'item' && RANK(s.id) >= 3 ? ' shine' : s.kind === 'relic' ? ' shine soft' : '';
     return `<div class="card stock k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button></div>`;
   }
+  // WHAT: THE SHOP SCREEN (hero, item or power shop): the products, the reroll button, the Leave button.
   function shopHTML() {
     const c = run.cur, rc = Run.rerollCost(run);
     const note = c.kind === 'heroShop' ? `<p class="center"><span class="lockpill">Team ${run.heroes.length}/${Run.teamMax(run)}</span></p>` : '';
@@ -849,6 +925,7 @@
       <div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
   }
   // v44: what an event gave, as pictures (items, relics, a hero joining, gold, XP, boosts)
+  // WHAT: the pictures of what an event choice gave (gold, XP, item, power, hero).
   function gainsHTML(G) {
     if (!G || !G.length) return '';
     const one = g => {
@@ -864,11 +941,13 @@
     return `<div class="gains">${G.map(one).join('')}</div>`;
   }
   // v47 (review #58): "Sharpen: +10 attack to one hero" reads as a bold name and what it does, on two lines
+  // WHAT: formats an event choice label.
   function evLabel(t) {
     const m = String(t).match(/^([^:0-9]{2,32}):\s+(.+)$/);
     return m ? `<b class="evn">${esc(m[1])}</b><span class="eve">${fmt(m[2].charAt(0).toUpperCase() + m[2].slice(1))}</span>` : fmt(t);
   }
   // review #17: 3 choices with a visible price or risk; some ask you to pick the hero, item or item type they apply to
+  // WHAT: THE EVENT SCREEN: the story text and its choices (greyed out with the reason when you cannot take one), then the result.
   function eventHTML() {
     const e = EVENT[run.cur.id], chs = Run.eventChoices(run);
     const head = `<section class="event ev-${e.rar || 'common'}"><div class="evmed">${evIcon(e.id)}</div>${EV_RAR[e.rar] ? `<p class="center"><span class="evrar">${EV_RAR[e.rar]}</span></p>` : ''}<h2>${esc(e.name)}</h2><p>${esc(e.text)}</p>`;
@@ -896,6 +975,7 @@
       return `<button class="${cls}" data-act="event" data-arg="${i}" ${c.ok ? '' : 'disabled'}>${pic}<span class="t">${tags.length ? `<span class="etags">${tags.join('')}</span>` : ''}${tag}${evLabel(ch.label)}${c.ok || c.req ? '' : `<span class="why">${esc(c.why)}</span>`}</span>${ch.cost ? `<span class="price">${ch.cost}</span>` : ''}${ch.target ? '<i class="chev" title="You choose">›</i>' : ''}</button>`;
     }).join('')}</div></section>`;
   }
+  // WHAT: THE GAME OVER SCREEN (defeat or end of the Gauntlet): score, XP panel, ladder, Play again.
   function overHTML() {
     const g = run.g;
     let body;
@@ -919,6 +999,7 @@
   }
 
   // ------------------------------------------------------------------ unit info panel
+  // WHAT: the small info panel under the board when you tap a unit or terrain (stats and ability text).
   function infoHTML() {
     const W = battle ? battle.W : preview;
     if (!W || !ui.info) return '';
@@ -932,12 +1013,14 @@
   }
 
   // ------------------------------------------------------------------ board mount + input
+  // WHAT: builds the simulation of the current fight (normal or Gauntlet) for the preview or the real battle.
   function worldFor(preview) {
     const t = run.cur && run.cur.type;
     return t === 'gauntlet' ? Run.gauntletWorld(run, preview) : Run.fightWorld(run, preview, { takeMul: (acct.league | 0) === 0 ? 0.8 : 1 });   // review #53 (David)
   }
   // review #13 (David: "randomly adjusted to 75% of my screen ... adapt to the screen size and device"):
   // the board takes the width AND the height left on screen, on phones (portrait/landscape), tablets and desktops.
+  // WHAT: BOARD SIZE AND INPUT. The board is a canvas sized to the screen (layoutClasses, boardWidth, mountBoard); onDown / onMove / onUp handle drag and tap of heroes (pointer events work for mouse and touch).
   const BOARD_RATIO = 0.703; // board height / width (render.js setup: 10.35 * size + 4 over 14.72 * size)
   function layoutClasses() {
     const vw = window.innerWidth, vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -958,6 +1041,7 @@
     const maxW = land ? vw * 0.62 : 1000;
     return Math.floor(Math.min(wrap.clientWidth || vw - 16, byHeight, maxW));
   }
+  // WHAT: creates the board canvas view and its pointer listeners after a screen with a board was drawn.
   function mountBoard() {
     const cv = $('#board'); if (!cv) return;
     const wrap = cv.parentElement;
@@ -965,10 +1049,13 @@
     if (screen !== 'battle') { preview = worldFor(true); drawPreview(); }
     cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', () => { ui.drag = null; drawPreview(); });
   }
+  // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
   function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid }, extra || {})); }
   (function idle() { if (screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag) drawPreview(); requestAnimationFrame(idle); })();
+  // WHAT: converts a pointer event into a board hex (c, r).
   function evHex(e) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y) }; }
   function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
+  // WHAT: pointer down on the board: pick up a hero (start of a drag) or tap a unit to see its info.
   function onDown(e) {
     const { h } = evHex(e); const W = battle ? battle.W : preview; const u = unitAt(W, h);
     const tk = !u && h && W && W.tk ? W.tk[B.Hex.key(h.c, h.r)] : null;
@@ -979,6 +1066,7 @@
   function onMove(e) { if (!ui.drag || battle) return; const { x, y, h } = evHex(e); drawPreview({ drop: h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r) ? h : null, dragGhost: { x, y, key: ui.drag.key } }); }
   // review #39: a hero can't be placed on a tree, boulder, ridge or pond
   function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
+  // WHAT: pointer up on the board: drop the hero on the new hex (rows 4-7 only, not on terrain) or select it; the first move ends the tutorial prompt.
   function onUp(e) {
     if (battle) return;
     const { h } = evHex(e); const d = ui.drag; ui.drag = null;
@@ -991,6 +1079,7 @@
   }
 
   // ------------------------------------------------------------------ battle
+  // WHAT: the Fight! button: builds the real simulation, shows what Smolder ate, switches to the battle screen and starts the loop.
   function startBattle() {
     const gau = run.cur && run.cur.type === 'gauntlet';
     const W = worldFor(false);
@@ -1003,6 +1092,7 @@
     if (ate) toast(ate);
     requestAnimationFrame(loop);
   }
+  // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
   function loop(now) {
     const b = battle; if (!b) return;
     const dt = Math.min(100, now - b.last); b.last = now;
@@ -1027,11 +1117,14 @@
   }
   // v62: when the owner empties the tower (or the server no longer knows this gauntlet run) a player in the middle of it would
   // be stuck on "Try again": the Gauntlet starts over from its gate instead, with the same team
+  // WHAT: if the server no longer knows our Gauntlet run (the tower was emptied), restart the Gauntlet from its gate instead of a stuck "Try again".
   const towerGone = e => /Unknown gauntlet run|already over/.test((e && e.message) || '');
   function resetTower() {
     run.g = { status: 'intro', history: [] }; run.cur = null; run.phase = 'gauntlet'; ui.result = null; screen = 'run'; save(); render();
     toast('The Gauntlet was reset. Enter it again with your team.');
   }
+  // WHAT: a fight ended: collects the damage / kills stats, then (normal fight) Run.finishFight and reports a lost run to the server, or (Gauntlet duel) sends the result and Elo.
+  // Also reports boss results for the boss Elo.
   async function endBattle() {
     tutSpeedDisarm();
     const b = battle; battle = null; const W = b.W;
@@ -1074,17 +1167,20 @@
       ui.result.pending = false; save(); render();
     }
   }
+  // WHAT: the Skip button (Crown Shop perk): plays the whole fight at once.
   function skipBattle() { const b = battle; if (!b) return; let n = 0; while (!b.W.over && n++ < 20 * 60 * 30) Sim.step(b.W); b.endAt = performance.now(); }
 
   // ------------------------------------------------------------------ modals
   // v52 (review #64, David: "Make sure menus and messages disappear between menu switches, nothing stays over"): when
   // the screen changes, a toast or a sheet left from the screen before goes away (the ones this tap just opened stay)
+  // WHAT: MODALS AND TOAST. When the screen changes, an info bubble (toast) or sheet left over from the screen before is closed, except the ones the very same tap just opened.
   function clearLeftovers() {
     const now = performance.now();
     clearTimeout(xpToast.h);
     if (toast.t && (toast.info || now - toast.t > 350)) { const t = $('#toast'); if (t) t.classList.remove('on'); }   // v62: an info bubble (boss, formation) never outlives its screen
     if (ui.modal && ui.modal !== 'artlab' && now - (ui.modalT || 0) > 350) closeModal();
   }
+  // WHAT: shows a sheet (popup) with the given HTML. closeModal() hides it; toast(msg) shows a bubble at the bottom (info = true for descriptions that must vanish when the screen changes).
   function openModal(html) { ui.modalT = performance.now(); const m = $('#modal'); m.innerHTML = `<div class="sheet">${html}</div>`; m.hidden = false; ui.modal = true; }
   function closeModal() { if (ui.modal === 'artlab' && B.ArtLab) B.ArtLab.closed(); const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; clearInterval(ui.sugTimer); }
   function toast(msg, info) { toast.info = !!info; toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }
@@ -1096,6 +1192,7 @@
   // tiles. Drag an item onto the hero (or onto another hero's tab) to put it on, drag it back to the bag to take it off,
   // or tap it and use the big button. Auto-equip dresses the whole team with the best gear in one tap. Every equip pops:
   // the socket bounces, the item's effect flies onto the hero and the stat it raised counts up.
+  // WHAT: THE ITEMS (GEAR) SCREEN. It is a sheet with the hero doll (7 slots), the bag, Auto-equip (purple button) and drag and drop. gearHTML draws it; gearPut / gearDo change the run.
   const GEAR_PAGE = 10;
   const shortName = n => n.length > 14 ? n.split(' ').slice(-1)[0] : n;
   const gearHero = () => run.heroes.find(h => h.uid === ui.gHero) || run.heroes[0];
@@ -1103,6 +1200,7 @@
   const futureSlots = h => SLOT_LV.filter(l => l > h.lvl);
   const maxSlots = h => Run.slots(run, h) + futureSlots(h).length;
   const gearStats = h => { const d = Run.heroDef(run, h); return { hp: Math.round(d.hp), atk: Math.round(d.atk), ap: Math.round(d.ap) }; };
+  // WHAT: draws the whole Items screen: hero tabs, the doll, the bag page, the selected item's description and the buttons.
   function gearHTML() {
     if (ui.heroInfo && run.heroes.some(h => h.uid === ui.heroInfo)) return `<div class="shead"><b>${I('user')} Hero</b><button data-act="close" aria-label="Close">✕</button></div>${heroCardHTML(run.heroes.find(h => h.uid === ui.heroInfo))}`;
     const h = gearHero(); if (!h) return '';
@@ -1149,8 +1247,10 @@
         <div class="gbgrid">${tiles || `<p class="dim small">Empty</p>`}</div></div>
       <div class="bar gbar"><button class="gauto ${autoOn() ? 'on' : ''}" data-act="gear-auto" ${run.bag.length || run.heroes.some(h => h.items.length) ? '' : 'disabled'}>${I('bolt')} Auto-equip${autoOn() ? '<i class="gon">ON</i>' : ''}</button><button class="primary" data-act="close">Done</button></div>`;
   }
+  // WHAT: opens or refreshes the Items screen.
   function openGear() { openModal(gearHTML()); ui.modal = 'gear'; const sh = $('#modal .sheet'); if (sh) sh.classList.add('gearsheet'); }
   // put a bag item on hero uid: same type = swap; full = replaces the socket j (or the weakest one); returns the socket it went into
+  // WHAT: moves an item from the bag onto a hero slot (swapping if the type is taken).
   function gearPut(bagIdx, uid, j) {
     const h = run.heroes.find(x => x.uid === uid), id = run.bag[bagIdx]; if (!h || !id) return -1;
     const same = h.items.findIndex(x => ITEM[x].type === ITEM[id].type);
@@ -1171,6 +1271,7 @@
   }
   // v58 (review #70, "Make Auto-equip the default gear experience"): with Auto on (the default), gear that lands in the
   // bag goes on by itself; a choice by hand in Gear turns Auto off, the purple button turns it on again
+  // WHAT: Auto-equip. While it is on (the default) new items are handed out by Run.autoEquip as soon as they appear; touching gear by hand turns it off until the purple button is pressed.
   const autoOn = () => run && run.autoGear !== false;
   function autoGear() {
     if (!autoOn() || battle || !run.bag.length || run.phase === 'over' || ui.modal === 'gear') return;
@@ -1179,11 +1280,14 @@
     clearTimeout(autoGear.h); autoGear.h = setTimeout(() => toast('Auto-equip put on your new gear'), 500);
   }
   function manualGear() { if (autoOn()) { run.autoGear = false; toast('Auto-equip is off: you choose. The purple button turns it back on.'); } }
+  // WHAT: runs a manual gear change, turns Auto-equip off, refreshes the screens and plays the effect.
   function gearDo(fn, uid) { manualGear(); const h = run.heroes.find(x => x.uid === uid), before = h ? gearStats(h) : null; const r = fn(); ui.gsel = null; ui.gHero = uid; save(); openGear(); refreshBehind(); if (r && r.sock >= 0 && before) gearFx(uid, r.sock, r.id, before); }
   // v57 (review #69): the decisions live in run.js (Run.autoEquip: hero profiles, item scores, best match first)
+  // WHAT: the purple button: Run.autoEquip for the whole team.
   function gearAuto() { return Run.autoEquip(run); }
 
   // drag and drop with the pointer (mouse and touch): a ghost follows the finger, drop targets glow
+  // WHAT: drag and drop on the Items screen with a pointer (mouse and touch): gearDown starts, gearMove shows the ghost and glows drop targets, gearUp drops.
   const gdrag = { on: false };
   function gearDown(e) {
     ui.gNoClick = 0;   // a new touch: an old drop no longer eats taps
@@ -1228,6 +1332,7 @@
   // review #19 (David: "include ability to read hero ability in item screen"): the hero card on top of the team sheet
   // v51 (review #63): a hero's Details from the shop or the start: the picture, what it does in plain words, the whole
   // ability with its numbers, its stats, and every level's two powers
+  // WHAT: the "details" sheet of a hero (stats, ability, all his powers) opened from cards.
   function heroPeekHTML(key) {
     const d = HEROES[key]; if (!d) return '';
     const def = Run.heroDef({ relics: [], heroes: [], bag: [] }, { key, lvl: 1, specs: [], items: [], bonus: {}, uid: 0 });
@@ -1236,6 +1341,7 @@
       <div class="abil peekab">${abilHTML(d)}</div>${scalingHTML(def)}
       <h3 class="peekh">Powers it can learn</h3><div class="peekpow">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span><div>${pr.map(sp => `<p><b class="spec">${esc(sp.name)}</b> ${fmt(plainAb(sp.desc))}</p>`).join('')}</div></div>`).join('')}</div>`;
   }
+  // WHAT: a hero card inside sheets.
   function heroCardHTML(h) {
     const d = HEROES[h.key], def = Run.heroDef(run, h), specs = h.specs.map(id => Run.specOf(h.key, id)).filter(Boolean);
     return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(d.name)}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}</span>
@@ -1244,11 +1350,14 @@
       ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
       ${Object.entries(Run.setCounts(h.items)).filter(([, n]) => n >= 2).map(([sid, n]) => `<div class="small setfull">◆ <b>${esc(B.SETS[sid].name)}</b> ${n}/3 · ${fmt(B.SETS[sid].bonus[2].desc)}${n >= 3 ? ' · ' + fmt(B.SETS[sid].bonus[3].desc) : ''}</div>`).join('')}</div>`;
   }
+  // WHAT: SUGGESTION BOX. "Send for review" lets anyone propose changes; they go to api/suggest.js and the owner's assistant reads them. ago() = "5 min ago".
   function ago(ms, now) { const s = Math.max(0, Math.round((now - ms) / 1000)); return s < 60 ? s + 's ago' : s < 3600 ? Math.round(s / 60) + ' min ago' : Math.round(s / 3600) + ' h ago'; }
   // Suggestions: the player writes changes into a local list (up to 10), then presses "Send for review".
   // That sends the whole list as one batch and wakes Claude (tools/vigia.js) right away.
+  // WHAT: the list of drafted changes kept in the browser before sending (max 10).
   const MAX_DRAFTS = 10;
   const drafts = () => store.get('balance.drafts', []);
+  // WHAT: the status line of the review (queued, in progress, done) and queueHTML the list of suggestions with their replies.
   function statusHTML(r, list) {
     if (!r) return '';
     const working = (list || []).some(s => s.status === 'doing');
@@ -1282,6 +1391,7 @@
     if (btn) btn.textContent = n ? `Send ${n} change${n > 1 ? 's' : ''} for review` : 'Send for review';
     const add = $('form[data-form=draft] button'); if (add) add.disabled = n >= MAX_DRAFTS;
   }
+  // WHAT: the frame of the suggestion sheet (text box, drafts, queue). openSuggest opens it, sendReview sends the drafts, loadQueue refreshes the queue.
   function suggestShell() {
     return `<div class="shead"><b>${I('bulb')} Suggest changes</b><button data-act="close">✕</button></div>
       <div id="sugStatus"></div>
@@ -1307,6 +1417,7 @@
     openModal(suggestShell()); ui.modal = 'suggest'; renderDrafts(); loadQueue();
     clearInterval(ui.sugTimer); ui.sugTimer = setInterval(() => { if (ui.modal === 'suggest') loadQueue(); else clearInterval(ui.sugTimer); }, 20000);
   }
+  // WHAT: sends the drafted changes (and Art Lab pictures) to the server as one review batch.
   async function sendReview(btn) {
     const ta = $('form[data-form=draft] textarea'), extra = ta ? ta.value.trim() : '';
     const items = drafts().concat(extra ? [extra] : []).slice(0, MAX_DRAFTS);
@@ -1321,9 +1432,11 @@
     btn.disabled = false;
   }
   // review #14 (David): a tab per kind of content with its own Elo, to balance heroes, items and relics
+  // WHAT: THE LADDER: tabs Player / Ranking / Heroes / Items / Powers. The content tabs (Elo of every piece) are a Crown Shop unlock.
   const LADDER_TABS = [['player', 'Player'], ['players', 'Ranking'], ['hero', 'Heroes'], ['item', 'Items'], ['relic', 'Powers']];
   const CONTENT_TABS = ['hero', 'item', 'relic'];
   // review #21 (David: "a player tab with scrolling banners for the leagues and the path between tiers")
+  // WHAT: the Player tab: your league, level, rewards and the road ahead (roadmapHTML).
   function playerTabHTML(me) {
     const L = B.LEAGUES, R = B.LEAGUE_RULES, cur = me.league | 0, top = L.length - 1, lp = me.lp | 0;
     const paid = me.sreach | 0;
@@ -1356,6 +1469,7 @@
       <p class="small xpways">Every game: 🎮 +${X.played} for playing · ⚔️ +${X.fight} per fight won · 👹 +${X.boss} per boss beaten · 🏆 +${X.reached} for reaching the Gauntlet · 🤺 +${X.duel} per duel won · 👑 +${X.champion} for the crown. Each level needs a bit more XP than the last.</p>
       <p class="small xpways">Bonus firsts: ⭐ first PvE clear with each hero +${B.ACCOUNT.heroClear} <span class="dim">(${me.cleared | 0}/${Object.keys(HEROES).length})</span> · 🏆 each new Gauntlet floor +${B.ACCOUNT.floor} <span class="dim">(best floor ${me.pfloor | 0})</span> · 👹 each boss beaten the first time +${B.ACCOUNT.boss} <span class="dim">(${me.bosses | 0}/${Object.keys(B.BOSSES).length})</span> · 💎 +${B.ACCOUNT.crownXp} per crown spent${hasPerk('xp2') ? ' · <b class="kw-gold">✨ Double XP on</b>' : ''}</p></div>`;
   }
+  // WHAT: the table of Elo, fights and wins of every hero / item / power.
   function contentTable(kind, ratings) {
     // review #20: the bosses sit in the heroes tab with their own Elo
     const by = {}; for (const r of ratings) if (r.kind === kind || (kind === 'hero' && r.kind === 'boss')) by[r.id] = r;
@@ -1371,6 +1485,7 @@
     return `<p class="dim small">📊 Content Elo unlocked. Every ${kind === 'relic' ? 'power' : kind} has its own Elo, apart from the players, to guide balance. It only counts in fights where it acted: heroes on the board, equipped items and powers with a combat effect. Losing a game is a loss against 1000, reaching the Gauntlet a win against 1000, and a duel is a game against the other team's ${kind === 'hero' ? 'heroes' : kind + 's'}.${kind === 'hero' ? ' ☠ Bosses have their own Elo: it rises when they beat a player and falls when they lose (against that player\'s Elo), and never changes the player\'s.' : ''}</p>
       <table class="tbl ctbl"><tr><th>#</th><th>${kind === 'hero' ? 'Hero' : kind === 'item' ? 'Item' : 'Power'}</th><th>Elo</th><th>Fights</th><th>Won</th></tr>${rows}</table>`;
   }
+  // WHAT: opens the ladder sheet on a tab (loads the ranking from api/elo.js).
   async function openScores(tab) {
     tab = ui.ladderTab = tab || ui.ladderTab || 'players';
     const head = `<div class="shead"><b>${I('trophy')} Ladder</b><button data-act="close">✕</button></div>
@@ -1407,6 +1522,7 @@
     } catch (err) { if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="err">${esc(err.message)}</p>`); }
   }
   // ---------------- v27 (owner + review #25 by David): Crown Shop, profiles, invites
+  // WHAT: CROWN SHOP, PROFILES AND INVITES. The shop sells perks for crowns (data.js B.SHOP_ITEM), profileHTML shows a player, the invite link gives crowns when friends join.
   function crownShopHTML() {
     const a = acct, season = a.season || B.seasonOf(Date.now()), days = Math.max(0, Math.ceil((B.seasonEnds(season) - Date.now()) / 864e5)), paid = a.account ? a.sreach | 0 : 0;
     const buyBtn = it => { const conf = ui.confirmBuy === it.id, cant = !a.account || (a.crowns | 0) < it.price;
@@ -1441,6 +1557,7 @@
   function heroList(rows, what) {
     return rows.length ? `<div class="phl">${rows.map(r => `<span class="phh">${img(r.hero, 34, 'por')}<b>${esc((HEROES[r.hero] || { name: r.hero }).name)}</b><em>${what(r)}</em></span>`).join('')}</div>` : '<p class="small dim">Not enough games yet.</p>';
   }
+  // WHAT: a player profile sheet (league, Elo, titles, best floor, favourite heroes for Kings).
   function profileHTML(p, viewerKing) {
     const L = B.LEAGUES, l = L[p.league] || L[0], top = L.length - 1, R = B.LEAGUE_RULES;
     const since = p.since ? new Date(p.since).toLocaleDateString() : '';
@@ -1477,6 +1594,7 @@
   }
   // v45 (review #56): the basics first, in five short lines for someone who never played this kind of game; the full
   // rules fold under them
+  // WHAT: the How to play text (also the HTML of that sheet). Update it when a rule changes.
   const HOWTO = `<div class="shead"><b>How to play</b><button data-act="close">✕</button></div>
     <ol class="howbasics">
       <li>${I('user')}<span><b>Pick a hero and a power.</b> Buy up to 2 more heroes in the Hero Shop.</span></li>
@@ -1509,8 +1627,10 @@
   // After "Send for review" the page follows that batch: queued -> Claude working -> READY ("press F5"). Claude marks
   // items done only AFTER the update is deployed, so "all items answered" means the new version is already live.
   // Everyone else gets a softer "the game was just updated" when a new update ships while the page is open.
+  // WHAT: THE REVIEW NOTICE at the top: after you send changes it shows "waiting / in progress / new version, tap to reload". nt = its state, poll() asks api/suggest.js every few seconds while something is pending.
   const PEND = 'balance.pending';
   const nt = { lastRun: null, latest: 0, update: false, timer: 0 };
+  // WHAT: draws the review notice in the top bar.
   function renderNotice() {
     const el = $('#notice'); if (!el) return;
     const p = store.get(PEND, null);
@@ -1531,6 +1651,7 @@
     el.className = cls; el.innerHTML = html; el.hidden = !html;
   }
   function trackBatch(batch) { store.set(PEND, { batch, state: 'waiting', sentAt: Date.now() }); nt.update = false; renderNotice(); schedulePoll(1500); }
+  // WHAT: asks the server for the review status and whether a new version of the game was published.
   async function poll() {
     const p = store.get(PEND, null);
     try {
@@ -1576,26 +1697,38 @@
   });
 
   // ------------------------------------------------------------------ actions
+  // WHAT (the button table): ACT[name] runs when a button with data-act="name" is tapped (one global listener, no inline handlers because of the CSP).
+  // To make a new button work: put data-act="my-name" in its HTML and add my-name: (arg, el) => {...} here. arg is the data-arg value. Names with a dash must be quoted.
   const ACT = {
+    // Play / Play again: starts a fresh run.
     'new-run': () => { run = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()) }); ui.startPick = []; ui.startRelic = null; ui.focusRelic = null; ui.focus = null; ui.startStep = 1; ui.lastGold = null; ui.goldHold = null; screen = 'run'; save(); render(); },
+    // Continue: back into the saved run.
     'continue-run': () => { screen = 'run'; render(); },
     menu: () => { if (battle) return; screen = 'title'; closeModal(); render(); },
     howto: () => openModal(HOWTO),
+    // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
     'start-pick': k => { ui.focus = k; ui.focusRelic = null; ui.startPick = [k]; render(); },
     'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if ((run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
     'start-back': () => { ui.startStep = 1; render(); },
     'start-relic': id => { ui.focusRelic = id; ui.startRelic = id; render(); },
     'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((run.relicOffer || []).length && !ui.startRelic)) return; Run.pickStart(run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1; save(); render(); },
+    // A map option was tapped: opens that fight, shop or event (Run.choose).
     choose: i => { Run.choose(run, +i); ui.info = null; save(); render(); window.scrollTo(0, 0); },
+    // A power was picked at a level-up.
     spec: i => { Run.chooseSpec(run, +i); save(); render(); },
+    // The big Fight! button on the deploy screen.
     fight: () => startBattle(),
+    // Battle speed 1x / 2x / 4x (4x is a Crown Shop perk). skip plays the fight at once (also a perk).
     speed: s => { if (+s === 4 && !hasPerk('speed4')) { toast(`4× speed is a Crown Shop unlock (👑 ${B.SHOP_ITEM.speed4.price}). 2× is free.`); return; } ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
     skip: () => { if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; } skipBattle(); },
+    // Continue on the result screen: next day, the Gauntlet or the game-over screen.
     'result-ok': () => { ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
+    // Prepare the duel in the Gauntlet match card: goes to the deploy screen.
     'to-duel': () => { run.phase = 'deploy'; run.cur = { type: 'gauntlet' }; ui.info = null; save(); render(); window.scrollTo(0, 0); },
     'retry-elo': () => { if (ui.result && ui.result.gauntlet) { const w = ui.result.win; ui.result.pending = true; render(); Net.post('elo', { op: 'result', pid: pid(), ref: refCode(), teamId: run.g.teamId, win: w, team: Run.teamSnapshot(run), relics: run.relics }).then(r => { setElo(r, r.over); logGameXp(r); Run.gauntletUpdate(run, r); ui.climb = w; Object.assign(ui.result, { delta: r.delta, elo: r.elo, ghost: r.ghost, pending: false, error: null }); save(); render(); }).catch(e => { if (towerGone(e)) { resetTower(); return; } Object.assign(ui.result, { pending: false, error: e.message }); render(); }); } },
     // v42 (review #51): a bought card flies into the Team button with a coin sound and gets a SOLD stamp; a reroll deals
     // the new cards in with a shuffle
+    // Buy product i in a shop. reroll refreshes the stock.
     buy: i => {
       const card = $(`.card.stock[data-i="${+i}"]`), pic = card && card.querySelector('.ico.big, .por.big');
       const err = Run.buy(run, +i);
@@ -1605,9 +1738,11 @@
     },
     reroll: () => { if (!Run.reroll(run)) { toast('Not enough gold'); sfx('deny'); return; } sfx('reroll'); ui.deal = true; save(); render(); ui.deal = false; },
     sound: () => { if (!B.Sfx) return; B.Sfx.toggle(); for (const b of document.querySelectorAll('.sndbtn')) { b.innerHTML = I(B.Sfx.on ? 'sound' : 'mute'); b.setAttribute('aria-label', 'Sound ' + (B.Sfx.on ? 'on' : 'off')); } if (ui.modal === 'home') { openModal(homeMenuHTML()); ui.modal = 'home'; } },
+    // Opens the menu sheet; give-up asks, give-up-yes ends the game (and reports the fights it played).
     'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
     'give-up-yes': () => { if (run && run.flog && run.flog.length) Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog }).catch(() => {}); run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },
+    // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.
     'form-info': t => toast(t, true),
     'g-rules': () => openModal(`<div class="shead"><b>${I('trophy')} How the Gauntlet works</b><button data-act="close" aria-label="Close">✕</button></div><ol class="howbasics">
       <li>${I('ghost')}<span><b>Your team becomes a ghost</b> and enters the tower.</span></li>
@@ -1626,6 +1761,7 @@
     },
     'event-target': arg => { const i = run.cur.pick; run.cur.pick = null; if (i == null) return; Run.eventAct(run, i, arg); save(); render(); },
     'event-back': () => { run.cur.pick = null; render(); },
+    // The Items / Team button: opens the gear screen. hero-info / gear-* / sell are its buttons.
     team: () => { if (!run || battle) return; ui.gsel = null; ui.heroInfo = 0; ui.gPage = 0; openGear(); },
     'hero-info': uid => { ui.heroInfo = +uid && ui.heroInfo !== +uid ? +uid : 0; ui.gsel = null; openGear(); },
     'gear-hero': uid => { ui.gHero = +uid; ui.gsel = null; openGear(); },
@@ -1635,20 +1771,25 @@
     'gear-auto': () => { run.autoGear = true; const n = gearAuto(); ui.gsel = null; save(); openGear(); refreshBehind(); if (n) { sfx('unlock'); const st = $('#modal .gstage'); if (st && B.Juice) { B.Juice.confettiAt(st, 50); B.Juice.bump(st, 'pop'); } toast(n > 1 ? n + ' heroes got better gear' : 'A hero got better gear'); } else toast('Your team already wears its best gear'); },
     'gear-page': d => { ui.gPage = Math.max(0, (ui.gPage || 0) + +d); openGear(); },
     sell: () => { const g = ui.gsel; if (!g || g.k !== 'b') return; Run.sell(run, g.i); ui.gsel = null; sfx('coin'); save(); openGear(); header(); },
+    // Closes the open sheet.
     close: () => { closeModal(); ui.gsel = null; ui.heroInfo = 0; if (!battle) render(); },
+    // Opens the suggestion box.
     suggest: () => openSuggest(),
     'art-lab': arg => { if (ui.modal) closeModal(); B.ArtLab.open(labKit, arg); },
     'draft-del': i => { const d = drafts(); d.splice(+i, 1); store.set('balance.drafts', d); renderDrafts(); },
     'send-review': (a, el) => sendReview(el),
     'sug-refresh': () => loadQueue(),
+    // Opens the ladder.
     scores: () => openScores(),
     'player-tab': () => openScores('player'),
+    // Opens the hidden balance dashboard (stats.html) in a new tab.
     stats: () => { window.open('stats.html', '_blank', 'noopener'); },
     'relic-info': id => { const r = RELIC[id]; if (r) toast(r.name + ': ' + r.desc, true); },
     'ladder-tab': k => openScores(k),
     shop: () => openShop(),
     profile: code => openProfile(code),
     'my-profile': () => openMyProfile(),
+    // Crown Shop: the first tap asks, the second buys (nobody spends 300 crowns by accident).
     'buy-perk': async id => {
       if (ui.confirmBuy !== id) { ui.confirmBuy = id; refreshShop(); return; }   // two taps: nobody spends 300 crowns by accident
       ui.confirmBuy = null;
@@ -1659,14 +1800,17 @@
     'copy-ref': () => { const i = $('#refLink'); if (!i) return; i.select(); const done = () => toast('Invite link copied'); if (navigator.clipboard) navigator.clipboard.writeText(i.value).then(done, () => { try { document.execCommand('copy'); done(); } catch (_) {} }); else { try { document.execCommand('copy'); done(); } catch (_) {} } },
   };
   // Art Lab (owner, 2026-09-29): its buttons join the one click listener; it gets the helpers it needs
+  // WHAT: the small toolbox handed to the Art Lab (js/artlab.js).
   const labKit = { $, $$: s => [...document.querySelectorAll(s)], esc, toast, openModal, Net, store, trackBatch, ui };
   Object.assign(ACT, B.ArtLab.actions); B.ArtLab.init(labKit);
   // hero pictures (this device's test art or the official art) finish loading after the first screen: redraw it
   B.Art.onChange(() => { if (screen === 'battle' || ui.modal || ui.drag) return; clearTimeout(ui.artH); ui.artH = setTimeout(() => { if (screen !== 'battle' && !ui.modal && !ui.drag) render(); }, 80); });
   B.Art.boot();
+  // WHAT: after a change inside a sheet, redraws the top bar and the board behind it.
   function refreshBehind() { header(); if (run && run.phase === 'deploy' && screen !== 'battle') { preview = worldFor(true); drawPreview(); } }
 
   // v42: every tap has a sound; these actions have their own (null = the action plays it, it depends on the outcome)
+  // WHAT: which sound each button makes (null = silent).
   const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: 'go', 'start-go': 'go', 'to-duel': 'go', choose: 'pick', 'start-pick': 'pick', 'start-relic': 'pick', 'start-next': 'pick', 'start-back': 'back',
     spec: 'unlock', event: 'pick', 'event-target': 'pick', equip: 'pick', bag: 'pick', unequip: 'back', close: 'back', 'event-back': 'back', sell: 'coin', 'result-ok': 'pick' };
   document.addEventListener('click', e => {
@@ -1699,6 +1843,7 @@
     } catch (err) { toast(err.message); if (btn) btn.disabled = false; }
   });
   let rz = 0;
+  // WHAT: when the window changes size (rotation, keyboard) the board is made again at the right size.
   function onResize() {
     clearTimeout(rz);
     rz = setTimeout(() => {
@@ -1713,6 +1858,7 @@
   if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
 
   // ------------------------------------------------------------------ boot
+  // BOOT: everything above only defined things; from here the game starts: update an old save, read an invite link, load the account, draw the title screen, start the review notice polling.
   run = Run.migrate(run);
   // v27: an invite link (?ref=<code>) is kept until this browser's first run creates the account, then sent with it
   try {

@@ -2,9 +2,14 @@
 // Every unit is a small rig (humanoid, beast, bomb, golem, serpent, wraith, turret) with its own parts and colours.
 // Poses: idle (breathing), walk (legs + bob), attack (windup -> strike exactly at the hit tick), cast (arms up + glow),
 // hurt flash, death (tips over and fades). Coordinates: origin at the feet, facing right, S = unit scale in px.
+// 
+// FILE GUIDE. THE LOOK OF EVERY UNIT, drawn with code (no image files). Two parts: (1) the table M below = one line per hero / monster / boss: its colours and body type; (2) the "rigs" that draw each body type (humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg).
+//   To change a unit's colours or gear: edit its line in M. To make a new body type: write a function like beast() and add it to RIGS at the bottom. Hero ART PICTURES (art/ folder) are handled by js/art.js and override these. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
+  // WHAT: the default humanoid: skin, body, trim, legs, bulk (width), head type, weapon. H({...}) overrides what is different.
   const H = (o) => Object.assign({ type: 'humanoid', skin: '#e0b48a', body: '#556', trim: '#aa8', legs: '#333', bulk: 1, head: 'bald', weapon: 'none', h: 1 }, o);
+  // WHAT: ONE LINE PER UNIT KEY (heroes, mobs, bosses, summons). Fields for a humanoid: skin, body, trim, legs, bulk, head (helm, hood, hat, chef, horns, skull...), weapon (sword, staff, bow, club...), cape, hair, orb... Other types: { type: 'beast' | 'golem' | ..., body, trim }.
   const M = {
     // heroes
     bastion: H({ body: '#4d6fb8', trim: '#d9c36a', legs: '#2c3a5c', bulk: 1.3, head: 'helm', weapon: 'shieldmace', pauldrons: '#8fa6d8', cape: '#23407a' }),
@@ -83,6 +88,7 @@
   M.clone = M.mirage;
 
   // ------------------------------------------------------------------ helpers
+  // WHAT: HELPERS for drawing: shade() makes a colour lighter or darker, limb() a thick line, ball() a shaded circle, poly() a shaded polygon, seg() a thin line. Every rig is built from these.
   const TAU = Math.PI * 2;
   // ---- review #8 "more HD": every part is drawn cel-shaded: dark ink outline, shaded body, a light rim toward the
   // upper-left light, and a specular glint on round parts. All models go through these helpers.
@@ -91,6 +97,7 @@
     if (col[0] === '#') { const n = parseInt(col.length === 4 ? col.slice(1).split('').map(x => x + x).join('') : col.slice(1, 7), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
     const m = col.match(/[\d.]+/g); return m ? [+m[0], +m[1], +m[2]] : [128, 128, 128];
   }
+  // WHAT: lightens (f > 0) or darkens (f < 0) a colour.
   function shade(col, f) {
     let [r, g, b] = rgbOf(col);
     if (f < 0) { r *= 1 + f; g *= 1 + f; b *= 1 + f; } else { r += (255 - r) * f; g += (255 - g) * f; b += (255 - b) * f; }
@@ -98,6 +105,7 @@
   }
   const isColor = col => typeof col === 'string' && (col[0] === '#' || col.startsWith('rgb'));
   function seg(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+  // WHAT: draws a thick rounded line (an arm, a leg, a staff).
   function limb(c, x1, y1, x2, y2, w, col) {
     c.lineCap = 'round';
     if (w < 2) { c.strokeStyle = col; c.lineWidth = w; seg(c, x1, y1, x2, y2); return; }
@@ -105,6 +113,7 @@
     c.strokeStyle = isColor(col) ? shade(col, -0.12) : col; c.lineWidth = w; seg(c, x1, y1, x2, y2);
     if (isColor(col) && w >= 3) { const o = w * 0.2; c.strokeStyle = shade(col, LIGHT); c.lineWidth = Math.max(1, w * 0.3); seg(c, x1 - o, y1 - o, x2 - o, y2 - o); }
   }
+  // WHAT: draws a shaded sphere (a head, an orb).
   function ball(c, x, y, r, col, line) {
     c.beginPath(); c.arc(x, y, r, 0, TAU);
     if (isColor(col) && r >= 3) {
@@ -115,6 +124,7 @@
     if (r >= 2.5) { c.strokeStyle = INK; c.lineWidth = r > 6 ? 1.4 : 1; c.stroke(); }
     if (isColor(col) && r >= 4) { c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.arc(x - r * 0.38, y - r * 0.42, r * 0.16, 0, TAU); c.fill(); }
   }
+  // WHAT: draws a shaded polygon (armor plates, wings, flags).
   function poly(c, pts, col, line) {
     c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath();
     if (isColor(col)) {
@@ -128,6 +138,7 @@
   // arm pose: angle 0 = hanging down, positive = forward. Returns the hand position.
   const hand = (sx, sy, a, len) => [sx + Math.sin(a) * len, sy + Math.cos(a) * len];
 
+  // WHAT: how far each arm swings in the current pose (walking, attacking, casting).
   function armAngles(m, p) {
     // [front arm, back arm]
     let f = 0.35 + Math.sin(p.t * 2.2) * 0.05, b = -0.25 - Math.sin(p.t * 2.2) * 0.05;
@@ -145,6 +156,7 @@
   }
 
   // ------------------------------------------------------------------ humanoid
+  // WHAT: HUMANOID RIG. weapon() draws what the hero holds (sword, staff, bow, club...); headgear() the head and hat; arm / leg / joint the limbs; humanoid() puts a whole person together.
   function weapon(c, m, x, y, a, S, p) {
     // phi = direction the arm points (screen angle). Blades follow the arm (a swing arc); staves stay upright;
     // the bow is held vertical in front.
@@ -175,6 +187,7 @@
     else if (w === 'scythe') { limb(c, -S * 0.3, 0, S * 0.65, 0, S * 0.05, '#4a3a2a'); c.fillStyle = '#c8d0da'; c.beginPath(); c.moveTo(S * 0.65, 0); c.quadraticCurveTo(S * 0.55, -S * 0.45, S * 0.15, -S * 0.42); c.quadraticCurveTo(S * 0.45, -S * 0.3, S * 0.6, 0); c.fill(); }
     c.restore();
   }
+  // WHAT: the head: face, eyes and the head type (helm, hood, hat, chef hat, tiara, horns, skull, boar...). Add a new head type as another "else if (k === ...)".
   function headgear(c, m, hx, hy, r, p) {
     const k = m.head;
     const eyes = (col) => {
@@ -261,6 +274,7 @@
     tlimb(c, kx, ky, fx, fy - w * 0.2, w * 0.78, w * 0.62, shade(col, -0.1));
     poly(c, [[fx - w * 0.45, fy - w * 0.55], [fx + w * 0.35, fy - w * 0.55], [fx + w * 0.95, fy - w * 0.05], [fx + w * 0.9, fy + w * 0.12], [fx - w * 0.45, fy + w * 0.12]], boot);
   }
+  // WHAT: draws a person: legs, body, cape, arms, head, weapon, in the pose p (idle, walk, attack, cast).
   function humanoid(c, m, S, p) {
     const s = S * m.h, bulk = m.bulk, det = !!p.detail;
     const bob = p.walk != null ? Math.abs(Math.sin(p.walk * TAU)) * s * 0.05 : Math.sin(p.t * 2.2) * s * 0.015;
@@ -334,6 +348,7 @@
   }
 
   // ------------------------------------------------------------------ other rigs
+  // WHAT: OTHER RIGS. beast = four legs and a snout (wolves, bears), bomb = round bomber, golem = big stone body, serpent = snake, wraith = floating ghost, turret = Sprocket's turret, tower = the Citadel, phoenix = Ashwing, egg = Ashwing's egg.
   function beast(c, m, S, p) {
     const s = S * 0.9, run = p.walk != null ? p.walk * TAU : p.t * 1.5, bob = p.walk != null ? Math.abs(Math.sin(run)) * s * 0.05 : 0;
     const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.2 : 0, by = -s * 0.45 - bob;
@@ -435,9 +450,11 @@
     poly(c, [[-s * 0.2, -s * 0.2], [-s * 0.1, -s * 0.4], [0, -s * 0.22], [s * 0.1, -s * 0.44], [s * 0.2, -s * 0.2]], m.trim, OUT);
     c.restore();
   }
+  // WHAT: the list of rigs by name. A unit's "type" in M picks one.
   const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg };
 
   // ------------------------------------------------------------------ public
+  // WHAT: PUBLIC. get(key) = the line of M for a unit (grunt if unknown); draw(...) paints it; portrait(key, px, bust) makes a cached picture for cards.
   function get(key) { return M[key] || M.grunt; }
   // pose: { t (sec), face (1|-1), walk (cycle phase) | null, atk (0..1) | null, cast (0..1) | null, dead (0..1), flash, frozen }
   function draw(c, key, x, y, S, pose, tint) {
@@ -457,6 +474,7 @@
     c.restore();
   }
   const cache = {};
+  // WHAT: a small picture of a unit (full body or bust) as an image URL, cached.
   function portrait(key, px, bust) {
     const id = key + ':' + px + ':' + (bust ? 1 : 0);
     if (cache[id]) return cache[id];
@@ -468,5 +486,6 @@
     draw(c, key, px * 0.5, bust ? px * 1.05 + S * 0.15 : px * 0.93, S, { t: 0.4, face: 1 });
     return (cache[id] = cv.toDataURL());
   }
+  // WHAT: the public list.
   B.Models = { get, draw, portrait, list: M, shade, limb, ball, poly };
 })(typeof window !== 'undefined' ? window : globalThis);
