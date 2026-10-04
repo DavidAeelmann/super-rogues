@@ -1840,6 +1840,7 @@ body.desk .logo-big .mark { width: 96px; height: 96px; } body.desk .logo-big .w1
 .mrow { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 58px; padding: 8px 12px; text-align: left; background: none !important; border: 0 !important;
   box-shadow: none !important; border-radius: 14px; color: #fff; }
 .mrow:hover { background: #ffffff14 !important; }
+.mrow.on { background: #ffd23f22 !important; }   /* v62h: the language in use */
 .mrow > svg.ui { width: 26px; height: 26px; color: #ffd23f; }
 .mrow span { flex: 1; min-width: 0; display: grid; gap: 1px; } .mrow b { font: 600 17px/1.2 var(--fun); } .mrow small { font: 600 13px/1.3 'Nunito', system-ui, sans-serif; color: #ffffffb3; }
 .mrow .chev { width: 18px; height: 18px; opacity: .6; }

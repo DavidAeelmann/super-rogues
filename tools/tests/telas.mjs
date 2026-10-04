@@ -43,6 +43,8 @@ const click = sel => ev(`(() => { const e = document.querySelector(${JSON.string
 await send('Runtime.enable'); await send('Page.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 740, deviceScaleFactor: 2, mobile: true });  // review #9: usable height of a phone browser
 await send('Emulation.setTouchEmulationEnabled', { enabled: true });
+if (process.env.LANG_ID) await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('balance.lang', '${process.env.LANG_ID}');` });   // LANG_ID=pt|de: plays the same flow in another language (the checks that read English text then fail; look at the screenshots)
+if (process.env.TRLOG) await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('balance.trlog', '1'); setInterval(() => { try { const all = new Set(JSON.parse(localStorage.getItem('balance.trall') || '[]')); for (const k of (window.B && B.i18n ? B.i18n.missing : [])) all.add(k); localStorage.setItem('balance.trall', JSON.stringify([...all])); } catch (e) {} }, 250);` });   // TRLOG=1: collects every English text the pages show, for tools/idiomas.js
 await send('Page.addScriptToEvaluateOnNewDocument', { source: `document.addEventListener('securitypolicyviolation', e => console.error('CSP ' + e.violatedDirective + ' ' + e.blockedURI));` });
 await send('Page.navigate', { url: BASE + '/' });
 await sleep(1200);
@@ -54,12 +56,31 @@ ok(await ev(`!!document.querySelector('.title h1.logo-big') && document.title ==
 await shot('01-title'); await noHScroll('title'); await noVScroll('title');
 // v27 (owner + review #25): the start menu has the Crown Shop and your profile; the suggestion box stays only at the top
 // v49 (review #60): the landing is the logo, Play and a live trailer; your level, crowns, the ladder, suggestions and the menu sit in the top bar
-ok(await ev(`!!document.querySelector('#top .lvchip[data-act=player-tab]') && !!document.querySelector('#top [data-act=shop].crownchip') && !!document.querySelector('#top [data-act=scores]') && !!document.querySelector('#top [data-act=home-menu]') && document.querySelectorAll('[data-act=suggest]').length === 1 && !!document.querySelector('#top [data-act=suggest]') && document.querySelectorAll('#screen button').length === 1 && !!document.querySelector('#screen [data-act=new-run]') && !document.querySelector('.live')`), 'v49 landing: only the Play button on the page; level, crowns, ladder, suggestions and the menu in the top bar');
+ok(await ev(`!!document.querySelector('#top .lvchip[data-act=player-tab]') && !!document.querySelector('#top [data-act=shop].crownchip') && !!document.querySelector('#top [data-act=scores]') && !!document.querySelector('#top [data-act=home-menu]') && document.querySelectorAll('#top [data-act=suggest]').length === 0 && !document.querySelector('.sugg') && document.querySelectorAll('#screen button').length === 1 && !!document.querySelector('#screen [data-act=new-run]') && !document.querySelector('.live')`), 'v49 landing: only the Play button on the page; level, crowns, ladder and the menu in the top bar (v62h, review #103: no lightbulb, suggestions only in the menu)');
 await sleep(700);
 ok(await ev(`(() => { const c = document.getElementById('trailer'); if (!c || c.width < 200) return false; const d = c.getContext('2d').getImageData(c.width >> 1, c.height >> 1, 1, 1).data; return d[3] > 0; })()`), 'v49 landing: the trailer fight is playing under Play');
 await click('#top [data-act=home-menu]'); await sleep(150);
 ok(await ev(`['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'art-lab', 'sound', 'suggest'].every(a => !!document.querySelector('#modal .mrow[data-act=' + a + ']'))`), 'v49 menu: How to play, level rewards, profile, Crown Shop, ladder, Art Lab, sound and suggestions, one tap each');
 await shot('01b-menu'); await noVScroll('menu');
+// v62h (review #97, David: "In the menu add an option to change language to Portuguese and German"): the Language row, the three languages, Portuguese and German on the real screens
+if (!process.env.LANG_ID) {
+  ok(await ev(`!!document.querySelector('#modal .mrow[data-act=language]')`), 'v62h (#97): the menu has a Language row');
+  await click('#modal [data-act=language]'); await sleep(200);
+  ok(await ev(`['en', 'pt', 'de'].every(id => !!document.querySelector('#modal [data-act=set-lang][data-arg=' + id + ']'))`), 'v62h (#97): English, Português and Deutsch to choose from');
+  for (const [id, word, menuWord] of [['pt', 'Jogar', 'Idioma'], ['de', 'Spielen', 'Sprache']]) {
+    await ev(`localStorage.setItem('balance.lang', '${id}')`); await send('Page.navigate', { url: BASE + '/' }); await sleep(1500);
+    ok(await ev(`document.documentElement.lang === '${id}' && document.body.innerText.includes('${word}') && !!B.LANG['${id}']`), 'v62h (#97): the whole game loads in ' + (id === 'pt' ? 'Portuguese' : 'German') + ' (' + word + ')');
+    await click('#top [data-act=home-menu]'); await sleep(200);
+    ok(await ev(`document.querySelector('#modal').innerText.includes('${menuWord}') && !/How to play|Crown Shop/.test(document.querySelector('#modal').innerText)`), 'v62h (#97): the menu is translated');
+    await noVScroll('menu in ' + id); await noHScroll('menu in ' + id);
+    await shot('01b-menu-' + id);
+    await click('[data-act=close]'); await sleep(100);
+  }
+  await ev(`localStorage.setItem('balance.lang', 'en')`); await send('Page.navigate', { url: BASE + '/' }); await sleep(1500);
+  await click('#top [data-act=home-menu]'); await sleep(200);
+  ok(await ev(`document.documentElement.lang === 'en' && document.querySelector('#modal').innerText.includes('How to play')`), 'v62h (#97): back to English');
+  await click('[data-act=close]'); await sleep(100); await click('#top [data-act=home-menu]'); await sleep(150);
+}
 await click('#modal [data-act=my-profile]'); await sleep(400);
 ok(await ev(`/first game/.test(document.querySelector('#modal').textContent)`), 'profile before the first game: explains when it starts');
 await click('[data-act=close]'); await sleep(100);
@@ -382,11 +403,11 @@ if (!REMOTE) {
 
 // suggestion box: write several changes into the list, then ONE button sends them all for review
 if (REMOTE) {
-  await click('[data-act=suggest]'); await sleep(1800);
+  await ev(`__bal.ACT.suggest()`); await sleep(1800);
   ok(await ev(`!!document.querySelector('#sugStatus .review') && !!document.querySelector('form[data-form=draft]') && !!document.querySelector('[data-act=send-review]')`), 'live suggestion box loads with reviewer status');
   await shot('12-suggest-live'); await click('[data-act=close]');
 } else {
-  await click('[data-act=suggest]'); await sleep(600);
+  await ev(`__bal.ACT.suggest()`); await sleep(600);
   const addNote = t => ev(`(() => { const f = document.querySelector('form[data-form=draft]'); f.text.value = ${JSON.stringify(t)}; f.querySelector('button').click(); })()`);
   await addNote('Please add a hero that <b>reflects</b> spells'); await addNote('Make the ghosts smarter'); await addNote('Pyra burn lasts 1s longer');
   await sleep(150);
@@ -404,16 +425,14 @@ if (REMOTE) {
 
   // the page waits for that review, then says "ready, press F5"; after F5 it shows what shipped
   const batch = await ev(`JSON.parse(localStorage.getItem('balance.pending')).batch`);
-  ok(await ev(`(() => { const n = document.querySelector('#notice'); return !n.hidden && n.className === 'wait' && n.textContent.includes('#' + ${batch}); })()`), 'top bar follows the review while it waits');
-  await shot('14-notice-waiting');
+  // v62h (review #103, David): no "in progress" banner any more; only the plain "New version" pill when something shipped
+  ok(await ev(`document.querySelector('#notice').hidden`), 'no review banner while a batch waits (the box in the menu shows the status)');
   await ev(`fetch('/__dev/resolve?batch=${batch}')`); await ev(`__bal.poll()`); await sleep(300);
-  ok(await ev(`(() => { const n = document.querySelector('#notice'); return n.className === 'ready' && /live/.test(n.textContent) && /reload/.test(n.textContent); })()`), 'when Claude finishes: "Your changes are live: tap to reload" (v58: a small pill)');
+  ok(await ev(`(() => { const n = document.querySelector('#notice'); return !n.hidden && /New version/.test(n.textContent) && /reload/.test(n.textContent); })()`), 'when Claude finishes, the plain "New version: tap to reload" pill shows');
   await shot('15-notice-ready');
   await click('#notice'); await sleep(1800);
-  ok(await ev(`(() => { const n = document.querySelector('#notice'); return !n.hidden && /live: tap for replies/.test(n.textContent); })()`), 'after reloading, the pill says the review is live');
+  ok(await ev(`document.querySelector('#notice').hidden`), 'after reloading no banner is left');
   ok(await ev(`__bal.run && __bal.run.phase === 'over'`), 'the run survives the reload');
-  await ev(`document.querySelector('#notice [data-act=notice-x]').click()`);
-  ok(await ev(`document.querySelector('#notice').hidden && !localStorage.getItem('balance.pending')`), 'the bar can be dismissed');
   // somebody else's update ships while this page is open
   await ev(`__bal.poll()`); await sleep(200); await ev(`fetch('/__dev/ship')`); await sleep(50); await ev(`__bal.poll()`); await sleep(300);
   ok(await ev(`/New version/.test(document.querySelector('#notice').textContent)`), 'other players get "New version: tap to reload"');
@@ -562,6 +581,7 @@ await click('#modal [data-act=close]'); await sleep(100);
   await click('#modal [data-act=close]'); await sleep(150);
   ok(await ev(`__bal.run.bag.includes('longsword')`), '...so the item stays where you put it');
 }
+if (process.env.TRLOG) { const all = await ev("localStorage.getItem('balance.trall')"); fs.writeFileSync(OUT + 'trlog.json', all || '[]'); console.log('trlog:', JSON.parse(all || '[]').length, 'texts'); }
 ok(errors.length === 0, 'no JS errors / CSP violations' + (errors.length ? ': ' + errors.slice(0, 5).join(' || ') : ''));
 console.log(`telas: ${oks} ok, ${fails} fail (screens in ${OUT})`);
 try { ws.close(); } catch (_) {}

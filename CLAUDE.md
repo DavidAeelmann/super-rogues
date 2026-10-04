@@ -50,6 +50,8 @@ O mapa completo, arquivo por arquivo, com receitas "quero mudar X", está no **`
 - Telas = uma função `*HTML()` por tela; `render()` escolhe. O que estava aberto numa tela (descrições, seleções, balões de informação) é zerado quando a tela muda.
 - Ícones de interface: `I('nome')` (`js/uiicons.js`), nunca emoji solto em botões. Descrições de herói/item/poder passam por `fmt()` (números e palavras-chave coloridos).
 - Celular primeiro: controles grandes, uma mão, texto mínimo, retomar na hora (a run é salva a cada mudança). A palavra na tela é **Power**; no código segue `relic`.
+- **Vocabulário dos atributos (v62h, pedido #96):** na tela são **Health** (`hp`), **Attack** (`atk`), **Magic** (`ap`), **Defense** (`armor`: UM só atributo, protege de dano físico e mágico; não existe mais resistência mágica) e **Energy** (`mana`). Os nomes no código não mudam. No texto, os cinco são nomes próprios com inicial maiúscula ("+20 Defense", "90% Magic"); "attack speed" e "crit" continuam minúsculos.
+- **Idiomas (v62h, pedido #97):** o jogo é escrito em inglês; português e alemão são dicionários (`js/lang-pt.js`, `js/lang-de.js`, tabela `x` = texto exato, `p` = padrões com `{0}`, `h` = parágrafos em HTML) aplicados por `js/i18n.js` (observador da página + `fmt()` + textos do canvas). Texto novo visível ao jogador precisa de uma linha em cada dicionário (`node tools/idiomas.js` lista o que falta nos dados; `TRLOG=1 LANG_ID=pt node tools/tests/telas.mjs` lista o que as telas mostraram sem tradução). O que não tiver tradução fica em inglês, nunca quebra.
 
 ## Regras do jogo (ponto de partida: os jogadores podem mudar qualquer uma)
 
@@ -94,7 +96,7 @@ O mapa completo, arquivo por arquivo, com receitas "quero mudar X", está no **`
 2. Commit local nesta pasta com o número do lote e dos pedidos; **sem push**.
 3. `bash tools/deploy.sh` e conferido com GET que o site serve a versão nova.
 4. `feito` / `recusa` respondidos em inglês, só depois de publicar; nada fica em `doing`.
-5. Uma entrada nova no topo do `CHANGELOG.md`; `CLAUDE.md` e `CODEMAP.md` só se um fato PERMANENTE mudou.
+5. Uma entrada nova no topo do `CHANGELOG.md`; `CLAUDE.md` e `CODEMAP.md` só se um fato PERMANENTE mudou. Se mudou texto visível, `node tools/idiomas.js` sem faltas (traduzir pt e de).
 6. Relato ao dono em 1 a 3 linhas, em português.
 
 ## Revisão de sugestões (o ciclo)

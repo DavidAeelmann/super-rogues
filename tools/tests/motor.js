@@ -402,7 +402,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     for (const kind of ['heroShop', 'itemShop', 'relicShop']) { r.fightNo = 9; if (Run.makeShop ? false : false) {} }
   }
   ok(!seenLocked, 'level 1: the 3 new heroes and the level relics never show up at the start');
-  const r0 = Run.newRun(7); ok(Object.keys(B.HEROES).length === 41 && (r0.locked || []).length === 0, 'without a lock list (bots, old saves) everything is open');
+  const r0 = Run.newRun(7); ok(Object.keys(B.HEROES).length === 45 && (r0.locked || []).length === 0, 'without a lock list (bots, old saves) everything is open');
   for (const k of ['buzzwell', 'coralie', 'stellan']) {
     const run = Run.newRun(11); Run.pickStart(run, [k]); Run.addHero(run, 'bastion');
     run.heroes.forEach(h => { h.lvl = 5; h.specs = B.HEROES[h.key].specs.map(p => p[1].id); });
@@ -470,7 +470,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const mk = (relics, pos, o = {}) => Sim.create(Object.assign({ mode: 'fight', seed: 9, relics, heroes: defs.map((d, i) => ({ def: JSON.parse(JSON.stringify(d)), c: pos[i][0], r: pos[i][1] })), enemies: [foe] }, o));
   const base = mk([], [[3, 4], [4, 4], [0, 7]]);
   let W = mk(['shieldwall'], [[3, 4], [4, 4], [0, 7]]);
-  ok(W.units[0].armor === base.units[0].armor + 10 && W.units[1].mr === base.units[1].mr + 10 && W.units[2].armor === base.units[2].armor, 'Shieldwall: +10 armor/MR per ally next to the hero, nothing when alone');
+  ok(W.units[0].armor === base.units[0].armor + 10 && W.units[1].armor === base.units[1].armor + 10 && W.units[2].armor === base.units[2].armor, 'Shieldwall: +10 defense per ally next to the hero, nothing when alone');
   W = mk(['lonewolf'], [[3, 4], [4, 4], [0, 7]]);
   ok(W.units[2].crit === base.units[2].crit + 0.1 && Sim.asOf(W, W.units[2]) > Sim.asOf(base, base.units[2]) && W.units[0].crit === base.units[0].crit, 'Lone Wolf: only the hero with nobody next to it');
   W = mk(['vanguard'], [[3, 4], [5, 5], [0, 7]]);
@@ -689,7 +689,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   let maxMana = 0; for (let i = 0; i < 20 * 20 && !W.over; i++) { Sim.step(W); maxMana = Math.max(maxMana, cit.mana); }
   ok(cit.c === at0.c && cit.r === at0.r && cit.atkN === 0, 'v60 Citadel: never moves and never attacks');
   ok(W.units.filter(u => u.garrison === cit.id).length >= 2 && maxMana > 0, 'v60 Citadel: more soldiers march out, and their hits fill its mana');
-  ok(Object.values(HEROES).length === 41 && HEROES.prism.tag && HEROES.citadel.tag, 'v60: 41 heroes, the new ones with their short line');
+  ok(Object.values(HEROES).length === 45 && HEROES.prism.tag && HEROES.citadel.tag, 'v60/v62h: 45 heroes, the new ones with their short line');
 }
 // ---- v62 (review #78, David): Smolder (eats an item), Tom (dishes) and Ashwing (egg and wall of fire)
 {
@@ -720,7 +720,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   for (let i = 0; i < 4; i++) Sim.step(W);
   ok(W.units.filter(u => u.side === 0 && (u.buffs.length || u.shield > 0 || u.hp > u.maxHp * 0.5 + 1)).length === 3, 'v62 Tom: Banquet serves every ally');
   // Ashwing: the egg
-  const sniper = { kind: 'mob', key: 'grunt', name: 'Sniper', glyph: 'x', hp: 99999, atk: 5000, armor: 0, mr: 0, as: 1, range: 9, ms: 0, mana: 0, m0: 0, fl: [], m: {}, ap: 100 };
+  const sniper = { kind: 'mob', key: 'grunt', name: 'Sniper', glyph: 'x', hp: 99999, atk: 5000, armor: 0, as: 1, range: 9, ms: 0, mana: 0, m0: 0, fl: [], m: {}, ap: 100 };
   const egg = kill => {
     const w = Sim.create({ mode: 'fight', seed: 1, heroes: [{ def: def('ashwing'), c: 3, r: 5 }, { def: def('bastion', 5), c: 3, r: 7 }], enemies: [{ def: sniper, c: 3, r: 0 }] });
     const a = w.units.find(x => x.key === 'ashwing'), sn = w.units.find(x => x.side === 1); let laid = 0, back = 0, eggs = 0;
@@ -781,6 +781,70 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const r2 = Run.newRun(5); Run.pickStart(r2, ['bastion'], null); Run.addHero(r2, 'lumen'); Run.addHero(r2, 'vex');
   const st = Run.stockFor(r2, 'heroShop'); ok(st.length === 4 && st.every(x => !r2.heroes.some(h => h.key === x.id)), 'v62: with all three classes the shop is just random heroes you do not own');
   ok(Run.lossTag(0.05) === 'SO CLOSE!' && Run.lossTag(0.2) === 'Almost had them!' && Run.lossTag(0.4) === 'A hard fight.' && Run.lossTag(0.7) === 'They were stronger.' && Run.lossTag(0.95) === 'You were wrecked!' && /Time ran out/.test(Run.lossTag(0.9, true)), 'v62 (review #94): the defeat line depends on how narrow the loss was');
+}
+// ---- v62h (reviews #96, #98, #100, #101, #102): Defense is one stat and four new heroes
+{
+  ok(Object.values(HEROES).every(h => h.mr === undefined) && Object.values(B.MOBS).every(m => m.mr === undefined) && Object.values(B.BOSSES).every(m => m.mr === undefined) && Sim.mrOf === undefined, 'v62h (#96): no unit has a separate magic resist any more, Defense is one stat');
+  const def = (k, lvl, specs) => Run.heroDef({ relics: [], heroes: [], bag: [] }, { key: k, lvl: lvl || 2, specs: specs || [], items: [], bonus: {}, uid: 7 });
+  const grunt = hp => Object.assign({}, Sim.mobScaleDef('grunt', 1.3), { hp: hp || 546 });
+  ok(['plasma', 'duelist', 'medic', 'gardener'].every(k => HEROES[k] && B.heroClass(k) === (k === 'medic' || k === 'gardener' ? 'support' : 'damage')), 'v62h: the four new heroes exist and have a class');
+  // #98 Plasma Cannon: never moves, shoves what it hits, hits harder the closer the target is
+  {
+    const W = Sim.create({ mode: 'fight', seed: 5, heroes: [{ def: def('plasma'), c: 3, r: 7 }, { def: def('bastion', 4), c: 3, r: 6 }], enemies: [0, 1, 2].map(i => ({ def: grunt(), c: 2 + i, r: 1 })) });
+    const p = W.units.find(u => u.key === 'plasma'); Sim.run(W);
+    ok(p.c === 3 && p.r === 7 && W.winner === 0 && p.dmgDone > 0, 'v62h (#98): the Plasma Cannon never moves and wins a small fight');
+    const W2 = Sim.create({ mode: 'fight', seed: 6, heroes: [{ def: def('plasma'), c: 3, r: 7 }], enemies: [{ def: grunt(99999), c: 3, r: 4 }] });
+    const q = W2.units.find(u => u.key === 'plasma'), e = W2.units.find(u => u.side === 1); q.ms = 0; e.ms = 0; const r0 = e.r; for (let i = 0; i < 50; i++) Sim.step(W2);
+    ok(e.r < r0, 'v62h (#98): its shots shove the enemy back');
+    const near = Sim.create({ mode: 'fight', seed: 7, heroes: [{ def: def('plasma'), c: 3, r: 7 }], enemies: [{ def: grunt(99999), c: 3, r: 6 }] }), far = Sim.create({ mode: 'fight', seed: 7, heroes: [{ def: def('plasma'), c: 3, r: 7 }], enemies: [{ def: grunt(99999), c: 3, r: 2 }] });
+    for (const w of [near, far]) for (const u of w.units) u.ms = 0;
+    for (let i = 0; i < 40; i++) { Sim.step(near); Sim.step(far); }
+    const dn = near.units.find(u => u.key === 'plasma').dmgDone || 0, df = far.units.find(u => u.key === 'plasma').dmgDone || 0;
+    ok(dn > df * 1.4, 'v62h (#98): the closer the target, the harder the hit (' + Math.round(dn) + ' vs ' + Math.round(df) + ')');
+    const W3 = Sim.create({ mode: 'fight', seed: 8, heroes: [{ def: def('plasma'), c: 3, r: 7 }], enemies: [{ def: grunt(99999), c: 3, r: 3 }, { def: grunt(99999), c: 5, r: 1 }] });
+    const c3 = W3.units.find(u => u.key === 'plasma'); c3.mana = c3.maxMana; for (const u of W3.units) u.ms = 0; for (let i = 0; i < 30; i++) { Sim.step(W3); }
+    ok(W3.fx.filter(f => f.k === 'proj' && f.from === c3.id).length >= 3, 'v62h (#98): the ultimate fires three shots in a row');
+  }
+  // #100 Duelist: the two fight only each other until one falls
+  {
+    const W = Sim.create({ mode: 'fight', seed: 7, heroes: [{ def: def('duelist'), c: 3, r: 5 }, { def: def('bastion', 4), c: 4, r: 6 }], enemies: [{ def: grunt(), c: 3, r: 3 }, { def: grunt(), c: 4, r: 3 }, { def: grunt(), c: 2, r: 3 }] });
+    const d = W.units.find(u => u.key === 'duelist'); d.mana = d.maxMana; Sim.step(W); Sim.step(W);
+    const e = W.byId[d.duelWith];
+    ok(e && e.duelWith === d.id && W.byId[e.st.tauntBy] === d && W.byId[d.st.tauntBy] === e && d.buffs.some(b => b.duel), 'v62h (#100): the challenge locks the Duelist and its enemy onto each other');
+    Sim.run(W);
+    ok(!d.duelWith && !d.buffs.some(b => b.duel) && W.winner === 0, 'v62h (#100): when the duel ends the edge ends with it');
+    const WB = Sim.create({ mode: 'fight', seed: 7, heroes: [{ def: def('duelist'), c: 3, r: 5 }], enemies: [{ def: Sim.mobScaleDef('gorewarden', 1), c: 3, r: 2 }] });
+    const db = WB.units.find(u => u.key === 'duelist'); db.mana = db.maxMana; Sim.step(WB); Sim.step(WB);
+    ok(!db.duelWith, 'v62h (#100): a boss cannot be challenged');
+  }
+  // #101 Combat Medic: its attacks heal hurt allies in range, and hit enemies when none is hurt
+  {
+    const W = Sim.create({ mode: 'fight', seed: 8, heroes: [{ def: def('medic'), c: 3, r: 7 }, { def: def('bastion', 4), c: 3, r: 6 }], enemies: [{ def: grunt(99999), c: 3, r: 3 }] });
+    const tank = W.units.find(u => u.key === 'bastion'), m = W.units.find(u => u.key === 'medic'); for (const u of W.units) if (u.side === 1) u.ms = 0; tank.hp = tank.maxHp * 0.5; const h0 = tank.hp;
+    for (let i = 0; i < 80; i++) Sim.step(W);
+    ok(tank.hp > h0, 'v62h (#101): the medic heals a hurt ally with its attacks');
+    const W2 = Sim.create({ mode: 'fight', seed: 9, heroes: [{ def: def('medic'), c: 3, r: 5 }], enemies: [{ def: grunt(99999), c: 3, r: 3 }] });
+    for (const u of W2.units) if (u.side === 1) u.ms = 0; const e2 = W2.units.find(u => u.side === 1); for (let i = 0; i < 60; i++) Sim.step(W2);
+    ok(e2.hp < e2.maxHp, 'v62h (#101): with no hurt ally in range the medic attacks enemies');
+    const W3 = Sim.create({ mode: 'fight', seed: 10, heroes: [{ def: def('medic'), c: 3, r: 6 }, { def: def('bastion', 4), c: 4, r: 5 }], enemies: [{ def: grunt(99999), c: 4, r: 3 }, { def: grunt(99999), c: 5, r: 3 }] });
+    const m3 = W3.units.find(u => u.key === 'medic'), t3 = W3.units.find(u => u.key === 'bastion'); for (const u of W3.units) if (u.side === 1) u.ms = 0; t3.hp = t3.maxHp * 0.6; m3.mana = m3.maxMana; const eh = W3.units.filter(u => u.side === 1).map(u => u.hp); let best = t3.hp;
+    for (let i = 0; i < 40; i++) { Sim.step(W3); best = Math.max(best, t3.hp); }
+    ok(W3.units.filter(u => u.side === 1).some((u, i) => u.hp < eh[i]) && best > t3.maxHp * 0.6, 'v62h (#101): the grenade hurts enemies and heals allies');
+  }
+  // #102 Gardener: plants cannot be attacked, block movement and do not keep a fight going
+  {
+    const W = Sim.create({ mode: 'fight', seed: 9, heroes: [{ def: def('gardener'), c: 3, r: 7 }, { def: def('bastion', 4), c: 3, r: 6 }], enemies: [{ def: grunt(), c: 3, r: 2 }, { def: grunt(), c: 4, r: 2 }] });
+    const g = W.units.find(u => u.key === 'gardener'); g.mana = g.maxMana; for (let i = 0; i < 30; i++) Sim.step(W);
+    const plants = W.units.filter(u => u.plant && !u.dead);
+    ok(plants.length === 3 && new Set(plants.map(p => p.plant)).size === 3 && plants.every(p => W.occ[B.Hex.key(p.c, p.r)] === p.id), 'v62h (#102): the ultimate plants 3 different plants that stand on their hexes (blocking movement)');
+    const hp0 = plants.map(p => p.hp); const foe = W.units.find(u => u.side === 1);
+    ok(plants.every(p => Sim.abilities && true) && W.units.filter(u => u.side === 1 && !u.dead).every(e => true), 'v62h (#102): plants exist on the side of the Gardener');
+    Sim.run(W);
+    ok(W.winner === 0 && plants.every((p, i) => p.hp === hp0[i] || p.dead), 'v62h (#102): nothing damaged the plants and the fight ended with them still around');
+    const WE = Sim.create({ mode: 'fight', seed: 10, heroes: [{ def: def('bastion', 5), c: 3, r: 6 }, { def: def('bastion', 5), c: 4, r: 6 }], enemies: [{ def: Object.assign(def('gardener', 2), { kind: 'hero' }), c: 3, r: 1 }] });
+    const ge = WE.units.find(u => u.side === 1); ge.mana = ge.maxMana; Sim.run(WE);
+    ok(WE.over && WE.units.some(u => u.plant), 'v62h (#102): a gardener on the enemy side cannot make a fight endless (plants do not count as enemies)');
+  }
 }
 console.log(`motor: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

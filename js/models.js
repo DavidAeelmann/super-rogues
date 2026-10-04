@@ -72,7 +72,8 @@
     mirewitch: H({ skin: '#7aa05a', body: '#2f4a2a', trim: '#9ad94a', robe: '#26391f', legs: '#1f2a18', bulk: 1.3, h: 1.15, head: 'hood', hood: '#1f2f18', weapon: 'staff', orb: '#9ad94a', eyes: '#d9ff7a' }),   // v52
     colossus: { type: 'golem', body: '#5a5f6a', trim: '#ffcf5a' },   // v52
     // v60 (review #72): Prism, the Citadel and its soldiers
-    prism: H({ skin: '#e8d4c0', body: '#3a8aa8', trim: '#bff4ff', robe: '#2a6a88', head: 'hood', hood: '#1f5a78', weapon: 'staff', orb: '#bff4ff', eyes: '#bff4ff' }),
+    // v62h (review #99): Prism is not a person but a long crystal that hovers
+    prism: { type: 'crystal', body: '#3a9ac0', trim: '#d8fbff', core: '#7dffe0' },
     citadel: { type: 'tower', body: '#a89a86', trim: '#c9a26a', flag: '#4f7cff' },
     footman: H({ skin: '#e0b48a', body: '#6a7a9a', trim: '#c9a26a', legs: '#3a3a42', bulk: 1, head: 'helm', weapon: 'sword', pauldrons: '#8a92a8' }),
     bowman: H({ skin: '#e0b48a', body: '#4a6a3a', trim: '#c9a26a', legs: '#3a3a2a', bulk: 0.9, head: 'hood', hood: '#3a5a2a', weapon: 'bow', quiver: true }),
@@ -81,6 +82,15 @@
     tom: H({ skin: '#e8b090', body: '#f2eee4', trim: '#c8453a', legs: '#3a3a48', bulk: 1.1, head: 'chef', hat: '#ffffff', weapon: 'club', hair: '#6a4a2a' }),
     ashwing: { type: 'phoenix', body: '#ff8a2a', trim: '#ffd23f', tail: '#ff4a1a' },
     egg: { type: 'egg', body: '#ffe0b0', trim: '#ff7a3d' },
+    // v62h (reviews #98, #100, #101, #102)
+    plasma: { type: 'cannon', body: '#4a5a78', trim: '#5fe0ff' },
+    duelist: H({ skin: '#e0b48a', body: '#2a3f7a', trim: '#ffd23f', legs: '#1c2748', head: 'tricorn', hat: '#2a3f7a', hair: '#3a2a1a', weapon: 'rapier', cape: '#a4262f' }),
+    medic: H({ skin: '#e8b890', body: '#f4f6f8', trim: '#e0405a', legs: '#4a5a6a', head: 'goggles', hair: '#5a3a1a', weapon: 'flask', orb: '#9dff7a', pack: true }),
+    gardener: H({ skin: '#e0b48a', body: '#3f8f4a', trim: '#e8d36a', robe: '#2f7a3a', head: 'hat', hat: '#d9b86a', hair: '#7a4a22', weapon: 'staff', orb: '#7ee08e' }),
+    plant_thorn: { type: 'plant', kind: 'thorn', body: '#2f8a3a', trim: '#d6f06a' },
+    plant_bloom: { type: 'plant', kind: 'bloom', body: '#3f9a45', trim: '#ff7fb8' },
+    plant_lily: { type: 'plant', kind: 'lily', body: '#3f9a6a', trim: '#bfe8ff' },
+    plant_spore: { type: 'plant', kind: 'spore', body: '#7a5a8a', trim: '#b6ff6a' },
     // summons
     skeleton: H({ skin: '#e8e2d0', body: '#cfc8b4', trim: '#8a8474', legs: '#cfc8b4', bulk: 0.8, head: 'skull', weapon: 'sword', eyes: '#6effc4', bones: true }),
     turret: { type: 'turret', body: '#d9a441', trim: '#5a4a2a' },
@@ -450,8 +460,67 @@
     poly(c, [[-s * 0.2, -s * 0.2], [-s * 0.1, -s * 0.4], [0, -s * 0.22], [s * 0.1, -s * 0.44], [s * 0.2, -s * 0.2]], m.trim, OUT);
     c.restore();
   }
+  // v62h (review #99, David: "Prism is not human but a hovering elongated crystal"): a tall faceted shard that floats and bobs above its shadow,
+  // with three small shards circling it; it flares when it attacks or casts
+  // WHAT: the "crystal" rig (Prism). m.body = the glass, m.trim = the bright edges, m.core = the glow inside.
+  function crystal(c, m, S, p) {
+    const s = S * 1.05, bob = Math.sin(p.t * 2.2) * s * 0.05, lift = s * 0.22 + bob, fl = Math.max(p.atk != null ? Math.sin(p.atk * Math.PI) : 0, p.cast != null ? Math.sin(p.cast * Math.PI) : 0);
+    const cy = -lift - s * 0.62, hw = s * 0.17, hh = s * 0.6;   // centre of the shard, half width, half height
+    c.globalAlpha *= 0.14 + 0.12 * fl; ball(c, 0, cy, s * (0.42 + 0.18 * fl), m.core); c.globalAlpha /= 0.14 + 0.12 * fl;
+    const top = [0, cy - hh], bot = [0, cy + hh * 0.95], L = [-hw, cy - hh * 0.35], R = [hw, cy - hh * 0.35], L2 = [-hw * 0.8, cy + hh * 0.4], R2 = [hw * 0.8, cy + hh * 0.4];
+    const g = c.createLinearGradient(-hw, 0, hw, 0); g.addColorStop(0, shade(m.body, 0.35)); g.addColorStop(0.5, m.body); g.addColorStop(1, shade(m.body, -0.35));
+    poly(c, [top, R, R2, bot, L2, L], g, OUT);
+    poly(c, [top, [0, cy - hh * 0.35], R], shade(m.body, 0.45)); poly(c, [top, [0, cy - hh * 0.35], L], shade(m.body, 0.1));   // the two upper facets
+    poly(c, [[0, cy - hh * 0.35], R, R2, [0, cy + hh * 0.4]], shade(m.body, -0.05)); poly(c, [[0, cy - hh * 0.35], L, L2, [0, cy + hh * 0.4]], shade(m.body, 0.2));
+    c.strokeStyle = m.trim; c.lineWidth = 1.2; c.beginPath(); c.moveTo(top[0], top[1]); c.lineTo(0, cy - hh * 0.35); c.lineTo(0, cy + hh * 0.4); c.lineTo(bot[0], bot[1]); c.moveTo(L[0], L[1]); c.lineTo(0, cy - hh * 0.35); c.lineTo(R[0], R[1]); c.stroke();
+    c.globalAlpha *= 0.55 + 0.3 * fl; ball(c, 0, cy + hh * 0.05, s * (0.1 + 0.05 * fl), m.core); c.globalAlpha /= 0.55 + 0.3 * fl; ball(c, 0, cy + hh * 0.05, s * 0.045, '#ffffff');
+    for (let i = 0; i < 3; i++) {   // three little shards circling it
+      const a = p.t * 1.6 + i * TAU / 3, x = Math.cos(a) * s * 0.42, d = Math.sin(a), y = cy + d * s * 0.12 + (i - 1) * s * 0.22, k = s * (0.07 + 0.015 * d);
+      poly(c, [[x, y - k * 1.5], [x + k, y], [x, y + k * 1.5], [x - k, y]], d > 0 ? m.trim : shade(m.body, 0.2), OUT);
+    }
+  }
+  // v62h (review #98): the Plasma Cannon: a stout tripod with a big barrel and a glowing plasma core; it kicks back when it fires and flares when it casts
+  // WHAT: the "cannon" rig (Plasma Cannon). m.body = the metal, m.trim = the plasma glow.
+  function cannon(c, m, S, p) {
+    const s = S * 1.05, fire = p.atk != null ? Math.sin(Math.min(1, p.atk) * Math.PI) : 0, cast = p.cast != null ? Math.sin(p.cast * Math.PI) : 0, rec = fire * s * 0.12, pulse = 0.5 + 0.5 * Math.sin(p.t * 4);
+    for (const x of [-0.42, -0.08, 0.3]) limb(c, x * 0.3 * s, -s * 0.3, x * s, 0, s * 0.07, '#3a4150');
+    poly(c, [[-s * 0.34, -s * 0.26], [s * 0.34, -s * 0.26], [s * 0.26, -s * 0.52], [-s * 0.26, -s * 0.52]], m.body, OUT);
+    poly(c, [[-s * 0.3, -s * 0.3], [s * 0.3, -s * 0.3], [s * 0.27, -s * 0.36], [-s * 0.27, -s * 0.36]], shade(m.body, -0.25));
+    c.globalAlpha *= 0.4 + 0.3 * pulse + 0.3 * cast; ball(c, -s * 0.02, -s * 0.4, s * 0.12, m.trim); c.globalAlpha /= 0.4 + 0.3 * pulse + 0.3 * cast;
+    ball(c, 0, -s * 0.62, s * 0.24, shade(m.body, 0.15), OUT);
+    const bx = -rec, g = c.createLinearGradient(0, -s * 0.78, 0, -s * 0.46); g.addColorStop(0, '#c4cfdf'); g.addColorStop(1, '#6f7a8c');
+    poly(c, [[s * 0.06 + bx, -s * 0.76], [s * 0.82 + bx, -s * 0.72], [s * 0.82 + bx, -s * 0.5], [s * 0.06 + bx, -s * 0.46]], g, OUT);
+    for (const x of [0.28, 0.5]) poly(c, [[s * x + bx, -s * 0.78], [s * (x + 0.07) + bx, -s * 0.78], [s * (x + 0.07) + bx, -s * 0.44], [s * x + bx, -s * 0.44]], shade(m.body, -0.1), OUT);
+    poly(c, [[s * 0.78 + bx, -s * 0.8], [s * 0.9 + bx, -s * 0.8], [s * 0.9 + bx, -s * 0.44], [s * 0.78 + bx, -s * 0.44]], '#2a303c', OUT);
+    c.globalAlpha *= 0.35 + 0.5 * Math.max(fire, cast); ball(c, s * 0.92 + bx, -s * 0.61, s * (0.1 + 0.16 * Math.max(fire, cast)), m.trim); c.globalAlpha /= 0.35 + 0.5 * Math.max(fire, cast);
+    ball(c, s * 0.92 + bx, -s * 0.61, s * 0.05, '#ffffff');
+  }
+  // v62h (review #102): the Gardener's plants, one look per kind (m.kind): a thorny bush, a pink bloom, a blue lily and a spore mushroom; they sway
+  // WHAT: the "plant" rig (Thornbush, Healing Bloom, Shield Lily, Spore Pod). m.body = the leaves, m.trim = the flower or glow.
+  function plant(c, m, S, p) {
+    const s = S * 0.95, sw = Math.sin(p.t * 2.4) * s * 0.035, k = m.kind, grow = p.t < 0.4 ? 0.6 + p.t * 1 : 1;
+    c.save(); c.scale(grow, grow);
+    if (k === 'spore') {
+      limb(c, 0, 0, sw, -s * 0.38, s * 0.1, '#d9cdb0');
+      c.fillStyle = m.body; c.beginPath(); c.ellipse(sw, -s * 0.46, s * 0.3, s * 0.2, 0, Math.PI, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.2; c.stroke();
+      for (const [dx, dy, r] of [[-0.14, -0.52, 0.045], [0.08, -0.56, 0.05], [0.18, -0.48, 0.035]]) ball(c, sw + s * dx, s * dy, s * r, m.trim);
+      c.globalAlpha *= 0.35; for (let i = 0; i < 3; i++) ball(c, sw + Math.sin(p.t * 1.7 + i * 2) * s * 0.2, -s * (0.65 + ((p.t * 0.4 + i / 3) % 1) * 0.35), s * 0.04, m.trim); c.globalAlpha /= 0.35;
+    } else {
+      for (const [dx, dy] of [[-0.3, -0.18], [0.3, -0.22]]) { c.fillStyle = shade(m.body, 0.1); c.beginPath(); c.ellipse(s * dx, s * dy, s * 0.2, s * 0.08, dx < 0 ? -0.5 : 0.5, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1; c.stroke(); }
+      limb(c, 0, 0, sw, -s * 0.5, s * 0.07, shade(m.body, -0.15));
+      if (k === 'thorn') {
+        for (const [dx, dy, r] of [[-0.18, -0.42, 0.2], [0.2, -0.4, 0.19], [0, -0.62, 0.22]]) ball(c, sw + s * dx, s * dy, s * r, m.body, OUT);
+        for (let i = 0; i < 8; i++) { const a = -Math.PI * (i / 7), x = sw + Math.cos(a) * s * 0.26, y = -s * 0.5 + Math.sin(a) * s * 0.28; poly(c, [[x, y], [x + Math.cos(a) * s * 0.13 - s * 0.03, y + Math.sin(a) * s * 0.13], [x + s * 0.04, y + s * 0.02]], m.trim, OUT); }
+      } else {   // bloom and lily: petals around a heart
+        const cx = sw, cy = -s * 0.56, n = k === 'bloom' ? 6 : 8;
+        for (let i = 0; i < n; i++) { const a = i / n * TAU + p.t * 0.2; ball(c, cx + Math.cos(a) * s * 0.17, cy + Math.sin(a) * s * 0.11, s * (k === 'bloom' ? 0.11 : 0.09), m.trim, OUT); }
+        ball(c, cx, cy, s * 0.1, k === 'bloom' ? '#ffe066' : '#7fd0ff', OUT);
+      }
+    }
+    c.restore();
+  }
   // WHAT: the list of rigs by name. A unit's "type" in M picks one.
-  const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg };
+  const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg, crystal, cannon, plant };
 
   // ------------------------------------------------------------------ public
   // WHAT: PUBLIC. get(key) = the line of M for a unit (grunt if unknown); draw(...) paints it; portrait(key, px, bust) makes a cached picture for cards.

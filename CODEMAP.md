@@ -42,6 +42,7 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 | `js/icons.js`, `js/uiicons.js` | item / power icons and interface icons | add an icon |
 | `js/juice.js`, `js/sfx.js` | confetti and coin effects, sounds (made with Web Audio) | add a sound or an effect |
 | `js/net.js` | the only way the page talks to the server | almost never |
+| `js/i18n.js`, `js/lang-boot.js`, `js/lang-pt.js`, `js/lang-de.js` | languages: the page watcher that swaps English text for its translation, the tiny loader of the chosen dictionary, and the two dictionaries (Portuguese, German) | translate a text, add a language (`node tools/idiomas.js` lists what is missing) |
 | `api/elo.js` | the Gauntlet, Elo, leagues, balance ratings, fights per day | change Gauntlet or league rules |
 | `api/player.js`, `api/_player.js` | accounts, Crown Shop, XP, profiles | change the Crown Shop or XP rules |
 | `api/suggest.js` | the suggestion box | change its limits |
@@ -59,7 +60,7 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 
 **Change a price or a gold reward.** `js/data.js`, `B.CFG` (`heroCost`, `itemCost`, `relicCost`, `reroll`, `gold`).
 
-**Make a hero stronger or weaker.** `js/data.js`, his block in `B.HEROES` (`hp`, `atk`, `armor`, `as`, `mana`, `grow`, and the numbers in `ab`). Then `ONLY=hisKey node tools/hero-odds.js 0 100` shows his win rate (aim 54 to 60%, the roster average is about 58%).
+**Make a hero stronger or weaker.** `js/data.js`, his block in `B.HEROES` (`hp`, `atk`, `armor` = Defense, `as`, `mana` = Energy, `grow`, and the numbers in `ab`). Then `ONLY=hisKey node tools/hero-odds.js 0 100` shows his win rate (aim 54 to 60%, the roster average is about 58%).
 
 **Add a hero.** Copy a block in `B.HEROES`; give it a new key; fill the fields (guide above the table); add a `TAGS` line (10 to 38 characters); add his look in `js/models.js` (`M`); if the ability is new write `A.myability = (W, u) => {...}` in `js/sim.js` and an entry in `SCALE` in `js/ui.js`; update the hero count in `tools/tests/motor.js`; run the tests.
 
@@ -87,7 +88,7 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 - **Power** (code name **relic**): a bonus for the whole team. **item**: equipment worn by one hero (7 types, one of each per hero).
 - **spec**: one of the two powers offered at a level-up (the hero table has 4 pairs, for levels 2 to 5). **ab**: the numbers of a hero's ability. **fl**: flags that switch on special behaviour.
 - **mods**: the shared list of stat bonuses (`atk`, `atkPct`, `hp`, `hpPct`, `asPct` attack speed, `crit`...). `Pct` means a fraction (0.1 = 10%).
-- **AD** attack damage, **AP** ability power, **MR** magic resist, **AS** attack speed, **MS** move speed.
+- On screen the stats are **Health** (`hp`), **Attack** (`atk`), **Magic** (`ap`), **Defense** (`armor`, one stat for physical and magic damage) and **Energy** (`mana`, the blue bar that fires the ability); **AS** attack speed, **MS** move speed. The names in the code did not change.
 - **ghost**: a saved team of another player that you duel in the **Gauntlet**. **floor**: a step of the Gauntlet tower.
 - **tick**: 1/20 of a second in the simulation. **side 0** is the player, **side 1** is the enemy (or the ghost).
 - **flog**: the list of fights a finished run reports for the balance dashboard.

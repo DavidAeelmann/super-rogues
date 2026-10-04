@@ -11,6 +11,7 @@
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     sound: '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>',
     mute: '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
+    globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c-3.2 3.4-3.2 13.6 0 17M12 3.5c3.2 3.4 3.2 13.6 0 17"/>',
     bulb: '<path d="M9.5 17.5h5M10.3 20.5h3.4M12 3.5a5.8 5.8 0 0 0-3.4 10.5c.6.5.9 1.1.9 1.8v1.7h5v-1.7c0-.7.3-1.3.9-1.8A5.8 5.8 0 0 0 12 3.5z"/>',
     trophy: '<path d="M7.5 4h9v5.5a4.5 4.5 0 0 1-9 0z" fill="currentColor" fill-opacity=".25"/><path d="M7.5 4h9v5.5a4.5 4.5 0 0 1-9 0zM7.5 6H4.5a3.5 3.5 0 0 0 3.6 4.4M16.5 6h3a3.5 3.5 0 0 1-3.6 4.4M12 14v3.5M8 20.5h8M9.5 20.5l.8-3h3.4l.8 3"/>',
     crown: '<path d="M3.5 8.5l4.2 3.6L12 5l4.3 7.1 4.2-3.6-1.8 10H5.3z" fill="currentColor" fill-opacity=".3"/><path d="M3.5 8.5l4.2 3.6L12 5l4.3 7.1 4.2-3.6-1.8 10H5.3zM5.5 21h13"/>',

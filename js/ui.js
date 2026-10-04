@@ -184,17 +184,17 @@
   // durations ("1.5s") are italic. It tokenises the RAW text and escapes every piece, so it is XSS-safe.
   // WHAT: TEXT COLOURS. fmt(text) wraps numbers and key words (damage, heal, stun, burn, mana...) in coloured spans so descriptions are easy to read. KW is the list of words and their colour class (CSS .kw-*).
   const KW = [
-    ['kw-atk', 'attack speed|attacks?|physical|damage|AD'], ['kw-ap', 'magic damage|magic|ability power|abilities|ability|AP'],
-    ['kw-def', 'magic resist|armor|MR|shields?|invulnerable|untargetable|dodge'], ['kw-hp', 'max HP|HP|heals?|healing|healed|regenerates?|regen|lifesteal|revives?|resurrect\\w*'],
+    ['kw-atk', 'attack speed|attacks?|physical|damage'], ['kw-ap', 'magic damage|magic|abilities|ability'],
+    ['kw-def', 'defense|shields?|invulnerable|untargetable|dodge'], ['kw-hp', 'max health|health|heals?|healing|healed|regenerates?|regen|lifesteal|revives?|resurrect\\w*'],
     ['kw-cc', 'stuns?|stunned|stunning|freezes?|frozen|freeze|roots?|slows?|slowed|silence[sd]?|taunts?|pulls?|knock\\w*'],
     ['kw-dot', 'burns?|burning|burn|poisons?|poison|bleed'], ['kw-crit', 'crit chance|crit damage|critical|crits?'],
-    ['kw-mana', 'mana'], ['kw-gold', 'gold'], ['kw-xp', 'XP|level'], ['kw-move', 'move speed|range|hex(?:es)?'],
+    ['kw-mana', 'energy'], ['kw-gold', 'gold'], ['kw-xp', 'XP|level'], ['kw-move', 'move speed|range|hex(?:es)?'],
   ];
-  const KW_RE = new RegExp('([+\\-−]?\\d+(?:\\.\\d+)?(?:%|x|s\\b)?)|\\b(' + KW.map(k => k[1]).join('|') + ')\\b', 'gi');
+  const KW_RE = new RegExp('([+\\-−]?\\d+(?:[.,]\\d+)?(?:%|x|s\\b)?)|\\b(' + KW.map(k => k[1]).join('|') + ')\\b', 'gi');
   const KW_CLS = w => { for (const [c, re] of KW) if (new RegExp('^(?:' + re + ')$', 'i').test(w)) return c; return ''; };
   // WHAT: turns a plain description into coloured HTML (see KW above). Use it for any ability / item / power text.
   function fmt(text) {
-    const t = String(text == null ? '' : text); let out = '', last = 0, m;
+    const t = B.T ? B.T(String(text == null ? '' : text)) : String(text == null ? '' : text); let out = '', last = 0, m;   // v62h (review #97): descriptions are translated here, before they are coloured
     KW_RE.lastIndex = 0;
     while ((m = KW_RE.exec(t))) {
       out += esc(t.slice(last, m.index)); last = m.index + m[0].length;
@@ -207,7 +207,7 @@
   // WHAT: the row of coloured stat chips (health, attack, armor, speed...) shown on hero cards.
   function chips(d, full) {
     const c = (cls, sym, v, tip) => `<span class="stat ${cls}" title="${tip}"><i>${sym}</i>${v}</span>`;
-    return `<span class="stats-row">${c('s-hp', '❤', d.hp, 'Health')}${c('s-atk', '⚔', d.atk, 'Attack (AD): physical abilities deal a % of it')}${full ? c('s-ap', '✦', d.ap, 'Ability power (AP): magic abilities, burns and heals deal a % of it. 100 at Lv 1, +30 per level') : ''}${c('s-arm', '⛨', d.armor, 'Armor')}${c('s-mr', '◈', d.mr, 'Magic resist')}${c('s-as', '»', d.as, 'Attacks per second')}${c('s-rng', '➶', d.range, 'Range (hexes)')}${d.crit ? c('s-crit', '✸', d.crit, 'Crit chance') : ''}${d.dodge ? c('s-dodge', '↯', d.dodge, 'Dodge') : ''}</span>`;
+    return `<span class="stats-row">${c('s-hp', '❤', d.hp, 'Health')}${c('s-atk', '⚔', d.atk, 'Attack: what your hits do, and what attack abilities deal a % of')}${full ? c('s-ap', '✦', d.ap, 'Magic: what magic abilities, burns and heals deal a % of. 100 at Lv 1, +30 per level') : ''}${c('s-arm', '⛨', d.armor, 'Defense: lowers all damage taken, physical and magic')}${c('s-as', '»', d.as, 'Attacks per second')}${c('s-rng', '➶', d.range, 'Range (hexes)')}${d.crit ? c('s-crit', '✸', d.crit, 'Crit chance') : ''}${d.dodge ? c('s-dodge', '↯', d.dodge, 'Dodge') : ''}</span>`;
   }
   const pct = x => Math.round(x * 100) + '%';
   // review #19 (David: "not clear how hero abilities scale with AP, attack etc.") and review #26 (David: "abilities
@@ -219,25 +219,29 @@
   // WHAT: HOW ABILITIES SCALE. One entry per ability id: a function that lists the parts of its damage (P = % of attack as physical, M = % of AP as magic, B = burn, H = heal, S = shield...) so the hero card can say "scales with AD / AP".
   // When you add an ability to sim.js you must add its entry here, or the hero card shows nothing (the Chrome test "every hero ability explains how it scales" fails).
   const SCALE = {
-    bulwark: ab => [['S', ab.shield, 'on himself'], ab.allyShield && ['Z', `allies within 2 hexes get a shield of ${pct(ab.shield * ab.allyShield)} of his max HP`], ab.burst && ['Z', `adjacent enemies take ${pct(ab.burst)} of the shield as magic damage`]],
+    bulwark: ab => [['S', ab.shield, 'on himself'], ab.allyShield && ['Z', `allies within 2 hexes get a shield of ${pct(ab.shield * ab.allyShield)} of his max Health`], ab.burst && ['Z', `adjacent enemies take ${pct(ab.burst)} of the shield as magic damage`]],
     shadowstep: ab => [['P', ab.dmg, 'to the weakest enemy, can crit']],
     fireball: ab => [['M', ab.dmg, `to every enemy in ${ab.radius} hex`], ['B', ab.burn, 'burn']],
     blizzard: ab => [['M', ab.dmg, 'to the frozen group'], ab.iceArmor && ['S', ab.iceArmor, 'on her and the weakest ally']],
     charge: ab => [['P', ab.dmg, 'to the enemies hit']],
     radiance: ab => [['H', ab.heal, 'the weakest ally'], ['H', ab.splash, 'allies next to it'], ab.smite && ['M', ab.smite, 'smite']],
     volley: ab => [['P', ab.dmg, `per arrow, ${ab.count} arrows, can crit`]],
-    flamethrower: ab => [['M', ab.dmg, 'to every enemy in the flames'], ['B', ab.burn, `burn, for ${ab.dur}s`], ab.heal && ['Z', `heals ${pct(ab.heal)} of its max HP for every enemy hit`], ab.vuln && ['Z', `burning enemies take ${pct(ab.vuln)} more damage`], ['Z', `Devour: eats ${ab.devour} item${ab.devour > 1 ? 's' : ''} at the start of a fight, ${pct(ab.boost)} of its stats`]],   // v62
+    flamethrower: ab => [['M', ab.dmg, 'to every enemy in the flames'], ['B', ab.burn, `burn, for ${ab.dur}s`], ab.heal && ['Z', `heals ${pct(ab.heal)} of its max Health for every enemy hit`], ab.vuln && ['Z', `burning enemies take ${pct(ab.vuln)} more damage`], ['Z', `Devour: eats ${ab.devour} item${ab.devour > 1 ? 's' : ''} at the start of a fight, ${pct(ab.boost)} of its stats`]],   // v62
     dishes: ab => [['Z', d => `hot pie: heals ${Math.round(ab.heal * (1 + ab.big) * d.ap)}; jerky: +${pct(ab.atk * (1 + ab.big))} attack and pepper soup: +${pct(ab.as * (1 + ab.big))} attack speed for ${ab.dur}s; pudding: a ${Math.round(ab.shield * (1 + ab.big) * d.ap)} shield`], ['Z', `${ab.all ? 'every ally' : ab.dishes + ' random allies'} get a dish${ab.double ? ', two effects each' : ''}`], ab.pan && ['M', ab.pan, 'to the nearest enemy (pan), 1s stun']],   // v62
+    tripleshot: ab => [['P', ab.dmg, `per shot, ${ab.shots} shots in a row, each shoves ${ab.push} hexes; +${pct(ab.close)} per hex nearer than 5`], ['Z', `every normal shot shoves ${ab.knock} hex${ab.knock > 1 ? 'es' : ''}`]],   // v62h
+    duel: ab => [['Z', 'challenges the nearest enemy (never a boss): the two can only fight each other until one falls'], ['Z', `in the duel: +${pct(ab.edge)} Attack, +${ab.guard} Defense, ${pct(ab.ls)} lifesteal${ab.parry ? ', ' + pct(ab.parry) + ' less damage taken' : ''}`], ab.strike && ['P', ab.strike, `opening strike, stuns ${ab.stun}s`], ab.winHeal && ['X', ab.winHeal, 'when it wins'], ab.rematch && ['Z', 'a win challenges the next enemy at once']],
+    grenade: ab => [['M', ab.dmg, `to every enemy within ${ab.radius} hex of the blast`], ['H', ab.healNade, 'to every ally in the blast'], ['Z', d => `its attacks heal ${Math.round(ab.heal * d.atk)} per hit (+${pct(ab.triage)} under 40% Health)`], ab.stun && ['Z', `stuns enemies for ${ab.stun}s`], ab.shield && ['S', ab.shield, 'shield for allies in the blast']],
+    plant: ab => [['Z', `${ab.count} plants for ${ab.life}s (at most ${ab.cap}): nothing can attack them and they block movement`], ['M', ab.dmg, 'per Thornbush shot'], ['H', ab.heal, 'per Healing Bloom pulse'], ['Z', d => `Shield Lily: a ${Math.round(ab.shield * d.ap)} shield; Spore Pod: ${Math.round(ab.poison * d.ap)} poison per second`]],
     firewall: ab => [['M', ab.dps, `per second to enemies on the wall, ${ab.dur}s, ${2 * ab.width + 1} hexes wide`], ['B', ab.burn, 'burn on those standing on it']],   // v62
     overcharge: ab => [['M', ab.dmg, 'per second to the enemy in a beam'], ['H', ab.heal, 'per second to the hurt ally in a beam'], ['Z', `Overcharge: x${ab.mult} for ${ab.dur}s and +${ab.extra} beam`]],   // v60
-    garrison: ab => [['Z', d => `footman: ${Math.round(ab.fhp * (1 + ab.vet) * d.ap)} HP and ${Math.round(ab.fatk * (1 + ab.vet) * d.ap)} attack; archer: ${Math.round(ab.ahp * (1 + ab.vet) * d.ap)} HP and ${Math.round(ab.aatk * (1 + ab.vet) * d.ap)} attack`]],   // v60
-    raise: ab => [['Z', d => `each skeleton: ${Math.round(3 * d.ap * ab.hpMul)} HP (${pct(3 * ab.hpMul)} AP) and ${Math.round(0.3 * d.ap)} attack (30% AP)`], ab.explode && ['M', ab.explode, 'when a skeleton dies, 1 hex']],
+    garrison: ab => [['Z', d => `footman: ${Math.round(ab.fhp * (1 + ab.vet) * d.ap)} Health and ${Math.round(ab.fatk * (1 + ab.vet) * d.ap)} attack; archer: ${Math.round(ab.ahp * (1 + ab.vet) * d.ap)} Health and ${Math.round(ab.aatk * (1 + ab.vet) * d.ap)} attack`]],   // v60
+    raise: ab => [['Z', d => `each skeleton: ${Math.round(3 * d.ap * ab.hpMul)} Health (${pct(3 * ab.hpMul)} Magic) and ${Math.round(0.3 * d.ap)} attack (30% Magic)`], ab.explode && ['M', ab.explode, 'when a skeleton dies, 1 hex']],
     chain: ab => [['M', ab.dmg, `per bounce, ${ab.bounces} enemies, ${pct(ab.falloff)} less each bounce`]],
     hook: ab => [['P', ab.dmg, 'to the pulled enemy']],
-    mirror: ab => [['Z', d => `each clone: ${pct(ab.stat)} of her HP, attack and armor (${Math.round(d.hp * ab.stat)} HP, ${Math.round(d.atk * ab.stat)} attack)`]],
-    turret: ab => [['Z', d => `each turret: ${Math.round(340 * lvF(d) * ab.hpMul)} HP and 80% of his AD as attack (${Math.round(0.8 * d.atk)})`]],
+    mirror: ab => [['Z', d => `each clone: ${pct(ab.stat)} of her Health, Attack and Defense (${Math.round(d.hp * ab.stat)} Health, ${Math.round(d.atk * ab.stat)} attack)`]],
+    turret: ab => [['Z', d => `each turret: ${Math.round(340 * lvF(d) * ab.hpMul)} Health and 80% of his Attack as attack (${Math.round(0.8 * d.atk)})`]],
     whirl: ab => [['P', ab.dmg, 'to every adjacent enemy'], ['Z', `heals ${pct(ab.heal)} of the damage dealt`]],
-    consecrate: ab => [['M', ab.dps, `per second to enemies on the ground, ${ab.dur}s`], ['Z', `allies on it heal ${pct(ab.heal)} of their max HP per second`]],
+    consecrate: ab => [['M', ab.dps, `per second to enemies on the ground, ${ab.dur}s`], ['Z', `allies on it heal ${pct(ab.heal)} of their max Health per second`]],
     eclipse: ab => [['A', ab.bonus, `extra on each of the next ${ab.hits} attacks`], ['Z', `heals ${pct(ab.heal)} of that damage`]],
     entangle: ab => [['M', ab.dmg, `to every enemy within ${ab.radius} hexes`]],
     anthem: ab => [['H', ab.heal, 'allies within 2 hexes'], ['Z', `+${pct(ab.atk)} attack for 4s`]],
@@ -250,7 +254,7 @@
     hypnosis: ab => [['M', ab.dmg, 'to the hypnotized group']],
     trick: ab => [['P', 1.5, 'pie'], ['H', ab.heal, 'balloons, every ally'], ['P', 1, `per knife, ${ab.knives} knives`], ['MX', [0.4, 0.2], 'confetti']],
     keg: ab => [['P', ab.dmg, 'to adjacent enemies'], ab.burn && ['BA', ab.burn, 'burn'], ['X', ab.heal, 'swig']],
-    hellfire: ab => [['MX', [ab.dmg, ab.apdmg], `to every enemy within ${ab.radius} hexes`], ['BA', ab.burn, 'burn'], ['Z', `costs ${pct(ab.cost)} of his current HP`]],
+    hellfire: ab => [['MX', [ab.dmg, ab.apdmg], `to every enemy within ${ab.radius} hexes`], ['BA', ab.burn, 'burn'], ['Z', `costs ${pct(ab.cost)} of his current Health`]],
     boulder: ab => [['P', ab.dmg, 'to the target'], ['P', 1, 'to enemies next to it']],
     wrap: ab => [['D', ab.decay, `decay on ${ab.count} enemies while rooted`]],
     phalanx: ab => [['P', ab.dmg, `per enemy, ${ab.hits} enemies, can crit`], ['Z', `allies next to him take ${pct(ab.dr)} less damage for 4s`]],
@@ -258,8 +262,8 @@
     flask: ab => [['M', ab.acid, 'acid flask'], ['H', ab.heal, 'healing flask']],
     galekick: ab => [['P', ab.dmg, 'kick, can crit'], ['P', 1, 'to anyone it crashes into']],
     hive: ab => [['M', ab.dps, `per second to enemies in the hive, ${ab.dur}s`], ['H', ab.honey, 'honey, the weakest ally'], ab.slow && ['Z', `enemies in the hive are slowed ${pct(ab.slow)}`], ab.twin && ['Z', 'a second hive on another group']],
-    wave: ab => [['M', ab.dmg, `to every enemy within ${ab.radius} hex, pushed ${ab.push} back`], ab.echo && ['Z', `a second wave 1s later deals ${pct(ab.echo)} of it`], ab.foam && ['Z', `allies next to her get a shield of ${pct(ab.foam)} of their max HP`]],
-    starfall: ab => [['MX', [ab.dmg, ab.apdmg], `where the star lands, ${ab.radius} hex, after ${Math.max(0.3, ab.delay)}s`], ab.shards && ['Z', `${ab.shards} shards hit random enemies for 50% of it`], ab.veil && ['Z', `allies within 2 hexes get a shield of ${pct(ab.veil)} of their max HP`]],
+    wave: ab => [['M', ab.dmg, `to every enemy within ${ab.radius} hex, pushed ${ab.push} back`], ab.echo && ['Z', `a second wave 1s later deals ${pct(ab.echo)} of it`], ab.foam && ['Z', `allies next to her get a shield of ${pct(ab.foam)} of their max Health`]],
+    starfall: ab => [['MX', [ab.dmg, ab.apdmg], `where the star lands, ${ab.radius} hex, after ${Math.max(0.3, ab.delay)}s`], ab.shards && ['Z', `${ab.shards} shards hit random enemies for 50% of it`], ab.veil && ['Z', `allies within 2 hexes get a shield of ${pct(ab.veil)} of their max Health`]],
   };
   // d = { abil, ab, atk, ap, hp, lvl, name } from Run.heroDef or a unit in the fight
   // WHAT: runs the SCALE entry of a hero and fills in the numbers for his current level.
@@ -268,11 +272,11 @@
     const n = x => Math.round(x);
     return S(d.ab).filter(Boolean).map(([k, v, note]) => {
       if (k === 'Z') return { k, t: typeof v === 'function' ? v(d) : v };
-      const txt = { P: `<b>${pct(v)} AD</b> → <b class="num">${n(v * d.atk)}</b> physical`, M: `<b>${pct(v)} AP</b> → <b class="num">${n(v * d.ap)}</b> magic`,
-        MX: `<b>${pct(v[0])} AD + ${pct(v[1])} AP</b> → <b class="num">${n(v[0] * d.atk + v[1] * d.ap)}</b> magic`, A: `<b>${pct(v)} AD</b> → <b class="num">${n(v * d.atk)}</b> magic`,
-        B: `burn <b>${pct(v)} AP</b> → <b class="num">${n(v * d.ap)}</b> per second for 3s`, BA: `burn <b>${pct(v)} AD</b> → <b class="num">${n(v * d.atk)}</b> per second for 3s`,
-        H: `heals <b>${pct(v)} AP</b> → <b class="num">${n(v * d.ap)}</b> HP`, X: `heals <b>${pct(v)}</b> of max HP → <b class="num">${n(v * d.hp)}</b>`,
-        S: `shield <b>${pct(v)}</b> of max HP → <b class="num">${n(v * d.hp)}</b>`, D: `<b>${pct(v)}</b> of the target's max HP per second` }[k];
+      const txt = { P: `<b>${pct(v)} Attack</b> → <b class="num">${n(v * d.atk)}</b> physical`, M: `<b>${pct(v)} Magic</b> → <b class="num">${n(v * d.ap)}</b> magic`,
+        MX: `<b>${pct(v[0])} Attack + ${pct(v[1])} Magic</b> → <b class="num">${n(v[0] * d.atk + v[1] * d.ap)}</b> magic`, A: `<b>${pct(v)} Attack</b> → <b class="num">${n(v * d.atk)}</b> magic`,
+        B: `burn <b>${pct(v)} Magic</b> → <b class="num">${n(v * d.ap)}</b> per second for 3s`, BA: `burn <b>${pct(v)} Attack</b> → <b class="num">${n(v * d.atk)}</b> per second for 3s`,
+        H: `heals <b>${pct(v)} Magic</b> → <b class="num">${n(v * d.ap)}</b> Health`, X: `heals <b>${pct(v)}</b> of max Health → <b class="num">${n(v * d.hp)}</b>`,
+        S: `shield <b>${pct(v)}</b> of max Health → <b class="num">${n(v * d.hp)}</b>`, D: `<b>${pct(v)}</b> of the target's max Health per second` }[k];
       return { k, t: txt + (note ? ` <span class="dim">(${note})</span>` : '') };
     });
   }
@@ -280,7 +284,7 @@
   // WHAT: draws the "How it scales" list under an ability.
   function scalingHTML(d, compact) {
     const parts = scaleParts(d); if (!parts.length) return '';
-    const head = compact ? '' : `<div class="scal-h">How it scales <span class="dim">now: ⚔ ${Math.round(d.atk)} AD · ✦ ${Math.round(d.ap)} AP</span></div>`;
+    const head = compact ? '' : `<div class="scal-h">How it scales <span class="dim">now: ⚔ ${Math.round(d.atk)} Attack · ✦ ${Math.round(d.ap)} Magic</span></div>`;
     return `<div class="scal ${compact ? 'compact' : ''}">${head}<ul>${parts.map(p => `<li class="sk-${p.k}"><i>${SCALE_ICON[p.k]}</i><span>${p.t}</span></li>`).join('')}</ul></div>`;
   }
   // "scales with AD · AP · max HP" under a hero's name (shops, start)
@@ -288,9 +292,9 @@
   function scaleTag(key) {
     const h = HEROES[key], S = SCALE[h.abil]; if (!S) return '';
     const ks = new Set(S(h.ab).filter(Boolean).map(p => p[0])), w = [];
-    if (['P', 'A', 'BA', 'MX'].some(k => ks.has(k)) || h.abil === 'turret' || h.abil === 'mirror') w.push('<span class="kw-atk">AD</span>');
-    if (['M', 'B', 'H', 'MX'].some(k => ks.has(k)) || h.abil === 'raise') w.push('<span class="kw-ap">AP</span>');
-    if (['S', 'X'].some(k => ks.has(k)) || h.abil === 'mirror') w.push('<span class="kw-hp">max HP</span>');
+    if (['P', 'A', 'BA', 'MX'].some(k => ks.has(k)) || h.abil === 'turret' || h.abil === 'mirror') w.push('<span class="kw-atk">Attack</span>');
+    if (['M', 'B', 'H', 'MX'].some(k => ks.has(k)) || h.abil === 'raise') w.push('<span class="kw-ap">Magic</span>');
+    if (['S', 'X'].some(k => ks.has(k)) || h.abil === 'mirror') w.push('<span class="kw-hp">max Health</span>');
     return w.length ? `<span class="scaletag">scales with ${w.join(' · ')}</span>` : '';
   }
   // WHAT: item and power labels: rarity colours, the "Rare weapon" tag, the set line, the order of the doll slots, the map node icons, shop names.
@@ -315,7 +319,7 @@
       // v49 (review #60): the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
       // the ladder, suggestions, and the menu sheet with the rest)
       const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button><button data-act="suggest" class="sugg ibtn" aria-label="Suggest a change">${I('bulb')}</button><button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
+      h.innerHTML = `<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button><button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
     const stepN = Math.max(0, run.step);
@@ -324,7 +328,7 @@
     const lgs = store.get('balance.league', null);
     h.innerHTML = `${elo != null ? `<button class="lgchip" data-act="player-tab" title="${lgs ? leagueName(lgs.league) + ' league · ' : ''}Elo ${elo}" aria-label="Your league and Elo">${emblem(lgs ? lgs.league : 0, 18)}<span>${elo}</span></button>` : ''}
       <span class="gold" title="Gold">${shownGold()}</span><button class="prog" data-act="path" aria-label="See the journey">${prog}</button>
-      <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team">${I('bag')} Team</button>`}<button data-act="suggest" class="sugg ibtn" aria-label="Suggest a change">${I('bulb')}</button><button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
+      <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
     animGold();
   }
   // v42 (review #51, David: "more dopamine hits"): sounds (js/sfx.js) with a switch, and a gold counter that counts up or
@@ -419,7 +423,14 @@
       <button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span>${I('arrow', 'chev')}</button>
       ${row('art-lab', 'palette', 'Art Lab', 'Your art on the heroes')}
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
+      ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}
       ${row('suggest', 'bulb', 'Suggest a change', 'Help build the game')}</div>`;
+  }
+  // v62h (review #97, David: "In the menu add an option to change language to Portuguese and German"): the sheet opened by the Language row
+  // WHAT: the language chooser: English, Portuguese, German. Picking one stores it and reloads the page (js/i18n.js).
+  function languageHTML() {
+    const cur = B.i18n ? B.i18n.lang : 'en';
+    return `<div class="shead"><b>Language</b><button data-act="close" aria-label="Close">✕</button></div><div class="mlist">${(B.i18n ? B.i18n.LANGS : [['en', 'English']]).map(([id, name]) => `<button class="mrow${id === cur ? ' on' : ''}" data-act="set-lang" data-arg="${id}"><span data-notr><b>${name}</b>${id === cur ? '<small>✓</small>' : ''}</span></button>`).join('')}</div>`;
   }
   // the trailer: three random heroes against a random fight, played with no sound; a new one starts when it ends
   // WHAT: the TRAILER under the start page: three random heroes fight a random fight with no sound; when it ends a new one starts. trailerWorld builds it, trailerLoop plays it.
@@ -452,16 +463,20 @@
   // part on their own lines (same words, easier to scan); the scaling note stays small under it
   // v47 (review #58, David: "make every decision understandable in under 2 seconds ... showing consequences instead of
   // mechanics ... hide complexity behind taps"): quick views (start, shops) say what an ability does without the
-  // "90% AP" formulas; the hero card in Team keeps every number
+  // "90% Magic" formulas; the hero card in Team keeps every number
   // WHAT: plainAb() shortens an ability description for small cards (removes the exact % numbers).
-  const ABTOK = '\\d+(?:\\.\\d+)?% (?:AD|AP)(?: \\+ \\d+(?:\\.\\d+)?% (?:AD|AP))?';
+  const ABTOK = '\\d+(?:\\.\\d+)?% (?:Attack|Magic)(?: \\+ \\d+(?:\\.\\d+)?% (?:Attack|Magic))?';
   const AB_RX = [[/, each with [^.;]*? as attack/g, ''], [new RegExp(`(heal(?:s|ing)?(?: \\()?)(?: for)? ?${ABTOK} ?`, 'g'), '$1 '],
     [new RegExp(` (?:for|of) ${ABTOK}(?! (?:as |physical|magic|true|damage|\\+))`, 'g'), ''], [new RegExp(`(?:an extra )?${ABTOK} (?:as )?(?=(?:physical|magic|true|damage)\\b)`, 'g'), m => /^an extra/.test(m) ? 'extra ' : ''],
     [new RegExp(ABTOK, 'g'), 'damage'], [/\s+([.,;)])/g, '$1'], [/\(\s+/g, '('], [/\s{2,}/g, ' ']];
-  const plainAb = s => AB_RX.reduce((t, [rx, to]) => t.replace(rx, to), String(s || '')).trim();
+  // v62h (review #97): the shortening works on English sentences; in another language the full translated text is shown instead
+  const loc = () => B.i18n && B.i18n.lang !== 'en';
+  const plainAb = s => loc() ? String(s || '') : AB_RX.reduce((t, [rx, to]) => t.replace(rx, to), String(s || '')).trim();
   // WHAT: the ability block of a hero card: name, description, how it scales.
   function abilHTML(h, plain) {
-    const d = plain ? plainAb(h.abDesc) : String(h.abDesc || ''), m = d.match(/^Passive(?: \(([^)]+)\))?:\s*(.*?)\s*Active:\s*(.*)$/);
+    // v62h (review #97): in another language the description is translated first and split on that language's "Passive" and "Active" words
+    const d = loc() ? B.T(String(h.abDesc || '')) : plain ? plainAb(h.abDesc) : String(h.abDesc || ''), PW = loc() ? B.T('Passive') : 'Passive', AW = loc() ? B.T('Active') : 'Active';
+    const m = d.match(new RegExp('^' + PW + '(?: \\(([^)]+)\\))?:\\s*(.*?)\\s*' + AW + ':\\s*(.*)$'));
     if (plain && m) return `<b class="abname">${esc(h.abName)}</b> ${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}`;   // quick view: what it does when it fires
     return `<b class="abname">${esc(h.abName)}</b>` + (m ? `<span class="abl"><i class="abk">Passive</i>${m[1] ? `<b>${esc(m[1])}</b>: ` : ''}${fmt(m[2])}</span><span class="abl"><i class="abk act">Active</i>${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}</span>` : ` ${fmt(d)}`);
   }
@@ -470,7 +485,7 @@
     const h = HEROES[key];
     return `<div class="hcard">
       <div class="hrow">${img(key, 48)}<b>${esc(h.name)}</b><span class="role">${h.role}</span></div>
-      ${chips({ hp: h.hp, atk: h.atk, armor: h.armor, mr: h.mr, as: h.as, range: h.range })}
+      ${chips({ hp: h.hp, atk: h.atk, armor: h.armor, as: h.as, range: h.range })}
       <div class="abil">${abilHTML(h)}</div>${scaleTag(key)}${extra}</div>`;
   }
   // review #22 (David): the game starts with 1 hero and 1 relic: pick one of each (3 offered).
@@ -532,11 +547,11 @@
   // WHAT: text for a "next fight" modifier bought in an event.
   function modText(M) {
     const pc = v => (v > 0 ? '+' : '') + Math.round(v * 100) + '%', out = [];
-    if (M.enemyHp) out.push(`enemies ${pc(M.enemyHp)} HP`);
+    if (M.enemyHp) out.push(`enemies ${pc(M.enemyHp)} Health`);
     if (M.enemyAtk) out.push(`enemies ${pc(M.enemyAtk)} attack`);
     if (M.atkPct) out.push(`your heroes ${pc(M.atkPct)} attack`);
-    if (M.manaStart) out.push(`your heroes start with +${M.manaStart} mana`);
-    if (M.regen) out.push(`your heroes regenerate ${Math.round(M.regen * 100)}% HP per second`);
+    if (M.manaStart) out.push(`your heroes start with +${M.manaStart} Energy`);
+    if (M.regen) out.push(`your heroes regenerate ${Math.round(M.regen * 100)}% Health per second`);
     if (M.goldPct) out.push(`${pc(M.goldPct)} gold`);
     if (M.reward) out.push(`win it for a ${M.reward} item`);
     if (M.rewardGold) out.push(`win it for +${M.rewardGold} gold`);
@@ -575,9 +590,9 @@
   // level; the ones you took in gold, today's pair glowing, later ones dim) with a fork from the branch you took
   // WHAT: LEVEL UP. specTags gives each power option small tags (Heal, Summon, ...) read from its description; levelHTML shows the two powers to choose from (js/run.js chooseSpec applies the pick).
   const STYLE = [['Summon', 'ghost', /skeleton|turret|clone|summon|decoy|\bbees?\b|spawn|minion/i], ['Heal', 'heart', /heal|lifesteal|regenerat|revive|rises/i],
-    ['Control', 'lock', /stun|root|slow|freez|taunt|blind|pull|push|knock|silence|hypno|charm|fear|longer/i], ['Tank', 'shield', /armor|\bMR\b|max HP|shield|invulnerab|untargetable|less damage|damage taken/i],
+    ['Control', 'lock', /stun|root|slow|freez|taunt|blind|pull|push|knock|silence|hypno|charm|fear|longer/i], ['Tank', 'shield', /defense|max health|shield|invulnerab|untargetable|less damage|damage taken/i],
     ['Area', 'swords', /radius|every enemy|all enemies|adjacent|within \d+ hex|group|bounce|chain|splash|nearby|around|more enemies|more targets|\d+ targets/i],
-    ['Speed', 'bolt', /attack speed|move speed|faster|sooner|dodge|blink|dash|mana|cooldown|twice|range/i], ['Damage', 'sword', /damage|crit|execut|burn|poison|bleed|\battack\b|\bAD\b|\bAP\b|strike|kill|double|\d+% more|more (?:knives|flasks|shots|arrows)/i]];
+    ['Speed', 'bolt', /attack speed|move speed|faster|sooner|dodge|blink|dash|energy|cooldown|twice|range/i], ['Damage', 'sword', /damage|crit|execut|burn|poison|bleed|\battack\b|\bmagic\b|strike|kill|double|\d+% more|more (?:knives|flasks|shots|arrows)/i]];
   const specTags = sp => { const t = STYLE.filter(x => x[2].test(sp.desc)).slice(0, 2); return (t.length ? t : [['Upgrade', 'star']]).map(([n, ic]) => `<span class="ptag pt-${n.toLowerCase()}">${I(ic)}${n}</span>`).join(''); };
   // WHAT: the level-up screen: pick one of two powers for the hero that levelled.
   function levelHTML() {
@@ -592,7 +607,7 @@
     }).join('');
     return `<section class="levelup"><h2 class="sc headline win">Level up!</h2>
       <div class="luhero"><img class="lufull" src="${por(h.key, 104, true)}" alt=""><div><b class="luname">${esc(d.name)}</b><span class="lulv">Lv ${p.lvl - 1} → <b>Lv ${p.lvl}</b></span>
-        <p class="small lugain" title="+15% HP and attack, +30 AP, +4 armor and MR">${I('up')} Stronger in every way${p.lvl >= 3 ? `<br><b class="kw-gold">${I('bag')} +1 item slot</b>` : ''}</p></div></div>
+        <p class="small lugain" title="+15% Health and Attack, +30 Magic, +4 Defense">${I('up')} Stronger in every way${p.lvl >= 3 ? `<br><b class="kw-gold">${I('bag')} +1 item slot</b>` : ''}</p></div></div>
       <h3>Pick a new power</h3>
       <div class="opts spec2">${pair.map((sp, i) => `<button class="card opt" data-act="spec" data-arg="${i}" title="${esc(sp.desc)}"><div class="ptags">${specTags(sp)}</div><div class="ctitle spec">${esc(sp.name)}</div><div class="small">${fmt(plainAb(sp.desc))}</div></button>`).join('')}</div>
       <div class="sp-path tree"><div class="bph"><b>Power path</b><span class="dim small">one of two at each level</span></div>${path}</div></section>`;
@@ -668,7 +683,7 @@
     if (w.gold) out.push('+' + w.gold + ' gold');
     if (w.item) out.push((/^[aeiou]/.test(w.item) ? 'an ' : 'a ') + w.item + ' item');
     if (w.relic) out.push('a power');
-    if (w.boost) out.push('+' + Math.round((w.boost.hpPct || 0) * 100) + '% HP and attack for good');
+    if (w.boost) out.push('+' + Math.round((w.boost.hpPct || 0) * 100) + '% Health and Attack for good');
     if (w.xp) out.push('+' + w.xp + ' XP');
     return out.join(', ');
   }
@@ -943,7 +958,8 @@
   }
   // v47 (review #58): "Sharpen: +10 attack to one hero" reads as a bold name and what it does, on two lines
   // WHAT: formats an event choice label.
-  function evLabel(t) {
+  function evLabel(t0) {
+    const t = B.T ? B.T(String(t0)) : String(t0);   // v62h (review #97): translated first, then split into the bold name and the rest
     const m = String(t).match(/^([^:0-9]{2,32}):\s+(.+)$/);
     return m ? `<b class="evn">${esc(m[1])}</b><span class="eve">${fmt(m[2].charAt(0).toUpperCase() + m[2].slice(1))}</span>` : fmt(t);
   }
@@ -996,7 +1012,7 @@
     }
     return `<section class="title">${body}
       <div class="stack againrow"><button class="primary big cta again" data-act="new-run">▶ Play again</button><button data-act="scores" aria-label="Ladder">🏆</button></div>
-      <p class="hint">Something felt off? <a href="#" data-act="suggest">Suggest a change</a>.</p></section>`;
+    </section>`;
   }
 
   // ------------------------------------------------------------------ unit info panel
@@ -1009,7 +1025,7 @@
     const hd = HEROES[u.key];
     const abil = hd ? `${abilHTML(hd)}` : u.boss ? fmt(B.BOSSES[u.key].desc) : u.abil ? fmt(MOB_ABIL[u.abil] || '') : u.fl.has('dive') ? 'Leaps to your back line at the start.' : u.kind === 'summon' ? 'Summoned unit.' : 'No special ability.';
     return `<div class="hrow">${img(u.key, 40)}<b>${esc(u.name)}</b>${u.kind === 'hero' ? ' Lv ' + u.lvl : ''}${u.elite ? ' <span class="elite">★ elite</span>' : ''}</div>
-      ${chips({ hp: Math.max(0, Math.round(u.hp)) + '/' + u.maxHp, atk: Math.round(Sim.atkOf(W, u)), ap: Math.round(u.ap), armor: Math.round(Sim.armorOf(W, u)), mr: Math.round(Sim.mrOf(W, u)), as: Sim.asOf(W, u).toFixed(2), range: u.range, crit: u.crit ? pct(u.crit) : 0, dodge: u.dodge ? pct(u.dodge) : 0 }, true)}
+      ${chips({ hp: Math.max(0, Math.round(u.hp)) + '/' + u.maxHp, atk: Math.round(Sim.atkOf(W, u)), ap: Math.round(u.ap), armor: Math.round(Sim.armorOf(W, u)), as: Sim.asOf(W, u).toFixed(2), range: u.range, crit: u.crit ? pct(u.crit) : 0, dodge: u.dodge ? pct(u.dodge) : 0 }, true)}
       <div class="small">${abil}</div>${hd ? scalingHTML({ abil: u.abil, ab: u.ab, atk: Sim.atkOf(W, u), ap: u.ap, hp: u.maxHp, lvl: u.lvl, name: u.name }, true) : ''}`;
   }
 
@@ -1400,7 +1416,7 @@
   function suggestShell() {
     return `<div class="shead"><b>${I('bulb')} Suggest changes</b><button data-act="close">✕</button></div>
       <div id="sugStatus"></div>
-      <p class="small">Write each change and tap <b>Add</b>. Got 5 ideas? Add all 5, then tap <b>Send for review</b>. Claude reviews the whole list and ships it. A bar at the top of the page tells you when it is ready: press F5 and play the new version.</p>
+      <p class="small">Write each change and tap <b>Add</b>. Got 5 ideas? Add all 5, then tap <b>Send for review</b>. Claude reviews the whole list and ships it. When the new version is live, a small notice at the top offers to reload the game.</p>
       <form data-form="draft" class="stack">
         <textarea name="text" maxlength="1500" rows="3" placeholder="A bug, a rebalance, a new hero, item or power, a UI change, a full restructure... One change per note. Any language is fine."></textarea>
         <button>+ Add to my list</button>
@@ -1610,13 +1626,13 @@
     </ol>
     <details class="howmore"><summary>All the rules</summary>
     <ol class="small howto">
-      <li>Start with 1 hero and 1 power (3 of each offered). Each hero has a unique ability that fires when its blue mana bar is full. Recruit up to 3 heroes in the Hero Shop.</li>
+      <li>Start with 1 hero and 1 power (3 of each offered). Each hero has a unique ability that fires when its blue Energy bar is full. Recruit up to 3 heroes in the Hero Shop.</li>
       <li>Every step offers 2 options: easy/medium/hard fights, or a shop/event. Fights 4 and 8 are bosses.</li>
       <li>❓ Events: trades, bets, powers and items to pick, and <b>challenges</b> (optional fights that start right away: win for a reward; lose and only that reward is gone, the game goes on). Some choices only open with the right hero in your team.</li>
       <li>Before each fight, place heroes in the 4 blue rows. Then the battle plays itself.</li>
       <li>⚑ Formation powers reward where you place your heroes (next to each other, alone, in the front or back row, in one line, next to terrain). While deploying, the line above the board shows who gets what.</li>
       <li>🗺 Every fight after the first is on a map with terrain: 🌳 trees, 🪨 boulders, ⛰️ ridges and 💧 ponds block the way (nobody can stand on them or walk through; arrows and spells fly over). Units pushed into a tree, boulder or ridge are slammed and stunned. Bosses fight at the Standing Stones.</li>
-      <li>How abilities scale: every ability names its stat. <b>AD</b> = attack (⚔). <b>AP</b> = ability power (✦): 100 at Lv 1, grows every level (each hero at its own pace), more from items. <span class="kw-atk">Physical</span> abilities deal a % of AD; <span class="kw-ap">magic</span> abilities deal a % of AP, of AD, or of both added together (like "40% AD + 20% AP"); heals scale with AP; shields are a % of max HP. AP never multiplies AD. Tap a hero (in battle or in Team) to see its numbers.</li>
+      <li>Stats: <b>Health</b> (❤), <b>Attack</b> (⚔), <b>Magic</b> (✦: 100 at Lv 1, grows every level at each hero's own pace, more from items), <b>Defense</b> (⛨: lowers all damage taken, physical and magic) and <b>Energy</b> (the blue bar that fires the ability). Every ability names its stat: it deals a % of Attack as <span class="kw-atk">physical</span> damage, a % of Magic as <span class="kw-ap">magic</span> damage, or both added together (like "40% Attack + 20% Magic"); heals scale with Magic; shields are a % of max Health. Magic never multiplies Attack. Tap a hero (in battle or in Team) to see its numbers.</li>
       <li>Heroes earn XP for every second they stay alive. Level ups raise stats and let you pick a specialization. From Lv 3, each level adds an item slot. Lv 5 is rare.</li>
       <li>Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
       <li>Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes. Lose a single fight and the game ends (and costs 2 league points). Heroes always heal after a fight.</li>
@@ -1640,17 +1656,9 @@
     const el = $('#notice'); if (!el) return;
     const p = store.get(PEND, null);
     let cls = '', html = '';
-    if (p && p.state === 'waiting') {
-      cls = 'wait';
-      const where = p.held ? `#${p.batch} waits for the owner` : p.working ? `#${p.batch} in progress` : p.ahead ? `#${p.batch} queued (${p.ahead} ahead)` : `#${p.batch} sent`;
-      html = `⏳ ${where}`;   // v58 (review #70, "Remove or minimise the review-status banner"): one short line, tap for details
-    } else if (p && p.state === 'ready' && p.done > 0) {
-      cls = 'ready'; html = `✅ Your changes are live: tap to reload`;
-    } else if (p && (p.state === 'shown' || (p.state === 'ready' && !p.done))) {
-      cls = 'info';
-      html = p.done ? `✅ #${p.batch} live: tap for replies` : `#${p.batch} done: tap for replies`;
-      html += '<span class="nx" data-act="notice-x" aria-label="Dismiss">✕</span>';
-    } else if (nt.update) {
+    // v62h (review #103, David: "Remove the banner with the suggestions in progress. Remove the lightbulb icon. Keep it all hidden in the other menu items"):
+    // no more "#12 in progress" / "your changes are live" pills and no lightbulb; the status of a batch is in the menu's suggestion box. Only the plain "New version" pill stays.
+    if (nt.update) {
       cls = 'info'; html = '🔄 New version: tap to reload<span class="nx" data-act="notice-x" aria-label="Dismiss">✕</span>';
     }
     el.className = cls; el.innerHTML = html; el.hidden = !html;
@@ -1666,7 +1674,7 @@
         if (!items.length) { store.del(PEND); }
         else if (items.every(i => i.status === 'done' || i.status === 'declined')) {
           Object.assign(p, { state: 'ready', done: items.filter(i => i.status === 'done').length, declined: items.filter(i => i.status === 'declined').length, readyAt: Date.now() });
-          store.set(PEND, p); nt.lastRun = d.review.lastRun;
+          store.set(PEND, p); nt.lastRun = d.review.lastRun; nt.update = true;
         } else {
           Object.assign(p, { ahead: d.ahead, working: items.some(i => i.status === 'doing'), held: !items.some(i => i.status === 'doing' || i.status === 'new') && items.some(i => i.status === 'held'), offline: !(d.review.seen && d.review.now - d.review.seen < 3 * 60e3) });
           store.set(PEND, p);
@@ -1745,6 +1753,8 @@
     sound: () => { if (!B.Sfx) return; B.Sfx.toggle(); for (const b of document.querySelectorAll('.sndbtn')) { b.innerHTML = I(B.Sfx.on ? 'sound' : 'mute'); b.setAttribute('aria-label', 'Sound ' + (B.Sfx.on ? 'on' : 'off')); } if (ui.modal === 'home') { openModal(homeMenuHTML()); ui.modal = 'home'; } },
     // Opens the menu sheet; give-up asks, give-up-yes ends the game (and reports the fights it played).
     'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
+    language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
+    'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
     'give-up-yes': () => { if (run && run.flog && run.flog.length) Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog }).catch(() => {}); run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },
     // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.

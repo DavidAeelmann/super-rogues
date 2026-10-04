@@ -156,7 +156,6 @@
       atk: (b.atk + (m.atk || 0)) * (1 + 0.15 * g * L) * (1 + (m.atkPct || 0) + all),
       ap: (100 + 30 * g * L + (m.ap || 0)) * (1 + all),   // review #26: AP 100 at Lv 1, +30 per level (it now scales abilities on its own)
       armor: (b.armor + 4 * L + (m.armor || 0)) * (1 + all),
-      mr: (b.mr + 4 * L + (m.mr || 0)) * (1 + all),
       as: b.as * Math.max(0.3, 1 + (m.asPct || 0)), range: Math.max(1, b.range + (m.range || 0)), ms: b.ms + (m.ms || 0),
       crit: (b.crit || 0) + (m.crit || 0), critDmg: 1.5 + (m.critDmg || 0), ls: (b.ls || 0) + (m.ls || 0),
       dodge: has(run, 'giant') ? 0 : (b.dodge || 0) + (m.dodge || 0), mana: Math.max(20, Math.round((b.mana + (m.manaMax || 0)) * (1 + (m.manaMaxPct || 0)))), m0: b.m0,
@@ -287,7 +286,7 @@
   // preview = the static board shown while deploying (no rng used, no start-of-fight effects)
   // v62 (review #78, David): Smolder eats an item it holds at the start of every fight and keeps its stats for good (the
   // numbers, not the item's effect). The first item it holds goes first; Second Helping eats two, Rich Fuel gives 50% more.
-  const DEVOUR = ['hp', 'atk', 'ap', 'armor', 'mr', 'hpPct', 'atkPct', 'asPct', 'crit', 'critDmg', 'ls', 'dodge', 'regen', 'manaRegen', 'manaStart'];
+  const DEVOUR = ['hp', 'atk', 'ap', 'armor', 'hpPct', 'atkPct', 'asPct', 'crit', 'critDmg', 'ls', 'dodge', 'regen', 'manaRegen', 'manaStart'];
   // WHAT: Smolder's passive. Called when a fight really starts (not for the preview): each Smolder eats the first item he wears and keeps its numbers in his permanent bonus.
   function devour(run) {
     const out = [];
@@ -650,8 +649,8 @@
     // v44 (review #54): the actual relics and items on offer, to pick from
     if (cur.id === 'altar') {
       const r = o.relics || [], R = id => B.RELIC[id].name + ': ' + B.RELIC[id].desc, out = [];
-      if (r[0]) out.push({ label: `Take ${R(r[0])} The next fight: enemies +30% HP`, act: 'relicPick:' + r[0], relic: r[0], next: { enemyHp: 0.3 }, risk: 'Enemies +30% HP next fight' });
-      if (r[1]) out.push({ label: `Take ${R(r[1])} One hero pays: 10% less max HP for good`, act: 'relicBlood:0.1:' + r[1], relic: r[1], target: 'hero', risk: 'A hero loses 10% max HP' });
+      if (r[0]) out.push({ label: `Take ${R(r[0])} The next fight: enemies +30% Health`, act: 'relicPick:' + r[0], relic: r[0], next: { enemyHp: 0.3 }, risk: 'Enemies +30% Health next fight' });
+      if (r[1]) out.push({ label: `Take ${R(r[1])} One hero pays: 10% less max Health for good`, act: 'relicBlood:0.1:' + r[1], relic: r[1], target: 'hero', risk: 'A hero loses 10% max Health' });
       if (r[2]) out.push({ label: `Buy ${R(r[2])}`, act: 'relicPick:' + r[2], relic: r[2], cost: 8 });
       return out.length ? out : [resolve(run, { label: 'The altar is empty: pray for +{x10} XP to all heroes', act: 'xpAll:{x10}' })];
     }
@@ -732,8 +731,8 @@
     const it = tgt && tgt.id ? itemAt(run, tgt.arg) : null, iname = id => B.ITEM[id].name;
     if (a === 'xpAll') { for (const h of run.heroes) gainXp(run, h, +x); msg = 'All heroes gained ' + x + ' XP.'; got('xp', +x); }
     else if (a === 'xpHero') { gainXp(run, hero, +x); msg = name(hero) + ' gained ' + x + ' XP.'; got('xp', +x, hero.key); }
-    else if (a === 'hpAll') { for (const h of run.heroes) h.bonus.hpPct = (h.bonus.hpPct || 0) + (+x); msg = 'Your heroes feel sturdier (+' + Math.round(x * 100) + '% max HP).'; got('boost', '+' + Math.round(x * 100) + '% max HP'); }
-    else if (a === 'hpHero') { hero.bonus.hpPct = (hero.bonus.hpPct || 0) + (+x); msg = name(hero) + ' gained +' + Math.round(x * 100) + '% max HP.'; got('boost', '+' + Math.round(x * 100) + '% max HP', hero.key); }
+    else if (a === 'hpAll') { for (const h of run.heroes) h.bonus.hpPct = (h.bonus.hpPct || 0) + (+x); msg = 'Your heroes feel sturdier (+' + Math.round(x * 100) + '% max Health).'; got('boost', '+' + Math.round(x * 100) + '% max Health'); }
+    else if (a === 'hpHero') { hero.bonus.hpPct = (hero.bonus.hpPct || 0) + (+x); msg = name(hero) + ' gained +' + Math.round(x * 100) + '% max Health.'; got('boost', '+' + Math.round(x * 100) + '% max Health', hero.key); }
     else if (a === 'buffHero') { for (const k in ch.mods) hero.bonus[k] = (hero.bonus[k] || 0) + ch.mods[k]; msg = name(hero) + ' got stronger.'; got('boost', modsText(ch.mods), hero.key); }
     else if (a === 'buffAll') { for (const h of run.heroes) for (const k in ch.mods) h.bonus[k] = (h.bonus[k] || 0) + ch.mods[k]; msg = 'Every hero got stronger.'; got('boost', modsText(ch.mods)); }
     else if (a === 'gold') { run.gold += +x; msg = '+' + x + ' gold.'; got('gold', +x); }
@@ -775,7 +774,7 @@
       const id = randomItem(run, t || top); run.bag.push(id); msg = names.join(' and ') + ' became ' + iname(id) + '.'; got('item', id);
     }
     else if (a === 'potion') {
-      const h = pick(run, run.heroes), P = [{ hpPct: 0.1 }, { atkPct: 0.08 }, { ap: 20 }, { asPct: 0.08 }, { armor: 15, mr: 15 }, { crit: 0.06 }], m = pick(run, P);
+      const h = pick(run, run.heroes), P = [{ hpPct: 0.1 }, { atkPct: 0.08 }, { ap: 20 }, { asPct: 0.08 }, { armor: 15 }, { crit: 0.06 }], m = pick(run, P);
       for (const k in m) h.bonus[k] = (h.bonus[k] || 0) + m[k]; msg = name(h) + ' drinks it: ' + modsText(m) + ' for good.'; got('boost', modsText(m), h.key);
     }
     else if (a === 'mimic') {
@@ -804,7 +803,7 @@
     run.cur.done = msg; run.cur.gains = gains; return msg;
   }
   // WHAT: names and formats stats for text ("+10% attack speed"). modsText(m) writes a whole bag of stats as a sentence.
-  const MOD_NAME = { hp: ['max HP', 0], dodge: ['dodge', 1], ls: ['lifesteal', 1], regen: ['regen per second', 1], critDmg: ['crit damage', 1], manaRegen: ['mana per second', 0], hpPct: ['max HP', 1], atkPct: ['attack', 1], asPct: ['attack speed', 1], crit: ['crit chance', 1], ap: ['AP', 0], atk: ['attack', 0], armor: ['armor', 0], mr: ['magic resist', 0], manaStart: ['starting mana', 0], cleanseOnce: ['ignores the first crowd control', -1] };
+  const MOD_NAME = { hp: ['max Health', 0], dodge: ['dodge', 1], ls: ['lifesteal', 1], regen: ['regen per second', 1], critDmg: ['crit damage', 1], manaRegen: ['Energy per second', 0], hpPct: ['max Health', 1], atkPct: ['attack', 1], asPct: ['attack speed', 1], crit: ['crit chance', 1], ap: ['magic', 0], atk: ['attack', 0], armor: ['defense', 0], manaStart: ['starting Energy', 0], cleanseOnce: ['ignores the first crowd control', -1] };
   function modsText(m) {
     return Object.keys(m).map(k => { const d = MOD_NAME[k] || [k, 0]; return d[1] < 0 ? d[0] : (m[k] > 0 ? '+' : '') + (d[1] ? Math.round(m[k] * 100) + '%' : m[k]) + ' ' + d[0]; }).join(', ');
   }
@@ -859,13 +858,13 @@
   function heroProfile(key) {
     if (profCache[key]) return profCache[key];
     const h = B.HEROES[key], t = h.abDesc + ' ' + h.specs.flat().map(s => s.desc).join(' ');
-    const ap = (t.match(/% (?:of (?:his|her) )?AP\b/g) || []).length, ad = (t.match(/% (?:of (?:his|her) )?AD\b/g) || []).length;
+    const ap = (t.match(/% (?:of (?:his|her) )?Magic\b/g) || []).length, ad = (t.match(/% (?:of (?:his|her) )?Attack\b/g) || []).length;   // v62h: the stat names are Magic and Attack now
     const apShare = ap + ad ? ap / (ap + ad) : 0.3;   // an ability that names neither leans on attacks
     return (profCache[key] = { apShare, tank: TANK_ROLES.includes(h.role) || (h.range <= 1 && h.hp >= 850), ranged: h.range > 1 });
   }
   // a stat's size that counts as one point, and which side of a hero it serves
   // WHAT: for each stat, how big counts as "one point" when scoring items (an item with +10 attack is worth 1 point of attack).
-  const NORM = { atk: 10, ap: 20, asPct: 0.1, crit: 0.1, critDmg: 0.25, hp: 150, hpPct: 0.1, armor: 15, mr: 15, ls: 0.1, dodge: 0.08, ms: 1, range: 1,
+  const NORM = { atk: 10, ap: 20, asPct: 0.1, crit: 0.1, critDmg: 0.25, hp: 150, hpPct: 0.1, armor: 15, ls: 0.1, dodge: 0.08, ms: 1, range: 1,
     manaStart: 20, manaRegen: 2, manaOnHit: 3, manaMaxPct: -0.15, regen: 0.01, thorns: 0.2, shieldStart: 150, shieldStartPct: 0.15, allPct: 0.05 };
   // WHAT: item effects grouped by who likes them: on-hit effects (attackers), on-cast effects (casters), defensive effects (tanks).
   const ON_HIT = ['burnOnHit', 'poisonOnHit', 'slowOnHit', 'curHpOnHit', 'splash', 'multishot', 'chainEvery', 'antiHeal', 'stackAtk', 'stackAs', 'armorPen', 'firstMoveAtk', 'killAtk', 'rampAtk', 'giantSlayer', 'execute', 'reap', 'critStack'];
@@ -876,7 +875,7 @@
     const it = B.ITEM[id], m = it.mods || {}, P = heroProfile(key), ap = P.apShare, dm = P.tank ? 1.8 : 1, om = P.tank ? 0.7 : 1;
     const W = { atk: (1.2 * (1 - ap) + 0.1) * om, ap: 1.2 * ap + 0.05, asPct: ((1 - ap) + 0.15) * om, crit: (0.9 * (1 - ap) + 0.05) * om, critDmg: 0.7 * (1 - ap) * om, ls: (0.7 * (1 - ap) + 0.15) * om,
       manaStart: 0.4 + 0.6 * ap, manaRegen: 0.3 + 0.7 * ap, manaOnHit: 0.3 + 0.6 * ap, manaMaxPct: 0.4 + 0.6 * ap,
-      hp: 0.6 * dm, hpPct: 0.6 * dm, armor: 0.5 * dm, mr: 0.5 * dm, regen: 0.5 * dm, thorns: 0.2 * dm, shieldStart: 0.5 * dm, shieldStartPct: 0.5 * dm, dodge: 0.45 * dm,
+      hp: 0.6 * dm, hpPct: 0.6 * dm, armor: 0.5 * dm, regen: 0.5 * dm, thorns: 0.2 * dm, shieldStart: 0.5 * dm, shieldStartPct: 0.5 * dm, dodge: 0.45 * dm,
       ms: 0.25, range: P.ranged ? 0.8 : -0.3, allPct: 1.2 };
     let s = 0;
     for (const k in m) {

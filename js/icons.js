@@ -78,6 +78,185 @@
     idol: (c, a) => { path(c, [[-22, 40], [22, 40], [16, 20], [-16, 20]], a || gold); path(c, [[-14, 20], [14, 20], [18, -6], [-18, -6]], a || gold); orb(c, 0, -20, 15, a || gold); orb(c, -5, -22, 3, '#c43a3a'); orb(c, 5, -22, 3, '#c43a3a'); },
     wind: (c, a) => { c.strokeStyle = a || '#bfe6ff'; c.lineWidth = 6; c.lineCap = 'round'; for (const [y, w] of [[-18, 34], [2, 42], [22, 28]]) { c.beginPath(); c.moveTo(-40, y); c.lineTo(w - 12, y); c.arc(w - 12, y - 8, 8, Math.PI / 2, -Math.PI, true); c.stroke(); } },
   };
+  // v62h (review #104, David: "Improve the icons for items and powers, they're too low res you can't see what they are supposed to be. Make more detailed and prettier"):
+  // the main drawers are drawn again with more parts (fullers, guards, gems, rivets, buckles, folds), bright edge highlights and glows, and the plate
+  // blows the glyph up and puts a soft glow of its accent colour behind it, so even at 36 px you can tell a sword from a staff
+  const sh = (col, f) => M().shade(col, f);
+  // WHAT: a bright highlight stroke along a bevelled edge.
+  const hl = (c, x1, y1, x2, y2, w) => { c.save(); c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = w || 1.8; c.lineCap = 'round'; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); c.restore(); };
+  // WHAT: a soft round glow (magic, gems, flames).
+  const glow = (c, x, y, r, col, a) => { c.save(); c.globalAlpha = a == null ? 0.5 : a; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.restore(); };
+  // WHAT: a cut gem (a small faceted stone) at x, y of radius r.
+  const gem = (c, x, y, r, col) => {
+    path(c, [[x, y - r], [x + r * 0.9, y - r * 0.25], [x + r * 0.55, y + r * 0.85], [x - r * 0.55, y + r * 0.85], [x - r * 0.9, y - r * 0.25]], col);
+    c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = 0.9; c.beginPath(); c.moveTo(x - r * 0.9, y - r * 0.25); c.lineTo(x + r * 0.9, y - r * 0.25); c.moveTo(x, y - r); c.lineTo(x - r * 0.3, y - r * 0.25); c.lineTo(x - r * 0.5, y + r * 0.85); c.moveTo(x, y - r); c.lineTo(x + r * 0.3, y - r * 0.25); c.lineTo(x + r * 0.5, y + r * 0.85); c.stroke();
+    hl(c, x - r * 0.45, y - r * 0.55, x - r * 0.2, y - r * 0.8, Math.max(1, r * 0.2));
+  };
+  const sparkle = (c, x, y, r) => { c.save(); c.fillStyle = 'rgba(255,255,255,0.95)'; c.beginPath(); c.moveTo(x, y - r); c.quadraticCurveTo(x, y, x + r, y); c.quadraticCurveTo(x, y, x, y + r); c.quadraticCurveTo(x, y, x - r, y); c.quadraticCurveTo(x, y, x, y - r); c.fill(); c.restore(); };
+  Object.assign(D, {
+    sword: (c, a) => {
+      const b = a || steel;
+      path(c, [[-8, 26], [8, 26], [8, -30], [0, -48], [-8, -30]], b); line(c, 0, -38, 0, 22, 3.2, sh(b, -0.28)); hl(c, -5.5, -28, -5.5, 22, 1.8);
+      path(c, [[-27, 29], [-18, 25], [18, 25], [27, 29], [24, 38], [8, 33], [-8, 33], [-24, 38]], gold); gem(c, 0, 31, 4.5, '#d03a4a');
+      line(c, 0, 36, 0, 46, 7, leather); for (const y of [38, 42, 46]) line(c, -5, y, 5, y + 2, 1.6, sh(leather, -0.45)); orb(c, 0, 49, 5, gold);
+    },
+    greatsword: (c, a) => {
+      const b = a || steel;
+      path(c, [[-12, 22], [12, 22], [12, -34], [0, -50], [-12, -34]], b); line(c, -4, -38, -4, 18, 2.6, sh(b, -0.3)); line(c, 4, -38, 4, 18, 2.6, sh(b, -0.3)); hl(c, -9, -30, -9, 18, 2);
+      for (const y of [-18, -2, 14]) { c.fillStyle = 'rgba(255,215,120,0.8)'; c.fillRect(-2, y, 4, 4); }
+      path(c, [[-30, 24], [-20, 20], [20, 20], [30, 24], [26, 34], [-26, 34]], gold); gem(c, 0, 28, 5, '#6fb6ff');
+      line(c, 0, 34, 0, 46, 8, leather); for (const y of [37, 41, 45]) line(c, -5, y, 5, y + 2, 1.6, sh(leather, -0.45)); orb(c, 0, 49, 5, gold);
+    },
+    dagger: (c, a) => {
+      c.rotate(-0.7); const b = a || steel;
+      path(c, [[-6, 10], [6, 10], [5, -26], [0, -44], [-5, -26]], b); line(c, 0, -34, 0, 6, 2.4, sh(b, -0.3)); hl(c, -3.6, -24, -3.6, 6, 1.5);
+      path(c, [[-16, 10], [16, 10], [13, 17], [-13, 17]], gold); gem(c, 0, 13.5, 3.2, '#d03a4a');
+      line(c, 0, 18, 0, 34, 6, leather); line(c, -4, 24, 4, 26, 1.5, sh(leather, -0.45)); line(c, -4, 29, 4, 31, 1.5, sh(leather, -0.45)); orb(c, 0, 36, 4.2, gold);
+    },
+    axe: (c, a) => {
+      line(c, 10, 46, -4, -40, 7.5, wood); for (const t of [0.15, 0.35, 0.55]) line(c, 10 - 14 * t - 4, 46 - 86 * t, 10 - 14 * t + 4, 46 - 86 * t - 2, 1.6, sh(wood, -0.5));
+      path(c, [[-5, -38], [-30, -48], [-44, -22], [-38, -4], [-5, -6]], a || steel); path(c, [[-5, -38], [-14, -34], [-22, -20], [-14, -8], [-5, -6]], sh(a || steel, -0.25));
+      hl(c, -30, -44, -40, -22, 2); orb(c, -8, -22, 3, gold); orb(c, 2, -40, 3.4, gold);
+    },
+    bow: (c, a) => {
+      c.strokeStyle = ink; c.lineWidth = 10; c.lineCap = 'round'; c.beginPath(); c.arc(-14, 0, 44, -1.15, 1.15); c.stroke();
+      c.strokeStyle = a || wood; c.lineWidth = 6.5; c.stroke(); c.strokeStyle = sh(a || wood, 0.45); c.lineWidth = 1.8; c.beginPath(); c.arc(-14, 0, 44, -1.0, 0.9); c.stroke();
+      const x1 = -14 + Math.cos(1.15) * 44, y1 = Math.sin(1.15) * 44; line(c, x1, -y1, x1, y1, 1.8, '#e8e2d0');
+      line(c, -22, 0, 38, 0, 3, wood); path(c, [[38, 0], [28, -5], [28, 5]], steel); path(c, [[-22, 0], [-16, -6], [-12, -6], [-16, 0], [-12, 6], [-16, 6]], '#c43a3a'); line(c, 0, -7, 0, 7, 6, leather);
+    },
+    shield: (c, a) => {
+      const b = a || '#4d6fb8';
+      path(c, [[-34, -40], [34, -40], [34, 0], [0, 46], [-34, 0]], sh(b, -0.25)); path(c, [[-27, -33], [27, -33], [27, -2], [0, 36], [-27, -2]], b);
+      path(c, [[-27, -33], [0, -33], [0, 36], [-27, -2]], sh(b, 0.25)); hl(c, -24, -30, -24, -4, 2);
+      c.strokeStyle = gold; c.lineWidth = 3.4; c.beginPath(); c.moveTo(-31, -37); c.lineTo(31, -37); c.lineTo(31, -1); c.lineTo(0, 43); c.lineTo(-31, -1); c.closePath(); c.stroke();
+      path(c, [[-4, -26], [4, -26], [4, -8], [16, -8], [16, 0], [4, 0], [4, 22], [-4, 22], [-4, 0], [-16, 0], [-16, -8], [-4, -8]], gold); for (const [x, y] of [[-24, -30], [24, -30]]) orb(c, x, y, 2.6, gold);
+    },
+    armor: (c, a) => {
+      const b = a || steel;
+      path(c, [[-40, -26], [-22, -40], [-8, -34], [8, -34], [22, -40], [40, -26], [32, -6], [26, 40], [-26, 40], [-32, -6]], sh(b, -0.2)); path(c, [[-20, -30], [20, -30], [22, 34], [-22, 34]], b);
+      path(c, [[-20, -30], [0, -30], [0, 34], [-22, 34]], sh(b, 0.22)); line(c, 0, -30, 0, 34, 2.4, sh(b, -0.4)); hl(c, -16, -26, -17, 24, 2);
+      path(c, [[-24, 8], [24, 8], [24, 16], [-24, 16]], gold); gem(c, 0, 12, 5, '#d03a4a'); for (const [x, y] of [[-14, -22], [14, -22], [-16, 26], [16, 26]]) orb(c, x, y, 2.2, gold);
+      path(c, [[-8, -34], [8, -34], [0, -24]], sh(b, -0.4));
+    },
+    helm: (c, a) => {
+      const b = a || steel;
+      c.fillStyle = lgG(c, -36, -36, 36, 36, b); c.beginPath(); c.arc(0, 2, 36, Math.PI, 0); c.lineTo(36, 34); c.lineTo(22, 40); c.lineTo(-22, 40); c.lineTo(-36, 34); c.closePath(); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.8; c.stroke();
+      path(c, [[-24, 6], [24, 6], [22, 22], [-22, 22]], '#15171d'); line(c, -20, 14, 20, 14, 3, '#2a2f3a'); line(c, 0, -34, 0, 6, 3.2, sh(b, -0.3)); hl(c, -26, -14, -14, -28, 2.2);
+      path(c, [[-4, -34], [4, -34], [14, -46], [0, -42], [-14, -46]], '#c43a3a'); orb(c, -30, 22, 2.4, gold); orb(c, 30, 22, 2.4, gold);
+    },
+    boots: (c, a) => {
+      const b = a || leather;
+      path(c, [[-24, -40], [4, -40], [6, 12], [38, 18], [40, 38], [-28, 38]], b); path(c, [[-28, 28], [40, 28], [40, 38], [-28, 38]], sh(b, -0.45)); path(c, [[-26, -40], [6, -40], [6, -28], [-26, -28]], sh(b, 0.3));
+      line(c, -22, -12, 4, -12, 5, gold); orb(c, -9, -12, 3, gold); hl(c, -18, -24, -18, 20, 2); line(c, 12, 22, 34, 26, 1.6, sh(b, -0.4));
+    },
+    glove: (c, a) => {
+      const b = a || leather;
+      path(c, [[-22, 40], [22, 40], [26, 4], [32, -26], [20, -30], [15, -8], [11, -40], [-1, -40], [-4, -10], [-12, -38], [-24, -32], [-22, -2], [-26, 6]], b);
+      for (const x of [-10, 4, 16]) line(c, x, -34, x, -8, 1.5, sh(b, -0.45)); path(c, [[-26, 24], [26, 24], [26, 42], [-26, 42]], sh(b, -0.25)); line(c, -22, 31, 22, 31, 4, gold); orb(c, 0, 31, 4.2, gold); hl(c, -20, -4, -22, 22, 2);
+    },
+    ring: (c, a) => {
+      glow(c, 0, -22, 26, a || '#c43a3a', 0.45); ring(c, 0, 14, 26, 9, gold); c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 1.8; c.beginPath(); c.arc(0, 14, 26, 3.6, 4.6); c.stroke();
+      path(c, [[-14, -12], [14, -12], [10, -4], [-10, -4]], gold); gem(c, 0, -22, 14, a || '#c43a3a'); sparkle(c, 14, -36, 6);
+    },
+    amulet: (c, a) => {
+      c.strokeStyle = ink; c.lineWidth = 6; c.beginPath(); c.arc(0, -24, 30, 0.35, Math.PI - 0.35, true); c.stroke(); c.strokeStyle = gold; c.lineWidth = 3.4; c.stroke();
+      glow(c, 0, 16, 26, a || '#3a8ac4', 0.5); path(c, [[0, -6], [22, 8], [18, 34], [0, 44], [-18, 34], [-22, 8]], gold); gem(c, 0, 18, 15, a || '#3a8ac4'); sparkle(c, 18, -2, 5);
+    },
+    gem: (c, a) => {
+      const b = a || '#3a8ac4'; glow(c, 0, 0, 44, b, 0.4);
+      path(c, [[-34, -12], [-18, -34], [18, -34], [34, -12], [0, 42]], b); path(c, [[-18, -34], [18, -34], [10, -12], [-10, -12]], sh(b, 0.35)); path(c, [[-34, -12], [-10, -12], [0, 42]], sh(b, 0.12)); path(c, [[34, -12], [10, -12], [0, 42]], sh(b, -0.3));
+      c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-34, -12); c.lineTo(34, -12); c.stroke(); hl(c, -24, -26, -14, -32, 2.4); sparkle(c, 30, -36, 7);
+    },
+    vial: (c, a) => {
+      const b = a || '#5fd47a'; glow(c, 0, 14, 36, b, 0.3);
+      path(c, [[-9, -34], [9, -34], [9, -14], [-9, -14]], '#d9e6f2'); orb(c, 0, 14, 28, 'rgba(210,228,245,0.9)'); c.save(); c.beginPath(); c.arc(0, 14, 25, 0, TAU); c.clip();
+      c.fillStyle = b; c.fillRect(-30, 8, 60, 40); c.fillStyle = sh(b, 0.4); c.fillRect(-30, 6, 60, 4); c.restore();
+      orb(c, -8, 20, 3, 'rgba(255,255,255,0.85)'); orb(c, 7, 28, 2.2, 'rgba(255,255,255,0.8)'); hl(c, -18, 0, -14, -8, 2.4);
+      path(c, [[-12, -46], [12, -46], [11, -34], [-11, -34]], wood);
+    },
+    rod: (c, a) => {
+      c.rotate(0.6); glow(c, 0, -34, 28, a || '#c77dff', 0.55); line(c, 0, 46, 0, -22, 7, '#6a4a3a'); line(c, -4, 40, 4, 36, 1.6, gold); line(c, -4, 12, 4, 8, 1.6, gold);
+      path(c, [[-8, -22], [8, -22], [6, -16], [-6, -16]], gold); gem(c, 0, -34, 13, a || '#c77dff'); sparkle(c, 16, -48, 6); sparkle(c, -18, -26, 4);
+    },
+    staff: (c, a) => {
+      c.rotate(0.4); line(c, 0, 48, 0, -22, 6.5, wood); for (const y of [-6, 18, 36]) line(c, -5, y, 5, y, 3, gold);
+      c.strokeStyle = ink; c.lineWidth = 8; c.beginPath(); c.arc(0, -36, 16, 0.5, Math.PI - 0.5, false); c.stroke(); c.strokeStyle = gold; c.lineWidth = 4.2; c.stroke();
+      glow(c, 0, -38, 24, a || '#fff3a0', 0.6); orb(c, 0, -38, 11, a || '#fff3a0'); sparkle(c, 18, -50, 6);
+    },
+    book: (c, a) => {
+      const b = a || '#5a1f24';
+      path(c, [[-34, -38], [30, -38], [30, 40], [-34, 40]], sh(b, -0.2)); path(c, [[-30, -34], [28, -34], [28, 36], [-30, 36]], b); path(c, [[30, -34], [37, -32], [37, 42], [30, 40]], '#e8e2d0');
+      line(c, -24, -38, -24, 40, 5, gold); for (const y of [-26, 0, 26]) line(c, -30, y, -18, y, 3, gold);
+      glow(c, 4, 0, 20, '#ffe08a', 0.4); orb(c, 4, 0, 11, gold); path(c, [[4, -8], [8, 0], [4, 8], [0, 0]], '#d03a4a'); hl(c, -12, -30, 18, -30, 1.6);
+    },
+    hat: (c, a) => {
+      const b = a || '#3a2160';
+      path(c, [[-44, 28], [44, 28], [24, 14], [-4, -46], [-24, 14]], b); path(c, [[-44, 28], [44, 28], [34, 20], [-34, 20]], sh(b, -0.3)); line(c, -24, 17, 24, 17, 7, gold); gem(c, 0, 17, 5, '#d03a4a');
+      sparkle(c, -4, -8, 5); sparkle(c, 8, 4, 3.4); hl(c, -12, -20, -4, -38, 2); orb(c, -4, -46, 4.5, gold);
+    },
+    crown: (c, a) => {
+      const b = a || gold;
+      path(c, [[-38, 30], [38, 30], [40, -22], [20, 2], [0, -34], [-20, 2], [-40, -22]], b); path(c, [[-38, 20], [38, 20], [38, 32], [-38, 32]], sh(b, -0.28)); hl(c, -34, 0, -34, 16, 2);
+      gem(c, 0, 8, 7, '#d03a4a'); gem(c, -22, 12, 5, '#3a8ac4'); gem(c, 22, 12, 5, '#3ac48a'); for (const [x, y] of [[0, -38], [-40, -26], [40, -26]]) orb(c, x, y, 4, '#f2ead0'); sparkle(c, 30, -22, 5);
+    },
+    heart: (c, a) => {
+      const b = a || '#c43a3a'; glow(c, 0, 0, 44, b, 0.35);
+      c.fillStyle = lgG(c, -40, -30, 40, 40, b); c.beginPath(); c.moveTo(0, 40); c.bezierCurveTo(-52, 4, -34, -44, 0, -18); c.bezierCurveTo(34, -44, 52, 4, 0, 40); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.8; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.ellipse(-20, -12, 8, 12, -0.7, 0, TAU); c.fill(); orb(c, -8, -24, 2.4, 'rgba(255,255,255,0.8)');
+    },
+    scroll: (c, a) => {
+      const b = a || '#e8d9b0';
+      path(c, [[-28, -30], [28, -30], [28, 30], [-28, 30]], b); path(c, [[-28, -30], [-10, -30], [-10, 30], [-28, 30]], sh(b, -0.1)); line(c, -34, -32, 34, -32, 10, '#c9b080'); line(c, -34, 32, 34, 32, 10, '#c9b080'); hl(c, -30, -33, 30, -33, 1.6);
+      for (let i = 0; i < 4; i++) line(c, -16, -16 + i * 9, 20 - (i % 2) * 8, -16 + i * 9, 2.2, 'rgba(70,50,30,0.7)'); orb(c, 20, 20, 8, '#c43a3a'); orb(c, 20, 20, 3.5, sh('#c43a3a', -0.4));
+    },
+    coin: (c, a) => {
+      const b = a || gold; glow(c, 0, 0, 44, b, 0.35); orb(c, 0, 0, 36, b); ring(c, 0, 0, 27, 3.4, sh(b, -0.3));
+      c.fillStyle = sh(b, -0.45); c.font = 'bold 34px Georgia'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('B', 0, 3); hl(c, -22, -14, -12, -26, 2.4); sparkle(c, 26, -26, 6);
+    },
+    bolt: (c, a) => {
+      const b = a || '#ffe066'; glow(c, 0, 0, 44, b, 0.5); path(c, [[8, -48], [-26, 6], [-4, 6], [-12, 48], [26, -10], [4, -10]], b); hl(c, 4, -42, -18, 0, 2.2);
+    },
+    flame: (c, a) => {
+      const b = a || '#ff7a3d'; glow(c, 0, 8, 44, b, 0.45);
+      c.fillStyle = lgG(c, 0, 44, 0, -46, b); c.beginPath(); c.moveTo(0, 44); c.bezierCurveTo(-44, 32, -30, -10, 0, -48); c.bezierCurveTo(4, -18, 38, -10, 28, 24); c.quadraticCurveTo(22, 42, 0, 44); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.8; c.stroke();
+      c.fillStyle = sh(b, 0.55); c.beginPath(); c.moveTo(0, 38); c.bezierCurveTo(-22, 30, -14, 6, 0, -14); c.bezierCurveTo(4, 6, 20, 10, 14, 28); c.quadraticCurveTo(10, 38, 0, 38); c.fill();
+      c.fillStyle = '#fff6c0'; c.beginPath(); c.ellipse(0, 26, 6, 9, 0, 0, TAU); c.fill();
+    },
+    drop: (c, a) => {
+      const b = a || '#5fa8ff'; glow(c, 0, 10, 40, b, 0.35); c.fillStyle = lgG(c, -26, -30, 26, 40, b); c.beginPath(); c.moveTo(0, -46); c.quadraticCurveTo(32, 0, 28, 16); c.arc(0, 16, 28, 0, Math.PI); c.quadraticCurveTo(-32, 0, 0, -46); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.8; c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.6)'; c.beginPath(); c.ellipse(-12, 12, 5, 11, 0.4, 0, TAU); c.fill(); orb(c, -6, -2, 2.2, 'rgba(255,255,255,0.8)');
+    },
+    skull: (c, a) => {
+      const b = a || '#e8e2d0';
+      orb(c, 0, -8, 32, b); path(c, [[-18, 14], [18, 14], [16, 38], [-16, 38]], b); orb(c, -12, -8, 9, '#111'); orb(c, 12, -8, 9, '#111'); orb(c, -12, -8, 3, '#ff4d5e'); orb(c, 12, -8, 3, '#ff4d5e');
+      path(c, [[-4, 10], [4, 10], [0, 2]], '#111'); for (const x of [-9, -3, 3, 9]) line(c, x, 24, x, 36, 1.6, '#2a2a30'); hl(c, -24, -26, -14, -34, 2.4);
+    },
+    banner: (c, a) => {
+      const b = a || '#c43a3a';
+      line(c, -28, -46, -28, 46, 6.5, wood); orb(c, -28, -48, 5, gold); path(c, [[-25, -40], [34, -40], [34, 22], [4, 12], [-25, 22]], b); path(c, [[-25, -40], [4, -40], [4, 12], [-25, 22]], sh(b, 0.2));
+      c.strokeStyle = gold; c.lineWidth = 3; c.beginPath(); c.moveTo(-25, -37); c.lineTo(32, -37); c.stroke(); gem(c, 6, -14, 9, gold); sparkle(c, 24, -30, 4);
+    },
+    cloak: (c, a) => {
+      const b = a || '#3d2555';
+      path(c, [[-16, -42], [16, -42], [40, 42], [14, 34], [0, 42], [-14, 34], [-40, 42]], b); path(c, [[-16, -42], [0, -40], [-2, 40], [-14, 34], [-40, 42]], sh(b, 0.18));
+      for (const x of [-18, 0, 18]) line(c, x * 0.5, -20, x * 1.1, 34, 1.6, sh(b, -0.4)); path(c, [[-20, -42], [20, -42], [14, -32], [-14, -32]], sh(b, -0.3)); gem(c, 0, -34, 6, gold);
+    },
+    belt: (c, a) => {
+      const b = a || leather;
+      path(c, [[-46, -10], [46, -10], [46, 12], [-46, 12]], b); line(c, -44, 0, -16, 0, 1.6, sh(b, -0.5)); line(c, 16, 0, 44, 0, 1.6, sh(b, -0.5));
+      path(c, [[-16, -18], [16, -18], [16, 20], [-16, 20]], gold); path(c, [[-10, -11], [10, -11], [10, 13], [-10, 13]], sh(gold, -0.3)); gem(c, 0, 1, 6, '#d03a4a'); hl(c, -13, -15, 13, -15, 1.6);
+      path(c, [[28, 12], [40, 12], [42, 32], [26, 32]], sh(b, -0.2)); orb(c, 34, 22, 2.4, gold);
+    },
+    fang: (c, a) => {
+      const b = a || '#f2ead0'; path(c, [[-24, -42], [24, -42], [8, 10], [0, 46], [-8, 10]], b); path(c, [[-24, -42], [0, -42], [0, 46], [-8, 10]], sh(b, 0.18)); hl(c, -16, -36, -8, 0, 2); c.fillStyle = 'rgba(196,58,58,0.85)'; c.beginPath(); c.arc(0, 38, 4, 0, TAU); c.fill();
+    },
+    feather: (c, a) => {
+      c.rotate(0.5); const b = a || '#ff7a3d'; c.fillStyle = lgG(c, -30, -44, 30, 44, b); c.beginPath(); c.moveTo(0, 46); c.quadraticCurveTo(-34, 0, 0, -46); c.quadraticCurveTo(34, 0, 0, 46); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.8; c.stroke();
+      line(c, 0, 46, 0, -40, 2.2, sh(b, -0.4)); for (let i = 0; i < 6; i++) { line(c, 0, 30 - i * 12, -14 + i, 22 - i * 12, 1.2, sh(b, -0.3)); line(c, 0, 30 - i * 12, 14 - i, 22 - i * 12, 1.2, sh(b, -0.3)); }
+    },
+  });
+  // WHAT: a vertical-ish gradient fill from light to dark of a colour, for glyphs drawn with plain canvas paths.
+  function lgG(c, x0, y0, x1, y1, col) { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, sh(col, 0.4)); g.addColorStop(0.5, col); g.addColorStop(1, sh(col, -0.38)); return g; }
   // WHAT: item id -> [drawer, accent colour].
   const IT = {
     honeycomb: ['amulet', '#ffc21a'], starcloak: ['cloak', '#5a4ab8'], tidepearl: ['gem', '#9ff0ff'], moonslippers: ['boots', '#c9d2ff'], comethammer: ['hammer', '#b8a8ff'],  // v30
@@ -137,7 +316,7 @@
     if (typeof document === 'undefined') return '';
     const slot = kind === 'slot';
     const spec = slot ? [SLOT[id] || 'gem', '#8a90a0'] : (kind === 'item' ? IT : RE)[id] || ['gem'], tier = kind === 'item' ? (B.ITEM[id] || {}).tier || 'common' : 'relic';
-    const cv = document.createElement('canvas'), dpr = 3; cv.width = cv.height = px * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr);
+    const cv = document.createElement('canvas'), dpr = 4; cv.width = cv.height = px * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr);   // v62h: 4x so the glyph stays crisp on a phone
     // frame: dark bevelled plate + rarity-coloured rim; rarer items get a tinted plate and a glow (mythic a double rim)
     const f = slot ? '#3a4050' : tierColor(tier), r = px * 0.18, hi = !slot && (tier === 'legendary' || tier === 'mythic' || tier === 'set');
     const rr = (x, y, w, h, q) => { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, q) : c.rect(x, y, w, h); };
@@ -150,7 +329,10 @@
       c.strokeStyle = f; c.lineWidth = 2; c.stroke();
       if (tier === 'mythic') { c.strokeStyle = '#ffd27a'; c.lineWidth = 1; rr(4, 4, px - 8, px - 8, r * 0.7); c.stroke(); }
     }
-    c.save(); c.translate(px / 2, px / 2); c.scale(px / 120, px / 120); if (slot) c.globalAlpha = 0.28; (D[spec[0]] || D.gem)(c, spec[1]); c.restore();
+    c.save(); c.translate(px / 2, px / 2); c.scale(px / 108, px / 108);   // v62h (review #104): the glyph fills the plate
+    if (!slot) glow(c, 0, 0, 50, spec[1] || tierColor(tier), 0.22);
+    if (slot) c.globalAlpha = 0.28;
+    (D[spec[0]] || D.gem)(c, spec[1]); c.restore();
     return (cache[key] = cv.toDataURL());
   }
   // WHAT: the public list: B.Icons.item(id, px), B.Icons.relic(id, px), B.Icons.slot(type, px).

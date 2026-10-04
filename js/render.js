@@ -11,6 +11,7 @@
   const Hx = B.Hex;
   // WHAT: the camera tilt. The board is a flat hex grid squashed vertically by K (0.6) to look 2.5D.
   const K = 0.6; // vertical squash of the board = camera tilt
+  const TT = s => (B.T ? B.T(s) : s);   // v62h (review #97): the words drawn on the canvas go through the language dictionary (js/i18n.js)
 
   // WHAT: sizes the canvas for a given width and returns the "view" v every draw call needs (size of a hex, offsets, pixel ratio).
   function setup(canvas, cssW) {
@@ -256,7 +257,7 @@
     if (u.st.frozenU > s) { ctx.globalAlpha = 0.45; ctx.fillStyle = '#9fe8ff'; ctx.beginPath(); ctx.moveTo(p.x, p.y - S * 1.45); ctx.lineTo(p.x + S * 0.42, p.y - S * 0.7); ctx.lineTo(p.x, p.y + S * 0.05); ctx.lineTo(p.x - S * 0.42, p.y - S * 0.7); ctx.closePath(); ctx.fill(); }
     if (u.shield > 0 && u.shieldU > s && !u.dead) { ctx.globalAlpha = 0.25; ctx.strokeStyle = '#e8ecff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(p.x, p.y - S * 0.62, S * 0.5, S * 0.8, 0, 0, Math.PI * 2); ctx.stroke(); }
     ctx.globalAlpha = 1;
-    if (u.dead) return;
+    if (u.dead || u.plant) return;   // v62h: a plant has no health bar (nothing can hurt it)
     // bars above the head
     const headTop = p.y - S * (u.boss ? 1.75 : 1.5), bw = Math.max(S * 0.95, size * 1.1), bx = p.x - bw / 2, by = headTop - 10;
     const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, Math.max(0, w), h, r); else ctx.rect(x, y, Math.max(0, w), h); };
@@ -341,7 +342,7 @@
         const y = p.y - size * 2.2 - k * size * (f.k === 'text' ? 0.6 : 1.0), x = p.x + (f.k === 'num' ? ((f.t0 * 7) % 11 - 5) * size * 0.05 : 0);
         const pop = k < 0.15 ? 1 + (1 - k / 0.15) * (f.big ? 0.8 : 0.35) : 1;
         ctx.save(); ctx.translate(x, y); ctx.scale(pop, pop); ctx.lineWidth = f.big ? 4 : 3;
-        ctx.strokeText(f.text, 0, 0); ctx.fillStyle = f.color; ctx.fillText(f.text, 0, 0); ctx.restore(); ctx.globalAlpha = 1;
+        const ft = TT(f.text); ctx.strokeText(ft, 0, 0); ctx.fillStyle = f.color; ctx.fillText(ft, 0, 0); ctx.restore(); ctx.globalAlpha = 1;
       } else if (f.k === 'proj') {
         const src = W.byId[f.from], a = src ? { x: hexScreen(v, f.fc, f.fr).x, y: hexScreen(v, f.fc, f.fr).y - size * 0.8 * src.size } : hexScreen(v, f.fc, f.fr);
         const tu = f.to && W.byId[f.to] && !W.byId[f.to].dead ? W.byId[f.to] : null, t = tu ? chest(tu) : hexScreen(v, f.tc, f.tr);
@@ -367,8 +368,8 @@
         ctx.globalAlpha = 1;
       } else if (f.k === 'banner') {
         ctx.globalAlpha = k < 0.8 ? 1 : (1 - k) / 0.2; ctx.font = '700 ' + Math.round(size * 0.9) + "px 'Fredoka', 'Nunito', system-ui, sans-serif";
-        ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.strokeText(f.text.toUpperCase(), v.w / 2, v.h * 0.4);
-        ctx.fillStyle = '#ffcf5a'; ctx.fillText(f.text.toUpperCase(), v.w / 2, v.h * 0.4); ctx.globalAlpha = 1;
+        ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.strokeText(TT(f.text).toUpperCase(), v.w / 2, v.h * 0.4);
+        ctx.fillStyle = '#ffcf5a'; ctx.fillText(TT(f.text).toUpperCase(), v.w / 2, v.h * 0.4); ctx.globalAlpha = 1;
       }
     }
     drawParts(ctx, S, o.deploy ? 0 : dt);
@@ -467,7 +468,7 @@
       ctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
     }
     ctx.translate(v.w / 2, y); ctx.scale(pop, pop);
-    const txt = win ? 'VICTORY!' : 'DEFEAT', fs = Math.round(Math.min(v.w * 0.14, size * 1.8));
+    const txt = TT(win ? 'VICTORY!' : 'DEFEAT'), fs = Math.round(Math.min(v.w * 0.14, size * 1.8));
     ctx.font = `700 ${fs}px 'Fredoka', 'Nunito', system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.lineWidth = fs * 0.22; ctx.strokeStyle = win ? '#1b2270' : '#2a0610'; ctx.strokeText(txt, 0, fs * 0.08);
     ctx.lineWidth = fs * 0.12; ctx.strokeStyle = win ? '#d08600' : '#b52c3c'; ctx.strokeText(txt, 0, 0);
@@ -552,7 +553,7 @@
       const p = unitPos(v, W, u, T), k = c.t / (c.big ? 1.5 : 1.1), pop = c.t < 0.12 ? 0.7 + c.t / 0.12 * (c.big ? 0.8 : 0.45) : (c.big ? 1.5 : 1.15) - Math.min(c.big ? 0.4 : 0.15, (c.t - 0.12));
       ctx.save(); ctx.globalAlpha = k < 0.75 ? 1 : (1 - k) / 0.25; ctx.translate(p.x, p.y - size * 2.6 - k * size * 0.4); ctx.scale(pop, pop);
       ctx.font = '700 ' + Math.round(size * (c.big ? 0.8 : 0.52)) + "px 'Fredoka', 'Nunito', system-ui, sans-serif"; ctx.textAlign = 'center';
-      ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.strokeText(c.text.toUpperCase(), 0, 0); ctx.fillStyle = c.col; ctx.fillText(c.text.toUpperCase(), 0, 0);
+      ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.strokeText(TT(c.text).toUpperCase(), 0, 0); ctx.fillStyle = c.col; ctx.fillText(TT(c.text).toUpperCase(), 0, 0);
       ctx.restore();
     }
     S.calls = keep;
@@ -566,7 +567,7 @@
     ctx.fillStyle = g; ctx.fillRect(x, y + 12, w * Math.max(0, b.hp / b.maxHp), 6);
     ctx.strokeStyle = '#e8b84a88'; ctx.lineWidth = 1; ctx.strokeRect(x, y + 12, w, 6);
     for (const f of [0.25, 0.5, 0.75]) { ctx.fillStyle = '#000a'; ctx.fillRect(x + w * f, y + 12, 1, 6); }
-    ctx.font = "700 12px 'Fredoka', 'Nunito', system-ui, sans-serif"; ctx.textAlign = 'left'; ctx.fillStyle = '#f3e6c4'; ctx.fillText(b.name.toUpperCase(), x, y + 9);
+    ctx.font = "700 12px 'Fredoka', 'Nunito', system-ui, sans-serif"; ctx.textAlign = 'left'; ctx.fillStyle = '#f3e6c4'; ctx.fillText(TT(b.name).toUpperCase(), x, y + 9);
     ctx.textAlign = 'right'; ctx.fillStyle = '#e8b84a'; ctx.fillText(Math.max(0, Math.round(b.hp)) + ' / ' + b.maxHp, x + w, y + 9);
   }
 
