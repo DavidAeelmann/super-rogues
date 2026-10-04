@@ -534,14 +534,31 @@
     return `<button class="banner b-${kind}" data-act="choose" data-arg="${i}"><span class="rod"></span><span class="emb">${emblem}</span>
       <span class="bt">${title}</span><span class="bd">${body}</span>${reward ? `<span class="rw">${reward}</span>` : ''}</button>`;
   }
-  // WHAT: draws one option of the map (fight with its difficulty and reward, shop, event).
+  // v62m (review #109, David: "the run choice screens are boring, just a generic card with an icon"): every option of the map is a small poster
+  // with its own scene: the enemies' faces for a fight (skulls = how hard), a fan of mystery cards for a shop, the boss with red rays, the event's picture
+  // WHAT: the poster of one map option: a scene on top, then title, a line of text and the reward.
+  function posterHTML(i, kind, scene, title, body, reward, ribbon) {
+    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon">${ribbon}</span>` : ''}</span><span class="bt">${title}</span><span class="bd">${body}</span>${reward ? `<span class="rw">${reward}</span>` : ''}</button>`;
+  }
+  const mobsOf = f => { const cnt = {}, order = []; for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); if (!cnt[k]) order.push(k); cnt[k] = (cnt[k] || 0) + 1; } return order.map(k => ({ key: k.replace('*', ''), n: cnt[k], elite: k.endsWith('*') })); };
+  const pickN = (arr, n, seed) => { const out = []; for (let k = 0; out.length < n && k < arr.length * 4; k++) { const v = arr[(seed * 7 + k * 5 + k * k) % arr.length]; if (!out.includes(v)) out.push(v); } return out; };
+  const SKULLS = { easy: 1, medium: 2, hard: 3 };
   function optHTML(o, i) {
     if (o.type === 'fight') {
-      if (o.diff === 'boss') { const b = o.enemies.map(e => B.BOSSES[e.key]).find(Boolean); return bannerHTML(i, 'boss', img(b.key, 72, 'por emb-img'), esc(b.name), `<span class="small">${fmt(b.desc)}</span><span class="ens">${enemyList(o)}</span>`, '+' + o.gold + ' gold'); }
-      return bannerHTML(i, o.diff, o.diff === 'hard' ? I('swords') + I('swords') : o.diff === 'medium' ? I('swords') : I('sword'), B.DIFF[o.diff].name + ' fight', `<span class="ens">${enemyList(o)}</span>`, '+' + o.gold + ' gold');
+      const list = mobsOf(o), show = list.slice(0, 3), more = list.length - show.length;
+      const faces = `<span class="mobs m${show.length}">${show.map(m => `<span class="mob ${m.elite ? 'elite' : ''}">${img(m.key, o.diff === 'boss' ? 96 : 64, 'por')}${m.n > 1 ? `<i>×${m.n}</i>` : ''}${m.elite ? '<u>★</u>' : ''}</span>`).join('')}${more > 0 ? `<span class="mob more">+${more}</span>` : ''}</span>`;
+      if (o.diff === 'boss') { const b = o.enemies.map(e => B.BOSSES[e.key]).find(Boolean); return posterHTML(i, 'boss', `<span class="rays"></span><span class="mobs m1 bigmob"><span class="mob">${img(b.key, 96, 'por')}</span></span>`, esc(b.name), `<span class="small">${fmt(String(b.desc).split(/(?<=[.!?])\s/)[0])}</span>`, '+' + o.gold + ' gold', I('skull') + I('skull') + I('skull') + I('skull')); }
+      return posterHTML(i, o.diff, faces, B.DIFF[o.diff].name + ' fight', `<span class="mn">${list.map(m => esc((B.MOBS[m.key] || B.BOSSES[m.key]).name) + (m.n > 1 ? ' ×' + m.n : '') + (m.elite ? ' ★' : '')).join(' · ')}</span>`, '+' + o.gold + ' gold', I('skull').repeat(SKULLS[o.diff] || 1));
     }
-    if (o.type === 'shop') return bannerHTML(i, 'shop', o.kind === 'heroShop' ? I('user') : o.kind === 'itemShop' ? I('shield') : I('gem'), SHOP_NAME[o.kind] + (o.final ? ' (last)' : ''), `<span class="small">${SHOP_DESC[o.kind]}</span>`);
-    if (o.type === 'event') { const e = EVENT[o.id]; return bannerHTML(i, 'event' + (e.rar === 'rare' ? ' b-rare' : ''), evIcon(o.id), esc(e.name), `<span class="small">${esc(e.text)}</span>`, EV_RAR[e.rar] || ''); }
+    if (o.type === 'shop') {
+      const seed = run.step * 3 + i;
+      const cards = o.kind === 'heroShop' ? pickN(Object.keys(HEROES), 3, seed).map(k => img(k, 64, 'por sil'))
+        : o.kind === 'itemShop' ? B.TYPES.slice(0, 3).map(t => `<img class="ico" src="${B.Icons.slot(t.id, 48)}" alt="">`)
+        : pickN(Object.keys(RELIC), 3, seed).map(k => ico('relic', k, 48));
+      const scene = `<span class="fan ${o.kind}">${cards.map((c, j) => `<span class="fc f${j}">${c}<b>?</b></span>`).join('')}</span>`;
+      return posterHTML(i, 'shop', scene, SHOP_NAME[o.kind], `<span class="small">${SHOP_DESC[o.kind]}</span>`, '', o.final ? 'Last' : '');
+    }
+    if (o.type === 'event') { const e = EVENT[o.id]; return posterHTML(i, 'event' + (e.rar === 'rare' ? ' b-rare' : ''), `<span class="rays"></span><span class="evbig">${evIcon(o.id)}</span>`, esc(e.name), `<span class="small">${esc(e.text)}</span>`, '', EV_RAR[e.rar] || ''); }
     return '';
   }
   // review #17: what an event did to the next fight, in words
@@ -924,21 +941,20 @@
   function stockCard(s, i) {
     const dis = s.sold || run.gold < s.price || (s.kind === 'hero' && run.heroes.length >= Run.teamMax(run));
     let body = '';
-    if (s.kind === 'hero') { const h = HEROES[s.id]; body = `<div class="srow">${img(s.id, 48, 'por big')}<div><div class="ctitle">${esc(h.name)}</div><div class="tier">${h.role}</div></div></div><p class="htag">${esc(h.tag || h.abName)}</p><div class="hfoot"><span class="rangeline">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span><button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')} More</button></div>`; }
-    else if (s.kind === 'item') { const it = ITEM[s.id]; body = `<div class="srow">${ico('item', s.id, 52, 'ico big')}<div><div class="ctitle" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}</div></div><div class="small">${fmt(it.desc)}</div>${setInfo(it)}`; }
-    else { const r = RELIC[s.id]; body = `<div class="srow">${ico('relic', s.id, 52, 'ico big')}<div><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div></div></div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<div class="hfoot"><span></span><button class="hdet" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button></div>` : ''}`; }
-    // review #44: a stripe in the rarity colour (hero colour for heroes, gold for relics) makes the rarity readable at a glance
+    // v62m (review #109): heroes are splash cards (the full art, class and range on it), items and powers are rows with a glowing medallion
+    if (s.kind === 'hero') { const h = HEROES[s.id]; body = `<div class="art" style="--hc:${h.color}"><img class="splash" src="${por(s.id, 112, true)}" alt=""><span class="rolechip">${esc(h.role)}</span><button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')}</button><span class="rngchip">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span></div><div class="meta"><div class="ctitle">${esc(h.name)}</div><p class="htag">${esc(h.tag || h.abName)}</p></div>`; }
+    else if (s.kind === 'item') { const it = ITEM[s.id]; body = `<div class="medal">${ico('item', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}<div class="small">${fmt(it.desc)}</div>${setInfo(it)}</div>`; }
+    else { const r = RELIC[s.id]; body = `<div class="medal">${ico('relic', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`; }
     const rc = s.kind === 'item' ? TIER_COLOR[ITEM[s.id].tier] : s.kind === 'hero' ? HEROES[s.id].color : '#ffd23f';
-    // v42 (review #51): epic, set, legendary and mythic items shine; a bought card gets a SOLD stamp
     const shine = s.kind === 'item' && RANK(s.id) >= 3 ? ' shine' : s.kind === 'relic' ? ' shine soft' : '';
-    return `<div class="card stock k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button></div>`;
+    return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button></div>`;
   }
   // WHAT: THE SHOP SCREEN (hero, item or power shop): the products, the reroll button, the Leave button.
   function shopHTML() {
     const c = run.cur, rc = Run.rerollCost(run);
-    const note = c.kind === 'heroShop' ? `<p class="center"><span class="lockpill">Team ${run.heroes.length}/${Run.teamMax(run)}</span></p>` : '';
-    return `<section class="shop"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${note}
-      <div class="grid ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div>
+    const note = c.kind === 'heroShop' ? `<span class="lockpill">Team ${run.heroes.length}/${Run.teamMax(run)}</span>` : '';
+    return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${note}</div>
+      <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div>
       <div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
   }
   // v44: what an event gave, as pictures (items, relics, a hero joining, gold, XP, boosts)
@@ -981,8 +997,10 @@
         <h3>${pickCh.target === 'hero' ? 'Choose a hero' : pickCh.target === 'type' ? 'Choose an item type' : 'Choose an item'}</h3><div class="tgrid">${grid}</div></div>
         <div class="bar"><button data-act="event-back">Back</button></div></section>`;
     }
+    // v62m (review #109): each choice has a round picture of what it does (a hero, an item or power, or an icon for gold, XP, a fight, a gamble...)
+    const EACT = { gold: '🪙', xpAll: '✨', xpHero: '✨', item: '🎁', fight: '⚔️', buffHero: '💪', buffAll: '💪', upgradeItem: '⚒️', invest: '🏦', gamble: '🎲', gambleItem: '🎲', transmute: '🔮', respec: '🔁', relicItem: '💎', relic: '💎', potion: '🧪', mimic: '📦', loan: '💸', hpHero: '❤️', hpAll: '❤️', none: '🚪' };
     return head + `<div class="stack evchoices">${chs.map((ch, i) => {
-      const c = Run.canChoose(run, ch), pic = ch.hero ? img(ch.hero, 40) : ch.item ? ico('item', ch.item, 40) : ch.relic ? ico('relic', ch.relic, 40) : '';
+      const c = Run.canChoose(run, ch), pic = ch.hero ? img(ch.hero, 40) : ch.item ? ico('item', ch.item, 40) : ch.relic ? ico('relic', ch.relic, 40) : `<span class="ci">${EACT[String(ch.act || '').split(':')[0]] || '❔'}</span>`;
       const tag = ch.item ? `<span class="itag" style="color:${TIER_COLOR[ITEM[ch.item].tier]}">${B.RARITY[ITEM[ch.item].tier].name} ${B.TYPE[ITEM[ch.item].type].name.toLowerCase()}</span>` : '';
       // v44 (review #54): a challenge, a choice only some heroes unlock (FTL's blue options), a risk
       const tags = [], rq = ch.req && B.EVENT_REQ[ch.req], who = rq ? Run.reqHeroes(run, ch.req) : [];

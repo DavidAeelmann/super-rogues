@@ -2199,3 +2199,98 @@ button.danger { background: linear-gradient(180deg, #ff7a7a, var(--c-danger)) !i
 }
 /* v62l (review #108): long names (German) never push a gear button past the screen edge */
 .gsock, .gitem { min-width: 0; overflow: hidden; } .gsock span, .gitem span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===== v62m (review #109, David: boring run-choice screens): map posters, hero splash cards, medallion rows, event choice icons ===== */
+.banner.v2 { padding: 0; gap: 0; min-height: 0; overflow: hidden; align-items: stretch; text-align: center; background: linear-gradient(180deg, #1c2475, #0f1553); border: 3px solid var(--c2); box-shadow: 0 6px 0 var(--c3), 0 12px 24px #0d114666; }
+.banner.v2:hover:not(:disabled) { border-color: #fff; transform: translateY(-3px); filter: none; }
+.banner.v2 .scene { position: relative; display: grid; place-items: center; height: 108px; overflow: hidden; background: radial-gradient(ellipse at 50% 110%, #ffffff66, transparent 65%), linear-gradient(180deg, var(--c1), var(--c2)); }
+.banner.v2 .scene::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(135deg, #ffffff12 0 9px, transparent 9px 18px); }
+.banner.v2 .ribbon { position: absolute; top: 6px; left: 6px; z-index: 3; display: inline-flex; align-items: center; gap: 1px; padding: 2px 8px; border-radius: 999px; background: #0d1146d0; color: #fff; font: 700 11px var(--fun); }
+.banner.v2 .ribbon svg.ui { width: 13px; height: 13px; color: #ffd23f; }
+.banner.v2 .bt { padding: 9px 8px 0; font: 700 16px/1.15 var(--fun); text-transform: none; letter-spacing: .2px; }
+.banner.v2 .bd { padding: 4px 9px 6px; font-size: 11.5px; line-height: 1.25; align-items: center; gap: 2px; }
+.banner.v2 .mn { font-weight: 600; opacity: .95; }
+.banner.v2 .rw { align-self: center; margin: auto 0 9px; }
+.banner.v2 .mobs { position: relative; z-index: 2; display: flex; justify-content: center; align-items: flex-end; padding-top: 6px; }
+.banner.v2 .mob { position: relative; width: 56px; height: 56px; margin: 0 -5px; }
+.banner.v2 .m1 .mob { width: 74px; height: 74px; } .banner.v2 .bigmob .mob { width: 86px; height: 86px; }
+.banner.v2 .m3 .mob:nth-child(2) { width: 66px; height: 66px; z-index: 2; } .banner.v2 .m2 .mob { width: 62px; height: 62px; }
+.banner.v2 .mob img.por { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #fff, 0 5px 10px #0007; background: #0d1146; }
+.banner.v2 .mob.elite img.por { box-shadow: 0 0 0 3px #ffd23f, 0 0 14px #ffd23fbb, 0 5px 10px #0007; }
+.banner.v2 .mob i { position: absolute; right: -3px; bottom: -3px; padding: 0 6px; border-radius: 999px; background: #0d1146; color: #fff; font: 700 11px/16px var(--fun); font-style: normal; box-shadow: 0 0 0 2px #fff; }
+.banner.v2 .mob u { position: absolute; top: -5px; left: -2px; color: #ffd23f; text-decoration: none; font-size: 16px; text-shadow: 0 1px 2px #000; }
+.banner.v2 .mob.more { display: grid; place-items: center; width: 34px; height: 34px; align-self: center; border-radius: 50%; background: #0d1146cc; color: #fff; font: 700 12px var(--fun); }
+.banner.v2 .rays { position: absolute; inset: -60%; background: repeating-conic-gradient(#ffffff26 0 9deg, transparent 9deg 18deg); }
+@media (prefers-reduced-motion: no-preference) { .banner.v2 .rays { animation: spin 26s linear infinite; } }
+.banner.v2 .evbig { position: relative; z-index: 2; font-size: 54px; line-height: 1; filter: drop-shadow(0 4px 6px #0007); }
+.banner.v2 .fan { position: relative; z-index: 2; display: flex; justify-content: center; align-items: center; }
+.banner.v2 .fc { position: relative; display: grid; place-items: center; width: 52px; height: 70px; margin: 0 -8px; border-radius: 11px; background: linear-gradient(180deg, #ffffff55, #ffffff1c); border: 2px solid #fffb; box-shadow: 0 5px 10px #0006; }
+.banner.v2 .fc.f0 { transform: rotate(-13deg) translateY(5px); } .banner.v2 .fc.f2 { transform: rotate(13deg) translateY(5px); } .banner.v2 .fc.f1 { z-index: 2; transform: translateY(-4px); width: 56px; height: 76px; }
+.banner.v2 .fc img { width: 42px; height: 42px; border-radius: 9px; object-fit: cover; }
+.banner.v2 .fc img.sil { filter: brightness(0) opacity(.5); }
+.banner.v2 .fc b { position: absolute; font: 800 24px var(--fun); color: #fff; text-shadow: 0 2px 0 #0d1146, 0 0 8px #0d1146; }
+.banner.v2 .fan:not(.heroShop) .fc b { display: none; }
+.banner.v2.b-rare { border-color: #ffd23f; box-shadow: 0 6px 0 #a67c00, 0 0 22px #ffd23f77, 0 12px 24px #0d114666; }
+.banner.v2.b-boss .scene { background: radial-gradient(ellipse at 50% 100%, #ff5a6a77, transparent 65%), linear-gradient(180deg, #5a1230, #2a0a1c); }
+.shophead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 8px; } .shophead h2 { margin: 0; }
+section.shop .grid.heroes { grid-template-columns: 1fr 1fr; gap: 10px; }
+section.shop .grid.heroes > :last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 5px); }
+section.shop .grid.rows { grid-template-columns: 1fr; gap: 9px; }
+body.wide section.shop .grid.heroes { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 720px; }
+body.wide section.shop .grid.heroes > :last-child:nth-child(odd) { grid-column: auto; width: auto; justify-self: stretch; }
+body.wide section.shop .grid.rows { max-width: 640px; }
+.card.stock.v2 { padding: 0; gap: 0; min-height: 0; overflow: hidden; border-radius: 18px; background: linear-gradient(180deg, #1c2475, #0f1553); border: 2px solid color-mix(in srgb, var(--rc) 75%, #ffffff40); border-top-width: 2px; }
+.card.stock.v2::before { display: none; }
+.card.stock.k-hero.v2 { display: flex; flex-direction: column; }
+.v2 .art { position: relative; height: 128px; overflow: hidden; background: radial-gradient(ellipse at 50% 85%, color-mix(in srgb, var(--hc) 55%, #fff) 0, var(--hc) 45%, #0f1553 115%); }
+.v2 .art .splash { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: 112%; width: auto; filter: drop-shadow(0 4px 6px #0009); }
+.v2 .rolechip, .v2 .rngchip { position: absolute; z-index: 2; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: #0d1146d0; color: #fff; font: 700 10.5px var(--fun); text-transform: uppercase; letter-spacing: .4px; }
+.v2 .rolechip { top: 6px; left: 6px; } .v2 .rngchip { bottom: 6px; left: 6px; text-transform: none; letter-spacing: 0; } .v2 .rngchip svg.ui { width: 12px; height: 12px; }
+.v2 .art .hdet { position: absolute; z-index: 2; top: 5px; right: 5px; width: 30px; height: 30px; min-height: 0; margin: 0; padding: 0; justify-content: center; border-radius: 50%; background: #0d1146d0 !important; border: 2px solid #fff8 !important; box-shadow: none !important; }
+.v2 .art .hdet svg.ui { width: 16px; height: 16px; }
+.card.stock.v2 .meta { padding: 8px 10px 2px; min-width: 0; }
+.card.stock.v2 .ctitle { font: 700 16px/1.15 var(--fun); }
+.card.stock.v2 .htag { margin: 3px 0 0; font-size: 12.5px; line-height: 1.25; }
+.card.stock.k-hero.v2 .buyb { margin: 7px 8px 8px; }
+.card.stock.k-hero.v2 .meta { flex: 1; }
+.card.stock.v2.k-item, .card.stock.v2.k-relic { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; }
+.card.stock.v2 .medal { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--rc) 45%, #fff), var(--rc) 58%, #0f1553 140%); box-shadow: 0 0 0 3px #ffffff40, 0 0 18px color-mix(in srgb, var(--rc) 60%, transparent); }
+.card.stock.v2 .medal .ico { width: 44px; height: 44px; border-radius: 0; box-shadow: none; filter: drop-shadow(0 2px 3px #0008); }
+.card.stock.v2.k-item .buyb, .card.stock.v2.k-relic .buyb { align-self: center; margin: 0; min-width: 76px; }
+.card.stock.v2 .meta .small { margin-top: 2px; font-size: 12px; line-height: 1.25; }
+.card.stock.v2 .hdet.more { margin: 4px 0 0; min-height: 26px; padding: 1px 9px; font-size: 12px; }
+.evch .ci { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #ffffff2e; box-shadow: inset 0 0 0 2px #ffffff45; font-size: 22px; line-height: 1; }
+@media (max-height: 700px) and (max-width: 500px) {
+  .banner.v2 .scene { height: 84px; } .banner.v2 .mob { width: 46px; height: 46px; } .banner.v2 .m1 .mob { width: 60px; height: 60px; } .banner.v2 .bigmob .mob { width: 68px; height: 68px; } .banner.v2 .m2 .mob { width: 52px; height: 52px; } .banner.v2 .m3 .mob:nth-child(2) { width: 54px; height: 54px; }
+  .banner.v2 .evbig { font-size: 42px; } .banner.v2 .fc { width: 42px; height: 56px; } .banner.v2 .fc.f1 { width: 46px; height: 62px; } .banner.v2 .fc img { width: 32px; height: 32px; }
+  .banner.v2 .bt { font-size: 14px; padding-top: 6px; } .banner.v2 .bd { font-size: 11px; padding: 2px 7px 4px; } .banner.v2 .rw { margin-bottom: 6px; }
+  .v2 .art { height: 98px; } .card.stock.v2 .ctitle { font-size: 14.5px; } .card.stock.v2 .htag { font-size: 11.5px; } .card.stock.v2 .meta { padding: 6px 8px 0; }
+  .card.stock.k-hero.v2 .buyb { margin: 5px 7px 7px; } .shophead { margin-bottom: 5px; }
+  .card.stock.v2.k-item, .card.stock.v2.k-relic { grid-template-columns: 52px minmax(0, 1fr) auto; gap: 8px; padding: 7px 8px; } .card.stock.v2 .medal { width: 52px; height: 52px; } .card.stock.v2 .medal .ico { width: 36px; height: 36px; }
+  section.shop .grid.rows { gap: 6px; } .card.stock.v2 .meta .small { font-size: 11px; }
+}
+body:not(.desk) .banners.three > .banner.v2:last-child { display: grid; grid-template-columns: 104px minmax(0, 1fr); grid-template-areas: "scene bt" "scene bd" "scene rw"; grid-template-rows: auto auto 1fr; padding: 0; text-align: left; align-items: center; column-gap: 0; }
+body:not(.desk) .banners.three > .banner.v2:last-child .scene { grid-area: scene; height: 100%; min-height: 86px; }
+body:not(.desk) .banners.three > .banner.v2:last-child .scene > :not(.ribbon):not(.rays) { zoom: .72; }
+body:not(.desk) .banners.three > .banner.v2:last-child .ribbon { font-size: 9.5px; padding: 1px 6px; top: 4px; left: 4px; }
+body:not(.desk) .banners.three > .banner.v2:last-child .bt { grid-area: bt; padding: 8px 10px 0; align-self: end; }
+body:not(.desk) .banners.three > .banner.v2:last-child .bd { grid-area: bd; align-items: flex-start; text-align: left; padding: 2px 10px 6px; }
+body:not(.desk) .banners.three > .banner.v2:last-child .rw { grid-area: rw; justify-self: start; margin: 0 10px 8px; }
+body.desk .banners.three > .banner.v2:last-child { display: flex; text-align: center; padding: 0; }
+@media (max-height: 700px) and (max-width: 500px) {
+  .card.stock.v2 .meta .tier, .card.stock.v2 .meta .itag { display: inline-block; vertical-align: middle; }
+  .card.stock.v2 .hdet.more { display: inline-flex; margin: 0 0 0 6px; vertical-align: middle; min-height: 22px; font-size: 11px; }
+  .card.stock.v2 .meta .htag { margin-top: 2px; }
+}
+.banners.three .banner.v2 { padding: 0; gap: 0; }
+.card.stock.v2 .meta .tier, .card.stock.v2 .meta .itag { display: inline-block; vertical-align: middle; }
+.card.stock.v2 .hdet.more { display: inline-flex; margin: 0 0 0 6px; vertical-align: middle; min-height: 24px; font-size: 12px; }
+section.shop .grid.rels { grid-template-columns: 1fr 1fr; gap: 10px; }
+section.shop .grid.rels > :last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 5px); }
+body.wide section.shop .grid.rels { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); max-width: 760px; }
+body.wide section.shop .grid.rels > :last-child:nth-child(odd) { grid-column: auto; width: auto; justify-self: stretch; }
+.grid.rels .card.stock.v2.k-relic { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 12px 8px 8px; gap: 6px; }
+.grid.rels .card.stock.v2 .meta { padding: 0; flex: 1; display: flex; flex-direction: column; align-items: center; }
+.grid.rels .card.stock.v2.k-relic .buyb { align-self: stretch; margin: 0; }
+.grid.rels .card.stock.v2 .hdet.more { margin: 5px 0 0; }
+@media (max-height: 700px) and (max-width: 500px) { .grid.rels .card.stock.v2.k-relic { padding: 8px 6px 6px; gap: 4px; } .grid.rels .card.stock.v2 .medal { width: 48px; height: 48px; } .grid.rels .card.stock.v2 .medal .ico { width: 34px; height: 34px; } }
