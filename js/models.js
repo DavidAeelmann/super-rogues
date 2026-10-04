@@ -135,6 +135,7 @@
     c.fill();
     if (r >= 2.5) { c.strokeStyle = INK; c.lineWidth = r > 6 ? 1.4 : 1; c.stroke(); }
     if (isColor(col) && r >= 4) { c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.arc(x - r * 0.38, y - r * 0.42, r * 0.16, 0, TAU); c.fill(); }
+    if (isColor(col) && r >= 5) { c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 1.1; c.beginPath(); c.arc(x, y, r * 0.82, Math.PI * 1.08, Math.PI * 1.62); c.stroke(); }   // v62j: lit rim
   }
   // WHAT: draws a shaded polygon (armor plates, wings, flags).
   function poly(c, pts, col, line) {
@@ -144,6 +145,17 @@
       const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, shade(col, 0.28)); g.addColorStop(0.5, col); g.addColorStop(1, shade(col, -0.32)); c.fillStyle = g;
     } else c.fillStyle = col;
     c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();
+    // v62j (review #106, David: "the prism looks clean, drawn, the rest look like poor cylinders"): bright facet edges on the sides facing the light
+    if (isColor(col) && pts.length >= 3) {
+      let cx = 0, cy = 0; for (const [x, y] of pts) { cx += x; cy += y; } cx /= pts.length; cy /= pts.length;
+      c.save(); c.strokeStyle = 'rgba(255,255,255,0.62)'; c.lineWidth = 1.1; c.lineCap = 'round';
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length], ex = b[0] - a[0], ey = b[1] - a[1], L = Math.hypot(ex, ey); if (L < 3) continue;
+        let nx = ey / L, ny = -ex / L; if (nx * ((a[0] + b[0]) / 2 - cx) + ny * ((a[1] + b[1]) / 2 - cy) < 0) { nx = -nx; ny = -ny; }   // outward normal
+        if (nx * -0.6 + ny * -0.8 > 0.5) { c.beginPath(); c.moveTo(a[0] + ex * 0.12 + nx * -1, a[1] + ey * 0.12 + ny * -1); c.lineTo(a[0] + ex * 0.88 + nx * -1, a[1] + ey * 0.88 + ny * -1); c.stroke(); }
+      }
+      c.restore();
+    }
   }
   const OUT = 'rgba(0,0,0,0.55)';
 
@@ -274,25 +286,43 @@
     const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1;
     return [mx - dy / L * bend * L, my + dx / L * bend * L];
   }
+  // v62j (review #106): a limb with one bend (upper and lower part) drawn as ONE shape: no round joints, one outline, a lit edge, like the Prism's facets
+  // WHAT: draws a limb through the points pts (shoulder, elbow, hand) with widths ws, filled with a light-to-dark gradient, outlined once, with a bright edge on the lit side.
+  function bent(c, pts, ws, col) {
+    const Lp = [], Rp = [];
+    pts.forEach(([x, y], i) => {
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+      Lp.push([x + nx * ws[i] / 2, y + ny * ws[i] / 2]); Rp.push([x - nx * ws[i] / 2, y - ny * ws[i] / 2]);
+    });
+    const n = pts.length - 1, e = pts[n], s0 = pts[0], dx = e[0] - pts[n - 1][0], dy = e[1] - pts[n - 1][1], ang = Math.atan2(dy, dx), sx = pts[1][0] - s0[0], sy = pts[1][1] - s0[1], ang0 = Math.atan2(sy, sx);
+    c.beginPath(); c.moveTo(Lp[0][0], Lp[0][1]); for (let i = 1; i <= n; i++) c.lineTo(Lp[i][0], Lp[i][1]);
+    c.arc(e[0], e[1], ws[n] / 2, ang - Math.PI / 2, ang + Math.PI / 2);
+    for (let i = n; i >= 0; i--) c.lineTo(Rp[i][0], Rp[i][1]);
+    c.arc(s0[0], s0[1], ws[0] / 2, ang0 + Math.PI / 2, ang0 + Math.PI * 1.5);
+    c.closePath();
+    const g = c.createLinearGradient(Lp[0][0], Lp[0][1], Rp[0][0], Rp[0][1]); g.addColorStop(0, shade(col, 0.32)); g.addColorStop(0.45, col); g.addColorStop(1, shade(col, -0.38));
+    c.fillStyle = g; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();
+    // the lit side is the one whose normal points up and left
+    const lit = (Lp[0][1] + Lp[n][1]) < (Rp[0][1] + Rp[n][1]) ? Lp : Rp;
+    if (ws[0] >= 4) { c.save(); c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 1.1; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); lit.forEach(([x, y], i) => { if (i) c.lineTo(x, y); else c.moveTo(x, y); }); c.stroke(); c.restore(); }
+  }
   function arm(c, sx, sy, a, L, w, sleeve, skin, bend) {
     const hx = sx + Math.sin(a) * L, hy = sy + Math.cos(a) * L, [ex, ey] = joint(sx, sy, hx, hy, bend);
-    tlimb(c, sx, sy, ex, ey, w, w * 0.85, sleeve);
-    tlimb(c, ex, ey, hx, hy, w * 0.82, w * 0.66, shade(sleeve, -0.08));
+    bent(c, [[sx, sy], [ex, ey], [hx, hy]], [w, w * 0.85, w * 0.66], sleeve);
     return [hx, hy];
   }
   function leg(c, x, y, a, L, w, col, boot, bend) {
     const fx = x + Math.sin(a) * L, fy = y + Math.cos(a) * L, [kx, ky] = joint(x, y, fx, fy, bend);
-    tlimb(c, x, y, kx, ky, w, w * 0.8, col);
-    tlimb(c, kx, ky, fx, fy - w * 0.2, w * 0.78, w * 0.62, shade(col, -0.1));
+    bent(c, [[x, y], [kx, ky], [fx, fy - w * 0.2]], [w, w * 0.8, w * 0.62], col);
     poly(c, [[fx - w * 0.45, fy - w * 0.55], [fx + w * 0.35, fy - w * 0.55], [fx + w * 0.95, fy - w * 0.05], [fx + w * 0.9, fy + w * 0.12], [fx - w * 0.45, fy + w * 0.12]], boot);
   }
   // WHAT: draws a person: legs, body, cape, arms, head, weapon, in the pose p (idle, walk, attack, cast).
   function humanoid(c, m, S, p) {
-    const s = S * m.h, bulk = m.bulk, det = !!p.detail;
+    const s = S * m.h, bulk = m.bulk, det = !!p.detail;   // v62j: sturdier limbs, bigger head and chest than the first stick-like rig
     const bob = p.walk != null ? Math.abs(Math.sin(p.walk * TAU)) * s * 0.05 : Math.sin(p.t * 2.2) * s * 0.015;
-    const hipY = -s * 0.55 - bob, shY = -s * 1.0 - bob, headR = s * 0.19, headY = shY - headR * 1.3;
+    const hipY = -s * 0.55 - bob, shY = -s * 1.0 - bob, headR = s * 0.215, headY = shY - headR * 1.3;
     const lean = p.walk != null ? 0.06 * s : 0, shX = lean;
-    const [fa, ba] = armAngles(m, p), armL = s * 0.44, armW = s * 0.12 * Math.sqrt(bulk);
+    const [fa, ba] = armAngles(m, p), armL = s * 0.44, armW = s * 0.16 * Math.sqrt(bulk);
     const boot = m.boot || shade(m.legs, -0.45), sleeve = m.body, bareArms = !!m.bare;
     // wings / cape (behind)
     if (m.wings) { const f = Math.sin(p.t * 12) * 0.4; for (const d of [-1, 1]) { c.beginPath(); c.moveTo(shX - s * 0.05, shY + s * 0.1); c.quadraticCurveTo(shX - s * 0.6, shY - s * (0.5 + d * 0.1 + f * 0.3), shX - s * 0.75, shY + s * 0.15); c.quadraticCurveTo(shX - s * 0.4, shY + s * 0.05, shX - s * 0.05, shY + s * 0.25); c.fillStyle = m.wings; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); } }
@@ -314,12 +344,12 @@
       limb(c, -s * 0.3 + sw, -s * 0.03, s * 0.3 + sw, -s * 0.03, s * 0.05, m.trim);
       poly(c, [[-s * 0.2 + sw, -s * 0.04], [-s * 0.02 + sw, -s * 0.04], [s * 0.02 + sw, 0], [-s * 0.2 + sw, 0]], boot);
     } else {
-      const la = p.walk != null ? Math.sin(p.walk * TAU) * 0.55 : 0.06, legL = -hipY, legW = s * 0.14 * Math.sqrt(bulk);
+      const la = p.walk != null ? Math.sin(p.walk * TAU) * 0.55 : 0.06, legL = -hipY, legW = s * 0.18 * Math.sqrt(bulk);
       leg(c, -s * 0.06, hipY, -la, legL, legW, shade(m.legs, -0.22), shade(boot, -0.2), la > 0 ? 0.06 : 0.12);
       leg(c, s * 0.06, hipY, la, legL, legW, m.legs, boot, la < 0 ? 0.06 : 0.12);
     }
     // torso: shoulders, chest, waist, hips
-    const tw = s * 0.22 * bulk, ww = s * 0.15 * bulk, bw = s * 0.17 * bulk, wy = hipY - s * 0.14;
+    const tw = s * 0.25 * bulk, ww = s * 0.16 * bulk, bw = s * 0.19 * bulk, wy = hipY - s * 0.14;
     c.beginPath();
     c.moveTo(shX - tw, shY + s * 0.05);
     c.quadraticCurveTo(shX - tw * 0.9, shY - s * 0.04, shX - tw * 0.4, shY - s * 0.03);
