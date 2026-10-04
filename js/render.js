@@ -346,25 +346,33 @@
       } else if (f.k === 'proj') {
         const src = W.byId[f.from], a = src ? { x: hexScreen(v, f.fc, f.fr).x, y: hexScreen(v, f.fc, f.fr).y - size * 0.8 * src.size } : hexScreen(v, f.fc, f.fr);
         const tu = f.to && W.byId[f.to] && !W.byId[f.to].dead ? W.byId[f.to] : null, t = tu ? chest(tu) : hexScreen(v, f.tc, f.tr);
-        const x = a.x + (t.x - a.x) * k, y = a.y + (t.y - a.y) * k - Math.sin(k * Math.PI) * size * 0.35 * (f.size || 1), r = (f.size || 1) * 3;
-        for (let i = 4; i >= 1; i--) { const kk = Math.max(0, k - i * 0.05), tx = a.x + (t.x - a.x) * kk, ty = a.y + (t.y - a.y) * kk - Math.sin(kk * Math.PI) * size * 0.35 * (f.size || 1); ctx.globalAlpha = 0.12 * (5 - i); ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(tx, ty, r * (1 - i * 0.12), 0, Math.PI * 2); ctx.fill(); }
-        ctx.globalAlpha = 0.3; ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(x, y, r * 2.4, 0, Math.PI * 2); ctx.fill();
+        const basic = !f.size && (f.color === '#f99' || f.color === '#9df');
+        const x = a.x + (t.x - a.x) * k, y = a.y + (t.y - a.y) * k - Math.sin(k * Math.PI) * size * 0.35 * (f.size || 1), r = (f.size || 1) * (basic ? 3 : 4.4);
+        if (!basic && S.parts.length < MAXP && Math.random() < 0.8) burst(S, x, y, 1, Math.random() < 0.35 ? '#fff' : f.color, { speed: 26, g: 0, life: 0.42, r: 2.1, spread: Math.PI * 2, glow: true });
+        for (let i = basic ? 4 : 8; i >= 1; i--) { const kk = Math.max(0, k - i * (basic ? 0.05 : 0.04)), tx = a.x + (t.x - a.x) * kk, ty = a.y + (t.y - a.y) * kk - Math.sin(kk * Math.PI) * size * 0.35 * (f.size || 1); ctx.globalAlpha = (basic ? 0.12 : 0.09) * ((basic ? 5 : 9) - i); ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(tx, ty, r * (1 - i * (basic ? 0.12 : 0.08)), 0, Math.PI * 2); ctx.fill(); }
+        ctx.globalAlpha = basic ? 0.3 : 0.38; ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(x, y, r * (basic ? 2.4 : 2.8), 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.globalAlpha = 0.8; ctx.fill(); ctx.globalAlpha = 1;
       } else if (f.k === 'bolt') {
-        ctx.globalAlpha = 1 - k; ctx.strokeStyle = f.color; ctx.lineWidth = 2.5; ctx.shadowColor = f.color; ctx.shadowBlur = 10; ctx.beginPath();
-        f.pts.forEach(([c, r], i) => {
+        // v62n: a wide soft glow, the colour, then a white-hot core; the jagged middle flickers each frame
+        const fl = Math.floor(T * 1.5);
+        const bolt = () => { ctx.beginPath(); f.pts.forEach(([c, r], i) => {
           const p = hexScreen(v, c, r); p.y -= size * 0.7;
           if (i === 0) ctx.moveTo(p.x, p.y);
-          else { const q = hexScreen(v, f.pts[i - 1][0], f.pts[i - 1][1]); q.y -= size * 0.7; ctx.lineTo((p.x + q.x) / 2 + ((i * 13 + f.t0) % 9 - 4) * 2, (p.y + q.y) / 2 + ((i * 7 + f.t0) % 9 - 4) * 2); ctx.lineTo(p.x, p.y); }
-        });
-        ctx.stroke(); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+          else { const q = hexScreen(v, f.pts[i - 1][0], f.pts[i - 1][1]); q.y -= size * 0.7; ctx.lineTo((p.x + q.x) / 2 + ((i * 13 + f.t0 + fl * 5) % 9 - 4) * 3, (p.y + q.y) / 2 + ((i * 7 + f.t0 + fl * 3) % 9 - 4) * 3); ctx.lineTo(p.x, p.y); }
+        }); ctx.stroke(); };
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.globalAlpha = (1 - k) * 0.3; ctx.strokeStyle = f.color; ctx.lineWidth = 11; bolt();
+        ctx.globalAlpha = 1 - k; ctx.lineWidth = 4.5; bolt();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; bolt(); ctx.globalAlpha = 1;
       } else if (f.k === 'blink') {
         const p = hexScreen(v, f.c, f.r); ctx.globalAlpha = (1 - k) * 0.6; ctx.fillStyle = f.color;
         ctx.beginPath(); ctx.ellipse(p.x, p.y - size * 0.6, size * 0.45 * (1 + k), size * 0.8 * (1 + k * 0.5), 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
       } else if (f.k === 'cast') {
         const u = W.byId[f.id]; if (!u) continue; const p = unitPos(v, W, u, T);
         ctx.globalAlpha = 1 - k; ctx.strokeStyle = f.color || '#fff'; ctx.lineWidth = 2;
-        for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + k * 2, R = size * (0.4 + k * 0.7); ctx.beginPath(); ctx.moveTo(p.x + Math.cos(a) * R * 0.5, p.y - size * 0.7 + Math.sin(a) * R * 0.5); ctx.lineTo(p.x + Math.cos(a) * R, p.y - size * 0.7 + Math.sin(a) * R); ctx.stroke(); }
+        ctx.lineWidth = 3; ctx.lineCap = 'round';
+        for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6 + k * 2, R = size * (0.5 + k * (i % 2 ? 0.9 : 1.5)); ctx.beginPath(); ctx.moveTo(p.x + Math.cos(a) * R * 0.5, p.y - size * 0.7 + Math.sin(a) * R * 0.5); ctx.lineTo(p.x + Math.cos(a) * R, p.y - size * 0.7 + Math.sin(a) * R); ctx.stroke(); }
+        ctx.globalAlpha = (1 - k) * 0.35; ctx.fillStyle = f.color || '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y - size * 0.7, size * (0.5 + k * 0.9), 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 1;
       } else if (f.k === 'banner') {
         ctx.globalAlpha = k < 0.8 ? 1 : (1 - k) / 0.2; ctx.font = '700 ' + Math.round(size * 0.9) + "px 'Fredoka', 'Nunito', system-ui, sans-serif";
@@ -374,6 +382,7 @@
     }
     drawParts(ctx, S, o.deploy ? 0 : dt);
     if (!o.deploy) drawCalls(v, W, T, S, dt);
+    if (S.flashes.length) { S.flashes = S.flashes.filter(fl => (fl.t += dt) < fl.life); for (const fl of S.flashes) { ctx.globalAlpha = fl.a * (1 - fl.t / fl.life); ctx.fillStyle = fl.col; ctx.fillRect(-10, -10, v.w + 20, v.h + 20); } ctx.globalAlpha = 1; }
     const vg = ctx.createRadialGradient(v.w / 2, v.h * 0.5, v.w * 0.35, v.w / 2, v.h * 0.5, v.w * 0.85);
     const sd = W.sd > 0 ? Math.min(0.55, 0.25 + W.sd * 0.15) * (0.75 + 0.25 * Math.sin(now * 6)) : 0;
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, sd ? `rgba(200,20,40,${sd})` : royal() ? 'rgba(0,0,0,0.45)' : 'rgba(20,40,120,0.18)'); ctx.fillStyle = vg; ctx.fillRect(-10, -10, v.w + 20, v.h + 20);
@@ -482,43 +491,72 @@
   // ------------------------------------------------------------------ battle effects (review #9)
   // Particles are spawned from the sim's fx events the first time the renderer sees them, so the sim stays pure.
   // WHAT: BATTLE EFFECTS. Particles (sparks, confetti), floating damage numbers, text and banners. spawnFromFx turns the simulation's fx events (W.fx) into pictures; drawParts and drawCalls paint them.
-  const MAXP = 260;
-  function fxState(v) { if (!v.fxs) v.fxs = { parts: [], seen: new WeakSet(), dead: new Set(), calls: [], shake: 0, last: 0, embers: 0, kb: {}, streak: {} }; return v.fxs; }
+  const MAXP = 420;
+  function fxState(v) { if (!v.fxs) v.fxs = { parts: [], seen: new WeakSet(), landed: new WeakSet(), flashes: [], dead: new Set(), calls: [], shake: 0, last: 0, embers: 0, kb: {}, streak: {} }; return v.fxs; }
+  // v62n (review #110, David: "make the abilities' particles and animations more noticeable and rewarding, a true dopamine hit"): shockwave rings on the ground,
+  // light pillars, streaking sparks, twinkling stars, a soft colour flash over the whole board and an impact burst where every ability projectile lands
+  // WHAT: effect helpers: shock (an expanding ground ring), pillar (a column of light), flash (a brief tint over the board); burst takes shape 'spark' or 'star' too.
+  function shock(S, x, y, col, R, o = {}) { if (S.parts.length < MAXP + 60) S.parts.push({ type: 'ring', x, y, R, col, life: o.life || 0.5, t: 0, w: o.w || 3, vx: 0, vy: 0, g: 0, r: 1 }); }
+  function pillar(S, x, y, col, h, w) { if (S.parts.length < MAXP + 60) S.parts.push({ type: 'pillar', x, y, h, w, col, life: 0.6, t: 0, vx: 0, vy: 0, g: 0, r: 1 }); }
+  function flash(S, col, a, life) { S.flashes.push({ col, a, life: life || 0.25, t: 0 }); if (S.flashes.length > 4) S.flashes.shift(); }
   function burst(S, x, y, n, col, o = {}) {
     for (let i = 0; i < n && S.parts.length < MAXP; i++) {
       const a = (o.dir != null ? o.dir : -Math.PI / 2) + (Math.random() - 0.5) * (o.spread != null ? o.spread : Math.PI * 2), sp = (o.speed || 90) * (0.4 + Math.random() * 0.8);
-      S.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: o.g != null ? o.g : 160, life: (o.life || 0.5) * (0.6 + Math.random() * 0.6), t: 0, r: (o.r || 2) * (0.6 + Math.random() * 0.8), col, glow: !!o.glow });
+      S.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: o.g != null ? o.g : 160, life: (o.life || 0.5) * (0.6 + Math.random() * 0.6), t: 0, r: (o.r || 2) * (0.6 + Math.random() * 0.8), col, glow: !!o.glow, shape: o.shape });
     }
   }
   // WHAT: reads the new visual events of the simulation (hits, heals, rings, bolts, projectiles) and creates particles and numbers for them. Also plays the matching sounds.
   function spawnFromFx(v, W, T, S) {
     const size = v.size;
     for (const f of W.fx) {
+      // v62n: an ability projectile that arrives bursts on the target (arrows and spears keep their small hit)
+      if (f.k === 'proj' && S.seen.has(f) && !S.landed.has(f) && T >= f.t1) {
+        S.landed.add(f);
+        if (f.size || (f.color !== '#f99' && f.color !== '#9df')) {
+          const tu = f.to && W.byId[f.to], q = tu ? unitPos(v, W, tu, T) : hexScreen(v, f.tc, f.tr), z = f.size || 1, y0 = q.y - size * 0.7;
+          burst(S, q.x, y0, 8 + z * 6, f.color, { speed: 120 + z * 30, life: 0.5, r: 2.4, g: 60, glow: true }); burst(S, q.x, y0, 6 + z * 3, '#fff', { speed: 150 + z * 30, life: 0.4, r: 2.2, g: 30, shape: 'spark' });
+          shock(S, q.x, q.y, f.color, size * (0.9 + z * 0.5), { life: 0.4, w: 2 + z });
+          if (z >= 1.5) { flash(S, f.color, 0.12, 0.2); S.shake = Math.max(S.shake, 2 + z * 1.2); }
+        }
+      }
       if (S.seen.has(f) || T < f.t0) continue;
       S.seen.add(f);
       const u = f.id ? W.byId[f.id] : null, p = u ? unitPos(v, W, u, T) : f.c != null ? hexScreen(v, f.c, f.r) : null;
       if (f.k === 'num' && p) {
         const heal = String(f.text)[0] === '+';
         sfx(heal ? 'heal' : f.big ? 'crit' : 'hit');
-        if (heal) burst(S, p.x, p.y - size * 0.9, 5, '#8dff9a', { speed: 40, g: -60, life: 0.7, r: 2, spread: 1.2, glow: true });
-        else { burst(S, p.x, p.y - size * 0.8, f.big ? 14 : 5, f.big ? '#ffe066' : '#ffd0a0', { speed: f.big ? 160 : 100, life: 0.35, r: f.big ? 2.6 : 1.8 }); if (f.big) S.shake = Math.max(S.shake, 5); }
+        if (heal) { burst(S, p.x, p.y - size * 0.9, 6, '#8dff9a', { speed: 40, g: -60, life: 0.8, r: 2, spread: 1.2, glow: true }); burst(S, p.x, p.y - size * 0.7, 4, '#d8ffe0', { speed: 34, g: -70, life: 0.9, r: 2.2, spread: 1.0, shape: 'star' }); shock(S, p.x, p.y, '#8dff9a', size * 0.9, { life: 0.5, w: 2.5 }); }
+        else {
+          burst(S, p.x, p.y - size * 0.8, f.big ? 16 : 7, f.big ? '#ffe066' : '#ffd0a0', { speed: f.big ? 190 : 120, life: 0.4, r: f.big ? 2.8 : 1.9, shape: 'spark' });
+          if (f.big) { burst(S, p.x, p.y - size * 0.8, 8, '#fff', { speed: 120, life: 0.5, r: 2.4, g: 40, shape: 'star' }); shock(S, p.x, p.y - size * 0.3, '#ffe066', size * 1.5, { life: 0.4, w: 4 }); flash(S, '#fff6c0', 0.12, 0.16); S.shake = Math.max(S.shake, 6); }
+        }
       } else if (f.k === 'ring') {
         const c = hexScreen(v, f.c, f.r), R = (f.rad * 1.6 + 0.7) * size;
-        for (let i = 0; i < 14 + f.rad * 8 && S.parts.length < MAXP; i++) { const a = Math.random() * Math.PI * 2; burst(S, c.x + Math.cos(a) * R * 0.8, c.y + Math.sin(a) * R * 0.8 * 0.6, 1, f.color, { speed: 60, g: -40, life: 0.6, r: 2.2, spread: 0.6, glow: true }); }
-        if (f.rad >= 1) S.shake = Math.max(S.shake, 2 + f.rad * 1.5);
-      } else if (f.k === 'bolt') { for (const [c, r] of f.pts) { const q = hexScreen(v, c, r); burst(S, q.x, q.y - size * 0.7, 5, f.color, { speed: 120, life: 0.3, r: 1.8, glow: true }); } }
-      else if (f.k === 'blink') { const q = hexScreen(v, f.c, f.r); burst(S, q.x, q.y - size * 0.6, 10, f.color, { speed: 70, g: -30, life: 0.5, r: 2.5 }); }
+        for (let i = 0; i < 18 + f.rad * 10 && S.parts.length < MAXP; i++) { const a = Math.random() * Math.PI * 2; burst(S, c.x + Math.cos(a) * R * 0.8, c.y + Math.sin(a) * R * 0.8 * 0.6, 1, f.color, { speed: 70, g: -40, life: 0.7, r: 2.4, spread: 0.6, glow: true }); }
+        // v62n: the blast: a white core flash, a fast outer wave, sparks flying out from the middle and a column of light
+        shock(S, c.x, c.y, f.color, R * 1.15, { life: 0.5, w: 5 }); shock(S, c.x, c.y, '#fff', R * 0.7, { life: 0.32, w: 3 }); pillar(S, c.x, c.y, f.color, size * (1.6 + f.rad * 0.5), size * (0.6 + f.rad * 0.25));
+        for (let i = 0; i < 10 + f.rad * 6 && S.parts.length < MAXP; i++) { const a = Math.random() * Math.PI * 2; burst(S, c.x, c.y - size * 0.2, 1, i % 3 ? f.color : '#fff', { dir: a, spread: 0, speed: 130 + f.rad * 40, g: 30, life: 0.55, r: 2.4, shape: 'spark' }); }
+        flash(S, f.color, Math.min(0.2, 0.08 + f.rad * 0.05), 0.22);
+        S.shake = Math.max(S.shake, f.rad >= 1 ? 3 + f.rad * 2 : 1.5);
+      } else if (f.k === 'bolt') { f.pts.forEach(([c, r], i) => { const q = hexScreen(v, c, r); burst(S, q.x, q.y - size * 0.7, 6, f.color, { speed: 140, life: 0.35, r: 1.9, glow: true, shape: 'spark' }); if (i === f.pts.length - 1) { burst(S, q.x, q.y - size * 0.7, 3, '#fff', { speed: 80, life: 0.45, r: 2.4, shape: 'star' }); shock(S, q.x, q.y, f.color, size * 1.0, { life: 0.35, w: 3 }); } }); }
+      else if (f.k === 'blink') { const q = hexScreen(v, f.c, f.r); burst(S, q.x, q.y - size * 0.6, 14, f.color, { speed: 90, g: -30, life: 0.55, r: 2.5, glow: true }); burst(S, q.x, q.y - size * 0.6, 6, '#fff', { speed: 50, g: -50, life: 0.6, r: 2.4, shape: 'star' }); shock(S, q.x, q.y, f.color, size * 1.1, { life: 0.4, w: 3 }); }
       else if (f.k === 'text' && /^(SLAM|EXECUTE|REAPED|LONGWATCH)$/.test(f.text)) sfx('slam');
       else if (f.k === 'text' && /^(miss|blind)$/.test(f.text)) sfx('dodge');
       else if (f.k === 'cast' && u) {
         sfx('cast');
-        burst(S, p.x, p.y - size * 0.3, 16, u.color || '#fff', { speed: 70, g: -120, life: 0.8, r: 2.2, spread: 1.4, glow: true });
+        // v62n: the cast is an event: a double shockwave under the hero, a pillar of light, a fountain of sparks and stars, a tint over the whole board
+        const cc0 = u.color || '#fff';
+        shock(S, p.x, p.y, cc0, size * 2.3, { life: 0.6, w: 5 }); shock(S, p.x, p.y, '#fff', size * 1.4, { life: 0.38, w: 3 }); pillar(S, p.x, p.y, cc0, size * 3.2, size * 0.9);
+        burst(S, p.x, p.y - size * 0.3, 22, cc0, { speed: 80, g: -120, life: 0.9, r: 2.4, spread: 1.4, glow: true });
+        for (let i = 0; i < 18; i++) burst(S, p.x, p.y - size * 0.5, 1, i % 3 ? cc0 : '#fff', { dir: (i / 18) * Math.PI * 2, spread: 0, speed: 170, g: 20, life: 0.6, r: 2.6, shape: 'spark' });
+        burst(S, p.x, p.y - size * 0.6, 8, '#fff', { speed: 70, g: -90, life: 1.0, r: 2.6, spread: 2.4, shape: 'star' });
+        flash(S, cc0, 0.26, 0.32); S.shake = Math.max(S.shake, 3.5);
         const hd = B.HEROES && B.HEROES[u.key]; if (hd) S.calls.push({ id: u.id, text: hd.abName, t: 0, col: u.color || '#ffe066' });
       }
     }
     for (const u of W.units) if (u.dead && !S.dead.has(u.id) && W.t - u.deathT < 12) {
       S.dead.add(u.id); const p = unitPos(v, W, u, T);
-      burst(S, p.x, p.y - size * 0.6, u.boss ? 40 : 16, u.side ? '#ff8a8a' : '#9fd8ff', { speed: u.boss ? 180 : 110, life: 0.6, r: 2.4 });
+      burst(S, p.x, p.y - size * 0.6, u.boss ? 56 : 20, u.side ? '#ff8a8a' : '#9fd8ff', { speed: u.boss ? 210 : 130, life: 0.65, r: 2.5 }); burst(S, p.x, p.y - size * 0.6, u.boss ? 24 : 8, '#fff', { speed: u.boss ? 200 : 120, life: 0.6, r: 2.4, shape: 'spark' }); shock(S, p.x, p.y, u.side ? '#ff8a8a' : '#9fd8ff', size * (u.boss ? 3.2 : 1.5), { life: 0.55, w: u.boss ? 6 : 3 }); if (u.boss) flash(S, '#fff', 0.45, 0.5);
       S.parts.push({ x: p.x, y: p.y - size * 0.8, vx: 0, vy: -40, g: -10, life: 1.4, t: 0, r: 5, col: '#e8f4ff', glow: true, wisp: true });
       if (u.boss) { S.shake = 10; sfx('boss'); } else sfx('ko');
     }
@@ -539,6 +577,10 @@
       q.vy += q.g * dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.wisp) q.x += Math.sin(q.t * 7) * 0.6;
       const k = 1 - q.t / q.life;
       ctx.globalAlpha = Math.max(0, k);
+      if (q.type === 'ring') { const e = 1 - Math.pow(k, 3); const rr = q.R * e + 2; ctx.beginPath(); ctx.ellipse(q.x, q.y, rr, rr * K, 0, 0, Math.PI * 2); ctx.globalAlpha = k * 0.22; ctx.fillStyle = q.col; ctx.fill(); ctx.globalAlpha = k * 0.5; ctx.strokeStyle = '#1a1f5a'; ctx.lineWidth = q.w * k + 3; ctx.stroke(); ctx.globalAlpha = k; ctx.strokeStyle = q.col; ctx.lineWidth = q.w * k + 0.8; ctx.stroke(); ctx.globalAlpha = k * 0.8; ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(0.6, q.w * k * 0.3); ctx.stroke(); keep.push(q); continue; }
+      if (q.type === 'pillar') { const w = q.w * (0.45 + 0.55 * k), g = ctx.createLinearGradient(0, q.y - q.h, 0, q.y); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.55, q.col); g.addColorStop(1, '#ffffff'); ctx.globalAlpha = k * 0.85; ctx.fillStyle = g; ctx.fillRect(q.x - w / 2, q.y - q.h * (1.1 - 0.1 * k), w, q.h * (1.1 - 0.1 * k)); ctx.globalAlpha = k * 0.9; ctx.fillStyle = '#fff'; ctx.fillRect(q.x - w * 0.12, q.y - q.h * 0.85 * (1.1 - 0.1 * k), w * 0.24, q.h * 0.85 * (1.1 - 0.1 * k)); keep.push(q); continue; }
+      if (q.shape === 'spark') { ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.x - q.vx * 0.08, q.y - q.vy * 0.08); ctx.strokeStyle = '#1a1f5a'; ctx.globalAlpha = k * 0.45; ctx.lineWidth = q.r * 2.6; ctx.stroke(); ctx.globalAlpha = k; ctx.strokeStyle = q.col; ctx.lineWidth = q.r * 1.6; ctx.stroke(); ctx.strokeStyle = '#fff'; ctx.lineWidth = q.r * 0.6; ctx.stroke(); keep.push(q); continue; }
+      if (q.shape === 'star') { const s = q.r * 2.6 * (0.4 + 0.6 * k); ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.t * 4); ctx.fillStyle = q.col; ctx.beginPath(); ctx.moveTo(0, -s); ctx.lineTo(s * 0.28, 0); ctx.lineTo(0, s); ctx.lineTo(-s * 0.28, 0); ctx.closePath(); ctx.moveTo(-s, 0); ctx.lineTo(0, s * 0.28); ctx.lineTo(s, 0); ctx.lineTo(0, -s * 0.28); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(26,31,90,0.6)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore(); keep.push(q); continue; }
       if (q.glow) { ctx.fillStyle = q.col; ctx.globalAlpha = k * 0.25; ctx.beginPath(); ctx.arc(q.x, q.y, q.r * 3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = k; }
       ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(q.x, q.y, q.r * (q.wisp ? k : 1), 0, Math.PI * 2); ctx.fill();
       keep.push(q);
@@ -552,8 +594,9 @@
       const u = W.byId[c.id]; if (!u) continue;
       const p = unitPos(v, W, u, T), k = c.t / (c.big ? 1.5 : 1.1), pop = c.t < 0.12 ? 0.7 + c.t / 0.12 * (c.big ? 0.8 : 0.45) : (c.big ? 1.5 : 1.15) - Math.min(c.big ? 0.4 : 0.15, (c.t - 0.12));
       ctx.save(); ctx.globalAlpha = k < 0.75 ? 1 : (1 - k) / 0.25; ctx.translate(p.x, p.y - size * 2.6 - k * size * 0.4); ctx.scale(pop, pop);
-      ctx.font = '700 ' + Math.round(size * (c.big ? 0.8 : 0.52)) + "px 'Fredoka', 'Nunito', system-ui, sans-serif"; ctx.textAlign = 'center';
-      ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.strokeText(TT(c.text).toUpperCase(), 0, 0); ctx.fillStyle = c.col; ctx.fillText(TT(c.text).toUpperCase(), 0, 0);
+      ctx.font = '700 ' + Math.round(size * (c.big ? 0.8 : 0.62)) + "px 'Fredoka', 'Nunito', system-ui, sans-serif"; ctx.textAlign = 'center';
+      ctx.lineJoin = 'round'; ctx.lineWidth = 11; ctx.strokeStyle = c.col; ctx.globalAlpha *= 0.35; ctx.strokeText(TT(c.text).toUpperCase(), 0, 0); ctx.globalAlpha /= 0.35;
+      ctx.lineWidth = 4.5; ctx.strokeStyle = '#000'; ctx.strokeText(TT(c.text).toUpperCase(), 0, 0); ctx.fillStyle = c.col; ctx.fillText(TT(c.text).toUpperCase(), 0, 0);
       ctx.restore();
     }
     S.calls = keep;
