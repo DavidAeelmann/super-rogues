@@ -5,3 +5,5 @@ tools/tests/.saida/
 backups/
 tools/vigia.log
 art-inbox/
+
+tools/results/*.json

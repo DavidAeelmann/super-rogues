@@ -105,7 +105,7 @@
       else if (b.fl === 'battleline') { buff(u, 'asPct', 0.15, 1e9); buff(u, 'atkPct', 0.15, 1e9); }
       else if (b.fl === 'cover') { u.dodge = Math.min(0.6, u.dodge + 0.15); u.armor += 15; }
       else if (b.fl === 'highground') { if (b.n > 0) { u.range += 1; buff(u, 'dmgAmp', 0.25, 1e9); } else { buff(u, 'dmgAmp', -0.05, 1e9); continue; } }
-      else if (b.fl === 'center') { if (b.n > 0) { u.maxHp = Math.round(u.maxHp * 1.4); u.hp = u.maxHp; buff(u, 'atkPct', 0.4, 1e9); u.ap *= 1.4; } else { u.maxHp = Math.round(u.maxHp * 0.9); u.hp = Math.min(u.hp, u.maxHp); continue; } }
+      else if (b.fl === 'center') { if (b.n > 0) { u.maxHp = Math.round(u.maxHp * 1.3); u.hp = u.maxHp; buff(u, 'atkPct', 0.3, 1e9); u.ap *= 1.3; } else { u.maxHp = Math.round(u.maxHp * 0.9); u.hp = Math.min(u.hp, u.maxHp); continue; } }
       fxText(W, u, FORM_LABEL[b.fl], '#bfe6ff');
     }
     for (const s of [0, 1]) {
@@ -309,7 +309,7 @@
       if (src.kind === 'hero') {   // v50 (review #62)
         const SF = flOf(W, src.side);
         if (SF.glass) amp += 1;
-        if (SF.packhorn && W.pack && W.pack[src.side] === tgt.id) amp += 0.35;
+        if (SF.packhorn && W.pack && W.pack[src.side] === tgt.id) amp += 0.75;
       }
     }
     if (tgt.st.vulnU > W.t) amp += tgt.st.vulnP;
@@ -320,7 +320,7 @@
     dmg *= 1 - Math.min(0.8, (tgt.m.dmgReduce || 0) + bsum(W, tgt, 'dr'));
     if (tgt.side === 0 && W.tm0 !== 1 && !(type === 'true' && raw >= tgt.hp + tgt.shield)) dmg *= W.tm0;
     if (tgt.anchor && tgt.c === tgt.anchor.c && tgt.r === tgt.anchor.r) dmg *= 0.75;   // v50: the Anchor Chain
-    if (tgt.kind === 'hero' && flOf(W, tgt.side).lodestone && lodestar(W, tgt.side) === tgt) dmg *= 0.9;   // v50: the Lodestone
+    if (tgt.kind === 'hero' && flOf(W, tgt.side).lodestone && lodestar(W, tgt.side) === tgt) dmg *= 0.95;   // v50: the Lodestone
     // v61 (review #73): the Brotherhood Chain also lowers the damage; a gravestone shelters the heroes next to it
     if (tgt.kind === 'hero' && flOf(W, tgt.side).bond) dmg *= 0.9;
     if (tgt.kind === 'hero' && flOf(W, tgt.side).gravestone && W.terrain.some(t => t.grave && Hx.dist(t, tgt) === 1)) dmg *= 0.8;
@@ -438,7 +438,7 @@
     if (u.kind === 'hero') {
       if (OF.lastone && !W.once['last' + u.side]) {
         const left = heroesOf(W, u.side);
-        if (left.length === 1) { const h = left[0]; W.once['last' + u.side] = 1; h.hp = h.maxHp; buff(h, 'atkPct', 1, 1e9); buff(h, 'asPct', 0.5, 1e9); fxText(W, h, 'LAST STAND', '#ffd23f'); fxRing(W, h.c, h.r, 1, '#ffd23f', 14); }
+        if (left.length === 1) { const h = left[0]; W.once['last' + u.side] = 1; h.hp = h.maxHp; buff(h, 'atkPct', 0.6, 1e9); buff(h, 'asPct', 0.3, 1e9); fxText(W, h, 'LAST STAND', '#ffd23f'); fxRing(W, h.c, h.r, 1, '#ffd23f', 14); }
       }
       if (u.king) for (const a of heroesOf(W, u.side)) { cc(W, a, 'stun', 2); fxText(W, a, 'PANIC', '#ff8a8a'); }
     }
@@ -1643,7 +1643,7 @@
     // v50 (review #62): the Phoenix Egg: the whole team rises once, and the egg is used up (run.js takes it away)
     if (!heroes && W.fl.phoenix && !W.once.phoenix) {
       W.once.phoenix = 1; W.used = Object.assign(W.used || {}, { phoenix: 1 });
-      for (const u of W.units) if (u.dead && u.side === 0 && u.kind === 'hero') reviveAt(W, u, 0.5, 'REBORN');
+      for (const u of W.units) if (u.dead && u.side === 0 && u.kind === 'hero') reviveAt(W, u, 0.3, 'REBORN');
       fx(W, { k: 'banner', text: 'The Phoenix Egg hatches!', t1: W.t + 50 });
       heroes = W.units.some(u => !u.dead && u.side === 0 && u.kind === 'hero');
     }

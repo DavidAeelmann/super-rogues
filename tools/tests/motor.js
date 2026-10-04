@@ -1,6 +1,7 @@
 // Engine + run logic checks (Node, no browser). Usage: node tools/tests/motor.js
 require('../../js/hex.js'); require('../../js/data.js'); require('../../js/sim.js'); require('../../js/run.js');
 const { Run, Sim, Hex, HEROES, ITEMS, RELICS, CFG } = B;
+B.TUNE.power = {};   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
 let fails = 0, oks = 0;
 const ok = (c, msg) => { if (c) oks++; else { fails++; console.log('FAIL ' + msg); } };
 const finite = W => W.units.every(u => Number.isFinite(u.hp) && Number.isFinite(u.mana) && Number.isFinite(u.atk));
@@ -580,7 +581,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(W.hush[1] === 200 && W.hush[0] === 40 && !early, 'Hush Bell: enemies silenced for 10s, your heroes for 2s');
   // ---- stats
   W = mk(['scales'], TEAM, FOES); const hp = W.units.filter(u => u.side === 0).map(u => u.maxHp); ok(hp.every(x => x === hp[0]), 'Scales of Balance: max HP evens out');
-  ok(Math.abs(HD(['glass'], 'bastion').hp / HD([], 'bastion').hp - 0.65) < 1e-9, 'Glass Crown: a third less max HP');
+  ok(Math.abs(HD(['glass'], 'bastion').hp / HD([], 'bastion').hp - 0.8) < 1e-9, 'Glass Crown: a fifth less max HP');
   const g1 = HD(['giant'], 'bastion'); W = mk(['giant'], [['bastion', 3, 5]], FOES); ok(g1.size === 1.25 && g1.dodge === 0 && W.units[0].size === 1.25, "Giant's Brew: the heroes grow (and lose their dodge)");
   W = mk(['berserk'], [['bastion', 3, 5]], FOES); const bz = W.units[0], as1 = Sim.asOf(W, bz); bz.hp = bz.maxHp / 2;
   ok(Math.abs(Sim.asOf(W, bz) / as1 - 1.5) < 0.01, 'Berserker Chain: at half HP a hero attacks 50% faster');
@@ -593,7 +594,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const RUN = (seed, relics, keys) => { const r = Run.newRun(seed); Run.pickStart(r, [keys ? keys[0] : 'bastion'], null); for (const k of (keys || []).slice(1)) Run.addHero(r, k); for (const id of relics) Run.gainRelic(r, id); return r; };
   let r = RUN(31, ['solo']);
   const s1 = Run.heroDef(r, r.heroes[0]), s0 = Run.heroDef(RUN(31, []), r.heroes[0]);
-  ok(Math.abs(s1.atk / s0.atk - 2.5) < 0.01 && Run.slots(r, r.heroes[0]) === Run.slots(RUN(31, []), r.heroes[0]) + 2, 'Lone Crown: one hero = +150% attack and HP, +2 item slots');
+  ok(Math.abs(s1.atk / s0.atk - 2.0) < 0.01 && Run.slots(r, r.heroes[0]) === Run.slots(RUN(31, []), r.heroes[0]) + 2, 'Lone Crown: one hero = +100% attack and HP, +2 item slots');
   let heroShops = 0; for (let i = 0; i < 40; i++) { const x = RUN(100 + i, ['solo']); x.step = 0; Run.advance(x); heroShops += x.opts.filter(o => o.kind === 'heroShop').length; }
   ok(!heroShops, 'Lone Crown: the Hero Shop never shows up');
   r = RUN(32, ['cabinet', 'drum', 'idol']); r.cur = { kind: 'relicShop' };
@@ -618,7 +619,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   r = RUN(39, []); const gc = r.gold; Run.gainRelic(r, 'cursecoin'); fightOf(r); const f39 = r.cur, ehp = () => Run.fightWorld(r, true).units.filter(u => u.side === 1).reduce((a, u) => a + u.maxHp, 0), hp0 = ehp();
   Run.finishFight(r, fake(r)); r.cur = f39; r.phase = 'deploy'; const hp1 = ehp();
   ok(r.gold > gc + 24 && hp1 > hp0 * 1.03, 'Cursed Doubloon: +25 gold now, and the enemies grow after every fight');
-  r = RUN(40, ['medal']); fightOf(r); const xp40 = r.heroes[0].xp; Run.finishFight(r, fake(r, false, 2)); ok(r.heroes[0].xp - xp40 === 50, "Veteran's Medal: XP from kills only (2 kills = 50)");
+  r = RUN(40, ['medal']); fightOf(r); const xp40 = r.heroes[0].xp; Run.finishFight(r, fake(r, false, 2)); ok(r.heroes[0].xp - xp40 === 28, "Veteran's Medal: XP from kills only (2 kills = 28)");
   r = RUN(41, ['double']); fightOf(r); res = Run.finishFight(r, fake(r)); const g41 = res.gold;
   r = RUN(41, ['double']); fightOf(r); res = Run.finishFight(r, fake(r, true));
   ok(g41 > 0 && res.gold === 0 && res.double === 'lost', 'Double or Nothing: double gold, or nothing if anyone fell');

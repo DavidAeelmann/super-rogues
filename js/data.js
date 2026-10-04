@@ -24,7 +24,7 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
-    fightScale: [1, 1.03, 1.25, 1.27, 1.39, 1.76, 2.1, 2.16, 2.49],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
+    fightScale: [1, 0.862, 0.827, 1.031, 1.247, 1.552, 1.775, 2.016, 2.208],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
     firstFight: 0.5,  // review #22: the first fight is fought by a single hero: half the usual enemy budget
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // review #24: sudden death burns every unit for 1%, 2%, 3%... of max HP per second
@@ -774,13 +774,13 @@
     I('stormbringer', 'Thunderspine', 'epic', { chainEvery: 3, chainTargets: 3, chainDmg: 0.6, asPct: 0.2 }, '+20% attack speed, every 3rd attack chains to 3 enemies'),
     I('morello', 'Grimoire of Blight', 'epic', { ap: 25, abilityBurn: 0.03 }, 'Abilities burn 3% max Health/s, +25 Magic'),
     I('redemption', "Mercy's Chime", 'epic', { hp: 300, onDeathHeal: 0.35 }, '+300 Health; on death, heals allies within 2 hexes for 35%'),
-    I('zeke', "Herald's Horn", 'epic', { aura: [{ r: 1, stat: 'asPct', val: 0.4 }] }, 'Adjacent allies +40% attack speed'),
+    I('zeke', "Herald's Horn", 'epic', { aura: [{ r: 1, stat: 'asPct', val: 0.55 }] }, 'Adjacent allies +55% attack speed'),
     I('botrk', 'Sorrowsteel', 'epic', { atk: 10, curHpOnHit: 0.06, ls: 0.15 }, '+10 Attack, attacks deal 6% current Health, +15% lifesteal'),
     I('stoneplate', 'Basalt Bulwark', 'epic', { armor: 50, asPct: -0.1 }, '+50 Defense, -10% attack speed'),
     I('striders', 'Cloudstriders', 'epic', { ms: 2, atk: 20, firstMoveAtk: 0.6 }, '+2 move speed, +20 Attack, attack after moving deals +60%'),
     I('archangel', 'Staff of Ascent', 'epic', { ap: 30, apPerSec: 4 }, '+30 Magic, +4 Magic every second in combat'),
     I('lastwhisper', 'Final Hush', 'epic', { armorPen: 0.4, atk: 25 }, 'Ignore 40% Defense, +25 Attack'),
-    I('dragonclaw', 'Wyrmscale Gloves', 'epic', { armor: 39, regen: 0.015 }, '+39 Defense, 1.5% regen per second'),
+    I('dragonclaw', 'Wyrmscale Gloves', 'epic', { armor: 30, regen: 0.01 }, '+30 Defense, 1% regen per second'),
     // ---- v5 (review #2): 20 more, several that grow during the fight
     I('knuckles', 'Iron Knuckles', 'common', { atk: 6, stackAtk: 1, stackAtkCap: 15 }, '+6 Attack, +1 Attack per hit (15x)'),
     I('warpaint', 'Clan Warpaint', 'common', { rampAtk: 1, rampAtkCap: 20 }, '+1 Attack every second in combat (up to +20)'),
@@ -857,18 +857,18 @@
     N('weapon', 'obsidianblade', 'Duskforged Greatsword', 'legendary', { atk: 30, splash: 0.35, armorPen: 0.2 }, '+30 Attack, attacks splash 35% to adjacent enemies, ignore 20% Defense'),
     N('offhand', 'aegis', 'Shield of First Light', 'legendary', { shieldStartPct: 0.4, aura: [{ r: 1, stat: 'armor', val: 25 }] }, 'Starts fights with a 40% shield, adjacent allies +25 Defense'),
     N('helmet', 'magicrown', 'Crown of the Conclave', 'legendary', { ap: 60, manaStart: 30, manaRegen: 2 }, '+60 Magic, +30 starting Energy, +2 Energy per second'),
-    N('armor', 'dragonscale', 'Wyrmhide Mail', 'legendary', { hp: 350, armor: 30, dmgReduce: 0.1 }, '+350 Health, +30 Defense, takes 10% less damage'),
+    N('armor', 'dragonscale', 'Wyrmhide Mail', 'legendary', { hp: 240, armor: 22, dmgReduce: 0.08 }, '+240 Health, +22 Defense, takes 8% less damage'),
     N('gloves', 'furygauntlets', 'Gauntlets of Wrath', 'legendary', { asPct: 0.25, rageDmg: 0.5 }, '+25% attack speed, up to +50% damage as Health drops'),
     N('boots', 'windwalkers', 'Galerunners', 'legendary', { ms: 2, dodge: 0.2, asPct: 0.15 }, '+2 move speed, +20% dodge, +15% attack speed'),
-    N('trinket', 'mountainheart', 'Heart of the Peak', 'legendary', { hpPct: 0.25, regen: 0.015, ccResist: 0.3 }, '+25% max Health, 1.5% regen per second, crowd control 30% shorter'),
+    N('trinket', 'mountainheart', 'Heart of the Peak', 'legendary', { hpPct: 0.18, regen: 0.01, ccResist: 0.3 }, '+18% max Health, 1% regen per second, crowd control 30% shorter'),
     // mythic: one per slot, only in late shops
     N('weapon', 'worldsplitter', 'Horizon Cleaver', 'mythic', { atk: 40, crit: 0.2, critDmg: 0.5, multishot: 0.5, reap: 0.1 }, '+40 Attack, +20% crit, +50% crit damage, attacks also hit a 2nd enemy for 50%, execute enemies below 10% Health'),
-    N('offhand', 'eternitytome', 'Codex Without End', 'mythic', { ap: 50, apPerSec: 4, abilityBurn: 0.03, manaMaxPct: -0.2 }, '+50 Magic, +4 Magic every second, abilities burn 3% max Health/s and need 20% less Energy'),
+    N('offhand', 'eternitytome', 'Codex Without End', 'mythic', { ap: 50, apPerSec: 3, abilityBurn: 0.03, manaMaxPct: -0.2 }, '+50 Magic, +3 Magic every second, abilities burn 3% max Health/s and need 20% less Energy'),
     N('helmet', 'voidmask', 'Mask of the Hollow Star', 'mythic', { allPct: 0.25, cleanseOnce: 1, omni: 0.15 }, '+25% Health, Attack, Magic, Defense, ignores the first crowd control, abilities heal 15% of damage'),
-    N('armor', 'obsidianplate', 'Rampart of Dusk', 'mythic', { hp: 500, armor: 40, thorns: 0.3, stasis: 1 }, '+500 Health, +40 Defense, reflects 30% melee damage, once per fight at 40% Health: invulnerable for 2s'),
+    N('armor', 'obsidianplate', 'Rampart of Dusk', 'mythic', { hp: 380, armor: 30, thorns: 0.3, stasis: 1 }, '+380 Health, +30 Defense, reflects 30% melee damage, once per fight at 40% Health: invulnerable for 2s'),
     N('gloves', 'ruinhands', 'Hands of Unmaking', 'mythic', { asPct: 0.35, curHpOnHit: 0.06, chainEvery: 3, chainTargets: 2, chainDmg: 0.6 }, '+35% attack speed, attacks deal 6% current Health, every 3rd attack chains to 2 enemies'),
     N('boots', 'phantomboots', 'Wraithwalkers', 'mythic', { ms: 2, dodge: 0.3, asPct: 0.2, firstMoveAtk: 0.8 }, '+2 move speed, +30% dodge, +20% attack speed, attack after moving deals +80%'),
-    N('trinket', 'phoenixheart', 'Emberborn Heart', 'mythic', { revive: 0.7, hp: 250, onDeathHeal: 0.3 }, 'Revives once at 70% Health, +250 Health, on death heals allies within 2 hexes for 30%'),
+    N('trinket', 'phoenixheart', 'Emberborn Heart', 'mythic', { revive: 0.5, hp: 160, onDeathHeal: 0.3 }, 'Revives once at 50% Health, +160 Health, on death heals allies within 2 hexes for 30%'),
     // sets: 3 pieces each, in 3 different slots
     N('weapon', 'obs_blade', 'Nightglass Blade', 'set', { atk: 18, armorPen: 0.15 }, '+18 Attack, ignore 15% Defense', 'obsidian'),
     N('helmet', 'obs_helm', 'Nightglass Helm', 'set', { armor: 20, hp: 100 }, '+20 Defense, +100 Health', 'obsidian'),
@@ -977,7 +977,7 @@
     R('vengeance', 'Wrathful Shade', 'When a hero dies, the others gain +20% Attack.', { fl: 'vengeance' }),
     R('frostsigil', 'Rime Glyph', 'Enemies start every fight slowed by 40% for 4s.', { fl: 'frostsigil' }),
     R('thunder', 'Stormpost Totem', 'Every 4s lightning strikes a random enemy.', { fl: 'thunder' }),
-    R('spring', 'Mending Spring', 'Heroes regenerate 0.5% max Health per second, and all healing on them is 30% stronger.', { mods: { regen: 0.005, healPower: 0.3 } }),
+    R('spring', 'Mending Spring', 'Heroes regenerate 0.5% max Health per second, and all healing on them is 20% stronger.', { mods: { regen: 0.005, healPower: 0.2 } }),
     R('firststrike', 'Drawn Steel', 'Heroes start fights with a shield of 20% max Health.', { mods: { shieldStartPct: 0.2 } }),
     R('purse', 'Fat Purse', 'Gain 10 gold now, and +1 gold per 10 held after each fight.', { fl: 'purse' }),
     R('tome', 'Mossbound Tome', 'All current heroes gain 45 XP now.', { fl: 'tome' }),
@@ -1000,8 +1000,8 @@
     R('seashell', 'Singing Seashell', 'All heroes +10 Defense and +8% attack speed.', { mods: { armor: 10, asPct: 0.08 } }),
     R('kite', 'Paper Kite', 'All heroes +1 move speed and +5% dodge.', { mods: { ms: 1, dodge: 0.05 } }),
     R('compass', 'Star Compass', 'All heroes +12% crit chance and +25% crit damage.', { mods: { crit: 0.12, critDmg: 0.25 } }),
-    R('teapot', 'Warm Teapot', 'All heroes regenerate 1% Health per second.', { mods: { regen: 0.01 } }),
-    R('snowglobe', 'Snow Globe', 'All heroes +10 Defense and +100 Health.', { mods: { armor: 10, hp: 100 } }),
+    R('teapot', 'Warm Teapot', 'All heroes regenerate 0.7% Health per second.', { mods: { regen: 0.007 } }),
+    R('snowglobe', 'Snow Globe', 'All heroes +8 Defense and +70 Health.', { mods: { armor: 8, hp: 70 } }),
     R('marbles', 'Marble Pouch', 'All heroes start fights with +25 Energy.', { mods: { manaStart: 25 } }),
     R('fireflies', 'Firefly Jar', 'All heroes +10 Attack and +10 Magic.', { mods: { atk: 10, ap: 10 } }),
     R('pinwheel', 'Pinwheel', 'All heroes +8% attack speed and +1 Energy per second.', { mods: { asPct: 0.08, manaRegen: 1 } }),
@@ -1031,18 +1031,18 @@
     R('blinkstone', 'Blink Pebble', 'Melee heroes blink next to their target instead of walking (once every 4s). They dive in alone.', { fl: 'blinkstone' }),
     R('trickcoin', "Swapper's Coin", 'Every 8s your most hurt hero swaps places with your healthiest one and heals 15% of max Health.', { fl: 'trickcoin' }),
     R('highground', 'Watchtower Flag', 'Formation: heroes starting in your back row get +1 range and +25% damage; heroes starting in your front row deal 5% less.', { fl: 'highground', form: true }),
-    R('center', 'Spotlight Lamp', 'Formation: the hero starting closest to the middle of your side is the Star: +40% Health, Attack and Magic. The others get 10% less Health.', { fl: 'center', form: true }),
+    R('center', 'Spotlight Lamp', 'Formation: the hero starting closest to the middle of your side is the Star: +30% Health, Attack and Magic. The others get 10% less Health.', { fl: 'center', form: true }),
     // -- targeting
-    R('lodestone', 'Lodestone', 'Every enemy goes for your hero with the most max Health, wherever it stands. That hero takes 10% less damage.', { fl: 'lodestone' }),
+    R('lodestone', 'Lodestone', 'Every enemy goes for your hero with the most max Health, wherever it stands. That hero takes 5% less damage.', { fl: 'lodestone' }),
     R('bodyguard', 'Bodyguard Oath', 'Enemies cannot target your ranged heroes while one of your melee heroes is alive (blasts still hit them), and your melee heroes get +20 Defense.', { fl: 'bodyguard' }),
-    R('packhorn', 'Pack Horn', 'Your heroes all hunt the same enemy (the one closest to your team) and deal 35% more damage to it.', { fl: 'packhorn' }),
+    R('packhorn', 'Pack Horn', 'Your heroes all hunt the same enemy (the one closest to your team) and deal 75% more damage to it.', { fl: 'packhorn' }),
     R('jesterbell', "Jester's Bell", 'Every 8s a random unit is confused for 2.5s and attacks its own side: mostly an enemy, sometimes one of yours. Bosses are deaf to it.', { fl: 'jesterbell' }),
     R('mirrorshield', 'Mirror Shard', 'The first ability that hits each hero in a fight bounces back to whoever cast it.', { fl: 'mirrorshield' }),
     // -- falling and rising
-    R('phoenix', 'Phoenix Egg', 'If your whole team falls, everyone rises at 50% Health. Then the egg hatches and is gone for the rest of the game.', { fl: 'phoenix' }),
+    R('phoenix', 'Phoenix Egg', 'If your whole team falls, everyone rises at 30% Health. Then the egg hatches and is gone for the rest of the game.', { fl: 'phoenix' }),
     R('souljar', 'Soul Jar', 'Every 5 enemies that fall fill the jar: a fallen hero rises at 50% Health (if nobody fell, every hero heals 30%).', { fl: 'souljar' }),
     R('gravecaller', 'Gravecaller Lantern', 'Each enemy that falls (not bosses) rises on your side for 6s at half strength. Heroes have 5% less max Health.', { fl: 'gravecaller', mods: { hpPct: -0.05 } }),
-    R('lastone', 'Last Stand Banner', 'When only one of your heroes is left, it heals to full and gets +100% Attack and +50% attack speed.', { fl: 'lastone' }),
+    R('lastone', 'Last Stand Banner', 'When only one of your heroes is left, it heals to full and gets +60% Attack and +30% attack speed.', { fl: 'lastone' }),
     R('pyre', 'Chain Pyre', 'Enemies that fall explode for 15% of their max Health into everything next to them (your heroes take a tenth of it). Crowds chain-react.', { fl: 'pyre' }),
     R('contagion', 'Plague Flask', 'When a burning or poisoned enemy falls, its burn and poison jump to every enemy within 2 hexes.', { fl: 'contagion' }),
     R('king', "King's Crown", 'Your highest-level hero is crowned: +40% Health and Attack. When the King falls, the others panic (stunned for 2s).', { fl: 'king' }),
@@ -1053,7 +1053,7 @@
     R('leyline', 'Ley Line Chalk', 'When a hero uses its ability, your other heroes in the same row gain 30 Energy.', { fl: 'leyline' }),
     // -- stats turned upside down
     R('scales', 'Scales of Balance', "When the fight starts, all your heroes' max Health evens out to the team's average, plus 10%.", { fl: 'scales' }),
-    R('glass', 'Glass Crown', 'Heroes deal double damage, but have a third less max Health.', { fl: 'glass', mods: { hpPct: -0.35 } }),
+    R('glass', 'Glass Crown', 'Heroes deal double damage, but have a fifth less max Health.', { fl: 'glass', mods: { hpPct: -0.2 } }),
     R('giant', "Giant's Brew", 'Heroes grow huge: +50% max Health and Attack, but 40% slower attacks, -1 move speed and no dodge.', { fl: 'giant', mods: { hpPct: 0.5, atkPct: 0.5, asPct: -0.4, ms: -1 } }),
     R('berserk', 'Berserker Chain', 'Heroes attack faster the more Health they lose (up to twice as fast), but heals can never lift them above half Health.', { fl: 'berserk' }),
     R('bond', 'Brotherhood Chain', 'Damage to any hero is shared equally by all your heroes still standing, and is 10% lower.', { fl: 'bond' }),
@@ -1067,11 +1067,11 @@
     R('huntmap', "Bounty Hunter's Map", 'One path is always a Hard fight. Hard fights pay double gold; Easy fights pay nothing.', { fl: 'huntmap' }),
     R('anvil', 'Heirloom Anvil', 'After each won fight, a random worn item goes up one rarity. Item shops sell 2 fewer items.', { fl: 'anvil' }),
     R('cabinet', 'Curio Cabinet', 'All heroes get +3% Health and Attack for every power you own. Powers cost 3 more.', { fl: 'cabinet' }),
-    R('solo', 'Lone Crown', 'While you have only one hero: +150% Health and Attack, +2 item slots and double XP. The Hero Shop never shows up.', { fl: 'solo' }),
+    R('solo', 'Lone Crown', 'While you have only one hero: +100% Health and Attack, +2 item slots and double XP. The Hero Shop never shows up.', { fl: 'solo' }),
     R('changeling', 'Changeling Mask', 'After each won fight, your lowest-level hero turns into a random new hero of the same level. It keeps its items.', { fl: 'changeling' }),
     R('cursecoin', 'Cursed Doubloon', 'Gain 25 gold now. Every fight after this one, enemies have 5% more Health, and it keeps adding up.', { fl: 'cursecoin' }),
     R('xmap', 'Treasure Map', 'Events show up twice as often and each one also gives a random item. Shops cost 1 more.', { fl: 'xmap' }),
-    R('medal', "Veteran's Medal", 'Heroes earn XP only from kills, but each kill is worth 25 XP.', { fl: 'medal' }),
+    R('medal', "Veteran's Medal", 'Heroes earn XP only from kills, but each kill is worth 14 XP.', { fl: 'medal' }),
     R('double', 'Double or Nothing', 'Win a fight with nobody falling: double gold. If anyone falls: no gold at all.', { fl: 'double' }),
     R('snowball', 'Snowball', 'Each fight won with nobody falling gives every hero +4% Health and Attack for the rest of the game. One fallen hero melts it all.', { fl: 'snowball' }),
     R('packrat', "Pack Rat's Sack", 'Every item in your bag (not worn) gives all heroes +3% Health and Attack, up to 10 items.', { fl: 'packrat' }),
@@ -1333,6 +1333,11 @@
   for (const k of 'bastion brakk bramble seraph barley grok imhotep leonidas citadel smolder rohammer'.split(' ')) B.CLASS_OF[k] = 'tank';
   for (const k of 'lumen echo vey buzzwell coralie tom prism glacia grimhook sprocket medic gardener'.split(' ')) B.CLASS_OF[k] = 'support';
   B.heroClass = key => B.CLASS_OF[key] || 'damage';
+  // v62o (review #111, David: simulate thousands of PvE runs and balance by the results): the PvE balance tuner (tools/pve/tune.js) rewrites this block.
+  // power = a multiplier on a hero's Health, Attack and Magic (1 = as designed); the tuner nudges it until every hero clears the PvE about as often as the others.
+  // <TUNE-BEGIN>
+  B.TUNE = { power: { ashwing: 0.854, azgul: 1.258, barley: 0.986, bastion: 1.089, blaze: 1.026, brakk: 1.155, bramble: 1.12, buzzwell: 0.902, citadel: 1.185, coralie: 0.969, deadshot: 0.94, duelist: 0.913, echo: 0.884, gardener: 0.802, glacia: 0.998, grimhook: 1.129, grok: 1.229, harlequin: 1.24, hippolyta: 1.126, imhotep: 1.264, kage: 1.082, kestrel: 0.963, leonidas: 1.32, lumen: 0.732, medic: 0.813, mirage: 0.922, morrow: 0.998, nyx: 1.2, pip: 0.893, plasma: 0.705, prism: 0.809, pyra: 0.912, rex: 1.292, rohammer: 1.16, rook: 0.913, seraph: 1.109, smolder: 1.14, sprocket: 0.914, stellan: 0.883, tempest: 0.94, thorne: 1.007, tom: 0.947, vesper: 0.905, vex: 1.167, vey: 1.046, zephyr: 0.978 } };
+  // <TUNE-END>
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
   const HEALER_ROLES = ['Healer', 'Paladin', 'Bard', 'Beekeeper', 'Tidecaller'];

@@ -127,7 +127,7 @@
   // WHAT: team powers whose bonus changes with the run (how many powers you own, wins in a row, bag size...). Returns { atkPct, hpPct } or null.
   function relicStats(run, h) {
     let p = 0;
-    if (lone(run)) p += 1.5;
+    if (lone(run)) p += 1.0;
     if (has(run, 'cabinet')) p += 0.03 * run.relics.length;
     if (has(run, 'snowball')) p += 0.04 * (run.snow || 0);
     if (has(run, 'packrat')) p += 0.03 * Math.min(10, (run.bag || []).length);
@@ -143,7 +143,7 @@
     const b = B.HEROES[h.key], m = heroMods(run, h), L = h.lvl - 1, all = m.allPct || 0;
     // v61 (review #73): each hero grows at its own pace per level (b.grow, 1 = +15% HP and attack and +30 AP per level),
     // so heroes that were strong early and fell off late (or the reverse) stay in line through the whole run
-    const g = b.grow || 1;
+    const g = b.grow || 1, tp = (B.TUNE && B.TUNE.power[h.key]) || 1;   // v62o: tp = the balance tuner's power factor for this hero
     const ab = Object.assign({}, b.ab), fl = (b.fl || []).slice();
     for (const id of h.specs) {
       const s = specOf(h.key, id); if (!s) continue;
@@ -152,9 +152,9 @@
     }
     return {
       kind: 'hero', uid: h.uid, key: h.key, name: b.name, glyph: b.glyph, color: b.color, lvl: h.lvl,
-      hp: (b.hp + (m.hp || 0)) * (1 + 0.15 * g * L) * (1 + (m.hpPct || 0) + all),
-      atk: (b.atk + (m.atk || 0)) * (1 + 0.15 * g * L) * (1 + (m.atkPct || 0) + all),
-      ap: (100 + 30 * g * L + (m.ap || 0)) * (1 + all),   // review #26: AP 100 at Lv 1, +30 per level (it now scales abilities on its own)
+      hp: (b.hp + (m.hp || 0)) * (1 + 0.15 * g * L) * (1 + (m.hpPct || 0) + all) * tp,
+      atk: (b.atk + (m.atk || 0)) * (1 + 0.15 * g * L) * (1 + (m.atkPct || 0) + all) * tp,
+      ap: (100 + 30 * g * L + (m.ap || 0)) * (1 + all) * tp,   // review #26: AP 100 at Lv 1, +30 per level (it now scales abilities on its own)
       armor: (b.armor + 4 * L + (m.armor || 0)) * (1 + all),
       as: b.as * Math.max(0.3, 1 + (m.asPct || 0)), range: Math.max(1, b.range + (m.range || 0)), ms: b.ms + (m.ms || 0),
       crit: (b.crit || 0) + (m.crit || 0), critDmg: 1.5 + (m.critDmg || 0), ls: (b.ls || 0) + (m.ls || 0),
@@ -354,7 +354,7 @@
       if (u.kind !== 'hero' || !u.uid) continue;
       const h = run.heroes.find(x => x.uid === u.uid); if (!h) continue;
       const before = h.lvl, xp0 = h.xp;
-      gainXp(run, h, has(run, 'medal') ? (u.kb || 0) * 25 : u.xpT / B.Sim.TPS);   // v50: the Veteran's Medal
+      gainXp(run, h, has(run, 'medal') ? (u.kb || 0) * 14 : u.xpT / B.Sim.TPS);   // v50: the Veteran's Medal
       res.xp.push({ uid: h.uid, name: B.HEROES[h.key].name, gained: h.xp - xp0, from: before, to: h.lvl });
     }
     if (win) {

@@ -1,0 +1,138 @@
+// PvE run simulation engine (review #111, David): a bot plays whole runs headless, fast, with decisions that make sense:
+//   - the team is built as a tank + a healer + a damage dealer (or the closest to it when the shops do not offer the role),
+//   - items bought are the ones with the best auto-equip score for any hero on the team (Run.itemScore), then Run.autoEquip hands them out,
+//   - powers (relics) are bought at random, events pick the best-looking choice, level-ups are random.
+// playRun(seed, { start }) returns one compact record; tools/pve-batch.js runs thousands of them over all CPU cores and stores the results.
+require('../../js/hex.js'); require('../../js/data.js'); require('../../js/sim.js'); require('../../js/run.js');
+const { Run, Sim, HEROES, ITEM, RELIC } = B;
+const C = B.CFG;
+const roleOf = key => (B.CLASS_OF && B.CLASS_OF[key]) || 'damage';   // 'tank', 'support' (the healer slot) or 'damage'
+const NEED_ORDER = ['tank', 'support', 'damage'];
+
+// which roles the team still lacks (a hero fills one role; a missing role is listed once)
+function missingRoles(run) {
+  const have = run.heroes.map(h => roleOf(h.key)), out = [];
+  for (const r of NEED_ORDER) if (!have.includes(r)) out.push(r);
+  return out;
+}
+// the hero in a hero shop that best completes the team: a missing role first (tank, then healer, then damage), then the cheapest duplicate role
+function bestHero(run, stock) {
+  const miss = missingRoles(run);
+  let best = null;
+  for (let k = 0; k < stock.length; k++) {
+    const s = stock[k]; if (s.kind !== 'hero' || s.sold || run.gold < s.price) continue;
+    const r = roleOf(s.id), need = miss.indexOf(r);
+    const v = need >= 0 ? 100 - need : 10 - (run.heroes.filter(h => roleOf(h.key) === r).length) * 3;   // with the roles covered a spare slot (the Crest of Many) takes the least duplicated role
+    if (!best || v > best.v) best = { k, v, role: r, missing: need >= 0 };
+  }
+  return best;
+}
+// the item that scores best for any hero of the team that can still wear it
+function bestItem(run, stock) {
+  let best = null;
+  for (let k = 0; k < stock.length; k++) {
+    const s = stock[k]; if (s.kind !== 'item' || s.sold || run.gold < s.price) continue;
+    let sc = -1;
+    for (const h of run.heroes) sc = Math.max(sc, Run.itemScore(h.key, s.id));
+    if (!best || sc > best.sc) best = { k, sc };
+  }
+  return best;
+}
+function shop(run, stats) {
+  const kind = run.cur.kind;
+  if (kind === 'heroShop') {
+    for (let tries = 0; tries < 3; tries++) {
+      if (run.heroes.length >= Run.teamMax(run)) break;
+      const b = bestHero(run, run.cur.stock);
+      if (b && (b.missing || tries >= 1 || !missingRoles(run).length)) { Run.buy(run, b.k); stats.heroBuys++; break; }
+      // nothing that completes the team: one reroll if the gold allows it, then take the best fit
+      if (tries === 0 && run.gold >= C.heroCost + Run.rerollCost(run) + 2) Run.reroll(run); else if (b) { Run.buy(run, b.k); stats.heroBuys++; break; } else break;
+    }
+  } else if (kind === 'itemShop') {
+    for (let guard = 0; guard < 8; guard++) { const b = bestItem(run, run.cur.stock); if (!b) break; Run.buy(run, b.k); }
+  } else {
+    // powers are bought at random while the gold lasts
+    const ok = run.cur.stock.map((s, k) => k).filter(k => !run.cur.stock[k].sold && run.gold >= run.cur.stock[k].price);
+    if (ok.length) Run.buy(run, ok[Math.floor(Run.rnd(run) * ok.length)]);
+  }
+  Run.autoEquip(run); Run.leave(run);
+}
+// what an event is worth to the bot: lasting power first, gold and gambles last, challenges and risks never unless nothing else is open
+const EV_RANK = { xpAll: 9, buffAll: 9, relic: 8, relicItem: 8, item: 8, hpAll: 7, buffHero: 7, xpHero: 6, hpHero: 6, upgradeItem: 6, potion: 5, gold: 4, transmute: 3, invest: 2, none: 1 };
+function event(run, stats) {
+  stats.events++;
+  const chs = Run.eventChoices(run);
+  let bestK = -1, bestV = -1;
+  chs.forEach((c, k) => {
+    if (!Run.canChoose(run, c).ok) return;
+    const act = String(c.act || 'none').split(':')[0];
+    let v = EV_RANK[act] != null ? EV_RANK[act] : 0;
+    if (c.risk || c.fight) v = -0.5;
+    if (c.cost && run.gold - c.cost < 0) return;
+    if (v > bestV) { bestV = v; bestK = k; }
+  });
+  if (bestK >= 0) {
+    const c = chs[bestK], ts = c.target ? Run.eventTargets(run, c) : null;
+    let arg; if (ts && ts.length) arg = ts[Math.floor(Run.rnd(run) * ts.length)].arg;   // the target is picked at random; the effects are small
+    Run.eventAct(run, bestK, arg);
+  }
+  if (run.phase === 'event') Run.leave(run);
+  Run.autoEquip(run);
+}
+// the next map step: a hero shop while the team is short of a role, then item shops, powers, events; fights: the middle difficulty
+function mapChoice(run) {
+  const o = run.opts;
+  if (o[0].type === 'fight') {
+    const ORD = ['easy', 'medium', 'hard'];
+    // medium if offered; else the easier of two (the bot plays safe)
+    const m = o.findIndex(x => x.diff === 'medium'); if (m >= 0) return m;
+    return o.length === 1 ? 0 : o.findIndex(x => x.diff === ORD.find(d => o.some(y => y.diff === d)));
+  }
+  const missing = run.heroes.length < Run.teamMax(run);   // short of a role, or of a hero for a spare slot
+  const want = missing ? ['heroShop', 'itemShop', 'event', 'relicShop'] : ['itemShop', 'event', 'relicShop', 'heroShop'];
+  const score = x => { const w = want.indexOf(x.type === 'event' ? 'event' : x.kind); return w < 0 ? 9 : w; };
+  let bi = 0; o.forEach((x, i) => { if (score(x) < score(o[bi])) bi = i; });
+  return bi;
+}
+
+// plays one whole run; start = the hero the run starts with (forced, so that every hero gets the same number of runs)
+function playRun(seed, opt = {}) {
+  const run = Run.newRun(seed);
+  const keys = Object.keys(HEROES);
+  const start = opt.start || keys[Math.floor(Run.rnd(run) * keys.length)];   // uniform over all heroes, not only the three offered
+  const relic = opt.relic || run.relicOffer[Math.floor(Run.rnd(run) * run.relicOffer.length)];
+  Run.pickStart(run, [start], relic);
+  if (opt.item) run.bag.push(opt.item);   // the item tests: one item in the bag from the start (auto-equip decides if anybody wears it)
+  const stats = { heroBuys: 0, events: 0 };
+  const rec = { seed, start, wins: 0, cleared: false, fights: [], secs: 0, tag: opt.relic || opt.item || undefined };
+  let guard = 0;
+  while (run.phase !== 'over' && run.phase !== 'gauntlet' && guard++ < 300) {
+    while (run.pending.length) Run.chooseSpec(run, Run.rnd(run) < 0.5 ? 0 : 1);
+    if (run.phase === 'map') Run.choose(run, mapChoice(run));
+    else if (run.phase === 'shop') shop(run, stats);
+    else if (run.phase === 'event') event(run, stats);
+    else if (run.phase === 'deploy') {
+      Run.autoEquip(run);
+      const f = run.cur, W = Run.fightWorld(run);
+      Sim.run(W, 20 * 60 * 20);
+      const win = W.winner === 0;
+      if (!f.challenge) { rec.fights.push([f.fightNo, f.diff[0], win ? 1 : 0]); if (win) rec.wins++; }
+      rec.secs += W.t / 20;
+      Run.finishFight(run, W);
+    } else break;
+  }
+  rec.cleared = run.phase === 'gauntlet';
+  rec.team = run.heroes.map(h => h.key);
+  rec.lvl = run.heroes.reduce((a, h) => a + h.lvl, 0) / Math.max(1, run.heroes.length);
+  rec.relics = run.relics.slice();
+  rec.items = [].concat(...run.heroes.map(h => h.items), run.bag);
+  rec.gold = run.gold;
+  return rec;
+}
+// the tuner tries numbers without touching data.js: power per hero and the fight scale of each fight number
+function applyTune(t) {
+  if (!t) return;
+  if (t.power) B.TUNE.power = Object.assign({}, t.power);
+  if (t.fightScale) C.fightScale = t.fightScale.slice();
+}
+module.exports = { playRun, roleOf, applyTune };
