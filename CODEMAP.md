@@ -149,3 +149,5 @@ Some numbers in it (hero counts, etc.) are older than the code; trust the code a
 | `tools/boss-odds.js` | v52: chance de vencer cada chefe de cada posição (times aleatórios um pouco abaixo de uma run típica: posição 1 na luta 4 com Lv 2 e 1 item, posição 2 na luta 8 com Lv 4 e 3 itens; mesmas sementes). `node tools/boss-odds.js [times=80]` |
 | `tools/tests/quadros.mjs` | v55: tira uma sequência de quadros da luta no celular (120 ms entre eles) para ver se o movimento está liso (`.saida/quadros.json`, montar a tira com PIL). `node tools/tests/quadros.mjs [quadros=12]` |
 | `tools/tests/` | `motor.js`, `api.js`, `telas.mjs` (Chrome de verdade, run inteira no celular 390x740, checa que cada tela cabe), `dispositivos.mjs` (5 aparelhos), `vitrine.mjs` (fotos de todas as telas no celular e em 3 PCs, v29), `galeria.mjs` / `icones.mjs` / `splash.mjs` (fotos de modelos, ícones e splash) |
+
+- `js/abilfx.js` (v62p): uma animação própria para cada habilidade (`B.AbilFx.SPEC[chave da habilidade]`), chamada por render.js para todo efeito com `f.ab`; áreas nos hexágonos reais; ferramenta de conferência `tools/fxlab.mjs`.

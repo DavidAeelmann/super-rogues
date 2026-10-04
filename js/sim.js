@@ -74,6 +74,7 @@
     const sh = (m.shieldStart || 0) + (m.shieldStartPct || 0) * u.maxHp;
     if (sh > 0) { u.shield = sh; u.shieldU = W.t + sec(8); }
     W.units.push(u); W.byId[u.id] = u; W.occ[Hx.key(c, r)] = u.id;
+    if (W.ctx && def.kind === 'summon') fx(W, { k: 'spawn', c, r, id: u.id, color: def.color || '#fff', t1: W.t + 14 });   // v62p: something appears (a skeleton, a turret, a plant...)
     return u;
   }
 
@@ -242,8 +243,13 @@
 
   // ------------------------------------------------------------------ scheduling & fx
   // WHAT: SCHEDULING AND EFFECTS. at(W, tick, fn) runs fn at a future tick (a delayed hit, a falling star). fx* functions only add pictures for render.js (numbers, rings, banners); they never change the fight.
-  function at(W, t, fn) { W.q.push({ t, fn }); }
-  function fx(W, o) { o.t0 = o.t0 ?? W.t; W.fx.push(o); }
+  // v62p (review #112): W.ctx = { ab, by } is the ability being cast right now; every effect made meanwhile (and by the delayed hits it schedules) carries it as f.ab / f.by,
+  // so the renderer can draw each ability its own way (js/abilfx.js). The fight never reads it.
+  function at(W, t, fn) { W.q.push({ t, fn, ctx: W.ctx }); }
+  function fx(W, o) { o.t0 = o.t0 ?? W.t; if (W.ctx && o.ab === undefined) { o.ab = W.ctx.ab; o.by = W.ctx.by; } W.fx.push(o); }
+  // WHAT: runs fn with W.ctx set to an ability (passives such as plants, the medic's attack and the Citadel's soldiers tag their effects too).
+  function inCtx(W, ab, by, fn) { const was = W.ctx; W.ctx = { ab, by }; try { return fn(); } finally { W.ctx = was; } }
+  const castAb = (W, u) => inCtx(W, u.abil, u.id, () => A[u.abil](W, u));
   function fxNum(W, u, v, color, big) { fx(W, { k: 'num', c: u.c, r: u.r, id: u.id, text: String(v), color, big: !!big, t1: W.t + 16 }); }
   function fxRing(W, c, r, rad, color, dur = 8) { fx(W, { k: 'ring', c, r, rad, color, t1: W.t + dur }); }
   // WHAT: the team power flags of a side: flOf(W, 0) for the player, flOf(W, 1) for the enemy / ghost.
@@ -1163,11 +1169,12 @@
     const ab = u.ab, t = bestCluster(W, u, ab.radius); if (!t) return false;
     const c = t.c, r = t.r, delay = Math.max(0.3, ab.delay);
     fxRing(W, c, r, ab.radius, '#b8a8ff', sec(delay));
+    { const land = W.t + sec(delay); fx(W, { k: 'bolt', pts: [[c, r - 3], [c, r]], color: '#fff6a0', t0: Math.max(W.t, land - 10), t1: land }); }   // v62p (review #112): the star is seen FALLING before it hits
     if (ab.blessing) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) buff(a, 'atkPct', ab.blessing, sec(4), W);
     at(W, W.t + sec(delay), () => {
       if (u.dead) return;
       const dmg = ab.dmg * atkOf(W, u) + ab.apdmg * apOf(u);
-      fx(W, { k: 'bolt', pts: [[c, r - 3], [c, r]], color: '#fff6a0', t1: W.t + 8 }); fxRing(W, c, r, ab.radius, '#fff6a0', 14);
+      fxRing(W, c, r, ab.radius, '#fff6a0', 14);
       for (const e of enemies(W, u)) if (Hx.dist(e, { c, r }) <= ab.radius) { deal(W, u, e, dmg, 'magic', { ability: true }); if (ab.stun) cc(W, e, 'stun', ab.stun); }
       for (let i = 0; i < ab.shards; i++) { const es = enemies(W, u); if (!es.length) break; const e = es[Math.floor(W.rng() * es.length)]; fx(W, { k: 'bolt', pts: [[e.c, e.r - 2], [e.c, e.r]], color: '#d8c8ff', t1: W.t + 6 }); deal(W, u, e, 0.5 * dmg, 'magic', { ability: true }); }
       if (ab.veil) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) shield(W, a, a.maxHp * ab.veil, 4);
@@ -1305,7 +1312,8 @@
   const GARRISON_CAP = 5;   // v62 (review #87): never more than 5 soldiers out at once, not even with Call to Arms
   const garrisonSize = (W, u) => W.units.filter(v => !v.dead && v.garrison === u.id).length;
   // WHAT: the Citadel's turn: it never moves or attacks, it only sends a new soldier every few seconds while it has fewer than its cap.
-  function towerAct(W, u) {
+  function towerAct(W, u) { inCtx(W, 'garrison', u.id, () => towerAct0(W, u)); }
+  function towerAct0(W, u) {
     const ab = u.ab;
     if (W.t >= (u.nextSpawn || 0)) {
       const mine = garrisonSize(W, u);
@@ -1452,7 +1460,8 @@
   // damages enemies. When no ally within autoattack range attack enemies"). medicAct runs before the normal turn: a hurt ally in range gets
   // healed by the attack (Attack x ab.heal, more under 40% Health); with none in range the unit attacks enemies like anyone else.
   // WHAT: the heal-attack of the Combat Medic. Returns true when it used the turn (healed, or waits for its next attack), false when no hurt ally is in range.
-  function medicAct(W, u) {
+  function medicAct(W, u) { return inCtx(W, 'medicshot', u.id, () => medicAct0(W, u)); }
+  function medicAct0(W, u) {
     const ab = u.ab, R = Math.max(1, u.range);
     const hurt = W.units.filter(v => !v.dead && v.side === u.side && !v.plant && !v.egg && v.hp < v.maxHp * 0.98 && Hx.dist(u, v) <= R).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
     if (!hurt) return false;
@@ -1523,7 +1532,8 @@
     fxRing(W, h.c, h.r, 0, '#7ee08e', 8);
   }
   // WHAT: what a plant does on its turn: Thornbush shoots the nearest enemy, Healing Bloom heals the most hurt ally, Shield Lily shields an unshielded ally, Spore Pod poisons every enemy within 2 hexes.
-  function plantAct(W, p) {
+  function plantAct(W, p) { inCtx(W, 'plant_' + p.plant, p.id, () => plantAct0(W, p)); }
+  function plantAct0(W, p) {
     if (W.t < p.nextAtk) return;
     const o = W.byId[p.owner], per = Math.max(4, Math.round(TPS / p.as)), R = p.plant === 'spore' ? 2 : p.range;
     const foes = enemies(W, p).filter(e => targetable(W, e) && Hx.dist(p, e) <= R).sort((a, b) => Hx.dist(p, a) - Hx.dist(p, b));
@@ -1552,11 +1562,11 @@
     if (W.t < u.busy || u.st.stun > W.t) return;
     u.anim = null;
     if (u.abil && u.maxMana > 0 && u.mana >= u.maxMana && !(u.st.silence > W.t) && !(u.castFail > W.t) && !(W.hush[u.side] > W.t)) {
-      if (A[u.abil](W, u)) {
-        u.mana = 0; u.castT = W.t; if (u.busy < W.t + 6) u.busy = W.t + 6; fx(W, { k: 'cast', id: u.id, color: u.color || '#fff', t1: W.t + 10 });
+      if (castAb(W, u)) {
+        u.mana = 0; u.castT = W.t; if (u.busy < W.t + 6) u.busy = W.t + 6; fx(W, { k: 'cast', id: u.id, color: u.color || '#fff', ab: u.abil, by: u.id, t1: W.t + 10 });
         if (u.kind === 'hero') {   // v50 (review #62)
           const F = flOf(W, u.side);
-          if (F.echo && !u.once.echo) { u.once.echo = 1; at(W, W.t + sec(1), () => { if (!u.dead && !W.over && !(u.st.stun > W.t) && A[u.abil](W, u)) { fxText(W, u, 'ECHO', '#c77dff'); fx(W, { k: 'cast', id: u.id, color: u.color || '#fff', t1: W.t + 10 }); } }); }
+          if (F.echo && !u.once.echo) { u.once.echo = 1; at(W, W.t + sec(1), () => { if (!u.dead && !W.over && !(u.st.stun > W.t) && castAb(W, u)) { fxText(W, u, 'ECHO', '#c77dff'); fx(W, { k: 'cast', id: u.id, color: u.color || '#fff', ab: u.abil, by: u.id, t1: W.t + 10 }); } }); }
           if (F.leyline) for (const a of heroesOf(W, u.side)) if (a !== u && a.r === u.r) { a.mana = Math.min(a.maxMana, a.mana + 30); fxRing(W, a.c, a.r, 0, '#5fd0ff', 6); }
         }
         return;
@@ -1615,7 +1625,7 @@
     W.t++;
     if (W.q.length) {
       const due = W.q.filter(e => e.t <= W.t); W.q = W.q.filter(e => e.t > W.t);
-      for (const e of due) { e.fn(); if (W.over) break; }
+      for (const e of due) { W.ctx = e.ctx || null; e.fn(); W.ctx = null; if (W.over) break; }
     }
     // review #24 (David): sudden death is damage over time that grows slowly and hits EVERY unit, allies and enemies:
     // each second after it starts, true damage of (1% x seconds into sudden death) of the unit's max HP
