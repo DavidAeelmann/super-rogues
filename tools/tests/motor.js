@@ -402,7 +402,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     for (const kind of ['heroShop', 'itemShop', 'relicShop']) { r.fightNo = 9; if (Run.makeShop ? false : false) {} }
   }
   ok(!seenLocked, 'level 1: the 3 new heroes and the level relics never show up at the start');
-  const r0 = Run.newRun(7); ok(Object.keys(B.HEROES).length === 45 && (r0.locked || []).length === 0, 'without a lock list (bots, old saves) everything is open');
+  const r0 = Run.newRun(7); ok(Object.keys(B.HEROES).length === 46 && (r0.locked || []).length === 0, 'without a lock list (bots, old saves) everything is open');
   for (const k of ['buzzwell', 'coralie', 'stellan']) {
     const run = Run.newRun(11); Run.pickStart(run, [k]); Run.addHero(run, 'bastion');
     run.heroes.forEach(h => { h.lvl = 5; h.specs = B.HEROES[h.key].specs.map(p => p[1].id); });
@@ -689,7 +689,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   let maxMana = 0; for (let i = 0; i < 20 * 20 && !W.over; i++) { Sim.step(W); maxMana = Math.max(maxMana, cit.mana); }
   ok(cit.c === at0.c && cit.r === at0.r && cit.atkN === 0, 'v60 Citadel: never moves and never attacks');
   ok(W.units.filter(u => u.garrison === cit.id).length >= 2 && maxMana > 0, 'v60 Citadel: more soldiers march out, and their hits fill its mana');
-  ok(Object.values(HEROES).length === 45 && HEROES.prism.tag && HEROES.citadel.tag, 'v60/v62h: 45 heroes, the new ones with their short line');
+  ok(Object.values(HEROES).length === 46 && HEROES.prism.tag && HEROES.citadel.tag, 'v60/v62h: 45 heroes, the new ones with their short line');
 }
 // ---- v62 (review #78, David): Smolder (eats an item), Tom (dishes) and Ashwing (egg and wall of fire)
 {
@@ -804,6 +804,15 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     const W3 = Sim.create({ mode: 'fight', seed: 8, heroes: [{ def: def('plasma'), c: 3, r: 7 }], enemies: [{ def: grunt(99999), c: 3, r: 3 }, { def: grunt(99999), c: 5, r: 1 }] });
     const c3 = W3.units.find(u => u.key === 'plasma'); c3.mana = c3.maxMana; for (const u of W3.units) u.ms = 0; for (let i = 0; i < 30; i++) { Sim.step(W3); }
     ok(W3.fx.filter(f => f.k === 'proj' && f.from === c3.id).length >= 3, 'v62h (#98): the ultimate fires three shots in a row');
+  }
+  // #105 Rohammer: no Energy from attacking, Energy from damage taken, blows stun for a blink, the sweep knocks back and stuns
+  {
+    const W = Sim.create({ mode: 'fight', seed: 3, heroes: [{ def: def('rohammer'), c: 3, r: 5 }], enemies: [{ def: grunt(99999), c: 3, r: 4 }] });
+    const r = W.units[0], e = W.units[1]; let stun = 0, hit = false; for (let i = 0; i < 60; i++) { Sim.step(W); if (e.st.stun > W.t) stun++; if (e.hp < e.maxHp) hit = true; }
+    ok(hit && stun > 0 && r.mana === 0 || (r.dmgTaken > 0 && r.mana > 0), 'v62i (#105): the hammer blows stun, and Energy comes only from damage taken');
+    const W2 = Sim.create({ mode: 'fight', seed: 3, heroes: [{ def: def('rohammer'), c: 3, r: 5 }], enemies: [{ def: grunt(99999), c: 3, r: 3 }] });
+    const q = W2.units[0], f = W2.units[1]; for (const u of W2.units) if (u.side === 1) u.ms = 0; q.mana = q.maxMana; const row0 = f.r; Sim.step(W2); Sim.step(W2); for (let i = 0; i < 6; i++) Sim.step(W2);
+    ok(f.r < row0 && f.st.stun > W2.t - 1, 'v62i (#105): the sweep knocks the enemies in front back and stuns them');
   }
   // #100 Duelist: the two fight only each other until one falls
   {

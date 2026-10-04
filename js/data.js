@@ -640,6 +640,21 @@
         [{ id: 'ash5a', name: 'Rebirth Blast', desc: 'When it hatches, enemies within 2 hexes take 150% Magic as magic damage.', ab: { burst: 1.5 } },
          { id: 'ash5b', name: 'Eternal Flame', desc: 'Is reborn at full Health.', ab: { revive: 0.4 } }],
       ] }),
+    // v62i (review #105, David): Rohammer, a huge brute with a very slow hammer
+    rohammer: H({ name: 'Rohammer', glyph: '🔨', role: 'Brute', color: '#e8943a', fl: ['brute'],
+      hp: 1040, atk: 78, armor: 30, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 1.48,
+      abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): its very slow hammer blows stun for 0.2s, and it gets Energy only from the damage it takes (2 per 1% of its max Health lost). Active: sweeps every enemy within 2 hexes in front of it for 150% Attack as physical damage, knocks them back 2 hexes and stuns them for 1s.',
+      ab: { dmg: 1.5, reach: 2, push: 2, stun: 1, tap: 0.2, gain: 2 },
+      specs: [
+        [{ id: 'roh2a', name: 'Heavier Head', desc: '+25 Attack.', mods: { atk: 25 } },
+         { id: 'roh2b', name: 'Thick Skin', desc: '+200 max Health.', mods: { hp: 200 } }],
+        [{ id: 'roh3a', name: 'Pain Drinker', desc: 'Gets 50% more Energy from damage taken.', ab: { gain: 1 } },
+         { id: 'roh3b', name: 'Long Handle', desc: 'The sweep reaches 1 hex further.', ab: { reach: 1 } }],
+        [{ id: 'roh4a', name: 'Dizzying Blows', desc: 'Hammer blows stun for 0.4s instead.', ab: { tap: 0.2 } },
+         { id: 'roh4b', name: 'Hurl Away', desc: 'The sweep knocks back 2 more hexes.', ab: { push: 2 } }],
+        [{ id: 'roh5a', name: 'Earthshaker', desc: 'The sweep stuns for 2s.', ab: { stun: 1 } },
+         { id: 'roh5b', name: 'Unstoppable', desc: 'Takes 20% less damage and the sweep deals 50% more.', mods: { dmgReduce: 0.2 }, ab: { dmg: 0.75 } }],
+      ] }),
     // v62h (reviews #98, #100, #101, #102, David): a stationary plasma cannon, a duelist, a combat medic and a gardener
     plasma: H({ name: 'Plasma Cannon', glyph: '💥', role: 'Artillery', color: '#5fe0ff', fl: ['closest', 'plasma'],
       hp: 565, atk: 55, armor: 22, as: 0.6, range: 6, ms: 0, mana: 68, m0: 20, grow: 1.5,
@@ -932,7 +947,7 @@
   };
   TAGS.prism = 'Beams that heal friends and burn foes'; TAGS.citadel = 'A tower that sends soldiers to fight';   // v60
   TAGS.smolder = 'Eats an item each fight, burns foes'; TAGS.tom = 'Serves dishes that buff or heal allies'; TAGS.ashwing = 'A fire bird that returns from an egg';   // v62
-  TAGS.plasma = 'Never moves, shoves foes back'; TAGS.duelist = 'Locks itself and one foe in a duel'; TAGS.medic = 'Heals with its attacks and grenades'; TAGS.gardener = 'Plants that attack, heal and shield';   // v62h
+  TAGS.plasma = 'Never moves, shoves foes back'; TAGS.duelist = 'Locks itself and one foe in a duel'; TAGS.medic = 'Heals with its attacks and grenades'; TAGS.gardener = 'Plants that attack, heal and shield'; TAGS.rohammer = 'Slow hammer, rages when hit';    // v62h
   for (const k in TAGS) if (B.HEROES[k]) B.HEROES[k].tag = TAGS[k];
   // v59 (review #71, PC boy: "pep up the names"): every hero got a new name; the old one stays as h.was (the Art Lab still
   // recognises picture files named after it)
@@ -1315,7 +1330,7 @@
   // offers one." Every hero belongs to one of three classes: tanks soak damage, supports heal / buff / control, the rest deal damage.
   B.CLASSES = ['tank', 'support', 'damage'];
   B.CLASS_OF = {};
-  for (const k of 'bastion brakk bramble seraph barley grok imhotep leonidas citadel smolder'.split(' ')) B.CLASS_OF[k] = 'tank';
+  for (const k of 'bastion brakk bramble seraph barley grok imhotep leonidas citadel smolder rohammer'.split(' ')) B.CLASS_OF[k] = 'tank';
   for (const k of 'lumen echo vey buzzwell coralie tom prism glacia grimhook sprocket medic gardener'.split(' ')) B.CLASS_OF[k] = 'support';
   B.heroClass = key => B.CLASS_OF[key] || 'damage';
   // v44: who can take a "req" choice (FTL's blue options)

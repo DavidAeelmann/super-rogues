@@ -82,6 +82,8 @@
     tom: H({ skin: '#e8b090', body: '#f2eee4', trim: '#c8453a', legs: '#3a3a48', bulk: 1.1, head: 'chef', hat: '#ffffff', weapon: 'club', hair: '#6a4a2a' }),
     ashwing: { type: 'phoenix', body: '#ff8a2a', trim: '#ffd23f', tail: '#ff4a1a' },
     egg: { type: 'egg', body: '#ffe0b0', trim: '#ff7a3d' },
+    // v62i (review #105)
+    rohammer: H({ skin: '#c8906a', body: '#8a4a2a', trim: '#e8943a', legs: '#4a3020', bulk: 1.6, head: 'bald', hair: '#2a1a10', weapon: 'club', pauldrons: '#6a5a4a' }),
     // v62h (reviews #98, #100, #101, #102)
     plasma: { type: 'cannon', body: '#4a5a78', trim: '#5fe0ff' },
     duelist: H({ skin: '#e0b48a', body: '#2a3f7a', trim: '#ffd23f', legs: '#1c2748', head: 'tricorn', hat: '#2a3f7a', hair: '#3a2a1a', weapon: 'rapier', cape: '#a4262f' }),

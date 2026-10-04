@@ -346,7 +346,8 @@
       if (o.ability && src.m.abilityBurn && !o.dot) dot(W, tgt, 'burn', src.m.abilityBurn * tgt.maxHp, 3, src);
       if (o.atk && !o.noThorns && tgt.m.thorns && Hx.dist(src, tgt) <= 1) deal(W, tgt, src, total * tgt.m.thorns, 'magic', { noThorns: true });
     }
-    if (tgt.maxMana > 0 && !o.dot) tgt.mana = Math.min(tgt.maxMana, tgt.mana + 3 * manaGain(W, tgt));
+    if (tgt.fl.has('brute') && tgt.maxMana > 0) tgt.mana = Math.min(tgt.maxMana, tgt.mana + total / tgt.maxHp * 100 * (tgt.ab.gain || 2));   // v62i (review #105): Rohammer fills its Energy only from damage taken
+    else if (tgt.maxMana > 0 && !o.dot) tgt.mana = Math.min(tgt.maxMana, tgt.mana + 3 * manaGain(W, tgt));
     if (tgt.m.titan && !o.dot) tgt.titan = Math.min(15, tgt.titan + 0.5);
     if (tgt.fl.has('laststand') && !tgt.once.ls && tgt.hp > 0 && tgt.hp < tgt.maxHp * 0.3) {
       tgt.once.ls = 1; tgt.st.invuln = W.t + sec(2); fxText(W, tgt, 'UNBROKEN', '#ffd23f'); A.bulwark(W, tgt);
@@ -561,7 +562,7 @@
     u.atkN++;
     if (u.garrison && dealt > 0) { const t = W.byId[u.garrison]; if (t && !t.dead && t.maxMana) t.mana = Math.min(t.maxMana, t.mana + 5); }   // v60: Citadel
     if (!u.dead) {
-      u.mana = Math.min(u.maxMana, u.mana + (10 + (u.m.manaOnHit || 0)) * manaGain(W, u)); if (u.ab.focus) u.focus = Math.min(u.ab.focusCap || 15, u.focus + 1); if (u.m.titan) u.titan = Math.min(15, u.titan + 0.5);
+      if (!u.fl.has('brute')) u.mana = Math.min(u.maxMana, u.mana + (10 + (u.m.manaOnHit || 0)) * manaGain(W, u)); if (u.ab.focus) u.focus = Math.min(u.ab.focusCap || 15, u.focus + 1); if (u.m.titan) u.titan = Math.min(15, u.titan + 0.5);
       if (u.m.stackAtk && (u.sc.sa || 0) < u.m.stackAtkCap) { u.sc.sa = (u.sc.sa || 0) + 1; u.bAtk += u.m.stackAtk; }
       if (u.m.stackAs && (u.sc.ss || 0) < u.m.stackAsCap) { u.sc.ss = (u.sc.ss || 0) + 1; u.bAsPct += u.m.stackAs; }
       if (u.m.apPerAtk) u.ap += u.m.apPerAtk;
@@ -569,6 +570,7 @@
     if (u.eclipse > 0 && alive(tgt)) { u.eclipse--; const x = deal(W, u, tgt, atk * u.ab.bonus, 'magic', { ability: true }); heal(W, u, x * u.ab.heal); }
     if (u.m.reap && alive(tgt) && tgt.hp < tgt.maxHp * u.m.reap) { fxText(W, tgt, 'REAPED', '#aaa'); deal(W, u, tgt, tgt.hp + tgt.shield + 1, 'true', {}); }
     if (dealt <= 0) return;
+    if (u.fl.has('brute') && alive(tgt)) cc(W, tgt, 'stun', u.ab.tap);   // v62i: every slow hammer blow stuns for a blink
     if (u.fl.has('plasma') && u.ab.knock && alive(tgt)) push(W, u, tgt, u.ab.knock);   // v62h: the slug shoves it back
     const m = u.m;
     if (m.burnOnHit) dot(W, tgt, 'burn', m.burnOnHit * atk, 3, u);
@@ -1492,6 +1494,17 @@
         else { heal(W, v, ab.healNade * apOf(u), true); if (ab.shield) shield(W, v, ab.shield * apOf(u), 4); }
       }
     });
+    return true;
+  };
+  // ROHAMMER (review #105, David: "Large brute man. Does not get energy from autoattack but from taking damage. Large hammer that is very very slow but autoattacks mini stun
+  // targets (0.2s). Ultimate sweeps all enemies in front, knocks them back and stuns them 1.0s"). Flag 'brute': no Energy from attacking, ab.gain Energy per 1% of max Health lost.
+  // WHAT: the ability "Hammer Sweep" of Rohammer (Brute). Passive: its very slow hammer blows stun for 0.2s, and it fills its Energy only by taking damage (2 per 1% of max Health). Active: sweeps every enemy within 2 hexes in front of it for 150% Attack as physical damage, knocks them back 2 hexes and stuns them 1s.
+  // Returns true when it fired (energy is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
+  A.sweep = (W, u) => {
+    const ab = u.ab, front = e => (u.side === 0 ? e.r <= u.r : e.r >= u.r), es = enemies(W, u).filter(e => targetable(W, e) && Hx.dist(u, e) <= ab.reach && front(e));
+    if (!es.length) return false;
+    fxRing(W, u.c, u.r, ab.reach, '#ffb347', 12);
+    for (const e of es) { deal(W, u, e, atkOf(W, u) * ab.dmg, 'phys', { ability: true }); if (alive(e)) { push(W, u, e, ab.push); cc(W, e, 'stun', ab.stun); } }
     return true;
   };
   // GARDENER (review #102, David: "Gardener. Ultimate is planting plants which cannot be attacked. Plants block movement and either attack heal shield
