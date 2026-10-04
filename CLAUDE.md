@@ -31,7 +31,7 @@ Roguelike auto-battler em grade hexagonal 8x8 para celular, runs de 3 a 7 minuto
 Como aplicar: antes de implementar um pedido, fazer a pergunta final (mais divertido nos próximos 5 minutos? decisão que importa? mais vontade de jogar de novo?). Se a resposta for não, implementar a versão mínima e dizer o porquê na resposta ao jogador. Não é motivo para recusar pedido do David ou do PC boy; é o critério de desempate quando um pedido pode ser feito de vários jeitos.
 
 Regras do David que valem sempre (cada uma veio de um pedido dele):
-- **Nenhuma tela pode exigir rolagem** em 390x740 e 360x640, e **nenhum texto pode ser cortado** (sem reticências, sem line-clamp). Os testes de Chrome conferem (`tools/tests/telas.mjs`, `dispositivos.mjs`).
+- **Nenhuma tela pode exigir rolagem** em 390x740 e 360x640, e **nenhum texto pode ser cortado** (sem reticências, sem line-clamp). Os testes de Chrome conferem (`tools/tests/telas.mjs`, `dispositivos.mjs`). Auditoria completa de botões fora da tela: `node tools/tests/interface.mjs [en|pt|de]` (telas de jogo nunca rolam; folhas de lista podem rolar por dentro, mas todo botão fica visível).
 - **Amarelo é só para a ação principal e recompensas-chave.** Tudo o resto usa os outros tons.
 - A ajuda do Bronze ("assist") **não é divulgada em lugar nenhum** (#53).
 - Baixa fricção: tocar, arrastar, nada de menus à toa; avisos de ajuda (balões) somem quando a tela muda.

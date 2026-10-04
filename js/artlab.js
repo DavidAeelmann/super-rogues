@@ -36,13 +36,13 @@
       <section class="alsec"><h3>3 · Test fight</h3>
         <p id="alBoardHint" class="small dim" ${k ? 'hidden' : ''}>Choose the hero at the top to see it fight.</p>
         <div class="alboard" ${k ? '' : 'hidden'}><canvas id="alBoard"></canvas></div>
-        <div class="row"><span class="small dim grow">Your hero fights on the blue side, next to a random ally.</span><button class="chip" data-act="al-restart">↻ New fight</button></div></section>
+        <div class="row"><span class="small dim grow">Your hero fights on the blue side, next to a random ally.</span></div></section>
       <section class="alsec"><h3>Keep it</h3>
-        <div class="row wrap"><button class="primary" data-act="al-keep">✓ Use in my game</button><button data-act="al-drop">Remove from my game</button></div>
         <p class="small dim">"Use in my game" changes this hero on this device only, everywhere in the game.</p>
         <textarea id="alNote" maxlength="600" rows="2" placeholder="A note for Claude (optional)"></textarea>
-        <div class="row"><input id="alName" maxlength="24" placeholder="Your name" value="${e(U.store.get('balance.name', ''))}"><button class="primary" data-act="al-send">Send for review</button></div>
+        <div class="row"><input id="alName" maxlength="24" placeholder="Your name" value="${e(U.store.get('balance.name', ''))}"></div>
         <p class="dim small">Only Claude sees the pictures you send; the public queue shows just your note. Send art you made or generated yourself, with no characters from other games, films or shows.</p></section>
+      <div class="albar"><button class="chip" data-act="al-restart">↻ New fight</button><button class="primary" data-act="al-keep">✓ Use in my game</button><button data-act="al-drop">Remove from my game</button><button class="primary" data-act="al-send">Send for review</button></div>
     </div>`;
   }
   // only the pictures (while a slider is being dragged the sliders themselves stay in place)

@@ -354,13 +354,19 @@ if (!REMOTE) {
   await ev(`fetch('/__dev/grant?pid=' + JSON.parse(localStorage.getItem('balance.pid')) + '&n=400')`); await sleep(200);
   await click('#modal .klock [data-act=shop]');
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .wallet') && /40[0-9]/.test(document.querySelector('#modal .wallet').textContent)`)); i++) await sleep(100);
-  ok(await ev(`document.querySelectorAll('#modal .crl').length === 5 && document.querySelectorAll('#modal .perk').length === 5 && !!document.querySelector('#modal .king') && !!document.querySelector('#refLink') && /[?]ref=[a-f0-9]{12}$/.test(document.querySelector('#refLink').value)`), 'Crown Shop: wallet, crowns per league, 5 perks (Double XP and Skip fights too), the King Tier and your invite link');
+  // review #108: the shop is four tabs (Perks / Name & King / Earn / Invite) so nothing sits below the screen
+  const shopTab = async t => { await ev(`__bal.ACT['shop-tab']('${t}')`); await sleep(150); };
+  ok(await ev(`document.querySelectorAll('#modal .perk').length === 4 && document.querySelectorAll('#modal .stabs button').length === 4`), 'Crown Shop: wallet, tabs, 4 perks on the first (Double XP and Skip fights too)');
+  await shopTab('earn'); ok(await ev(`document.querySelectorAll('#modal .crl').length === 5`), 'Crown Shop: crowns per league on the Earn tab');
+  await shopTab('invite'); ok(await ev(`!!document.querySelector('#refLink') && /[?]ref=[a-f0-9]{12}$/.test(document.querySelector('#refLink').value)`), 'Crown Shop: your invite link on the Invite tab');
+  await shopTab('king'); ok(await ev(`!!document.querySelector('#modal .king') && !!document.querySelector('#modal [data-form=rename]')`), 'Crown Shop: the King Tier and the rename on the Name & King tab');
+  await shopTab('perks');
   await shot('23-crown-shop'); await noHScroll('crown shop');
   await click('[data-act=buy-perk][data-arg=elo]'); await sleep(150);
   ok(await ev(`/Tap again/.test(document.querySelector('[data-act=buy-perk][data-arg=elo]').textContent) && !__bal.acct.perks.includes('elo')`), 'the first tap only asks to confirm');
   await click('[data-act=buy-perk][data-arg=elo]'); await sleep(400);
   ok(await ev(`__bal.acct.perks.includes('elo') && __bal.acct.crowns === 400 - B.SHOP_ITEM.elo.price`), 'Content Elo bought');
-  await click('[data-act=buy-perk][data-arg=king]'); await sleep(150); await click('[data-act=buy-perk][data-arg=king]'); await sleep(400);
+  await shopTab('king'); await click('[data-act=buy-perk][data-arg=king]'); await sleep(150); await click('[data-act=buy-perk][data-arg=king]'); await sleep(400);
   ok(await ev(`__bal.acct.perks.includes('king') && B.Render.skin === 'royal' && !!document.querySelector('.king.own [data-act=skin]')`), 'the King Tier: bought, the Royal board is on');
   await shot('24-king'); await noHScroll('king tier');
   await ev(`(() => { const f = document.querySelector('form[data-form=rename]'); f.name.value = 'Tester King'; f.querySelector('button').click(); })()`); await sleep(400);

@@ -1024,10 +1024,13 @@
     if (typeof ui.info === 'string') { const T = B.TERRAIN[ui.info]; return T ? `<div class="hrow"><span class="ticon">${T.icon}</span><b>${T.name}</b><span class="dim small">terrain</span></div><div class="small">${esc(T.desc)}</div>` : ''; }
     const u = W.byId[ui.info]; if (!u) return '';
     const hd = HEROES[u.key];
-    const abil = hd ? `${abilHTML(hd)}` : u.boss ? fmt(B.BOSSES[u.key].desc) : u.abil ? fmt(MOB_ABIL[u.abil] || '') : u.fl.has('dive') ? 'Leaps to your back line at the start.' : u.kind === 'summon' ? 'Summoned unit.' : 'No special ability.';
+    // v62l (review #108, David: "clicking on a hero shows their info, which displaced the fight button below the lower edge"): the card is short and fixed in size (name, stats and the ability's NAME, or
+    // one sentence for monsters) and the heroes' full text is one tap away on Details; on the deploy screen it takes the place of the enemies list
+    const first = s => String(s || '').split(/(?<=[.!?])\s/)[0];
+    const abil = hd ? `<b class="abname">${esc(hd.abName)}</b> <button class="linkbtn" data-act="hero-peek" data-arg="${u.key}">Details</button>` : u.boss ? fmt(first(B.BOSSES[u.key].desc)) : u.abil ? fmt(MOB_ABIL[u.abil] || '') : u.fl.has('dive') ? 'Leaps to your back line at the start.' : u.kind === 'summon' ? 'Summoned unit.' : 'No special ability.';
     return `<div class="hrow">${img(u.key, 40)}<b>${esc(u.name)}</b>${u.kind === 'hero' ? ' Lv ' + u.lvl : ''}${u.elite ? ' <span class="elite">★ elite</span>' : ''}</div>
       ${chips({ hp: Math.max(0, Math.round(u.hp)) + '/' + u.maxHp, atk: Math.round(Sim.atkOf(W, u)), ap: Math.round(u.ap), armor: Math.round(Sim.armorOf(W, u)), as: Sim.asOf(W, u).toFixed(2), range: u.range, crit: u.crit ? pct(u.crit) : 0, dodge: u.dodge ? pct(u.dodge) : 0 }, true)}
-      <div class="small">${abil}</div>${hd ? scalingHTML({ abil: u.abil, ab: u.ab, atk: Sim.atkOf(W, u), ap: u.ap, hp: u.maxHp, lvl: u.lvl, name: u.name }, true) : ''}`;
+      <div class="small">${abil}</div>`;
   }
 
   // ------------------------------------------------------------------ board mount + input
@@ -1415,7 +1418,7 @@
   }
   // WHAT: the frame of the suggestion sheet (text box, drafts, queue). openSuggest opens it, sendReview sends the drafts, loadQueue refreshes the queue.
   function suggestShell() {
-    return `<div class="shead"><b>${I('bulb')} Suggest changes</b><button data-act="close">✕</button></div>
+    return `<div class="shead"><b>${I('bulb')} Suggest changes</b><span class="grow"></span><button class="chip" data-act="sug-refresh">↻ Refresh</button><button data-act="close">✕</button></div>
       <div id="sugStatus"></div>
       <p class="small">Write each change and tap <b>Add</b>. Got 5 ideas? Add all 5, then tap <b>Send for review</b>. Claude reviews the whole list and ships it. When the new version is live, a small notice at the top offers to reload the game.</p>
       <form data-form="draft" class="stack">
@@ -1426,7 +1429,7 @@
       <div class="row"><input id="sugName" maxlength="24" placeholder="Your name (optional)" value="${esc(store.get('balance.name', ''))}"><button class="primary" data-act="send-review">Send for review</button></div>
       <p class="small">Made hero art? <a href="#" data-act="art-lab">Try it in the 🎨 Art Lab</a> and send the pictures from there.</p>
       <p class="dim small">Everything sent is public. Claude implements what fits the game, replies to each change, and declines anything harmful or unrelated to the game.</p>
-      <div class="row"><h3>Queue</h3><span class="grow"></span><button class="chip" data-act="sug-refresh">↻ Refresh</button></div><div id="sugQueue"><p class="dim">Loading…</p></div>`;
+      <h3>Queue</h3><div id="sugQueue"><p class="dim">Loading…</p></div>`;
   }
   async function loadQueue() {
     try {
@@ -1472,12 +1475,13 @@
     const season = me.season || B.seasonOf(Date.now()), days = Math.max(0, Math.ceil((B.seasonEnds(season) - Date.now()) / 864e5));
     return `<div class="ptab"><div class="pme">${emblem(cur, 52)}<div><b>${me.code ? plink(me.name || 'You', me.code) : esc(me.name || 'You')}</b><span class="pl1" style="color:${L[cur].hi}">${L[cur].name} league</span>
         <span class="small">${cur >= top ? `${lp} points in Celestial` : `${lp}/${R.step} points to ${L[cur + 1].name}`}</span><span class="dim small">Elo ${me.elo} · ${me.runs} games · best ${me.best}${me.titles ? ' · 🏆 ' + me.titles : ''} · ${crowns(me.crowns)}</span></div></div>
+      <div class="row center ptabbtns"><button data-act="my-profile">👤 My profile</button><button data-act="shop">👑 Crown Shop</button></div>
       ${roadmapHTML(me)}
       <h3 class="lgh">Leagues <span class="seasonl">Season ${season} · ${days} day${days === 1 ? '' : 's'} left</span></h3>
       <div class="lgscroll mini" id="lgscroll">${banners}</div>
       <div class="lgpath">${path}</div>
       <p class="small dim">+${R.duelWin} league point for each Gauntlet duel you win, ${R.pveLoss} when a game ends before the Gauntlet (a PvE loss). ${R.step} points move you up one league and you never drop a league during a season. Celestial has no ceiling. The first time you reach a league in a season you earn the crowns on its banner. A season lasts ${B.SEASON.days} days; then everyone starts again from Bronze (your best league stays on your profile).</p>
-      <div class="row center"><button data-act="my-profile">👤 My profile</button><button data-act="shop">👑 Crown Shop</button></div></div>`;
+    </div>`;
   }
   // review #28 (PC boy): the account level and the road of rewards (one new hero, item or relic per level)
   function roadmapHTML(me) {
@@ -1557,19 +1561,19 @@
     return `<div class="shead"><b>${I('crown')} Crown Shop</b><button data-act="close">✕</button></div>
       <div class="wallet"><span class="wc">👑</span><div><b>${a.crowns | 0}</b> crown${(a.crowns | 0) === 1 ? '' : 's'}<span class="small dim">Season ${season} · ${days} day${days === 1 ? '' : 's'} left</span></div></div>
       ${a.account ? '' : '<p class="small center dim">Your account starts when your first game ends. Then crowns, unlocks and your invite link live here.</p>'}
-      <h3>Earn crowns</h3>
+      <div class="stabs">${[['perks', 'Perks'], ['king', 'Name & King'], ['earn', 'Earn'], ['invite', 'Invite']].map(([id, n]) => `<button class="${(ui.shopTab || 'perks') === id ? 'on' : ''}" data-act="shop-tab" data-arg="${id}">${n}</button>`).join('')}</div>
+      ${(ui.shopTab || 'perks') === 'earn' ? `<h3>Earn crowns</h3>
       <p class="small">Reach a league for the first time this season (win Gauntlet duels for league points). A new season every ${B.SEASON.days} days sends everyone back to Bronze, so the crowns come again.</p>
-      <div class="crlist">${leagues}</div>
-      <h3>Perks</h3>
-      ${perk(B.SHOP_ITEM.speed4)}${perk(B.SHOP_ITEM.elo)}${perk(B.SHOP_ITEM.xp2)}${perk(B.SHOP_ITEM.skip)}
-      <div class="perk"><span class="pi">${rn.icon}</span><div class="pb"><b>${esc(rn.name)}</b><p class="small">${esc(rn.desc)}${a.account ? ` Now: <b>${esc(a.name || '')}</b>.` : ''}</p>
+      <div class="crlist">${leagues}</div>` : ''}
+      ${(ui.shopTab || 'perks') === 'perks' ? `${perk(B.SHOP_ITEM.speed4)}${perk(B.SHOP_ITEM.elo)}${perk(B.SHOP_ITEM.xp2)}${perk(B.SHOP_ITEM.skip)}` : ''}
+      ${(ui.shopTab || 'perks') === 'king' ? `<div class="perk"><span class="pi">${rn.icon}</span><div class="pb"><b>${esc(rn.name)}</b><p class="small">${esc(rn.desc)}${a.account ? ` Now: <b>${esc(a.name || '')}</b>.` : ''}</p>
         <form class="row" data-form="rename"><input name="name" maxlength="16" placeholder="New name" ${a.account ? '' : 'disabled'}><button class="cprice" ${!a.account || (a.crowns | 0) < rn.price ? 'disabled' : ''}>👑 ${rn.price}</button></form></div></div>
       <div class="king ${king ? 'own' : ''}"><div class="kh"><span class="kcrown">👑</span><div><b>King Tier</b><span class="small">${king ? 'You are a King' : 'The top of the shop'}</span></div><span class="rboard" aria-hidden="true"></span></div>
         <ul class="small"><li><b>Royal board</b>: violet and gold stone, only for Kings</li><li><b>Deeper profiles</b>, yours and everyone else's: most played heroes, best win rate heroes, the wins and losses of all their ghosts</li><li>A 👑 next to your name on the ladder and on your profile</li><li>Includes <b>4× speed</b> and <b>Content Elo</b></li></ul>
-        ${king ? `<div class="row"><span class="small">Board</span><button class="${skin === 'royal' ? 'on' : ''}" data-act="skin" data-arg="royal">Royal</button><button class="${skin !== 'royal' ? 'on' : ''}" data-act="skin" data-arg="classic">Classic</button></div>` : buyBtn(K)}</div>
-      <h3>Invite friends</h3>
+        ${king ? `<div class="row"><span class="small">Board</span><button class="${skin === 'royal' ? 'on' : ''}" data-act="skin" data-arg="royal">Royal</button><button class="${skin !== 'royal' ? 'on' : ''}" data-act="skin" data-arg="classic">Classic</button></div>` : buyBtn(K)}</div>` : ''}
+      ${(ui.shopTab || 'perks') === 'invite' ? `<h3>Invite friends</h3>
       <div class="invite"><p class="small">A friend who starts playing from your link is yours for good: every time they earn crowns by playing, you get ${Math.round(B.CROWNS.referPct * 100)}% of it (at least ${B.CROWNS.referMin} crown).</p>
-        ${link ? `<div class="row"><input id="refLink" readonly value="${esc(link)}"><button data-act="copy-ref">Copy</button></div><p class="small dim">${a.refs | 0} friend${(a.refs | 0) === 1 ? '' : 's'} joined · they earned you 👑 ${a.refCrowns | 0}</p>` : '<p class="small dim">Your invite link appears after your first run.</p>'}</div>`;
+        ${link ? `<div class="row"><input id="refLink" readonly value="${esc(link)}"><button data-act="copy-ref">Copy</button></div><p class="small dim">${a.refs | 0} friend${(a.refs | 0) === 1 ? '' : 's'} joined · they earned you 👑 ${a.refCrowns | 0}</p>` : '<p class="small dim">Your invite link appears after your first run.</p>'}</div>` : ''}`;
   }
   function openShop(noFetch) {
     openModal(crownShopHTML()); ui.modal = 'shop';
@@ -1753,6 +1757,7 @@
     reroll: () => { if (!Run.reroll(run)) { toast('Not enough gold'); sfx('deny'); return; } sfx('reroll'); ui.deal = true; save(); render(); ui.deal = false; },
     sound: () => { if (!B.Sfx) return; B.Sfx.toggle(); for (const b of document.querySelectorAll('.sndbtn')) { b.innerHTML = I(B.Sfx.on ? 'sound' : 'mute'); b.setAttribute('aria-label', 'Sound ' + (B.Sfx.on ? 'on' : 'off')); } if (ui.modal === 'home') { openModal(homeMenuHTML()); ui.modal = 'home'; } },
     // Opens the menu sheet; give-up asks, give-up-yes ends the game (and reports the fights it played).
+    'shop-tab': id => { ui.shopTab = id; refreshShop(); },
     'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
     language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },

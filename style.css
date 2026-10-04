@@ -1562,6 +1562,20 @@ body.desk .formline { justify-content: center; }
 .fo.plain { align-items: center; }
 .fo .rng { font-style: normal; font-weight: 700; opacity: .9; margin-left: 2px; }
 .info.empty { display: none; }
+.stabs { display: flex; gap: 6px; margin: 8px 0; } .stabs button { flex: 1; padding: 8px 4px; font: 600 14px var(--fun); } .stabs button.on { background: linear-gradient(180deg, #ffe46b, #ffc21a) !important; color: #5a3000 !important; }
+.ptabbtns { margin: 6px 0; }
+@media (max-height: 700px) and (max-width: 500px) {
+  .perk { padding: 6px 8px; margin: 4px 0; gap: 8px; } .perk .pb p { font-size: 11.5px; line-height: 1.2; margin: 1px 0 0; } .perk .pi { font-size: 20px; width: 26px; }
+  .gdt .small { font-size: 11.5px; line-height: 1.2; } .gdet { padding: 4px 8px; }
+}
+/* v62l (review #108): the Art Lab's actions stay at the bottom of the sheet whatever you scroll to */
+.albar { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 0 2px; background: linear-gradient(180deg, #0000, #232b6e 24%); z-index: 3; }
+.albar button { min-height: 38px; padding: 4px 6px; font-size: 13px; }
+/* v62l (review #108): a selected unit's card replaces the enemies list on the deploy screen, so nothing moves below the screen */
+.deploy:has(#info:not(.empty)) > .foes { display: none; }
+.battle:has(#info:not(.empty)) .bpanel > .bph, .battle:has(#info:not(.empty)) .bpanel > .estrip { display: none; }   /* in a fight the card takes the place of the enemies strip */
+.info .linkbtn { display: inline-block; min-height: 0; padding: 2px 10px; margin-left: 4px; font-size: 12px; border-radius: 10px; }
+.info .hrow { gap: 6px; } .info .stats-row { margin: 3px 0; }
 /* shops: price-only buy buttons, rare items shine, bought cards get a stamp */
 .buyb .price { font-size: 18px; gap: 6px; } .buyb .price::before { width: 17px; height: 17px; }
 .reroll .price { gap: 4px; } .reroll { font-size: 17px; }
@@ -2148,3 +2162,40 @@ button.danger { background: linear-gradient(180deg, #ff7a7a, var(--c-danger)) !i
 @keyframes tutblink { from { opacity: 1; } to { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .tutmove, .tutspeed { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .rstars .st.slam, .rw-gold.glow, .xpbar.shine::after, .rhead.rflash::before { animation: none; } }
+
+/* ==================================================================== v62l (review #108, David): nothing may need scrolling on a short phone (360 x 640) */
+@media (max-height: 700px) and (max-width: 500px) {
+  .pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .pm { flex-direction: column; align-items: flex-start; gap: 4px; padding: 6px; }
+  .pm .pmb { width: 100%; } .pm .pmn { flex-wrap: wrap; gap: 0 6px; }
+  .party { margin-top: 6px; }
+  .sp-path { display: none; }   /* level-up: the two cards are the choice; the preview of the whole path goes */
+}
+@media (max-height: 700px) and (max-width: 500px) {
+  .battle:has(#info:not(.empty)) .teamstrip.v2 .ts { padding-top: 3px; padding-bottom: 3px; gap: 6px; }
+  .battle:has(#info:not(.empty)) .teamstrip.v2 .ts .dm { display: none; }   /* the damage meter makes room for a selected unit's card */
+  .battle:has(#info:not(.empty)) .teamstrip.v2 .ts .por { width: 38px; height: 38px; }
+}
+@media (max-height: 700px) and (max-width: 500px) {
+  .gart img { width: 76px; height: 98px; } .gsock { min-height: 48px; } .gstage { padding: 6px; gap: 8px; }
+}
+@media (max-height: 700px) and (max-width: 500px) {
+  .gtab { padding: 3px 4px 3px; } .gtab .por { width: 30px; height: 30px; }
+  .gdet { padding: 5px 8px; gap: 2px 8px; } .gdet .ico { width: 34px; height: 34px; }
+  .gbag { padding: 4px 6px 5px; } .gitem { padding: 3px 2px 2px; gap: 1px; } .gitem .ico { width: 32px; height: 32px; }
+  .gsock .ico { width: 30px; height: 30px; }
+  .battle:has(#info:not(.empty)) .hud { margin-bottom: 0; }
+  .battle:has(#info:not(.empty)) .info { margin-top: 4px; padding: 4px 8px; }
+}
+@media (max-height: 700px) and (max-width: 500px) {
+  .info .hrow .por { display: none; }
+  .info .stats-row { gap: 4px; flex-wrap: nowrap; } .info .stat { padding: 2px 6px; font-size: 11.5px; } .info .stat i { font-size: 11px; }
+  .info .small { font-size: 11.5px; line-height: 1.25; }
+}
+@media (max-height: 700px) and (max-width: 500px) {
+  .nextboss { padding: 4px 8px; min-height: 0; margin-top: 6px; } .nextboss .por { width: 30px; height: 30px; }
+  .relicline { margin-top: 4px; } .pm .pmi { min-height: 16px; } .pm .pmi .ico.xs { width: 16px; height: 16px; } .pm .por { width: 32px; height: 32px; }
+  .pm .pmn { font-size: 12px; } .party .bph { margin-bottom: 2px; }
+}
+/* v62l (review #108): long names (German) never push a gear button past the screen edge */
+.gsock, .gitem { min-width: 0; overflow: hidden; } .gsock span, .gitem span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
