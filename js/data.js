@@ -24,7 +24,7 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
-    fightScale: [1, 0.862, 0.827, 1.031, 1.247, 1.552, 1.775, 2.016, 2.208],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
+    fightScale: [1, 0.992, 1.175, 1.391, 1.576, 1.95, 2.309, 2.734, 2.745],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
     firstFight: 0.5,  // review #22: the first fight is fought by a single hero: half the usual enemy budget
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // review #24: sudden death burns every unit for 1%, 2%, 3%... of max HP per second
@@ -142,7 +142,7 @@
          { id: 'kes5b', name: 'Piercing Shots', desc: 'Ignore 50% Defense, +50% crit damage.', mods: { armorPen: 0.5, critDmg: 0.5 } }],
       ] }),
     morrow: H({ name: 'Graveborn', glyph: '💀', role: 'Summoner', color: '#9aa3b5',
-      hp: 410, atk: 26, armor: 25, as: 0.7, range: 3, ms: 2, mana: 99, m0: 40, grow: 1.65,
+      hp: 470, atk: 30, armor: 25, as: 0.7, range: 3, ms: 2, mana: 75, m0: 60, grow: 1.5,
       abil: 'raise', abName: 'Bone Call', abDesc: 'Raises 2 skeleton warriors next to Graveborn, each with 300% Magic as Health and 30% Magic as attack.',
       ab: { count: 2, hpMul: 1, archers: 0, explode: 0, colossus: 0 },
       specs: [
@@ -1205,9 +1205,9 @@
   };
   // WHAT: the three fight difficulties offered on the map. budget = how much enemy there is, elites = how many elites, mul = strength multiplier per fight number (tuned by tools/tune-pve.js).
   B.DIFF = {
-    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: [1, 0.73, 1.14, 1.1, 1, 1.12, 1.14, 1.11, 1] },   // v61: mul = strength per fight number (~99%)
+    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: 1.074 },   // v61: mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
-    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: [1, 0.79, 0.88, 0.95, 1, 1.01, 1.03, 0.99, 1] },   // v61: ~60% (v62: 72% in fights 1-3)
+    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: 1.055 },   // v61: ~60% (v62: 72% in fights 1-3)
     horde: { name: 'Horde', budget: 8.4, elites: 0, pool: 2 },   // v44 (review #54): the Bounty Board's horde challenge
   };
 
@@ -1336,7 +1336,7 @@
   // v62o (review #111, David: simulate thousands of PvE runs and balance by the results): the PvE balance tuner (tools/pve/tune.js) rewrites this block.
   // power = a multiplier on a hero's Health, Attack and Magic (1 = as designed); the tuner nudges it until every hero clears the PvE about as often as the others.
   // <TUNE-BEGIN>
-  B.TUNE = { power: { ashwing: 0.854, azgul: 1.258, barley: 0.986, bastion: 1.089, blaze: 1.026, brakk: 1.155, bramble: 1.12, buzzwell: 0.902, citadel: 1.185, coralie: 0.969, deadshot: 0.94, duelist: 0.913, echo: 0.884, gardener: 0.802, glacia: 0.998, grimhook: 1.129, grok: 1.229, harlequin: 1.24, hippolyta: 1.126, imhotep: 1.264, kage: 1.082, kestrel: 0.963, leonidas: 1.32, lumen: 0.732, medic: 0.813, mirage: 0.922, morrow: 0.998, nyx: 1.2, pip: 0.893, plasma: 0.705, prism: 0.809, pyra: 0.912, rex: 1.292, rohammer: 1.16, rook: 0.913, seraph: 1.109, smolder: 1.14, sprocket: 0.914, stellan: 0.883, tempest: 0.94, thorne: 1.007, tom: 0.947, vesper: 0.905, vex: 1.167, vey: 1.046, zephyr: 0.978 } };
+  B.TUNE = { base: 1.279, growth: 0.615, power: { ashwing: 0.84, azgul: 1.208, barley: 1.18, bastion: 1.249, blaze: 0.959, brakk: 1.324, bramble: 1.348, buzzwell: 0.807, citadel: 1.341, coralie: 0.832, deadshot: 0.909, duelist: 0.903, echo: 0.772, gardener: 0.762, glacia: 0.878, grimhook: 1.042, grok: 1.532, harlequin: 1.237, hippolyta: 1.029, imhotep: 1.495, kage: 1.04, kestrel: 0.867, leonidas: 1.663, lumen: 0.674, medic: 0.819, mirage: 0.917, morrow: 0.719, nyx: 1.255, pip: 0.867, plasma: 0.636, prism: 0.776, pyra: 0.867, rex: 1.22, rohammer: 1.45, rook: 0.923, seraph: 1.278, smolder: 1.356, sprocket: 0.835, stellan: 0.827, tempest: 0.912, thorne: 1.043, tom: 0.826, vesper: 0.882, vex: 1.007, vey: 0.961, zephyr: 1 } };
   // <TUNE-END>
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];

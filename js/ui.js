@@ -495,19 +495,21 @@
   // WHAT: START SCREENS. Step 1 pick a hero, step 2 pick a starting power, step 3 fight. stepsHTML draws the 1-2-3 header; startHTML draws the current step.
   const stepsHTML = s => `<ol class="ssteps">${['Hero', 'Power', 'Fight!'].map((t, i) => `<li class="${i + 1 < s ? 'done' : i + 1 === s ? 'on' : ''}"><i>${i + 1 < s ? '✓' : i + 1}</i>${t}</li>`).join('')}</ol>`;
   // WHAT: the start flow screens (pick your first hero, pick a power).
+  // v62q (review #114): the pointing hand on the start screens is shown for the first two runs a player ever starts
+  const startHint = () => (+store.get('balance.starts', 0) || 0) < 2;
   function startHTML() {
     const relics = run.relicOffer || [], n = ui.startPick.length;
     if (ui.startStep === 2 && n === CFG.startHeroes && relics.length) {
       const rsel = ui.startRelic && relics.includes(ui.startRelic) ? ui.startRelic : null;
       return `<section class="start s2">${stepsHTML(2)}<h2 class="sc">Pick a power</h2><p class="ssub">A bonus for your whole team, all game long.</p>
-        <div class="srelics big">${relics.map(id => `<button class="srelic ${rsel === id ? 'on' : ''}" data-act="start-relic" data-arg="${id}">${ico('relic', id, 44)}<span class="srt"><b class="relic">${esc(RELIC[id].name)}</b><small class="srd">${esc(RELIC[id].short)}</small></span>${rsel === id ? '<span class="chk">✓</span>' : ''}</button>`).join('')}</div>
+        <div class="stage pedestals srelics big">${relics.map((id, i) => `<button class="srelic ped ${rsel === id ? 'on' : ''}" data-act="start-relic" data-arg="${id}"><span class="shaft"></span><span class="orb">${ico('relic', id, 56)}</span><span class="plinth"><i></i><u></u></span><span class="srt"><b class="relic">${esc(RELIC[id].name)}</b><small class="srd">${esc(RELIC[id].short)}</small></span>${rsel === id ? '<span class="chk">✓</span>' : ''}${i === 1 && !rsel && startHint() ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`).join('')}</div>
         <div class="bar"><button data-act="start-back">◀ Back</button><button class="primary big" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a power'}</button></div></section>`;
     }
     const f = run.startOffer.includes(ui.focus) ? ui.focus : ui.startPick[0] || null, h = f && HEROES[f];
     return `<section class="start s1">${stepsHTML(1)}<h2 class="sc">Pick your first hero</h2><p class="ssub">You can buy 2 more heroes later.</p>
-      <div class="hbanners">${run.startOffer.map(k => { const d = HEROES[k], on = ui.startPick.includes(k);
-        return `<button class="hbanner ${on ? 'on' : ''} ${k === f ? 'focus' : ''}" data-act="start-pick" data-arg="${k}" style="--cloth:${d.color}">
-          <span class="rod"></span><img src="${por(k, 120, true)}" alt=""><b>${esc(d.name)}</b><i>${d.role}</i>${on ? '<span class="chk">✓</span>' : ''}</button>`; }).join('')}</div>
+      <div class="stage spotlights hbanners">${run.startOffer.map((k, i) => { const d = HEROES[k], on = ui.startPick.includes(k);
+        return `<button class="hbanner spot ${on ? 'on' : ''} ${k === f ? 'focus' : ''}" data-act="start-pick" data-arg="${k}" style="--cloth:${d.color}">
+          <span class="cone"></span><img class="splash" src="${por(k, 150, true)}" alt=""><span class="plate"></span><b>${esc(d.name)}</b><i>${d.role}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !n && startHint() ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`; }).join('')}</div>
       ${h ? `<div class="card detail"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
         <p class="htag">${esc(h.tag || h.abName)}</p><button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>'}
       ${(run.locked || []).length ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : ''}
@@ -1747,7 +1749,7 @@
     'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if ((run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
     'start-back': () => { ui.startStep = 1; render(); },
     'start-relic': id => { ui.focusRelic = id; ui.startRelic = id; render(); },
-    'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((run.relicOffer || []).length && !ui.startRelic)) return; Run.pickStart(run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1; save(); render(); },
+    'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((run.relicOffer || []).length && !ui.startRelic)) return; store.set('balance.starts', (+store.get('balance.starts', 0) || 0) + 1); Run.pickStart(run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1; save(); render(); },
     // A map option was tapped: opens that fight, shop or event (Run.choose).
     choose: i => { Run.choose(run, +i); ui.info = null; save(); render(); window.scrollTo(0, 0); },
     // A power was picked at a level-up.

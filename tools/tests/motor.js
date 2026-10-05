@@ -1,7 +1,7 @@
 // Engine + run logic checks (Node, no browser). Usage: node tools/tests/motor.js
 require('../../js/hex.js'); require('../../js/data.js'); require('../../js/sim.js'); require('../../js/run.js');
 const { Run, Sim, Hex, HEROES, ITEMS, RELICS, CFG } = B;
-B.TUNE.power = {};   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
+B.TUNE.power = {}; B.TUNE.base = 1; B.TUNE.growth = 1;   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
 let fails = 0, oks = 0;
 const ok = (c, msg) => { if (c) oks++; else { fails++; console.log('FAIL ' + msg); } };
 const finite = W => W.units.every(u => Number.isFinite(u.hp) && Number.isFinite(u.mana) && Number.isFinite(u.atk));

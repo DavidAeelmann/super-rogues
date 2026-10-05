@@ -143,7 +143,7 @@
     const b = B.HEROES[h.key], m = heroMods(run, h), L = h.lvl - 1, all = m.allPct || 0;
     // v61 (review #73): each hero grows at its own pace per level (b.grow, 1 = +15% HP and attack and +30 AP per level),
     // so heroes that were strong early and fell off late (or the reverse) stay in line through the whole run
-    const g = b.grow || 1, tp = (B.TUNE && B.TUNE.power[h.key]) || 1;   // v62o: tp = the balance tuner's power factor for this hero
+    const g = (b.grow || 1) * ((B.TUNE && B.TUNE.growth) || 1), tp = ((B.TUNE && B.TUNE.power[h.key]) || 1) * ((B.TUNE && B.TUNE.base) || 1);   // v62o: tp = the balance tuner's power factor for this hero; v62q (review #113): g also takes the global growth (what a level gives: Health, Attack, Magic and so the ability numbers)
     const ab = Object.assign({}, b.ab), fl = (b.fl || []).slice();
     for (const id of h.specs) {
       const s = specOf(h.key, id); if (!s) continue;

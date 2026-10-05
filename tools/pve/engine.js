@@ -80,10 +80,13 @@ function event(run, stats) {
   Run.autoEquip(run);
 }
 // the next map step: a hero shop while the team is short of a role, then item shops, powers, events; fights: the middle difficulty
+let POLICY = 'medium';   // which fights the bot picks: 'medium' (the default), 'easy' or 'hard' (to measure those difficulties)
 function mapChoice(run) {
   const o = run.opts;
   if (o[0].type === 'fight') {
     const ORD = ['easy', 'medium', 'hard'];
+    if (POLICY === 'hard') { const h = o.findIndex(x => x.diff === 'hard'); if (h >= 0) return h; return o.length - 1; }
+    if (POLICY === 'easy') { const e = o.findIndex(x => x.diff === 'easy'); return e >= 0 ? e : 0; }
     // medium if offered; else the easier of two (the bot plays safe)
     const m = o.findIndex(x => x.diff === 'medium'); if (m >= 0) return m;
     return o.length === 1 ? 0 : o.findIndex(x => x.diff === ORD.find(d => o.some(y => y.diff === d)));
@@ -97,6 +100,7 @@ function mapChoice(run) {
 
 // plays one whole run; start = the hero the run starts with (forced, so that every hero gets the same number of runs)
 function playRun(seed, opt = {}) {
+  POLICY = opt.policy || 'medium';
   const run = Run.newRun(seed);
   const keys = Object.keys(HEROES);
   const start = opt.start || keys[Math.floor(Run.rnd(run) * keys.length)];   // uniform over all heroes, not only the three offered
@@ -134,5 +138,9 @@ function applyTune(t) {
   if (!t) return;
   if (t.power) B.TUNE.power = Object.assign({}, t.power);
   if (t.fightScale) C.fightScale = t.fightScale.slice();
+  if (t.growth != null) B.TUNE.growth = t.growth;
+  if (t.base != null) B.TUNE.base = t.base;
+  if (t.easyMul != null) B.DIFF.easy.mul = t.easyMul;
+  if (t.hardMul != null) B.DIFF.hard.mul = t.hardMul;
 }
 module.exports = { playRun, roleOf, applyTune };

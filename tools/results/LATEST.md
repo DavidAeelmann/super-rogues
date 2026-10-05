@@ -1,53 +1,53 @@
 ```
-PvE balance report (final, 69000 simulated runs, pve-final-2026-10-04T23-09-41.json)
+PvE balance report (v113c, 46000 simulated runs, pve-v113c-2026-10-05T10-07-00.json)
 
-runs 69000  cleared 30.0%  avg fights won 5.26
-fights: 1e 100% | 1m 96% | 2e 99% | 2m 96% | 3e 99% | 3m 93% | 4b 66% | 5e 100% | 5m 92% | 6e 99% | 6m 90% | 7e 99% | 7m 89% | 8b 63%
-heroes: mean rate 32.0%  spread (sd) 1.7pp  best 35%  worst 27%
-  tom        start  34% (1500)  team  37% (5070)  rate  35%  wins 5.5  support
-  pip        start  31% (1500)  team  39% (2625)  rate  35%  wins 5.1  damage
-  buzzwell   start  32% (1500)  team  37% (4915)  rate  34%  wins 5.6  support
-  plasma     start  30% (1500)  team  38% (2603)  rate  34%  wins 4.8  damage
-  duelist    start  33% (1500)  team  35% (2526)  rate  34%  wins 5.3  damage
-  lumen      start  35% (1500)  team  33% (4992)  rate  34%  wins 4.9  support
-  glacia     start  31% (1500)  team  36% (4892)  rate  34%  wins 5.6  support
-  rohammer   start  34% (1500)  team  33% (6115)  rate  34%  wins 5.6  tank
-  morrow     start  27% (1500)  team  40% (2607)  rate  33%  wins 3.4  damage
-  mirage     start  32% (1500)  team  35% (2530)  rate  33%  wins 5.7  damage
-  vex        start  31% (1500)  team  36% (2549)  rate  33%  wins 5.7  damage
-  rook       start  30% (1500)  team  36% (2512)  rate  33%  wins 5.4  damage
-  citadel    start  35% (1500)  team  31% (6005)  rate  33%  wins 5.7  tank
-  kestrel    start  30% (1500)  team  36% (2571)  rate  33%  wins 5.5  damage
-  grimhook   start  31% (1500)  team  34% (4976)  rate  33%  wins 5.7  support
-  blaze      start  30% (1500)  team  36% (2578)  rate  33%  wins 5.9  damage
-  pyra       start  29% (1500)  team  36% (2587)  rate  33%  wins 5.4  damage
-  bastion    start  33% (1500)  team  33% (6082)  rate  33%  wins 4.9  tank
-  smolder    start  33% (1500)  team  32% (6075)  rate  33%  wins 5.2  tank
-  echo       start  30% (1500)  team  35% (5023)  rate  32%  wins 5.3  support
-  sprocket   start  31% (1500)  team  34% (4925)  rate  32%  wins 5.3  support
-  hippolyta  start  29% (1500)  team  35% (2546)  rate  32%  wins 5.5  damage
-  deadshot   start  28% (1500)  team  36% (2587)  rate  32%  wins 5.7  damage
-  prism      start  31% (1500)  team  33% (5043)  rate  32%  wins 5.2  support
-  nyx        start  29% (1500)  team  35% (2539)  rate  32%  wins 5.4  damage
-  zephyr     start  30% (1500)  team  34% (2513)  rate  32%  wins 5.4  damage
-  harlequin  start  29% (1500)  team  35% (2515)  rate  32%  wins 5.6  damage
-  tempest    start  28% (1500)  team  35% (2610)  rate  32%  wins 5.3  damage
-  imhotep    start  30% (1500)  team  33% (6069)  rate  32%  wins 5.3  tank
-  coralie    start  29% (1500)  team  34% (4916)  rate  31%  wins 5.4  support
-  vey        start  28% (1500)  team  35% (4998)  rate  31%  wins 5.7  support
-  azgul      start  29% (1500)  team  33% (2511)  rate  31%  wins 5.4  damage
-  rex        start  29% (1500)  team  33% (2513)  rate  31%  wins 5.5  damage
-  stellan    start  27% (1500)  team  35% (2524)  rate  31%  wins 5.1  damage
-  kage       start  28% (1500)  team  34% (2548)  rate  31%  wins 5.6  damage
-  vesper     start  29% (1500)  team  32% (2517)  rate  31%  wins 5.2  damage
-  ashwing    start  27% (1500)  team  34% (2597)  rate  31%  wins 5.5  damage
-  gardener   start  30% (1500)  team  31% (4951)  rate  30%  wins 4.4  support
-  bramble    start  29% (1500)  team  31% (6101)  rate  30%  wins 5.2  tank
-  leonidas   start  32% (1500)  team  28% (6059)  rate  30%  wins 6.1  tank
-  grok       start  30% (1500)  team  30% (5998)  rate  30%  wins 5.3  tank
-  seraph     start  29% (1500)  team  31% (6097)  rate  30%  wins 5.0  tank
-  thorne     start  27% (1500)  team  31% (2526)  rate  29%  wins 5.2  damage
-  barley     start  30% (1500)  team  29% (6069)  rate  29%  wins 5.0  tank
-  brakk      start  30% (1500)  team  29% (5985)  rate  29%  wins 5.4  tank
-  medic      start  20% (1500)  team  34% (4827)  rate  27%  wins 2.2  support
+runs 46000  cleared 27.8%  avg fights won 5.37
+fights: 1e 97% | 1m 98% | 2e 99% | 2m 94% | 3e 99% | 3m 93% | 4b 73% | 5e 100% | 5m 92% | 6e 99% | 6m 86% | 7e 98% | 7m 77% | 8b 60%
+heroes: mean rate 29.5%  spread (sd) 1.8pp  best 33%  worst 24%
+  pip        start  30% (1000)  team  36% (1761)  rate  33%  wins 5.4  damage
+  nyx        start  30% (1000)  team  35% (1727)  rate  33%  wins 5.8  damage
+  grok       start  33% (1000)  team  32% (4106)  rate  32%  wins 5.8  tank
+  deadshot   start  30% (1000)  team  34% (1730)  rate  32%  wins 6.0  damage
+  imhotep    start  33% (1000)  team  30% (4016)  rate  32%  wins 5.5  tank
+  mirage     start  30% (1000)  team  33% (1715)  rate  31%  wins 5.9  damage
+  prism      start  30% (1000)  team  33% (3347)  rate  31%  wins 5.5  support
+  kestrel    start  28% (1000)  team  34% (1696)  rate  31%  wins 5.6  damage
+  zephyr     start  30% (1000)  team  32% (1716)  rate  31%  wins 5.7  damage
+  vey        start  29% (1000)  team  33% (3333)  rate  31%  wins 5.9  support
+  pyra       start  28% (1000)  team  33% (1719)  rate  30%  wins 5.5  damage
+  grimhook   start  30% (1000)  team  31% (3366)  rate  30%  wins 6.0  support
+  plasma     start  27% (1000)  team  34% (1757)  rate  30%  wins 4.8  damage
+  rook       start  27% (1000)  team  33% (1740)  rate  30%  wins 5.5  damage
+  harlequin  start  28% (1000)  team  32% (1658)  rate  30%  wins 6.0  damage
+  medic      start  22% (1000)  team  38% (3414)  rate  30%  wins 2.9  support
+  citadel    start  32% (1000)  team  29% (4072)  rate  30%  wins 5.7  tank
+  echo       start  29% (1000)  team  32% (3443)  rate  30%  wins 5.2  support
+  barley     start  32% (1000)  team  28% (4166)  rate  30%  wins 5.3  tank
+  azgul      start  28% (1000)  team  32% (1685)  rate  30%  wins 5.7  damage
+  glacia     start  28% (1000)  team  31% (3305)  rate  30%  wins 5.6  support
+  kage       start  28% (1000)  team  32% (1720)  rate  30%  wins 5.9  damage
+  rohammer   start  29% (1000)  team  30% (3931)  rate  30%  wins 5.6  tank
+  duelist    start  28% (1000)  team  31% (1723)  rate  30%  wins 5.3  damage
+  gardener   start  29% (1000)  team  30% (3355)  rate  30%  wins 4.8  support
+  brakk      start  31% (1000)  team  28% (3990)  rate  29%  wins 5.6  tank
+  rex        start  27% (1000)  team  32% (1636)  rate  29%  wins 5.8  damage
+  lumen      start  29% (1000)  team  30% (3267)  rate  29%  wins 4.7  support
+  thorne     start  27% (1000)  team  32% (1772)  rate  29%  wins 5.4  damage
+  buzzwell   start  28% (1000)  team  30% (3308)  rate  29%  wins 5.5  support
+  leonidas   start  31% (1000)  team  27% (4020)  rate  29%  wins 6.3  tank
+  vesper     start  27% (1000)  team  30% (1772)  rate  29%  wins 5.3  damage
+  stellan    start  26% (1000)  team  32% (1709)  rate  29%  wins 5.2  damage
+  hippolyta  start  25% (1000)  team  32% (1733)  rate  29%  wins 5.5  damage
+  coralie    start  27% (1000)  team  31% (3406)  rate  29%  wins 5.3  support
+  smolder    start  28% (1000)  team  29% (4028)  rate  29%  wins 5.3  tank
+  sprocket   start  26% (1000)  team  32% (3342)  rate  29%  wins 5.2  support
+  tempest    start  25% (1000)  team  32% (1747)  rate  28%  wins 5.4  damage
+  blaze      start  26% (1000)  team  30% (1744)  rate  28%  wins 5.8  damage
+  seraph     start  27% (1000)  team  29% (4082)  rate  28%  wins 4.8  tank
+  ashwing    start  24% (1000)  team  32% (1722)  rate  28%  wins 5.4  damage
+  bastion    start  28% (1000)  team  28% (4028)  rate  28%  wins 4.7  tank
+  tom        start  26% (1000)  team  29% (3377)  rate  27%  wins 5.5  support
+  bramble    start  26% (1000)  team  27% (4044)  rate  27%  wins 5.0  tank
+  morrow     start  19% (1000)  team  30% (1738)  rate  25%  wins 2.8  damage
+  vex        start  22% (1000)  team  27% (1737)  rate  24%  wins 5.5  damage
 ```
