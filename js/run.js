@@ -474,7 +474,7 @@
       else { run.steal = stealOptions(run, g.opp); run.stealFrom = g.opp.name; run.phase = 'steal'; }
       return res;
     }
-    run.lost++; run.lives--; res.lives = run.lives;
+    run.lost++; run.lives--; res.lives = run.lives; run.pvpLost = (run.pvpLost || 0) + 1;   // v65 (review #129): league points count the PvP fights lost
     if (run.lives <= 0) { run.phase = 'over'; run.result = 'defeat'; }
     else if (final) { run.phase = 'gauntlet'; run.g = { status: 'intro', history: [] }; }   // another finalist waits
     else { run.g = null; advance(run); }
@@ -778,7 +778,13 @@
   }
   // the concrete choices of the open event (dynamic events build theirs from the offer)
   // WHAT: the real list of choices of the open event, with numbers filled in and costs, for the UI to draw.
+  // v65 (review #128, David: "hero shops dont allow replacing, say team is full"): with a full team, a hero an event offers takes the place of one of yours
+  // (like the Hero Shop): the choice asks which hero steps aside
   function eventChoices(run) {
+    const full = run.heroes.length >= teamMax(run);
+    return eventChoices0(run).map(ch => full && /^(hire|join):/.test(ch.act || '') ? Object.assign({}, ch, { target: 'hero', swap: true }) : ch);
+  }
+  function eventChoices0(run) {
     const cur = run.cur, ev = B.EVENT[cur.id]; if (!ev) return [];
     if (!ev.dyn) return ev.choices.map(ch => resolve(run, ch));
     cur.offer = cur.offer || rollOffer(run, cur.id);
@@ -833,7 +839,6 @@
   function canChoose(run, ch) {
     if (!ch || run.cur.done) return { ok: false, why: '' };
     if (ch.cost && run.gold < ch.cost) return { ok: false, why: 'Needs ' + ch.cost + ' gold' };
-    if ((ch.act.startsWith('hire:') || ch.act.startsWith('join:')) && run.heroes.length >= teamMax(run)) return { ok: false, why: 'Your team is full' };
     if (ch.req && !reqHeroes(run, ch.req).length) return { ok: false, why: 'Needs ' + B.EVENT_REQ[ch.req].name, req: true };
     if (ch.act === 'transmute' && itemRefs(run).length < 2) return { ok: false, why: 'Needs two items' };
     if (ch.target && !eventTargets(run, ch).length) return { ok: false, why: ch.target === 'item' ? (ch.minRarity ? 'Needs a ' + ch.minRarity + ' or better item' : 'Needs an item') : ch.act === 'respec' ? 'No hero has a specialization yet' : 'No valid target' };
@@ -897,8 +902,7 @@
       const k = hero.specs.length - 1, pair = B.HEROES[hero.key].specs[k], was = hero.specs[k], now = pair[0].id === was ? pair[1] : pair[0];
       hero.specs[k] = now.id; msg = name(hero) + ' now follows ' + now.name + '.'; got('boost', '★ ' + now.name, hero.key);
     }
-    else if (a === 'hire') { const h = addHero(run, x); msg = name(h) + ' joins your team!'; got('hero', x); }
-    else if (a === 'join') { const h = addHero(run, x); msg = name(h) + ' joins your team!'; got('hero', x); }
+    else if (a === 'hire' || a === 'join') { const h = hero ? swapIn(run, hero.uid, x) : addHero(run, x); msg = name(h) + (hero ? ' takes ' + B.HEROES[hero.key].name + "'s place!" : ' joins your team!'); got('hero', x); }
     else if (a === 'take') { run.bag.push(x); msg = 'You took ' + iname(x) + '.'; got('item', x); }
     else if (a === 'invest') { (run.bank = run.bank || []).push(+x); msg = 'The banker writes it down: ' + x + ' gold comes back after your next won fight.'; got('bank', +x); }
     else if (a === 'loan') { run.gold += +x; (run.bank = run.bank || []).push(-y); msg = '+' + x + ' gold now. ' + y + ' gold is paid back after your next won fight.'; got('gold', +x); }

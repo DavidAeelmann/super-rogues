@@ -1369,20 +1369,28 @@
   ];
   B.LEAGUE_RULES = { step: 100, demoteTo: 75, duelWin: 0, pveLoss: 0 };   // duelWin / pveLoss: only the old Gauntlet ops (old tabs) still read them
   // v64 (review #125): a completed run is a victory of a kind by the lives left: Perfect (no fight lost), Gold, Bronze
-  // WHAT: the three kinds of victory (by lives left) and what each pays in league points.
+  // WHAT: the three kinds of victory (by lives left). v65: only a name and a medal (league points come from PvP fights).
   B.VICTORY = [
-    { lives: 3, id: 'perfect', name: 'Perfect', icon: '💎', color: '#7ee8ff', lp: 35 },
-    { lives: 2, id: 'gold', name: 'Gold', icon: '🥇', color: '#ffd23f', lp: 28 },
-    { lives: 1, id: 'bronze', name: 'Bronze', icon: '🥉', color: '#e09a5c', lp: 22 },
+    { lives: 3, id: 'perfect', name: 'Perfect', icon: '💎', color: '#7ee8ff' },
+    { lives: 2, id: 'gold', name: 'Gold', icon: '🥇', color: '#ffd23f' },
+    { lives: 1, id: 'bronze', name: 'Bronze', icon: '🥉', color: '#e09a5c' },
   ];
   B.victoryOf = lives => B.VICTORY.find(v => v.lives === (lives | 0)) || B.VICTORY[B.VICTORY.length - 1];
-  // WHAT: the league points the end of a run moves. A completed run pays by its victory kind; a run that ran out of lives costs 24 but every PvE fight won
-  //   gives 3 of them back; each duel won (PvP, the final included) adds 5. The higher the league, the less a run pays (2 per league above Bronze).
-  //   g = { done, lives, fights (PvE fights won), duels (duels won) }. Used by the server (api/elo.js) and shown by the game.
-  B.runLp = (g, league) => {
-    const pve = Math.max(0, Math.min(12, g.fights | 0)), duels = Math.max(0, Math.min(5, g.duels | 0));
-    return Math.round((g.done ? B.victoryOf(g.lives).lp : -24 + 3 * pve) + 5 * duels - 2 * (league | 0));
+  // v65 (review #129, David: "only pvp fights should count to increase league LP. Bronze cannot lose LP"; review #133: "+1 LP for each streak"): league points
+  // come only from PvP fights. Each duel won +10, the final fight won +20, each PvP fight lost (a duel or a try at the final) -8, and a completed run adds
+  // its win streak (+1 LP per run in the streak). PvE fights move no LP (they give XP). In Bronze a run never takes LP away.
+  // WHAT: what each PvP result is worth in league points (B.LP) and the parts of one run's LP (B.lpParts, also the "why" line of the end screen).
+  //   g = { done (final fight won), duels (PvP-day duels won), lost (PvP fights lost), streak (the win streak after this run) }. Used by api/elo.js.
+  B.LP = { duel: 10, final: 20, loss: 8, streak: 1 };
+  B.lpParts = g => {
+    const duels = Math.max(0, Math.min(4, g.duels | 0)), lost = Math.max(0, Math.min(6, g.lost | 0)), streak = g.done ? Math.max(0, Math.min(50, g.streak | 0)) : 0, out = [];
+    if (duels) out.push({ id: 'duel', n: duels, lp: duels * B.LP.duel });
+    if (g.done) out.push({ id: 'final', n: 1, lp: B.LP.final });
+    if (lost) out.push({ id: 'loss', n: lost, lp: -lost * B.LP.loss });
+    if (streak) out.push({ id: 'streak', n: streak, lp: streak * B.LP.streak });
+    return out;
   };
+  B.runLp = (g, league) => { const s = B.lpParts(g).reduce((a, x) => a + x.lp, 0); return (league | 0) === 0 ? Math.max(0, s) : s; };
 
   // v27 (owner, 2026-09-29): Crowns, the account currency. Earned the first time you reach each league in a season
   // (leagues reset to Bronze when a season starts) and from friends you referred. Spent in the Crown Shop on perks and
@@ -1420,18 +1428,25 @@
   // START_HEROES; the other 26 come two per level from level 2 to 14, in the order of HERO_UNLOCKS (a mix of damage, support and tank); items and powers keep their own levels
   B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta'];
   B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage', 'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist'];
+  // v65 (review #131, David: "add hero portraits for profile in xp rewards"): your picture (profile, ladder, the top bar) is a hero portrait. Four are free;
+  // every level from 2 on unlocks one more (the starting heroes first, then the ones the levels unlock), so every level has a reward up to level 43
+  B.PORTRAITS_FREE = ['bastion', 'lumen', 'pyra', 'kestrel'];
+  B.PORTRAIT_UNLOCKS = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k)).concat(B.HERO_UNLOCKS);
   B.UNLOCKS = [
     [2, 'relic', 'beehive'], [3, 'item', 'honeycomb'], [4, 'relic', 'seashell'], [6, 'relic', 'kite'],
     [7, 'item', 'starcloak'], [8, 'relic', 'compass'], [9, 'relic', 'teapot'], [11, 'item', 'tidepearl'],
     [12, 'relic', 'snowglobe'], [13, 'relic', 'marbles'], [14, 'item', 'moonslippers'], [16, 'relic', 'fireflies'],
     [17, 'item', 'comethammer'], [18, 'relic', 'pinwheel'], [19, 'relic', 'horseshoe'],
-  ].map(([lvl, kind, id]) => ({ lvl, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: 2 + Math.floor(i / 2), kind: 'hero', id }))).sort((a, b) => a.lvl - b.lvl);
+  ].map(([lvl, kind, id]) => ({ lvl, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: 2 + Math.floor(i / 2), kind: 'hero', id })))
+    .concat(B.PORTRAIT_UNLOCKS.map((id, i) => ({ lvl: 2 + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);
+  // WHAT: the account level a hero's portrait opens at (1 = free from the start, 0 = no such portrait).
+  B.portraitLevel = key => B.PORTRAITS_FREE.includes(key) ? 1 : (B.UNLOCKS.find(u => u.kind === 'portrait' && u.id === key) || { lvl: 0 }).lvl;
   B.xpToNext = lvl => B.ACCOUNT.base + B.ACCOUNT.step * (Math.max(1, lvl) - 1);
   B.xpForLevel = lvl => { let s = 0; for (let l = 1; l < lvl; l++) s += B.xpToNext(l); return s; };   // total XP to reach it
   B.levelOf = xp => { let l = 1, left = Math.max(0, xp || 0); while (left >= B.xpToNext(l)) { left -= B.xpToNext(l); l++; } return l; };
   // where an XP total sits: its level, the XP into that level and what the level costs
   B.levelProgress = xp => { const lvl = B.levelOf(xp), into = Math.max(0, xp || 0) - B.xpForLevel(lvl); return { lvl, into, need: B.xpToNext(lvl) }; };
-  B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl).map(u => u.id);
+  B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl && u.kind !== 'portrait').map(u => u.id);   // v65: portraits are pictures, they never lock a hero
   B.hasPerk = (perks, id) => (perks || []).includes(id) || (id === 'speed4' && (perks || []).includes('king'));   // v64: Content Elo is gone (review #122: the Balance lab has it)
 
   // ---------------------------------------------------------------- terrain (review #39, David)

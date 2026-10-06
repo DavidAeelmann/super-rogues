@@ -129,7 +129,7 @@ await sleep(200);
 ok(await ev(`document.querySelectorAll('[data-act=choose]').length === (__bal.run.relics.includes('quill') ? 3 : 2)`), "first map step shows 2 options (3 with the Pathfinder's Quill)");
 await shot('03-map'); await noHScroll('map'); await noVScroll('map');
 // v47 (review #58): the journey sits behind the Day chip; the map itself has no 17-icon strip
-ok(await ev(`!!document.querySelector('#screen .journey .jn.cur .jtok') && document.querySelectorAll('#screen .journey .jn').length === B.Run.seqOf(__bal.run).length && document.querySelectorAll('#screen .journey .jn.boss').length === 2 && document.querySelectorAll('#screen .journey .jn.pvp').length === 2 && !!document.querySelector('#screen .journey .jn.final') && /Day 1.17/.test(document.querySelector('.jcap').textContent) && !!document.querySelector('#top button.prog[data-act=path]')`), 'v64 (review #123): the map shows the whole journey (you on today, the bosses, the duel days, the final fight)');
+ok(await ev(`(() => { const seq = B.Run.seqOf(__bal.run), r = __bal.run, wm = document.querySelector('#wmap'); if (!wm) return false; const w = wm.getBoundingClientRect(); return !!wm.querySelector('.rtok') && wm.querySelectorAll('.rn:not(.camp)').length === seq.length - 1 && !!wm.querySelector('.rn.camp') && wm.querySelectorAll('.rn.boss').length === 2 && wm.querySelectorAll('.rn.pvp').length === 2 && !!wm.querySelector('.rn.final .castle') && /Day 1.17/.test(wm.querySelector('.rday').textContent) && wm.querySelectorAll('.rtoday [data-act=choose]').length === r.opts.length && wm.scrollHeight > wm.clientHeight && wm.scrollTop > 0 && [...wm.querySelectorAll('.rtoday .banner')].every(b => { const q = b.getBoundingClientRect(); return q.top >= w.top - 1 && q.bottom <= w.bottom + 1; }) && !!document.querySelector('#top button.prog[data-act=path]'); })()`), "v65 (review #130): the map is a vertical road: the camp, every day ahead (2 bosses, 2 duel days, the castle of the final fight), your leader, and today's choices as the fork, in view");
 await click('#top [data-act=path]'); await sleep(150);
 ok(await ev(`document.querySelectorAll('#modal .track .node').length > 10 && document.querySelectorAll('#modal .plegend li').length === 5`), 'v47: tapping the Day chip shows the whole journey with a legend');
 await click('[data-act=close]'); await sleep(100);
@@ -272,7 +272,7 @@ if (fin.phase === 'over' && !REMOTE) {
   await sleep(600);
   ok(await ev(`!document.querySelector('.lgcard') && !!document.querySelector('[data-act=over-next]') && !document.querySelector('[data-act=new-run]')`), 'v64 (review #127): the end of a run shows the XP and the unlocks first, then Next');
   await click('[data-act=over-next]'); await sleep(300);
-  ok(await ev(`!!__bal.run.lgEnd && !!document.querySelector('.lgcard .lgbar i') && /LP/.test(document.querySelector('.lgcard').textContent) && !!document.querySelector('.lgcard .lgwhy') && !!document.querySelector('[data-act=new-run]') && !!document.querySelector('#top .lgchip')`), 'v64 (review #125): ...then the league card: the league points this run moved, why, and the bar');
+  ok(await ev(`!!__bal.run.lgEnd && !!document.querySelector('.lgcard .lgbar i') && /LP/.test(document.querySelector('.lgcard').textContent) && !!document.querySelector('.lgcard .lpwhy') && !!document.querySelector('[data-act=new-run]') && !document.querySelector('#top .gold') && !!document.querySelector('#stkcard .flame.big')`), 'v64 (review #125): ...then the league card: the league points this run moved, why, and the bar; v65 (reviews #129 #133): the win streak above it, no run bar on top');
   ok(await ev(`(__bal.run.result === 'clear' ? !!document.querySelector('.vbadge') : __bal.run.lives === 0)`), 'a completed run shows its victory kind; a lost one ran out of lives');
   await shot('11c-over-league'); await noHScroll('over, league'); await noVScroll('over, league');
   ok(await ev(`(() => { const t = document.querySelector('#top'); return t.scrollWidth <= t.clientWidth + 1 && [...t.children].every(c => c.getBoundingClientRect().right <= window.innerWidth + 1); })()`), 'review #51: the top bar fits the phone with the league chip, gold, day, Team, suggest and menu');
@@ -389,7 +389,7 @@ if (!REMOTE) {
   const ladder = await ev(`document.querySelector('#modal').textContent`);
   ok(ladder.includes('Rival') && ladder.includes('TestBot') && !/Onslaught|Elo/.test(ladder) && /LP/.test(ladder), 'the ladder lists the players by league and LP (no Elo)' + (ladder.includes('Rival') && ladder.includes('TestBot') ? '' : ': ' + ladder.replace(/\s+/g, ' ').slice(0, 400)));
   await ev(`fetch('/__dev/grant?pid=' + JSON.parse(localStorage.getItem('balance.pid')) + '&n=400')`); await sleep(200);
-  ok(await ev(`document.querySelectorAll('[data-act=ladder-tab]').length === 2 && !document.querySelector('[data-act=ladder-tab][data-arg=hero]')`), 'v64 (review #122): the ladder has no content Elo tabs (they live in the Balance lab)');
+  ok(await ev(`document.querySelectorAll('[data-act=ladder-tab]').length === 3 && !!document.querySelector('[data-act=ladder-tab][data-arg=friends]') && !document.querySelector('[data-act=ladder-tab][data-arg=hero]')`), 'v64 (review #122): the ladder has no content Elo tabs (they live in the Balance lab); v65 (review #132): Player, Global, Friends');
   await ev('__bal.ACT.shop()');
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .wallet') && /40[0-9]/.test(document.querySelector('#modal .wallet').textContent)`)); i++) await sleep(100);
   // review #108: the shop is four tabs (Perks / Name & King / Earn / Invite) so nothing sits below the screen
@@ -423,12 +423,21 @@ if (!REMOTE) {
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .prof')`)); i++) await sleep(100);
   ok(await ev(`(() => { const t = document.querySelector('#modal .prof').textContent; return /Rival/.test(t) && /Trophies/.test(t) && !/Elo/.test(t) && /league/i.test(t) && !!document.querySelector('.h2h') && /You vs Rival/.test(document.querySelector('.h2h').textContent) && document.querySelector('.h2h .win').textContent === '2' && document.querySelector('.h2h .lose').textContent === '0' && !!document.querySelector('.pmore') && /Most played/.test(t); })()`), "v64 (reviews #125 #127): a player's profile: league, trophies and your duels against them (2-0); the King's view adds heroes and ghosts");
   await shot('25-profile'); await noHScroll('profile');
+  await click('#modal [data-act=follow]'); for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal [data-act=follow].on')`)); i++) await sleep(100);
+  ok(await ev(`/Following/.test(document.querySelector('#modal [data-act=follow]').textContent) && /1 follower/.test(document.querySelector('#pfcount').textContent) && !!document.querySelector('#modal .phead .pfp') && !!document.querySelector('#modal .pstats .flame')`), "v65 (reviews #131 #132 #133): a profile has the player's portrait, the win streak, and Follow");
+  await click('[data-act=close]'); await ev('__bal.ACT.scores()'); await sleep(200); await click('[data-act=ladder-tab][data-arg=friends]');
+  for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .tbl')`)); i++) await sleep(100);
+  ok(await ev(`[...document.querySelectorAll('#modal .tbl .plink')].some(b => b.textContent === 'Rival') && document.querySelectorAll('#modal .tbl tr').length === 3 && !!document.querySelector('#modal .tbl td.stk .flame')`), 'v65 (reviews #132 #134): the Friends ladder: you and Rival, with the win streaks');
   await click('[data-act=close]');
   // your own profile from the start menu, and the opponent's name in the gauntlet opens theirs
   await click('#top [data-act=menu]'); await sleep(200); await click('#top [data-act=home-menu]'); await sleep(150); await click('#modal [data-act=my-profile]');
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .prof')`)); i++) await sleep(100);
   ok(await ev(`/Tester King/.test(document.querySelector('#modal .pname').textContent) && !!document.querySelector('#modal .pname .kingmark') && !!document.querySelector('#modal .phl')`), 'your own profile from the start menu (King mark, most played heroes)');
   await shot('26-my-profile'); await noHScroll('my profile');
+  await click('#modal [data-act=avatar-pick]'); await sleep(200);
+  ok(await ev(`document.querySelectorAll('#modal .avpick').length === B.PORTRAITS_FREE.length + B.PORTRAIT_UNLOCKS.length && document.querySelectorAll('#modal .avpick:not(.locked)').length >= 4`), 'v65 (review #131): the portrait picker: the free ones and those your level opened, the rest locked');
+  await ev(`document.querySelectorAll('#modal .avpick:not(.locked)')[2].click()`); for (let i = 0; i < 30 && !(await ev(`__bal.acct.avatar === B.PORTRAITS_FREE[2]`)); i++) await sleep(100);
+  ok(await ev(`__bal.acct.avatar === B.PORTRAITS_FREE[2] && !!document.querySelector('#modal .avpick.on')`), '...a tap makes it your picture');
   await click('[data-act=close]');
 }
 
@@ -562,7 +571,7 @@ if (!REMOTE) {
 await ev(`__bal.ACT['new-run']()`); await sleep(150);
 await pickHero(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
 await ev(`(() => { const r = __bal.run; B.Run.gainRelic(r, 'quill'); B.Run.gainRelic(r, 'ledger'); r.pending = []; r.step -= 1; r.fightNo = 0; B.Run.advance(r); __bal.render(); })()`); await sleep(200);
-ok(await ev(`document.querySelectorAll('.banners.three .banner').length === 3`), "v50: the Pathfinder's Quill shows three paths");
+ok(await ev(`document.querySelectorAll('.banners.rb3 .banner').length === 3`), "v50: the Pathfinder's Quill shows three paths");
 await shot('27-three-paths'); await noHScroll('three paths'); await noVScroll('three paths');
 await ev(`(() => { const r = __bal.run; r.phase = 'map'; r.opts = [{ type: 'shop', kind: 'itemShop' }]; B.Run.choose(r, 0); __bal.render(); })()`); await sleep(200);
 ok(await ev(`[...document.querySelectorAll('.buyb')].filter(b => /Free!/.test(b.textContent)).length === 1`), "v50: the Merchant's Ledger shows one free offer");

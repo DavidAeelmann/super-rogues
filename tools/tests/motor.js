@@ -245,7 +245,9 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   run = fresh(8, 'gambler'); run.gold = 3;
   ok(Run.canChoose(run, Run.eventChoices(run)[0]).why === 'Needs 5 gold' && Run.eventAct(run, 0) === null, 'a choice you cannot afford is refused, with the reason');
   run = fresh(9, 'mercs'); Run.addHero(run, Object.keys(B.HEROES).find(k => !run.heroes.some(h => h.key === k)));
-  ok(/full/.test(Run.canChoose(run, Run.eventChoices(run)[0]).why) && Run.canChoose(run, Run.eventChoices(run)[2]).ok, 'Mercenary Camp: hiring needs room in the team, sparring does not');
+  run.gold = 50; { const ch = Run.eventChoices(run)[0], old = run.heroes[1], n = run.heroes.length;
+    ok(ch.swap && ch.target === 'hero' && Run.canChoose(run, ch).ok && Run.eventTargets(run, ch).length === n && Run.canChoose(run, Run.eventChoices(run)[2]).ok, 'v65 (review #128): with a full team, hiring at the Mercenary Camp asks which hero steps aside');
+    Run.eventAct(run, 0, String(old.uid)); ok(run.heroes.length === n && !run.heroes.some(h => h.uid === old.uid) && run.heroes.some(h => h.key === ch.hero && h.lvl === old.lvl), 'v65 (review #128): the hired hero takes that hero\'s place and level'); }
   run = fresh(9, 'mercs'); const hk = Run.eventChoices(run)[1].hero; Run.eventAct(run, 1);
   ok(run.heroes.length === 3 && run.heroes[2].key === hk && run.gold === 44, 'Mercenary Camp: the named hero joins for 6 gold');
   // armory: 3 items of 3 different types, take one
@@ -961,12 +963,16 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(nw && nw.lvl === 4 && nw.xp === old.xp && nw.specs.length === 3 && nw.specs.every((id, i) => B.HEROES[key].specs[i].some(p => p.id === id)) && nw.items.join() === 'longsword,chainmail' && nw.pos && nw.pos.c === old.pos.c, 'it takes the level, XP, place and items of the one it replaces, with powers picked for its levels');
   // victory kinds and league points
   ok(B.victoryOf(3).id === 'perfect' && B.victoryOf(2).id === 'gold' && B.victoryOf(1).id === 'bronze', 'victory kinds: Perfect (no fight lost), Gold, Bronze');
-  ok(B.runLp({ done: true, lives: 3, duels: 2 }, 0) === 45 && B.runLp({ done: true, lives: 1, duels: 0 }, 2) === 18, 'a completed run pays by its kind, +5 a duel, -2 a league above Bronze');
-  ok(B.runLp({ done: false, fights: 2, duels: 0 }, 0) === -18 && B.runLp({ done: false, fights: 8, duels: 1 }, 0) === 5, 'a run out of lives costs points, less the further it got');
+  ok(B.runLp({ done: true, duels: 2, lost: 0, streak: 3 }, 0) === 43 && B.runLp({ done: true, duels: 1, lost: 1, streak: 1 }, 2) === 23, 'v65 (review #129): a completed run: +10 a duel, +20 the final, -8 a PvP fight lost, +1 per run of the streak');
+  ok(B.runLp({ done: false, duels: 0, lost: 2 }, 0) === 0 && B.runLp({ done: false, duels: 0, lost: 2 }, 1) === -16 && B.runLp({ done: false, duels: 1, lost: 1 }, 1) === 2 && B.runLp({ done: false, fights: 9, streak: 4 }, 1) === 0, 'v65 (review #129): only PvP fights move LP (PvE none, no streak on a lost run); Bronze never loses LP');
+  ok(B.lpParts({ done: true, duels: 1, lost: 1, streak: 2 }).map(x => x.id + x.lp).join() === 'duel10,final20,loss-8,streak2', 'v65: the parts of a run\'s LP, for the end screen');
+  ok(B.UNLOCKS.filter(u => u.kind === 'portrait').length === 42 && B.portraitLevel('bastion') === 1 && B.portraitLevel(B.PORTRAIT_UNLOCKS[0]) === 2 && B.portraitLevel('nope') === 0 && B.lockedFor(1).filter(id => HEROES[id]).length === 26 && B.lockedFor(1).length === B.UNLOCKS.filter(u => u.lvl > 1 && u.kind !== 'portrait').length, 'v65 (review #131): 42 hero portraits, one a level from level 2; a portrait never locks a hero');
   // the trophies of a run
   const t = Run.newRun(33); Run.pickStart(t, t.startOffer.slice(0, 3), t.relicOffer[0]); Run.startDuel(t, Run.randomGhost(t, 3), 'pvp', 3);
   const Wt = Run.gauntletWorld(t); Wt.over = true; Wt.winner = 0; Run.finishDuel(t, Wt);
   ok(t.duelsWon === 1 && t.trophies.length === 1 && t.trophies[0].name && !t.trophies[0].final, 'a won duel is a trophy of the run');
+  Run.startDuel(t, Run.randomGhost(t, 6), 'pvp', 6); const Wl = Run.gauntletWorld(t); Wl.over = true; Wl.winner = 1; Run.finishDuel(t, Wl);
+  ok(t.pvpLost === 1 && t.duelsWon === 1, 'v65 (review #129): a lost duel counts as a PvP fight lost (league points)');
 }
 console.log(`motor: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

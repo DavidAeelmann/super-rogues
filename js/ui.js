@@ -39,7 +39,7 @@
   }
   const myName = () => store.get('balance.name', '') || '';
   // WHAT: ACCOUNT. acct = what the server told us about this player (crowns, perks, level, league, Elo). setAcct() copies the server answer in and shows toasts for new XP; hasPerk() = does he own a Crown Shop perk.
-  const setElo = (r, quiet) => { if (r && r.elo != null) store.set('balance.elo', r.elo); if (r && r.league != null) store.set('balance.league', { league: r.league, lp: r.lp }); setAcct(r, quiet); };
+  const setElo = (r, quiet) => { if (r && r.elo != null) store.set('balance.elo', r.elo); if (r && r.league != null) store.set('balance.league', { league: r.league, lp: r.lp, streak: r.streak }); setAcct(r, quiet); };
   // v27 (owner + review #25 by David): the account. Crowns (earned the first time you reach a league each season, and
   // from invited friends), Crown Shop unlocks, the King Tier, profiles and the invite link. The server is the source of
   // truth (api/player.js); this cache only decides what to show before it answers.
@@ -47,7 +47,7 @@
   const acct = Object.assign({ account: false, crowns: 0, perks: [] }, store.get(ACCT, null) || {});
   const hasPerk = id => B.hasPerk(acct.perks, id);
   const isDefaultName = n => !n || /^Player [a-f0-9]{4}$/.test(n);
-  const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account'];
+  const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account', 'streak', 'bstreak', 'avatar'];
   // WHAT: copies the server's account answer into acct, remembers it, and shows what XP was earned.
   function setAcct(r, quiet) {
     if (!r || typeof r !== 'object') return;
@@ -58,7 +58,7 @@
     applySkin();
   }
   // v30 (review #28, PC boy): account XP and level. A toast for what was earned; a level up names what it unlocked
-  const unlockName = u => (u.kind === 'hero' ? HEROES[u.id] : u.kind === 'item' ? ITEM[u.id] : RELIC[u.id]).name;
+  const unlockName = u => u.kind === 'portrait' ? HEROES[u.id].name + ' portrait' : (u.kind === 'hero' ? HEROES[u.id] : u.kind === 'item' ? ITEM[u.id] : RELIC[u.id]).name;
   // WHAT: the small "+N XP" message when account XP is earned (and "Level up! New hero: ..." when a level unlocks something).
   function xpToast(list) {
     const n = list.reduce((a, g) => a + g.xp, 0), up = list.filter(g => g.up).pop();
@@ -70,7 +70,15 @@
   // each run with looming rewards. It should be a rewarding dopamine hit and encourage playing again"): the title shows
   // your level, its bar and the next reward; every game keeps the XP it earned (run.xpLog) and the game-over screen fills
   // the bar line by line (level ups burst with confetti) and ends on the next reward waiting for you
-  const unlockPic = (u, px) => u.kind === 'hero' ? img(u.id, px, 'por') : ico(u.kind, u.id, px);
+  const unlockPic = (u, px) => u.kind === 'portrait' ? `<span class="pfp">${img(u.id, px, 'por')}</span>` : u.kind === 'hero' ? img(u.id, px, 'por') : ico(u.kind, u.id, px);
+  // v65 (review #131): a player's picture is a hero portrait (one of the four free ones, picked from the public code, until they choose one)
+  // WHAT: the portrait a player shows (avKey) and its round frame (avatarHTML), on the profile, the ladder and the top bar.
+  const avKey = (key, code) => key && HEROES[key] ? key : B.PORTRAITS_FREE[(parseInt(String(code || '').slice(0, 4), 16) || 0) % B.PORTRAITS_FREE.length];
+  const avatarHTML = (key, code, px, cls = '') => `<span class="pfp ${cls}" style="--px:${px}px">${img(avKey(key, code), px, 'por')}</span>`;
+  // v65 (review #133, David: "add big streak marker. Starts at 1. Visually goes to zero when you lose a run. Visually increase when you win consecutive runs"):
+  // WHAT: the win streak flame (completed runs in a row) with its number; hot from 2 on, cold at 0.
+  const streakOf = () => acct.streak == null ? 1 : acct.streak | 0;
+  const flameHTML = (n, cls = '') => `<span class="flame ${n >= 2 ? 'hot' : n <= 0 ? 'cold' : ''} ${cls}" title="Win streak: ${n} run${n === 1 ? '' : 's'} won in a row"><i>🔥</i><b>${n}</b></span>`;
   const nextUnlock = lvl => B.UNLOCKS.find(u => u.lvl > lvl) || null;
   const capFirst = t => String(t).charAt(0).toUpperCase() + String(t).slice(1);
   function logGameXp(r) { if (run && r && Array.isArray(r.xp) && r.xp.length) { (run.xpLog = run.xpLog || []).push(...r.xp.map(g => ({ why: g.why, xp: g.xp | 0, k: g.k || 'first' }))); } }
@@ -323,9 +331,10 @@
       // v49 (review #60): the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
       // the ladder, suggestions, and the menu sheet with the rest)
       const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button><button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
+      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button><button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
+    if (run.phase === 'over' && screen === 'run') { h.innerHTML = `<span class="grow"></span><button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
     const stepN = Math.max(0, run.step);
     const g = run.g;
     const prog = run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + Run.seqOf(run).length;
@@ -355,6 +364,7 @@
     header();
     const m = $('#screen');
     const key = screenKey();
+    const wm0 = $('#wmap'), keepMap = wm0 ? { key: wm0.dataset.key, top: wm0.scrollTop } : null;   // v65: a redraw of the map keeps where the road was scrolled to
     if (key !== ui.lastKey) { ui.info = null; ui.gsel = null; ui.heroInfo = 0; ui.selUid = 0; ui.confirmBuy = null; ui.rmore = false; }   // v62 (reviews #77 #89): what was open on the screen before (unit / boss / item descriptions, selections) does not follow you to the next one
     if (screen === 'title' || !run) m.innerHTML = titleHTML();
     else if (screen === 'battle') { m.innerHTML = battleHTML(); mountBoard(); }
@@ -365,7 +375,7 @@
     else if (run.phase === 'recruit') m.innerHTML = recruitHTML();
     else if (run.phase === 'gauntlet') m.innerHTML = gauntletHTML();
     else if (run.phase === 'start') m.innerHTML = startHTML();
-    else if (run.phase === 'map') m.innerHTML = mapHTML();
+    else if (run.phase === 'map') { m.innerHTML = mapHTML(); layoutMap(keepMap); }
     else if (run.phase === 'deploy') { m.innerHTML = deployHTML(); mountBoard(); }
     else if (run.phase === 'shop') m.innerHTML = shopHTML();
     else if (run.phase === 'event') m.innerHTML = eventHTML();
@@ -376,6 +386,7 @@
     if (run && screen === 'run' && run.phase === 'map') findDuels();
     if (screen === 'result' && ui.result && !ui.result.fx) celebrate(ui.result);
     if (run && screen === 'run' && run.phase === 'over' && !run.xpShown) animXp();
+    if (run && screen === 'run' && run.phase === 'over' && run.overStep === 2 && !run.stkShown) animStreak();
     if (screen === 'title' || !run) startTrailer();
     autoGear();
   }
@@ -412,6 +423,7 @@
         ${has ? `<button class="primary big cta" data-act="continue-run"><span>${I('play')} Continue</span><small>${run.phase === 'gauntlet' ? 'Final fight' : 'Day ' + (Math.max(0, run.step) + 1) + '/' + Run.seqOf(run).length} · ${run.heroes.length} hero${run.heroes.length === 1 ? '' : 'es'} · ${run.gold} gold</small></button>
         <button class="giveup" data-act="give-up">${I('flag')} Give up</button>`
         : `<button class="primary big cta play" data-act="new-run">${I('play')} Play</button>`}
+        ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
     </section>`;
@@ -544,21 +556,69 @@
     return `<div class="shead"><b>🗺 Your journey</b><button data-act="close">✕</button></div>${trackHTML()}
       <ul class="plegend"><li>${I('swords')} Fight</li><li>${I('help')} Shop or event</li><li>${I('skull')} Boss</li><li>${I('cart')} Last shop</li><li>${I('trophy')} Final fight</li></ul>`;
   }
-  // v64 (review #123, David: "the choose your path screen is now cooler, with a clearer indication of where you are in your run, like a map"): a trail of the
-  // whole run on top of the map: the days behind you checked, your team's leader standing on today, the bosses, the duel days and the final fight ahead
-  // WHAT: the journey trail at the top of the map screen.
-  function journeyHTML() {
-    const seq = Run.seqOf(run); let fn = 0;
-    const nodes = seq.map((t, i) => {
-      if (t === 'F' || t === 'B') fn++;
-      const pvp = t === 'F' && (CFG.pvpFights || []).includes(fn), k = i < run.step ? 'done' : i === run.step ? 'cur' : 'next';
-      const icon = t === 'B' ? img(Run.bossOf(run, seq.slice(0, i + 1).filter(x => x === 'B').length), 22, 'por') : t === 'G' ? I('trophy') : pvp ? I('ghost') : t === 'F' ? I('swords') : t === 'S' ? I('cart') : I('help');
-      const kind = t === 'B' ? 'boss' : t === 'G' ? 'final' : pvp ? 'pvp' : t === 'F' ? 'fight' : 'shop';
-      return `<span class="jn ${k} ${kind}" title="Day ${i + 1}">${k === 'cur' && run.heroes[0] ? `<span class="jtok">${img(run.heroes[0].key, 26, 'por')}</span>` : ''}<span class="ji">${k === 'done' ? '✓' : icon}</span></span>`;
+  // v64 (review #123): a trail of the whole run on top of the map. v65 (review #130, David: "the map is horrible. Make it vertical and cool"): the run is a road
+  // climbing a valley at night, from the camp at the bottom to the castle of the final fight at the top. The days behind you are lit gold, your leader stands
+  // where you are, today's choices are the fork in the road (the posters), and the days ahead wind up into the dark with their bosses and duel days. The road
+  // scrolls inside the screen and opens on today.
+  // WHAT: the road of the map screen (one node per day; today = the posters). ROAD = the sizes in px; layoutMap() fits it to the screen and scrolls to today.
+  const ROAD = { row: 74, top: 150, bottom: 92 };
+  const roadToday = () => document.body.classList.contains('desk') ? 400 : 262;
+  function mapRoad() {
+    const seq = Run.seqOf(run), n = seq.length, step = Math.max(0, Math.min(n - 1, run.step)), today = roadToday(), opts = run.opts || [];
+    const ahead = Math.max(0, n - 2 - step), todayTop = ROAD.top + ahead * ROAD.row, H = todayTop + today + step * ROAD.row + ROAD.bottom;
+    const yOf = i => i === n - 1 && i !== step ? 74 : i > step ? todayTop - (i - step - 0.5) * ROAD.row : i === step ? todayTop + today / 2 : todayTop + today + (step - 1 - i + 0.5) * ROAD.row;
+    const xOf = i => i === n - 1 ? 50 : Math.round(50 + 29 * Math.sin(i * 1.05 + 0.6));
+    let fn = 0, bn = 0; const info = seq.map((t, i) => {
+      if (t === 'F' || t === 'B') fn++; if (t === 'B') bn++;
+      const pvp = t === 'F' && (CFG.pvpFights || []).includes(fn);
+      return { t, i, pvp, boss: t === 'B' ? Run.bossOf(run, bn) : null, kind: t === 'B' ? 'boss' : t === 'G' ? 'final' : pvp ? 'pvp' : t === 'F' ? 'fight' : t === 'S' ? 'shop' : 'event' };
+    });
+    const nextBoss = info.find(d => d.i > step && d.boss);
+    const icon = d => d.boss ? img(d.boss, 40, 'por') : d.kind === 'final' ? I('trophy') : d.pvp ? I('ghost') : d.kind === 'fight' ? I('swords') : d.kind === 'shop' ? I('cart') : I('help');
+    const what = d => d.boss ? `Boss · ${esc(B.BOSSES[d.boss].name)}${d === nextBoss ? ` <i>in ${d.i - step} day${d.i - step === 1 ? '' : 's'}</i>` : ''}` : d.kind === 'final' ? 'Final fight' : d.pvp ? 'Duel · PvP' : d.kind === 'fight' ? 'Fight' : d.kind === 'shop' ? 'Last shop' : 'Shop or event';
+    const start = [50, H - ROAD.bottom / 2], last = step ? [xOf(step - 1), yOf(step - 1)] : start;
+    const k = opts.length || 1, ox = k === 1 ? [50] : k === 2 ? [27, 73] : [17, 50, 83], top0 = todayTop + 34, bot0 = todayTop + today - 12;
+    const seg = (a, b) => `M${a[0]} ${a[1]} C${a[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${b[1]}`;
+    const past = [start].concat(info.filter(d => d.i < step).map(d => [xOf(d.i), yOf(d.i)]));
+    const after = info.filter(d => d.i > step).map(d => [xOf(d.i), yOf(d.i)]), nextPt = after[0];
+    const paths = past.slice(1).map((p, j) => `<path class="rpast" d="${seg(past[j], p)}"/>`).join('')
+      + ox.map(x => `<path class="rfork" d="${seg(last, [x, bot0])}"/>${nextPt ? `<path class="rfork" d="${seg([x, top0], nextPt)}"/>` : ''}`).join('')
+      + after.slice(1).map((p, j) => `<path class="rnext" d="${seg(after[j], p)}"/>`).join('');
+    const road = `<svg class="wroad" viewBox="0 0 100 ${H}" preserveAspectRatio="none" style="height:${H}px" aria-hidden="true">${paths.replace(/<path class="(\w+)"/g, '<path class="bed"')}${paths}</svg>`;
+    // decorations: pines down in the valley, rocks higher up, never on the road (the road keeps between 21% and 79%)
+    const decor = []; for (let y = 120, j = 0; y < H - 40; y += 58, j++) {
+      const side = (j + (run.seed | 0)) % 2, x = side ? 88 + ((j * 37 + (run.seed | 0)) % 9) : 3 + ((j * 53 + (run.seed | 0)) % 9), z = y / H;
+      decor.push(`<span class="wdec ${z < 0.3 ? 'rock' : z < 0.6 ? 'pine dk' : 'pine'}" style="left:${x}%;top:${y}px;--s:${0.75 + ((j * 13) % 5) / 10}"></span>`);
+    }
+    const nodes = info.filter(d => d.i !== step).map(d => {
+      const st = d.i < step ? 'done' : 'next', x = xOf(d.i), y = yOf(d.i), far = nextBoss && d.i > nextBoss.i && d.kind !== 'final';
+      const left = x > 55, label = st === 'done' ? '' : `<span class="rl ${left ? 'lft' : 'rgt'}" style="--room:${left ? x : 100 - x}"><b>Day ${d.i + 1}</b> ${what(d)}</span>`;
+      return `<span class="rn ${d.kind} ${st} ${far ? 'far' : ''}" style="left:${x}%;top:${y}px" title="Day ${d.i + 1}">${d.kind === 'final' ? '<span class="castle" aria-hidden="true"></span>' : ''}<span class="ri">${st === 'done' ? '✓' : icon(d)}</span>${label}</span>`;
     }).join('');
-    const t = seq[run.step], left = seq.slice(run.step + 1).indexOf('B');
-    const today = t === 'B' ? 'Boss day' : t === 'S' ? 'Last shop' : (run.opts || []).some(o => o.type === 'duel') ? 'Duel day' : t === 'F' ? 'Fight day' : 'Shop or event';
-    return `<div class="journey" role="img" aria-label="Day ${run.step + 1} of ${seq.length}"><div class="jtrail">${nodes}</div><div class="jcap"><b>Day ${run.step + 1}/${seq.length}</b> · ${today}${left >= 0 ? ` · boss in ${left + 1} day${left ? 's' : ''}` : t !== 'B' ? ' · then the final fight' : ''}</div></div>`;
+    const t = seq[step], title = t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : t === 'G' ? 'The final fight' : 'Choose your path';
+    const leader = run.heroes[0];
+    return `<div class="wmap" id="wmap" data-today="${todayTop}" data-key="${run.seed}:${step}"><div class="wtrack" style="height:${H}px"><span class="wsky"></span><span class="wpeaks"></span>${decor.join('')}${road}
+      <span class="rn camp done" style="left:50%;top:${start[1]}px"><span class="ri">⛺</span><span class="rl rgt"><b>Start</b></span></span>${nodes}
+      ${leader ? `<span class="rtok" style="left:${last[0]}%;top:${last[1]}px">${img(leader.key, 44, 'por')}</span>` : ''}
+      <div class="rtoday" style="top:${todayTop}px;height:${today}px"><div class="rday"><b>Day ${step + 1}/${n}</b> ${title}</div>
+        ${run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(run.nextMod))}</p>` : ''}
+        <div class="banners rb${k}">${opts.map(optHTML).join('')}</div></div></div></div>`;
+  }
+  // WHAT: fits the road to the screen (the page itself never scrolls) and opens it on today; a redraw on the same day keeps where you scrolled to.
+  function layoutMap(keep) {
+    const wm = $('#wmap'); if (!wm) return;
+    let y = 0; for (let e = wm; e; e = e.offsetParent) y += e.offsetTop;
+    const strip = $('.map .mstrip'), sh = strip && strip.offsetParent ? strip.offsetHeight + 8 : 0;
+    const vh = window.visualViewport ? window.visualViewport.height : innerHeight;
+    wm.style.height = Math.max(240, Math.round(vh - y - sh - 8)) + 'px';
+    const over = document.documentElement.scrollHeight - vh; if (over > 0) wm.style.height = Math.max(240, wm.clientHeight - Math.ceil(over)) + 'px';   // the paddings below it
+    if (keep && keep.key === wm.dataset.key) { wm.scrollTop = keep.top; return; }
+    wm.scrollTop = Math.max(0, +wm.dataset.today - Math.round(wm.clientHeight * (document.body.classList.contains('desk') ? 0.12 : 0.16)));
+  }
+  // WHAT: the team under the road on phones (portraits with levels, items waiting in the bag, powers); on computers the full party panel sits beside it.
+  function mstripHTML() {
+    return `<div class="mstrip"><button class="mteam" data-act="team" aria-label="Team">${run.heroes.map(h => `<span class="mh">${img(h.key, 40, 'por')}<i>${h.lvl}</i></span>`).join('')}${run.bag.length ? `<span class="mbag">${I('bag')}<b>${run.bag.length}</b></span>` : ''}</button>
+      ${run.relics.length ? `<span class="mrel">${run.relics.slice(0, 4).map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 28)}</button>`).join('')}${run.relics.length > 4 ? `<button class="mmore" data-act="team">+${run.relics.length - 4}</button>` : ''}</span>` : ''}</div>`;
   }
   // WHAT: the little progress track shown above the map.
   function trackHTML() {
@@ -589,7 +649,7 @@
       const list = mobsOf(o), show = list.slice(0, 3), more = list.length - show.length;
       const faces = `<span class="mobs m${show.length}">${show.map(m => `<span class="mob ${m.elite ? 'elite' : ''}">${img(m.key, o.diff === 'boss' ? 96 : 64, 'por')}${m.n > 1 ? `<i>×${m.n}</i>` : ''}${m.elite ? '<u>★</u>' : ''}</span>`).join('')}${more > 0 ? `<span class="mob more">+${more}</span>` : ''}</span>`;
       if (o.diff === 'boss') { const b = o.enemies.map(e => B.BOSSES[e.key]).find(Boolean); return posterHTML(i, 'boss', `<span class="rays"></span><span class="mobs m1 bigmob"><span class="mob">${img(b.key, 96, 'por')}</span></span>`, esc(b.name), `<span class="small">${fmt(String(b.desc).split(/(?<=[.!?])\s/)[0])}</span>`, '+' + o.gold + ' gold', I('skull') + I('skull') + I('skull') + I('skull')); }
-      return posterHTML(i, o.diff, faces, B.DIFF[o.diff].name + ' fight', `<span class="mn">${list.map(m => esc((B.MOBS[m.key] || B.BOSSES[m.key]).name) + (m.n > 1 ? ' ×' + m.n : '') + (m.elite ? ' ★' : '')).join(' · ')}</span>`, '+' + o.gold + ' gold', I('skull').repeat(SKULLS[o.diff] || 1));
+      return posterHTML(i, o.diff, faces, B.DIFF[o.diff].name + ' fight', `<span class="mn">${list.map(m => (m.elite ? '<b class="elt">★ Elite</b> ' : '') + esc((B.MOBS[m.key] || B.BOSSES[m.key]).name) + (m.n > 1 ? ' ×' + m.n : '')).join(' · ')}</span>`, '+' + o.gold + ' gold', I('skull').repeat(SKULLS[o.diff] || 1));
     }
     if (o.type === 'shop') {
       const seed = run.step * 3 + i;
@@ -604,7 +664,7 @@
       if (!o.opp) return `<button class="banner v2 b-duel wait" disabled><span class="scene"><span class="rays"></span><span class="evbig">${I('ghost')}</span></span><span class="bt">Duel</span><span class="bd"><span class="small">Looking for an opponent…</span></span></button>`;
       const mine = Run.powerOf(run, run.heroes), th = Run.ghostPower(o.opp), lab = Run.powerLabel(mine, th);
       const faces = `<span class="mobs m3">${o.opp.team.slice(0, 3).map(h => `<span class="mob">${img(h.key, 64, 'por')}</span>`).join('')}</span>`;
-      return posterHTML(i, 'duel', `<span class="rays"></span>${faces}`, `Duel: ${esc(o.opp.name)}`, `<span class="small">Another player's team. Win to steal a hero, an item or a power.</span>`, `<span class="pw ${lab.tone}">${I('swords')} ${lab.text}</span><span class="pw me">Power ${th} · yours ${mine}</span>`, 'PvP');
+      return posterHTML(i, 'duel', `<span class="rays"></span>${faces}`, `Duel: ${esc(o.opp.name)}`, `<span class="small">Another player's team. Win to steal a hero, item or power.</span>`, `<span class="pw ${lab.tone}">${I('swords')} ${lab.text}</span><span class="pw me">Power ${th} · yours ${mine}</span>`, 'PvP');
     }
     if (o.type === 'event') { const e = EVENT[o.id]; return posterHTML(i, 'event' + (e.rar === 'rare' ? ' b-rare' : ''), `<span class="rays"></span><span class="evbig">${evIcon(o.id)}</span>`, esc(e.name), `<span class="small">${esc(e.text)}</span>`, '', EV_RAR[e.rar] || ''); }
     return '';
@@ -623,12 +683,9 @@
     if (M.rewardGold) out.push(`win it for +${M.rewardGold} gold`);
     return out.join(', ');
   }
-  // WHAT: THE MAP SCREEN: the day, the next boss info, and the options to choose from (run.opts built by Run.advance).
+  // WHAT: THE MAP SCREEN: the road (mapRoad) with today's options (run.opts built by Run.advance), the team strip under it on phones, the party panel beside it on computers.
   function mapHTML() {
-    const t = Run.seqOf(run)[run.step];
-    const title = t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';
-    return `<section class="map"><div class="mapmain">${journeyHTML()}<h2 class="sc">${title}</h2>${run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(run.nextMod))}</p>` : ''}<div class="banners ${run.opts.length === 1 ? 'one' : run.opts.length === 3 ? 'three' : ''}">${run.opts.map(optHTML).join('')}</div>
-      </div><aside class="mapside">${partyHTML()}</aside></section>`;
+    return `<section class="map road"><div class="mapmain">${mapRoad()}${mstripHTML()}</div><aside class="mapside">${partyHTML()}</aside></section>`;
   }
   // review #18: the party under the map (levels, XP, worn items, relics) and the next boss, so each choice is informed
   // WHAT: the party row (hero portraits with levels and items) shown under the deploy board and on the map.
@@ -697,7 +754,7 @@
     // that do something special get a card with what they do; the plain ones are small chips under them
     const big = groups.filter(g => g.what), small = groups.filter(g => !g.what);
     const nm = g => `${esc(g.name)}${g.n > 1 ? ' ×' + g.n : ''}`;
-    return `<div class="foes"><div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
+    return `<div class="foes ${gau ? 'gau' : ''}"><div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
       ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}">${img(g.key, 34, 'por')}<div><b>${nm(g)}${g.ranged ? ' ' + I('bow') : ''}${g.elite ? ` <span class="elt">★ ${esc(g.elite)}</span>` : ''}</b><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div></div>`).join('')}</div>` : ''}
       ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">★</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
   }
@@ -839,7 +896,8 @@
     // nobody fell, 1 more if the team also kept 60% of its health. They light up one by one (celebrate()).
     const meta = [r.time != null ? `<span title="Time">⏱ ${clock(r.time)}</span>` : '', r.foes ? `<span title="Enemies down">💥 ${foesDown}/${r.foes.length}</span>` : '', `<span title="Heroes standing">♥ ${hs.filter(o => o.s.alive).length}/${hs.length}</span>`, r.timeout ? '<span>time ran out</span>' : ''].filter(Boolean).join('');
     const stars = r.stars || 0;
-    const starRow = r.win ? `<div class="rstars" aria-label="${stars} of 3 stars">${[0, 1, 2].map(i => `<i class="st ${i < (fx.stars || 0) ? 'lit' : ''} ${i < stars ? 'earn' : ''}">★</i>`).join('')}${stars === 3 ? `<b class="flawless ${fx.stars >= 3 ? 'on' : ''}">Flawless!</b>` : ''}</div>` : '';
+    const STAR_WHY = ['Won', 'Nobody fell', '60%+ health'];   // v65 (review #129, David: "what do the stars mean?"): each star says what it is for
+    const starRow = r.win ? `<div class="rstars" aria-label="${stars} of 3 stars">${[0, 1, 2].map(i => `<span class="stw ${i < stars ? 'earn' : ''}"><i class="st ${i < (fx.stars || 0) ? 'lit' : ''} ${i < stars ? 'earn' : ''}">★</i><small>${STAR_WHY[i]}</small></span>`).join('')}${stars === 3 ? `<b class="flawless ${fx.stars >= 3 ? 'on' : ''}">Flawless!</b>` : ''}</div>` : '';
     const loseTag = !r.win && r.left != null ? `<p class="losetag">${esc(Run.lossTag(r.left, r.timeout))}</p>` : '';   // v62 (review #94): takes the place of the stars of a win
     const chips = [];
     if (r.win && !r.duel) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
@@ -1044,33 +1102,55 @@
         <div class="stack againrow"><button class="primary big cta again" data-act="new-run">▶ Play again</button><button data-act="scores" aria-label="Ladder">🏆</button></div></section>`;
     }
     // v64 (review #125): a completed run is a Perfect, Gold or Bronze victory by the lives left
+    // v65 (review #129, David: "the screens are a bit cluttered now. I dont even know where to look. The next button is too small"): one thing per screen and
+    // one big button at the bottom. Screen 1: how the run ended and the XP; screen 2: the win streak and the league
     const won = run.result === 'clear', V = won ? B.victoryOf(run.lives) : null;
-    const head = won ? `<div class="vbadge" style="--vc:${V.color}"><span class="vi">${V.icon}</span><b>${V.name} victory!</b><small>${run.lives === CFG.lives ? 'No fight lost' : `${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left`}</small></div>`
-      : `<div class="evmed over">${I('flag')}</div><h2 class="sc">Out of lives</h2>`;
-    // v64 (review #127, David: "final victory screen focused on first the new xp level and unlocks, satisfying, and next screen on new leagues and progression")
     if ((run.overStep || 1) === 1) {
+      const head = won ? `<div class="vbadge" style="--vc:${V.color}"><span class="vi">${V.icon}</span><b>${V.name} victory!</b><small>${run.lives === CFG.lives ? 'No fight lost' : `${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left`}</small></div>`
+        : `<div class="vbadge lost" style="--vc:#ff6b6b"><span class="vi">${I('flag')}</span><b>Out of lives</b><small>${run.won} fight${run.won === 1 ? '' : 's'} won</small></div>`;
       return `<section class="title over1">${head}${xpPanelHTML()}
-        <div class="stack againrow"><button class="primary big cta" data-act="over-next">Next ${I('arrow')}</button></div></section>`;
+        <div class="overbar"><button class="primary big cta wide" data-act="over-next">Next ${I('arrow')}</button></div></section>`;
     }
     const tr = run.trophies || [];
-    const trophies = tr.length ? `<div class="trophies"><b>${I('trophy')} Trophies this run</b><div>${tr.map(t => `<span class="tro ${t.final ? 'fin' : ''}">🏆 ${esc(t.name)}${t.final ? ' <i>final</i>' : ''}</span>`).join('')}</div><small>+${tr.length} 👑</small></div>` : '';
-    const stats = `<p class="ovline">${run.heroes.map(h => img(h.key, 26, 'por')).join('')}<span><b>${run.won}</b> fight${run.won === 1 ? '' : 's'} won · ${won ? `<b>${run.lives}</b> ${run.lives === 1 ? 'life' : 'lives'} left` : `fell at fight <b>${run.fightNo}</b>`}</span></p>`;
-    return `<section class="title over2">${head}${leagueCardHTML(run.lgEnd, won)}${trophies}${stats}
-      <div class="stack againrow"><button class="primary big cta again" data-act="new-run">▶ Play again</button><button data-act="scores" aria-label="Ladder">🏆</button></div></section>`;
+    const trophies = tr.length ? `<div class="trophies"><b>${I('trophy')} Trophies this run <small>+${tr.length} 👑</small></b><div>${tr.map(t => `<span class="tro ${t.final ? 'fin' : ''}">🏆 ${esc(t.name)}${t.final ? ' <i>final</i>' : ''}</span>`).join('')}</div></div>` : '';
+    return `<section class="title over2"><h2 class="sc ovh">${won ? `${V.icon} Run complete` : 'Run over'}</h2>${streakCardHTML(run.lgEnd)}${leagueCardHTML(run.lgEnd, won)}${trophies}
+      <div class="overbar"><button class="primary big cta again" data-act="new-run">${I('play')} Play again</button><button class="ladb" data-act="scores" aria-label="Ladder">${I('trophy')}</button></div></section>`;
+  }
+  // v65 (review #133): the big win streak of the end screen. It shows what the streak was, then moves: one more with a burst of fire, or out to 0 (animStreak)
+  // WHAT: the win streak card of the end screen (step 2).
+  function streakCardHTML(lg) {
+    const s = lg && lg.streak; if (!s) return '';
+    const up = s.to > s.from, shown = run.stkShown ? s.to : s.from;
+    const title = up ? (s.to >= 2 ? `${s.to} wins in a row!` : 'Win streak!') : s.to === 0 && s.from > 0 ? 'Streak lost' : 'Win streak';
+    const sub = up ? `+${s.to * B.LP.streak} LP · best ${s.best}` : `Win a run to light it again · best ${s.best}`;
+    return `<div class="stkcard ${up ? 'up' : s.to === 0 ? 'out' : ''}" id="stkcard" data-to="${s.to}">${flameHTML(shown, 'big')}<div><b>${title}</b><small>${sub}</small></div></div>`;
+  }
+  async function animStreak() {
+    const card = $('#stkcard'); if (!card || run.stkShown) return;
+    run.stkShown = true; save();
+    const to = +card.dataset.to, f = card.querySelector('.flame'), b = f && f.querySelector('b'); if (!b) return;
+    await new Promise(r => setTimeout(r, B.Juice && B.Juice.reduced() ? 0 : 900));
+    if (!f.isConnected) return;
+    b.textContent = to; f.classList.toggle('hot', to >= 2); f.classList.toggle('cold', to <= 0);
+    f.classList.add(card.classList.contains('up') ? 'flare' : 'fizzle');
+    if (card.classList.contains('up')) { sfx('star'); if (B.Juice) B.Juice.confettiAt(f, 40); } else if (card.classList.contains('out')) sfx('deny');
   }
   // v64 (review #125): the league card at the end of a run: the league, the league points this run moved (and why), the bar filling from where it was, promoted or dropped
-  // WHAT: the league card of the end screen (step 2).
+  // WHAT: the league card of the end screen (step 2). v65 (review #129): the reasons are PvP fights only (duels, the final fight, PvP fights lost) and the streak.
   function leagueCardHTML(lg, won) {
     if (!lg) return run.xpWait ? '<p class="dim center">Counting your league points…</p>' : run.xpErr ? '<p class="err center">Your league points could not be saved (no connection).</p>' : '';
     const R = B.LEAGUE_RULES, L = B.LEAGUES, top = L.length - 1, from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) }, l = L[lg.league] || L[0];
     const pct = x => Math.max(0, Math.min(100, 100 * x / R.step)), start = from.league === lg.league ? pct(from.lp) : lg.promoted ? 0 : 100;
-    const duels = run.duelsWon || 0, pve = Math.max(0, (run.won || 0) - duels), why = (won ? [`${B.victoryOf(run.lives).name} victory +${B.victoryOf(run.lives).lp}`] : ['Out of lives −24', pve ? `${pve} fight${pve === 1 ? '' : 's'} won +${3 * pve}` : ''])
-      .concat(duels ? `${duels} duel${duels === 1 ? '' : 's'} won +${5 * duels}` : '', from.league ? `${L[from.league].name} league −${2 * from.league}` : '').filter(Boolean).join(' · ');
+    const parts = B.lpParts({ done: won, duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, streak: lg.streak ? lg.streak.to : 0 }), raw = parts.reduce((a, x) => a + x.lp, 0);
+    const NAME = { duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Final fight won', loss: n => `${n} PvP fight${n === 1 ? '' : 's'} lost`, streak: n => `Streak ${n}` };
+    const ICON = { duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥' };
+    const why = parts.map(x => `<span class="lpw ${x.lp < 0 ? 'neg' : 'pos'}">${ICON[x.id]} ${NAME[x.id](x.n)} <b>${x.lp > 0 ? '+' : ''}${x.lp}</b></span>`).join('')
+      + (!parts.length ? '<span class="lpw">No PvP fight this run: only duels and the final fight move LP</span>' : from.league === 0 && raw < 0 ? '<span class="lpw">Bronze never loses LP</span>' : '');
     const banner = lg.promoted ? `<div class="promo" style="--lc:${l.color}">${emblem(lg.league, 40)}<b>Promoted to ${l.name}!</b>${lg.crowns ? `<span class="crn">+${lg.crowns} 👑</span>` : ''}</div>`
       : lg.demoted ? `<div class="promo demo" style="--lc:${l.color}">${emblem(lg.league, 40)}<b>Dropped to ${l.name}</b></div>` : '';
     return `${banner}<div class="lgcard" style="--lc:${l.color};--lh:${l.hi}"><div class="lgch">${emblem(lg.league, 56)}<div><b>${l.name} league</b><span class="lgd ${lg.delta > 0 ? 'win' : lg.delta < 0 ? 'lose' : 'dim'}">${lg.delta > 0 ? '+' : ''}${lg.delta} LP</span></div></div>
       <div class="lgbar"><i style="--from:${start}%;width:${pct(lg.lp)}%"></i></div><small class="lgnext">${lg.league >= top ? `${lg.lp} LP in ${l.name}` : `${lg.lp}/${R.step} LP to ${L[lg.league + 1].name}`}</small>
-      <p class="lgwhy small">${why}</p></div>`;
+      <div class="lpwhy">${why}</div></div>`;
   }
 
   // ------------------------------------------------------------------ unit info panel
@@ -1247,7 +1327,7 @@
   async function reportRunEnd() {
     ui.result.pending = true; render();
     run.xpWait = true;   // v46: the game's XP (fights won, the boss beaten) comes back with the answer
-    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: run.duelsWon || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; Object.assign(ui.result, { lg: r.lg }); }
+    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; Object.assign(ui.result, { lg: r.lg }); }
     catch (e) { ui.result.error = e.message; run.xpErr = true; }
     run.xpWait = false;
     ui.result.pending = false; save(); render();
@@ -1532,7 +1612,7 @@
   }
   // review #14 (David): a tab per kind of content with its own Elo, to balance heroes, items and relics
   // WHAT: THE LADDER: tabs Player / Ranking / Heroes / Items / Powers. The content tabs (Elo of every piece) are a Crown Shop unlock.
-  const LADDER_TABS = [['player', 'Player'], ['players', 'Ranking']];
+  const LADDER_TABS = [['player', 'Player'], ['players', 'Global'], ['friends', 'Friends']];   // v65 (review #132): Friends = the players you follow
   // review #21 (David: "a player tab with scrolling banners for the leagues and the path between tiers")
   // WHAT: the Player tab: your league, level, rewards and the road ahead (roadmapHTML).
   function playerTabHTML(me) {
@@ -1546,20 +1626,20 @@
     }).join('');
     const path = L.map((l, i) => `<span class="pn ${i < cur ? 'done' : i === cur ? 'cur' : ''}" title="${l.name}">${emblem(i, i === cur ? 30 : 22)}</span>${i < top ? `<span class="pl"><i style="width:${i < cur ? 100 : i === cur ? Math.round(100 * lp / R.step) : 0}%"></i></span>` : ''}`).join('');
     const season = me.season || B.seasonOf(Date.now()), days = Math.max(0, Math.ceil((B.seasonEnds(season) - Date.now()) / 864e5));
-    return `<div class="ptab"><div class="pme">${emblem(cur, 52)}<div><b>${me.code ? plink(me.name || 'You', me.code) : esc(me.name || 'You')}</b><span class="pl1" style="color:${L[cur].hi}">${L[cur].name} league</span>
-        <span class="small">${cur >= top ? `${lp} LP in Celestial` : `${lp}/${R.step} LP to ${L[cur + 1].name}`}</span><span class="dim small">${me.runs} games${me.titles ? ' · 🏆 ' + me.titles + ' completed' : ''} · ${crowns(me.crowns)}</span></div></div>
+    return `<div class="ptab"><div class="pme"><span class="pwho">${avatarHTML(me.avatar || acct.avatar, me.code || acct.code, 56)}</span><div><b>${me.code ? plink(me.name || 'You', me.code) : esc(me.name || 'You')}</b><span class="pl1" style="color:${L[cur].hi}">${L[cur].name} league</span>
+        <span class="small">${cur >= top ? `${lp} LP in Celestial` : `${lp}/${R.step} LP to ${L[cur + 1].name}`}</span><span class="dim small">${me.runs} games${me.titles ? ' · 🏆 ' + me.titles + ' completed' : ''} · ${crowns(me.crowns)}</span><span class="small">${flameHTML(me.streak == null ? 1 : me.streak)} win streak · best ${me.bstreak == null ? 1 : me.bstreak}</span></div></div>
       <div class="row center ptabbtns"><button data-act="my-profile">👤 My profile</button><button data-act="shop">👑 Crown Shop</button></div>
       ${roadmapHTML(me)}
       <h3 class="lgh">Leagues <span class="seasonl">Season ${season} · ${days} day${days === 1 ? '' : 's'} left</span></h3>
       <div class="lgscroll mini" id="lgscroll">${banners}</div>
       <div class="lgpath">${path}</div>
-      <p class="small dim">League points (LP) move at the end of every run: a completed run pays by its victory (💎 Perfect +${B.VICTORY[0].lp}, 🥇 Gold +${B.VICTORY[1].lp}, 🥉 Bronze +${B.VICTORY[2].lp}); a run out of lives costs 24, minus 3 for every fight it won; each duel won adds 5; each league above Bronze takes 2 off. ${R.step} LP move you up a league; below 0 you drop to the league under (at ${R.demoteTo} LP). Celestial has no ceiling. The first time you reach a league in a season you earn the crowns on its banner. A season lasts ${B.SEASON.days} days; then everyone starts again from Bronze (your best league stays on your profile).</p>
+      <p class="small dim">League points (LP) come only from PvP fights: every duel won +${B.LP.duel}, the final fight won +${B.LP.final}, every PvP fight lost −${B.LP.loss}; a completed run also adds its 🔥 win streak (+${B.LP.streak} LP per run in the streak). PvE fights give XP, not LP. In Bronze a run never takes LP away. ${R.step} LP move you up a league; below 0 you drop to the league under (at ${R.demoteTo} LP). Celestial has no ceiling. The first time you reach a league in a season you earn the crowns on its banner. A season lasts ${B.SEASON.days} days; then everyone starts again from Bronze (your best league stays on your profile).</p>
     </div>`;
   }
   // review #28 (PC boy): the account level and the road of rewards (one new hero, item or relic per level)
   function roadmapHTML(me) {
     const xp = me.axp | 0, L = B.levelProgress(xp), lvl = L.lvl, per = L.need, inLv = L.into, max = B.UNLOCKS[B.UNLOCKS.length - 1].lvl, X = B.GAME_XP;
-    const pic = u => u.kind === 'hero' ? img(u.id, 44, 'por') : ico(u.kind, u.id, 44);
+    const pic = u => unlockPic(u, 44);
     const nodes = B.UNLOCKS.map(u => `<div class="rmn ${u.lvl <= lvl ? 'got' : u.lvl === lvl + 1 ? 'next' : ''}"><span class="rml">Lv ${u.lvl}</span>${pic(u)}<b>${esc(unlockName(u))}</b><i>${u.kind}</i><em>${u.lvl <= lvl ? '✓' : '🔒'}</em></div>`).join('');
     return `<div class="acctlv"><div class="alh"><span class="lvb">${lvl}</span><div class="alb"><b>Account level ${lvl}</b>
         <span class="xpbar big"><i style="width:${lvl > max ? 100 : Math.round(100 * inLv / per)}%"></i></span>
@@ -1588,10 +1668,12 @@
         }
         return;
       }
-      const e = await Net.get('elo');
-      const eRows = e.top.map((p, i) => `<tr><td>${i + 1}</td><td class="who">${emblem(p.league || 0, 20)}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}</td><td><b>${p.lp | 0}</b></td><td>${p.titles ? '🏆' + p.titles : ''}</td></tr>`).join('');
-      if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="dim small">By league, then league points (LP). The end of every run moves them: a win by its kind (Perfect, Gold, Bronze), a run out of lives by how far it got, and every duel won adds some. 🏆 = runs completed, 👑 = King Tier. Tap a name to open the profile.</p>
-        ${eRows ? `<table class="tbl"><tr><th>#</th><th>Name</th><th>LP</th><th></th></tr>${eRows}</table>` : '<p class="dim">No ranked players yet.</p>'}`);
+      // v65 (reviews #132 #134): Global or Friends (the players you follow, and you); every row has the win streak now and the best one
+      const e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.get('elo');
+      const eRows = e.top.map((p, i) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${i + 1}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td></tr>`).join('');
+      const none = tab === 'friends' ? `<p class="dim">${acct.account ? 'Follow players from their profile (tap a name) and they show up here.' : 'Your account starts when your first run ends; then follow players from their profile.'}</p>` : '<p class="dim">No ranked players yet.</p>';
+      if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="dim small ladnote">${tab === 'friends' ? 'You and the players you follow. ' : ''}By league, then league points (LP), which come from PvP fights: duels and the final fight. 🔥 = runs won in a row now, Best = the longest streak, 👑 = King Tier. Tap a name to open the profile.</p>
+        ${eRows ? `<table class="tbl"><tr><th>#</th><th>Name</th><th>LP</th><th title="Win streak">🔥</th><th>Best</th></tr>${eRows}</table>` : ''}${!eRows || (tab === 'friends' && e.top.length <= 1) ? none : ''}`);
     } catch (err) { if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="err">${esc(err.message)}</p>`); }
   }
   // ---------------- v27 (owner + review #25 by David): Crown Shop, profiles, invites
@@ -1643,14 +1725,23 @@
       : `<div class="klock"><span class="hi">👑</span><b>King Tier</b><p class="small">Kings also see ${p.own ? 'your' : "this player's"} most played heroes, best win rate heroes and the wins and losses of ${p.own ? 'your' : 'their'} ghosts.</p><button data-act="shop">👑 Crown Shop</button></div>`;
     return `<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>
       <div class="prof" style="--lc:${l.color};--lh:${l.hi}">
-        <div class="phead">${emblem(p.league, 66)}<div><b class="pname">${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${esc(p.name)} <span class="lvb sm" title="Account level">${p.level || 1}</span></b><span class="pl1" style="color:${l.hi}">${l.name} league</span>
-          <span class="small dim">${p.league >= top ? `${p.lp} LP` : `${p.lp}/${R.step} LP`} · Season ${p.season}${since ? ' · since ' + since : ''}</span></div></div>
+        <div class="phead"><span class="pwho">${avatarHTML(p.avatar, p.code, 76)}${emblem(p.league, 30)}</span><div><b class="pname">${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${esc(p.name)} <span class="lvb sm" title="Account level">${p.level || 1}</span></b><span class="pl1" style="color:${l.hi}">${l.name} league</span>
+          <span class="small dim">${p.league >= top ? `${p.lp} LP` : `${p.lp}/${R.step} LP`} · Season ${p.season}${since ? ' · since ' + since : ''}</span>${p.own ? `<button class="avedit" data-act="avatar-pick">${I('user')} Change picture</button>` : ''}</div></div>
+        <div class="pfollow">${!p.own ? `<button class="follow ${p.followed ? 'on' : 'primary'}" data-act="follow" data-arg="${esc(p.code)}">${p.followed ? '✓ Following' : '+ Follow'}</button>` : ''}<small id="pfcount">${followText(p)}</small></div>
         ${p.h2h ? `<div class="h2h"><span>You vs ${esc(p.name)}</span><b class="win">${p.h2h.w}</b><i>–</i><b class="lose">${p.h2h.l}</b><small>${p.h2h.w + p.h2h.l ? 'duels between you two' : 'no duel between you two yet'}</small></div>` : ''}
-        <div class="pstats">${stat(p.trophies ? '🏆 ' + p.trophies.n : '—', 'Trophies')}${stat(p.titles || '—', 'Runs completed')}${stat(p.runs, 'Games')}
+        <div class="pstats">${stat(`${flameHTML(p.streak == null ? 1 : p.streak)} <small>best ${p.bstreak == null ? 1 : p.bstreak}</small>`, 'Win streak')}${stat(p.trophies ? '🏆 ' + p.trophies.n : '—', 'Trophies')}${stat(p.titles || '—', 'Runs completed')}${stat(p.runs, 'Games')}
           <div>${emblem(p.peakLeague, 24)}<span>Best league</span></div><div>${p.lastLeague >= 0 ? emblem(p.lastLeague, 24) : '<b>—</b>'}<span>Last season</span></div></div>
         ${p.trophies && p.trophies.list.length ? `<div class="ptro"><div class="pmh">Latest trophies</div><div>${p.trophies.list.map(t => `<span class="tro ${t.final ? 'fin' : ''}">🏆 ${t.code ? plink(t.name, t.code) : esc(t.name)}${t.final ? ' <i>final</i>' : ''}</span>`).join('')}</div></div>` : ''}
         ${more}
         ${p.own ? `<div class="row center"><button data-act="shop">👑 Crown Shop · ${acct.crowns | 0}</button></div>` : ''}</div>`;
+  }
+  const followText = p => `${p.followers | 0} follower${(p.followers | 0) === 1 ? '' : 's'} · following ${p.following | 0}`;
+  // v65 (review #131): the portraits your level has opened (four free, then one more each level); the locked ones say the level they open at
+  // WHAT: the sheet to pick your picture (a hero portrait).
+  function avatarPickHTML() {
+    const lvl = lvlNow(), cur = avKey(acct.avatar, acct.code), list = B.PORTRAITS_FREE.concat(B.PORTRAIT_UNLOCKS), open = list.filter(k => B.portraitLevel(k) <= lvl).length;
+    return `<div class="shead"><b>${I('user')} Your picture</b><button data-act="close" aria-label="Close">✕</button></div><p class="small dim">Every account level opens one more hero portrait. Level ${lvl}: ${open} of ${list.length}.</p>
+      <div class="avgrid">${list.map(k => { const need = B.portraitLevel(k), ok = need <= lvl; return `<button class="avpick ${k === cur ? 'on' : ''} ${ok ? '' : 'locked'}" data-act="avatar-set" data-arg="${k}" ${ok ? '' : 'disabled'}>${avatarHTML(k, '', 54)}<span>${ok ? esc(HEROES[k].name) : '🔒 Lv ' + need}</span></button>`; }).join('')}</div>`;
   }
   async function openProfile(code) {
     const shell = b => `<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>${b}`;
@@ -1691,10 +1782,11 @@
       <li>Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
       <li>Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes; with a full team a hero from the Hero Shop takes the place of one of yours (its level and items, powers picked at random). You have 3 lives: a lost fight costs one and the third ends the game. Heroes always heal after a fight.</li>
       <li>⚔ Duels: on some days one choice is a duel against the team another player had at about the same day (its power is shown next to yours). Win and you steal a hero, an item or a power from it and earn a trophy (+1 crown); lose and you lose a life. When no player has been there yet, a made-up team stands in. After the second boss and a last shop comes the final fight, against a team that won its own final fight: win it and the run is complete.</li>
-      <li>Leagues: the end of every run moves your league points (LP): a completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory and pays by its kind; a run out of lives costs points, less the further it got; every duel won adds some. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
+      <li>Leagues: League points (LP) come only from PvP fights: every duel won +${B.LP.duel}, the final fight won +${B.LP.final}, every PvP fight lost −${B.LP.loss}; a completed run also adds its 🔥 win streak (+${B.LP.streak} LP per run in the streak). PvE fights give XP, not LP. In Bronze a run never takes LP away. A completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
+      <li>🔥 Win streak: the runs you completed in a row (everyone starts at 1). Losing a run, or giving it up, puts it back to 0.</li>
       <li>🏆 Trophies: every duel you win is a trophy with the name of the player you beat, and 1 crown. A profile shows its trophies and your duels against that player.</li>
       <li>👑 Crowns: earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: 4× battle speed, Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles).</li>
-      <li>Tap any player's name to open their profile: league, trophies, runs completed and your duels against them.</li>
+      <li>Tap any player's name to open their profile: league, win streak, trophies, runs completed and your duels against them. Follow players there to see them in the Friends ladder. Your picture is a hero portrait: every account level opens one more.</li>
       <li>✨ Account level: every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for reaching the final fight, +${B.GAME_XP.duel} per duel won, +${B.GAME_XP.champion} for winning it), plus bonuses the first time you complete a run with each hero (+${B.ACCOUNT.heroClear}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and levels 2 to 19 unlock new heroes (two a level up to 14), items and powers (see the road on the title or in Ladder → Player).</li>
     </ol></details>`;
 
@@ -1821,7 +1913,7 @@
     language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
-    'give-up-yes': () => { if (run && run.flog && run.flog.length) Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog }).catch(() => {}); run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },
+    'give-up-yes': () => { if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // v65 (review #133): giving up ends the win streak
     // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.
     'form-info': t => toast(t, true),
     'hero-peek': k => { if (HEROES[k]) { openModal(heroPeekHTML(k)); ui.modal = 'peek'; } },
@@ -1863,6 +1955,19 @@
     shop: () => openShop(),
     profile: code => openProfile(code),
     'my-profile': () => openMyProfile(),
+    // v65 (review #132): follow / unfollow from a profile
+    follow: async code => {
+      if (!acct.account) { toast('Your account starts when your first run ends. Play one first!'); return; }
+      const b = $('[data-act=follow]'), on = !(b && b.classList.contains('on'));
+      try { const r = await Net.post('player', { op: 'follow', pid: pid(), code, on }); const b2 = $('[data-act=follow]'); if (b2) { b2.classList.toggle('on', r.followed); b2.classList.toggle('primary', !r.followed); b2.textContent = r.followed ? '✓ Following' : '+ Follow'; } const c = $('#pfcount'); if (c) c.textContent = followText(r); sfx(r.followed ? 'coin' : 'back'); }
+      catch (e) { toast(e.message); }
+    },
+    // v65 (review #131): pick your picture
+    'avatar-pick': () => { openModal(avatarPickHTML()); ui.modal = 'avatar'; },
+    'avatar-set': async key => {
+      try { const r = await Net.post('player', { op: 'avatar', pid: pid(), hero: key }); setAcct(r); sfx('coin'); header(); if (ui.modal === 'avatar') { openModal(avatarPickHTML()); ui.modal = 'avatar'; } toast(`${HEROES[key].name} is your picture`); }
+      catch (e) { toast(e.message); }
+    },
     // Crown Shop: the first tap asks, the second buys (nobody spends 300 crowns by accident).
     'buy-perk': async id => {
       if (ui.confirmBuy !== id) { ui.confirmBuy = id; refreshShop(); return; }   // two taps: nobody spends 300 crowns by accident
@@ -1926,6 +2031,7 @@
       if (!battle && was !== document.body.className && !ui.modal) { render(); return; }
       const cv = $('#board'); if (cv) { view = Render.setup(cv, boardWidth(cv.parentElement)); drawPreview(); }
       trailer.cv = null;   // v49: the trailer sizes itself again on its next frame
+      const wm = $('#wmap'); if (wm) layoutMap({ key: wm.dataset.key, top: wm.scrollTop });   // v65: the road fits the new screen
     }, 120);
   }
   window.addEventListener('resize', onResize);

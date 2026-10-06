@@ -16,7 +16,8 @@ const { codeOf } = require('./_store');
 const perksOf = p => { try { const a = JSON.parse(p.perks || '[]'); return Array.isArray(a) ? a.filter(x => D.SHOP_ITEM[x]) : []; } catch (_) { return []; } };
 const isKing = p => !!p && perksOf(p).includes('king');
 // the fields setPlayer writes
-const row = p => ({ elo: p.elo, runs: p.runs, crowns: p.crowns, best: p.best, league: p.league | 0, lp: p.lp | 0, season: p.season | 0, sreach: p.sreach | 0, peak_league: p.peak_league | 0, last_league: p.last_league == null ? -1 : p.last_league });
+const row = p => ({ elo: p.elo, runs: p.runs, crowns: p.crowns, best: p.best, league: p.league | 0, lp: p.lp | 0, season: p.season | 0, sreach: p.sreach | 0, peak_league: p.peak_league | 0, last_league: p.last_league == null ? -1 : p.last_league,
+  streak: p.streak == null ? 1 : p.streak | 0, bstreak: p.bstreak == null ? 1 : p.bstreak | 0 });
 
 // WHAT: if a new season (28 days) has started, sends the player back to Bronze and keeps the old league as last_league.
 function rollSeason(p, now) {
@@ -144,7 +145,7 @@ function profileView(p) {
   const q = Object.assign({}, p); rollSeason(q);   // shows the new season even before the player comes back
   return { name: q.name, code: q.code || codeOf(q.pid), league: q.league | 0, lp: q.lp | 0, elo: Math.round(q.elo), best: q.best | 0, titles: q.crowns | 0,
     runs: q.runs | 0, peakLeague: Math.max(q.peak_league | 0, q.league | 0), lastLeague: q.last_league == null ? -1 : q.last_league, season: q.season, king: isKing(q), since: Number(q.created) || null,
-    level: D.levelOf(q.axp | 0), pfloor: q.pfloor | 0 };
+    level: D.levelOf(q.axp | 0), pfloor: q.pfloor | 0, streak: q.streak == null ? 1 : q.streak | 0, bstreak: q.bstreak == null ? 1 : q.bstreak | 0, avatar: q.avatar || null };
 }
 // King Tier: most played heroes, best win rate heroes (3+ games), the record of all the player's ghosts
 async function kingExtras(st, pid) {

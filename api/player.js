@@ -6,6 +6,9 @@
 //   {op:'buy', pid, item}          a Crown Shop unlock (B.SHOP), paid atomically
 //   {op:'rename', pid, name}       a name change (paid each time); the player's ghosts take the new name
 //   {op:'ratings', pid}            the Elo of every hero, boss, item and relic (needs Content Elo or the King Tier)
+//   {op:'friends', pid}            v65: the Friends ladder (the players you follow, and you)
+//   {op:'follow', pid, code, on}   v65: follow / unfollow a player
+//   {op:'avatar', pid, hero}       v65: your picture, a hero portrait your account level has opened
 // 
 // FILE GUIDE. THE ACCOUNT ENDPOINT, POST /api/player { op, pid, ... }: me (wallet and progress), profile (anyone's public profile), buy (Crown Shop), rename, ratings (content Elo, needs the unlock). It never creates a player: accounts start when a first game ends (api/elo.js). The index of the whole project is CODEMAP.md.
 const { send, body, sameOrigin, clean } = require('./_http');
@@ -37,9 +40,28 @@ module.exports = async (req, res) => {
       if (king) v.more = await P.kingExtras(st, t.pid);
       v.trophies = await st.trophiesOf(t.pid, 12);   // v64 (review #125): the duels this player won
       if (p && p.pid !== t.pid) v.h2h = await st.h2h(p.pid, t.pid);   // v64 (review #127): your duels against this player
+      Object.assign(v, await st.followCounts(t.pid, v.code));   // v65 (review #132): followers, following, and whether you follow this player
+      v.followed = !!p && p.pid !== t.pid && await st.isFollowing(p.pid, v.code);
       return send(res, 200, { profile: v, viewerKing: king });
     }
+    if (b.op === 'friends') return send(res, 200, { top: p ? await st.friendsTop(pid, 50) : [] });   // v65 (review #132): the players you follow, and you
     if (!p) return send(res, 404, { error: 'Your account starts when your first run ends. Play one first!' });
+
+    if (b.op === 'follow') {   // v65 (review #132): follow / unfollow a player by the public code
+      const code = clean(b.code, 16).toLowerCase(), t = /^[a-f0-9]{12}$/.test(code) ? await st.getPlayerByCode(code) : null;
+      if (!t) return send(res, 404, { error: 'No player with that id' });
+      if (t.pid === p.pid) return send(res, 400, { error: 'That is you' });
+      if (b.on && (await st.followCounts(p.pid, code)).following >= 300) return send(res, 400, { error: 'You follow 300 players already' });
+      await st.follow(p.pid, code, !!b.on);
+      return send(res, 200, Object.assign({ followed: !!b.on }, await st.followCounts(t.pid, code)));
+    }
+    if (b.op === 'avatar') {   // v65 (review #131): your picture is a hero portrait the account level has opened
+      const key = String(b.hero || ''), need = D.portraitLevel(key);
+      if (!need) return send(res, 400, { error: 'Unknown portrait' });
+      if (need > D.levelOf(p.axp | 0)) return send(res, 400, { error: `That portrait opens at level ${need}` });
+      await st.setAvatar(pid, key); p.avatar = key;
+      return send(res, 200, await P.ownView(st, p));
+    }
 
     if (b.op === 'buy') {
       const it = D.SHOP_ITEM[String(b.item || '')];

@@ -209,12 +209,13 @@ module.exports = async (req, res) => {
     if (b.ref) await P.linkRef(st, p, b.ref);
     const save = () => st.setPlayer(pid, P.row(p));
     const xp = [];   // v30: account XP earned by this call (shown as toasts and on the result screen)
-    const me = extra => Object.assign({ name: p.name, code: P.codeOf(pid), elo: Math.round(p.elo), runs: p.runs, titles: p.crowns, best: p.best, league: p.league | 0, lp: p.lp | 0,
+    const me = extra => Object.assign({ name: p.name, code: P.codeOf(pid), elo: Math.round(p.elo), runs: p.runs, titles: p.crowns, best: p.best, league: p.league | 0, lp: p.lp | 0, streak: p.streak == null ? 1 : p.streak | 0, bstreak: p.bstreak == null ? 1 : p.bstreak | 0, avatar: p.avatar || null,
       crowns: p.gems | 0, season: p.season, sreach: p.sreach | 0, xp }, P.levelView(p), extra);
 
     if (b.op === 'hello') return send(res, 200, me({}));
 
     if (b.op === 'flog') {  // v62 (review #82): a game given up reports the fights it played (no league points either way)
+      if (b.gaveUp && (p.streak == null || (p.streak | 0) > 0)) { p.streak = 0; await save(); }   // v65 (review #133): giving a run up ends the win streak
       await logFights(st, req, pid, b.runId, b.flog);
       return send(res, 200, { ok: true });
     }
@@ -231,7 +232,9 @@ module.exports = async (req, res) => {
 
     if (b.op === 'fail') {  // review #24: a lost run no longer moves the player's Elo (league points and the pieces' Elo still do)
       p.runs++;
-      const lg = leaguePoints(p, D.runLp({ done: false, fights: b.game && b.game.fights, duels: b.game && b.game.duels }, p.league));   // v64: the end of the run moves the league
+      const s0 = p.streak == null ? 1 : p.streak | 0; p.streak = 0;   // v65 (review #133): a lost run ends the win streak
+      const lg = leaguePoints(p, D.runLp({ done: false, duels: b.game && b.game.duels, lost: b.game && b.game.lost }, p.league));   // v65 (review #129): only PvP fights move the league
+      lg.streak = { from: s0, to: 0, best: p.bstreak == null ? 1 : p.bstreak | 0 };
       if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
       await save({});
       const used = cleanTeam(b.team); if (used) { await rateContent(st, ipHash(req), [{ used: usedIn(used, relicList(b.relics)), score: 0 }]); await P.heroGames(st, pid, used, false); }
@@ -276,7 +279,9 @@ module.exports = async (req, res) => {
       let id = null;
       if (await st.countTeams(pid, Date.now() - 3600e3) < 40) { id = await st.insertTeam({ pid, name, elo_at: p.elo, team: JSON.stringify(team), relics: JSON.stringify(relics) }); await st.updateTeam(id, { wins: 8, status: 'final', opp: null }); }
       p.runs++; p.crowns++; p.best = Math.max(p.best, 1);
-      const lg = leaguePoints(p, D.runLp({ done: true, lives: b.game && b.game.lives, duels: b.game && b.game.duels }, p.league));   // v64: the victory kind moves the league
+      const s0 = p.streak == null ? 1 : p.streak | 0; p.streak = s0 + 1; p.bstreak = Math.max(p.bstreak == null ? 1 : p.bstreak | 0, p.streak);   // v65 (review #133): one more run in the streak
+      const lg = leaguePoints(p, D.runLp({ done: true, duels: b.game && b.game.duels, lost: b.game && b.game.lost, streak: p.streak }, p.league));   // v65 (review #129): PvP fights and the streak move the league
+      lg.streak = { from: s0, to: p.streak, best: p.bstreak };
       if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
       await save();
       await rateContent(st, ipHash(req), [{ used: usedIn(team, relics), score: 1 }]);

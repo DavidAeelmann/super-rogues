@@ -2429,3 +2429,151 @@ body.wide section.shop .grid.rels > :last-child:nth-child(odd) { grid-column: au
 .over2 .promo { margin: 2px auto 4px; padding: 4px 12px; } .over2 .lgcard { padding: 10px 12px; }
 .shead img.por { width: 30px; height: 30px; border-radius: 50%; vertical-align: middle; box-shadow: 0 0 0 2px #fff; }
 .lgcard .lgch > div { display: grid; justify-items: start; }
+/* v65 (review #130): the map is a road climbing a valley at night, from the camp to the castle of the final fight; it scrolls inside the screen */
+.map.road { padding-top: 6px; }
+.map.road .wmap { position: relative; overflow-y: auto; overflow-x: hidden; border-radius: 22px; overscroll-behavior: contain; scrollbar-width: none; box-shadow: inset 0 0 0 2px #ffffff24, 0 8px 24px #0006; }
+.map.road .wmap::-webkit-scrollbar { display: none; }
+.wtrack { position: relative; overflow: hidden; background:
+  radial-gradient(ellipse 70% 120px at 50% 40px, #ffd23f2e, transparent 70%),
+  linear-gradient(180deg, #120b34 0%, #23186a 16%, #283a8c 42%, #1f5a7a 70%, #1c6a52 92%, #17573f 100%); }
+.wsky { position: absolute; left: 0; right: 0; top: 0; height: 46%; pointer-events: none; opacity: .75;
+  background-image: radial-gradient(1.6px 1.6px at 12% 18%, #fff 50%, transparent 52%), radial-gradient(1.2px 1.2px at 34% 62%, #fff 50%, transparent 52%), radial-gradient(1.8px 1.8px at 58% 30%, #fff 50%, transparent 52%), radial-gradient(1.2px 1.2px at 77% 74%, #fff 50%, transparent 52%), radial-gradient(1.5px 1.5px at 90% 12%, #fff 50%, transparent 52%), radial-gradient(1px 1px at 46% 88%, #fff 50%, transparent 52%);
+  background-size: 190px 150px; -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent); }
+@media (prefers-reduced-motion: no-preference) { .wsky { animation: twinkle 3.2s ease-in-out infinite alternate; } }
+@keyframes twinkle { from { opacity: .45; } to { opacity: .9; } }
+.wpeaks { position: absolute; left: -2%; right: -2%; top: 70px; height: 150px; pointer-events: none; background: linear-gradient(180deg, #3b2a8a, #1a1450); opacity: .85;
+  clip-path: polygon(0 100%, 0 62%, 9% 40%, 17% 58%, 27% 22%, 36% 50%, 44% 34%, 50% 8%, 57% 36%, 65% 24%, 74% 52%, 83% 30%, 92% 54%, 100% 38%, 100% 100%); }
+.wdec { position: absolute; z-index: 0; width: 22px; height: 30px; transform: translate(-50%, -100%) scale(var(--s, 1)); pointer-events: none; }
+.wdec.pine { background: linear-gradient(180deg, #2f9a68, #1b5e43); clip-path: polygon(50% 0, 82% 38%, 66% 38%, 96% 82%, 58% 82%, 58% 100%, 42% 100%, 42% 82%, 4% 82%, 34% 38%, 18% 38%); filter: drop-shadow(0 3px 2px #0005); }
+.wdec.pine.dk { background: linear-gradient(180deg, #3a6f8a, #1e3f66); }
+.wdec.rock { width: 26px; height: 16px; background: linear-gradient(180deg, #6b62b8, #3a3180); clip-path: polygon(0 100%, 14% 38%, 38% 10%, 62% 26%, 84% 4%, 100% 100%); }
+.wroad { position: absolute; left: 0; top: 0; width: 100%; z-index: 1; overflow: visible; pointer-events: none; }
+.wroad path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.wroad path.bed { stroke: #0b0f3fcc; stroke-width: 15px; }
+.wroad path.rpast { stroke: #ffd23f; stroke-width: 5px; filter: drop-shadow(0 0 4px #ffd23faa); }
+.wroad path.rfork { stroke: #fff; stroke-width: 4px; stroke-dasharray: 2 9; }
+.wroad path.rnext { stroke: #ffffff8c; stroke-width: 3px; stroke-dasharray: 2 10; }
+@media (prefers-reduced-motion: no-preference) { .wroad path.rfork { animation: roadflow 1s linear infinite; } }
+@keyframes roadflow { to { stroke-dashoffset: -22; } }
+.rn { position: absolute; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; background: #2a3290; color: #fff; box-shadow: 0 0 0 3px #ffffffaa, 0 4px 8px #0008; }
+.rn .ri { display: grid; place-items: center; font: 800 15px var(--fun); line-height: 1; } .rn .ri svg.ui { width: 18px; height: 18px; }
+.rn.done { width: 24px; height: 24px; margin: -12px 0 0 -12px; background: #ffd23f; color: #5a3000; box-shadow: 0 0 0 3px #fff, 0 0 12px #ffd23f88; } .rn.done .ri { font-size: 13px; }
+.rn.camp { width: 38px; height: 38px; margin: -19px 0 0 -19px; background: #1d4a3a; box-shadow: 0 0 0 3px #ffd23f, 0 0 14px #ffd23f66; } .rn.camp .ri { font-size: 20px; }
+.rn.fight { background: linear-gradient(180deg, #4a5bd6, #2a3290); }
+.rn.event, .rn.shop { background: linear-gradient(180deg, #2fb37a, #1c7a52); }
+.rn.pvp { background: linear-gradient(180deg, #ef5bb4, #a8237a); box-shadow: 0 0 0 3px #ffc2e4, 0 0 14px #ef5bb488; }
+.rn.boss { width: 50px; height: 50px; margin: -25px 0 0 -25px; background: #5a1230; box-shadow: 0 0 0 3px #ff7a8a, 0 0 22px #ff3d5acc; }
+.rn.boss .ri img.por { width: 44px; height: 44px; border-radius: 50%; display: block; }
+@media (prefers-reduced-motion: no-preference) { .rn.boss.next { animation: bossaura 1.8s ease-in-out infinite alternate; } }
+@keyframes bossaura { to { box-shadow: 0 0 0 4px #ff9aa6, 0 0 34px #ff3d5a; } }
+.rn.final { width: 58px; height: 58px; margin: -29px 0 0 -29px; background: linear-gradient(180deg, #ffe46b, #ffb31a); color: #5a3000; box-shadow: 0 0 0 4px #fff, 0 0 34px #ffd23fcc; }
+.rn.final .ri svg.ui { width: 30px; height: 30px; }
+.rn.final .castle { position: absolute; left: 50%; bottom: 62%; width: 132px; height: 62px; transform: translateX(-50%); z-index: -1; background: linear-gradient(180deg, #4b3aa8, #261c6e);
+  clip-path: polygon(0 100%, 0 30%, 6% 30%, 6% 18%, 11% 18%, 11% 30%, 16% 30%, 16% 18%, 21% 18%, 21% 46%, 34% 46%, 34% 10%, 39% 10%, 39% 0, 44% 0, 44% 10%, 50% 10%, 50% 0, 56% 0, 56% 10%, 61% 10%, 61% 0, 66% 0, 66% 46%, 79% 46%, 79% 18%, 84% 18%, 84% 30%, 89% 30%, 89% 18%, 94% 18%, 94% 30%, 100% 30%, 100% 100%); filter: drop-shadow(0 0 14px #ffd23f66); }
+.rn.far:not(.boss) { opacity: .62; }
+.wtrack { container-type: inline-size; }
+.wtrack .rn.done { width: 24px; height: 24px; margin: -12px 0 0 -12px; background: #ffd23f; color: #5a3000; box-shadow: 0 0 0 3px #fff, 0 0 12px #ffd23f88; animation: none; }
+.wtrack .rn.camp { width: 38px; height: 38px; margin: -19px 0 0 -19px; background: #1d4a3a; box-shadow: 0 0 0 3px #ffd23f, 0 0 14px #ffd23f66; }
+.rn .rl { position: absolute; top: 50%; transform: translateY(-50%); width: max-content; max-width: calc(var(--room, 50) * 1cqw - 32px); text-wrap: balance; line-height: 1.25; padding: 3px 9px; border-radius: 999px; background: #0b0f3fd9; color: #d8dcff; font: 600 11.5px var(--fun); box-shadow: 0 0 0 1px #ffffff26; pointer-events: none; }
+.rn .rl b { color: #fff; margin-right: 2px; } .rn .rl i { font-style: normal; color: #ff9aa6; }
+.rn .rl.rgt { left: calc(100% + 8px); } .rn .rl.lft { right: calc(100% + 8px); }
+.rn.boss .rl { background: #3a0a1ee6; color: #ffd0d6; } .rn.final .rl { top: calc(100% + 14px); left: 50%; right: auto; transform: translateX(-50%); background: #5a3000e6; color: #ffe9a6; font-size: 13px; }
+.rn.pvp .rl { color: #ffd0ec; }
+.rtok { position: absolute; z-index: 4; margin: -27px 0 0 -27px; pointer-events: none; }
+.rtok img.por { display: block; width: 48px; height: 48px; border-radius: 50%; box-shadow: 0 0 0 3px #fff, 0 0 0 6px #ffd23f, 0 8px 14px #0009; background: #0d1146; }
+@media (prefers-reduced-motion: no-preference) { .rtok { animation: tokbob 1.3s ease-in-out infinite alternate; } }
+@keyframes tokbob { to { translate: 0 -6px; } }
+.rtoday { position: absolute; left: 0; right: 0; z-index: 3; }
+.rtoday .rday { position: absolute; left: 50%; top: 0; transform: translateX(-50%); z-index: 2; white-space: nowrap; padding: 4px 14px; border-radius: 999px; background: linear-gradient(180deg, #ffe46b, #ffc21a); color: #3a1f00; font: 700 14px var(--fun); box-shadow: 0 3px 0 #c47f00, 0 0 18px #ffd23f88; }
+.rtoday .rday b { margin-right: 4px; color: #6a3600; }
+.rtoday .nextmod { position: absolute; left: 8%; right: 8%; top: 32px; z-index: 2; margin: 0; padding: 2px 8px; font-size: 11.5px; text-align: center; background: #2a1f3ae6; }
+.rtoday .banners { position: absolute; left: 3%; right: 3%; top: 34px; bottom: 6px; margin: 0; gap: 10px; align-items: stretch; }
+.rtoday .nextmod ~ .banners { top: 56px; }
+.rtoday .banners.rb1 { grid-template-columns: minmax(0, 300px); justify-content: center; }
+.rtoday .banners.rb3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.rtoday .banner.v2 { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+.rtoday .banner.v2 .bd { flex: 1; min-height: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.rtoday .banner.v2 .rw { flex: none; } .rtoday .banner.v2.b-duel .bd { -webkit-line-clamp: 2; }
+.rtoday .banners.rb3 .banner.v2 .scene { height: 76px; } .rtoday .banners.rb3 .banner.v2 .bt { font-size: 12.5px; padding: 6px 4px 0; } .rtoday .banners.rb3 .banner.v2 .bd { font-size: 10.5px; padding: 2px 4px 4px; -webkit-line-clamp: 4; }
+.rtoday .banners.rb3 .banner.v2 .mob { width: 38px; height: 38px; } .rtoday .banners.rb3 .banner.v2 .m1 .mob, .rtoday .banners.rb3 .banner.v2 .bigmob .mob { width: 52px; height: 52px; } .rtoday .banners.rb3 .banner.v2 .fc { width: 34px; height: 46px; } .rtoday .banners.rb3 .banner.v2 .fc img { width: 26px; height: 26px; } .rtoday .banners.rb3 .banner.v2 .evbig { font-size: 34px; }
+.elt { color: #ffd23f; font-weight: 800; }
+/* the team under the road on phones; the party panel beside it on computers */
+.map.road .mapside { display: none; }
+.mstrip { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.mstrip .mteam { flex: 1; display: flex; align-items: center; gap: 6px; min-height: 52px; padding: 5px 8px; border-radius: 16px; background: #1b2270aa; border: 2px solid #ffffff26; box-shadow: none; }
+.mstrip .mh { position: relative; } .mstrip .mh img.por { display: block; width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
+.mstrip .mh i { position: absolute; right: -4px; bottom: -3px; min-width: 17px; padding: 0 3px; border-radius: 999px; background: #ffd23f; color: #3a1f00; font: 800 11px/16px var(--fun); font-style: normal; text-align: center; box-shadow: 0 0 0 2px #0d1146; }
+.mstrip .mbag { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; padding: 3px 9px; border-radius: 999px; background: #ffd23f; color: #3a1f00; font: 800 13px var(--fun); }
+@media (prefers-reduced-motion: no-preference) { .mstrip .mbag { animation: bagnote 1.4s ease-in-out infinite; } }
+.mstrip .mrel { display: flex; align-items: center; gap: 3px; padding: 6px 8px; border-radius: 16px; background: #1b2270aa; border: 2px solid #ffffff26; }
+.mstrip .mmore { min-height: 0; padding: 2px 6px; font: 700 12px var(--fun); }
+body.desk .map.road { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+body.desk .map.road .mapside { display: block; } body.desk .map.road .mstrip { display: none; }
+body.desk .rtoday .banners { left: 8%; right: 8%; gap: 22px; } body.desk .rtoday .banners.rb1 { grid-template-columns: minmax(0, 380px); }
+body.desk .rn .rl { font-size: 13px; } body.desk .rtoday .rday { font-size: 17px; padding: 5px 18px; }
+/* v65 (review #129): the end screens: one thing each, a big button at the bottom, no run bar on top */
+.over1, .over2 { display: flex; flex-direction: column; min-height: calc(100dvh - 70px); padding-top: 8px; }
+.overbar { display: flex; gap: 10px; margin-top: auto; padding: 12px 0 6px; }
+.overbar .cta { flex: 1; min-height: 60px; font-size: 22px; flex-direction: row; justify-content: center; align-items: center; gap: 8px; }
+.over1 > :first-child, .over2 > :first-child { margin-top: auto; }
+.overbar .ladb { flex: 0 0 64px; min-height: 60px; display: grid; place-items: center; } .overbar .ladb svg.ui { width: 28px; height: 28px; }
+.vbadge.lost .vi { font-size: 0; color: #fff; } .vbadge.lost .vi svg.ui { width: 44px; height: 44px; }
+.over2 > h2.ovh { margin: 2px 0 8px; font-size: 26px; }
+.lpwhy { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 8px; }
+.lpw { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; background: #0d114699; font: 600 12px var(--fun); color: #d8dcff; }
+.lpw svg.ui { width: 14px; height: 14px; } .lpw b { color: #fff; } .lpw.pos b { color: #6ff0a0; } .lpw.neg b { color: #ff8a8a; }
+/* v65 (review #133): the win streak flame */
+.flame { display: inline-flex; align-items: center; gap: 2px; font: 800 15px var(--fun); color: #fff; }
+.flame i { font-style: normal; filter: grayscale(.2); } .flame.cold i { filter: grayscale(1) brightness(.8); opacity: .7; } .flame.cold b { color: #b9bfd8; }
+.flame.hot i { filter: drop-shadow(0 0 6px #ff8a1a); } .flame.hot b { color: #ffd23f; }
+.stkbtn { display: inline-flex; align-items: center; min-height: 36px; padding: 2px 10px !important; border-radius: 999px; background: linear-gradient(180deg, #ff9a3d33, #ff5a1a22); border: 2px solid #ff9a3d88; }
+.stkbtn .flame { font-size: 17px; }
+.stkcard { display: flex; align-items: center; gap: 14px; margin: 4px 0 8px; padding: 10px 14px; border-radius: 18px; background: linear-gradient(180deg, #3a1a10, #1d0f2e); box-shadow: inset 0 0 0 2px #ff9a3d55, 0 6px 18px #0006; text-align: left; }
+.stkcard.out { background: linear-gradient(180deg, #232846, #141838); box-shadow: inset 0 0 0 2px #ffffff22; }
+.stkcard > div { display: grid; } .stkcard > div b { font: 700 20px var(--fun); color: #fff; } .stkcard > div small { font: 600 12.5px var(--fun); color: #ffcf9a; } .stkcard.out > div small { color: #b9bfd8; }
+.flame.big { position: relative; flex: none; display: grid; place-items: center; width: 74px; height: 74px; border-radius: 50%; background: radial-gradient(circle at 50% 70%, #ff8a1a66, transparent 70%); }
+.flame.big i { font-size: 52px; line-height: 1; } .flame.big b { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); min-width: 30px; padding: 0 6px; border-radius: 999px; background: #0d1146; box-shadow: 0 0 0 2px #ffd23f; font-size: 20px; line-height: 26px; text-align: center; color: #ffd23f; }
+.flame.big.cold { background: none; } .flame.big.cold b { box-shadow: 0 0 0 2px #8a90b0; color: #d8dcff; }
+@media (prefers-reduced-motion: no-preference) {
+  .flame.big.hot i { animation: flick 1.1s ease-in-out infinite alternate; transform-origin: 50% 90%; }
+  .flame.flare { animation: flare .8s cubic-bezier(.3, 1.7, .5, 1); } .flame.fizzle { animation: shake .6s ease-in-out; }
+}
+@keyframes flick { 0% { transform: scale(1) rotate(-3deg); } 100% { transform: scale(1.08, 1.12) rotate(3deg); } }
+@keyframes flare { 0% { scale: 1; } 40% { scale: 1.45; filter: brightness(1.6); } 100% { scale: 1; } }
+/* v65 (review #129): each star of a won fight says what it is for */
+.rstars .stw { display: inline-grid; justify-items: center; gap: 0; } .rstars .stw small { font: 600 10px var(--fun); color: #ffffffa0; white-space: nowrap; margin-top: -2px; } .rstars .stw.earn small { color: #ffe9a6; }
+/* v65 (review #131): portraits as player pictures */
+.pfp { display: inline-grid; place-items: center; flex: none; width: var(--px, 34px); height: var(--px, 34px); border-radius: 50%; overflow: hidden; background: #0d1146; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #ffd23f99; }
+.pfp img.por { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.avbtn { min-height: 0 !important; padding: 0 !important; border: 0; background: none; box-shadow: none; border-radius: 50%; }
+.xpup .pfp, .rmn .pfp, .xpnext .pfp, .lvnext .pfp { --px: 34px; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #b98aff; }
+.rmn .pfp { --px: 44px; } .xpnext .pfp { --px: 48px; } .lvnext .pfp { --px: 40px; }
+.phead .pfp { --px: 76px; box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--lc, #ffd23f), 0 8px 18px #0008; }
+.phead .pwho { position: relative; flex: none; } .phead .pwho .lgem { position: absolute; right: -8px; bottom: -6px; }
+.avedit { display: block; margin: 6px auto 0; min-height: 30px !important; padding: 3px 12px !important; font-size: 12.5px; }
+.avgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; padding: 4px 2px 10px; }
+.avpick { display: grid; justify-items: center; gap: 3px; min-height: 0; padding: 6px 2px; border-radius: 14px; background: #1b2270aa; border: 2px solid transparent; box-shadow: none; }
+.avpick .pfp { --px: 54px; } .avpick span { font: 600 11px var(--fun); color: #d8dcff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avpick.on { border-color: #ffd23f; background: #ffd23f22; } .avpick.locked { opacity: .5; } .avpick.locked .pfp img { filter: grayscale(1) brightness(.6); } .avpick.locked span { color: #ffd23f; }
+/* v65 (reviews #132 #134): follow, followers, streaks on profiles and the ladder */
+.pfollow { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 8px 0 4px; }
+.pfollow .follow { min-width: 120px; } .pfollow .follow.on { background: #ffffff22; color: #fff; box-shadow: inset 0 0 0 2px #ffffff55; }
+.pfollow small { color: var(--dim); font: 600 12px var(--fun); }
+.tbl td.who .pfp { --px: 26px; margin-right: 6px; vertical-align: middle; box-shadow: 0 0 0 2px #fff; }
+.tbl td.stk { white-space: nowrap; font: 700 13px var(--fun); } .tbl td.stk .flame { font-size: 13px; } .tbl td.stk small { color: var(--dim); font-weight: 600; }
+.tbl tr.me td { background: #ffd23f1c; }
+.ladnote { margin: 4px 0 8px; }
+/* v65: a duel's three enemy heroes fit a small phone in one row (portrait, name, More) */
+@media (max-height: 700px) and (max-width: 500px) {
+  .foes.gau .fgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .foes.gau .fo { flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 4px 3px; }
+  .foes.gau .fo .fw { display: none; } .foes.gau .fo b { font-size: 11px; line-height: 1.15; }
+  .foes.gau .fo .hdet.sm { min-height: 24px; margin-top: 2px; padding: 0 7px; font-size: 11px; }
+}
+.prof .phead .pname .lvb { display: inline-grid; vertical-align: 2px; margin-left: 4px; }
+.prof .phead .pwho, .ptab .pme .pwho { display: block; position: relative; flex: none; } .prof .phead .pfp, .ptab .pme .pfp { display: grid; }
+.ptab .pme .flame { display: inline-flex; vertical-align: -1px; } .ptab .pme .flame b { display: inline; font-size: inherit; }
+.pstats .flame { font-size: 17px; } .pstats b small { font: 600 11px var(--fun); color: var(--dim); }
+.home .stack { position: relative; }
+.playstk { position: absolute; right: -4px; top: -30px; z-index: 3; pointer-events: none; }
+.playstk .flame.big { width: 66px; height: 66px; } .playstk .flame.big i { font-size: 46px; } .playstk .flame.big b { font-size: 17px; line-height: 22px; bottom: 2px; }
