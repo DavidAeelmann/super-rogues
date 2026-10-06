@@ -1,7 +1,7 @@
 // Engine + run logic checks (Node, no browser). Usage: node tools/tests/motor.js
 require('../../js/hex.js'); require('../../js/data.js'); require('../../js/sim.js'); require('../../js/run.js');
 const { Run, Sim, Hex, HEROES, ITEMS, RELICS, CFG } = B;
-B.TUNE.power = {}; B.TUNE.base = 1; B.TUNE.growth = 1; B.CFG.startItems = 0;   // v63: the starting common items have their own test at the end   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
+B.TUNE.power = {}; B.TUNE.base = 1; B.TUNE.growth = 1; B.CFG.startItems = 0; B.CFG.freeRecruits = 0;   // v63/v64: the starting common items and the free recruits have their own tests at the end   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
 let fails = 0, oks = 0;
 const ok = (c, msg) => { if (c) oks++; else { fails++; console.log('FAIL ' + msg); } };
 const finite = W => W.units.every(u => Number.isFinite(u.hp) && Number.isFinite(u.mana) && Number.isFinite(u.atk));
@@ -100,7 +100,7 @@ for (const r of RELICS) {
 // review #22: 1 hero and 1 relic at the start, the hero shop is offered while you have a single hero, old runs keep 13 steps
 {
   const run = Run.newRun(77);
-  ok(run.startOffer.length === 6 && run.relicOffer.length === 3 && run.relicOffer.every(id => B.RELIC[id]), '6 heroes and 3 relics offered');
+  ok(run.startOffer.length === 3 && run.relicOffer.length === 3 && run.relicOffer.every(id => B.RELIC[id]), '3 heroes and 3 relics offered');
   Run.pickStart(run, [run.startOffer[1]], run.relicOffer[2]);
   ok(run.heroes.length === 1 && run.heroes[0].key === run.startOffer[1] && run.relics.includes(run.relicOffer[2]), 'the run starts with the chosen hero and relic');
   Run.choose(run, 0); const W = Run.fightWorld(run); W.over = true; W.winner = 0; Run.finishFight(run, W); while (run.pending.length) Run.chooseSpec(run, 0);
@@ -860,7 +860,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
 {
   B.CFG.startItems = 2;
   const run = Run.newRun(21);
-  ok(run.lives === 3 && run.startOffer.length === 6 && B.CLASSES.every(cl => run.startOffer.filter(k => B.heroClass(k) === cl).length === 2), 'the offer is six heroes, two of each class, and the run has three lives');
+  ok(run.lives === 3, 'the run has three lives');
   Run.pickStart(run, run.startOffer.slice(0, 3), run.relicOffer[0]);
   ok(run.heroes.length === 3 && run.relics.length === 1 && run.heroes.reduce((a, h) => a + h.items.length, 0) + run.bag.length === 2, 'the run starts with 3 heroes, 1 power and 2 common items');
   B.CFG.startItems = 0;
@@ -931,6 +931,42 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(B.lockedFor(14).filter(id => HEROES[id]).length === 0 && B.lockedFor(2).filter(id => HEROES[id]).length === 24 && B.lockedFor(8).filter(id => HEROES[id]).length === 12, 'two more heroes per level: all of them open by level 14');
   ok(B.UNLOCKS.filter(u => u.kind === 'hero').length === 26 && B.UNLOCKS.every((u, i, a) => !i || a[i - 1].lvl <= u.lvl), 'the unlock road is in level order');
   const lk = Run.newRun(25, { locked: B.lockedFor(1) }); ok(lk.startOffer.every(k => B.START_HEROES.includes(k)), 'a level 1 player is only offered the 20 starting heroes');
+}
+// v64 (reviews #126 #127 #125): start with 1 of 3, a free recruit after each of the first days, hero shops swap a hero in, victory kinds and league points
+{
+  B.CFG.freeRecruits = 2;
+  const r = Run.newRun(31);
+  ok(r.startOffer.length === 3 && B.CLASSES.every(cl => r.startOffer.filter(k => B.heroClass(k) === cl).length === 1), 'the start offers 3 heroes, one of each class');
+  Run.pickStart(r, [r.startOffer[0]], r.relicOffer[0]);
+  ok(r.heroes.length === 1 && r.phase === 'map' && r.step === 0, 'the run starts with the one hero picked');
+  Run.choose(r, 0); const W = Run.fightWorld(r); W.over = true; W.winner = 0; Run.finishFight(r, W);
+  ok(r.phase === 'recruit' && r.step === 0 && r.recruitOffer.length === 3 && !r.recruitOffer.includes(r.heroes[0].key), 'after day 1: the free recruit screen (3 heroes, none already in the team)');
+  ok(Run.recruit(r, 'nope') !== null && r.heroes.length === 1, 'only an offered hero can be recruited');
+  const k1 = r.recruitOffer[1]; ok(Run.recruit(r, k1) === null && r.heroes.length === 2 && r.heroes[1].key === k1 && r.phase === 'map' && r.step === 1, 'the recruit joins and the run goes on to day 2');
+  Run.choose(r, 0); Run.leave(r);
+  ok(r.phase === 'recruit' && r.step === 1, 'after day 2: a second free recruit');
+  Run.recruit(r, r.recruitOffer[0]);
+  ok(r.heroes.length === 3 && r.phase === 'map' && r.step === 2, 'three heroes by day 3');
+  Run.choose(r, 0); if (r.phase === 'deploy') { const W2 = Run.fightWorld(r); W2.over = true; W2.winner = 0; Run.finishFight(r, W2); } else Run.leave(r);
+  ok(r.phase !== 'recruit' && (r.recruits | 0) === 2, 'no more free recruits after two');
+  B.CFG.freeRecruits = 0;
+  // hero shop with a full team: the bought hero takes the place of one of yours (level, XP, items; random powers)
+  const s = Run.newRun(32); Run.pickStart(s, s.startOffer.slice(0, 3), s.relicOffer[0]); s.gold = 99;
+  const old = s.heroes[1]; old.lvl = 4; old.xp = CFG.xpLevels[4] + 3; old.items = ['longsword', 'chainmail']; old.specs = B.HEROES[old.key].specs.slice(0, 3).map(p => p[0].id);
+  const key = Object.keys(HEROES).find(k => !s.heroes.some(h => h.key === k));
+  s.phase = 'shop'; s.cur = { type: 'shop', kind: 'heroShop', stock: [{ kind: 'hero', id: key, price: 7 }], rerolls: 0 };
+  ok(Run.buy(s, 0) === 'Pick the hero it replaces' && s.gold === 99, 'a full team: buying a hero asks which one it replaces');
+  ok(Run.buy(s, 0, old.uid) === null && s.gold === 92 && s.heroes.length === 3 && !s.heroes.includes(old), 'the hero is bought and swapped in');
+  const nw = s.heroes.find(h => h.key === key);
+  ok(nw && nw.lvl === 4 && nw.xp === old.xp && nw.specs.length === 3 && nw.specs.every((id, i) => B.HEROES[key].specs[i].some(p => p.id === id)) && nw.items.join() === 'longsword,chainmail' && nw.pos && nw.pos.c === old.pos.c, 'it takes the level, XP, place and items of the one it replaces, with powers picked for its levels');
+  // victory kinds and league points
+  ok(B.victoryOf(3).id === 'perfect' && B.victoryOf(2).id === 'gold' && B.victoryOf(1).id === 'bronze', 'victory kinds: Perfect (no fight lost), Gold, Bronze');
+  ok(B.runLp({ done: true, lives: 3, duels: 2 }, 0) === 45 && B.runLp({ done: true, lives: 1, duels: 0 }, 2) === 18, 'a completed run pays by its kind, +5 a duel, -2 a league above Bronze');
+  ok(B.runLp({ done: false, fights: 2, duels: 0 }, 0) === -18 && B.runLp({ done: false, fights: 8, duels: 1 }, 0) === 5, 'a run out of lives costs points, less the further it got');
+  // the trophies of a run
+  const t = Run.newRun(33); Run.pickStart(t, t.startOffer.slice(0, 3), t.relicOffer[0]); Run.startDuel(t, Run.randomGhost(t, 3), 'pvp', 3);
+  const Wt = Run.gauntletWorld(t); Wt.over = true; Wt.winner = 0; Run.finishDuel(t, Wt);
+  ok(t.duelsWon === 1 && t.trophies.length === 1 && t.trophies[0].name && !t.trophies[0].final, 'a won duel is a trophy of the run');
 }
 console.log(`motor: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

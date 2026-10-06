@@ -2379,3 +2379,53 @@ body.wide section.shop .grid.rels > :last-child:nth-child(odd) { grid-column: au
 .xpups.lots .xpupn { flex: 1 0 100%; text-align: center; font: 700 13px var(--fun); color: var(--gold-hi, #ffd23f); }
 .xpups.lots .xpup { flex: none; padding: 3px; border-radius: 12px; } .xpups.lots .xpup span { display: none; } .xpups.lots .xpup .ico, .xpups.lots .xpup .por { width: 32px; height: 32px; }
 .xpups.lots { gap: 4px; margin-top: 6px; } .xpups.lots .xpup { padding: 2px; border-radius: 10px; } .xpups.lots .xpup .ico, .xpups.lots .xpup .por { width: 27px; height: 27px; border-radius: 8px; }
+/* v64 (review #124): only the picked hero is lit (nothing stays lit after another tap), a hover never sticks on a phone */
+.start .stage .hbanner.spot:not(.on) { filter: brightness(.55) saturate(.65) !important; }
+.start .stage .hbanner.spot:not(.on) .splash { transform: none !important; box-shadow: 0 0 0 2px #ffffff40, 0 12px 18px #000b !important; }
+.start .stage .hbanner.spot:not(.on) .cone { opacity: 0 !important; }
+@media (hover: hover) { .start .stage .hbanner.spot:not(.on):hover { filter: brightness(.8) saturate(.85) !important; } }
+.start.recruit .ssub img.por { width: 24px; height: 24px; border-radius: 50%; vertical-align: middle; margin-left: 3px; box-shadow: 0 0 0 2px #fff; }
+/* v64 (review #123): the journey trail on top of the map */
+.journey { margin: 2px 0 6px; padding: 8px 8px 6px; border-radius: 16px; background: linear-gradient(180deg, #0d1146cc, #0d114688); box-shadow: inset 0 0 0 2px #ffffff22; }
+.jtrail { position: relative; display: flex; align-items: center; justify-content: space-between; height: 34px; }
+.jtrail::before { content: ''; position: absolute; left: 6px; right: 6px; top: 50%; height: 3px; margin-top: -1.5px; border-radius: 2px; background: repeating-linear-gradient(90deg, #ffffff55 0 5px, transparent 5px 9px); }
+.jn { position: relative; z-index: 1; flex: none; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: #2a3290; box-shadow: 0 0 0 2px #ffffff55; color: #fff; }
+.jn .ji { display: grid; place-items: center; font: 700 9px var(--fun); line-height: 1; } .jn .ji svg.ui { width: 10px; height: 10px; }
+.jn.done { background: #3ddc84; box-shadow: 0 0 0 2px #fff; } .jn.done .ji { font-size: 10px; }
+.jn.next { opacity: .85; }
+.jn.boss { width: 24px; height: 24px; background: #7e45e6; box-shadow: 0 0 0 2px #e3d0ff; } .jn.boss .ji img.por { width: 22px; height: 22px; border-radius: 50%; }
+.jn.pvp { background: #d4429a; box-shadow: 0 0 0 2px #ffc2e4; } .jn.final { width: 24px; height: 24px; background: linear-gradient(180deg, #ffe46b, #ffc21a); color: #5a3000; box-shadow: 0 0 0 2px #fff, 0 0 12px #ffd23f99; } .jn.final .ji svg.ui { width: 14px; height: 14px; }
+.jn.cur { width: 22px; height: 22px; background: #fff; color: #0d1146; box-shadow: 0 0 0 3px #ffd23f, 0 0 14px #ffd23faa; }
+.jn.cur .jtok { position: absolute; bottom: 100%; left: 50%; transform: translate(-50%, 2px); animation: jbob 1.4s ease-in-out infinite alternate; }
+.jn.cur .jtok img.por { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; display: block; }
+.jn.done.boss .ji, .jn.done.final .ji { font-size: 12px; }
+@keyframes jbob { to { transform: translate(-50%, -2px); } }
+.jtrail { margin-top: 12px; }
+.jcap { margin-top: 3px; text-align: center; font: 600 12px var(--fun); color: #d8dcff; } .jcap b { color: #fff; }
+@media (prefers-reduced-motion: reduce) { .jn.cur .jtok { animation: none; } }
+/* v64 (reviews #125 #127): the end of a run in two screens: the victory kind + XP first, then the league card with the league points, trophies */
+.vbadge { display: grid; justify-items: center; gap: 2px; margin: 6px auto 8px; } .vbadge .vi { display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; font-size: 46px; background: radial-gradient(circle at 50% 35%, #ffffff55, color-mix(in srgb, var(--vc) 55%, #0d1146)); box-shadow: 0 0 0 4px var(--vc), 0 0 34px color-mix(in srgb, var(--vc) 70%, transparent); animation: popin .7s cubic-bezier(.3, 1.7, .5, 1) backwards; }
+.vbadge b { font: 700 28px/1.1 var(--fun); color: #fff; text-shadow: 0 3px 0 #0006, 0 0 18px var(--vc); } .vbadge small { font: 600 13px var(--fun); color: #d8dcff; }
+.over1 .xppanel { margin-top: 6px; } .over1 .xph .lvb { transform: scale(1.12); }
+.lgcard { margin: 6px 0; padding: 12px 14px; border-radius: 18px; background: linear-gradient(180deg, color-mix(in srgb, var(--lc) 35%, #1a2070), #0f1553); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--lh) 45%, transparent), 0 6px 18px #0006; }
+.lgcard .lgch { display: flex; align-items: center; gap: 12px; } .lgcard .lgch b { display: block; font: 700 20px var(--fun); } .lgcard .lgd { font: 700 22px var(--fun); } .lgcard .lgd.win { color: #6ff0a0; } .lgcard .lgd.lose { color: #ff8a8a; }
+.lgcard .lgbar { position: relative; height: 12px; margin: 10px 0 4px; border-radius: 999px; background: #0d1146; box-shadow: inset 0 0 0 2px #ffffff22; overflow: hidden; }
+.lgcard .lgbar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: linear-gradient(90deg, var(--lc), var(--lh)); animation: lgfill 1.3s cubic-bezier(.3, .8, .3, 1) .35s backwards; }
+@keyframes lgfill { from { width: var(--from); } }
+.lgcard .lgnext { display: block; font: 600 12px var(--fun); color: #d8dcff; } .lgcard .lgwhy { margin: 6px 0 0; color: #c8ccf0; }
+.promo.demo { filter: grayscale(.4); } .promo.demo b { color: #ffb0b0; }
+.trophies { margin: 6px 0; padding: 8px 10px; border-radius: 14px; background: #0d114688; text-align: center; } .trophies > b { display: flex; justify-content: center; align-items: center; gap: 4px; font: 700 13px var(--fun); }
+.trophies > div, .ptro > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin: 5px 0 2px; } .trophies small { font: 700 12px var(--fun); color: #ffd23f; }
+.tro { display: inline-flex; align-items: center; gap: 3px; padding: 3px 9px; border-radius: 999px; background: linear-gradient(180deg, #ffe46b, #ffc21a); color: #5a3000; font: 700 12px var(--fun); box-shadow: 0 2px 0 #c47f00; }
+.tro.fin { background: linear-gradient(180deg, #e9d2ff, #b98aff); color: #2a0a5a; box-shadow: 0 2px 0 #7e45e6; } .tro i { font-style: normal; opacity: .7; font-size: 10.5px; } .tro .plink { color: inherit; }
+.h2h { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 6px 0; padding: 6px 10px; border-radius: 12px; background: #0d114688; font-family: var(--fun); }
+.h2h b { font-size: 22px; } .h2h i { font-style: normal; opacity: .6; } .h2h span { font-weight: 600; } .h2h small { flex-basis: 100%; text-align: center; color: var(--dim); }
+.ptro { margin: 6px 0; text-align: center; }
+.over2 .overteam span img.por { width: 40px; height: 40px; } .over2 .overstats { margin-top: 4px; }
+.vline b { color: #ffd23f; }
+@media (prefers-reduced-motion: reduce) { .lgcard .lgbar i, .vbadge .vi { animation: none; } }
+.over2 .vbadge { margin: 2px auto 4px; } .over2 .vbadge .vi { width: 54px; height: 54px; font-size: 30px; } .over2 .vbadge b { font-size: 22px; } .over2 .evmed.over { width: 56px; height: 56px; } .over2 > h2.sc { margin: 4px 0; }
+.ovline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; margin: 6px 0; font: 600 13px var(--fun); color: #d8dcff; } .ovline img.por { width: 26px; height: 26px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; } .ovline span { margin-left: 6px; } .ovline b { color: #fff; }
+.over2 .promo { margin: 2px auto 4px; padding: 4px 12px; } .over2 .lgcard { padding: 10px 12px; }
+.shead img.por { width: 30px; height: 30px; border-radius: 50%; vertical-align: middle; box-shadow: 0 0 0 2px #fff; }
+.lgcard .lgch > div { display: grid; justify-items: start; }

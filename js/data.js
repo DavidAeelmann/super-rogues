@@ -24,18 +24,19 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
-    fightScale: [1, 1.607, 1.751, 1.909, 1.837, 2.268, 2.472, 2.695, 2.813],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
-    firstFight: 1,  // review #22 had the first fight at half size for a single hero; v63: the run starts with 3 heroes, so a full-size fight
+    fightScale: [1, 1.511, 1.644, 1.787, 1.674, 2.114, 2.299, 2.5, 2.648],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
+    firstFight: 0.3,  // review #22: the first fight is fought by a single hero: a small enemy budget (v64, review #126: one hero again; 0.3 measured, a gentle first win)
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // review #24: sudden death burns every unit for 1%, 2%, 3%... of max HP per second
     // node sequence: F = fight (2 of easy/medium/hard), X = shop or event (2 options), B = boss (no option),
     // S = final shop choice (2 shops), G = the PvP gauntlet against player ghosts (review #9 removed the Onslaught)
     // Review #22 (David): the run starts with 1 hero and 1 relic, and each boss gets 1 more fight and 1 more shop/event
     seq: ['F', 'X', 'F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'F', 'X', 'B', 'S', 'G'],
-    // v63 (review #117 / #118, David): the run starts with 3 heroes (picked from 6: two tanks, two supports, two damage) and 1 power plus a few common items; 3 lives (a lost fight costs one, the third ends the run);
+    // v63 (review #117 / #118, David): 3 lives (a lost fight costs one, the third ends the run); v64 (review #126): the run starts with 1 hero picked from 3 (one of each class),
+    // and after each of the first days a free hero joins (picked from 3, the same screen) until the team has 3 (freeRecruits); 1 power and a few common items to start;
     // on the fight days in pvpFights one of the choices is a duel against another player's team that reached about the same day (a win steals a hero, an item or a power);
     // the last day (G) is the final fight against a team that won its own final fight
-    startHeroes: 3, startOffer: 6, startRelics: 3, startItems: 2, lives: 3, pvpFights: [3, 6], ghostPower: 0.78,
+    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 2, lives: 3, pvpFights: [3, 6], ghostPower: 0.78,
   };
 
   // ---------------------------------------------------------------- heroes
@@ -1208,9 +1209,9 @@
   };
   // WHAT: the three fight difficulties offered on the map. budget = how much enemy there is, elites = how many elites, mul = strength multiplier per fight number (tuned by tools/tune-pve.js).
   B.DIFF = {
-    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: 1.101 },   // v61: mul = strength per fight number (~99%)
+    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: 1.085 },   // v61: mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
-    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: 1.039 },   // v61: ~60% (v62: 72% in fights 1-3)
+    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: 0.965 },   // v61: ~60% (v62: 72% in fights 1-3)
     horde: { name: 'Horde', budget: 8.4, elites: 0, pool: 2 },   // v44 (review #54): the Bounty Board's horde challenge
   };
 
@@ -1339,7 +1340,7 @@
   // v62o (review #111, David: simulate thousands of PvE runs and balance by the results): the PvE balance tuner (tools/pve/tune.js) rewrites this block.
   // power = a multiplier on a hero's Health, Attack and Magic (1 = as designed); the tuner nudges it until every hero clears the PvE about as often as the others.
   // <TUNE-BEGIN>
-  B.TUNE = { base: 1.191, growth: 0.694, power: { ashwing: 0.867, azgul: 1.126, barley: 1.249, bastion: 1.273, blaze: 0.948, brakk: 1.317, bramble: 1.271, buzzwell: 0.834, citadel: 1.696, coralie: 0.849, deadshot: 0.689, duelist: 1.046, echo: 0.885, gardener: 0.809, glacia: 0.674, grimhook: 0.938, grok: 1.407, harlequin: 1.195, hippolyta: 1.225, imhotep: 1.309, kage: 1.151, kestrel: 0.938, leonidas: 1.434, lumen: 0.76, medic: 0.791, mirage: 1.012, morrow: 0.689, nyx: 1.398, pip: 0.867, plasma: 0.601, prism: 0.839, pyra: 0.858, rex: 1.322, rohammer: 1.196, rook: 0.949, seraph: 1.322, smolder: 1.084, sprocket: 0.903, stellan: 0.762, tempest: 0.783, thorne: 1.192, tom: 0.859, vesper: 1.046, vex: 0.981, vey: 0.924, zephyr: 0.998 } };
+  B.TUNE = { base: 1.173, growth: 0.711, power: { ashwing: 0.921, azgul: 1.135, barley: 1.151, bastion: 1.186, blaze: 0.945, brakk: 1.248, bramble: 1.19, buzzwell: 0.856, citadel: 1.637, coralie: 0.856, deadshot: 0.735, duelist: 1.03, echo: 0.89, gardener: 0.81, glacia: 0.653, grimhook: 0.889, grok: 1.325, harlequin: 1.274, hippolyta: 1.258, imhotep: 1.188, kage: 1.214, kestrel: 0.974, leonidas: 1.269, lumen: 0.757, medic: 0.773, mirage: 1.054, morrow: 0.736, nyx: 1.33, pip: 0.928, plasma: 0.694, prism: 0.835, pyra: 0.919, rex: 1.321, rohammer: 1.069, rook: 1.038, seraph: 1.218, smolder: 1.077, sprocket: 0.887, stellan: 0.814, tempest: 0.875, thorne: 1.126, tom: 0.851, vesper: 1.068, vex: 1.003, vey: 0.887, zephyr: 1.049 } };
   // <TUNE-END>
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
@@ -1354,8 +1355,9 @@
   };
 
   // ---------------------------------------------------------------- leagues (review #21, David)
-  // Everyone starts in Bronze. 10 league points move you up one league; Celestial has no ceiling. +1 for each gauntlet
-  // duel won, -2 when a run ends before the gauntlet (a PvE loss). You never drop a league (points stop at 0).
+  // Everyone starts in Bronze. v64 (review #125, David: "remove all elos, a lol style system where you go up and down leagues at the end of each run"):
+  // each league has 100 league points (LP); the end of every run moves them (B.runLp): 100 LP = the next league, below 0 = the league below
+  // (you land on demoteTo LP). Bronze has a floor at 0, Celestial has no ceiling.
   // WHAT: LEAGUES from Bronze to Celestial and how points move (B.LEAGUE_RULES). Seasons last B.SEASON.days days.
   B.LEAGUES = [
     { id: 'bronze', name: 'Bronze', color: '#b8733d', hi: '#f3bd88' },
@@ -1365,7 +1367,22 @@
     { id: 'diamond', name: 'Diamond', color: '#3f7dff', hi: '#c5dcff' },
     { id: 'celestial', name: 'Celestial', color: '#9a4dff', hi: '#f3dcff' },
   ];
-  B.LEAGUE_RULES = { step: 10, duelWin: 1, pveLoss: -2 };
+  B.LEAGUE_RULES = { step: 100, demoteTo: 75, duelWin: 0, pveLoss: 0 };   // duelWin / pveLoss: only the old Gauntlet ops (old tabs) still read them
+  // v64 (review #125): a completed run is a victory of a kind by the lives left: Perfect (no fight lost), Gold, Bronze
+  // WHAT: the three kinds of victory (by lives left) and what each pays in league points.
+  B.VICTORY = [
+    { lives: 3, id: 'perfect', name: 'Perfect', icon: '💎', color: '#7ee8ff', lp: 35 },
+    { lives: 2, id: 'gold', name: 'Gold', icon: '🥇', color: '#ffd23f', lp: 28 },
+    { lives: 1, id: 'bronze', name: 'Bronze', icon: '🥉', color: '#e09a5c', lp: 22 },
+  ];
+  B.victoryOf = lives => B.VICTORY.find(v => v.lives === (lives | 0)) || B.VICTORY[B.VICTORY.length - 1];
+  // WHAT: the league points the end of a run moves. A completed run pays by its victory kind; a run that ran out of lives costs 24 but every PvE fight won
+  //   gives 3 of them back; each duel won (PvP, the final included) adds 5. The higher the league, the less a run pays (2 per league above Bronze).
+  //   g = { done, lives, fights (PvE fights won), duels (duels won) }. Used by the server (api/elo.js) and shown by the game.
+  B.runLp = (g, league) => {
+    const pve = Math.max(0, Math.min(12, g.fights | 0)), duels = Math.max(0, Math.min(5, g.duels | 0));
+    return Math.round((g.done ? B.victoryOf(g.lives).lp : -24 + 3 * pve) + 5 * duels - 2 * (league | 0));
+  };
 
   // v27 (owner, 2026-09-29): Crowns, the account currency. Earned the first time you reach each league in a season
   // (leagues reset to Bronze when a season starts) and from friends you referred. Spent in the Crown Shop on perks and
@@ -1380,7 +1397,6 @@
   };
   B.SHOP = [
     { id: 'speed4', icon: '⏩', name: '4× battle speed', price: 25, desc: 'Unlocks the 4× speed button in battle. 1× and 2× stay free.' },
-    { id: 'elo', icon: '📊', name: 'Content Elo', price: 20, desc: 'Unlocks the Heroes, Items and Powers tabs of the Ladder: the Elo, fights and win rate of every hero, boss, item and power.' },
     { id: 'rename', icon: '✎', name: 'Name change', price: 10, desc: 'Pick a new name. Your ghosts take it too. Pay each time you change it.', use: true },
     { id: 'king', icon: '👑', name: 'King Tier', price: 300, king: true, desc: "The Royal board skin, only for Kings. Deeper profiles, yours and everyone else's: most played heroes, best win rate heroes, and the record of their ghosts. A crown next to your name. Includes 4× speed and Content Elo." },
   ];
@@ -1416,7 +1432,7 @@
   // where an XP total sits: its level, the XP into that level and what the level costs
   B.levelProgress = xp => { const lvl = B.levelOf(xp), into = Math.max(0, xp || 0) - B.xpForLevel(lvl); return { lvl, into, need: B.xpToNext(lvl) }; };
   B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl).map(u => u.id);
-  B.hasPerk = (perks, id) => (perks || []).includes(id) || ((id === 'speed4' || id === 'elo') && (perks || []).includes('king'));
+  B.hasPerk = (perks, id) => (perks || []).includes(id) || (id === 'speed4' && (perks || []).includes('king'));   // v64: Content Elo is gone (review #122: the Balance lab has it)
 
   // ---------------------------------------------------------------- terrain (review #39, David)
   // "Add some interesting features to the hex map so the fights aren't all the same ... an impassable ridge, a tree ...

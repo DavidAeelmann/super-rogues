@@ -104,6 +104,12 @@ function mapChoiceIn(o) {
   return bi;
 }
 
+// the free recruit: a hero of the first role the team lacks (tank, then healer, then damage)
+function recruitPick(run) {
+  const offer = run.recruitOffer, miss = missingRoles(run);
+  for (const r of miss) { const k = offer.find(x => roleOf(x) === r); if (k) return k; }
+  return offer[0];
+}
 // plays one whole run; start = the hero the run starts with (forced, so that every hero gets the same number of runs)
 function playRun(seed, opt = {}) {
   POLICY = opt.policy || 'medium';
@@ -111,20 +117,15 @@ function playRun(seed, opt = {}) {
   const keys = Object.keys(HEROES);
   const start = opt.start || keys[Math.floor(Run.rnd(run) * keys.length)];   // uniform over all heroes, not only the three offered
   const relic = opt.relic || run.relicOffer[Math.floor(Run.rnd(run) * run.relicOffer.length)];
-  // v63 (review #118): the run starts with 3 heroes: the forced one plus one of each role it lacks (taken from the offer when it has one, else any hero of that role)
-  const team = [start];
-  for (const role of NEED_ORDER) {
-    if (team.some(k => roleOf(k) === role)) continue;
-    const from = run.startOffer.filter(k => roleOf(k) === role && !team.includes(k)), any = keys.filter(k => roleOf(k) === role && !team.includes(k));
-    const list = from.length ? from : any; team.push(list[Math.floor(Run.rnd(run) * list.length)]);
-  }
-  Run.pickStart(run, team.slice(0, C.startHeroes), relic);
+  // v64 (review #126): the run starts with the forced hero; the free recruits after the first days fill the roles it lacks (recruitPick)
+  Run.pickStart(run, [start], relic);
   if (opt.item) run.bag.push(opt.item);   // the item tests: one item in the bag from the start (auto-equip decides if anybody wears it)
   const stats = { heroBuys: 0, events: 0 };
   const rec = { seed, start, wins: 0, cleared: false, fights: [], secs: 0, tag: opt.relic || opt.item || undefined };
   let guard = 0;
   while (run.phase !== 'over' && run.phase !== 'gauntlet' && guard++ < 300) {
     while (run.pending.length) Run.chooseSpec(run, Run.rnd(run) < 0.5 ? 0 : 1);
+    if (run.phase === 'recruit') { Run.recruit(run, recruitPick(run)); continue; }
     if (run.phase === 'map') Run.choose(run, mapChoice(run));
     else if (run.phase === 'shop') shop(run, stats);
     else if (run.phase === 'event') event(run, stats);
@@ -163,6 +164,7 @@ function applyTune(t) {
   if (t.fightScale) C.fightScale = t.fightScale.slice();
   if (t.growth != null) B.TUNE.growth = t.growth;
   if (t.ghostPower != null) C.ghostPower = t.ghostPower;
+  if (t.firstFight != null) C.firstFight = t.firstFight;
   if (t.base != null) B.TUNE.base = t.base;
   if (t.easyMul != null) B.DIFF.easy.mul = t.easyMul;
   if (t.hardMul != null) B.DIFF.hard.mul = t.hardMul;

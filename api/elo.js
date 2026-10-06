@@ -144,11 +144,13 @@ function cleanTeam(team) {
 const oppView = (t, pid) => t && { teamId: t.id, name: t.name, code: P.codeOf(t.pid), elo: Math.round(t.elo_at), wins: t.wins, status: t.status, own: t.pid === pid, defW: t.def_w || 0, defL: t.def_l || 0, team: JSON.parse(t.team), relics: JSON.parse(t.relics) };
 // review #21: league points; returns what changed
 // WHAT: moves league points (+1 per duel won, -2 for a game lost before the Gauntlet, 10 points = next league; never drops a league).
+// v64 (review #125): ranked leagues. 100 LP a league; reaching 100 moves you up (the rest carries over), going below 0 moves you down to demoteTo LP; Bronze has a floor, Celestial no ceiling
 function leaguePoints(p, delta) {
   const R = D.LEAGUE_RULES, top = D.LEAGUES.length - 1, l0 = p.league | 0, lp0 = p.lp | 0;
-  p.league = l0; p.lp = Math.max(0, lp0 + delta);
+  p.league = l0; p.lp = lp0 + Math.round(delta);
   while (p.league < top && p.lp >= R.step) { p.lp -= R.step; p.league++; }
-  return { league: p.league, lp: p.lp, delta: p.league > l0 ? delta : p.lp - lp0, promoted: p.league > l0 };
+  if (p.lp < 0) { if (p.league > 0) { p.league--; p.lp = R.demoteTo; } else p.lp = 0; }
+  return { league: p.league, lp: p.lp, delta: Math.round(delta), from: { league: l0, lp: lp0 }, promoted: p.league > l0, demoted: p.league < l0 };
 }
 
 // next opponent with at least `wins` wins: other players first, then your own older teams
@@ -229,7 +231,8 @@ module.exports = async (req, res) => {
 
     if (b.op === 'fail') {  // review #24: a lost run no longer moves the player's Elo (league points and the pieces' Elo still do)
       p.runs++;
-      const lg = leaguePoints(p, D.LEAGUE_RULES.pveLoss);
+      const lg = leaguePoints(p, D.runLp({ done: false, fights: b.game && b.game.fights, duels: b.game && b.game.duels }, p.league));   // v64: the end of the run moves the league
+      if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
       await save({});
       const used = cleanTeam(b.team); if (used) { await rateContent(st, ipHash(req), [{ used: usedIn(used, relicList(b.relics)), score: 0 }]); await P.heroGames(st, pid, used, false); }
       await logFights(st, req, pid, b.runId, b.flog);
@@ -252,34 +255,36 @@ module.exports = async (req, res) => {
       const opp = await st.pickFinal(pid, Array.isArray(b.faced) ? b.faced : []);
       return send(res, 200, me({ opponent: oppView(opp, pid) || null }));
     }
-    if (b.op === 'duel') {   // the result of a PvP-day duel or of the final fight: Elo against the team faced (1000 for a made-up one), the ghost's record, league points
-      const opp = b.oppId ? await st.getTeam(Math.floor(Number(b.oppId))) : null, win = !!b.win, before = p.elo;
-      p.elo = eloAfter(p.elo, opp ? opp.elo_at : PVE, win ? 1 : 0);
-      const delta = Math.round(p.elo) - Math.round(before), mine = cleanTeam(b.team), myRelics = relicList(b.relics);
+    if (b.op === 'duel') {   // the result of a PvP-day duel or of the final fight. v64 (review #125): no Elo; a win is a trophy with the name beaten and 1 crown; the ghost keeps its defense record
+      const opp = b.oppId ? await st.getTeam(Math.floor(Number(b.oppId))) : null, win = !!b.win;
+      const mine = cleanTeam(b.team), myRelics = relicList(b.relics);
       const sides = []; if (mine) sides.push({ used: usedIn(mine, myRelics), score: win ? 1 : 0 });
       if (opp && mine) sides.push({ used: usedIn(JSON.parse(opp.team), JSON.parse(opp.relics)), score: win ? 0 : 1 });
       if (sides.length) await rateContent(st, ipHash(req), sides);
       if (mine) await P.heroGames(st, pid, mine, win);
-      let ghost = null;
-      if (opp) { const gElo = eloAfter(opp.elo_at, before, win ? 0 : 1); await st.ghostResult(opp.id, gElo, !win); ghost = { name: opp.name, elo: Math.round(gElo), delta: Math.round(gElo) - Math.round(opp.elo_at) }; }
-      const lg = win ? leaguePoints(p, D.LEAGUE_RULES.duelWin) : null;
-      if (lg && lg.promoted) lg.crowns = await P.payLeagues(st, p);
-      if (win) await P.xpDuel(st, p, !!b.final, xp);
+      if (opp) await st.ghostResult(opp.id, opp.elo_at, !win);
+      const oppName = opp ? opp.name : (clean(b.oppName, 16) || 'A rival');
+      await st.addDuel({ pid, opp_pid: opp ? opp.pid : null, opp_name: oppName, opp_code: opp ? P.codeOf(opp.pid) : null, final: !!b.final, win });
+      let trophy = null;
+      if (win) { await P.grant(st, p, 1); trophy = { name: oppName, code: opp ? P.codeOf(opp.pid) : null, final: !!b.final, crowns: 1 }; await P.xpDuel(st, p, !!b.final, xp); }
       await save();
-      return send(res, 200, me({ win, delta, ghost, lg }));
+      return send(res, 200, me({ win, trophy }));
     }
     if (b.op === 'complete') {   // the run was completed: the team becomes a finalist other players can face in their final fight
       const team = cleanTeam(b.team); if (!team) return send(res, 400, { error: 'Invalid team' });
       const relics = relicList(b.relics);
       let id = null;
       if (await st.countTeams(pid, Date.now() - 3600e3) < 40) { id = await st.insertTeam({ pid, name, elo_at: p.elo, team: JSON.stringify(team), relics: JSON.stringify(relics) }); await st.updateTeam(id, { wins: 8, status: 'final', opp: null }); }
-      p.runs++; p.crowns++; p.best = Math.max(p.best, 1); await save();
+      p.runs++; p.crowns++; p.best = Math.max(p.best, 1);
+      const lg = leaguePoints(p, D.runLp({ done: true, lives: b.game && b.game.lives, duels: b.game && b.game.duels }, p.league));   // v64: the victory kind moves the league
+      if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
+      await save();
       await rateContent(st, ipHash(req), [{ used: usedIn(team, relics), score: 1 }]);
       await P.heroGames(st, pid, team, true);
       await logFights(st, req, pid, b.runId, b.flog);
       await P.xpGame(st, p, { fights: b.game && b.game.fights, reached: true }, xp);
       await P.xpClear(st, p, team, xp);
-      return send(res, 200, me({ teamId: id }));
+      return send(res, 200, me({ teamId: id, lg }));
     }
 
     if (b.op === 'enter') {

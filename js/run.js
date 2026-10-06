@@ -66,7 +66,7 @@
     const run = { v: 5, seed: seed >>> 0, rs: seed | 0, gold: C.startGold, heroes: [], bag: [], relics: [], nuid: 0,
       step: -1, fightNo: 0, phase: 'start', opts: [], cur: null, pending: [], curse: 0, log: [], won: 0, lost: 0, score: 0, startOffer: [],
       seq: C.seq.slice(), fightScale: C.fightScale.slice(), locked: ((opts && opts.locked) || []).slice() };
-    // v63 (review #118): six heroes are offered, two of each class, and the player picks three
+    // v63 (review #118): heroes offered by class (v64, review #126: one of each class, the player picks one)
     run.startOffer = [].concat(...B.CLASSES.map(cl => pickN(run, heroKeysOf(run).filter(k => B.heroClass(k) === cl), C.startOffer / B.CLASSES.length)));
     run.relicOffer = pickN(run, relicsOf(run).map(r => r.id), C.startRelics || 3);  // review #22: the run also starts with a relic
     run.lives = C.lives;
@@ -390,6 +390,32 @@
     return res;
   }
   // ------------------------------------------------------------------ PvP days and the final fight (v63, reviews #117 #118 #119)
+  // WHAT: the three heroes offered on the free recruit screen: one of each class, the classes the team lacks first (never a hero already in the team).
+  function recruitOffer(run) {
+    const have = new Set(run.heroes.map(h => h.key)), pool = heroKeysOf(run).filter(k => !have.has(k));
+    const out = []; for (const cl of B.CLASSES) { const c = pool.filter(k => B.heroClass(k) === cl && !out.includes(k)); if (c.length) out.push(pick(run, c)); }
+    while (out.length < 3) { const c = pool.filter(k => !out.includes(k)); if (!c.length) break; out.push(pick(run, c)); }
+    return out;
+  }
+  // WHAT: the player picked a free recruit: the hero joins (level 1) and the run goes on to the next day.
+  function recruit(run, key) {
+    if (run.phase !== 'recruit' || !(run.recruitOffer || []).includes(key)) return 'Pick one of the offered heroes';
+    addHero(run, key); run.recruits = (run.recruits || 0) + 1; run.recruitOffer = null;
+    advance(run); return null;
+  }
+  // v64 (review #127, David: "hero shops may still exist swapping in with an existing team hero, upgrades are random, items kept"): with a full team a bought hero takes
+  // the place of one of yours: it starts at that hero's level and XP, picks its powers at random for those levels and wears the same items
+  // WHAT: swaps hero oldUid for a new hero key (same level, XP, place and items; random powers). Returns the new hero.
+  function swapIn(run, oldUid, key) {
+    const old = run.heroes.find(h => h.uid === oldUid); if (!old) return null;
+    const specs = B.HEROES[key].specs.slice(0, old.lvl - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id);
+    const h = { uid: ++run.nuid, key, lvl: old.lvl, xp: old.xp, specs, items: [], bonus: {}, pos: old.pos ? { c: old.pos.c, r: old.pos.r } : null };
+    run.pending = run.pending.filter(p => p.uid !== old.uid);
+    run.heroes[run.heroes.indexOf(old)] = h;
+    for (const id of old.items) { if (h.items.length < slots(run, h) && !h.items.some(x => B.ITEM[x].type === B.ITEM[id].type)) h.items.push(id); else run.bag.push(id); }
+    if (!h.pos) autoPlace(run, h);
+    return h;
+  }
   // WHAT: a number for how strong a team is (health and defense against damage per second, as one number per hero, added up). Only used to tell the player how a ghost compares with their own team.
   function powerOf(run, heroes) {
     let p = 0;
@@ -443,7 +469,7 @@
     run.log.push((win ? 'Won ' : 'Lost ') + (final ? 'the final fight' : 'a duel on fight ' + f.fightNo));
     run.cur = null;
     if (win) {
-      run.won++; relicsAfterWin(run, res);
+      run.won++; run.duelsWon = (run.duelsWon || 0) + 1; (run.trophies = run.trophies || []).push({ name: g.opp.name, final }); relicsAfterWin(run, res);
       if (final) { run.phase = 'over'; run.result = 'clear'; run.g = null; }
       else { run.steal = stealOptions(run, g.opp); run.stealFrom = g.opp.name; run.phase = 'steal'; }
       return res;
@@ -560,6 +586,10 @@
   function bossFight(run, n) { let f = 0, b = 0; for (const t of seqOf(run)) { if (t === 'F' || t === 'B') f++; if (t === 'B' && ++b === n) return f; } return f; }
   // WHAT (important): moves to the next day and builds what the map offers: two fights (easy / medium / hard), a boss, two shops or events, the last shop, or the start of the Gauntlet.
   function advance(run) {
+    // v64 (review #126): after each of the first days, while the team is short, a free hero joins: the recruit screen comes before the next day
+    if (run.phase !== 'recruit' && run.step >= 0 && (run.recruits || 0) < (C.freeRecruits || 0) && run.heroes.length < C.maxTeam) {
+      run.phase = 'recruit'; run.recruitOffer = recruitOffer(run); run.cur = null; run.opts = []; return;
+    }
     run.step++;
     const t = seqOf(run)[run.step];
     run.phase = 'map'; run.opts = [];
@@ -575,13 +605,13 @@
       }
     } else if (t === 'X') {
       const w = { heroShop: 0.25, itemShop: 0.3, relicShop: 0.2, event: has(run, 'xmap') ? 0.6 : 0.3 };
-      if (run.heroes.length >= teamMax(run) || has(run, 'solo')) delete w.heroShop;
+      if (has(run, 'solo')) delete w.heroShop;   // v64 (review #127): with a full team the Hero Shop swaps a hero in
       // review #22: with a single hero the hero shop is always one of the two options
       const a = run.heroes.length === 1 && w.heroShop ? 'heroShop' : wpick(run, w); delete w[a]; const b = wpick(run, w); delete w[b];
       const ks = [a, b]; if (has(run, 'quill') && Object.keys(w).length) ks.push(wpick(run, w));
       run.opts = ks.map(k => k === 'event' ? { type: 'event', id: pickEvent(run) } : { type: 'shop', kind: k });
     } else if (t === 'S') {
-      run.opts = pickN(run, ['heroShop', 'itemShop', 'relicShop'].filter(k => k !== 'heroShop' || (run.heroes.length < teamMax(run) && !has(run, 'solo'))), has(run, 'quill') ? 3 : 2).map(k => ({ type: 'shop', kind: k, final: true }));
+      run.opts = pickN(run, ['heroShop', 'itemShop', 'relicShop'].filter(k => k !== 'heroShop' || !has(run, 'solo')), has(run, 'quill') ? 3 : 2).map(k => ({ type: 'shop', kind: k, final: true }));
     } else if (t === 'G') {
       // the gauntlet (reviews #3 #4 #9 #10): duels against ghosts of other players' runs
       run.phase = 'gauntlet'; run.g = { status: 'intro', history: [] }; run.cur = null;
@@ -660,9 +690,13 @@
     return true;
   }
   // WHAT: buys product i of the open shop. Returns an error text or null when it worked.
-  function buy(run, i) {
+  function buy(run, i, replaceUid) {
     const s = run.cur.stock[i]; if (!s || s.sold || run.gold < s.price) return 'Not enough gold';
-    if (s.kind === 'hero') { if (run.heroes.length >= teamMax(run)) return 'Team is full'; addHero(run, s.id); }
+    if (s.kind === 'hero') {
+      if (run.heroes.length < teamMax(run)) addHero(run, s.id);
+      else if (!run.heroes.some(h => h.uid === replaceUid)) return 'Pick the hero it replaces';   // v64 (review #127): a full team swaps
+      else swapIn(run, replaceUid, s.id);
+    }
     else if (s.kind === 'item') run.bag.push(s.id);
     else gainRelic(run, s.id);
     run.gold -= s.price; s.sold = true; return null;
@@ -1023,7 +1057,7 @@
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
   B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
-    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, canEquip, setCounts, setBonuses, seqOf, bossFight,
+    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };
   if (typeof module !== 'undefined') module.exports = B.Run;
 })(typeof window !== 'undefined' ? window : globalThis);

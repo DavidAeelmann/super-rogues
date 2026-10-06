@@ -76,6 +76,7 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 
 **Change how a fight looks.** Units: `js/models.js` (or pictures in `js/art.js`). The board, effects, banners: `js/render.js`. A boss background: `bossBackdrop` in `js/render.js`.
 
+**Change the start, the recruits, leagues and trophies (v64).** The free recruits: `CFG.freeRecruits`, `recruitOffer` / `recruit` in `js/run.js`, `recruitHTML` in `js/ui.js`. The Hero Shop swap: `swapIn` (run.js), `swapHTML` (ui.js). League points at the end of a run: `B.runLp`, `B.VICTORY`, `B.LEAGUE_RULES` (data.js) and `leaguePoints` (api/elo.js). Trophies and head-to-head: table `duels`, `addDuel` / `trophiesOf` / `h2h` (api/_store.js), op `duel` (api/elo.js), `profile` (api/player.js). The end screens: `overHTML` + `leagueCardHTML` (ui.js). The map trail: `journeyHTML` (ui.js).
 **Change the PvP days and the final fight (v63).** Which days have a duel: `CFG.pvpFights` in `js/data.js`; the lives: `CFG.lives`; the duel and final flow: `startDuel`, `finishDuel`, `stealOptions`, `steal`, `randomGhost`, `powerOf` in `js/run.js`; the screens: `optHTML` (the duel poster), `stealHTML`, `gauntletHTML` (the final fight gate), `findDuels`, `reportRunEnd` in `js/ui.js`; the server: ops `snap`, `final`, `duel`, `complete` in `api/elo.js` (`pickSnap`, `pickFinal` in `api/_store.js`).
 **Change the old Gauntlet.** Rules of who you meet: `nextOpponent` in `api/elo.js`. What a ghost keeps: `cleanTeam` in `api/elo.js` and `teamSnapshot` in `js/run.js`. The fight itself: `gauntletWorld` in `js/run.js`.
 

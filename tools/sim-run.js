@@ -38,6 +38,7 @@ for (let n = 0; n < RUNS; n++) {
         i = score(o[0]) <= score(o[1]) ? 0 : 1;
       }
       Run.choose(run, i);
+    } else if (run.phase === 'recruit') { Run.recruit(run, run.recruitOffer[Math.floor(Run.rnd(run) * run.recruitOffer.length)]);   // v64 (review #126): the free recruits
     } else if (run.phase === 'shop') {
       const st = run.cur.stock;
       for (let k = 0; k < st.length; k++) {

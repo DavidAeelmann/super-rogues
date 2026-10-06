@@ -92,7 +92,7 @@ async function xpGame(st, p, g, log) {
 }
 async function xpDuel(st, p, champion, log) {
   await addXp(st, p, D.GAME_XP.duel, 'duel won', log, 'duel');
-  if (champion) await addXp(st, p, D.GAME_XP.champion, 'crowned champion', log, 'champ');
+  if (champion) await addXp(st, p, D.GAME_XP.champion, 'won the final fight', log, 'champ');
 }
 async function xpClear(st, p, team, log) {
   const had = listOf(p.cleared), fresh = [...new Set((team || []).map(h => h.key))].filter(k => D.HEROES[k] && !had.includes(k));
@@ -162,4 +162,4 @@ async function ownView(st, p) {
     referred: !!p.ref, seasonEnds: D.seasonEnds(D.seasonOf(Date.now())), account: true });
 }
 
-module.exports = { perksOf, isKing, row, rollSeason, payLeagues, sync, linkRef, heroGames, profileView, kingExtras, ownView, codeOf, xpClear, xpFloor, xpBoss, xpSpend, xpGame, xpDuel, levelView };
+module.exports = { grant, perksOf, isKing, row, rollSeason, payLeagues, sync, linkRef, heroGames, profileView, kingExtras, ownView, codeOf, xpClear, xpFloor, xpBoss, xpSpend, xpGame, xpDuel, levelView };

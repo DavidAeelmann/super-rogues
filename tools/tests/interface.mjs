@@ -102,6 +102,15 @@ for (dev of DEVICES.map(d => d)) {
     await force(`B.Run.startDuel(r, B.Run.randomGhost(r, 8, true), 'final', 9)`); await sleep(500); await audit('final-deploy');
     await force(`r.cur = null; r.g = null; r.phase = 'over'; r.result = 'clear'`); await sleep(400); await audit('run-complete');
     await force(`r.phase = 'over'; r.result = 'defeat'; r.lives = 0`); await sleep(400); await audit('run-lost');
+    // v64 (reviews #125 #126 #127): the league screen after a run, the free recruit, the hero shop swap
+    await force(`r.overStep = 2; r.xpShown = true; r.duelsWon = 2; r.won = 9; r.trophies = [{ name: 'Mira' }, { name: 'Tobias', final: true }]; r.lgEnd = { league: 1, lp: 12, delta: 31, from: { league: 0, lp: 81 }, promoted: true, crowns: 10 }`); await sleep(400); await audit('run-lost-league');
+    await force(`r.result = 'clear'; r.lives = 2`); await sleep(400); await audit('run-complete-league');
+    await force(`r.overStep = 1; r.result = 'clear'`); await sleep(300); await audit('run-complete-xp');
+    await force(`r.phase = 'recruit'; r.result = null; r.overStep = 1; r.recruits = 0; r.heroes = r.heroes.slice(0, 1); r.recruitOffer = B.Run.recruitOffer(r)`); await sleep(400); await audit('recruit');
+    await force(`__bal.ui.recruitPick = r.recruitOffer[1]`); await sleep(250); await audit('recruit-picked');
+    await force(`while (r.heroes.length < 3) B.Run.addHero(r, Object.keys(B.HEROES).find(k => !r.heroes.some(h => h.key === k))); r.phase = 'map'; r.gold = 99; r.opts = [{ type: 'shop', kind: 'heroShop' }]; B.Run.choose(r, 0)`); await sleep(350);
+    await ev(`document.querySelector('[data-act=buy]') && document.querySelector('[data-act=buy]').click()`); await sleep(300); await audit('hero-shop-swap');
+    await act('close'); await sleep(100);
     errors.length && console.log('errors so far:', errors.slice(0, 2));
   }
 }

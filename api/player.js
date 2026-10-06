@@ -35,6 +35,8 @@ module.exports = async (req, res) => {
       const v = P.profileView(t), king = P.isKing(p);
       v.own = !!p && p.pid === t.pid;
       if (king) v.more = await P.kingExtras(st, t.pid);
+      v.trophies = await st.trophiesOf(t.pid, 12);   // v64 (review #125): the duels this player won
+      if (p && p.pid !== t.pid) v.h2h = await st.h2h(p.pid, t.pid);   // v64 (review #127): your duels against this player
       return send(res, 200, { profile: v, viewerKing: king });
     }
     if (!p) return send(res, 404, { error: 'Your account starts when your first run ends. Play one first!' });

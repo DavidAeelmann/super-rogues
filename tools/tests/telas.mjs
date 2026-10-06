@@ -101,7 +101,7 @@ await click('[data-act=new-run]'); await sleep(200);
 ok(await ev(`document.getElementById('modal').hidden && !document.getElementById('toast').classList.contains('on')`), 'v52: the toast and the sheet from the screen before are gone once the screen changes');
 ok(await ev(`__bal.ui.info === null`), 'v62 (review #77): the unit / boss description of the screen before does not follow you to the next screen');
 const picks = await ev(`[...document.querySelectorAll('[data-act=start-pick]')].length`);
-ok(picks === 6 && await ev(`document.querySelectorAll('.stage.six .hbanner').length === 6`), 'v63 (review #118): start offers 6 heroes (two of each class) to pick 3 from');
+ok(picks === 3 && !(await ev(`!!document.querySelector('.stage.six')`)), 'v64 (review #126): start offers 3 heroes (one of each class) to pick 1 from');
 // v49 (review #60): a game only counts once its hero and relic are picked: back on the landing it is Play, not Continue
 await click('#top [data-act=menu]'); await sleep(150);
 ok(await ev(`!document.querySelector('[data-act=continue-run]') && !document.querySelector('[data-act=give-up]') && !!document.querySelector('[data-act=new-run]')`), 'v49: a game still picking its hero shows Play on the landing, not Continue');
@@ -109,9 +109,14 @@ await click('[data-act=new-run]'); await sleep(200);
 ok(await ev(`!!document.querySelector('.start .ssteps li.on') && !!document.querySelector('.ssub.tap') && document.querySelector('[data-act=start-next]').disabled && !document.querySelector('[data-act=start-relic]')`), 'v45 step 1: "Tap a hero", Next is off until you pick, no relics yet');
 const fmtOut = await ev(`__bal.fmt('<b>x</b> deals 20% magic damage and stuns for 1.5s')`);
 ok(/&lt;b&gt;/.test(fmtOut) && /class="num">20%/.test(fmtOut) && /kw-ap/.test(fmtOut) && /kw-cc/.test(fmtOut) && /class="dur">1.5s/.test(fmtOut), 'review #10: descriptions colour terms, bold numbers, italic durations, and stay escaped');
-await pick3();
+await pickHero();
 ok(await ev(`!!document.querySelector('.detail .htag') && !!document.querySelector('.detail [data-act=hero-peek]') && !document.querySelector('.detail .stat') && !document.querySelector('[data-act=start-next]').disabled`), 'v45 step 1: the picked hero shows its ability (no stat table) and Next turns on');
 await shot('02a-start-hero'); await noHScroll('start hero'); await noVScroll('start hero');
+await ev(`document.querySelectorAll('[data-act=start-pick]')[2].click()`); await sleep(80);
+ok(await ev(`document.querySelectorAll('.hbanner.spot.on').length === 1 && document.querySelectorAll('.hbanner.spot')[2].classList.contains('on') && !document.querySelectorAll('.hbanner.spot')[0].classList.contains('on') && !document.querySelector('.hbanner.focus')`), 'v64 (review #124): tapping another hero moves the light: only the picked one stays lit');
+await ev(`document.querySelectorAll('[data-act=start-pick]')[2].click()`); await sleep(80);
+ok(await ev(`!document.querySelector('.hbanner.spot.on') && document.querySelector('[data-act=start-next]').disabled`), 'tapping it again puts it back (nothing stays lit)');
+await pickHero();
 await click('[data-act=start-next]'); await sleep(100);
 ok(await ev(`document.querySelectorAll('[data-act=start-relic]').length === 3 && document.querySelector('[data-act=start-go]').disabled && document.querySelectorAll('.srelic .srd').length === 3 && document.querySelectorAll('.ssteps li.done').length === 1`), 'review #22 + v45 step 2: 3 relics with what they do written on them; you need a relic to begin');
 await click('[data-act=start-back]'); await sleep(100);
@@ -124,7 +129,7 @@ await sleep(200);
 ok(await ev(`document.querySelectorAll('[data-act=choose]').length === (__bal.run.relics.includes('quill') ? 3 : 2)`), "first map step shows 2 options (3 with the Pathfinder's Quill)");
 await shot('03-map'); await noHScroll('map'); await noVScroll('map');
 // v47 (review #58): the journey sits behind the Day chip; the map itself has no 17-icon strip
-ok(await ev(`!document.querySelector('#screen .track') && !!document.querySelector('#top button.prog[data-act=path]')`), 'v47: no journey strip on the map; the Day chip is a button');
+ok(await ev(`!!document.querySelector('#screen .journey .jn.cur .jtok') && document.querySelectorAll('#screen .journey .jn').length === B.Run.seqOf(__bal.run).length && document.querySelectorAll('#screen .journey .jn.boss').length === 2 && document.querySelectorAll('#screen .journey .jn.pvp').length === 2 && !!document.querySelector('#screen .journey .jn.final') && /Day 1.17/.test(document.querySelector('.jcap').textContent) && !!document.querySelector('#top button.prog[data-act=path]')`), 'v64 (review #123): the map shows the whole journey (you on today, the bosses, the duel days, the final fight)');
 await click('#top [data-act=path]'); await sleep(150);
 ok(await ev(`document.querySelectorAll('#modal .track .node').length > 10 && document.querySelectorAll('#modal .plegend li').length === 5`), 'v47: tapping the Day chip shows the whole journey with a legend');
 await click('[data-act=close]'); await sleep(100);
@@ -137,7 +142,8 @@ ok(await ev(`!!document.querySelector('#modal [data-act=give-up-yes]')`), 'v49: 
 await click('#modal [data-act=close]'); await sleep(100); await click('[data-act=continue-run]'); await sleep(200);
 ok(await ev(`__bal.run && __bal.run.phase === 'map' && !!document.querySelector('.map')`), 'v49: Keep playing, then Continue: back to the same game');
 
-async function pick3() { const n = await ev(`document.querySelectorAll('[data-act=start-pick]').length`); if (n < 3) console.log('pick3: only', n, await ev('__bal.run.phase + " " + document.querySelector("#screen").innerHTML.slice(0, 200)')); for (let i = 0; i < 3; i++) { await ev(`document.querySelectorAll('[data-act=start-pick]')[${i}].click()`); await sleep(60); } }
+async function pickHero() { await ev(`document.querySelector('[data-act=start-pick]').click()`); await sleep(60); }
+async function pick3_old() { const n = await ev(`document.querySelectorAll('[data-act=start-pick]').length`); if (n < 3) console.log('pick3: only', n, await ev('__bal.run.phase + " " + document.querySelector("#screen").innerHTML.slice(0, 200)')); for (let i = 0; i < 3; i++) { await ev(`document.querySelectorAll('[data-act=start-pick]')[${i}].click()`); await sleep(60); } }
 let fightsSeen = 0, sawSmooth = false, sawShop = false, sawEvent = false, sawPicker = false, sawLevel = false, sawBoss = 0, steps = 0;
 while (steps++ < 160) {
   const st = await ev(`(() => { const r = __bal.run; return { phase: r.phase, screen: document.querySelector('#screen').innerHTML.slice(0, 200), pending: r.pending.length, type: r.cur && r.cur.type, diff: r.cur && r.cur.diff, gold: r.gold, bag: r.bag.length, battle: !!__bal.battle }; })()`);
@@ -145,6 +151,10 @@ while (steps++ < 160) {
   if (st.phase === 'gauntlet' && !(await ev(`!!document.querySelector('[data-act=result-ok], [data-act=spec]')`))) {
     if (await ev(`!!document.querySelector('form[data-form=gauntlet]')`)) { if (REMOTE) break; await ev(`(() => { const f = document.querySelector('form[data-form=gauntlet]'); f.name.value = 'TestBot'; f.querySelector('button').click(); })()`); await sleep(800); continue; }
     await sleep(150); continue;
+  }
+  if (st.phase === 'recruit' && !(await ev(`!!document.querySelector('[data-act=result-ok], [data-act=spec]')`))) {
+    if (!globalThis.__sawRecruit) { globalThis.__sawRecruit = 1; ok(await ev(`document.querySelectorAll('[data-act=recruit-pick]').length === 3 && document.querySelector('[data-act=recruit-go]').disabled && /Free hero 1 of 2/.test(document.querySelector('#screen').textContent)`), 'v64 (review #126): after day 1 a free hero joins: 3 to pick from'); await shot('07c-recruit'); await noHScroll('recruit'); await noVScroll('recruit'); }
+    await click('[data-act=recruit-pick]'); await click('[data-act=recruit-go]'); await sleep(120); continue;
   }
   if (st.phase === 'steal') { await click('[data-act=steal]:last-of-type'); await sleep(100); continue; }
   if (await ev(`!!document.querySelector('[data-act=result-ok]')`)) { if (fightsSeen === 1) { await sleep(900); await shot('06-result'); await noVScroll('result');
@@ -166,8 +176,13 @@ while (steps++ < 160) {
   }
   if (st.phase === 'shop') {
     if (!sawShop) { await shot('08-shop'); await noHScroll('shop'); await noVScroll('shop'); sawShop = true; }
-    await ev(`[...document.querySelectorAll('[data-act=buy]')].forEach(b => { if (!b.disabled) b.click(); })`);
+    await ev(`[...document.querySelectorAll('[data-act=buy]')].forEach(b => { if (!b.disabled && !document.querySelector('#modal [data-act=buy-swap]')) b.click(); })`);
     await sleep(80);
+    if (await ev(`!!document.querySelector('#modal [data-act=buy-swap]')`)) {   // v64 (review #127): a hero bought with a full team swaps in
+      const sw = await ev(`(() => { const s = __bal.run.cur.stock[__bal.ui.swapBuy], o = __bal.run.heroes[0]; return { key: s.id, lvl: o.lvl, uid: o.uid }; })()`);
+      await click('#modal [data-act=buy-swap]'); await sleep(150);
+      if (!globalThis.__sawSwap) { globalThis.__sawSwap = 1; ok(await ev(`__bal.run.heroes.length === 3 && __bal.run.heroes.some(h => h.key === ${JSON.stringify(sw.key)} && h.lvl === ${sw.lvl}) && !__bal.run.heroes.some(h => h.uid === ${sw.uid})`), 'v64 (review #127): with a full team the bought hero swaps in at the level of the one it replaces'); }
+    }
     if (!globalThis.__teamShot && await ev(`__bal.run.bag.length > 0`)) {
       globalThis.__teamShot = 1;
       await ev(`document.querySelector('[data-act=team]').click()`); await sleep(200);
@@ -253,9 +268,13 @@ if (fin.phase === 'over') {
   ok(await ev(`!!document.querySelector('.xppanel') && document.querySelectorAll('.xppanel .xplines li').length >= 1 && /^\\+[1-9]/.test(document.querySelector('#xpgot').textContent) && !!document.querySelector('.xpnext, .xppanel .center')`), 'v46: game over counts the XP of the game (chips, the total) and shows the next reward');
   await shot('11b-over-xp'); await noVScroll('game over, XP counted');
 }
-if (fin.result === 'defeat' && !REMOTE) {
+if (fin.phase === 'over' && !REMOTE) {
   await sleep(600);
-  ok(await ev(`__bal.run.lives === 0 && __bal.run.eloEnd == null && !!__bal.run.lgEnd && /league point/.test(document.querySelector('#screen').textContent) && !!document.querySelector('#top .lgchip')`), 'v63: the third lost fight ended the run (no lives left); review #24: it costs league points but no Elo');
+  ok(await ev(`!document.querySelector('.lgcard') && !!document.querySelector('[data-act=over-next]') && !document.querySelector('[data-act=new-run]')`), 'v64 (review #127): the end of a run shows the XP and the unlocks first, then Next');
+  await click('[data-act=over-next]'); await sleep(300);
+  ok(await ev(`!!__bal.run.lgEnd && !!document.querySelector('.lgcard .lgbar i') && /LP/.test(document.querySelector('.lgcard').textContent) && !!document.querySelector('.lgcard .lgwhy') && !!document.querySelector('[data-act=new-run]') && !!document.querySelector('#top .lgchip')`), 'v64 (review #125): ...then the league card: the league points this run moved, why, and the bar');
+  ok(await ev(`(__bal.run.result === 'clear' ? !!document.querySelector('.vbadge') : __bal.run.lives === 0)`), 'a completed run shows its victory kind; a lost one ran out of lives');
+  await shot('11c-over-league'); await noHScroll('over, league'); await noVScroll('over, league');
   ok(await ev(`(() => { const t = document.querySelector('#top'); return t.scrollWidth <= t.clientWidth + 1 && [...t.children].every(c => c.getBoundingClientRect().right <= window.innerWidth + 1); })()`), 'review #51: the top bar fits the phone with the league chip, gold, day, Team, suggest and menu');
 }
 
@@ -267,8 +286,8 @@ ok(await ev(`Object.keys(B.HEROES).every(k => { const d = B.Run.heroDef({ relics
 if (!REMOTE) {
   await ev('B.CFG.startItems = 0');   // v63: the events below count the items in the bag
   await click('[data-act=new-run]'); await sleep(150);
-  await pick3(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
-  await ev(`(() => { const r = __bal.run; r.gold = 30; r.bag.push('cap', 'bloodthirster'); r.phase = 'map'; r.opts = [{ type: 'event', id: 'smith' }]; B.Run.choose(r, 0); __bal.render(); })()`); await sleep(150);
+  await pickHero(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+  await ev(`(() => { const r = __bal.run; r.recruits = 2; r.gold = 30; r.bag.push('cap', 'bloodthirster'); r.phase = 'map'; r.opts = [{ type: 'event', id: 'smith' }]; B.Run.choose(r, 0); __bal.render(); })()`); await sleep(150);
   ok(await ev(`document.querySelectorAll('[data-act=event]').length === 4 && !document.querySelector('[data-act=event][data-arg="2"]').disabled && !!document.querySelector('[data-act=event][data-arg="2"] .price') && !!document.querySelector('[data-act=event][data-arg="3"] .etag.ereq')`), 'event: 4 choices (one needs a melee hero, tagged), the priced one is available');
   await shot('09-event'); await noHScroll('event'); await noVScroll('event');
   await click('[data-act=event][data-arg="2"]'); await sleep(120);
@@ -301,7 +320,7 @@ if (!REMOTE) {
   ok(await ev(`!!document.querySelector('.lufull') && document.querySelectorAll('.sp-row').length === 4 && !!document.querySelector('.sp-row.done .sp-n.on') && document.querySelectorAll('[data-act=spec]').length === 2`), 'level up: splash, 2 choices and the 4-step specialization path (the earlier pick marked)');
   await shot('07b-levelup'); await noVScroll('level up (forced)');
   await click('[data-act=spec]'); await sleep(100);
-  await ev(`(() => { __bal.run.phase = 'over'; __bal.run.result = 'defeat'; __bal.render(); })()`); await sleep(100);
+  await ev(`(() => { __bal.run.phase = 'over'; __bal.run.result = 'defeat'; __bal.run.overStep = 2; __bal.render(); })()`); await sleep(100);
 }
 
 // ---- v63 (reviews #117 #118): a PvP day (the duel poster shows the rival and its power), the steal screen, then the final fight against a team that completed its run
@@ -311,9 +330,9 @@ if (!REMOTE) {
   await post({ op: 'snap', pid: 'b'.repeat(32), name: 'Rival', day: 3, team: rival, relics: ['feather'] });
   await post({ op: 'complete', pid: 'b'.repeat(32), name: 'Rival', team: rival, relics: ['feather'], runId: 77, game: { fights: 6 } });
   await click('[data-act=new-run]'); await sleep(150);
-  await pick3(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
-  ok(await ev(`__bal.run.heroes.length === 3 && __bal.run.lives === 3 && document.querySelectorAll('#top .lives .hrt.on').length === 3`), 'v63: three heroes at the start and three hearts in the top bar');
-  await ev(`(() => { const r = __bal.run;
+  await pickHero(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+  ok(await ev(`__bal.run.heroes.length === 1 && __bal.run.lives === 3 && document.querySelectorAll('#top .lives .hrt.on').length === 3`), 'v64: one hero at the start and three hearts in the top bar');
+  await ev(`(() => { const r = __bal.run; r.recruits = 2; while (r.heroes.length < 3) B.Run.addHero(r, Object.keys(B.HEROES).find(k => !r.heroes.some(h => h.key === k)));
     r.heroes.forEach(h => { h.lvl = 5; h.specs = B.HEROES[h.key].specs.map(p => p[0].id); h.items = ['bloodthirster', 'warmog', 'deathcap', 'guardian']; }); r.heroes[0].items = ['obs_blade', 'obs_plate', 'obs_helm', 'mountainheart']; r.bag.push('worldsplitter', 'aegis', 'storm_boots'); r.autoGear = false;
     r.relics.push('drum'); r.step = 3; r.fightNo = 2; B.Run.advance(r); __bal.render(); })()`);
   // the PvP day: a duel next to the PvE fight, with the rival's team and its power next to yours
@@ -324,8 +343,8 @@ if (!REMOTE) {
   ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.g.kind === 'pvp' && /Duel/.test(document.querySelector('.bhead').textContent) && /Rival/.test(document.querySelector('.bhead').textContent) && /Power [0-9]+/.test(document.querySelector('.bhead').textContent)`), 'the duel deploy screen names the rival and compares power');
   await shot('17-duel-deploy'); await noHScroll('duel deploy'); await noVScroll('duel deploy');
   await click('[data-act=fight]'); await sleep(1200); await ev('__bal.skipBattle()');
-  for (let k = 0; k < 80 && !(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /Elo/.test(x.textContent))`)); k++) await sleep(100);
-  ok(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /Elo [0-9]+/.test(x.textContent) && /[+-][0-9]+/.test(x.textContent))`), 'duel result shows the Elo change (a reward chip)');
+  for (let k = 0; k < 80 && !(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /trophy/.test(x.textContent))`)); k++) await sleep(100);
+  ok(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /trophy/.test(x.textContent) && /Rival/.test(x.textContent)) && ![...document.querySelectorAll('.rewards2 .rw')].some(x => /Elo/.test(x.textContent))`), 'v64 (review #125): a won duel shows a trophy with the name beaten (no Elo)');
   await shot('18b-duel-result'); await noVScroll('duel result');
   await click('[data-act=result-ok]'); await sleep(200);
   ok(await ev(`__bal.run.phase === 'steal' && document.querySelectorAll('button.steal').length === 3 && !!document.querySelector('button.steal.k-hero') && !!document.querySelector('button.steal.k-item') && !!document.querySelector('button.steal.k-relic')`), 'v63 (review #118): a won duel offers three spoils: a hero, an item, a power');
@@ -342,7 +361,7 @@ if (!REMOTE) {
   await shot('16-final-intro'); await noHScroll('final intro'); await noVScroll('final intro');
   // itemization v16: the team sheet with 3 heroes at Lv 5, a full set and items in the bag still fits the phone
   await click('[data-act=team]'); await sleep(250); await click('#modal .gitem'); await sleep(150);
-  ok(await ev(`document.querySelectorAll('#modal .gtab').length === 3 && document.querySelectorAll('#modal .gsock.full').length >= 4`), 'gear: 3 hero tabs and full sockets at Lv 5');
+  ok(await ev(`document.querySelectorAll('#modal .gtab').length === 3 && [...document.querySelectorAll('#modal .gtab')].filter(t => /4.4/.test(t.textContent)).length >= 2`), 'gear: 3 hero tabs, the Lv 5 heroes with every socket full');
   await shot('16b-team-full'); await noHScroll('team sheet full'); await noVScroll('team sheet, 3 heroes with items');
   await click('[data-act=close]'); await sleep(100);
   await ev(`(() => { const f = document.querySelector('form[data-form=gauntlet]'); f.name.value = 'TestBot'; f.querySelector('button').click(); })()`); await sleep(900);
@@ -355,54 +374,42 @@ if (!REMOTE) {
   await click('[data-act=result-ok]'); await sleep(200);
   const g = await ev(`({ phase: __bal.run.phase, result: __bal.run.result, lives: __bal.run.lives })`);
   ok(g.phase === 'over' && g.result === 'clear', `the final fight is won and the run is complete (${g.result}, ${g.lives} lives)`);
-  ok(await ev(`/Run complete/.test(document.querySelector('#screen').textContent)`), 'the game over screen says the run is complete');
+  ok(await ev(`!!document.querySelector('.vbadge') && /victory!/.test(document.querySelector('.vbadge').textContent)`), 'v64 (review #125): the end screen names the kind of victory');
   await shot('19-run-complete');
   await noVScroll('run complete');
   for (let k = 0; k < 150 && !(await ev(xpDone)); k++) await sleep(100);
   ok(await ev(`document.querySelectorAll('.xppanel .xplines li').length >= 2 && !document.querySelector('.xppanel.pre')`), 'v46: the completed run pays XP (played, the final fight, firsts)');
   await shot('19b-complete-xp'); await noVScroll('run complete, XP counted');
+  await click('[data-act=over-next]'); await sleep(400);
+  for (let k = 0; k < 40 && !(await ev(`!!document.querySelector('.lgcard')`)); k++) await sleep(100);
+  ok(await ev(`!!document.querySelector('.lgcard') && document.querySelectorAll('.trophies .tro').length === 2 && /Rival/.test(document.querySelector('.trophies').textContent) && !!document.querySelector('.trophies .tro.fin')`), 'v64: the second end screen: the league card and the trophies of the run (the duel and the final)');
+  await shot('19c-complete-league'); await noHScroll('run complete, league'); await noVScroll('run complete, league');
   await click('[data-act=scores]');
   for (let k = 0; k < 30 && !(await ev(`!!document.querySelector('#modal table')`)); k++) await sleep(100);
   const ladder = await ev(`document.querySelector('#modal').textContent`);
-  ok(ladder.includes('Rival') && ladder.includes('TestBot') && !/Onslaught/.test(ladder), 'Elo ladder lists the players' + (ladder.includes('Rival') && ladder.includes('TestBot') ? '' : ': ' + ladder.replace(/\s+/g, ' ').slice(0, 400)));
-  // v27: the content Elo tabs are a Crown Shop unlock: locked first, then bought with crowns (two taps), and the King Tier
-  await click('[data-act=ladder-tab][data-arg=hero]');
-  for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .klock')`)); i++) await sleep(100);
-  ok(await ev(`/Crown Shop unlock/.test(document.querySelector('#modal .klock').textContent) && /🔒/.test(document.querySelector('[data-act=ladder-tab][data-arg=item]').textContent)`), 'v27: Heroes/Items/Relics tabs are locked without Content Elo');
+  ok(ladder.includes('Rival') && ladder.includes('TestBot') && !/Onslaught|Elo/.test(ladder) && /LP/.test(ladder), 'the ladder lists the players by league and LP (no Elo)' + (ladder.includes('Rival') && ladder.includes('TestBot') ? '' : ': ' + ladder.replace(/\s+/g, ' ').slice(0, 400)));
   await ev(`fetch('/__dev/grant?pid=' + JSON.parse(localStorage.getItem('balance.pid')) + '&n=400')`); await sleep(200);
-  await click('#modal .klock [data-act=shop]');
+  ok(await ev(`document.querySelectorAll('[data-act=ladder-tab]').length === 2 && !document.querySelector('[data-act=ladder-tab][data-arg=hero]')`), 'v64 (review #122): the ladder has no content Elo tabs (they live in the Balance lab)');
+  await ev('__bal.ACT.shop()');
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .wallet') && /40[0-9]/.test(document.querySelector('#modal .wallet').textContent)`)); i++) await sleep(100);
   // review #108: the shop is four tabs (Perks / Name & King / Earn / Invite) so nothing sits below the screen
   const shopTab = async t => { await ev(`__bal.ACT['shop-tab']('${t}')`); await sleep(150); };
-  ok(await ev(`document.querySelectorAll('#modal .perk').length === 4 && document.querySelectorAll('#modal .stabs button').length === 4`), 'Crown Shop: wallet, tabs, 4 perks on the first (Double XP and Skip fights too)');
+  ok(await ev(`document.querySelectorAll('#modal .perk').length === 3 && !/Content Elo/.test(document.querySelector('#modal').textContent) && document.querySelectorAll('#modal .stabs button').length === 4`), 'Crown Shop: wallet, tabs, 3 perks on the first (4x speed, Double XP, Skip fights; no Content Elo)');
   await shopTab('earn'); ok(await ev(`document.querySelectorAll('#modal .crl').length === 5`), 'Crown Shop: crowns per league on the Earn tab');
   await shopTab('invite'); ok(await ev(`!!document.querySelector('#refLink') && /[?]ref=[a-f0-9]{12}$/.test(document.querySelector('#refLink').value)`), 'Crown Shop: your invite link on the Invite tab');
   await shopTab('king'); ok(await ev(`!!document.querySelector('#modal .king') && !!document.querySelector('#modal [data-form=rename]')`), 'Crown Shop: the King Tier and the rename on the Name & King tab');
-  await shopTab('perks');
+  await shopTab('perks'); await ev('__bal.crowns0 = __bal.acct.crowns');
   await shot('23-crown-shop'); await noHScroll('crown shop');
-  await click('[data-act=buy-perk][data-arg=elo]'); await sleep(150);
-  ok(await ev(`/Tap again/.test(document.querySelector('[data-act=buy-perk][data-arg=elo]').textContent) && !__bal.acct.perks.includes('elo')`), 'the first tap only asks to confirm');
-  await click('[data-act=buy-perk][data-arg=elo]'); await sleep(400);
-  ok(await ev(`__bal.acct.perks.includes('elo') && __bal.acct.crowns === 400 - B.SHOP_ITEM.elo.price`), 'Content Elo bought');
+  await click('[data-act=buy-perk][data-arg=xp2]'); await sleep(150);
+  ok(await ev(`/Tap again/.test(document.querySelector('[data-act=buy-perk][data-arg=xp2]').textContent) && !__bal.acct.perks.includes('xp2')`), 'the first tap only asks to confirm');
+  await click('[data-act=buy-perk][data-arg=xp2]'); await sleep(400);
+  ok(await ev(`__bal.acct.perks.includes('xp2') && __bal.acct.crowns === __bal.crowns0 - B.SHOP_ITEM.xp2.price`), 'Double XP bought');
   await shopTab('king'); await click('[data-act=buy-perk][data-arg=king]'); await sleep(150); await click('[data-act=buy-perk][data-arg=king]'); await sleep(400);
   ok(await ev(`__bal.acct.perks.includes('king') && B.Render.skin === 'royal' && !!document.querySelector('.king.own [data-act=skin]')`), 'the King Tier: bought, the Royal board is on');
   await shot('24-king'); await noHScroll('king tier');
   await ev(`(() => { const f = document.querySelector('form[data-form=rename]'); f.name.value = 'Tester King'; f.querySelector('button').click(); })()`); await sleep(400);
-  ok(await ev(`__bal.acct.name === 'Tester King' && __bal.acct.crowns === 400 - B.SHOP_ITEM.elo.price - B.SHOP_ITEM.king.price - B.SHOP_ITEM.rename.price`), 'a name change from the shop');
+  ok(await ev(`__bal.acct.name === 'Tester King' && __bal.acct.crowns === __bal.crowns0 - B.SHOP_ITEM.xp2.price - B.SHOP_ITEM.king.price - B.SHOP_ITEM.rename.price`), 'a name change from the shop');
   await click('[data-act=close]'); await sleep(100); await ev('__bal.ACT.scores()'); await sleep(300);
-  // review #14: a tab per kind of content with its own Elo
-  const tab = async (k, n, extra, msg) => {
-    await click(`[data-act=ladder-tab][data-arg=${k}]`);
-    for (let i = 0; i < 40 && !(await ev(`!!document.querySelector('#modal .ctbl') && document.querySelector('[data-act=ladder-tab].on').dataset.arg === '${k}'`)); i++) await sleep(100);
-    const t = await ev(`(() => { const t = document.querySelector('#modal .ctbl'); return t ? { rows: t.querySelectorAll('tr').length - 1, rated: t.querySelectorAll('tr:not(.unrated)').length - 1, text: t.textContent } : null; })()`);
-    ok(t && t.rows === n && t.rated >= 1 && /\d+%/.test(t.text) && extra(t.text), msg + (t ? ` (${t.rated} rated of ${t.rows})` : ''));
-    await noHScroll(k + ' tab');
-  };
-  await tab('hero', await ev('Object.keys(B.HEROES).length + Object.keys(B.BOSSES).length'), x => /Aegir/.test(x) && /Gorewarden/.test(x) && /Ashen Sovereign/.test(x), 'Heroes tab: every hero and both bosses listed (review #20), the played ones with Elo, fights and win rate');
-  await shot('20-ladder-heroes');
-  await tab('item', await ev('B.ITEMS.length'), x => /no combat effect/.test(x) && /not played yet/.test(x), 'Items tab: every item (no-combat items marked)');
-  await tab('relic', await ev('B.RELICS.length'), x => /no combat effect/.test(x), 'Relics tab: every relic');
-  await shot('21-ladder-relics');
   // review #21: the Player tab: league banners you can scroll, the path between the leagues
   await click('[data-act=ladder-tab][data-arg=player]');
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#lgscroll')`)); i++) await sleep(100);
@@ -414,7 +421,7 @@ if (!REMOTE) {
   // v27: tap a name, see the profile; a King also sees most played heroes, best win rate and the ghost record
   await ev(`[...document.querySelectorAll('#modal .plink')].find(b => b.textContent === 'Rival').click()`);
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .prof')`)); i++) await sleep(100);
-  ok(await ev(`(() => { const t = document.querySelector('#modal .prof').textContent; return /Rival/.test(t) && /Elo/.test(t) && /Best Gauntlet/.test(t) && /league/i.test(t) && !!document.querySelector('.pmore') && /Ghosts/.test(t) && /Most played/.test(t); })()`), "a player's profile: name, league, Elo, best Gauntlet; the King's view adds heroes and ghosts");
+  ok(await ev(`(() => { const t = document.querySelector('#modal .prof').textContent; return /Rival/.test(t) && /Trophies/.test(t) && !/Elo/.test(t) && /league/i.test(t) && !!document.querySelector('.h2h') && /You vs Rival/.test(document.querySelector('.h2h').textContent) && document.querySelector('.h2h .win').textContent === '2' && document.querySelector('.h2h .lose').textContent === '0' && !!document.querySelector('.pmore') && /Most played/.test(t); })()`), "v64 (reviews #125 #127): a player's profile: league, trophies and your duels against them (2-0); the King's view adds heroes and ghosts");
   await shot('25-profile'); await noHScroll('profile');
   await click('[data-act=close]');
   // your own profile from the start menu, and the opponent's name in the gauntlet opens theirs
@@ -553,7 +560,7 @@ if (!REMOTE) {
 
 // v50 (review #62): new relics on screen: three paths (Pathfinder's Quill), a free offer (Merchant's Ledger)
 await ev(`__bal.ACT['new-run']()`); await sleep(150);
-await pick3(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+await pickHero(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
 await ev(`(() => { const r = __bal.run; B.Run.gainRelic(r, 'quill'); B.Run.gainRelic(r, 'ledger'); r.pending = []; r.step -= 1; r.fightNo = 0; B.Run.advance(r); __bal.render(); })()`); await sleep(200);
 ok(await ev(`document.querySelectorAll('.banners.three .banner').length === 3`), "v50: the Pathfinder's Quill shows three paths");
 await shot('27-three-paths'); await noHScroll('three paths'); await noVScroll('three paths');
