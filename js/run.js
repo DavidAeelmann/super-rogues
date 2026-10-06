@@ -27,7 +27,7 @@
   // WHAT: the three lists of everything this player may get in this run: hero keys, items, powers (relics). Locked content is left out.
   const heroKeysOf = run => Object.keys(B.HEROES).filter(k => isOpen(run, k));
   const itemsOf = run => B.ITEMS.filter(i => isOpen(run, i.id));
-  const relicsOf = run => B.RELICS.filter(r => isOpen(run, r.id));
+  const relicsOf = run => B.RELICS.filter(r => isOpen(run, r.id) && r.id !== 'solo');   // v63: the Lone Crown needs a team of one, and the run now starts with three heroes: it is no longer offered
   // WHAT: n DIFFERENT random items of a list (no repeats).  pickN(run, list, 3).
   function pickN(run, arr, n) { const a = arr.slice(), o = []; while (a.length && o.length < n) o.push(a.splice(Math.floor(rnd(run) * a.length), 1)[0]); return o; }
   // WHAT: a random key from { key: weight } where a bigger weight is likelier.  wpick(run, { common: 0.5, rare: 0.1 }).
@@ -53,6 +53,10 @@
     }
     // v5 (review #22): the sequence and the fight scale live in the run; runs started before keep the old 13 steps
     if (run.v === 4) { run.v = 5; run.seq = ['F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'B', 'S', 'G']; run.fightScale = [1, 0.9, 1.1, 1.3, 1.5, 1.75, 2]; }
+    if (run.v === 5) {
+      if (run.lives == null) run.lives = C.lives;   // v63 (review #117): runs saved before lives got the full three
+      if (run.g && run.g.teamId != null && run.phase !== 'over') { run.phase = 'gauntlet'; run.cur = null; run.g = { status: 'intro', history: [] }; }   // the old tower is gone: the run goes to the final fight
+    }
     return run.v === 5 ? run : null;
   }
   // WHAT: the order of the days of a run: F = fight, X = shop or event, B = boss, S = last shop, G = Gauntlet (B.CFG.seq in data.js).
@@ -62,8 +66,10 @@
     const run = { v: 5, seed: seed >>> 0, rs: seed | 0, gold: C.startGold, heroes: [], bag: [], relics: [], nuid: 0,
       step: -1, fightNo: 0, phase: 'start', opts: [], cur: null, pending: [], curse: 0, log: [], won: 0, lost: 0, score: 0, startOffer: [],
       seq: C.seq.slice(), fightScale: C.fightScale.slice(), locked: ((opts && opts.locked) || []).slice() };
-    run.startOffer = pickN(run, heroKeysOf(run), C.startOffer);
-    run.relicOffer = pickN(run, relicsOf(run).map(r => r.id), C.startOffer);  // review #22: the run also starts with a relic
+    // v63 (review #118): six heroes are offered, two of each class, and the player picks three
+    run.startOffer = [].concat(...B.CLASSES.map(cl => pickN(run, heroKeysOf(run).filter(k => B.heroClass(k) === cl), C.startOffer / B.CLASSES.length)));
+    run.relicOffer = pickN(run, relicsOf(run).map(r => r.id), C.startRelics || 3);  // review #22: the run also starts with a relic
+    run.lives = C.lives;
     run.bosses = B.BOSS_SLOTS.map(s => pick(run, s));   // v52 (review #64): which boss waits in each slot this game
     return run;
   }
@@ -77,6 +83,8 @@
   function pickStart(run, keys, relic) {
     for (const k of keys.slice(0, C.maxTeam)) addHero(run, k);
     if (relic && B.RELIC[relic]) gainRelic(run, relic);
+    for (let i = 0; i < (C.startItems || 0); i++) run.bag.push(randomItem(run, 'common'));   // v63 (review #118): a few common items to start with
+    autoEquip(run);
     run.phase = 'map'; advance(run);
   }
   // WHAT: how many heroes the team may have (B.CFG.maxTeam, +1 with the Hero's Crest power).
@@ -377,10 +385,104 @@
     run.cur = null;
     // v44: a challenge from an event pays its reward on a win; lost, the run goes on (only the reward is gone)
     if (f.challenge) { res.challenge = f.challenge.name; if (win) challengeReward(run, f, res); advance(run); return res; }
-    // review #3: no hearts, one lost fight ends the run
-    if (!win) { run.phase = 'over'; run.result = 'defeat'; } else advance(run);
+    // v63 (review #117): three lives. A lost fight costs one and the day passes; the third lost fight ends the run
+    if (!win) { run.lives--; res.lives = run.lives; if (run.lives <= 0) { run.phase = 'over'; run.result = 'defeat'; } else advance(run); } else advance(run);
     return res;
   }
+  // ------------------------------------------------------------------ PvP days and the final fight (v63, reviews #117 #118 #119)
+  // WHAT: a number for how strong a team is (health and defense against damage per second, as one number per hero, added up). Only used to tell the player how a ghost compares with their own team.
+  function powerOf(run, heroes) {
+    let p = 0;
+    for (const h of heroes) { const d = heroDef(run, h), dmg = d.atk * d.as * (1 + d.crit * (d.critDmg - 1)) + d.ap * 0.35, ehp = d.hp * (1 + d.armor / 80); p += Math.sqrt(ehp * dmg); }
+    return Math.round(p);
+  }
+  // WHAT: how strong a ghost is, as a number, from the team and powers it carries.
+  function ghostPower(opp) { return powerOf({ relics: opp.relics || [], heroes: opp.team || [], bag: [] }, opp.team || []); }
+  // WHAT: the words for how a ghost compares with your team (the ratio of their power to yours) and a tone for its colour.
+  function powerLabel(mine, theirs) {
+    const r = theirs / Math.max(1, mine);
+    return r < 0.75 ? { text: 'Much weaker', tone: 'easy' } : r < 0.92 ? { text: 'Weaker', tone: 'easy' } : r <= 1.08 ? { text: 'Even', tone: 'even' } : r <= 1.3 ? { text: 'Stronger', tone: 'hard' } : { text: 'Much stronger', tone: 'hard' };
+  }
+  const GHOST_NAMES = ['Mira', 'Tobias', 'Ayla', 'Kenji', 'Rosa', 'Dmitri', 'Nia', 'Bruno', 'Sakura', 'Omar', 'Elsa', 'Felix', 'Zara', 'Hugo', 'Lena', 'Tariq', 'Ines', 'Marco', 'Yuki', 'Olga'];
+  // WHAT (review #119: "the initial ghost population can be randomly generated until players are available"): a made-up player team for a day of the run, so a duel or the final fight always has an opponent. One hero per class, powers picked at random, items and powers growing with the day.
+  function randomGhost(run, day, final) {
+    const lvl = final ? 5 : Math.max(1, Math.min(5, 1 + Math.floor(day / 2))), nItems = final ? 3 : Math.min(3, Math.floor((day + 1) / 3)), nRel = final ? 3 : Math.floor(day / 3);
+    const w = tierWeights(Object.assign({}, run, { fightNo: final ? 8 : day })), all = Object.keys(B.HEROES), team = [];
+    B.CLASSES.forEach((cl, i) => {
+      const key = pick(run, all.filter(k => B.heroClass(k) === cl)), b = B.HEROES[key];
+      const specs = b.specs.slice(0, lvl - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id), items = [], types = new Set();
+      for (let n = 0, tries = 0; n < nItems && tries < 30; tries++) { const it = B.ITEM[randomItemOf(run, wpick(run, w))]; if (types.has(it.type)) continue; types.add(it.type); items.push(it.id); n++; }
+      const gp = (C.ghostPower || 1) - 1;   // v63: how strong the made-up teams are (B.CFG.ghostPower, 1 = as built), tuned so a PvE-built team completes about as often as intended
+      team.push({ key, lvl, specs, items, bonus: gp ? { hpPct: gp, atkPct: gp } : {}, pos: { c: [3, 4, 2][i], r: b.range <= 1 ? 4 : 6 } });
+    });
+    const relics = pickN(run, B.RELICS.filter(r => !B.NONCOMBAT.relic.includes(r.id) && r.id !== 'solo').map(r => r.id), nRel);
+    return { teamId: null, random: true, name: pick(run, GHOST_NAMES), code: null, elo: 1000 + 30 * (final ? 8 : day), wins: final ? 8 : day, status: final ? 'final' : 'snap', own: false, defW: 0, defL: 0, team, relics };
+  }
+  const randomItemOf = (run, tier) => pick(run, itemsOf(run).filter(i => i.tier === tier)).id;
+  // WHAT: starts a duel against a ghost: a PvP day (kind 'pvp') or the final fight (kind 'final'). Opens the deploy screen with the ghost's team on the other side.
+  function startDuel(run, opp, kind, fightNo) {
+    run.faced = (run.faced || []).concat(opp.teamId ? [opp.teamId] : []);   // the real teams already met this run (never the same one twice)
+    run.g = { status: 'match', kind, round: (fightNo || 8) - 1, opp, history: [] };
+    run.g.map = gauntletMap(run, opp, fightNo || 8);
+    run.cur = { type: 'gauntlet', kind, fightNo: fightNo || run.fightNo + 1 };
+    run.phase = 'deploy';
+  }
+  // WHAT (important): everything that happens when a duel ends: XP, then a win on a PvP day opens the steal choice, a win in the final fight completes the run, a loss costs a life (the third ends the run).
+  function finishDuel(run, W) {
+    const g = run.g, f = run.cur, final = g.kind === 'final', win = W.winner === 0;
+    const res = { win, duel: true, final, gold: 0, xp: [], timeout: !!W.timeout, boss: false };
+    run.lastFight = { team: teamSnapshot(run), relics: run.relics.slice() };
+    for (const u of W.units) {
+      if (u.kind !== 'hero' || !u.uid) continue;
+      const h = run.heroes.find(x => x.uid === u.uid); if (!h) continue;
+      const before = h.lvl, xp0 = h.xp;
+      gainXp(run, h, has(run, 'medal') ? (u.kb || 0) * 14 : u.xpT / B.Sim.TPS);
+      res.xp.push({ uid: h.uid, name: B.HEROES[h.key].name, gained: h.xp - xp0, from: before, to: h.lvl });
+    }
+    if (W.used && W.used.phoenix) { run.relics = run.relics.filter(id => id !== 'phoenix'); res.phoenix = true; }
+    run.log.push((win ? 'Won ' : 'Lost ') + (final ? 'the final fight' : 'a duel on fight ' + f.fightNo));
+    run.cur = null;
+    if (win) {
+      run.won++; relicsAfterWin(run, res);
+      if (final) { run.phase = 'over'; run.result = 'clear'; run.g = null; }
+      else { run.steal = stealOptions(run, g.opp); run.stealFrom = g.opp.name; run.phase = 'steal'; }
+      return res;
+    }
+    run.lost++; run.lives--; res.lives = run.lives;
+    if (run.lives <= 0) { run.phase = 'over'; run.result = 'defeat'; }
+    else if (final) { run.phase = 'gauntlet'; run.g = { status: 'intro', history: [] }; }   // another finalist waits
+    else { run.g = null; advance(run); }
+    return res;
+  }
+  // WHAT: the three things a won duel can steal: one of their heroes (one you do not own, the highest level), one of the items they wore, one of their powers. Anything they lack is replaced by a random one.
+  function stealOptions(run, opp) {
+    const team = (opp && opp.team) || [], have = new Set(run.heroes.map(h => h.key)), out = [];
+    const cand = team.filter(h => B.HEROES[h.key] && !have.has(h.key)).sort((a, b) => b.lvl - a.lvl);
+    const top = cand.filter(h => h.lvl === (cand[0] || {}).lvl), hero = top.length ? pick(run, top) : null;
+    if (hero) out.push({ kind: 'hero', hero: { key: hero.key, lvl: hero.lvl, specs: hero.specs.slice(), bonus: Object.assign({}, hero.bonus), items: hero.items.filter(id => B.ITEM[id]) } });
+    else { const key = pick(run, heroKeysOf(run).filter(k => !have.has(k))); if (key) out.push({ kind: 'hero', hero: { key, lvl: 1, specs: [], bonus: {}, items: [] } }); }
+    const worn = [].concat(...team.map(h => h.items)).filter(id => B.ITEM[id]);
+    out.push({ kind: 'item', id: worn.length ? pick(run, worn) : randomItem(run) });
+    const rel = (opp.relics || []).filter(id => B.RELIC[id] && !run.relics.includes(id));
+    const rid = rel.length ? pick(run, rel) : pick(run, relicsOf(run).filter(r => !run.relics.includes(r.id)).map(r => r.id));
+    if (rid) out.push({ kind: 'relic', id: rid });
+    return out;
+  }
+  // WHAT: takes steal option i. A hero joins the team; with a full team it needs replaceUid (the hero it replaces, whose items go to the bag). Then the run moves on. Returns an error text or null.
+  function steal(run, i, replaceUid) {
+    const o = run.steal && run.steal[i]; if (!o) return 'Nothing to take';
+    if (o.kind === 'hero') {
+      const full = run.heroes.length >= teamMax(run), old = full ? run.heroes.find(h => h.uid === replaceUid) : null;
+      if (full && !old) return 'Pick the hero it replaces';
+      let pos = null;
+      if (old) { run.bag.push(...old.items); pos = old.pos; run.heroes = run.heroes.filter(h => h !== old); run.pending = run.pending.filter(p => p.uid !== old.uid); }
+      const x = o.hero, h = { uid: ++run.nuid, key: x.key, lvl: x.lvl, xp: C.xpLevels[x.lvl] || 0, specs: x.specs.slice(), items: [], bonus: Object.assign({}, x.bonus), pos: pos ? { c: pos.c, r: pos.r } : null };
+      run.heroes.push(h); if (!h.pos) autoPlace(run, h); run.bag.push(...x.items);
+    } else if (o.kind === 'item') run.bag.push(o.id);
+    else gainRelic(run, o.id);
+    run.steal = null; run.g = null; advance(run); return null;
+  }
+
 
 
   // v50 (review #62): the Heirloom Anvil (a worn item goes up a rarity) and the Changeling Mask (the lowest-level hero
@@ -465,9 +567,11 @@
       const n = run.fightNo + 1;
       if (t === 'B') run.opts = [makeFight(run, 'boss', n, seqOf(run).slice(0, run.step + 1).filter(x => x === 'B').length)];
       else {
-        const ORD = ['easy', 'medium', 'hard'], k = has(run, 'quill') ? 3 : 2;
-        const ds = has(run, 'huntmap') && k < 3 ? pickN(run, ['easy', 'medium'], 1).concat('hard') : pickN(run, ORD, k);
+        const ORD = ['easy', 'medium', 'hard'], k = has(run, 'quill') ? 3 : 2, pvp = (C.pvpFights || []).includes(n);
+        // v63 (review #117): on a PvP day one of the choices is a duel against another player's team (the others are PvE fights)
+        const ds = pvp ? (has(run, 'huntmap') ? ['medium'] : pickN(run, ORD, k - 1)) : has(run, 'huntmap') && k < 3 ? pickN(run, ['easy', 'medium'], 1).concat('hard') : pickN(run, ORD, k);
         run.opts = ds.sort((a, b) => ORD.indexOf(a) - ORD.indexOf(b)).map(d => makeFight(run, d, n));
+        if (pvp) run.opts.push({ type: 'duel', fightNo: n, opp: null });
       }
     } else if (t === 'X') {
       const w = { heroShop: 0.25, itemShop: 0.3, relicShop: 0.2, event: has(run, 'xmap') ? 0.6 : 0.3 };
@@ -494,6 +598,7 @@
   // WHAT: the player tapped option i of the map: opens that fight (deploy), shop or event.
   function choose(run, i) {
     const o = run.opts[i]; if (!o) return;
+    if (o.type === 'duel') { if (!o.opp) return; run.opts = []; run.fightNo = o.fightNo; startDuel(run, o.opp, 'pvp', o.fightNo); return; }   // v63: the opponent is found when the map opens (ui.js)
     run.cur = o; run.opts = [];
     if (o.type === 'fight') {
       run.fightNo = o.fightNo;
@@ -918,7 +1023,7 @@
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
   B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
-    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, canEquip, setCounts, setBonuses, seqOf, bossFight,
+    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };
   if (typeof module !== 'undefined') module.exports = B.Run;
 })(typeof window !== 'undefined' ? window : globalThis);

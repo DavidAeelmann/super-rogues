@@ -237,6 +237,51 @@ module.exports = async (req, res) => {
       return send(res, 200, me({ lg }));
     }
 
+    // ---- v63 (reviews #117 #118 #119): PvP days and the final fight. A player's team is stored as a snapshot on its PvP day (status 'snap', wins = the day) and, if the run is completed, as a
+    // finalist (status 'final'). Opponents are other players' snapshots from about the same day / finalists; none yet = the browser makes one up (js/run.js randomGhost).
+    if (b.op === 'snap') {
+      const team = cleanTeam(b.team); if (!team) return send(res, 400, { error: 'Invalid team' });
+      const day = Math.max(1, Math.min(8, Math.round(Number(b.day) || 1)));
+      if (await st.countTeams(pid, Date.now() - 3600e3) >= 40) return send(res, 200, me({ opponent: null }));
+      const id = await st.insertTeam({ pid, name, elo_at: p.elo, team: JSON.stringify(team), relics: JSON.stringify(relicList(b.relics)) });
+      await st.updateTeam(id, { wins: day, status: 'snap', opp: null });
+      const opp = await st.pickSnap(day, pid, Array.isArray(b.faced) ? b.faced : []);
+      return send(res, 200, me({ snapId: id, opponent: oppView(opp, pid) || null }));
+    }
+    if (b.op === 'final') {
+      const opp = await st.pickFinal(pid, Array.isArray(b.faced) ? b.faced : []);
+      return send(res, 200, me({ opponent: oppView(opp, pid) || null }));
+    }
+    if (b.op === 'duel') {   // the result of a PvP-day duel or of the final fight: Elo against the team faced (1000 for a made-up one), the ghost's record, league points
+      const opp = b.oppId ? await st.getTeam(Math.floor(Number(b.oppId))) : null, win = !!b.win, before = p.elo;
+      p.elo = eloAfter(p.elo, opp ? opp.elo_at : PVE, win ? 1 : 0);
+      const delta = Math.round(p.elo) - Math.round(before), mine = cleanTeam(b.team), myRelics = relicList(b.relics);
+      const sides = []; if (mine) sides.push({ used: usedIn(mine, myRelics), score: win ? 1 : 0 });
+      if (opp && mine) sides.push({ used: usedIn(JSON.parse(opp.team), JSON.parse(opp.relics)), score: win ? 0 : 1 });
+      if (sides.length) await rateContent(st, ipHash(req), sides);
+      if (mine) await P.heroGames(st, pid, mine, win);
+      let ghost = null;
+      if (opp) { const gElo = eloAfter(opp.elo_at, before, win ? 0 : 1); await st.ghostResult(opp.id, gElo, !win); ghost = { name: opp.name, elo: Math.round(gElo), delta: Math.round(gElo) - Math.round(opp.elo_at) }; }
+      const lg = win ? leaguePoints(p, D.LEAGUE_RULES.duelWin) : null;
+      if (lg && lg.promoted) lg.crowns = await P.payLeagues(st, p);
+      if (win) await P.xpDuel(st, p, !!b.final, xp);
+      await save();
+      return send(res, 200, me({ win, delta, ghost, lg }));
+    }
+    if (b.op === 'complete') {   // the run was completed: the team becomes a finalist other players can face in their final fight
+      const team = cleanTeam(b.team); if (!team) return send(res, 400, { error: 'Invalid team' });
+      const relics = relicList(b.relics);
+      let id = null;
+      if (await st.countTeams(pid, Date.now() - 3600e3) < 40) { id = await st.insertTeam({ pid, name, elo_at: p.elo, team: JSON.stringify(team), relics: JSON.stringify(relics) }); await st.updateTeam(id, { wins: 8, status: 'final', opp: null }); }
+      p.runs++; p.crowns++; p.best = Math.max(p.best, 1); await save();
+      await rateContent(st, ipHash(req), [{ used: usedIn(team, relics), score: 1 }]);
+      await P.heroGames(st, pid, team, true);
+      await logFights(st, req, pid, b.runId, b.flog);
+      await P.xpGame(st, p, { fights: b.game && b.game.fights, reached: true }, xp);
+      await P.xpClear(st, p, team, xp);
+      return send(res, 200, me({ teamId: id }));
+    }
+
     if (b.op === 'enter') {
       const team = cleanTeam(b.team);
       if (!team) return send(res, 400, { error: 'Invalid team' });

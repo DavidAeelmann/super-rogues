@@ -128,6 +128,9 @@ function memStore() {
     async getChampion(excludeId) { const c = (M.teams || []).filter(t => t.status === 'champion' && t.id !== excludeId).sort((a, b) => b.wins - a.wins || (b.updated || b.created) - (a.updated || a.created))[0]; return c ? Object.assign({}, c) : null; },
     async demoteChampions(keepId) { let n = 0; for (const t of M.teams || []) if (t.status === 'champion' && t.id !== keepId) { t.status = 'lost'; n++; } return n; },
     async pickPool(lo, hi, exclude, staleBefore) { const pool = poolOf(M, lo, hi, exclude, staleBefore); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
+    // v63 (review #117): a random PvP-day snapshot of another player from about the same day (wins = the day), and a random team that won its final fight
+    async pickSnap(day, pid, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => t.status === 'snap' && t.pid !== pid && !ex.has(t.id) && t.wins >= day - 1 && t.wins <= day + 1); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
+    async pickFinal(pid, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => t.status === 'final' && t.pid !== pid && !ex.has(t.id)); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
     async countPool(lo, hi, exclude, staleBefore) { return poolOf(M, lo, hi, exclude, staleBefore).length; },
     async pickAbove(w, exclude, staleBefore) { let pool = poolOf(M, w + 1, null, exclude, staleBefore); if (!pool.length) return null; const m = Math.min(...pool.map(t => t.wins)); pool = pool.filter(t => t.wins === m); return Object.assign({}, pool[Math.floor(Math.random() * pool.length)]); },
     async pickGhost(cmp, w, exclude, staleBefore) {
@@ -220,6 +223,14 @@ function pgStore() {
     async maxWins(excludeId, staleBefore) { const r = await q("select max(wins)::int m from teams where id <> $1 and (status in ('lost','champion') or (status = 'running' and coalesce(updated, created) < $2))", [excludeId || 0, staleBefore || 0]); return r[0].m == null ? -1 : Number(r[0].m); },
     async getChampion(excludeId) { const r = await q("select * from teams where status = 'champion' and id <> $1 order by wins desc, coalesce(updated, created) desc limit 1", [excludeId || 0]); return r.length ? num(r[0]) : null; },
     async demoteChampions(keepId) { return (await q("update teams set status = 'lost' where status = 'champion' and id <> $1 returning id", [keepId || 0])).length; },
+    async pickSnap(day, pid, exclude) {
+      const r = await q("select * from teams where status = 'snap' and pid <> $1 and wins between $2 and $3 and not (id = any($4::bigint[])) order by random() limit 1", [pid, day - 1, day + 1, (exclude || []).map(Number).filter(Number.isFinite)]);
+      return r.length ? num(r[0]) : null;
+    },
+    async pickFinal(pid, exclude) {
+      const r = await q("select * from teams where status = 'final' and pid <> $1 and not (id = any($2::bigint[])) order by random() limit 1", [pid, (exclude || []).map(Number).filter(Number.isFinite)]);
+      return r.length ? num(r[0]) : null;
+    },
     async pickPool(lo, hi, exclude, staleBefore) {
       const r = await q(`select * from teams where not (id = any($1::bigint[])) and (status = 'lost' or (status = 'running' and coalesce(updated, created) < $4))
         and wins >= $2 and ($3::int is null or wins <= $3) order by random() limit 1`, [(exclude || []).map(Number).filter(Number.isFinite), lo, hi == null ? null : hi, staleBefore || 0]);

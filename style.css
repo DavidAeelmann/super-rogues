@@ -2348,3 +2348,34 @@ body.wide section.shop .grid.rels > :last-child:nth-child(odd) { grid-column: au
 .start .stage .hbanner.spot .hand { }
 .start .stage .hbanner.spot .hand, .start .stage .hbanner.spot ~ .hand { bottom: 40px; }
 .start .stage .hbanner.spot.focus .cone, .start .stage .hbanner.spot.on .cone { opacity: .45; left: 2%; right: 2%; }
+/* v63 (reviews #117 #118 #120): lives, the duel poster with its power, the steal screen, six heroes to pick three from */
+#top .lives, .lifeline .lives, .lifelost .lives { display: inline-flex; align-items: center; gap: 1px; padding: 2px 7px; border-radius: 999px; background: #ffffff22; border: 2px solid #ffffff38; line-height: 1; }
+#top .lives .hrt, .lives .hrt { font-style: normal; font-size: 13px; color: #ffffff4d; } #top .lives .hrt.on, .lives .hrt.on { color: #ff5a6e; text-shadow: 0 0 6px #ff5a6e88; }
+.lifeline { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0; font-family: var(--fun); font-weight: 600; } .lifeline .lives .hrt { font-size: 18px; }
+.lifelost { display: flex; align-items: center; justify-content: center; gap: 8px; } .lifelost .lives .hrt { font-size: 16px; }
+.b-duel { --c1: #ff8fc8; --c2: #d4429a; --c3: #962870; color: #fff; }
+.banner.v2.wait { opacity: .78; cursor: progress; } .banner.v2.wait .evbig { animation: hover 1.4s ease-in-out infinite alternate; }
+.banner.v2 .rw .pw { display: inline-flex; align-items: center; gap: 4px; font: 700 12px var(--fun); } .banner.v2 .rw .pw svg.ui { width: 14px; height: 14px; }
+.banner.v2 .rw .pw.easy { color: #14703a; } .banner.v2 .rw .pw.even { color: #5a3000; } .banner.v2 .rw .pw.hard { color: #b52c3c; } .banner.v2 .rw .pw.me { margin-left: 8px; font-weight: 600; opacity: .7; }
+.stealscreen .stealrows { display: grid; gap: 10px; margin: 10px 0; }
+.stealscreen button.steal { display: flex; align-items: center; gap: 12px; padding: 10px 12px; text-align: left; border-radius: 18px; background: linear-gradient(180deg, #232c86, #141a5e); border: 3px solid var(--rc, #fff); box-shadow: 0 5px 0 color-mix(in srgb, var(--rc, #fff) 45%, #0d1146); color: #fff; }
+.stealscreen button.steal .sp { flex: none; display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #ffffff40, #0d114688); }
+.stealscreen button.steal .sp img.por { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px #fff; }
+.stealscreen button.steal .st { flex: 1; min-width: 0; display: grid; gap: 2px; } .stealscreen button.steal .st b { font: 700 16px/1.15 var(--fun); } .stealscreen button.steal .st b em { font-style: normal; opacity: .75; font-size: 13px; margin-left: 4px; }
+.stealscreen button.steal .st small { font-size: 12px; line-height: 1.25; opacity: .9; }
+.stealscreen button.steal .take { flex: none; font: 700 14px var(--fun); font-style: normal; padding: 8px 14px; border-radius: 999px; background: linear-gradient(180deg, #ffe46b, #ffc21a); color: #5a3000; box-shadow: 0 3px 0 #c47f00; }
+.stealscreen button.steal:hover { filter: brightness(1.1); }
+.start .stage.spotlights.six, .start .stage.spotlights.six[class] { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 6px; padding: 8px 6px 6px; }
+.start .stage.six .hbanner.spot .splash { max-width: 78px; margin: 0 auto; } .start .stage.six .hbanner.spot b { font-size: 12px; margin-top: -30px; } .start .stage.six .hbanner.spot i { font-size: 9.5px; margin-bottom: 4px; }
+.start .stage.six .hbanner.spot .cone { top: -4px; }
+@media (min-height: 760px) { .start .stage.six .hbanner.spot .splash { max-width: 96px; } .start .stage.six .hbanner.spot b { font-size: 13px; margin-top: -34px; } }
+@media (max-height: 700px) { .start.s1 .ssub:not(.tap) { display: none; } .start .stage.six .hbanner.spot .splash { max-width: 68px; } .start .stage.six .hbanner.spot b { margin-top: -26px; } .start.s1 .stage.six { margin: 4px 0; } }
+.banner.v2.b-duel .rw { display: grid; justify-items: center; gap: 1px; border-radius: 16px; padding: 4px 12px; }
+.banner.v2 .rw .pw.me { margin-left: 0; font: 600 11.5px var(--fun); }
+.xpups.many .xpup { flex-direction: row; text-align: left; gap: 6px; padding: 4px 6px 4px 4px; } .xpups.many .xpup small { display: none; } .xpups.many .xpup .ico, .xpups.many .xpup .por { width: 30px; height: 30px; } .xpups.many .xpup b { font-size: 12px; line-height: 1.1; }
+.lifeline { margin: 0; } .lifeline .lives .hrt { font-size: 15px; }
+/* v63 (review #120): a run that climbs several account levels unlocks many things at once (three per level): a strip of pictures */
+.xpups.lots { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 5px; }
+.xpups.lots .xpupn { flex: 1 0 100%; text-align: center; font: 700 13px var(--fun); color: var(--gold-hi, #ffd23f); }
+.xpups.lots .xpup { flex: none; padding: 3px; border-radius: 12px; } .xpups.lots .xpup span { display: none; } .xpups.lots .xpup .ico, .xpups.lots .xpup .por { width: 32px; height: 32px; }
+.xpups.lots { gap: 4px; margin-top: 6px; } .xpups.lots .xpup { padding: 2px; border-radius: 10px; } .xpups.lots .xpup .ico, .xpups.lots .xpup .por { width: 27px; height: 27px; border-radius: 8px; }

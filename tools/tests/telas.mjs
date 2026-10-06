@@ -36,7 +36,7 @@ ws.onmessage = m => {
   if (d.method === 'Runtime.consoleAPICalled' && (d.params.type === 'error' || String(d.params.args?.[0]?.value || '').startsWith('CSP'))) errors.push('console: ' + JSON.stringify(d.params.args).slice(0, 300));
 };
 const send = (method, params = {}) => new Promise(res => { const i = ++id; pending[i] = res; ws.send(JSON.stringify({ id: i, method, params })); });
-const ev = async expr => { const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result?.exceptionDetails) errors.push('eval: ' + JSON.stringify(r.result.exceptionDetails).slice(0, 300)); return r.result?.result?.value; };
+const ev = async expr => { const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result?.exceptionDetails) errors.push('eval: ' + (r.result.exceptionDetails.exception && r.result.exceptionDetails.exception.description || '').slice(0, 260) + ' <<' + String(expr).slice(0, 140)); return r.result?.result?.value; };
 const shot = async name => { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(OUT + name + '.png', Buffer.from(r.result.data, 'base64')); };
 const click = sel => ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e || e.disabled) return false; e.click(); return true; })()`);
 
@@ -101,7 +101,7 @@ await click('[data-act=new-run]'); await sleep(200);
 ok(await ev(`document.getElementById('modal').hidden && !document.getElementById('toast').classList.contains('on')`), 'v52: the toast and the sheet from the screen before are gone once the screen changes');
 ok(await ev(`__bal.ui.info === null`), 'v62 (review #77): the unit / boss description of the screen before does not follow you to the next screen');
 const picks = await ev(`[...document.querySelectorAll('[data-act=start-pick]')].length`);
-ok(picks === 3, 'start offers 3 heroes side by side');
+ok(picks === 6 && await ev(`document.querySelectorAll('.stage.six .hbanner').length === 6`), 'v63 (review #118): start offers 6 heroes (two of each class) to pick 3 from');
 // v49 (review #60): a game only counts once its hero and relic are picked: back on the landing it is Play, not Continue
 await click('#top [data-act=menu]'); await sleep(150);
 ok(await ev(`!document.querySelector('[data-act=continue-run]') && !document.querySelector('[data-act=give-up]') && !!document.querySelector('[data-act=new-run]')`), 'v49: a game still picking its hero shows Play on the landing, not Continue');
@@ -109,7 +109,7 @@ await click('[data-act=new-run]'); await sleep(200);
 ok(await ev(`!!document.querySelector('.start .ssteps li.on') && !!document.querySelector('.ssub.tap') && document.querySelector('[data-act=start-next]').disabled && !document.querySelector('[data-act=start-relic]')`), 'v45 step 1: "Tap a hero", Next is off until you pick, no relics yet');
 const fmtOut = await ev(`__bal.fmt('<b>x</b> deals 20% magic damage and stuns for 1.5s')`);
 ok(/&lt;b&gt;/.test(fmtOut) && /class="num">20%/.test(fmtOut) && /kw-ap/.test(fmtOut) && /kw-cc/.test(fmtOut) && /class="dur">1.5s/.test(fmtOut), 'review #10: descriptions colour terms, bold numbers, italic durations, and stay escaped');
-await click('[data-act=start-pick]');
+await pick3();
 ok(await ev(`!!document.querySelector('.detail .htag') && !!document.querySelector('.detail [data-act=hero-peek]') && !document.querySelector('.detail .stat') && !document.querySelector('[data-act=start-next]').disabled`), 'v45 step 1: the picked hero shows its ability (no stat table) and Next turns on');
 await shot('02a-start-hero'); await noHScroll('start hero'); await noVScroll('start hero');
 await click('[data-act=start-next]'); await sleep(100);
@@ -137,14 +137,16 @@ ok(await ev(`!!document.querySelector('#modal [data-act=give-up-yes]')`), 'v49: 
 await click('#modal [data-act=close]'); await sleep(100); await click('[data-act=continue-run]'); await sleep(200);
 ok(await ev(`__bal.run && __bal.run.phase === 'map' && !!document.querySelector('.map')`), 'v49: Keep playing, then Continue: back to the same game');
 
+async function pick3() { const n = await ev(`document.querySelectorAll('[data-act=start-pick]').length`); if (n < 3) console.log('pick3: only', n, await ev('__bal.run.phase + " " + document.querySelector("#screen").innerHTML.slice(0, 200)')); for (let i = 0; i < 3; i++) { await ev(`document.querySelectorAll('[data-act=start-pick]')[${i}].click()`); await sleep(60); } }
 let fightsSeen = 0, sawSmooth = false, sawShop = false, sawEvent = false, sawPicker = false, sawLevel = false, sawBoss = 0, steps = 0;
-while (steps++ < 80) {
+while (steps++ < 160) {
   const st = await ev(`(() => { const r = __bal.run; return { phase: r.phase, screen: document.querySelector('#screen').innerHTML.slice(0, 200), pending: r.pending.length, type: r.cur && r.cur.type, diff: r.cur && r.cur.diff, gold: r.gold, bag: r.bag.length, battle: !!__bal.battle }; })()`);
   if (!st) break;
-  if (st.phase === 'gauntlet') {
+  if (st.phase === 'gauntlet' && !(await ev(`!!document.querySelector('[data-act=result-ok], [data-act=spec]')`))) {
     if (await ev(`!!document.querySelector('form[data-form=gauntlet]')`)) { if (REMOTE) break; await ev(`(() => { const f = document.querySelector('form[data-form=gauntlet]'); f.name.value = 'TestBot'; f.querySelector('button').click(); })()`); await sleep(800); continue; }
-    await click('[data-act=to-duel]'); await sleep(150); continue;
+    await sleep(150); continue;
   }
+  if (st.phase === 'steal') { await click('[data-act=steal]:last-of-type'); await sleep(100); continue; }
   if (await ev(`!!document.querySelector('[data-act=result-ok]')`)) { if (fightsSeen === 1) { await sleep(900); await shot('06-result'); await noVScroll('result');
       ok(await ev(`!!document.querySelector('.result.v2 .rhead .headline') && /⏱/.test(document.querySelector('.rmeta').textContent) && /💥 [0-9]+.[0-9]+/.test(document.querySelector('.rmeta').textContent) && !!document.querySelector('.rh .rst') && /🛡/.test(document.querySelector('.rh .rst').textContent) && (document.querySelector('.rhead.win') ? document.querySelectorAll('.rstars .st').length === 3 : document.querySelectorAll('.rfoes .rf').length > 0) && !/NaN|undefined/.test(document.querySelector('.result').textContent)`), 'review #25/#51: the after-battle screen: banner, time and foes down, damage dealt and taken and kills per hero, stars on a win (the enemy line-up on a loss)');
       // review #51: the rewards play in order and end with the stars lit, the gold counted and the top bar showing the new gold
@@ -153,13 +155,13 @@ while (steps++ < 80) {
       ok(await ev(`(() => { const r = __bal.result; if (!r || !r.win) return true; const lit = document.querySelectorAll('.rstars .st.lit').length; return r.stars >= 1 && lit === r.stars && document.querySelector('.rw-gold b').textContent === '+' + r.gold && +document.querySelector('#top .gold').textContent === __bal.run.gold; })()`), 'review #51: after the reward animation: the stars lit, +gold counted, the top bar shows the new gold');
       // v47 (review #58): the numbers wait behind Details
       ok(await ev(`!document.querySelector('.result.v2.more') && getComputedStyle(document.querySelector('.rmeta')).display === 'none' && !!document.querySelector('[data-act=result-more]')`), 'v47: the result shows the win and the rewards; the numbers wait behind Details'); await click('[data-act=result-more]'); await sleep(80); ok(await ev(`!!document.querySelector('.result.v2.more') && getComputedStyle(document.querySelector('.rmeta')).display !== 'none'`), 'v47: Details shows the time, the damage and the kills'); await click('[data-act=result-more]'); await sleep(80); }
-      ok(await ev(`(() => { const r = __bal.result; return !r || r.win || r.gauntlet || (!!document.querySelector('.rhead .losetag') && document.querySelector('.losetag').textContent.length > 3); })()`), 'v62 (review #94): a lost fight says how close it was (SO CLOSE! ... You were wrecked!)');
+      ok(await ev(`(() => { const r = __bal.result; return !r || r.win || r.duel || (!!document.querySelector('.rhead .losetag') && document.querySelector('.losetag').textContent.length > 3); })()`), 'v62 (review #94): a lost fight says how close it was (SO CLOSE! ... You were wrecked!)');
       await click('[data-act=result-ok]'); await sleep(100); continue; }
   if (st.phase === 'over') break;
   if (await ev(`!!document.querySelector('[data-act=spec]')`)) { if (!sawLevel) { await shot('07-levelup'); await noVScroll('level up'); sawLevel = true; } await click('[data-act=spec]'); await sleep(80); continue; }
   if (st.phase === 'map') {
     // prefer medium fights and shops so the run goes the distance
-    await ev(`(() => { const b = [...document.querySelectorAll('[data-act=choose]')]; const pref = b.find(x => /Item Shop|Hero Shop|Medium|Easy/.test(x.textContent)) || b[0]; pref.click(); })()`);
+    await ev(`(() => { const b = [...document.querySelectorAll('[data-act=choose]')]; const pref = b.find(x => /Item Shop|Hero Shop|Medium|Easy/.test(x.textContent) && !x.classList.contains('b-duel')) || b.find(x => !x.classList.contains('b-duel')) || b[0]; pref.click(); })()`);
     await sleep(120); continue;
   }
   if (st.phase === 'shop') {
@@ -196,7 +198,8 @@ while (steps++ < 80) {
       if (!sawPicker) { await shot('09b-event-target'); await noVScroll('event target picker'); sawPicker = true; }
       await click('[data-act=event-target]'); await sleep(80);
     }
-    ok(await ev(`!!__bal.run.cur && !!__bal.run.cur.done`), 'the event choice resolved: ' + (await ev(`(__bal.run.cur && __bal.run.cur.done) || ''`)));
+    ok(await ev(`(!!__bal.run.cur && !!__bal.run.cur.done) || __bal.run.phase === 'deploy'`), 'the event choice resolved: ' + (await ev(`(__bal.run.cur && __bal.run.cur.done) || __bal.run.phase`)));
+    if (await ev(`__bal.run.phase === 'deploy'`)) continue;   // a challenge: fought right away
     await click('[data-act=leave]'); await sleep(80); continue;
   }
   if (st.phase === 'deploy' && !st.battle) {
@@ -238,7 +241,7 @@ while (steps++ < 80) {
   await sleep(100);
 }
 ok(sawSmooth, 'units are drawn between hexes while moving (smooth movement)');
-ok(fightsSeen >= 1, 'played ' + fightsSeen + ' battles (no hearts: a run can end at the first loss)');
+ok(fightsSeen >= 1, 'played ' + fightsSeen + ' battles');
 ok(sawShop, 'visited a shop');
 const fin = await ev(`({ phase: __bal.run.phase, result: __bal.run.result, score: __bal.run.score, fightNo: __bal.run.fightNo })`);
 ok(fin.phase === 'over' || (REMOTE && fin.phase === 'gauntlet'), `run reached the end (${fin.result}, fight ${fin.fightNo}, score ${fin.score})`);
@@ -252,7 +255,7 @@ if (fin.phase === 'over') {
 }
 if (fin.result === 'defeat' && !REMOTE) {
   await sleep(600);
-  ok(await ev(`__bal.run.eloEnd == null && !!__bal.run.lgEnd && /league point/.test(document.querySelector('#screen').textContent) && /1000/.test(document.querySelector('#top').textContent)`), 'no hearts: the lost fight ended the run; review #24: it costs league points but no Elo');
+  ok(await ev(`__bal.run.lives === 0 && __bal.run.eloEnd == null && !!__bal.run.lgEnd && /league point/.test(document.querySelector('#screen').textContent) && !!document.querySelector('#top .lgchip')`), 'v63: the third lost fight ended the run (no lives left); review #24: it costs league points but no Elo');
   ok(await ev(`(() => { const t = document.querySelector('#top'); return t.scrollWidth <= t.clientWidth + 1 && [...t.children].every(c => c.getBoundingClientRect().right <= window.innerWidth + 1); })()`), 'review #51: the top bar fits the phone with the league chip, gold, day, Team, suggest and menu');
 }
 
@@ -262,8 +265,9 @@ ok(await ev(`Object.keys(B.HEROES).every(k => { const d = B.Run.heroDef({ relics
 // ---- review #17: events, forced so every test run sees one: 3 choices, a targeted choice with its picker, the result,
 // and a next-fight modifier shown on the map
 if (!REMOTE) {
+  await ev('B.CFG.startItems = 0');   // v63: the events below count the items in the bag
   await click('[data-act=new-run]'); await sleep(150);
-  await click('[data-act=start-pick]'); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+  await pick3(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
   await ev(`(() => { const r = __bal.run; r.gold = 30; r.bag.push('cap', 'bloodthirster'); r.phase = 'map'; r.opts = [{ type: 'event', id: 'smith' }]; B.Run.choose(r, 0); __bal.render(); })()`); await sleep(150);
   ok(await ev(`document.querySelectorAll('[data-act=event]').length === 4 && !document.querySelector('[data-act=event][data-arg="2"]').disabled && !!document.querySelector('[data-act=event][data-arg="2"] .price') && !!document.querySelector('[data-act=event][data-arg="3"] .etag.ereq')`), 'event: 4 choices (one needs a melee hero, tagged), the priced one is available');
   await shot('09-event'); await noHScroll('event'); await noVScroll('event');
@@ -300,49 +304,63 @@ if (!REMOTE) {
   await ev(`(() => { __bal.run.phase = 'over'; __bal.run.result = 'defeat'; __bal.render(); })()`); await sleep(100);
 }
 
-// ---- gauntlet: Rival's ghost is already stored; take a strong team past the last shop into the duels
+// ---- v63 (reviews #117 #118): a PvP day (the duel poster shows the rival and its power), the steal screen, then the final fight against a team that completed its run
 if (!REMOTE) {
-  await ev(`fetch('/api/elo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'enter', pid: 'b'.repeat(32), name: 'Rival', team: [{ key: 'bastion', lvl: 3, specs: [], items: ['warmog', 'longsword'], bonus: {}, pos: { c: 3, r: 4 } }], relics: ['feather'] }) })`);
+  const post = body => ev(`fetch('/api/elo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(${JSON.stringify(body)}) }).then(r => r.json())`);
+  const rival = [{ key: 'bastion', lvl: 3, specs: [], items: ['warmog', 'longsword'], bonus: {}, pos: { c: 3, r: 4 } }];
+  await post({ op: 'snap', pid: 'b'.repeat(32), name: 'Rival', day: 3, team: rival, relics: ['feather'] });
+  await post({ op: 'complete', pid: 'b'.repeat(32), name: 'Rival', team: rival, relics: ['feather'], runId: 77, game: { fights: 6 } });
   await click('[data-act=new-run]'); await sleep(150);
-  await click('[data-act=start-pick]'); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
-  await ev(`(() => { const r = __bal.run; while (r.heroes.length < 3) B.Run.addHero(r, Object.keys(B.HEROES).find(k => !r.heroes.some(h => h.key === k)));
+  await pick3(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+  ok(await ev(`__bal.run.heroes.length === 3 && __bal.run.lives === 3 && document.querySelectorAll('#top .lives .hrt.on').length === 3`), 'v63: three heroes at the start and three hearts in the top bar');
+  await ev(`(() => { const r = __bal.run;
     r.heroes.forEach(h => { h.lvl = 5; h.specs = B.HEROES[h.key].specs.map(p => p[0].id); h.items = ['bloodthirster', 'warmog', 'deathcap', 'guardian']; }); r.heroes[0].items = ['obs_blade', 'obs_plate', 'obs_helm', 'mountainheart']; r.bag.push('worldsplitter', 'aegis', 'storm_boots'); r.autoGear = false;
-    r.relics.push('drum'); r.step = B.Run.seqOf(r).length - 2; r.fightNo = 8; B.Run.advance(r); __bal.render(); })()`);
-  ok(await ev(`__bal.run.phase === 'gauntlet' && !!document.querySelector('form[data-form=gauntlet]') && !document.querySelector('form[data-form=score]') && !/Onslaught/.test(document.body.textContent)`), 'after the last shop comes the Gauntlet (no Onslaught)');
-  await shot('16-gauntlet-intro');
-  // itemization v16: the team sheet with 3 heroes at Lv 5, a full set and items in the bag still fits the phone
-  await click('[data-act=team]'); await sleep(250); await click('#modal .gitem'); await sleep(150);
-  ok(await ev(`document.querySelectorAll('#modal .gtab').length === 3 && /Nightglass Guard\\s*3\\/3/.test(document.querySelector('#modal').textContent) && /Mythic weapon/i.test((document.querySelector('.gdet') || {}).textContent || '') && document.querySelectorAll('#modal .gsock.full').length >= 4`), 'gear: 3 hero tabs, the set 3/3, the selected mythic item (best rarity first) with its big button');
-  await shot('16b-team-full'); await noHScroll('team sheet full'); await noVScroll('team sheet, 3 heroes with items');
-  await click('[data-act=close]'); await sleep(100);
-  await ev(`(() => { const f = document.querySelector('form[data-form=gauntlet]'); f.name.value = 'TestBot'; f.querySelector('button').click(); })()`); await sleep(900);
-  ok(await ev(`__bal.run.g.status === 'match' && document.querySelector('.opp').textContent.includes('Rival')`), 'gauntlet round 1: a card shows the stored rival team');
-  ok(await ev(`!!document.querySelector('.tower .floor.cur .token') && !!document.querySelector('.tower .floor.crown') && /Floor 1/.test(document.querySelector('.tower .floor.cur').textContent) && /Rival/.test(document.querySelector('.tower .floor.cur').textContent)`), 'review #16: the gauntlet tower: your token on floor 1 facing Rival, the crown on top');
-  ok(await ev(`document.querySelectorAll('.opp .gitems img').length === 2 && document.querySelectorAll('.opp .relics img').length === 1 && __bal.run.g.opp.relics.includes('feather')`), "review #15: the ghost card shows the rival's items hero by hero and its relics");
-  ok(await ev(`!__bal.run.g.history.some(h => h.reach || h.name === 'Reached the Gauntlet') && __bal.run.g.eloStart === __bal.run.g.elo`), 'review #24: reaching the gauntlet no longer moves the Elo');
-  await shot('17-gauntlet-opponent'); await noHScroll('gauntlet card'); await noVScroll('gauntlet card');
-  // v62: the owner emptied the tower under a player in the middle of it: the Gauntlet starts over from its gate, no "Try again" loop
-  await ev('__bal.run.g.teamId = 987654321');
-  await click('[data-act=to-duel]'); await sleep(300); await click('[data-act=fight]'); await sleep(1200); await ev('__bal.skipBattle()');
-  for (let k = 0; k < 80 && !(await ev("__bal.run.g.status === 'intro'")); k++) await sleep(100);
-  ok(await ev("__bal.run.g.status === 'intro' && !!document.querySelector('form[data-form=gauntlet]') && !document.querySelector('[data-act=retry-elo]')"), 'v62: a Gauntlet the server no longer knows restarts from its gate (no stuck "Try again")');
-  await ev(`(() => { const f = document.querySelector('form[data-form=gauntlet]'); f.name.value = 'TestBot'; f.querySelector('button').click(); })()`); await sleep(900);
-  await click('[data-act=to-duel]'); await sleep(300);
-  ok(await ev(`/Rival/.test(document.querySelector('.bhead').textContent) && __bal.run.cur.type === 'gauntlet'`), 'duel deploy screen');
-  await shot('18-gauntlet-deploy');
+    r.relics.push('drum'); r.step = 3; r.fightNo = 2; B.Run.advance(r); __bal.render(); })()`);
+  // the PvP day: a duel next to the PvE fight, with the rival's team and its power next to yours
+  for (let k = 0; k < 30 && !(await ev(`!!document.querySelector('.banner.b-duel:not(.wait)')`)); k++) await sleep(100);
+  ok(await ev(`document.querySelectorAll('[data-act=choose]').length === (__bal.run.relics.includes('quill') ? 3 : 2) && document.querySelectorAll('.banner.b-duel').length === 1 && /Rival/.test(document.querySelector('.banner.b-duel .bt').textContent) && /Power [0-9]+/.test(document.querySelector('.banner.b-duel .rw').textContent) && /yours [0-9]+/.test(document.querySelector('.banner.b-duel .rw').textContent)`), 'v63 (review #117): a PvP day offers a duel against another player team (its power next to yours) beside the PvE fight');
+  await shot('16-duel-poster'); await noHScroll('duel poster'); await noVScroll('duel poster');
+  await click('.banner.b-duel'); await sleep(250);
+  ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.g.kind === 'pvp' && /Duel/.test(document.querySelector('.bhead').textContent) && /Rival/.test(document.querySelector('.bhead').textContent) && /Power [0-9]+/.test(document.querySelector('.bhead').textContent)`), 'the duel deploy screen names the rival and compares power');
+  await shot('17-duel-deploy'); await noHScroll('duel deploy'); await noVScroll('duel deploy');
   await click('[data-act=fight]'); await sleep(1200); await ev('__bal.skipBattle()');
   for (let k = 0; k < 80 && !(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /Elo/.test(x.textContent))`)); k++) await sleep(100);
   ok(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /Elo [0-9]+/.test(x.textContent) && /[+-][0-9]+/.test(x.textContent))`), 'duel result shows the Elo change (a reward chip)');
   await shot('18b-duel-result'); await noVScroll('duel result');
   await click('[data-act=result-ok]'); await sleep(200);
-  const g = await ev(`({ phase: __bal.run.phase, status: __bal.run.g.status, wins: __bal.run.g.wins, elo: __bal.run.g.elo })`);
-  ok(g.phase === 'over' && (g.status === 'champion' || g.status === 'lost'), `gauntlet ends (${g.status}, ${g.wins} win, Elo ${g.elo})`);
-  await shot('19-gauntlet-over');
-  ok(await ev(`!!document.querySelector('.tower') && (__bal.run.g.status === 'champion' ? !!document.querySelector('.floor.crown.cur .token') && !!document.querySelector('.floor.cleared') : !!document.querySelector('.floor.fell'))`), 'the final tower shows where the run ended (crown or the floor it fell on)');
-  await noVScroll('gauntlet over');
+  ok(await ev(`__bal.run.phase === 'steal' && document.querySelectorAll('button.steal').length === 3 && !!document.querySelector('button.steal.k-hero') && !!document.querySelector('button.steal.k-item') && !!document.querySelector('button.steal.k-relic')`), 'v63 (review #118): a won duel offers three spoils: a hero, an item, a power');
+  await shot('18c-steal'); await noHScroll('steal'); await noVScroll('steal');
+  await click('button.steal.k-hero'); await sleep(150);
+  ok(await ev(`document.querySelectorAll('[data-act=steal-swap]').length === 3 && /steps aside/.test(document.querySelector('#screen').textContent)`), 'a stolen hero asks which of your heroes steps aside when the team is full');
+  await shot('18d-steal-swap'); await noVScroll('steal swap');
+  const before = await ev(`__bal.run.steal[0].hero.key`);
+  await click('[data-act=steal-swap]'); await sleep(200);
+  ok(await ev(`__bal.run.phase === 'map' && __bal.run.heroes.length === 3 && __bal.run.heroes.some(h => h.key === ${JSON.stringify(before)})`), 'the stolen hero joined the team and the run moved on');
+  // the last shop leads to the final fight
+  await ev(`(() => { const r = __bal.run; r.bag = ['worldsplitter', 'aegis', 'storm_boots']; r.step = B.Run.seqOf(r).length - 2; r.fightNo = 8; B.Run.advance(r); __bal.render(); })()`);
+  ok(await ev(`__bal.run.phase === 'gauntlet' && !!document.querySelector('form[data-form=gauntlet]') && !document.querySelector('form[data-form=score]') && /final fight/i.test(document.querySelector('#screen').textContent) && !/Onslaught/.test(document.body.textContent)`), 'after the last shop comes the final fight (no tower, no Onslaught)');
+  await shot('16-final-intro'); await noHScroll('final intro'); await noVScroll('final intro');
+  // itemization v16: the team sheet with 3 heroes at Lv 5, a full set and items in the bag still fits the phone
+  await click('[data-act=team]'); await sleep(250); await click('#modal .gitem'); await sleep(150);
+  ok(await ev(`document.querySelectorAll('#modal .gtab').length === 3 && document.querySelectorAll('#modal .gsock.full').length >= 4`), 'gear: 3 hero tabs and full sockets at Lv 5');
+  await shot('16b-team-full'); await noHScroll('team sheet full'); await noVScroll('team sheet, 3 heroes with items');
+  await click('[data-act=close]'); await sleep(100);
+  await ev(`(() => { const f = document.querySelector('form[data-form=gauntlet]'); f.name.value = 'TestBot'; f.querySelector('button').click(); })()`); await sleep(900);
+  ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.g.kind === 'final' && __bal.run.g.opp.name === 'Rival' && __bal.run.g.opp.status === 'final' && __bal.run.g.opp.relics.includes('feather') && /Final/.test(document.querySelector('.bhead').textContent) && /Rival/.test(document.querySelector('.bhead').textContent)`), 'the final fight faces a team that completed its run (Rival), shown on the deploy screen');
+  ok(await ev(`document.querySelectorAll('.foes .fs, .foes .fo').length >= 1 && !!document.querySelector('[data-act=fight]')`), "review #15: the rival's team is listed before the fight");
+  await shot('18-final-deploy'); await noHScroll('final deploy'); await noVScroll('final deploy');
+  await click('[data-act=fight]'); await sleep(1200); await ev('__bal.skipBattle()');
+  for (let k = 0; k < 80 && !(await ev(`!!document.querySelector('[data-act=result-ok]') && !__bal.result.pending`)); k++) await sleep(100);
+  await shot('18e-final-result'); await noVScroll('final result');
+  await click('[data-act=result-ok]'); await sleep(200);
+  const g = await ev(`({ phase: __bal.run.phase, result: __bal.run.result, lives: __bal.run.lives })`);
+  ok(g.phase === 'over' && g.result === 'clear', `the final fight is won and the run is complete (${g.result}, ${g.lives} lives)`);
+  ok(await ev(`/Run complete/.test(document.querySelector('#screen').textContent)`), 'the game over screen says the run is complete');
+  await shot('19-run-complete');
+  await noVScroll('run complete');
   for (let k = 0; k < 150 && !(await ev(xpDone)); k++) await sleep(100);
-  ok(await ev(`document.querySelectorAll('.xppanel .xplines li').length >= 3 && [...document.querySelectorAll('.xppanel .xplines li')].some(li => /Gauntlet/.test(li.textContent) && !!li.querySelector('svg.ui')) && !document.querySelector('.xppanel.pre')`), 'v46: the Gauntlet game pays for the PvE part, the duels and the firsts');
-  await shot('19b-gauntlet-over-xp'); await noVScroll('gauntlet over, XP counted');
+  ok(await ev(`document.querySelectorAll('.xppanel .xplines li').length >= 2 && !document.querySelector('.xppanel.pre')`), 'v46: the completed run pays XP (played, the final fight, firsts)');
+  await shot('19b-complete-xp'); await noVScroll('run complete, XP counted');
   await click('[data-act=scores]');
   for (let k = 0; k < 30 && !(await ev(`!!document.querySelector('#modal table')`)); k++) await sleep(100);
   const ladder = await ev(`document.querySelector('#modal').textContent`);
@@ -535,8 +553,8 @@ if (!REMOTE) {
 
 // v50 (review #62): new relics on screen: three paths (Pathfinder's Quill), a free offer (Merchant's Ledger)
 await ev(`__bal.ACT['new-run']()`); await sleep(150);
-await click('[data-act=start-pick]'); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
-await ev(`(() => { const r = __bal.run; B.Run.gainRelic(r, 'quill'); B.Run.gainRelic(r, 'ledger'); r.step -= 1; r.fightNo = 0; B.Run.advance(r); __bal.render(); })()`); await sleep(200);
+await pick3(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+await ev(`(() => { const r = __bal.run; B.Run.gainRelic(r, 'quill'); B.Run.gainRelic(r, 'ledger'); r.pending = []; r.step -= 1; r.fightNo = 0; B.Run.advance(r); __bal.render(); })()`); await sleep(200);
 ok(await ev(`document.querySelectorAll('.banners.three .banner').length === 3`), "v50: the Pathfinder's Quill shows three paths");
 await shot('27-three-paths'); await noHScroll('three paths'); await noVScroll('three paths');
 await ev(`(() => { const r = __bal.run; r.phase = 'map'; r.opts = [{ type: 'shop', kind: 'itemShop' }]; B.Run.choose(r, 0); __bal.render(); })()`); await sleep(200);

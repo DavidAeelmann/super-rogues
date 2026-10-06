@@ -80,9 +80,15 @@ function event(run, stats) {
   Run.autoEquip(run);
 }
 // the next map step: a hero shop while the team is short of a role, then item shops, powers, events; fights: the middle difficulty
-let POLICY = 'medium';   // which fights the bot picks: 'medium' (the default), 'easy' or 'hard' (to measure those difficulties)
+let POLICY = 'medium', CUR = null;   // which fights the bot picks: 'medium' (the default), 'easy' or 'hard' (to measure those difficulties)
 function mapChoice(run) {
-  const o = run.opts;
+  // v63 (review #117): the bot plays PvE only: on a PvP day it picks among the PvE fights
+  const all = run.opts, keep = all.map((x, i) => i).filter(i => all[i].type !== 'duel'), o = keep.map(i => all[i]);
+  const pickAt = j => keep[j];
+  return pickAt(mapChoiceIn(o));
+}
+function mapChoiceIn(o) {
+  const run = CUR;
   if (o[0].type === 'fight') {
     const ORD = ['easy', 'medium', 'hard'];
     if (POLICY === 'hard') { const h = o.findIndex(x => x.diff === 'hard'); if (h >= 0) return h; return o.length - 1; }
@@ -101,11 +107,18 @@ function mapChoice(run) {
 // plays one whole run; start = the hero the run starts with (forced, so that every hero gets the same number of runs)
 function playRun(seed, opt = {}) {
   POLICY = opt.policy || 'medium';
-  const run = Run.newRun(seed);
+  const run = Run.newRun(seed); CUR = run;
   const keys = Object.keys(HEROES);
   const start = opt.start || keys[Math.floor(Run.rnd(run) * keys.length)];   // uniform over all heroes, not only the three offered
   const relic = opt.relic || run.relicOffer[Math.floor(Run.rnd(run) * run.relicOffer.length)];
-  Run.pickStart(run, [start], relic);
+  // v63 (review #118): the run starts with 3 heroes: the forced one plus one of each role it lacks (taken from the offer when it has one, else any hero of that role)
+  const team = [start];
+  for (const role of NEED_ORDER) {
+    if (team.some(k => roleOf(k) === role)) continue;
+    const from = run.startOffer.filter(k => roleOf(k) === role && !team.includes(k)), any = keys.filter(k => roleOf(k) === role && !team.includes(k));
+    const list = from.length ? from : any; team.push(list[Math.floor(Run.rnd(run) * list.length)]);
+  }
+  Run.pickStart(run, team.slice(0, C.startHeroes), relic);
   if (opt.item) run.bag.push(opt.item);   // the item tests: one item in the bag from the start (auto-equip decides if anybody wears it)
   const stats = { heroBuys: 0, events: 0 };
   const rec = { seed, start, wins: 0, cleared: false, fights: [], secs: 0, tag: opt.relic || opt.item || undefined };
@@ -126,6 +139,16 @@ function playRun(seed, opt = {}) {
     } else break;
   }
   rec.cleared = run.phase === 'gauntlet';
+  rec.lives = run.lives;
+  // the final fight against a made-up finalist (Run.randomGhost): how often the PvE-built team completes the run (the bot never picks the PvP days)
+  rec.reached = rec.cleared;   // reached the final fight with a life left; cleared (below) = the run was completed (PVE_NOFINAL=1 skips the final fight: cleared = reached)
+  if (rec.cleared && opt.final !== false && !process.env.PVE_NOFINAL) {
+    for (let k = 0; k < 3 && run.phase === 'gauntlet'; k++) {
+      Run.autoEquip(run); Run.startDuel(run, Run.randomGhost(run, 8, true), 'final', 9);
+      const W = Run.gauntletWorld(run); Sim.run(W, 20 * 60 * 20); Run.finishDuel(run, W);
+    }
+    rec.cleared = run.result === 'clear';
+  }
   rec.team = run.heroes.map(h => h.key);
   rec.lvl = run.heroes.reduce((a, h) => a + h.lvl, 0) / Math.max(1, run.heroes.length);
   rec.relics = run.relics.slice();
@@ -139,6 +162,7 @@ function applyTune(t) {
   if (t.power) B.TUNE.power = Object.assign({}, t.power);
   if (t.fightScale) C.fightScale = t.fightScale.slice();
   if (t.growth != null) B.TUNE.growth = t.growth;
+  if (t.ghostPower != null) C.ghostPower = t.ghostPower;
   if (t.base != null) B.TUNE.base = t.base;
   if (t.easyMul != null) B.DIFF.easy.mul = t.easyMul;
   if (t.hardMul != null) B.DIFF.hard.mul = t.hardMul;

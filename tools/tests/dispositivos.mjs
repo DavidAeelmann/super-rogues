@@ -47,7 +47,7 @@ for (const d of DEVICES) {
   await ev(`localStorage.clear(); ${process.env.LANG_ID ? "localStorage.setItem('balance.lang', '" + process.env.LANG_ID + "')" : ''}`); await send('Page.reload'); await sleep(900);   // LANG_ID=pt|de: the same checks in another language (texts are longer there)
   await noHScroll(d.name + ' title'); if (PHONE(d)) await noVScroll(d.name + ' title');
   await ev(`document.querySelector('[data-act=new-run]').click()`); await sleep(200);
-  await ev(`document.querySelectorAll('[data-act=start-pick]')[0].click(); document.querySelector('[data-act=start-next]').click(); document.querySelectorAll('[data-act=start-relic]')[0].click(); document.querySelector('[data-act=start-go]').click()`); await sleep(300);
+  await ev(`[0, 1, 2].forEach(i => document.querySelectorAll('[data-act=start-pick]')[i].click()); document.querySelector('[data-act=start-next]').click(); document.querySelectorAll('[data-act=start-relic]')[0].click(); document.querySelector('[data-act=start-go]').click()`); await sleep(300);
   await noHScroll(d.name + ' map'); await shot('dev-' + d.name + '-map'); if (PHONE(d)) await noVScroll(d.name + ' map');
   if (PHONE(d)) {
     for (const kind of ['heroShop', 'itemShop', 'relicShop']) { await force(`r.phase = 'map'; r.opts = [{ type: 'shop', kind: '${kind}' }]; B.Run.choose(r, 0)`); await sleep(500); await noVScroll(d.name + ' ' + kind); await shot('dev-' + d.name + '-' + kind); }

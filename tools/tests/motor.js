@@ -1,7 +1,7 @@
 // Engine + run logic checks (Node, no browser). Usage: node tools/tests/motor.js
 require('../../js/hex.js'); require('../../js/data.js'); require('../../js/sim.js'); require('../../js/run.js');
 const { Run, Sim, Hex, HEROES, ITEMS, RELICS, CFG } = B;
-B.TUNE.power = {}; B.TUNE.base = 1; B.TUNE.growth = 1;   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
+B.TUNE.power = {}; B.TUNE.base = 1; B.TUNE.growth = 1; B.CFG.startItems = 0;   // v63: the starting common items have their own test at the end   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
 let fails = 0, oks = 0;
 const ok = (c, msg) => { if (c) oks++; else { fails++; console.log('FAIL ' + msg); } };
 const finite = W => W.units.every(u => Number.isFinite(u.hp) && Number.isFinite(u.mana) && Number.isFinite(u.atk));
@@ -100,7 +100,7 @@ for (const r of RELICS) {
 // review #22: 1 hero and 1 relic at the start, the hero shop is offered while you have a single hero, old runs keep 13 steps
 {
   const run = Run.newRun(77);
-  ok(run.startOffer.length === 3 && run.relicOffer.length === 3 && run.relicOffer.every(id => B.RELIC[id]), '3 heroes and 3 relics offered');
+  ok(run.startOffer.length === 6 && run.relicOffer.length === 3 && run.relicOffer.every(id => B.RELIC[id]), '6 heroes and 3 relics offered');
   Run.pickStart(run, [run.startOffer[1]], run.relicOffer[2]);
   ok(run.heroes.length === 1 && run.heroes[0].key === run.startOffer[1] && run.relics.includes(run.relicOffer[2]), 'the run starts with the chosen hero and relic');
   Run.choose(run, 0); const W = Run.fightWorld(run); W.over = true; W.winner = 0; Run.finishFight(run, W); while (run.pending.length) Run.chooseSpec(run, 0);
@@ -362,7 +362,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(run.phase === 'over' && run.result === 'gauntlet' && run.g.status === 'champion' && run.g.history.length === 1, 'crowned champion ends the run');
   const r2 = Run.newRun(5); Run.pickStart(r2, ['vex', 'rook']); r2.cur = Run.makeFight(r2, 'hard', 2);
   const W2 = Run.fightWorld(r2); W2.over = true; W2.winner = 1; Run.finishFight(r2, W2);
-  ok(r2.phase === 'over' && r2.result === 'defeat', 'no hearts: one lost fight ends the run');
+  ok(r2.phase === 'map' && r2.lives === 2, 'v63 (review #117): a lost fight costs one of three lives and the day passes');
 }
 // v12 (review #11): new mechanics work as described
 {
@@ -855,6 +855,82 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     const ge = WE.units.find(u => u.side === 1); ge.mana = ge.maxMana; Sim.run(WE);
     ok(WE.over && WE.units.some(u => u.plant), 'v62h (#102): a gardener on the enemy side cannot make a fight endless (plants do not count as enemies)');
   }
+}
+// v63 (reviews #117 #118 #119 #120): three lives, three starting heroes, PvP days with a steal, the final fight, made-up ghosts, heroes unlocked by level
+{
+  B.CFG.startItems = 2;
+  const run = Run.newRun(21);
+  ok(run.lives === 3 && run.startOffer.length === 6 && B.CLASSES.every(cl => run.startOffer.filter(k => B.heroClass(k) === cl).length === 2), 'the offer is six heroes, two of each class, and the run has three lives');
+  Run.pickStart(run, run.startOffer.slice(0, 3), run.relicOffer[0]);
+  ok(run.heroes.length === 3 && run.relics.length === 1 && run.heroes.reduce((a, h) => a + h.items.length, 0) + run.bag.length === 2, 'the run starts with 3 heroes, 1 power and 2 common items');
+  B.CFG.startItems = 0;
+  // lives: the third lost fight ends the run
+  const r = Run.newRun(22); Run.pickStart(r, r.startOffer.slice(0, 3), r.relicOffer[0]);
+  const lose = () => { while (!r.opts.some(o => o.type === 'fight')) { Run.choose(r, 0); Run.leave(r); } Run.choose(r, r.opts.findIndex(o => o.type === 'fight')); const W = Run.fightWorld(r); W.over = true; W.winner = 1; return Run.finishFight(r, W); };
+  lose(); ok(r.lives === 2 && r.phase === 'map', 'first loss: two lives left, the run goes on');
+  lose(); ok(r.lives === 1 && r.phase === 'map', 'second loss: one life left');
+  lose(); ok(r.lives === 0 && r.phase === 'over' && r.result === 'defeat', 'third loss ends the run');
+  // PvP days: fights 3 and 6 offer a duel next to PvE fights
+  const q = Run.newRun(23); Run.pickStart(q, q.startOffer.slice(0, 3), q.relicOffer[0]);
+  const days = [];
+  for (let i = 0; i < 17 && q.phase !== 'gauntlet'; i++) {
+    const t = Run.seqOf(q)[q.step]; days.push(t + (q.opts.some(o => o.type === 'duel') ? 'P' : ''));
+    const k = q.opts.findIndex(o => o.type !== 'duel'); Run.choose(q, k);
+    if (q.phase === 'deploy') { const W = Run.fightWorld(q); W.over = true; W.winner = 0; Run.finishFight(q, W); }
+    else if (q.phase === 'shop' || q.phase === 'event') Run.leave(q);
+    while (q.pending.length) Run.chooseSpec(q, 0);
+  }
+  ok(days.join(' ') === 'F X F X FP X B X F X FP X F X B S', 'the PvP days are fights 3 and 6: ' + days.join(' '));
+  ok(q.phase === 'gauntlet', 'after the last shop comes the final fight');
+  // a duel: an opponent must be found first, then a win opens the steal choice and a loss costs a life
+  const d = Run.newRun(24); Run.pickStart(d, d.startOffer.slice(0, 3), d.relicOffer[0]);
+  while (!d.opts.some(o => o.type === 'duel')) { Run.choose(d, 0); if (d.phase === 'deploy') { const W = Run.fightWorld(d); W.over = true; W.winner = 0; Run.finishFight(d, W); } else Run.leave(d); while (d.pending.length) Run.chooseSpec(d, 0); }
+  const di = d.opts.findIndex(o => o.type === 'duel'); Run.choose(d, di);
+  ok(d.phase === 'map', 'a duel with no opponent found yet cannot be chosen');
+  d.opts[di].opp = Run.randomGhost(d, d.opts[di].fightNo);
+  const g0 = d.opts[di].opp; ok(g0.team.length === 3 && g0.random && g0.team.every(h => B.HEROES[h.key] && h.pos), 'a made-up ghost has a full team');
+  ok(['Much weaker', 'Weaker', 'Even', 'Stronger', 'Much stronger'].includes(Run.powerLabel(Run.powerOf(d, d.heroes), Run.ghostPower(g0)).text), 'the duel shows how its power compares with yours');
+  Run.choose(d, di);
+  ok(d.phase === 'deploy' && d.cur.type === 'gauntlet' && d.g.kind === 'pvp', 'choosing the duel opens the deploy screen');
+  const snap = JSON.stringify(d);
+  const Wd = Run.gauntletWorld(d); ok(Wd.units.filter(u => u.side === 1 && u.kind === 'hero').length === 3, 'the duel board has the ghost on the other side');
+  Wd.over = true; Wd.winner = 1; const resL = Run.finishDuel(d, Wd);
+  ok(!resL.win && d.lives === 2 && d.phase === 'map' && d.g === null, 'a lost duel costs a life and the day passes');
+  // the same duel, won
+  const w = JSON.parse(snap); const Ww = Run.gauntletWorld(w); Ww.over = true; Ww.winner = 0;
+  const resW = Run.finishDuel(w, Ww);
+  ok(resW.win && w.phase === 'steal' && w.steal.length === 3 && w.steal.map(o => o.kind).join() === 'hero,item,relic', 'a won duel offers three things to steal: a hero, an item, a power');
+  const hero = w.steal[0].hero.key;
+  ok(Run.steal(w, 0) === 'Pick the hero it replaces', 'a full team asks which hero steps aside');
+  const out = w.heroes[1]; out.items = ['longsword']; const outKey = out.key;
+  ok(Run.steal(w, 0, out.uid) === null && w.heroes.length === 3 && w.heroes.some(h => h.key === hero) && !w.heroes.some(h => h.key === outKey) && w.bag.includes('longsword') && w.phase === 'map', 'the stolen hero replaces the chosen one (its items go to the bag)');
+  const w2 = JSON.parse(snap); const W2 = Run.gauntletWorld(w2); W2.over = true; W2.winner = 0; Run.finishDuel(w2, W2);
+  const relicId = w2.steal[2].id; ok(Run.steal(w2, 2) === null && w2.relics.includes(relicId) && w2.phase === 'map', 'a stolen power joins the run');
+  const w3 = JSON.parse(snap); const W3 = Run.gauntletWorld(w3); W3.over = true; W3.winner = 0; Run.finishDuel(w3, W3);
+  const itemId = w3.steal[1].id, nb = w3.bag.length; ok(Run.steal(w3, 1) === null && w3.bag.length === nb + 1 && w3.bag.includes(itemId), 'a stolen item goes to the bag');
+  // the final fight: lost with a life left = another opponent; won = the run is complete
+  const f = JSON.parse(snap); f.phase = 'gauntlet'; f.g = { status: 'intro', history: [] }; f.cur = null; f.opts = [];
+  Run.startDuel(f, Run.randomGhost(f, 8, true), 'final', 9);
+  ok(f.phase === 'deploy' && f.g.kind === 'final', 'the final fight opens the deploy screen');
+  const Wf = Run.gauntletWorld(f); Wf.over = true; Wf.winner = 1; Run.finishDuel(f, Wf);
+  ok(f.lives === 2 && f.phase === 'gauntlet' && f.g.status === 'intro', 'a lost final fight with lives left sends you to another opponent');
+  Run.startDuel(f, Run.randomGhost(f, 8, true), 'final', 9); const Wf2 = Run.gauntletWorld(f); Wf2.over = true; Wf2.winner = 0; Run.finishDuel(f, Wf2);
+  ok(f.phase === 'over' && f.result === 'clear', 'a won final fight completes the run');
+  const fz = JSON.parse(snap); fz.lives = 1; Run.startDuel(fz, Run.randomGhost(fz, 8, true), 'final', 9); const Wz = Run.gauntletWorld(fz); Wz.over = true; Wz.winner = 1; Run.finishDuel(fz, Wz);
+  ok(fz.phase === 'over' && fz.result === 'defeat' && fz.lives === 0, 'the last life lost in the final fight ends the run');
+  // old saved runs get their lives; one inside the old tower goes to the final fight
+  const old = Run.migrate({ v: 5, step: 4, heroes: [], bag: [], relics: [], fightNo: 2, phase: 'deploy', cur: { type: 'gauntlet' }, g: { teamId: 7, status: 'match', history: [] } });
+  ok(old.lives === 3 && old.phase === 'gauntlet' && old.g.status === 'intro' && old.cur === null, 'a run saved inside the old tower continues at the final fight with three lives');
+  // random ghosts grow with the day
+  const G1 = Run.randomGhost(d, 1), G6 = Run.randomGhost(d, 6), GF = Run.randomGhost(d, 8, true);
+  const nit = g => g.team.reduce((a, h) => a + h.items.length, 0);
+  ok(nit(G1) <= nit(G6) && nit(G6) <= nit(GF) && G1.relics.length <= G6.relics.length && G6.relics.length <= GF.relics.length && GF.team.every(h => h.lvl === 5), 'made-up ghosts get more items, powers and levels as the days pass');
+  // account level: 20 heroes at the start, the other 26 two per level from level 2 to 14
+  const locked1 = B.lockedFor(1).filter(id => HEROES[id]), open1 = Object.keys(HEROES).filter(k => !locked1.includes(k));
+  ok(open1.length === 20 && open1.every(k => B.START_HEROES.includes(k)) && B.HERO_UNLOCKS.length === 26, 'level 1 opens 20 heroes');
+  ok(B.lockedFor(14).filter(id => HEROES[id]).length === 0 && B.lockedFor(2).filter(id => HEROES[id]).length === 24 && B.lockedFor(8).filter(id => HEROES[id]).length === 12, 'two more heroes per level: all of them open by level 14');
+  ok(B.UNLOCKS.filter(u => u.kind === 'hero').length === 26 && B.UNLOCKS.every((u, i, a) => !i || a[i - 1].lvl <= u.lvl), 'the unlock road is in level order');
+  const lk = Run.newRun(25, { locked: B.lockedFor(1) }); ok(lk.startOffer.every(k => B.START_HEROES.includes(k)), 'a level 1 player is only offered the 20 starting heroes');
 }
 console.log(`motor: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

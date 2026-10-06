@@ -88,10 +88,10 @@ async function xpGame(st, p, g, log) {
   await addXp(st, p, X.played, 'game played', log, 'game');
   if (fights) await addXp(st, p, fights * X.fight, fights + ' fight' + (fights === 1 ? '' : 's') + ' won', log, 'fight');
   if (bosses) await addXp(st, p, bosses * X.boss, bosses + ' boss' + (bosses === 1 ? '' : 'es') + ' beaten', log, 'boss');
-  if (g && g.reached) await addXp(st, p, X.reached, 'reached the Gauntlet', log, 'reach');
+  if (g && g.reached) await addXp(st, p, X.reached, 'reached the final fight', log, 'reach');
 }
 async function xpDuel(st, p, champion, log) {
-  await addXp(st, p, D.GAME_XP.duel, 'Gauntlet duel won', log, 'duel');
+  await addXp(st, p, D.GAME_XP.duel, 'duel won', log, 'duel');
   if (champion) await addXp(st, p, D.GAME_XP.champion, 'crowned champion', log, 'champ');
 }
 async function xpClear(st, p, team, log) {

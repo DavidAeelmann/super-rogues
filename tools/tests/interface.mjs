@@ -58,7 +58,7 @@ for (dev of DEVICES.map(d => d)) {
     for (const a of ['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'art-lab', 'language', 'suggest']) { await act(a); await sleep(250); await audit('menu-' + a); await act('close'); await sleep(100); }
     // a game
     await ev(`document.querySelector('[data-act=new-run]').click()`); await sleep(250); await audit('start-heroes');
-    await ev(`document.querySelectorAll('[data-act=start-pick]')[0].click()`); await sleep(250); await audit('start-hero-picked');
+    await ev(`[0, 1, 2].forEach(i => document.querySelectorAll('[data-act=start-pick]')[i].click())`); await sleep(250); await audit('start-hero-picked');
     const hk = await ev(`__bal.ui.focus || Object.keys(B.HEROES)[0]`); await act('hero-peek', hk); await sleep(250); await audit('start-hero-details'); await act('close'); await sleep(100);
     await ev(`document.querySelector('[data-act=start-next]').click()`); await sleep(250); await audit('start-power');
     await ev(`document.querySelectorAll('[data-act=start-relic]')[0].click()`); await sleep(250); await audit('start-power-picked');
@@ -91,6 +91,17 @@ for (dev of DEVICES.map(d => d)) {
     if (bq) { await tap(bq.x, bq.y - 20); await audit('battle-enemy-tapped'); }
     for (let i = 0; i < 80 && (await ev(`!!__bal.battle`)); i++) await sleep(250);   // let the fight end by itself (the 2x speed button is a Crown Shop unlock)
     await sleep(600); await audit('result');
+    // v63 (reviews #117 #118): the PvP day, the steal, the final fight and the end of a run
+    await ev(`__bal.skipBattle && __bal.skipBattle()`); await sleep(400); await ev(`document.querySelector('[data-act=result-ok]') && document.querySelector('[data-act=result-ok]').click()`); await sleep(300);
+    await force(`r.phase = 'map'; r.cur = null; r.pending = []; r.lives = 2; r.fightNo = 2; r.opts = [B.Run.makeFight(r, 'medium', 3), { type: 'duel', fightNo: 3, opp: B.Run.randomGhost(r, 3) }]`); await sleep(350); await audit('duel-poster');
+    await force(`r.opts = [B.Run.makeFight(r, 'medium', 3), { type: 'duel', fightNo: 3, opp: null }]`); await sleep(200); await audit('duel-poster-waiting');
+    await force(`r.opts = [B.Run.makeFight(r, 'medium', 3), { type: 'duel', fightNo: 3, opp: B.Run.randomGhost(r, 3) }]; B.Run.choose(r, 1)`); await sleep(500); await audit('duel-deploy');
+    await force(`r.cur = null; r.phase = 'steal'; r.stealFrom = 'Mira'; r.steal = B.Run.stealOptions(r, B.Run.randomGhost(r, 6))`); await sleep(300); await audit('steal');
+    await force(`__bal.ui.stealPick = 0`); await sleep(250); await audit('steal-swap'); await force(`__bal.ui.stealPick = null`);
+    await force(`r.phase = 'gauntlet'; r.g = { status: 'intro', history: [] }; r.cur = null; r.steal = null`); await sleep(300); await audit('final-intro');
+    await force(`B.Run.startDuel(r, B.Run.randomGhost(r, 8, true), 'final', 9)`); await sleep(500); await audit('final-deploy');
+    await force(`r.cur = null; r.g = null; r.phase = 'over'; r.result = 'clear'`); await sleep(400); await audit('run-complete');
+    await force(`r.phase = 'over'; r.result = 'defeat'; r.lives = 0`); await sleep(400); await audit('run-lost');
     errors.length && console.log('errors so far:', errors.slice(0, 2));
   }
 }

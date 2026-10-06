@@ -24,15 +24,18 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
-    fightScale: [1, 0.992, 1.175, 1.391, 1.576, 1.95, 2.309, 2.734, 2.745],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
-    firstFight: 0.5,  // review #22: the first fight is fought by a single hero: half the usual enemy budget
+    fightScale: [1, 1.607, 1.751, 1.909, 1.837, 2.268, 2.472, 2.695, 2.813],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
+    firstFight: 1,  // review #22 had the first fight at half size for a single hero; v63: the run starts with 3 heroes, so a full-size fight
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // review #24: sudden death burns every unit for 1%, 2%, 3%... of max HP per second
     // node sequence: F = fight (2 of easy/medium/hard), X = shop or event (2 options), B = boss (no option),
     // S = final shop choice (2 shops), G = the PvP gauntlet against player ghosts (review #9 removed the Onslaught)
     // Review #22 (David): the run starts with 1 hero and 1 relic, and each boss gets 1 more fight and 1 more shop/event
     seq: ['F', 'X', 'F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'F', 'X', 'B', 'S', 'G'],
-    startHeroes: 1, startOffer: 3,
+    // v63 (review #117 / #118, David): the run starts with 3 heroes (picked from 6: two tanks, two supports, two damage) and 1 power plus a few common items; 3 lives (a lost fight costs one, the third ends the run);
+    // on the fight days in pvpFights one of the choices is a duel against another player's team that reached about the same day (a win steals a hero, an item or a power);
+    // the last day (G) is the final fight against a team that won its own final fight
+    startHeroes: 3, startOffer: 6, startRelics: 3, startItems: 2, lives: 3, pvpFights: [3, 6], ghostPower: 0.78,
   };
 
   // ---------------------------------------------------------------- heroes
@@ -1205,9 +1208,9 @@
   };
   // WHAT: the three fight difficulties offered on the map. budget = how much enemy there is, elites = how many elites, mul = strength multiplier per fight number (tuned by tools/tune-pve.js).
   B.DIFF = {
-    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: 1.074 },   // v61: mul = strength per fight number (~99%)
+    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: 1.101 },   // v61: mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
-    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: 1.055 },   // v61: ~60% (v62: 72% in fights 1-3)
+    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: 1.039 },   // v61: ~60% (v62: 72% in fights 1-3)
     horde: { name: 'Horde', budget: 8.4, elites: 0, pool: 2 },   // v44 (review #54): the Bounty Board's horde challenge
   };
 
@@ -1336,7 +1339,7 @@
   // v62o (review #111, David: simulate thousands of PvE runs and balance by the results): the PvE balance tuner (tools/pve/tune.js) rewrites this block.
   // power = a multiplier on a hero's Health, Attack and Magic (1 = as designed); the tuner nudges it until every hero clears the PvE about as often as the others.
   // <TUNE-BEGIN>
-  B.TUNE = { base: 1.279, growth: 0.615, power: { ashwing: 0.84, azgul: 1.208, barley: 1.18, bastion: 1.249, blaze: 0.959, brakk: 1.324, bramble: 1.348, buzzwell: 0.807, citadel: 1.341, coralie: 0.832, deadshot: 0.909, duelist: 0.903, echo: 0.772, gardener: 0.762, glacia: 0.878, grimhook: 1.042, grok: 1.532, harlequin: 1.237, hippolyta: 1.029, imhotep: 1.495, kage: 1.04, kestrel: 0.867, leonidas: 1.663, lumen: 0.674, medic: 0.819, mirage: 0.917, morrow: 0.719, nyx: 1.255, pip: 0.867, plasma: 0.636, prism: 0.776, pyra: 0.867, rex: 1.22, rohammer: 1.45, rook: 0.923, seraph: 1.278, smolder: 1.356, sprocket: 0.835, stellan: 0.827, tempest: 0.912, thorne: 1.043, tom: 0.826, vesper: 0.882, vex: 1.007, vey: 0.961, zephyr: 1 } };
+  B.TUNE = { base: 1.191, growth: 0.694, power: { ashwing: 0.867, azgul: 1.126, barley: 1.249, bastion: 1.273, blaze: 0.948, brakk: 1.317, bramble: 1.271, buzzwell: 0.834, citadel: 1.696, coralie: 0.849, deadshot: 0.689, duelist: 1.046, echo: 0.885, gardener: 0.809, glacia: 0.674, grimhook: 0.938, grok: 1.407, harlequin: 1.195, hippolyta: 1.225, imhotep: 1.309, kage: 1.151, kestrel: 0.938, leonidas: 1.434, lumen: 0.76, medic: 0.791, mirage: 1.012, morrow: 0.689, nyx: 1.398, pip: 0.867, plasma: 0.601, prism: 0.839, pyra: 0.858, rex: 1.322, rohammer: 1.196, rook: 0.949, seraph: 1.322, smolder: 1.084, sprocket: 0.903, stellan: 0.762, tempest: 0.783, thorne: 1.192, tom: 0.859, vesper: 1.046, vex: 0.981, vey: 0.924, zephyr: 0.998 } };
   // <TUNE-END>
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
@@ -1397,12 +1400,16 @@
   // WHAT: ACCOUNT LEVEL. XP needed per level (B.ACCOUNT), XP for each thing done in a game (B.GAME_XP), and B.UNLOCKS = which hero / item / power each level unlocks.
   B.ACCOUNT = { base: 80, step: 20, heroClear: 10, floor: 50, boss: 30, crownXp: 2 };
   B.GAME_XP = { played: 10, fight: 8, boss: 25, reached: 30, duel: 20, champion: 50, perHour: 12, maxFights: 14 };
+  // v63 (review #120, David: "restrict the initial pool of champions to 20, and make the xp progression unlock all the rest with the first levels"): a new player has the 20 heroes of
+  // START_HEROES; the other 26 come two per level from level 2 to 14, in the order of HERO_UNLOCKS (a mix of damage, support and tank); items and powers keep their own levels
+  B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta'];
+  B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage', 'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist'];
   B.UNLOCKS = [
-    [2, 'relic', 'beehive'], [3, 'item', 'honeycomb'], [4, 'relic', 'seashell'], [5, 'hero', 'buzzwell'], [6, 'relic', 'kite'],
-    [7, 'item', 'starcloak'], [8, 'relic', 'compass'], [9, 'relic', 'teapot'], [10, 'hero', 'coralie'], [11, 'item', 'tidepearl'],
-    [12, 'relic', 'snowglobe'], [13, 'relic', 'marbles'], [14, 'item', 'moonslippers'], [15, 'hero', 'stellan'], [16, 'relic', 'fireflies'],
+    [2, 'relic', 'beehive'], [3, 'item', 'honeycomb'], [4, 'relic', 'seashell'], [6, 'relic', 'kite'],
+    [7, 'item', 'starcloak'], [8, 'relic', 'compass'], [9, 'relic', 'teapot'], [11, 'item', 'tidepearl'],
+    [12, 'relic', 'snowglobe'], [13, 'relic', 'marbles'], [14, 'item', 'moonslippers'], [16, 'relic', 'fireflies'],
     [17, 'item', 'comethammer'], [18, 'relic', 'pinwheel'], [19, 'relic', 'horseshoe'],
-  ].map(([lvl, kind, id]) => ({ lvl, kind, id }));
+  ].map(([lvl, kind, id]) => ({ lvl, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: 2 + Math.floor(i / 2), kind: 'hero', id }))).sort((a, b) => a.lvl - b.lvl);
   B.xpToNext = lvl => B.ACCOUNT.base + B.ACCOUNT.step * (Math.max(1, lvl) - 1);
   B.xpForLevel = lvl => { let s = 0; for (let l = 1; l < lvl; l++) s += B.xpToNext(l); return s; };   // total XP to reach it
   B.levelOf = xp => { let l = 1, left = Math.max(0, xp || 0); while (left >= B.xpToNext(l)) { left -= B.xpToNext(l); l++; } return l; };
