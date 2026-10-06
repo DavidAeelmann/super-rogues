@@ -1140,6 +1140,10 @@
     const b = battle; if (!b) return;
     if (now - b.last < 12) { requestAnimationFrame(loop); return; }   // v62b: a 120 / 144 Hz screen draws about 60 frames a second, not 144 (the time is not lost, the next frame adds it)
     const dt = Math.min(100, now - b.last); b.last = now;
+    // v62r: a computer that draws slowly (no graphics acceleration, weak integrated GPU) gets a smaller canvas by itself: frames slower than ~30 fps for about 1.5 s
+    // drop the pixel ratio one step (2 -> 1.5 -> 1); the picture keeps its size on screen, just a little softer
+    b.slow = Math.max(0, Math.min(60, (b.slow || 0) + (dt > 34 ? 1 : -1)));
+    if (b.slow >= 45 && view && view.dpr > 1 && !document.hidden) { b.slow = 0; Render.maxDpr = view.dpr > 1.5 ? 1.5 : 1; view = Render.setup(view.canvas, view.w); }
     const TICK = 1000 / Sim.TPS;
     if (!b.W.over) { b.acc += dt * ui.speed; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }
     // v42 (review #51): the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)

@@ -18,7 +18,7 @@
     const size = cssW / (Math.sqrt(3) * (Hx.COLS + 0.5));
     const flat = Hx.boardSize(size), top = size * 2.4, slab = size * 0.45;
     const w = flat.w, h = top + flat.h * K + slab + 4;
-    const dpr = Math.min(2, G.devicePixelRatio || 1);   // v62b: 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
+    const dpr = Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1);   // v62r: the battle loop lowers maxDpr by itself when a computer draws slowly   // v62b: 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
