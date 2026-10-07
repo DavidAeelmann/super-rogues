@@ -273,7 +273,7 @@ if (fin.phase === 'over' && !REMOTE) {
   ok(await ev(`!document.querySelector('.lgcard') && !!document.querySelector('[data-act=over-next]') && !document.querySelector('[data-act=new-run]')`), 'v64 (review #127): the end of a run shows the XP and the unlocks first, then Next');
   await click('[data-act=over-next]'); await sleep(300);
   ok(await ev(`!!__bal.run.lgEnd && !!document.querySelector('.lgcard .lgbar i') && /LP/.test(document.querySelector('.lgcard').textContent) && !!document.querySelector('.lgcard .lpwhy') && !!document.querySelector('[data-act=new-run]') && !document.querySelector('#top .gold') && !!document.querySelector('#stkcard .flame.big')`), 'v64 (review #125): ...then the league card: the league points this run moved, why, and the bar; v65 (reviews #129 #133): the win streak above it, no run bar on top');
-  ok(await ev(`(__bal.run.result === 'clear' ? !!document.querySelector('.vbadge') : __bal.run.lives === 0)`), 'a completed run shows its victory kind; a lost one ran out of lives');
+  ok(await ev(`(__bal.run.result === 'clear' ? /Run complete/.test(document.querySelector('.over2 .ovh').textContent) : __bal.run.lives === 0)`), 'a completed run shows its victory kind; a lost one ran out of lives');
   await shot('11c-over-league'); await noHScroll('over, league'); await noVScroll('over, league');
   ok(await ev(`(() => { const t = document.querySelector('#top'); return t.scrollWidth <= t.clientWidth + 1 && [...t.children].every(c => c.getBoundingClientRect().right <= window.innerWidth + 1); })()`), 'review #51: the top bar fits the phone with the league chip, gold, day, Team, suggest and menu');
 }
@@ -342,6 +342,9 @@ if (!REMOTE) {
   await click('.banner.b-duel'); await sleep(250);
   ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.g.kind === 'pvp' && /Duel/.test(document.querySelector('.bhead').textContent) && /Rival/.test(document.querySelector('.bhead').textContent) && /Power [0-9]+/.test(document.querySelector('.bhead').textContent)`), 'the duel deploy screen names the rival and compares power');
   await shot('17-duel-deploy'); await noHScroll('duel deploy'); await noVScroll('duel deploy');
+  await ev('__bal.showVs(true)'); await sleep(1500);
+  ok(await ev(`!!document.querySelector('#vs .vsword') && document.querySelectorAll('#vs .me .vsteam span').length === __bal.run.heroes.length && document.querySelectorAll('#vs .them .vsteam span').length === Math.min(5, __bal.run.g.opp.team.length) && /Duel/.test(document.querySelector('#vs .vsmid').textContent)`), 'v66 (review #135): before a fight, the VS screen: your team on the left, VS, theirs on the right');
+  await shot('17b-vs'); await ev('__bal.closeVs()'); await sleep(350); ok(await ev(`!document.querySelector('#vs')`), '...and it goes away');
   await click('[data-act=fight]'); await sleep(1200); await ev('__bal.skipBattle()');
   for (let k = 0; k < 80 && !(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /trophy/.test(x.textContent))`)); k++) await sleep(100);
   ok(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /trophy/.test(x.textContent) && /Rival/.test(x.textContent)) && ![...document.querySelectorAll('.rewards2 .rw')].some(x => /Elo/.test(x.textContent))`), 'v64 (review #125): a won duel shows a trophy with the name beaten (no Elo)');
@@ -394,7 +397,10 @@ if (!REMOTE) {
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .wallet') && /40[0-9]/.test(document.querySelector('#modal .wallet').textContent)`)); i++) await sleep(100);
   // review #108: the shop is four tabs (Perks / Name & King / Earn / Invite) so nothing sits below the screen
   const shopTab = async t => { await ev(`__bal.ACT['shop-tab']('${t}')`); await sleep(150); };
-  ok(await ev(`document.querySelectorAll('#modal .perk').length === 3 && !/Content Elo/.test(document.querySelector('#modal').textContent) && document.querySelectorAll('#modal .stabs button').length === 4`), 'Crown Shop: wallet, tabs, 3 perks on the first (4x speed, Double XP, Skip fights; no Content Elo)');
+  ok(await ev(`document.querySelectorAll('#modal .perk').length === 3 && !/Content Elo/.test(document.querySelector('#modal').textContent) && document.querySelectorAll('#modal .stabs button').length === 5`), 'Crown Shop: wallet, tabs (v66: + Style), 3 perks on the first (4x speed, Double XP, Skip fights; no Content Elo)');
+  await click('#modal [data-act=shop-tab][data-arg=style]'); await sleep(150);
+  ok(await ev(`document.querySelectorAll('#modal .perk.cos').length === B.TAUNTS.length + B.VSFX.length && document.querySelectorAll('#modal .tbub').length === B.TAUNTS.length && !!document.querySelector('#modal .cpors .cpor')`), 'v66 (review #136): the Style tab sells taunts, VS entrances and portraits');
+  await click('#modal [data-act=shop-tab][data-arg=perks]'); await sleep(100);
   await shopTab('earn'); ok(await ev(`document.querySelectorAll('#modal .crl').length === 5`), 'Crown Shop: crowns per league on the Earn tab');
   await shopTab('invite'); ok(await ev(`!!document.querySelector('#refLink') && /[?]ref=[a-f0-9]{12}$/.test(document.querySelector('#refLink').value)`), 'Crown Shop: your invite link on the Invite tab');
   await shopTab('king'); ok(await ev(`!!document.querySelector('#modal .king') && !!document.querySelector('#modal [data-form=rename]')`), 'Crown Shop: the King Tier and the rename on the Name & King tab');

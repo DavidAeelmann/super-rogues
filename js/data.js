@@ -1412,7 +1412,25 @@
   B.SHOP.splice(2, 0,
     { id: 'xp2', icon: '✨', name: 'Double XP', price: 50, desc: 'Every account XP you earn counts twice, so you level up and unlock new heroes, items and powers faster.' },
     { id: 'skip', icon: '⏭', name: 'Skip fights', price: 100, desc: 'Unlocks the ⏭ button in battle: a fight ends at once with the same result it would have had.' });
-  B.SHOP_ITEM = Object.fromEntries(B.SHOP.map(x => [x.id, x]));
+  // v66 (review #136, David: "add to the crown store, besides portraits for the battle screens/user, pvp animations or taunts your profile says in a comic
+  // bubble (be it as a ghost or a player)"): cosmetics. A taunt is what your profile says in a comic bubble, also on the VS screen before a fight (yours, and
+  // a ghost's when other players face your team); a VS entrance is how your team bursts in on that screen; any portrait still locked by your level can be
+  // bought. You own many, you show one taunt and one entrance (op 'style').
+  B.TAUNTS = [
+    { id: 'tn_gl', text: 'Good luck. You will need it.', price: 10 }, { id: 'tn_ez', text: 'Is that your best team?', price: 15 },
+    { id: 'tn_tea', text: 'I fight better after tea.', price: 15 }, { id: 'tn_bring', text: 'Bring snacks. This takes a while.', price: 20 },
+    { id: 'tn_crown', text: 'Bow before the crown!', price: 30 }, { id: 'tn_ghost', text: 'Boo! Even my ghost beats you.', price: 30 },
+    { id: 'tn_gg', text: 'GG. Well played, whoever wins.', price: 10 }, { id: 'tn_legend', text: 'They will write songs about this.', price: 40 },
+  ];
+  B.VSFX = [
+    { id: 'vx_fire', name: 'Fire entrance', icon: '🔥', price: 40, desc: 'Your team bursts onto the VS screen in flames.' },
+    { id: 'vx_bolt', name: 'Thunder entrance', icon: '⚡', price: 40, desc: 'Lightning strikes and your team appears.' },
+    { id: 'vx_stars', name: 'Starfall entrance', icon: '🌟', price: 60, desc: 'Your team lands in a shower of stars.' },
+  ];
+  B.PORTRAIT_PRICE = 20;
+  B.COSMETICS = B.TAUNTS.map(t => ({ id: t.id, kind: 'taunt', icon: '💬', name: 'Taunt', text: t.text, price: t.price, desc: `"${t.text}"` }))
+    .concat(B.VSFX.map(v => Object.assign({ kind: 'vsfx' }, v)));   // the portraits join below, once B.PORTRAIT_UNLOCKS exists
+  B.SHOP_ITEM = Object.fromEntries(B.SHOP.concat(B.COSMETICS).map(x => [x.id, x]));
   // v30 (review #28, PC boy): account level. 10 XP per level; XP comes from firsts (each hero's first PvE clear, each
   // Gauntlet floor reached for the first time, each boss beaten for the first time) and from crowns spent in the shop.
   // Every level from 2 to 19 unlocks one new hero, item or relic (locked ones never show up in a run before that).
@@ -1432,6 +1450,7 @@
   // every level from 2 on unlocks one more (the starting heroes first, then the ones the levels unlock), so every level has a reward up to level 43
   B.PORTRAITS_FREE = ['bastion', 'lumen', 'pyra', 'kestrel'];
   B.PORTRAIT_UNLOCKS = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k)).concat(B.HERO_UNLOCKS);
+  for (const k of B.PORTRAIT_UNLOCKS) { const it = { id: 'pt_' + k, kind: 'portrait', hero: k, icon: '🖼', name: (B.HEROES[k] || {}).name + ' portrait', price: B.PORTRAIT_PRICE, desc: 'Use this portrait before your level opens it.' }; B.COSMETICS.push(it); B.SHOP_ITEM[it.id] = it; }   // v66 (review #136)
   B.UNLOCKS = [
     [2, 'relic', 'beehive'], [3, 'item', 'honeycomb'], [4, 'relic', 'seashell'], [6, 'relic', 'kite'],
     [7, 'item', 'starcloak'], [8, 'relic', 'compass'], [9, 'relic', 'teapot'], [11, 'item', 'tidepearl'],

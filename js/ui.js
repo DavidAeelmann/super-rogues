@@ -47,7 +47,7 @@
   const acct = Object.assign({ account: false, crowns: 0, perks: [] }, store.get(ACCT, null) || {});
   const hasPerk = id => B.hasPerk(acct.perks, id);
   const isDefaultName = n => !n || /^Player [a-f0-9]{4}$/.test(n);
-  const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account', 'streak', 'bstreak', 'avatar'];
+  const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account', 'streak', 'bstreak', 'avatar', 'taunt', 'tauntId', 'vsfx'];
   // WHAT: copies the server's account answer into acct, remembers it, and shows what XP was earned.
   function setAcct(r, quiet) {
     if (!r || typeof r !== 'object') return;
@@ -381,7 +381,7 @@
     else if (run.phase === 'event') m.innerHTML = eventHTML();
     // v42: the screen plays its entrance only when it is a new screen (buying an item no longer makes the shop jump)
     const sec = m.firstElementChild;
-    if (sec && key !== ui.lastKey) { sec.classList.add('enter'); onEnter(key); clearLeftovers(); }
+    if (sec && key !== ui.lastKey) { sec.classList.add('enter'); onEnter(key); clearLeftovers(); if (ui.lastKey && key.startsWith('deploy') && screen === 'run') showVs(); }
     ui.lastKey = key;
     if (run && screen === 'run' && run.phase === 'map') findDuels();
     if (screen === 'result' && ui.result && !ui.result.fx) celebrate(ui.result);
@@ -1346,6 +1346,46 @@
       });
     }
   }
+  // v66 (review #135, David: "before every fight, be it pve or pvp, have a short animation, one of those TEAM VS TEAM battle screens ... your team always on the
+  // left, with your name on top; then a cool VS grows, then the other team, a shake ... If PvP, include the current score between you"): it plays when a fight's
+  // deploy screen opens (PvE, duels, the final fight, event challenges); a tap skips it. Review #136: each side shows its taunt in a comic bubble and its VS entrance.
+  // WHAT: the VS screen (showVs), the made-up taunt of a ghost that has no player (ghostTaunt), closeVs removes it.
+  const ghostTaunt = name => { let h = 0; for (const c of String(name || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 3 ? B.TAUNTS[h % B.TAUNTS.length].text : null; };
+  function closeVs() { const v = $('#vs'); if (!v) return; clearTimeout(ui.vsT); v.classList.add('out'); setTimeout(() => v.remove(), 260); }
+  function showVs(force) {
+    if (!run || !run.cur || run.phase !== 'deploy' || (navigator.webdriver && !force)) return;
+    closeVs(); const old = $('#vs'); if (old) old.remove();
+    const g = run.g, duel = run.cur.type === 'gauntlet' && g && g.opp, f = run.cur;
+    let theirs, name, taunt = null, fx = null, av = '', tag, code = null;
+    if (duel) {
+      const o = g.opp; theirs = (o.team || []).map(h => h.key); name = esc(o.name || 'Rival'); code = o.code || null;
+      taunt = o.code ? o.taunt || null : ghostTaunt(o.name); fx = o.vsfx || null; tag = g.kind === 'final' ? `${I('trophy')} Final fight` : `${I('ghost')} Duel`;
+      av = avatarHTML(o.avatar, o.code || o.name, 40);
+    } else {
+      theirs = []; for (const e of f.enemies || []) if (!theirs.includes(e.key)) theirs.push(e.key);
+      const bk = (f.enemies || []).map(e => e.key).find(k => B.BOSSES[k]);
+      name = bk ? esc(B.BOSSES[bk].name) : f.challenge ? 'Challenge' : esc((B.DIFF[f.diff] || { name: 'Monster' }).name + ' fight');
+      tag = bk ? `${I('skull')} Boss` : `Day ${Math.max(0, run.step) + 1}`;
+    }
+    const more = theirs.length > 5 ? theirs.length - 4 : 0, shown = more ? theirs.slice(0, 4) : theirs;
+    const myTaunt = acct.taunt || null, myFx = acct.vsfx || null, me = esc(acct.account && acct.name ? acct.name : myName() || 'You');
+    const parts = (fxId, n) => { const v = fxId && B.VSFX.find(x => x.id === fxId); return v ? `<span class="vsfx ${v.id}">${Array.from({ length: n }, (_, i) => `<i style="--i:${i}">${v.icon}</i>`).join('')}</span>` : ''; };
+    const bubble = t => t ? `<span class="vsbub">${esc(t)}</span>` : '';
+    const el = document.createElement('div'); el.id = 'vs'; el.className = 'vs' + (B.Juice && B.Juice.reduced() ? ' calm' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${me} versus ${name}. Tap to skip`);
+    el.innerHTML = `<div class="vsside me">${parts(myFx, 9)}<div class="vsname">${acct.account ? avatarHTML(acct.avatar, acct.code, 40) : ''}<b>${me}</b></div>${bubble(myTaunt)}
+        <div class="vsteam n${run.heroes.length}">${run.heroes.map((h, i) => `<span style="--i:${i}">${img(h.key, 96, 'por')}<i>Lv ${h.lvl}</i></span>`).join('')}</div></div>
+      <div class="vsmid"><b class="vsword">VS</b><small>${tag}</small><span class="vsscore" id="vsscore"></span></div>
+      <div class="vsside them">${parts(fx, 9)}<div class="vsname"><b>${name}</b>${av}</div>${bubble(taunt)}
+        <div class="vsteam n${shown.length + (more ? 1 : 0)}">${shown.map((k, i) => `<span style="--i:${i}">${img(k, 96, 'por')}</span>`).join('')}${more ? `<span class="more" style="--i:4"><b>+${more}</b></span>` : ''}</div></div>
+      <small class="vsskip">Tap to skip</small>`;
+    el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); closeVs(); });
+    document.body.appendChild(el); sfx('go');
+    if (B.Juice) setTimeout(() => { if (el.isConnected) { B.Juice.bump(el.querySelector('.vsword'), 'shake'); sfx('levelup'); } }, 650);
+    ui.vsT = setTimeout(closeVs, B.Juice && B.Juice.reduced() ? 1400 : 2900);
+    if (duel && code) Net.post('player', { op: 'profile', pid: pid(), code }).then(r => {   // the score between you two (PvP)
+      const s = $('#vsscore'), h = r && r.profile && r.profile.h2h; if (s && h) s.innerHTML = `<b class="win">${h.w}</b><i>–</i><b class="lose">${h.l}</b><em>${h.w + h.l ? 'your duels' : 'first duel'}</em>`;
+    }).catch(() => {});
+  }
   // WHAT: the Skip button (Crown Shop perk): plays the whole fight at once.
   function skipBattle() { const b = battle; if (!b) return; let n = 0; while (!b.W.over && n++ < 20 * 60 * 30) Sim.step(b.W); b.endAt = performance.now(); }
 
@@ -1690,10 +1730,11 @@
     return `<div class="shead"><b>${I('crown')} Crown Shop</b><button data-act="close">✕</button></div>
       <div class="wallet"><span class="wc">👑</span><div><b>${a.crowns | 0}</b> crown${(a.crowns | 0) === 1 ? '' : 's'}<span class="small dim">Season ${season} · ${days} day${days === 1 ? '' : 's'} left</span></div></div>
       ${a.account ? '' : '<p class="small center dim">Your account starts when your first game ends. Then crowns, unlocks and your invite link live here.</p>'}
-      <div class="stabs">${[['perks', 'Perks'], ['king', 'Name & King'], ['earn', 'Earn'], ['invite', 'Invite']].map(([id, n]) => `<button class="${(ui.shopTab || 'perks') === id ? 'on' : ''}" data-act="shop-tab" data-arg="${id}">${n}</button>`).join('')}</div>
+      <div class="stabs">${[['perks', 'Perks'], ['style', 'Style'], ['king', 'Name & King'], ['earn', 'Earn'], ['invite', 'Invite']].map(([id, n]) => `<button class="${(ui.shopTab || 'perks') === id ? 'on' : ''}" data-act="shop-tab" data-arg="${id}">${n}</button>`).join('')}</div>
       ${(ui.shopTab || 'perks') === 'earn' ? `<h3>Earn crowns</h3>
       <p class="small">🏆 Every duel you win: +1 crown. And the first time you reach a league this season, the crowns on its banner (league points come at the end of each run). A new season every ${B.SEASON.days} days sends everyone back to Bronze, so the crowns come again.</p>
       <div class="crlist">${leagues}</div>` : ''}
+      ${(ui.shopTab || 'perks') === 'style' ? styleTab(buyBtn) : ''}
       ${(ui.shopTab || 'perks') === 'perks' ? `${perk(B.SHOP_ITEM.speed4)}${perk(B.SHOP_ITEM.xp2)}${perk(B.SHOP_ITEM.skip)}` : ''}
       ${(ui.shopTab || 'perks') === 'king' ? `<div class="perk"><span class="pi">${rn.icon}</span><div class="pb"><b>${esc(rn.name)}</b><p class="small">${esc(rn.desc)}${a.account ? ` Now: <b>${esc(a.name || '')}</b>.` : ''}</p>
         <form class="row" data-form="rename"><input name="name" maxlength="16" placeholder="New name" ${a.account ? '' : 'disabled'}><button class="cprice" ${!a.account || (a.crowns | 0) < rn.price ? 'disabled' : ''}>👑 ${rn.price}</button></form></div></div>
@@ -1703,6 +1744,20 @@
       ${(ui.shopTab || 'perks') === 'invite' ? `<h3>Invite friends</h3>
       <div class="invite"><p class="small">A friend who starts playing from your link is yours for good: every time they earn crowns by playing, you get ${Math.round(B.CROWNS.referPct * 100)}% of it (at least ${B.CROWNS.referMin} crown).</p>
         ${link ? `<div class="row"><input id="refLink" readonly value="${esc(link)}"><button data-act="copy-ref">Copy</button></div><p class="small dim">${a.refs | 0} friend${(a.refs | 0) === 1 ? '' : 's'} joined · they earned you 👑 ${a.refCrowns | 0}</p>` : '<p class="small dim">Your invite link appears after your first run.</p>'}</div>` : ''}`;
+  }
+  // v66 (review #136): the Style tab: taunts (your comic bubble on your profile and the VS screen, also when others face your ghost), VS entrances, and
+  // the portraits your level has not opened yet. Bought ones get a Show button: you show one taunt and one entrance.
+  // WHAT: the Style tab of the Crown Shop.
+  function styleTab(buyBtn) {
+    const a = acct, lvl = lvlNow(), own = id => hasPerk(id);
+    const show = (kind, id, on) => `<button class="cshow ${on ? 'on' : ''}" data-act="style-set" data-arg="${kind}:${on ? '' : id}">${on ? '✓ Showing' : 'Show'}</button>`;
+    const row = (it, on, body) => `<div class="perk cos ${own(it.id) ? 'own' : ''}"><span class="pi">${it.icon}</span><div class="pb">${body}</div>${own(it.id) ? show(it.kind, it.id, on) : buyBtn(it)}</div>`;
+    const taunts = B.COSMETICS.filter(x => x.kind === 'taunt').map(it => row(it, a.tauntId === it.id, `<span class="tbub">${esc(it.text)}</span>`)).join('');
+    const fx = B.COSMETICS.filter(x => x.kind === 'vsfx').map(it => row(it, a.vsfx === it.id, `<b>${esc(it.name)}</b><p class="small">${esc(it.desc)}</p>`)).join('');
+    const pors = B.PORTRAIT_UNLOCKS.filter(k => B.portraitLevel(k) > lvl).map(k => { const it = B.SHOP_ITEM['pt_' + k]; return `<div class="cpor">${avatarHTML(k, '', 54)}<span>${esc(HEROES[k].name)}</span>${own(it.id) ? '<i>✓ Yours</i>' : buyBtn(it)}</div>`; }).join('');
+    return `<h3>💬 Taunts</h3><p class="small dim">Your profile says it in a comic bubble, and so does your team on the VS screen before a fight, also when other players face your ghost.</p>${taunts}
+      <h3>⚡ VS entrances</h3><p class="small dim">How your team bursts onto the VS screen.</p>${fx}
+      <h3>🖼 Portraits</h3><p class="small dim">Every level opens one more for free; buy one now to use it as your picture (Profile → Change picture).</p>${pors ? `<div class="cpors">${pors}</div>` : '<p class="small">Your level has opened every portrait.</p>'}`;
   }
   function openShop(noFetch) {
     openModal(crownShopHTML()); ui.modal = 'shop';
@@ -1727,6 +1782,7 @@
       <div class="prof" style="--lc:${l.color};--lh:${l.hi}">
         <div class="phead"><span class="pwho">${avatarHTML(p.avatar, p.code, 76)}${emblem(p.league, 30)}</span><div><b class="pname">${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${esc(p.name)} <span class="lvb sm" title="Account level">${p.level || 1}</span></b><span class="pl1" style="color:${l.hi}">${l.name} league</span>
           <span class="small dim">${p.league >= top ? `${p.lp} LP` : `${p.lp}/${R.step} LP`} · Season ${p.season}${since ? ' · since ' + since : ''}</span>${p.own ? `<button class="avedit" data-act="avatar-pick">${I('user')} Change picture</button>` : ''}</div></div>
+        ${p.taunt ? `<div class="pbubble">${esc(p.taunt)}</div>` : p.own ? `<button class="linkbtn ptaunt" data-act="shop-tab" data-arg="style">💬 Pick a taunt (Crown Shop)</button>` : ''}
         <div class="pfollow">${!p.own ? `<button class="follow ${p.followed ? 'on' : 'primary'}" data-act="follow" data-arg="${esc(p.code)}">${p.followed ? '✓ Following' : '+ Follow'}</button>` : ''}<small id="pfcount">${followText(p)}</small></div>
         ${p.h2h ? `<div class="h2h"><span>You vs ${esc(p.name)}</span><b class="win">${p.h2h.w}</b><i>–</i><b class="lose">${p.h2h.l}</b><small>${p.h2h.w + p.h2h.l ? 'duels between you two' : 'no duel between you two yet'}</small></div>` : ''}
         <div class="pstats">${stat(`${flameHTML(p.streak == null ? 1 : p.streak)} <small>best ${p.bstreak == null ? 1 : p.bstreak}</small>`, 'Win streak')}${stat(p.trophies ? '🏆 ' + p.trophies.n : '—', 'Trophies')}${stat(p.titles || '—', 'Runs completed')}${stat(p.runs, 'Games')}
@@ -1739,9 +1795,9 @@
   // v65 (review #131): the portraits your level has opened (four free, then one more each level); the locked ones say the level they open at
   // WHAT: the sheet to pick your picture (a hero portrait).
   function avatarPickHTML() {
-    const lvl = lvlNow(), cur = avKey(acct.avatar, acct.code), list = B.PORTRAITS_FREE.concat(B.PORTRAIT_UNLOCKS), open = list.filter(k => B.portraitLevel(k) <= lvl).length;
-    return `<div class="shead"><b>${I('user')} Your picture</b><button data-act="close" aria-label="Close">✕</button></div><p class="small dim">Every account level opens one more hero portrait. Level ${lvl}: ${open} of ${list.length}.</p>
-      <div class="avgrid">${list.map(k => { const need = B.portraitLevel(k), ok = need <= lvl; return `<button class="avpick ${k === cur ? 'on' : ''} ${ok ? '' : 'locked'}" data-act="avatar-set" data-arg="${k}" ${ok ? '' : 'disabled'}>${avatarHTML(k, '', 54)}<span>${ok ? esc(HEROES[k].name) : '🔒 Lv ' + need}</span></button>`; }).join('')}</div>`;
+    const lvl = lvlNow(), cur = avKey(acct.avatar, acct.code), list = B.PORTRAITS_FREE.concat(B.PORTRAIT_UNLOCKS), open = list.filter(k => B.portraitLevel(k) <= lvl || hasPerk('pt_' + k)).length;
+    return `<div class="shead"><b>${I('user')} Your picture</b><button data-act="close" aria-label="Close">✕</button></div><p class="small dim">Every account level opens one more hero portrait (or buy one in the Crown Shop, Style). Level ${lvl}: ${open} of ${list.length}.</p>
+      <div class="avgrid">${list.map(k => { const need = B.portraitLevel(k), ok = need <= lvl || hasPerk('pt_' + k); return `<button class="avpick ${k === cur ? 'on' : ''} ${ok ? '' : 'locked'}" data-act="avatar-set" data-arg="${k}" ${ok ? '' : 'disabled'}>${avatarHTML(k, '', 54)}<span>${ok ? esc(HEROES[k].name) : `🔒 Lv ${need} · 👑 ${B.PORTRAIT_PRICE}`}</span></button>`; }).join('')}</div>`;
   }
   async function openProfile(code) {
     const shell = b => `<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>${b}`;
@@ -1962,6 +2018,12 @@
       try { const r = await Net.post('player', { op: 'follow', pid: pid(), code, on }); const b2 = $('[data-act=follow]'); if (b2) { b2.classList.toggle('on', r.followed); b2.classList.toggle('primary', !r.followed); b2.textContent = r.followed ? '✓ Following' : '+ Follow'; } const c = $('#pfcount'); if (c) c.textContent = followText(r); sfx(r.followed ? 'coin' : 'back'); }
       catch (e) { toast(e.message); }
     },
+    // v66 (review #136): show a bought taunt or VS entrance (an empty id = none)
+    'style-set': async arg => {
+      const [kind, id] = String(arg).split(':'), taunt = kind === 'taunt' ? id || null : acct.tauntId || null, vsfx = kind === 'vsfx' ? id || null : acct.vsfx || null;
+      try { const r = await Net.post('player', { op: 'style', pid: pid(), taunt, vsfx }); acct.tauntId = r.tauntId || null; acct.taunt = r.taunt || null; acct.vsfx = r.vsfx || null; setAcct(r); sfx('coin'); } catch (e) { toast(e.message); }
+      if (ui.modal === 'shop') refreshShop();
+    },
     // v65 (review #131): pick your picture
     'avatar-pick': () => { openModal(avatarPickHTML()); ui.modal = 'avatar'; },
     'avatar-set': async key => {
@@ -2055,5 +2117,5 @@
   render();
   bootNotice();
   // test hook (headless Chrome tests drive the game through this)
-  window.__bal = { get ui() { return ui; }, get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
+  window.__bal = { showVs, closeVs, get ui() { return ui; }, get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
 })();

@@ -139,13 +139,15 @@ async function heroGames(st, pid, team, win) {
   try { if (team && team.length) await st.addHeroGames(pid, [...new Set(team.map(h => h.key))], win ? 1 : 0); } catch (e) { console.error('phero', e); }
 }
 
+// v66 (review #136): the words of the taunt a player picked (null = none)
+const tauntText = p => { const t = p && p.taunt && D.TAUNTS.find(x => x.id === p.taunt); return t ? t.text : null; };
 // what anyone can see on a profile
 // WHAT: the public profile of a player (never his id or visitor hash). kingExtras adds the King-only details; ownView is the player's own wallet and progress.
 function profileView(p) {
   const q = Object.assign({}, p); rollSeason(q);   // shows the new season even before the player comes back
   return { name: q.name, code: q.code || codeOf(q.pid), league: q.league | 0, lp: q.lp | 0, elo: Math.round(q.elo), best: q.best | 0, titles: q.crowns | 0,
     runs: q.runs | 0, peakLeague: Math.max(q.peak_league | 0, q.league | 0), lastLeague: q.last_league == null ? -1 : q.last_league, season: q.season, king: isKing(q), since: Number(q.created) || null,
-    level: D.levelOf(q.axp | 0), pfloor: q.pfloor | 0, streak: q.streak == null ? 1 : q.streak | 0, bstreak: q.bstreak == null ? 1 : q.bstreak | 0, avatar: q.avatar || null };
+    level: D.levelOf(q.axp | 0), pfloor: q.pfloor | 0, streak: q.streak == null ? 1 : q.streak | 0, bstreak: q.bstreak == null ? 1 : q.bstreak | 0, avatar: q.avatar || null, taunt: tauntText(q), vsfx: q.vsfx || null };
 }
 // King Tier: most played heroes, best win rate heroes (3+ games), the record of all the player's ghosts
 async function kingExtras(st, pid) {
@@ -160,7 +162,7 @@ async function kingExtras(st, pid) {
 // the player's own view: the profile plus the wallet, perks and referral numbers
 async function ownView(st, p) {
   return Object.assign(profileView(p), levelView(p), { crowns: p.gems | 0, perks: perksOf(p), sreach: p.sreach | 0, refs: await st.countRefs(p.pid), refCrowns: p.ref_gems | 0,
-    referred: !!p.ref, seasonEnds: D.seasonEnds(D.seasonOf(Date.now())), account: true });
+    referred: !!p.ref, seasonEnds: D.seasonEnds(D.seasonOf(Date.now())), account: true, tauntId: p.taunt || null });
 }
 
-module.exports = { grant, perksOf, isKing, row, rollSeason, payLeagues, sync, linkRef, heroGames, profileView, kingExtras, ownView, codeOf, xpClear, xpFloor, xpBoss, xpSpend, xpGame, xpDuel, levelView };
+module.exports = { tauntText, grant, perksOf, isKing, row, rollSeason, payLeagues, sync, linkRef, heroGames, profileView, kingExtras, ownView, codeOf, xpClear, xpFloor, xpBoss, xpSpend, xpGame, xpDuel, levelView };

@@ -62,6 +62,9 @@ const SCHEMA = [
   `alter table players add column if not exists avatar text`,
   `create table if not exists follows (pid text not null, code text not null, created bigint not null, primary key (pid, code))`,
   `create index if not exists follows_code on follows(code)`,
+  // v66 (review #136): the taunt (comic bubble) and the VS entrance a player shows, picked among the ones bought in the Crown Shop
+  `alter table players add column if not exists taunt text`,
+  `alter table players add column if not exists vsfx text`,
   // v30 (review #28): account XP (axp), the heroes that cleared PvE (cleared, JSON), the highest gauntlet floor ever
   // reached (pfloor), bosses beaten (bosses, JSON), xpv = 1 once the XP of older players was counted from their teams
   `alter table players add column if not exists axp int not null default 0`,
@@ -107,7 +110,7 @@ function memStore() {
     async topScores(n) { return M.scores.slice().sort((a, b) => b.score - a.score || a.created - b.created).slice(0, n).map(pubScore); },
     async getPlayer(pid) { const P = M.players = M.players || {}; return P[pid] ? Object.assign({}, P[pid]) : null; },
     // v27: a name given later only replaces the default one ("Player xxxx"); after that, renaming costs crowns
-    async upsertPlayer(pid, name, iph, fallback) { const P = M.players = M.players || {}; if (!P[pid]) P[pid] = { pid, code: codeOf(pid), name: name || fallback, elo: 1000, runs: 0, crowns: 0, best: 0, league: 0, lp: 0, gems: 0, season: 0, sreach: 0, peak_league: 0, last_league: -1, perks: '[]', ref: null, ref_gems: 0, axp: 0, cleared: '[]', pfloor: 0, bosses: '[]', xpv: 0, streak: 1, bstreak: 1, avatar: null, iph, created: Date.now() }; else if (name && P[pid].name === fallback) P[pid].name = name; return Object.assign({}, P[pid]); },
+    async upsertPlayer(pid, name, iph, fallback) { const P = M.players = M.players || {}; if (!P[pid]) P[pid] = { pid, code: codeOf(pid), name: name || fallback, elo: 1000, runs: 0, crowns: 0, best: 0, league: 0, lp: 0, gems: 0, season: 0, sreach: 0, peak_league: 0, last_league: -1, perks: '[]', ref: null, ref_gems: 0, axp: 0, cleared: '[]', pfloor: 0, bosses: '[]', xpv: 0, streak: 1, bstreak: 1, avatar: null, taunt: null, vsfx: null, iph, created: Date.now() }; else if (name && P[pid].name === fallback) P[pid].name = name; return Object.assign({}, P[pid]); },
     async setPlayer(pid, f) { for (const x of ['elo', 'runs', 'crowns', 'best', 'league', 'lp', 'season', 'sreach', 'peak_league', 'last_league', 'streak', 'bstreak']) if (f[x] != null) M.players[pid][x] = f[x]; M.players[pid].updated = Date.now(); },
     async topPlayers(n) { return Object.values(M.players || {}).filter(p => p.runs > 0).sort((a, b) => (b.league | 0) - (a.league | 0) || (b.lp | 0) - (a.lp | 0)).slice(0, n).map(pubPlayer); },   // v64: by league, then league points   // v62 (review #85): only players who finished a first run
     async getPlayerByCode(code) { const p = Object.values(M.players || {}).find(x => x.code === code); return p ? Object.assign({}, p) : null; },
@@ -125,6 +128,7 @@ function memStore() {
     async followCounts(pid, code) { const F = M.follows || []; return { following: F.filter(f => f.pid === pid).length, followers: F.filter(f => f.code === code).length }; },
     async friendsTop(pid, n) { const codes = new Set((M.follows || []).filter(f => f.pid === pid).map(f => f.code)); return Object.values(M.players || {}).filter(p => p.pid === pid || codes.has(p.code)).sort((a, b) => (b.league | 0) - (a.league | 0) || (b.lp | 0) - (a.lp | 0)).slice(0, n).map(pubPlayer); },
     async setAvatar(pid, key) { const p = M.players && M.players[pid]; if (p) p.avatar = key; },
+    async setStyle(pid, taunt, vsfx) { const p = M.players && M.players[pid]; if (p) { p.taunt = taunt; p.vsfx = vsfx; } },
     async addDuel(d) { (M.duels = M.duels || []).push(Object.assign({ id: (M.duels.length || 0) + 1, created: Date.now() }, d)); },
     async trophiesOf(pid, n) { const w = (M.duels || []).filter(d => d.pid === pid && d.win).sort((a, b) => b.id - a.id); return { n: w.length, list: w.slice(0, n).map(pubTrophy) }; },
     async h2h(a, b) { const D = M.duels || []; let w = 0, l = 0; for (const d of D) { if (d.pid === a && d.opp_pid === b) { if (d.win) w++; else l++; } else if (d.pid === b && d.opp_pid === a) { if (d.win) l++; else w++; } } return { w, l }; },
@@ -228,6 +232,7 @@ function pgStore() {
     async followCounts(pid, code) { const r = await q('select (select count(*)::int from follows where pid=$1) a, (select count(*)::int from follows where code=$2) b', [pid, code]); return { following: Number(r[0].a), followers: Number(r[0].b) }; },
     async friendsTop(pid, n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar from players where pid=$1 or code in (select code from follows where pid=$1) order by league desc, lp desc limit $2', [pid, n])).map(pubPlayer); },
     async setAvatar(pid, key) { await q('update players set avatar=$2 where pid=$1', [pid, key]); },
+    async setStyle(pid, taunt, vsfx) { await q('update players set taunt=$2, vsfx=$3 where pid=$1', [pid, taunt, vsfx]); },
     async addDuel(d) { await q('insert into duels (pid, opp_pid, opp_name, opp_code, final, win, created) values ($1,$2,$3,$4,$5,$6,$7)', [d.pid, d.opp_pid || null, d.opp_name, d.opp_code || null, d.final ? 1 : 0, d.win ? 1 : 0, Date.now()]); },
     async trophiesOf(pid, n) { const c = await q('select count(*)::int n from duels where pid=$1 and win=1', [pid]); const r = await q('select * from duels where pid=$1 and win=1 order by id desc limit $2', [pid, n]); return { n: Number(c[0].n), list: r.map(pubTrophy) }; },
     async h2h(a, b) { const r = await q('select coalesce(sum(case when (pid=$1 and win=1) or (pid=$2 and win=0) then 1 else 0 end),0)::int w, coalesce(sum(case when (pid=$1 and win=0) or (pid=$2 and win=1) then 1 else 0 end),0)::int l from duels where (pid=$1 and opp_pid=$2) or (pid=$2 and opp_pid=$1)', [a, b]); return { w: Number(r[0].w), l: Number(r[0].l) }; },
