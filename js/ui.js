@@ -385,8 +385,9 @@
     ui.lastKey = key;
     if (run && screen === 'run' && run.phase === 'map') findDuels();
     if (screen === 'result' && ui.result && !ui.result.fx) celebrate(ui.result);
-    if (run && screen === 'run' && run.phase === 'over' && !run.xpShown) animXp();
-    if (run && screen === 'run' && run.phase === 'over' && run.overStep === 2 && !run.stkShown) animStreak();
+    if (run && screen === 'run' && run.phase === 'over' && run.result === 'gauntlet' && !run.xpShown) animXp();   // the old Gauntlet end (saves from before v63)
+    if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !run.lpShown) animLp();   // v68 (review #140)
+    if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && run.overStep === 2 && !run.xpShown) animXp2();   // v68 (review #141)
     if (screen === 'title' || !run) startTrailer();
     autoGear();
   }
@@ -618,8 +619,15 @@
     const [seed, step] = wm.dataset.key.split(':').map(Number), tok = wm.querySelector('.rtok');
     if (tok && step > 0 && ui.roadAt === seed + ':' + (step - 1) && !(B.Juice && B.Juice.reduced())) {
       const [fx, fy] = tok.dataset.from.split(',').map(Number), [tx, ty] = tok.dataset.to.split(',').map(Number);
+      // v69 (review #142, David: "make the walking up the map slower and the screen follows along with the character until reaching the point it is now")
+      const end = wm.scrollTop, MS = 2200, cam = y => Math.max(0, Math.min(wm.scrollHeight - wm.clientHeight, y - wm.clientHeight * 0.62));
+      const s0 = Math.max(end, cam(fy)); wm.scrollTop = s0;
       tok.style.left = fx + '%'; tok.style.top = fy + 'px'; tok.classList.add('walk'); void tok.offsetWidth;
-      setTimeout(() => { if (!tok.isConnected) return; tok.style.left = tx + '%'; tok.style.top = ty + 'px'; sfx('pick'); setTimeout(() => tok.classList.remove('walk'), 1000); }, 350);
+      setTimeout(() => {
+        if (!tok.isConnected) return; tok.style.left = tx + '%'; tok.style.top = ty + 'px'; sfx('pick');
+        const t0 = performance.now(), ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        (function follow(now) { if (!wm.isConnected || ui.roadAt !== wm.dataset.key) return; const t = Math.min(1, (now - t0) / MS); wm.scrollTop = s0 + (end - s0) * ease(t); if (t < 1) requestAnimationFrame(follow); else tok.classList.remove('walk'); })(t0);
+      }, 400);
     }
     ui.roadAt = wm.dataset.key;
   }
@@ -1073,7 +1081,7 @@
   // WHAT: THE EVENT SCREEN: the story text and its choices (greyed out with the reason when you cannot take one), then the result.
   function eventHTML() {
     const e = EVENT[run.cur.id], chs = Run.eventChoices(run);
-    const head = `<section class="event ev-${e.rar || 'common'}"><div class="evmed">${evIcon(e.id)}</div>${EV_RAR[e.rar] ? `<p class="center"><span class="evrar">${EV_RAR[e.rar]}</span></p>` : ''}<h2>${esc(e.name)}</h2><p>${esc(e.text)}</p>`;
+    const head = `<section class="event ev-${e.rar || 'common'}">${run.cur.done || run.cur.pick != null ? '' : `<button class="evskipb" data-act="leave">Skip ${I('arrow')}</button>`}<div class="evmed">${evIcon(e.id)}</div>${EV_RAR[e.rar] ? `<p class="center"><span class="evrar">${EV_RAR[e.rar]}</span></p>` : ''}<h2>${esc(e.name)}</h2><p>${esc(e.text)}</p>`;
     if (run.cur.done) return head + `${gainsHTML(run.cur.gains)}<div class="card result">${fmt(run.cur.done)}</div><div class="bar"><button class="primary big" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
     const pickCh = run.cur.pick != null ? chs[run.cur.pick] : null;
     if (pickCh) {
@@ -1110,55 +1118,108 @@
         <div class="stack againrow"><button class="primary big cta again" data-act="new-run">▶ Play again</button><button data-act="scores" aria-label="Ladder">🏆</button></div></section>`;
     }
     // v64 (review #125): a completed run is a Perfect, Gold or Bronze victory by the lives left
-    // v65 (review #129, David: "the screens are a bit cluttered now. I dont even know where to look. The next button is too small"): one thing per screen and
-    // one big button at the bottom. Screen 1: how the run ended and the XP; screen 2: the win streak and the league
+    // v68 (reviews #140 #141, David): two screens with the big button in the same place at the bottom, for one finger. Screen 1 = the league: a meter in the
+    // league's colours with its banner on top, filling (or falling) to where you are, and the LP gained or lost in big on the right; Next. Screen 2 = the XP:
+    // the same kind of meter for the account level; a level up cheers and a chest bursts open with the level's rewards (no level up = the chest stays shaded);
+    // Play again
     const won = run.result === 'clear', V = won ? B.victoryOf(run.lives) : null;
-    if ((run.overStep || 1) === 1) {
-      const head = won ? `<div class="vbadge" style="--vc:${V.color}"><span class="vi">${V.icon}</span><b>${V.name} victory!</b><small>${run.lives === CFG.lives ? 'No fight lost' : `${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left`}</small></div>`
-        : `<div class="vbadge lost" style="--vc:#ff6b6b"><span class="vi">${I('flag')}</span><b>Out of lives</b><small>${run.won} fight${run.won === 1 ? '' : 's'} won</small></div>`;
-      return `<section class="title over1">${head}${xpPanelHTML()}
-        <div class="overbar"><button class="primary big cta wide" data-act="over-next">Next ${I('arrow')}</button></div></section>`;
-    }
-    const tr = run.trophies || [];
-    const trophies = tr.length ? `<div class="trophies"><b>${I('trophy')} Trophies this run <small>+${tr.length} 👑</small></b><div>${tr.map(t => `<span class="tro ${t.final ? 'fin' : ''}">🏆 ${esc(t.name)}${t.final ? ' <i>final</i>' : ''}</span>`).join('')}</div></div>` : '';
-    return `<section class="title over2"><h2 class="sc ovh">${won ? `${V.icon} Run complete` : 'Run over'}</h2>${streakCardHTML(run.lgEnd)}${leagueCardHTML(run.lgEnd, won)}${trophies}
-      <div class="overbar"><button class="primary big cta again" data-act="new-run">${I('play')} Play again</button><button class="ladb" data-act="scores" aria-label="Ladder">${I('trophy')}</button></div></section>`;
+    const head = `<h2 class="sc ovh">${won ? `${V.icon} ${V.name} victory!` : `${I('flag')} Out of lives`}</h2><p class="ovsub">${won ? (run.lives === CFG.lives ? 'No fight lost' : `${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left`) : `${run.won} fight${run.won === 1 ? '' : 's'} won`}</p>`;
+    if ((run.overStep || 1) === 1) return `<section class="title over1 lpscr">${head}${lpScreenHTML(run.lgEnd, won)}
+        <div class="overbar"><button class="primary big cta" data-act="over-next">Next ${I('arrow')}</button></div></section>`;
+    return `<section class="title over2 xpscr"><h2 class="sc ovh">✨ Account XP <button class="ladb sm" data-act="scores" aria-label="Ladder">${I('trophy')}</button></h2>${xpScreenHTML()}
+      <div class="overbar"><button class="primary big cta again" data-act="new-run">${I('play')} Play again</button></div></section>`;
   }
-  // v65 (review #133): the big win streak of the end screen. It shows what the streak was, then moves: one more with a burst of fire, or out to 0 (animStreak)
-  // WHAT: the win streak card of the end screen (step 2).
-  function streakCardHTML(lg) {
-    const s = lg && lg.streak; if (!s) return '';
-    const up = s.to > s.from, shown = run.stkShown ? s.to : s.from;
-    const title = up ? (s.to >= 2 ? `${s.to} wins in a row!` : 'Win streak!') : s.to === 0 && s.from > 0 ? 'Streak lost' : 'Win streak';
-    const sub = up ? `+${s.to * B.LP.streak} LP · best ${s.best}` : `Win a run to light it again · best ${s.best}`;
-    return `<div class="stkcard ${up ? 'up' : s.to === 0 ? 'out' : ''}" id="stkcard" data-to="${s.to}">${flameHTML(shown, 'big')}<div><b>${title}</b><small>${sub}</small></div></div>`;
-  }
-  async function animStreak() {
-    const card = $('#stkcard'); if (!card || run.stkShown) return;
-    run.stkShown = true; save();
-    const to = +card.dataset.to, f = card.querySelector('.flame'), b = f && f.querySelector('b'); if (!b) return;
-    await new Promise(r => setTimeout(r, B.Juice && B.Juice.reduced() ? 0 : 900));
-    if (!f.isConnected) return;
-    b.textContent = to; f.classList.toggle('hot', to >= 2); f.classList.toggle('cold', to <= 0);
-    f.classList.add(card.classList.contains('up') ? 'flare' : 'fizzle');
-    if (card.classList.contains('up')) { sfx('star'); if (B.Juice) B.Juice.confettiAt(f, 40); } else if (card.classList.contains('out')) sfx('deny');
-  }
-  // v64 (review #125): the league card at the end of a run: the league, the league points this run moved (and why), the bar filling from where it was, promoted or dropped
-  // WHAT: the league card of the end screen (step 2). v65 (review #129): the reasons are PvP fights only (duels, the final fight, PvP fights lost) and the streak.
-  function leagueCardHTML(lg, won) {
-    if (!lg) return run.xpWait ? '<p class="dim center">Counting your league points…</p>' : run.xpErr ? '<p class="err center">Your league points could not be saved (no connection).</p>' : '';
-    const R = B.LEAGUE_RULES, L = B.LEAGUES, top = L.length - 1, from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) }, l = L[lg.league] || L[0];
-    const pct = x => Math.max(0, Math.min(100, 100 * x / R.step)), start = from.league === lg.league ? pct(from.lp) : lg.promoted ? 0 : 100;
+  // WHAT: a vertical meter (league or level): the banner on top, the tube, the filling (height in %), a line under it.
+  const meterHTML = (id, style, banner, pct, foot) => `<div class="vmeter" id="${id}" style="${style}"><div class="vmban">${banner}</div><div class="vmtube"><i style="height:${pct}%"></i><span class="vmshine"></span></div><small class="vmfoot">${foot}</small></div>`;
+  // WHAT: the league screen (end of a run, screen 1): the league meter on the left, the LP in big, why, the streak and the call to beat other players on the right.
+  function lpScreenHTML(lg, won) {
+    if (!lg) return `<p class="dim center">${run.xpWait ? 'Counting your league points…' : run.xpErr ? 'Your league points could not be saved (no connection).' : 'No league points this time.'}</p>`;
+    const R = B.LEAGUE_RULES, L = B.LEAGUES, from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) }, done = !!run.lpShown;
+    const lgi = done ? lg.league : from.league, l = L[lgi] || L[0], pct = x => Math.max(0, Math.min(100, 100 * x / R.step));
     const parts = B.lpParts({ done: won, duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, streak: lg.streak ? lg.streak.to : 0 }), raw = parts.reduce((a, x) => a + x.lp, 0);
-    const NAME = { duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Final fight won', loss: n => `${n} PvP fight${n === 1 ? '' : 's'} lost`, streak: n => `Streak ${n}` };
+    const NAME = { duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Final fight', loss: n => `${n} PvP lost`, streak: n => `Streak ${n}` };
     const ICON = { duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥' };
     const why = parts.map(x => `<span class="lpw ${x.lp < 0 ? 'neg' : 'pos'}">${ICON[x.id]} ${NAME[x.id](x.n)} <b>${x.lp > 0 ? '+' : ''}${x.lp}</b></span>`).join('')
-      + (!parts.length ? '<span class="lpw">No PvP fight this run: only duels and the final fight move LP</span>' : from.league === 0 && raw < 0 ? '<span class="lpw">Bronze never loses LP</span>' : '');
-    const banner = lg.promoted ? `<div class="promo" style="--lc:${l.color}">${emblem(lg.league, 40)}<b>Promoted to ${l.name}!</b>${lg.crowns ? `<span class="crn">+${lg.crowns} 👑</span>` : ''}</div>`
-      : lg.demoted ? `<div class="promo demo" style="--lc:${l.color}">${emblem(lg.league, 40)}<b>Dropped to ${l.name}</b></div>` : '';
-    return `${banner}<div class="lgcard" style="--lc:${l.color};--lh:${l.hi}"><div class="lgch">${emblem(lg.league, 56)}<div><b>${l.name} league</b><span class="lgd ${lg.delta > 0 ? 'win' : lg.delta < 0 ? 'lose' : 'dim'}">${lg.delta > 0 ? '+' : ''}${lg.delta} LP</span></div></div>
-      <div class="lgbar"><i style="--from:${start}%;width:${pct(lg.lp)}%"></i></div><small class="lgnext">${lg.league >= top ? `${lg.lp} LP in ${l.name}` : `${lg.lp}/${R.step} LP to ${L[lg.league + 1].name}`}</small>
-      <div class="lpwhy">${why}</div></div>`;
+      + (!parts.length ? '<span class="lpw">No PvP fight this run</span>' : from.league === 0 && raw < 0 ? '<span class="lpw">Bronze never loses LP</span>' : '');
+    const s = lg.streak, tr = run.trophies || [];
+    const banner = `${emblem(lgi, 58)}<b class="vmname">${l.name}</b>`;
+    const foot = lgi >= L.length - 1 ? `${done ? lg.lp : from.lp} LP` : `${done ? lg.lp : from.lp}/${R.step} LP`;
+    return `<div class="vmwrap">${meterHTML('lpmeter', `--lc:${l.color};--lh:${l.hi}`, banner, pct(done ? lg.lp : from.lp), foot)}
+      <div class="vmright"><b class="vmbig ${lg.delta > 0 ? 'win' : lg.delta < 0 ? 'lose' : ''}" ><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : '0'}</span> <small>LP</small></b>
+        <div class="lpwhy">${why}</div>
+        <div class="vmpromo" id="lppromo">${done && lg.promoted ? `<b>Promoted to ${l.name}!</b>${lg.crowns ? ` <span class="crn">+${lg.crowns} 👑</span>` : ''}` : done && lg.demoted ? `<b class="lose">Dropped to ${l.name}</b>` : ''}</div>
+        ${s ? `<div class="vmstk ${s.to > s.from ? 'up' : s.to === 0 ? 'out' : ''}" id="lpstk" data-to="${s.to}">${flameHTML(done ? s.to : s.from)}<span>${s.to > s.from ? (s.to >= 2 ? `${s.to} wins in a row` : 'Win streak!') : s.to === 0 && s.from > 0 ? 'Streak lost' : 'Win streak'} · best ${s.best}</span></div>` : ''}
+        ${tr.length ? `<div class="vmtro">${tr.map(t => `<span class="tro ${t.final ? 'fin' : ''}">🏆 ${esc(t.name)}</span>`).join('')}</div>` : ''}
+        <p class="vmcall">Beat other players to rise in the league!</p></div></div>`;
+  }
+  // WHAT: the league meter's animation: the LP count up or down; the tube fills or falls; a promotion fills to the top, swaps the banner and fills again; a drop empties, swaps and falls.
+  async function animLp() {
+    const m = $('#lpmeter'), lg = run.lgEnd; if (!m || !lg || run.lpShown) return;
+    run.lpShown = true; save();
+    const fast = B.Juice && B.Juice.reduced(), wait = ms => new Promise(r => setTimeout(r, fast ? 0 : ms)), R = B.LEAGUE_RULES, L = B.LEAGUES;
+    const fill = m.querySelector('.vmtube i'), foot = m.querySelector('.vmfoot'), big = $('#lpbig'), live = () => fill.isConnected;
+    const go = (pct, ms) => { fill.style.transition = `height ${ms}ms cubic-bezier(.3, .8, .3, 1)`; fill.style.height = pct + '%'; return wait(ms + 60); };
+    const setLeague = i => { const l = L[i] || L[0]; m.style.setProperty('--lc', l.color); m.style.setProperty('--lh', l.hi); m.querySelector('.vmban').innerHTML = `${emblem(i, 58)}<b class="vmname">${l.name}</b>`; if (B.Juice) B.Juice.bump(m.querySelector('.vmban')); };
+    await wait(450); if (!live()) return;
+    if (B.Juice) B.Juice.countUp(big, 0, lg.delta, 900, v => (v > 0 ? '+' : '') + v); sfx(lg.delta >= 0 ? 'coin' : 'deny');
+    const pct = x => Math.max(0, Math.min(100, 100 * x / R.step));
+    if (lg.promoted) {
+      await go(100, 800); if (!live()) return;
+      setLeague(lg.league); fill.style.transition = 'none'; fill.style.height = '0%'; void fill.offsetWidth; sfx('levelup'); if (B.Juice) B.Juice.confettiAt(m, 80);
+      const p = $('#lppromo'); if (p) { p.innerHTML = `<b>Promoted to ${leagueName(lg.league)}!</b>${lg.crowns ? ` <span class="crn">+${lg.crowns} 👑</span>` : ''}`; p.classList.add('pop'); }
+      await go(pct(lg.lp), 700);
+    } else if (lg.demoted) {
+      await go(0, 700); if (!live()) return;
+      setLeague(lg.league); m.classList.add('fizzle'); fill.style.transition = 'none'; fill.style.height = '100%'; void fill.offsetWidth; sfx('deny');
+      const p = $('#lppromo'); if (p) { p.innerHTML = `<b class="lose">Dropped to ${leagueName(lg.league)}</b>`; p.classList.add('pop'); }
+      await go(pct(lg.lp), 700);
+    } else await go(pct(lg.lp), 1000);
+    if (!live()) return;
+    foot.textContent = lg.league >= L.length - 1 ? `${lg.lp} LP` : `${lg.lp}/${R.step} LP`;
+    const st = $('#lpstk'), f = st && st.querySelector('.flame'), b = f && f.querySelector('b');
+    if (b) { const to = +st.dataset.to; b.textContent = to; f.classList.toggle('hot', to >= 2); f.classList.toggle('cold', to <= 0); f.classList.add(st.classList.contains('up') ? 'flare' : 'fizzle'); if (st.classList.contains('up')) sfx('star'); }
+  }
+  // WHAT: the XP screen (end of a run, screen 2): the level meter on the left, the XP gained in big and where it came from on the right, and the reward chest.
+  function xpScreenHTML() {
+    const log = run.xpLog || [], got = log.reduce((a, g) => a + g.xp, 0), to = acct.axp || 0, from = Math.max(0, to - got);
+    const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
+    const ups = B.UNLOCKS.filter(x => x.lvl > A.lvl && x.lvl <= Z.lvl);
+    const note = run.xpWait ? 'Counting your XP…' : run.xpErr ? 'Your XP could not be saved (no connection).' : '';
+    const banner = `<span class="lvb" id="xplv">${S.lvl}</span><b class="vmname">Level</b>`;
+    const chest = `<div class="chestzone ${ups.length ? (done ? 'open' : 'will') : 'shut'}" id="chest">
+        <b class="cheer" id="cheer">LEVEL UP!</b>
+        <div class="chest" aria-hidden="true"><span class="lid"></span><span class="box"><i></i></span><span class="glow"></span></div>
+        ${ups.length ? `<div class="loot ${ups.length > 4 ? 'lots' : ''}">${ups.map((x, i) => `<span class="lootit" style="--i:${i}" title="New ${x.kind}: ${esc(unlockName(x))}">${unlockPic(x, 46)}<b>${esc(unlockName(x))}</b><small>New ${x.kind}</small></span>`).join('')}</div>`
+          : u ? `<p class="chestnote">${I('lock')} Next chest at level ${u.lvl}: <b>${esc(unlockName(u))}</b> · ${B.xpForLevel(u.lvl) - to} XP to go</p>` : '<p class="chestnote">🏅 Every reward unlocked!</p>'}</div>`;
+    return `<div class="vmwrap xp" id="xppanel" data-from="${from}" data-to="${to}">${meterHTML('xpmeter', '--lc:#7c4dff;--lh:#7ee8ff', banner, Math.round(100 * S.into / S.need), `<span id="xpnum">${S.into}/${S.need}</span> XP`)}
+      <div class="vmright"><b class="vmbig xp"><span id="xpbig">+${done ? got : 0}</span> <small>XP</small></b>
+        ${log.length ? `<ul class="xplines">${xpChips(log).map((c, i) => `<li style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i><span>${esc(c.name)}</span><b>+${c.xp}</b></li>`).join('')}</ul>` : note ? `<p class="small">${note}</p>` : ''}</div></div>${chest}`;
+  }
+  // WHAT: the XP screen's animation: the total counts up, the level tube fills; every level up cheers (LEVEL UP!) and empties the tube; at the end a chest with rewards bursts open.
+  async function animXp2() {
+    const el = $('#xppanel'); if (!el || run.xpShown || !(run.xpLog || []).length) return;
+    run.xpShown = true; save();
+    const fast = B.Juice && B.Juice.reduced(), wait = ms => new Promise(r => setTimeout(r, fast ? 0 : ms));
+    const fill = $('#xpmeter .vmtube i'), num = $('#xpnum'), lv = $('#xplv'), big = $('#xpbig'), cheer = $('#cheer'), chest = $('#chest');
+    let cur = +el.dataset.from, left = +el.dataset.to - cur; const total = left, live = () => fill.isConnected;
+    await wait(400); if (!live()) return;
+    if (B.Juice) B.Juice.countUp(big, 0, total, 1100, v => '+' + v); sfx('coin');
+    while (left > 0) {
+      const L = B.levelProgress(cur), room = L.need - L.into, step = Math.min(left, room), ms = 300 + Math.round(700 * step / L.need);
+      fill.style.transition = `height ${ms}ms ease-out`; fill.style.height = (step === room ? 100 : Math.round(100 * (L.into + step) / L.need)) + '%';
+      if (B.Juice) B.Juice.countUp(num, L.into, L.into + step, ms);
+      await wait(ms + 60); if (!live()) return; cur += step; left -= step;
+      if (step === room) {
+        const N = B.levelProgress(cur); lv.textContent = N.lvl; sfx('levelup');
+        cheer.textContent = `LEVEL ${N.lvl}!`; cheer.classList.remove('pop'); void cheer.offsetWidth; cheer.classList.add('pop');
+        if (B.Juice) { B.Juice.bump(lv); B.Juice.confettiAt(lv, 60); }
+        fill.style.transition = 'none'; fill.style.height = '0%'; num.textContent = '0/' + N.need; await wait(500);
+      }
+    }
+    if (chest && chest.classList.contains('will')) {
+      chest.classList.add('shake'); await wait(700); if (!chest.isConnected) return;
+      chest.classList.remove('will', 'shake'); chest.classList.add('open'); sfx('unlock'); if (B.Juice) B.Juice.confettiAt(chest.querySelector('.chest'), 90);
+    }
   }
 
   // ------------------------------------------------------------------ unit info panel
@@ -1956,7 +2017,7 @@
     skip: () => { if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; } skipBattle(); },
     // Continue on the result screen: next day, the Gauntlet or the game-over screen.
     'result-ok': () => { ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
-    'over-next': () => { run.overStep = 2; run.xpShown = true; save(); render(); window.scrollTo(0, 0); },
+    'over-next': () => { run.overStep = 2; run.lpShown = true; save(); render(); window.scrollTo(0, 0); },
     'retry-elo': () => { const r0 = ui.result; if (r0 && r0.req) { r0.pending = true; render(); Net.post('elo', r0.req).then(r => { setElo(r); logGameXp(r); Object.assign(r0, { trophy: r.trophy || null, pending: false, error: null }); save(); render(); }).catch(e => { Object.assign(r0, { pending: false, error: e.message }); render(); }); } else if (run && run.phase === 'over') { reportRunEnd(); } },
     // The steal screen after a won duel: take a hero (it asks which hero steps aside when the team is full), an item or a power.
     steal: i => { const o = run.steal && run.steal[+i]; if (!o) return; if (o.kind === 'hero' && run.heroes.length >= Run.teamMax(run)) { ui.stealPick = +i; render(); return; } const err = Run.steal(run, +i); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },

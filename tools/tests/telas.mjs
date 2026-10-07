@@ -261,20 +261,20 @@ ok(sawShop, 'visited a shop');
 const fin = await ev(`({ phase: __bal.run.phase, result: __bal.run.result, score: __bal.run.score, fightNo: __bal.run.fightNo })`);
 ok(fin.phase === 'over' || (REMOTE && fin.phase === 'gauntlet'), `run reached the end (${fin.result}, fight ${fin.fightNo}, score ${fin.score})`);
 await shot('11-over'); await noHScroll('over');
-// v46 (review #57): the end of a game counts its XP chip by chip and ends on the next reward
-const xpDone = `!!document.querySelector('.xpnext.loom') || (!document.querySelector('.xppanel.pre') && !document.querySelector('.xpnext'))`;
-for (let k = 0; k < 150 && !(await ev(xpDone)); k++) await sleep(100);
-if (fin.phase === 'over') {
-  ok(await ev(`!!document.querySelector('.xppanel') && document.querySelectorAll('.xppanel .xplines li').length >= 1 && /^\\+[1-9]/.test(document.querySelector('#xpgot').textContent) && !!document.querySelector('.xpnext, .xppanel .center')`), 'v46: game over counts the XP of the game (chips, the total) and shows the next reward');
-  await shot('11b-over-xp'); await noVScroll('game over, XP counted');
-}
+// v68 (reviews #140 #141): the end of a run: the league screen first (a meter in the league's colours, the LP in big, Next), then the XP screen (a level meter, the chest)
+const xpDone = `!!__bal.run.xpShown && !document.querySelector('#chest.will')`;
 if (fin.phase === 'over' && !REMOTE) {
-  await sleep(600);
-  ok(await ev(`!document.querySelector('.lgcard') && !!document.querySelector('[data-act=over-next]') && !document.querySelector('[data-act=new-run]')`), 'v64 (review #127): the end of a run shows the XP and the unlocks first, then Next');
-  await click('[data-act=over-next]'); await sleep(300);
-  ok(await ev(`!!__bal.run.lgEnd && !!document.querySelector('.lgcard .lgbar i') && /LP/.test(document.querySelector('.lgcard').textContent) && !!document.querySelector('.lgcard .lpwhy') && !!document.querySelector('[data-act=new-run]') && !document.querySelector('#top .gold') && !!document.querySelector('#stkcard .flame.big')`), 'v64 (review #125): ...then the league card: the league points this run moved, why, and the bar; v65 (reviews #129 #133): the win streak above it, no run bar on top');
-  ok(await ev(`(__bal.run.result === 'clear' ? /Run complete/.test(document.querySelector('.over2 .ovh').textContent) : __bal.run.lives === 0)`), 'a completed run shows its victory kind; a lost one ran out of lives');
+  for (let k = 0; k < 60 && !(await ev(`!!__bal.run.lpShown`)); k++) await sleep(100);
+  await sleep(2200);
+  ok(await ev(`!!__bal.run.lgEnd && !!document.querySelector('#lpmeter .vmtube i') && !!document.querySelector('#lpmeter .lgem') && /LP/.test(document.querySelector('.vmbig').textContent) && /Beat other players/.test(document.querySelector('.vmcall').textContent) && !!document.querySelector('.overbar [data-act=over-next]') && !document.querySelector('[data-act=new-run]') && !document.querySelector('#top .gold') && !!document.querySelector('#lpstk .flame')`), 'v68 (review #140): the league screen: the meter with the league banner, the LP in big, the streak, "beat other players", Next at the bottom');
+  ok(await ev(`(__bal.run.result === 'clear' ? /victory/.test(document.querySelector('.ovh').textContent) : __bal.run.lives === 0)`), 'a completed run shows its victory kind; a lost one ran out of lives');
   await shot('11c-over-league'); await noHScroll('over, league'); await noVScroll('over, league');
+  const y1 = await ev(`document.querySelector('.overbar .cta').getBoundingClientRect().top`);
+  await click('[data-act=over-next]'); await sleep(300);
+  for (let k = 0; k < 150 && !(await ev(xpDone)); k++) await sleep(100);
+  ok(await ev(`!!document.querySelector('#xpmeter .vmtube i') && document.querySelectorAll('.vmwrap.xp .xplines li').length >= 1 && /^\\+[1-9]/.test(document.querySelector('#xpbig').textContent) && !!document.querySelector('#chest') && (document.querySelector('#chest').classList.contains('open') ? document.querySelectorAll('#chest .lootit').length >= 1 : document.querySelector('#chest').classList.contains('shut'))`), 'v68 (review #141): the XP screen: the level meter, the XP in big, a chest that opened with the rewards (or stays shaded)');
+  ok(Math.abs(y1 - await ev(`document.querySelector('.overbar [data-act=new-run]').getBoundingClientRect().top`)) < 2, 'v68 (review #141): Play again sits where Next was (one finger)');
+  await shot('11b-over-xp'); await noVScroll('game over, XP counted');
   ok(await ev(`(() => { const t = document.querySelector('#top'); return t.scrollWidth <= t.clientWidth + 1 && [...t.children].every(c => c.getBoundingClientRect().right <= window.innerWidth + 1); })()`), 'review #51: the top bar fits the phone with the league chip, gold, day, Team, suggest and menu');
 }
 
@@ -377,16 +377,16 @@ if (!REMOTE) {
   await click('[data-act=result-ok]'); await sleep(200);
   const g = await ev(`({ phase: __bal.run.phase, result: __bal.run.result, lives: __bal.run.lives })`);
   ok(g.phase === 'over' && g.result === 'clear', `the final fight is won and the run is complete (${g.result}, ${g.lives} lives)`);
-  ok(await ev(`!!document.querySelector('.vbadge') && /victory!/.test(document.querySelector('.vbadge').textContent)`), 'v64 (review #125): the end screen names the kind of victory');
+  ok(await ev(`/victory!/.test(document.querySelector('.ovh').textContent)`), 'v64 (review #125): the end screen names the kind of victory');
   await shot('19-run-complete');
   await noVScroll('run complete');
-  for (let k = 0; k < 150 && !(await ev(xpDone)); k++) await sleep(100);
-  ok(await ev(`document.querySelectorAll('.xppanel .xplines li').length >= 2 && !document.querySelector('.xppanel.pre')`), 'v46: the completed run pays XP (played, the final fight, firsts)');
-  await shot('19b-complete-xp'); await noVScroll('run complete, XP counted');
-  await click('[data-act=over-next]'); await sleep(400);
-  for (let k = 0; k < 40 && !(await ev(`!!document.querySelector('.lgcard')`)); k++) await sleep(100);
-  ok(await ev(`!!document.querySelector('.lgcard') && document.querySelectorAll('.trophies .tro').length === 2 && /Rival/.test(document.querySelector('.trophies').textContent) && !!document.querySelector('.trophies .tro.fin')`), 'v64: the second end screen: the league card and the trophies of the run (the duel and the final)');
+  for (let k = 0; k < 60 && !(await ev(`!!document.querySelector('#lpmeter')`)); k++) await sleep(100);
+  ok(await ev(`document.querySelectorAll('.vmtro .tro').length === 2 && /Rival/.test(document.querySelector('.vmtro').textContent) && !!document.querySelector('.vmtro .tro.fin')`), 'v64: the league screen shows the trophies of the run (the duel and the final)');
   await shot('19c-complete-league'); await noHScroll('run complete, league'); await noVScroll('run complete, league');
+  await click('[data-act=over-next]'); await sleep(400);
+  for (let k = 0; k < 150 && !(await ev(xpDone)); k++) await sleep(100);
+  ok(await ev(`document.querySelectorAll('.vmwrap.xp .xplines li').length >= 2`), 'v46: the completed run pays XP (played, the final fight, firsts)');
+  await shot('19b-complete-xp'); await noVScroll('run complete, XP counted');
   await click('[data-act=scores]');
   for (let k = 0; k < 30 && !(await ev(`!!document.querySelector('#modal table')`)); k++) await sleep(100);
   const ladder = await ev(`document.querySelector('#modal').textContent`);
