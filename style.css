@@ -2635,3 +2635,11 @@ body.desk .vsteam { flex-direction: row; } body.desk .vsteam span { width: 110px
 .them .vsbub::after { top: -9px; bottom: auto; border: 8px solid transparent; border-bottom-color: #fff; border-top: 0; } .them .vsname { order: 3; } .them .vsbub { order: 2; } .them .vsteam { order: 1; }
 .vsteam { flex-direction: row; flex-wrap: wrap; justify-content: center; max-width: 180px; gap: 8px 4px; } .vsteam span, .vsteam.n4 span, .vsteam.n5 span, .vsteam.n6 span { width: 54px; height: 54px; }
 body.desk .vsteam { max-width: none; } body.desk .vsteam span { width: 110px !important; height: 110px !important; }
+/* v67 (review #137): a player side of the VS screen in the colours of their league, with its badge, LP, level and streak */
+.vsside.me.lg { background: linear-gradient(160deg, var(--lh), var(--lc) 45%, color-mix(in srgb, var(--lc) 45%, #0b0f3f)); }
+.vsside.them.lg { background: linear-gradient(200deg, var(--lh), var(--lc) 45%, color-mix(in srgb, var(--lc) 40%, #3a0a1e)); }
+.vsplate { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; border-radius: 14px; background: #0b0f3fcc; box-shadow: 0 0 0 2px color-mix(in srgb, var(--lh, #fff) 70%, transparent), 0 0 18px color-mix(in srgb, var(--lc, #fff) 60%, transparent); animation: vspop .35s cubic-bezier(.3, 1.7, .5, 1) .3s both; }
+.them .vsplate { animation-delay: 1.05s; order: 4; } .vsplate > div { display: grid; text-align: left; } .vsplate b { font: 800 13px/1.1 var(--fun); color: var(--lh, #fff); text-transform: uppercase; letter-spacing: .5px; } .vsplate small { font: 600 11px var(--fun); color: #d8dcff; } .vsplate .flame { font-size: 14px; margin-left: 2px; }
+/* v67 (review #139): the leader walks to today on the road */
+.rtok.walk { transition: left .9s ease-in-out, top .9s ease-in-out; } .rtok.walk img.por { animation: tokhop .3s ease-in-out 3 alternate; }
+@keyframes tokhop { to { transform: translateY(-10px) scale(1.06); } }

@@ -576,7 +576,7 @@
     const nextBoss = info.find(d => d.i > step && d.boss);
     const icon = d => d.boss ? img(d.boss, 40, 'por') : d.kind === 'final' ? I('trophy') : d.pvp ? I('ghost') : d.kind === 'fight' ? I('swords') : d.kind === 'shop' ? I('cart') : I('help');
     const what = d => d.boss ? `Boss · ${esc(B.BOSSES[d.boss].name)}${d === nextBoss ? ` <i>in ${d.i - step} day${d.i - step === 1 ? '' : 's'}</i>` : ''}` : d.kind === 'final' ? 'Final fight' : d.pvp ? 'Duel · PvP' : d.kind === 'fight' ? 'Fight' : d.kind === 'shop' ? 'Last shop' : 'Shop or event';
-    const start = [50, H - ROAD.bottom / 2], last = step ? [xOf(step - 1), yOf(step - 1)] : start;
+    const start = [50, H - ROAD.bottom / 2], last = step ? [xOf(step - 1), yOf(step - 1)] : start, prev = step > 1 ? [xOf(step - 2), yOf(step - 2)] : start;
     const k = opts.length || 1, ox = k === 1 ? [50] : k === 2 ? [27, 73] : [17, 50, 83], top0 = todayTop + 34, bot0 = todayTop + today - 12;
     const seg = (a, b) => `M${a[0]} ${a[1]} C${a[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${b[1]}`;
     const past = [start].concat(info.filter(d => d.i < step).map(d => [xOf(d.i), yOf(d.i)]));
@@ -599,7 +599,7 @@
     const leader = run.heroes[0];
     return `<div class="wmap" id="wmap" data-today="${todayTop}" data-key="${run.seed}:${step}"><div class="wtrack" style="height:${H}px"><span class="wsky"></span><span class="wpeaks"></span>${decor.join('')}${road}
       <span class="rn camp done" style="left:50%;top:${start[1]}px"><span class="ri">⛺</span><span class="rl rgt"><b>Start</b></span></span>${nodes}
-      ${leader ? `<span class="rtok" style="left:${last[0]}%;top:${last[1]}px">${img(leader.key, 44, 'por')}</span>` : ''}
+      ${leader ? `<span class="rtok" style="left:${last[0]}%;top:${last[1]}px" data-to="${last[0]},${last[1]}" data-from="${prev[0]},${prev[1]}">${img(leader.key, 44, 'por')}</span>` : ''}
       <div class="rtoday" style="top:${todayTop}px;height:${today}px"><div class="rday"><b>Day ${step + 1}/${n}</b> ${title}</div>
         ${run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(run.nextMod))}</p>` : ''}
         <div class="banners rb${k}">${opts.map(optHTML).join('')}</div></div></div></div>`;
@@ -614,6 +614,14 @@
     const over = document.documentElement.scrollHeight - vh; if (over > 0) wm.style.height = Math.max(240, wm.clientHeight - Math.ceil(over)) + 'px';   // the paddings below it
     if (keep && keep.key === wm.dataset.key) { wm.scrollTop = keep.top; return; }
     wm.scrollTop = Math.max(0, +wm.dataset.today - Math.round(wm.clientHeight * (document.body.classList.contains('desk') ? 0.12 : 0.16)));
+    // v67 (review #139, David: "show player move in map between days"): a new day, the leader hops along the road from where it stood to today's spot
+    const [seed, step] = wm.dataset.key.split(':').map(Number), tok = wm.querySelector('.rtok');
+    if (tok && step > 0 && ui.roadAt === seed + ':' + (step - 1) && !(B.Juice && B.Juice.reduced())) {
+      const [fx, fy] = tok.dataset.from.split(',').map(Number), [tx, ty] = tok.dataset.to.split(',').map(Number);
+      tok.style.left = fx + '%'; tok.style.top = fy + 'px'; tok.classList.add('walk'); void tok.offsetWidth;
+      setTimeout(() => { if (!tok.isConnected) return; tok.style.left = tx + '%'; tok.style.top = ty + 'px'; sfx('pick'); setTimeout(() => tok.classList.remove('walk'), 1000); }, 350);
+    }
+    ui.roadAt = wm.dataset.key;
   }
   // WHAT: the team under the road on phones (portraits with levels, items waiting in the bag, powers); on computers the full party panel sits beside it.
   function mstripHTML() {
@@ -896,8 +904,8 @@
     // nobody fell, 1 more if the team also kept 60% of its health. They light up one by one (celebrate()).
     const meta = [r.time != null ? `<span title="Time">⏱ ${clock(r.time)}</span>` : '', r.foes ? `<span title="Enemies down">💥 ${foesDown}/${r.foes.length}</span>` : '', `<span title="Heroes standing">♥ ${hs.filter(o => o.s.alive).length}/${hs.length}</span>`, r.timeout ? '<span>time ran out</span>' : ''].filter(Boolean).join('');
     const stars = r.stars || 0;
-    const STAR_WHY = ['Won', 'Nobody fell', '60%+ health'];   // v65 (review #129, David: "what do the stars mean?"): each star says what it is for
-    const starRow = r.win ? `<div class="rstars" aria-label="${stars} of 3 stars">${[0, 1, 2].map(i => `<span class="stw ${i < stars ? 'earn' : ''}"><i class="st ${i < (fx.stars || 0) ? 'lit' : ''} ${i < stars ? 'earn' : ''}">★</i><small>${STAR_WHY[i]}</small></span>`).join('')}${stars === 3 ? `<b class="flawless ${fx.stars >= 3 ? 'on' : ''}">Flawless!</b>` : ''}</div>` : '';
+    const STAR_WHY = ['Won', 'Nobody fell', '60%+ health'];   // v65 (review #129): what each star is for; v67 (review #138, David: "remove detail of stars explained"): only as a tooltip
+    const starRow = r.win ? `<div class="rstars" aria-label="${stars} of 3 stars">${[0, 1, 2].map(i => `<span class="stw ${i < stars ? 'earn' : ''}"><i class="st ${i < (fx.stars || 0) ? 'lit' : ''} ${i < stars ? 'earn' : ''}" title="${STAR_WHY[i]}">★</i></span>`).join('')}${stars === 3 ? `<b class="flawless ${fx.stars >= 3 ? 'on' : ''}">Flawless!</b>` : ''}</div>` : '';
     const loseTag = !r.win && r.left != null ? `<p class="losetag">${esc(Run.lossTag(r.left, r.timeout))}</p>` : '';   // v62 (review #94): takes the place of the stars of a win
     const chips = [];
     if (r.win && !r.duel) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
@@ -1372,10 +1380,16 @@
     const parts = (fxId, n) => { const v = fxId && B.VSFX.find(x => x.id === fxId); return v ? `<span class="vsfx ${v.id}">${Array.from({ length: n }, (_, i) => `<i style="--i:${i}">${v.icon}</i>`).join('')}</span>` : ''; };
     const bubble = t => t ? `<span class="vsbub">${esc(t)}</span>` : '';
     const el = document.createElement('div'); el.id = 'vs'; el.className = 'vs' + (B.Juice && B.Juice.reduced() ? ' calm' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${me} versus ${name}. Tap to skip`);
-    el.innerHTML = `<div class="vsside me">${parts(myFx, 9)}<div class="vsname">${acct.account ? avatarHTML(acct.avatar, acct.code, 40) : ''}<b>${me}</b></div>${bubble(myTaunt)}
+    // v67 (review #137, David: "improve player part of vs screen. Badge and colors based on current league"): a player's side takes the colours of their league,
+    // with its badge, LP, account level and win streak (yours always; a duel rival's too when it is a real player)
+    const lgs = store.get('balance.league', null), myLg = acct.account ? (lgs && lgs.league != null ? lgs.league : acct.league | 0) : null;
+    const lgStyle = i => { const l = B.LEAGUES[i] || B.LEAGUES[0]; return `--lc:${l.color};--lh:${l.hi}`; };
+    const plate = (i, lp, lvl, st) => i == null ? '' : `<div class="vsplate">${emblem(i, 34)}<div><b>${leagueName(i)}</b><small>${lp | 0} LP · Lv ${lvl}</small></div>${flameHTML(st)}</div>`;
+    const oppLg = duel && g.opp.code && g.opp.league != null ? g.opp.league : null;
+    el.innerHTML = `<div class="vsside me ${myLg != null ? 'lg' : ''}" style="${myLg != null ? lgStyle(myLg) : ''}">${parts(myFx, 9)}<div class="vsname">${acct.account ? avatarHTML(acct.avatar, acct.code, 40) : ''}<b>${me}</b></div>${plate(myLg, lgs ? lgs.lp : acct.lp, lvlNow(), streakOf())}${bubble(myTaunt)}
         <div class="vsteam n${run.heroes.length}">${run.heroes.map((h, i) => `<span style="--i:${i}">${img(h.key, 96, 'por')}<i>Lv ${h.lvl}</i></span>`).join('')}</div></div>
       <div class="vsmid"><b class="vsword">VS</b><small>${tag}</small><span class="vsscore" id="vsscore"></span></div>
-      <div class="vsside them">${parts(fx, 9)}<div class="vsname"><b>${name}</b>${av}</div>${bubble(taunt)}
+      <div class="vsside them ${oppLg != null ? 'lg' : ''}" style="${oppLg != null ? lgStyle(oppLg) : ''}">${parts(fx, 9)}<div class="vsname"><b>${name}</b>${av}</div>${oppLg != null ? plate(oppLg, g.opp.lp, g.opp.level || 1, g.opp.streak == null ? 1 : g.opp.streak) : ''}${bubble(taunt)}
         <div class="vsteam n${shown.length + (more ? 1 : 0)}">${shown.map((k, i) => `<span style="--i:${i}">${img(k, 96, 'por')}</span>`).join('')}${more ? `<span class="more" style="--i:4"><b>+${more}</b></span>` : ''}</div></div>
       <small class="vsskip">Tap to skip</small>`;
     el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); closeVs(); });

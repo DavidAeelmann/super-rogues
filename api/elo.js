@@ -209,7 +209,7 @@ module.exports = async (req, res) => {
     if (b.ref) await P.linkRef(st, p, b.ref);
     const save = () => st.setPlayer(pid, P.row(p));
     // v66 (review #136): an opponent's team comes with its player's taunt, VS entrance and portrait (shown on the VS screen)
-    const styled = async t => { const v = oppView(t, pid); if (!v) return null; const o = await st.getPlayer(t.pid); if (o) Object.assign(v, { taunt: P.tauntText(o), vsfx: o.vsfx || null, avatar: o.avatar || null }); return v; };
+    const styled = async t => { const v = oppView(t, pid); if (!v) return null; const o = await st.getPlayer(t.pid); if (o) Object.assign(v, { taunt: P.tauntText(o), vsfx: o.vsfx || null, avatar: o.avatar || null, league: o.league | 0, lp: o.lp | 0, streak: o.streak == null ? 1 : o.streak | 0, level: D.levelOf(o.axp | 0) }); return v; };   // v67 (review #137): and their league
     const xp = [];   // v30: account XP earned by this call (shown as toasts and on the result screen)
     const me = extra => Object.assign({ name: p.name, code: P.codeOf(pid), elo: Math.round(p.elo), runs: p.runs, titles: p.crowns, best: p.best, league: p.league | 0, lp: p.lp | 0, streak: p.streak == null ? 1 : p.streak | 0, bstreak: p.bstreak == null ? 1 : p.bstreak | 0, avatar: p.avatar || null,
       crowns: p.gems | 0, season: p.season, sreach: p.sreach | 0, xp }, P.levelView(p), extra);
