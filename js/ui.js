@@ -47,7 +47,7 @@
   const acct = Object.assign({ account: false, crowns: 0, perks: [] }, store.get(ACCT, null) || {});
   const hasPerk = id => B.hasPerk(acct.perks, id);
   const isDefaultName = n => !n || /^Player [a-f0-9]{4}$/.test(n);
-  const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account', 'streak', 'bstreak', 'avatar', 'taunt', 'tauntId', 'vsfx'];
+  const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account', 'streak', 'bstreak', 'avatar', 'taunt', 'tauntId', 'vsfx', 'title', 'titleId', 'achs'];
   // WHAT: copies the server's account answer into acct, remembers it, and shows what XP was earned.
   function setAcct(r, quiet) {
     if (!r || typeof r !== 'object') return;
@@ -58,19 +58,20 @@
     applySkin();
   }
   // v30 (review #28, PC boy): account XP and level. A toast for what was earned; a level up names what it unlocked
-  const unlockName = u => u.kind === 'portrait' ? HEROES[u.id].name + ' portrait' : (u.kind === 'hero' ? HEROES[u.id] : u.kind === 'item' ? ITEM[u.id] : RELIC[u.id]).name;
+  const KIND_NAME = k => ({ taunt: 'voice line' })[k] || k;   // v74: what each kind of level reward is called
+  const unlockName = u => u.kind === 'title' ? `"${B.ACH[u.id].title}" title` : u.kind === 'taunt' ? `"${B.TAUNT_ALL.find(t => t.id === u.id).text}"` : u.kind === 'portrait' ? HEROES[u.id].name + ' portrait' : (u.kind === 'hero' ? HEROES[u.id] : u.kind === 'item' ? ITEM[u.id] : RELIC[u.id]).name;
   // WHAT: the small "+N XP" message when account XP is earned (and "Level up! New hero: ..." when a level unlocks something).
   function xpToast(list) {
     const n = list.reduce((a, g) => a + g.xp, 0), up = list.filter(g => g.up).pop();
     const us = up ? B.UNLOCKS.filter(x => x.lvl === up.level) : [], u = us[0];   // v63: a level can unlock several things
-    clearTimeout(xpToast.h); xpToast.h = setTimeout(() => toast(`✨ +${n} XP` + (list.length === 1 ? ` (${list[0].why})` : '') + (up ? ` · Level ${up.level}!${u ? ` New ${u.kind}: ${unlockName(u)}${us.length > 1 ? ` (+${us.length - 1} more)` : ''}` : ''}` : '')), 700);
+    clearTimeout(xpToast.h); xpToast.h = setTimeout(() => toast(`✨ +${n} XP` + (list.length === 1 ? ` (${list[0].why})` : '') + (up ? ` · Level ${up.level}!${u ? ` New ${KIND_NAME(u.kind)}: ${unlockName(u)}${us.length > 1 ? ` (+${us.length - 1} more)` : ''}` : ''}` : '')), 700);
   }
   const lvlNow = () => B.levelOf(acct.axp || 0);
   // v46 (review #57, David: "Bring the player xp progression to the forefront of the game ... visually show progress after
   // each run with looming rewards. It should be a rewarding dopamine hit and encourage playing again"): the title shows
   // your level, its bar and the next reward; every game keeps the XP it earned (run.xpLog) and the game-over screen fills
   // the bar line by line (level ups burst with confetti) and ends on the next reward waiting for you
-  const unlockPic = (u, px) => u.kind === 'portrait' ? `<span class="pfp">${img(u.id, px, 'por')}</span>` : u.kind === 'hero' ? img(u.id, px, 'por') : ico(u.kind, u.id, px);
+  const unlockPic = (u, px) => u.kind === 'title' ? `<i class="upic" style="--px:${px}px">${B.ACH[u.id].icon}</i>` : u.kind === 'taunt' ? `<i class="upic" style="--px:${px}px">💬</i>` : u.kind === 'portrait' ? `<span class="pfp">${img(u.id, px, 'por')}</span>` : u.kind === 'hero' ? img(u.id, px, 'por') : ico(u.kind, u.id, px);
   // v65 (review #131): a player's picture is a hero portrait (one of the four free ones, picked from the public code, until they choose one)
   // WHAT: the portrait a player shows (avKey) and its round frame (avatarHTML), on the profile, the ladder and the top bar.
   const avKey = (key, code) => key && HEROES[key] ? key : B.PORTRAITS_FREE[(parseInt(String(code || '').slice(0, 4), 16) || 0) % B.PORTRAITS_FREE.length];
@@ -111,7 +112,7 @@
         <span class="xpbar big"><i id="xpfill" style="width:${Math.round(100 * S.into / S.need)}%"></i></span><small id="xpnum">${S.into}/${S.need} XP</small></div>
         <b class="xpgot" id="xpgot">+${done ? got : 0}</b></div>
       ${log.length ? `<ul class="xplines">${xpChips(log).map(c => `<li data-xp="${c.xp}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i><span>${esc(c.name)}</span><b>+${c.xp}</b></li>`).join('')}</ul>` : note ? `<p class="small center">${note}</p>` : ''}
-      ${ups.length ? `<div class="xpups ${ups.length > 3 ? 'lots' : ups.length > 2 ? 'many' : ''}">${ups.length > 3 ? `<b class="xpupn">${ups.length} new unlocks!</b>` : ''}${ups.map(x => `<div class="xpup" data-lvl="${x.lvl}" title="New ${x.kind}: ${esc(unlockName(x))}">${unlockPic(x, 34)}<span><small>New ${x.kind}!</small><b>${esc(unlockName(x))}</b></span></div>`).join('')}</div>` : ''}
+      ${ups.length ? `<div class="xpups ${ups.length > 3 ? 'lots' : ups.length > 2 ? 'many' : ''}">${ups.length > 3 ? `<b class="xpupn">${ups.length} new unlocks!</b>` : ''}${ups.map(x => `<div class="xpup" data-lvl="${x.lvl}" title="New ${KIND_NAME(x.kind)}: ${esc(unlockName(x))}">${unlockPic(x, 34)}<span><small>New ${KIND_NAME(x.kind)}!</small><b>${esc(unlockName(x))}</b></span></div>`).join('')}</div>` : ''}
       ${u ? `<div class="xpnext">${unlockPic(u, 48)}<span><small>Next reward · level ${u.lvl}</small><b>${esc(unlockName(u))}</b><i>${B.xpForLevel(u.lvl) - to} XP to go</i></span><em>🔒</em></div>` : '<p class="small center">🏅 Every reward unlocked!</p>'}
     </div>`;
   }
@@ -1197,13 +1198,13 @@
   function xpScreenHTML() {
     const log = run.xpLog || [], got = log.reduce((a, g) => a + g.xp, 0), to = acct.axp || 0, from = Math.max(0, to - got);
     const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
-    const ups = B.UNLOCKS.filter(x => x.lvl > A.lvl && x.lvl <= Z.lvl);
+    const ups = B.UNLOCKS.filter(x => x.lvl > A.lvl && x.lvl <= Z.lvl), na = (run.newAchs || []).map(id => B.ACH[id]).filter(Boolean), n = ups.length + na.length;   // v73 (review #150): new titles come out of the chest too
     const note = run.xpWait ? 'Counting your XP…' : run.xpErr ? 'Your XP could not be saved (no connection).' : '';
     const banner = `<span class="lvb" id="xplv">${S.lvl}</span><b class="vmname">Level</b>`;
-    const chest = `<div class="chestzone ${ups.length ? (done ? 'open' : 'will') : 'shut'}" id="chest">
+    const chest = `<div class="chestzone ${n ? (done ? 'open' : 'will') : 'shut'}" id="chest">
         <b class="cheer" id="cheer">LEVEL UP!</b>
         <div class="chest" aria-hidden="true"><span class="lid"></span><span class="box"><i></i></span><span class="glow"></span></div>
-        ${ups.length ? `<div class="loot ${ups.length > 4 ? 'lots' : ''}">${ups.map((x, i) => `<span class="lootit" style="--i:${i}" title="New ${x.kind}: ${esc(unlockName(x))}">${unlockPic(x, 46)}<b>${esc(unlockName(x))}</b><small>New ${x.kind}</small></span>`).join('')}</div>`
+        ${n ? `<div class="loot ${n > 4 ? 'lots' : ''}">${na.map((a, i) => `<span class="lootit ach" style="--i:${i}" title="New title: ${esc(a.title)} · ${esc(a.desc)}"><i class="achi">${a.icon}</i><b>${esc(a.title)}</b><small>New title!</small></span>`).join('')}${ups.map((x, i) => `<span class="lootit" style="--i:${i + na.length}" title="New ${KIND_NAME(x.kind)}: ${esc(unlockName(x))}">${unlockPic(x, 46)}<b>${esc(unlockName(x))}</b><small>New ${KIND_NAME(x.kind)}</small></span>`).join('')}</div>`
           : u ? `<p class="chestnote">${I('lock')} Next chest at level ${u.lvl}: <b>${esc(unlockName(u))}</b> · ${B.xpForLevel(u.lvl) - to} XP to go</p>` : '<p class="chestnote">🏅 Every reward unlocked!</p>'}</div>`;
     return `<div class="vmwrap xp" id="xppanel" data-from="${from}" data-to="${to}">${meterHTML('xpmeter', '--lc:#7c4dff;--lh:#7ee8ff', banner, Math.round(100 * S.into / S.need), `<span id="xpnum">${S.into}/${S.need}</span> XP`)}
       <div class="vmright"><b class="vmbig xp ${got >= 100 ? 'long' : ''}"><span id="xpbig">+${done ? got : 0}</span> <small>XP</small></b>
@@ -1230,6 +1231,7 @@
         fill.style.transition = 'none'; fill.style.height = '0%'; num.textContent = '0/' + N.need; await wait(500);
       }
     }
+    if (chest && chest.classList.contains('will') && (run.newAchs || []).length && cheer && !cheer.classList.contains('pop')) { cheer.textContent = 'NEW TITLE!'; cheer.classList.add('pop'); }
     if (chest && chest.classList.contains('will')) {
       chest.classList.add('shake'); await wait(700); if (!chest.isConnected) return;
       chest.classList.remove('will', 'shake'); chest.classList.add('open'); sfx('unlock'); if (B.Juice) B.Juice.confettiAt(chest.querySelector('.chest'), 90);
@@ -1421,7 +1423,7 @@
   async function reportRunEnd() {
     ui.result.pending = true; render();
     run.xpWait = true;   // v46: the game's XP (fights won, the boss beaten) comes back with the answer
-    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; Object.assign(ui.result, { lg: r.lg }); }
+    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, achs: Run.endAchs(run), game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; run.newAchs = Array.isArray(r.achs) ? r.achs.filter(id => B.ACH[id]) : []; Object.assign(ui.result, { lg: r.lg }); }
     catch (e) { ui.result.error = e.message; run.xpErr = true; }
     run.xpWait = false;
     ui.result.pending = false; save(); render();
@@ -1472,10 +1474,10 @@
     const lgStyle = i => { const l = B.LEAGUES[i] || B.LEAGUES[0]; return `--lc:${l.color};--lh:${l.hi}`; };
     const plate = (i, lp, lvl, st) => i == null ? '' : `<div class="vsplate">${emblem(i, 34)}<div><b>${leagueName(i)}</b><small>${lp | 0} LP · Lv ${lvl}</small></div>${flameHTML(st)}</div>`;
     const oppLg = duel && g.opp.code && g.opp.league != null ? g.opp.league : null;
-    el.innerHTML = `<div class="vsside me ${myLg != null ? 'lg' : ''}" style="${myLg != null ? lgStyle(myLg) : ''}">${parts(myFx, 9)}<div class="vsname">${acct.account ? avatarHTML(acct.avatar, acct.code, 40) : ''}<b>${me}</b></div>${plate(myLg, lgs ? lgs.lp : acct.lp, lvlNow(), streakOf())}${bubble(myTaunt)}
+    el.innerHTML = `<div class="vsside me ${myLg != null ? 'lg' : ''}" style="${myLg != null ? lgStyle(myLg) : ''}">${parts(myFx, 9)}<div class="vsname">${acct.account ? avatarHTML(acct.avatar, acct.code, 40) : ''}<b>${me}</b></div>${acct.title ? `<span class="vstitle">${esc(acct.title)}</span>` : ''}${plate(myLg, lgs ? lgs.lp : acct.lp, lvlNow(), streakOf())}${bubble(myTaunt)}
         <div class="vsteam n${run.heroes.length}">${run.heroes.map((h, i) => `<span style="--i:${i}">${img(h.key, 96, 'por')}<i>Lv ${h.lvl}</i></span>`).join('')}</div></div>
       <div class="vsmid"><b class="vsword">VS</b><small>${tag}</small><span class="vsscore" id="vsscore"></span></div>
-      <div class="vsside them ${oppLg != null ? 'lg' : ''}" style="${oppLg != null ? lgStyle(oppLg) : ''}">${parts(fx, 9)}<div class="vsname"><b>${name}</b>${av}</div>${oppLg != null ? plate(oppLg, g.opp.lp, g.opp.level || 1, g.opp.streak == null ? 1 : g.opp.streak) : ''}${bubble(taunt)}
+      <div class="vsside them ${oppLg != null ? 'lg' : ''}" style="${oppLg != null ? lgStyle(oppLg) : ''}">${parts(fx, 9)}<div class="vsname"><b>${name}</b>${av}</div>${duel && g.opp.title ? `<span class="vstitle">${esc(g.opp.title)}</span>` : ''}${oppLg != null ? plate(oppLg, g.opp.lp, g.opp.level || 1, g.opp.streak == null ? 1 : g.opp.streak) : ''}${bubble(taunt)}
         <div class="vsteam n${shown.length + (more ? 1 : 0)}">${shown.map((k, i) => `<span style="--i:${i}">${img(k, 96, 'por')}</span>`).join('')}${more ? `<span class="more" style="--i:4"><b>+${more}</b></span>` : ''}</div></div>
       <small class="vsskip">Tap to skip</small>`;
     el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); closeVs(); });
@@ -1780,7 +1782,7 @@
   function roadmapHTML(me) {
     const xp = me.axp | 0, L = B.levelProgress(xp), lvl = L.lvl, per = L.need, inLv = L.into, max = B.UNLOCKS[B.UNLOCKS.length - 1].lvl, X = B.GAME_XP;
     const pic = u => unlockPic(u, 44);
-    const nodes = B.UNLOCKS.map(u => `<div class="rmn ${u.lvl <= lvl ? 'got' : u.lvl === lvl + 1 ? 'next' : ''}"><span class="rml">Lv ${u.lvl}</span>${pic(u)}<b>${esc(unlockName(u))}</b><i>${u.kind}</i><em>${u.lvl <= lvl ? '✓' : '🔒'}</em></div>`).join('');
+    const nodes = B.UNLOCKS.map(u => `<div class="rmn ${u.lvl <= lvl ? 'got' : u.lvl === lvl + 1 ? 'next' : ''}"><span class="rml">Lv ${u.lvl}</span>${pic(u)}<b>${esc(unlockName(u))}</b><i>${KIND_NAME(u.kind)}</i><em>${u.lvl <= lvl ? '✓' : '🔒'}</em></div>`).join('');
     return `<div class="acctlv"><div class="alh"><span class="lvb">${lvl}</span><div class="alb"><b>Account level ${lvl}</b>
         <span class="xpbar big"><i style="width:${lvl > max ? 100 : Math.round(100 * inLv / per)}%"></i></span>
         <span class="small">${lvl > max ? `${xp} XP · every reward unlocked` : `${inLv}/${per} XP to level ${lvl + 1}`}</span></div></div>
@@ -1810,7 +1812,7 @@
       }
       // v65 (reviews #132 #134): Global or Friends (the players you follow, and you); every row has the win streak now and the best one
       const e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.get('elo');
-      const eRows = e.top.map((p, i) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${i + 1}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td></tr>`).join('');
+      const eRows = e.top.map((p, i) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${i + 1}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}${p.title ? `<small class="ltitle">${esc(p.title)}</small>` : ''}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td></tr>`).join('');
       const none = tab === 'friends' ? `<p class="dim">${acct.account ? 'Follow players from their profile (tap a name) and they show up here.' : 'Your account starts when your first run ends; then follow players from their profile.'}</p>` : '<p class="dim">No ranked players yet.</p>';
       if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="dim small ladnote">${tab === 'friends' ? 'You and the players you follow. ' : ''}By league, then league points (LP), which come from PvP fights: duels and the final fight. 🔥 = runs won in a row now, Best = the longest streak, 👑 = King Tier. Tap a name to open the profile.</p>
         ${eRows ? `<table class="tbl"><tr><th>#</th><th>Name</th><th>LP</th><th title="Win streak">🔥</th><th>Best</th></tr>${eRows}</table>` : ''}${!eRows || (tab === 'friends' && e.top.length <= 1) ? none : ''}`);
@@ -1852,7 +1854,8 @@
     const a = acct, lvl = lvlNow(), own = id => hasPerk(id);
     const show = (kind, id, on) => `<button class="cshow ${on ? 'on' : ''}" data-act="style-set" data-arg="${kind}:${on ? '' : id}">${on ? '✓ Showing' : 'Show'}</button>`;
     const row = (it, on, body) => `<div class="perk cos ${own(it.id) ? 'own' : ''}"><span class="pi">${it.icon}</span><div class="pb">${body}</div>${own(it.id) ? show(it.kind, it.id, on) : buyBtn(it)}</div>`;
-    const taunts = B.COSMETICS.filter(x => x.kind === 'taunt').map(it => row(it, a.tauntId === it.id, `<span class="tbub">${esc(it.text)}</span>`)).join('');
+    const taunts = B.COSMETICS.filter(x => x.kind === 'taunt').map(it => row(it, a.tauntId === it.id, `<span class="tbub">${esc(it.text)}</span>`)).join('')
+      + B.LEVEL_TAUNTS.map(t => `<div class="perk cos ${t.lvl <= lvl ? 'own' : ''}"><span class="pi">🎁</span><div class="pb"><span class="tbub">${esc(t.text)}</span></div>${t.lvl <= lvl ? show('taunt', t.id, a.tauntId === t.id) : `<span class="owned dim">🔒 Lv ${t.lvl}</span>`}</div>`).join('');   // v74 (review #152): the voice lines your level gives
     const fx = B.COSMETICS.filter(x => x.kind === 'vsfx').map(it => row(it, a.vsfx === it.id, `<b>${esc(it.name)}</b><p class="small">${esc(it.desc)}</p>`)).join('');
     const pors = B.PORTRAIT_UNLOCKS.filter(k => B.portraitLevel(k) > lvl).map(k => { const it = B.SHOP_ITEM['pt_' + k]; return `<div class="cpor">${avatarHTML(k, '', 54)}<span>${esc(HEROES[k].name)}</span>${own(it.id) ? '<i>✓ Yours</i>' : buyBtn(it)}</div>`; }).join('');
     return `<h3>💬 Taunts</h3><p class="small dim">Your profile says it in a comic bubble, and so does your team on the VS screen before a fight, also when other players face your ghost.</p>${taunts}
@@ -1880,16 +1883,23 @@
       : `<div class="klock"><span class="hi">👑</span><b>King Tier</b><p class="small">Kings also see ${p.own ? 'your' : "this player's"} most played heroes, best win rate heroes and the wins and losses of ${p.own ? 'your' : 'their'} ghosts.</p><button data-act="shop">👑 Crown Shop</button></div>`;
     return `<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>
       <div class="prof" style="--lc:${l.color};--lh:${l.hi}">
-        <div class="phead"><span class="pwho">${avatarHTML(p.avatar, p.code, 76)}${emblem(p.league, 30)}</span><div><b class="pname">${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${esc(p.name)} <span class="lvb sm" title="Account level">${p.level || 1}</span></b><span class="pl1" style="color:${l.hi}">${l.name} league</span>
+        <div class="phead"><span class="pwho">${avatarHTML(p.avatar, p.code, 76)}${emblem(p.league, 30)}</span><div><b class="pname">${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${esc(p.name)} <span class="lvb sm" title="Account level">${p.level || 1}</span></b>${p.title ? `<span class="ptitle">${esc(p.title)}</span>` : ''}<span class="pl1" style="color:${l.hi}">${l.name} league</span>
           <span class="small dim">${p.league >= top ? `${p.lp} LP` : `${p.lp}/${R.step} LP`} · Season ${p.season}${since ? ' · since ' + since : ''}</span>${p.own ? `<button class="avedit" data-act="avatar-pick">${I('user')} Change picture</button>` : ''}</div></div>
         ${p.taunt ? `<div class="pbubble">${esc(p.taunt)}</div>` : p.own ? `<button class="linkbtn ptaunt" data-act="shop-tab" data-arg="style">💬 Pick a taunt (Crown Shop)</button>` : ''}
         <div class="pfollow">${!p.own ? `<button class="follow ${p.followed ? 'on' : 'primary'}" data-act="follow" data-arg="${esc(p.code)}">${p.followed ? '✓ Following' : '+ Follow'}</button>` : ''}<small id="pfcount">${followText(p)}</small></div>
         ${p.h2h ? `<div class="h2h"><span>You vs ${esc(p.name)}</span><b class="win">${p.h2h.w}</b><i>–</i><b class="lose">${p.h2h.l}</b><small>${p.h2h.w + p.h2h.l ? 'duels between you two' : 'no duel between you two yet'}</small></div>` : ''}
-        <div class="pstats">${stat(`${flameHTML(p.streak == null ? 1 : p.streak)} <small>best ${p.bstreak == null ? 1 : p.bstreak}</small>`, 'Win streak')}${stat(p.trophies ? '🏆 ' + p.trophies.n : '—', 'Trophies')}${stat(p.titles || '—', 'Runs completed')}${stat(p.runs, 'Games')}
+        <div class="pstats">${stat(`${flameHTML(p.streak == null ? 1 : p.streak)} <small>best ${p.bstreak == null ? 1 : p.bstreak}</small>`, 'Win streak')}${stat(p.trophies ? '🏆 ' + p.trophies.n : '—', 'Trophies')}${stat(p.titles || '—', 'Runs completed')}<button class="pstatb" data-act="achs-open"><b>🏅 ${(p.achs || []).length}/${B.ACHIEVEMENTS.length}</b><span>Achievements ›</span></button>
           <div>${emblem(p.peakLeague, 24)}<span>Best league</span></div><div>${p.lastLeague >= 0 ? emblem(p.lastLeague, 24) : '<b>—</b>'}<span>Last season</span></div></div>
         ${p.trophies && p.trophies.list.length ? `<div class="ptro"><div class="pmh">Latest trophies</div><div>${p.trophies.list.map(t => `<span class="tro ${t.final ? 'fin' : ''}">🏆 ${t.code ? plink(t.name, t.code) : esc(t.name)}${t.final ? ' <i>final</i>' : ''}</span>`).join('')}</div></div>` : ''}
         ${more}
         ${p.own ? `<div class="row center"><button data-act="shop">👑 Crown Shop · ${acct.crowns | 0}</button></div>` : ''}</div>`;
+  }
+  // v73 (reviews #150 #151): the achievements on a profile: the ones earned lit, the rest dim (the secret ones say so); on your own profile a tap makes one your title
+  // WHAT: the achievements grid of a profile.
+  function achsHTML(p) {
+    const own = p.achs || [], mine = p.own, cur = mine ? acct.titleId : null;
+    const cell = a => { const got = own.includes(a.id), secret = !got && /secret/i.test(a.desc); return `<${mine && got ? 'button data-act="title-set" data-arg="' + (cur === a.id ? '' : a.id) + '"' : 'div'} class="achc ${got ? 'got' : ''} ${cur === a.id ? 'on' : ''}" title="${esc(a.desc)}"><i>${got || !secret ? a.icon : '❔'}</i><b>${esc(got || !secret ? a.title : '???')}</b><small>${esc(secret ? 'A secret' : a.desc)}</small>${cur === a.id ? '<em>✓ Your title</em>' : ''}</${mine && got ? 'button' : 'div'}>`; };
+    return `<div class="pachs"><div class="pmh">🏅 Achievements <span class="dim">${own.length}/${B.ACHIEVEMENTS.length}</span>${mine ? ' <span class="dim small">· tap one you earned to show it as your title</span>' : ''}</div><div class="achgrid">${B.ACHIEVEMENTS.map(cell).join('')}</div></div>`;
   }
   const followText = p => `${p.followers | 0} follower${(p.followers | 0) === 1 ? '' : 's'} · following ${p.following | 0}`;
   // v65 (review #131): the portraits your level has opened (four free, then one more each level); the locked ones say the level they open at
@@ -1904,7 +1914,7 @@
     openModal(shell('<p class="dim">Loading…</p>')); ui.modal = 'profile'; ui.profile = code;
     try {
       const r = await Net.post('player', { op: 'profile', pid: pid(), code });
-      if (ui.modal === 'profile' && ui.profile === code) { openModal(profileHTML(r.profile, r.viewerKing)); ui.modal = 'profile'; }
+      if (ui.modal === 'profile' && ui.profile === code) { ui.lastProfile = r.profile; openModal(profileHTML(r.profile, r.viewerKing)); ui.modal = 'profile'; }
     } catch (e) { if (ui.modal === 'profile' && ui.profile === code) { openModal(shell(`<p class="err">${esc(e.message)}</p>`)); ui.modal = 'profile'; } }
   }
   async function openMyProfile() {
@@ -1943,7 +1953,7 @@
       <li>🏆 Trophies: every duel you win is a trophy with the name of the player you beat, and 1 crown. A profile shows its trophies and your duels against that player.</li>
       <li>👑 Crowns: earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: 4× battle speed, Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles).</li>
       <li>Tap any player's name to open their profile: league, win streak, trophies, runs completed and your duels against them. Follow players there to see them in the Friends ladder. Your picture is a hero portrait: every account level opens one more.</li>
-      <li>✨ Account level: every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for reaching the final fight, +${B.GAME_XP.duel} per duel won, +${B.GAME_XP.champion} for winning it), plus bonuses the first time you complete a run with each hero (+${B.ACCOUNT.heroClear}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and levels 2 to 19 unlock new heroes (two a level up to 14), items and powers (see the road on the title or in Ladder → Player).</li>
+      <li>✨ Account level: every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for reaching the final fight, +${B.GAME_XP.duel} per duel won, +${B.GAME_XP.champion} for winning it), plus bonuses the first time you complete a run with each hero (+${B.ACCOUNT.heroClear}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and every level opens rewards: a new hero (one a level up to 27), items, powers, hero portraits, voice lines and titles (see the road on the title or in Ladder → Player).</li>
     </ol></details>`;
 
 
@@ -2117,6 +2127,12 @@
       const b = $('[data-act=follow]'), on = !(b && b.classList.contains('on'));
       try { const r = await Net.post('player', { op: 'follow', pid: pid(), code, on }); const b2 = $('[data-act=follow]'); if (b2) { b2.classList.toggle('on', r.followed); b2.classList.toggle('primary', !r.followed); b2.textContent = r.followed ? '✓ Following' : '+ Follow'; } const c = $('#pfcount'); if (c) c.textContent = followText(r); sfx(r.followed ? 'coin' : 'back'); }
       catch (e) { toast(e.message); }
+    },
+    // v73 (review #150): show an earned achievement as your title (tap it again to hide it)
+    // v73 (review #150): the achievements of the profile you are looking at, in their own sheet (the profile stays short)
+    'achs-open': () => { const p = ui.lastProfile; if (!p) return; openModal(`<div class="shead"><b>🏅 ${esc(p.name)}</b><button data-act="profile" data-arg="${esc(p.code)}" aria-label="Back">✕</button></div>${achsHTML(p)}`); ui.modal = 'achs'; },
+    'title-set': async id => {
+      try { const r = await Net.post('player', { op: 'title', pid: pid(), title: id || null }); acct.title = r.title || null; acct.titleId = r.titleId || null; setAcct(r); sfx('coin'); toast(r.title ? `Your title: ${r.title}` : 'No title shown'); if (ui.modal === 'achs' && ui.lastProfile) { ui.lastProfile.title = r.title || null; ACT['achs-open'](); } } catch (e) { toast(e.message); }
     },
     // v66 (review #136): show a bought taunt or VS entrance (an empty id = none)
     'style-set': async arg => {

@@ -140,14 +140,14 @@ async function heroGames(st, pid, team, win) {
 }
 
 // v66 (review #136): the words of the taunt a player picked (null = none)
-const tauntText = p => { const t = p && p.taunt && D.TAUNTS.find(x => x.id === p.taunt); return t ? t.text : null; };
+const tauntText = p => { const t = p && p.taunt && D.TAUNT_ALL.find(x => x.id === p.taunt); return t ? t.text : null; };
 // what anyone can see on a profile
 // WHAT: the public profile of a player (never his id or visitor hash). kingExtras adds the King-only details; ownView is the player's own wallet and progress.
 function profileView(p) {
   const q = Object.assign({}, p); rollSeason(q);   // shows the new season even before the player comes back
   return { name: q.name, code: q.code || codeOf(q.pid), league: q.league | 0, lp: q.lp | 0, elo: Math.round(q.elo), best: q.best | 0, titles: q.crowns | 0,
     runs: q.runs | 0, peakLeague: Math.max(q.peak_league | 0, q.league | 0), lastLeague: q.last_league == null ? -1 : q.last_league, season: q.season, king: isKing(q), since: Number(q.created) || null,
-    level: D.levelOf(q.axp | 0), pfloor: q.pfloor | 0, streak: q.streak == null ? 1 : q.streak | 0, bstreak: q.bstreak == null ? 1 : q.bstreak | 0, avatar: q.avatar || null, taunt: tauntText(q), vsfx: q.vsfx || null };
+    level: D.levelOf(q.axp | 0), pfloor: q.pfloor | 0, streak: q.streak == null ? 1 : q.streak | 0, bstreak: q.bstreak == null ? 1 : q.bstreak | 0, avatar: q.avatar || null, taunt: tauntText(q), vsfx: q.vsfx || null, title: q.title && D.ACH[q.title] ? D.ACH[q.title].title : null, achs: listOf(q.achs).filter(id => D.ACH[id]) };
 }
 // King Tier: most played heroes, best win rate heroes (3+ games), the record of all the player's ghosts
 async function kingExtras(st, pid) {
@@ -162,7 +162,20 @@ async function kingExtras(st, pid) {
 // the player's own view: the profile plus the wallet, perks and referral numbers
 async function ownView(st, p) {
   return Object.assign(profileView(p), levelView(p), { crowns: p.gems | 0, perks: perksOf(p), sreach: p.sreach | 0, refs: await st.countRefs(p.pid), refCrowns: p.ref_gems | 0,
-    referred: !!p.ref, seasonEnds: D.seasonEnds(D.seasonOf(Date.now())), account: true, tauntId: p.taunt || null });
+    referred: !!p.ref, seasonEnds: D.seasonEnds(D.seasonOf(Date.now())), account: true, tauntId: p.taunt || null, titleId: p.title || null });
 }
 
-module.exports = { tauntText, grant, perksOf, isKing, row, rollSeason, payLeagues, sync, linkRef, heroGames, profileView, kingExtras, ownView, codeOf, xpClear, xpFloor, xpBoss, xpSpend, xpGame, xpDuel, levelView };
+// v73 (reviews #150 #151): the achievements of a finished run: the ones the game saw (by 'run', sent by the browser like every result here) and the account
+// ones checked here (first run, every hero, streaks, leagues). Returns the new ones (shown on the XP screen as new titles).
+async function grantAchs(st, p, sent) {
+  const had = listOf(p.achs), heroes = Object.keys(D.HEROES).length, cand = (Array.isArray(sent) ? sent : []).filter(id => D.ACH[id] && D.ACH[id].by === 'run');
+  if ((p.crowns | 0) >= 1) cand.push('first');
+  if (listOf(p.cleared).length >= heroes) cand.push('allheroes');
+  const s = p.streak == null ? 1 : p.streak | 0; if (s >= 3) cand.push('onfire'); if (s >= 10) cand.push('unstoppable');
+  const lg = Math.max(p.league | 0, p.peak_league | 0); if (lg >= 2) cand.push('golden'); if (lg >= 5) cand.push('celestial');
+  const lvl = D.levelOf(p.axp | 0); for (const a of D.ACHIEVEMENTS) if (a.by === 'level' && a.lvl <= lvl) cand.push(a.id);   // v74 (review #152): the level titles
+  const fresh = [...new Set(cand)].filter(id => !had.includes(id)); if (!fresh.length) return [];
+  p.achs = JSON.stringify(had.concat(fresh)); await st.setProgress(p.pid, { achs: p.achs });
+  return fresh;
+}
+module.exports = { grantAchs, tauntText, grant, perksOf, isKing, row, rollSeason, payLeagues, sync, linkRef, heroGames, profileView, kingExtras, ownView, codeOf, xpClear, xpFloor, xpBoss, xpSpend, xpGame, xpDuel, levelView };

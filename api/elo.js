@@ -209,7 +209,7 @@ module.exports = async (req, res) => {
     if (b.ref) await P.linkRef(st, p, b.ref);
     const save = () => st.setPlayer(pid, P.row(p));
     // v66 (review #136): an opponent's team comes with its player's taunt, VS entrance and portrait (shown on the VS screen)
-    const styled = async t => { const v = oppView(t, pid); if (!v) return null; const o = await st.getPlayer(t.pid); if (o) Object.assign(v, { taunt: P.tauntText(o), vsfx: o.vsfx || null, avatar: o.avatar || null, league: o.league | 0, lp: o.lp | 0, streak: o.streak == null ? 1 : o.streak | 0, level: D.levelOf(o.axp | 0) }); return v; };   // v67 (review #137): and their league
+    const styled = async t => { const v = oppView(t, pid); if (!v) return null; const o = await st.getPlayer(t.pid); if (o) Object.assign(v, { taunt: P.tauntText(o), vsfx: o.vsfx || null, avatar: o.avatar || null, title: o.title && D.ACH[o.title] ? D.ACH[o.title].title : null, league: o.league | 0, lp: o.lp | 0, streak: o.streak == null ? 1 : o.streak | 0, level: D.levelOf(o.axp | 0) }); return v; };   // v67 (review #137): and their league
     const xp = [];   // v30: account XP earned by this call (shown as toasts and on the result screen)
     const me = extra => Object.assign({ name: p.name, code: P.codeOf(pid), elo: Math.round(p.elo), runs: p.runs, titles: p.crowns, best: p.best, league: p.league | 0, lp: p.lp | 0, streak: p.streak == null ? 1 : p.streak | 0, bstreak: p.bstreak == null ? 1 : p.bstreak | 0, avatar: p.avatar || null,
       crowns: p.gems | 0, season: p.season, sreach: p.sreach | 0, xp }, P.levelView(p), extra);
@@ -242,7 +242,8 @@ module.exports = async (req, res) => {
       const used = cleanTeam(b.team); if (used) { await rateContent(st, ipHash(req), [{ used: usedIn(used, relicList(b.relics)), score: 0 }]); await P.heroGames(st, pid, used, false); }
       await logFights(st, req, pid, b.runId, b.flog);
       await P.xpGame(st, p, b.game, xp);   // v46 (review #57): XP for the game, by how far it went
-      return send(res, 200, me({ lg }));
+      const achs = await P.grantAchs(st, p, b.achs);   // v73 (reviews #150 #151)
+      return send(res, 200, me({ lg, achs }));
     }
 
     // ---- v63 (reviews #117 #118 #119): PvP days and the final fight. A player's team is stored as a snapshot on its PvP day (status 'snap', wins = the day) and, if the run is completed, as a
@@ -291,7 +292,8 @@ module.exports = async (req, res) => {
       await logFights(st, req, pid, b.runId, b.flog);
       await P.xpGame(st, p, { fights: b.game && b.game.fights, reached: true }, xp);
       await P.xpClear(st, p, team, xp);
-      return send(res, 200, me({ teamId: id, lg }));
+      const achs = await P.grantAchs(st, p, b.achs);   // v73 (reviews #150 #151)
+      return send(res, 200, me({ teamId: id, lg, achs }));
     }
 
     if (b.op === 'enter') {

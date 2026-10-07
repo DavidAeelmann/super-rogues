@@ -379,6 +379,7 @@
       if (run.bank && run.bank.length) { res.bank = run.bank.reduce((a, x) => a + x, 0); run.gold = Math.max(0, run.gold + res.bank); run.bank = []; }
     }
     else run.lost++;
+    fightAchs(run, W, win, f.diff === 'boss' && !f.challenge, f.fightNo === 1 && !f.challenge);
     if (has(run, 'cursecoin')) run.coinN = (run.coinN || 0) + 1;
     if (W.used && W.used.phoenix) { run.relics = run.relics.filter(id => id !== 'phoenix'); res.phoenix = true; }   // v50: the egg hatched
     run.log.push((win ? 'Won ' : 'Lost ') + (f.challenge ? f.challenge.name : f.diff === 'boss' ? 'boss' : f.diff) + ' fight ' + f.fightNo);
@@ -388,6 +389,29 @@
     // v63 (review #117): three lives. A lost fight costs one and the day passes; the third lost fight ends the run
     if (!win) { run.lives--; res.lives = run.lives; if (run.lives <= 0) { run.phase = 'over'; run.result = 'defeat'; } else advance(run); } else advance(run);
     return res;
+  }
+  // v73 (reviews #150 #151): achievements the run sees (B.ACHIEVEMENTS by 'run'); the account ones are checked by the server at the end of the run
+  // WHAT: ach() notes an achievement of this run; fightAchs() looks at a finished fight (heroes that fell, a hero under 1% Health, how long it took, the lucky ones);
+  // endAchs() adds the ones of a finished run (perfect, comeback, untouchable, duel master, hoard). They are sent with the end of the run (api/elo.js).
+  function ach(run, id) { if (!B.ACH[id]) return; run.achs = run.achs || []; if (!run.achs.includes(id)) run.achs.push(id); }
+  function fightAchs(run, W, win, boss, first) {
+    const hs = W.units.filter(u => u.kind === 'hero' && u.side === 0), up = hs.filter(u => !u.dead && u.hp > 0), secs = W.t / B.Sim.TPS;
+    if (hs.some(u => u.dead)) run.fell = (run.fell || 0) + 1;
+    if (!win) { if (first) ach(run, 'humble'); return; }
+    if (up.some(u => u.hp / u.maxHp < 0.01)) ach(run, 'thread');
+    if (secs < 8) ach(run, 'blitz'); if (secs > 90) ach(run, 'marathon');
+    if (hs.length >= 3 && up.length === 1) ach(run, 'lastone');
+    if (boss) { run.bossWins = (run.bossWins || 0) + 1; if (run.bossWins >= 2) ach(run, 'bosses'); }
+    const luck = ((run.seed | 0) * 2654435761 + (run.fightNo | 0) * 40503 + (run.won | 0) * 97) >>> 0;   // the same run always gets the same luck (no draw from the run's dice)
+    if (luck % 1000 < 25) ach(run, 'lucky'); if (luck % 10007 < 40) ach(run, 'clover');
+  }
+  function endAchs(run) {
+    if (run.result !== 'clear') return run.achs || [];
+    if (run.lives >= C.lives) ach(run, 'perfect'); if (run.lives === 1) ach(run, 'comeback');
+    if (!run.fell) ach(run, 'untouchable');
+    if ((run.trophies || []).filter(t => !t.final).length >= (C.pvpFights || []).length && !run.pvpLost) ach(run, 'duelmaster');
+    if (run.gold >= 100) ach(run, 'hoarder');
+    return run.achs || [];
   }
   // ------------------------------------------------------------------ PvP days and the final fight (v63, reviews #117 #118 #119)
   // WHAT: the three heroes offered on the free recruit screen: one of each class, the classes the team lacks first (never a hero already in the team).
@@ -466,6 +490,8 @@
       res.xp.push({ uid: h.uid, name: B.HEROES[h.key].name, gained: h.xp - xp0, from: before, to: h.lvl });
     }
     if (W.used && W.used.phoenix) { run.relics = run.relics.filter(id => id !== 'phoenix'); res.phoenix = true; }
+    fightAchs(run, W, win, false, false);
+    if (win && g.opp && ghostPower(g.opp) >= 1.3 * powerOf(run, run.heroes)) ach(run, 'giant');
     run.log.push((win ? 'Won ' : 'Lost ') + (final ? 'the final fight' : 'a duel on fight ' + f.fightNo));
     run.cur = null;
     if (win) {
@@ -503,7 +529,7 @@
       let pos = null;
       if (old) { run.bag.push(...old.items); pos = old.pos; run.heroes = run.heroes.filter(h => h !== old); run.pending = run.pending.filter(p => p.uid !== old.uid); }
       const x = o.hero, h = { uid: ++run.nuid, key: x.key, lvl: x.lvl, xp: C.xpLevels[x.lvl] || 0, specs: x.specs.slice(), items: [], bonus: Object.assign({}, x.bonus), pos: pos ? { c: pos.c, r: pos.r } : null };
-      run.heroes.push(h); if (!h.pos) autoPlace(run, h); run.bag.push(...x.items);
+      run.heroes.push(h); if (!h.pos) autoPlace(run, h); run.bag.push(...x.items); ach(run, 'pickpocket');
     } else if (o.kind === 'item') run.bag.push(o.id);
     else gainRelic(run, o.id);
     run.steal = null; run.g = null; advance(run); return null;
@@ -606,6 +632,7 @@
     } else if (t === 'X') {
       const w = { heroShop: 0.25, itemShop: 0.3, relicShop: 0.2, event: has(run, 'xmap') ? 0.6 : 0.3 };
       if (has(run, 'solo')) delete w.heroShop;   // v64 (review #127): with a full team the Hero Shop swaps a hero in
+      if ((run.recruits || 0) < (C.freeRecruits || 0)) delete w.heroShop;   // v73 (review #149, David: "no hero shops until 3rd hero is picked"): the free recruits come first
       // review #22: with a single hero the hero shop is always one of the two options
       const a = run.heroes.length === 1 && w.heroShop ? 'heroShop' : wpick(run, w); delete w[a]; const b = wpick(run, w); delete w[b];
       const ks = [a, b]; if (has(run, 'quill') && Object.keys(w).length) ks.push(wpick(run, w));
@@ -1061,7 +1088,7 @@
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
   B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
-    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, canEquip, setCounts, setBonuses, seqOf, bossFight,
+    eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };
   if (typeof module !== 'undefined') module.exports = B.Run;
 })(typeof window !== 'undefined' ? window : globalThis);

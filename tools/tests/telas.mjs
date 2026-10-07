@@ -399,7 +399,7 @@ if (!REMOTE) {
   const shopTab = async t => { await ev(`__bal.ACT['shop-tab']('${t}')`); await sleep(150); };
   ok(await ev(`document.querySelectorAll('#modal .perk').length === 3 && !/Content Elo/.test(document.querySelector('#modal').textContent) && document.querySelectorAll('#modal .stabs button').length === 5`), 'Crown Shop: wallet, tabs (v66: + Style), 3 perks on the first (4x speed, Double XP, Skip fights; no Content Elo)');
   await click('#modal [data-act=shop-tab][data-arg=style]'); await sleep(150);
-  ok(await ev(`document.querySelectorAll('#modal .perk.cos').length === B.TAUNTS.length + B.VSFX.length && document.querySelectorAll('#modal .tbub').length === B.TAUNTS.length && !!document.querySelector('#modal .cpors .cpor')`), 'v66 (review #136): the Style tab sells taunts, VS entrances and portraits');
+  ok(await ev(`document.querySelectorAll('#modal .perk.cos').length === B.TAUNTS.length + B.LEVEL_TAUNTS.length + B.VSFX.length && document.querySelectorAll('#modal .tbub').length === B.TAUNTS.length + B.LEVEL_TAUNTS.length && !!document.querySelector('#modal .cpors .cpor')`), 'v66 (review #136): the Style tab sells taunts, VS entrances and portraits');
   await click('#modal [data-act=shop-tab][data-arg=perks]'); await sleep(100);
   await shopTab('earn'); ok(await ev(`document.querySelectorAll('#modal .crl').length === 5`), 'Crown Shop: crowns per league on the Earn tab');
   await shopTab('invite'); ok(await ev(`!!document.querySelector('#refLink') && /[?]ref=[a-f0-9]{12}$/.test(document.querySelector('#refLink').value)`), 'Crown Shop: your invite link on the Invite tab');

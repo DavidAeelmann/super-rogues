@@ -65,6 +65,9 @@ const SCHEMA = [
   // v66 (review #136): the taunt (comic bubble) and the VS entrance a player shows, picked among the ones bought in the Crown Shop
   `alter table players add column if not exists taunt text`,
   `alter table players add column if not exists vsfx text`,
+  // v73 (reviews #150 #151): the achievements a player has (JSON array of ids) and the one shown as a title under the name
+  `alter table players add column if not exists achs text not null default '[]'`,
+  `alter table players add column if not exists title text`,
   // v30 (review #28): account XP (axp), the heroes that cleared PvE (cleared, JSON), the highest gauntlet floor ever
   // reached (pfloor), bosses beaten (bosses, JSON), xpv = 1 once the XP of older players was counted from their teams
   `alter table players add column if not exists axp int not null default 0`,
@@ -110,7 +113,7 @@ function memStore() {
     async topScores(n) { return M.scores.slice().sort((a, b) => b.score - a.score || a.created - b.created).slice(0, n).map(pubScore); },
     async getPlayer(pid) { const P = M.players = M.players || {}; return P[pid] ? Object.assign({}, P[pid]) : null; },
     // v27: a name given later only replaces the default one ("Player xxxx"); after that, renaming costs crowns
-    async upsertPlayer(pid, name, iph, fallback) { const P = M.players = M.players || {}; if (!P[pid]) P[pid] = { pid, code: codeOf(pid), name: name || fallback, elo: 1000, runs: 0, crowns: 0, best: 0, league: 0, lp: 0, gems: 0, season: 0, sreach: 0, peak_league: 0, last_league: -1, perks: '[]', ref: null, ref_gems: 0, axp: 0, cleared: '[]', pfloor: 0, bosses: '[]', xpv: 0, streak: 1, bstreak: 1, avatar: null, taunt: null, vsfx: null, iph, created: Date.now() }; else if (name && P[pid].name === fallback) P[pid].name = name; return Object.assign({}, P[pid]); },
+    async upsertPlayer(pid, name, iph, fallback) { const P = M.players = M.players || {}; if (!P[pid]) P[pid] = { pid, code: codeOf(pid), name: name || fallback, elo: 1000, runs: 0, crowns: 0, best: 0, league: 0, lp: 0, gems: 0, season: 0, sreach: 0, peak_league: 0, last_league: -1, perks: '[]', ref: null, ref_gems: 0, axp: 0, cleared: '[]', pfloor: 0, bosses: '[]', xpv: 0, streak: 1, bstreak: 1, avatar: null, taunt: null, vsfx: null, achs: '[]', title: null, iph, created: Date.now() }; else if (name && P[pid].name === fallback) P[pid].name = name; return Object.assign({}, P[pid]); },
     async setPlayer(pid, f) { for (const x of ['elo', 'runs', 'crowns', 'best', 'league', 'lp', 'season', 'sreach', 'peak_league', 'last_league', 'streak', 'bstreak']) if (f[x] != null) M.players[pid][x] = f[x]; M.players[pid].updated = Date.now(); },
     async topPlayers(n) { return Object.values(M.players || {}).filter(p => p.runs > 0).sort((a, b) => (b.league | 0) - (a.league | 0) || (b.lp | 0) - (a.lp | 0)).slice(0, n).map(pubPlayer); },   // v64: by league, then league points   // v62 (review #85): only players who finished a first run
     async getPlayerByCode(code) { const p = Object.values(M.players || {}).find(x => x.code === code); return p ? Object.assign({}, p) : null; },
@@ -133,7 +136,8 @@ function memStore() {
     async trophiesOf(pid, n) { const w = (M.duels || []).filter(d => d.pid === pid && d.win).sort((a, b) => b.id - a.id); return { n: w.length, list: w.slice(0, n).map(pubTrophy) }; },
     async h2h(a, b) { const D = M.duels || []; let w = 0, l = 0; for (const d of D) { if (d.pid === a && d.opp_pid === b) { if (d.win) w++; else l++; } else if (d.pid === b && d.opp_pid === a) { if (d.win) l++; else w++; } } return { w, l }; },
     async addXp(pid, n) { const p = M.players && M.players[pid]; if (!p) return null; p.axp = (p.axp || 0) + n; return p.axp; },
-    async setProgress(pid, f) { const p = M.players && M.players[pid]; if (!p) return; for (const k of ['cleared', 'pfloor', 'bosses', 'xpv']) if (f[k] != null) p[k] = f[k]; },
+    async setProgress(pid, f) { const p = M.players && M.players[pid]; if (!p) return; for (const k of ['cleared', 'pfloor', 'bosses', 'xpv', 'achs']) if (f[k] != null) p[k] = f[k]; },
+    async setTitle(pid, t) { const p = M.players && M.players[pid]; if (p) p.title = t; },
     async xpvStep(pid, from, to) { const p = M.players && M.players[pid]; if (!p || (p.xpv | 0) !== from) return false; p.xpv = to; return true; },
     async teamsOf(pid) { return (M.teams || []).filter(t => t.pid === pid).map(t => ({ team: t.team, wins: t.wins })); },
     async ghostRecord(pid) { const T = (M.teams || []).filter(t => t.pid === pid); return { w: T.reduce((a, t) => a + (t.def_w || 0), 0), l: T.reduce((a, t) => a + (t.def_l || 0), 0), n: T.length }; },
@@ -210,7 +214,7 @@ function pgStore() {
     },
     // never the Crown balance (only addGems / spend move it, atomically) nor perks, name or ref
     async setPlayer(pid, f) { await q('update players set elo=$2, runs=$3, crowns=$4, best=$5, updated=$6, league=$7, lp=$8, season=$9, sreach=$10, peak_league=$11, last_league=$12, streak=coalesce($13, streak), bstreak=coalesce($14, bstreak) where pid=$1', [pid, f.elo, f.runs, f.crowns, f.best, Date.now(), f.league | 0, f.lp | 0, f.season | 0, f.sreach | 0, f.peak_league | 0, f.last_league == null ? -1 : f.last_league, f.streak == null ? null : f.streak | 0, f.bstreak == null ? null : f.bstreak | 0]); },
-    async topPlayers(n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar from players where runs > 0 order by league desc, lp desc limit $1', [n])).map(pubPlayer); },   // v64: by league, then league points   // v62 (review #85)
+    async topPlayers(n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar, title from players where runs > 0 order by league desc, lp desc limit $1', [n])).map(pubPlayer); },   // v64: by league, then league points   // v62 (review #85)
     async getPlayerByCode(code) { const r = await q('select * from players where code=$1', [code]); return r.length ? num(r[0]) : null; },
     async addGems(pid, n, fromRef) { const r = await q(`update players set gems = gems + $2${fromRef ? ', ref_gems = ref_gems + $2' : ''} where pid=$1 returning gems`, [pid, n]); return r.length ? Number(r[0].gems) : null; },
     async spend(pid, price, perksOld, perksNew, name) {
@@ -230,8 +234,9 @@ function pgStore() {
     async follow(pid, code, on) { if (on) await q('insert into follows (pid, code, created) values ($1,$2,$3) on conflict do nothing', [pid, code, Date.now()]); else await q('delete from follows where pid=$1 and code=$2', [pid, code]); },
     async isFollowing(pid, code) { return (await q('select 1 from follows where pid=$1 and code=$2', [pid, code])).length > 0; },
     async followCounts(pid, code) { const r = await q('select (select count(*)::int from follows where pid=$1) a, (select count(*)::int from follows where code=$2) b', [pid, code]); return { following: Number(r[0].a), followers: Number(r[0].b) }; },
-    async friendsTop(pid, n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar from players where pid=$1 or code in (select code from follows where pid=$1) order by league desc, lp desc limit $2', [pid, n])).map(pubPlayer); },
+    async friendsTop(pid, n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar, title from players where pid=$1 or code in (select code from follows where pid=$1) order by league desc, lp desc limit $2', [pid, n])).map(pubPlayer); },
     async setAvatar(pid, key) { await q('update players set avatar=$2 where pid=$1', [pid, key]); },
+    async setTitle(pid, t) { await q('update players set title=$2 where pid=$1', [pid, t]); },
     async setStyle(pid, taunt, vsfx) { await q('update players set taunt=$2, vsfx=$3 where pid=$1', [pid, taunt, vsfx]); },
     async addDuel(d) { await q('insert into duels (pid, opp_pid, opp_name, opp_code, final, win, created) values ($1,$2,$3,$4,$5,$6,$7)', [d.pid, d.opp_pid || null, d.opp_name, d.opp_code || null, d.final ? 1 : 0, d.win ? 1 : 0, Date.now()]); },
     async trophiesOf(pid, n) { const c = await q('select count(*)::int n from duels where pid=$1 and win=1', [pid]); const r = await q('select * from duels where pid=$1 and win=1 order by id desc limit $2', [pid, n]); return { n: Number(c[0].n), list: r.map(pubTrophy) }; },
@@ -240,7 +245,7 @@ function pgStore() {
     // v46: moves xpv from one version to the next only once, even when two calls race
     async xpvStep(pid, from, to) { const r = await q('update players set xpv=$3 where pid=$1 and xpv=$2 returning pid', [pid, from, to]); return r.length > 0; },
     async setProgress(pid, f) {
-      const cols = ['cleared', 'pfloor', 'bosses', 'xpv'].filter(k => f[k] != null); if (!cols.length) return;
+      const cols = ['cleared', 'pfloor', 'bosses', 'xpv', 'achs'].filter(k => f[k] != null); if (!cols.length) return;
       await q(`update players set ${cols.map((k, i) => k + '=$' + (i + 2)).join(', ')} where pid=$1`, [pid, ...cols.map(k => f[k])]);
     },
     async teamsOf(pid) { return (await q('select team, wins from teams where pid=$1', [pid])).map(r => ({ team: r.team, wins: Number(r.wins) })); },
@@ -315,7 +320,7 @@ function pub(s) { return { id: Number(s.id), batch: Number(s.batch || s.id), nam
 function num(r) { for (const k of ['id', 'elo', 'runs', 'crowns', 'best', 'elo_at', 'wins', 'opp', 'def_w', 'def_l', 'league', 'lp', 'created', 'updated', 'gems', 'season', 'sreach', 'peak_league', 'last_league', 'ref_gems', 'axp', 'pfloor', 'xpv', 'streak', 'bstreak']) if (r[k] != null) r[k] = Number(r[k]); return r; }
 // v27: `titles` = champion titles (column crowns); `code` = public id for the profile; `king` = owns the King Tier
 function pubPlayer(p) { return { name: p.name, code: p.code || codeOf(p.pid), elo: Math.round(Number(p.elo)), runs: Number(p.runs), titles: Number(p.crowns), best: Number(p.best), league: Number(p.league) || 0, lp: Number(p.lp) || 0, king: /"king"/.test(p.perks || ''),
-  streak: p.streak == null ? 1 : Number(p.streak), bstreak: p.bstreak == null ? 1 : Number(p.bstreak), avatar: p.avatar || null }; }   // v65: win streak, best streak, portrait
+  streak: p.streak == null ? 1 : Number(p.streak), bstreak: p.bstreak == null ? 1 : Number(p.bstreak), avatar: p.avatar || null, title: p.title && globalThis.B && B.ACH && B.ACH[p.title] ? B.ACH[p.title].title : null }; }   // v65: win streak, best streak, portrait; v73: title
 // v64: a trophy = a won duel: who was beaten (their public code when it was a real player), when, and whether it was the final fight
 function pubTrophy(d) { return { name: d.opp_name, code: d.opp_code || null, final: !!Number(d.final), at: Number(d.created) }; }
 function pubRating(r) { return { kind: r.kind, id: r.id, elo: Math.round(Number(r.elo)), games: Number(r.games), wins: Number(r.wins) }; }

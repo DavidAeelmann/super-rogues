@@ -2759,3 +2759,16 @@ section.event { position: relative; } .evskipb { position: absolute; top: 4px; r
 @media (prefers-reduced-motion: no-preference) { .depban { animation: depglow 1.4s ease-in-out infinite alternate; } }
 @keyframes depglow { to { box-shadow: 0 0 0 2px #fff, 0 0 26px #7ee8ffcc; } }
 .tutspeed.dep { top: 40px !important; }
+/* v73 (reviews #150 #151): titles and achievements */
+.ptitle { display: inline-block !important; width: fit-content; margin: 1px 0 2px; padding: 1px 10px; border-radius: 999px; background: linear-gradient(90deg, #ffd23f, #ff9a3d); color: #3a1f00; font: 800 12px var(--fun); letter-spacing: .3px; box-shadow: 0 2px 0 #c47f00; }
+.ltitle { display: block; margin-left: 32px; font: 700 10.5px var(--fun); color: #ffd23f; }
+.vstitle { padding: 1px 10px; border-radius: 999px; background: #ffd23f; color: #3a1f00; font: 800 11px var(--fun); box-shadow: 0 2px 0 #c47f00; animation: vspop .3s .5s both; } .them .vstitle { order: 4; animation-delay: 1.2s; }
+.pachs { margin: 10px 0; } .achgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; margin-top: 6px; }
+.achc { display: grid; justify-items: center; align-content: start; gap: 2px; min-height: 0; padding: 8px 4px; border-radius: 14px; background: #0d114699; border: 2px solid transparent; text-align: center; opacity: .5; filter: grayscale(.9); box-shadow: none; }
+.achc i { font-style: normal; font-size: 26px; line-height: 1; } .achc b { font: 800 12px/1.15 var(--fun); color: #fff; } .achc small { font: 600 10px/1.2 var(--fun); color: #c8ccf0; }
+.achc.got { opacity: 1; filter: none; background: linear-gradient(180deg, #2a3a9a, #18206a); border-color: #ffd23f88; } .achc.on { border-color: #ffd23f; box-shadow: 0 0 14px #ffd23f88; } .achc em { font: 800 10px var(--fun); font-style: normal; color: #ffd23f; }
+button.achc.got { cursor: pointer; }
+.lootit.ach { box-shadow: 0 0 0 2px #ff9a3d, 0 0 22px #ffd23f99; background: linear-gradient(180deg, #4a2a8a, #1b2270); } .lootit .achi { font-style: normal; font-size: 40px; line-height: 46px; height: 46px; } .lootit.ach small { color: #ff9a3d; }
+.loot.lots .lootit .achi { font-size: 30px; line-height: 34px; height: 34px; }
+.pstatb { display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 58px; padding: 6px 4px !important; border-radius: 10px; background: linear-gradient(180deg, #ffd23f33, #ffd23f11); box-shadow: inset 0 0 0 2px #ffd23f88; } .pstatb b { font-size: 16px; color: #ffe9a6; } .pstatb span { font-size: 11px; color: #ffd23f; }
+.upic { display: inline-grid; place-items: center; width: var(--px, 40px); height: var(--px, 40px); border-radius: 12px; background: linear-gradient(180deg, #4a2a8a, #1b2270); font-style: normal; font-size: calc(var(--px, 40px) * .6); line-height: 1; box-shadow: 0 0 0 2px #ff9a3d; }

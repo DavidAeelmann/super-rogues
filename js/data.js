@@ -1422,6 +1422,15 @@
     { id: 'tn_crown', text: 'Bow before the crown!', price: 30 }, { id: 'tn_ghost', text: 'Boo! Even my ghost beats you.', price: 30 },
     { id: 'tn_gg', text: 'GG. Well played, whoever wins.', price: 10 }, { id: 'tn_legend', text: 'They will write songs about this.', price: 40 },
   ];
+  // v74 (review #152, David: "make some voice lines and titles drop from xp in chests as you level, sprinkle in, not all champions in a row"): taunts the account
+  // level gives (never sold); B.TAUNT_ALL = every taunt (the Crown Shop ones and these)
+  B.LEVEL_TAUNTS = [
+    { id: 'lt_hi', text: 'Hi! Mind if I win?', lvl: 3 }, { id: 'lt_warm', text: 'Just warming up.', lvl: 6 },
+    { id: 'lt_nap', text: 'Wake me when it gets hard.', lvl: 9 }, { id: 'lt_math', text: 'I did the math. You lose.', lvl: 13 },
+    { id: 'lt_snack', text: 'Your team looks delicious.', lvl: 17 }, { id: 'lt_story', text: 'Gather round, this is a short story.', lvl: 21 },
+    { id: 'lt_mirror', text: 'I practise in the mirror. Daily.', lvl: 26 }, { id: 'lt_ok', text: 'OK. Now try hard.', lvl: 31 },
+    { id: 'lt_bard', text: 'The bards already wrote my win.', lvl: 37 }, { id: 'lt_end', text: 'This is where your run ends.', lvl: 42 },
+  ];
   B.VSFX = [
     { id: 'vx_fire', name: 'Fire entrance', icon: '🔥', price: 40, desc: 'Your team bursts onto the VS screen in flames.' },
     { id: 'vx_bolt', name: 'Thunder entrance', icon: '⚡', price: 40, desc: 'Lightning strikes and your team appears.' },
@@ -1431,6 +1440,45 @@
   B.COSMETICS = B.TAUNTS.map(t => ({ id: t.id, kind: 'taunt', icon: '💬', name: 'Taunt', text: t.text, price: t.price, desc: `"${t.text}"` }))
     .concat(B.VSFX.map(v => Object.assign({ kind: 'vsfx' }, v)));   // the portraits join below, once B.PORTRAIT_UNLOCKS exists
   B.SHOP_ITEM = Object.fromEntries(B.SHOP.concat(B.COSMETICS).map(x => [x.id, x]));
+  B.TAUNT_ALL = B.TAUNTS.concat(B.LEVEL_TAUNTS);
+  // v73 (reviews #150 #151, David: "add achievements. Achievements unlock titles that you can put in your profile under your name, announced in the xp screen ...
+  // no hero died during run, picked and won all possible pvp fights, win perfect victory, win once with all heroes, win with a hero under 1% hp, etc. Make them fun
+  // and sometimes random"): each achievement is a title. `by` = who sees it happen: 'run' (the game, js/run.js + reportRunEnd) or 'server' (api/elo.js, from the account).
+  // WHAT: the achievements and the titles they unlock.
+  B.ACHIEVEMENTS = [
+    { id: 'first', title: 'Rookie Rogue', icon: '🎒', desc: 'Complete your first run.', by: 'server' },
+    { id: 'untouchable', title: 'The Untouchable', icon: '🛡', desc: 'Complete a run without a single hero falling in any fight.', by: 'run' },
+    { id: 'perfect', title: 'Flawless', icon: '💎', desc: 'Win a Perfect victory (no fight lost).', by: 'run' },
+    { id: 'duelmaster', title: 'Duel Master', icon: '🤺', desc: 'Pick every duel of a run, win them all and win the final fight.', by: 'run' },
+    { id: 'thread', title: 'Hanging by a Thread', icon: '🧵', desc: 'Win a fight with a hero standing on less than 1% Health.', by: 'run' },
+    { id: 'allheroes', title: 'Master of All', icon: '🌈', desc: 'Complete a run at least once with every hero.', by: 'server' },
+    { id: 'comeback', title: 'Comeback Kid', icon: '🩹', desc: 'Complete a run with your last life.', by: 'run' },
+    { id: 'bosses', title: 'Boss Slayer', icon: '👹', desc: 'Beat both bosses in one run.', by: 'run' },
+    { id: 'blitz', title: 'Blitz', icon: '⚡', desc: 'Win a fight in under 8 seconds.', by: 'run' },
+    { id: 'marathon', title: 'Marathon Runner', icon: '🏃', desc: 'Win a fight that lasted over 90 seconds.', by: 'run' },
+    { id: 'lastone', title: 'Last One Standing', icon: '☝', desc: 'Win a fight with three or more heroes where only one is left standing.', by: 'run' },
+    { id: 'giant', title: 'Giant Slayer', icon: '🗡', desc: 'Win a duel against a team at least 30% stronger than yours.', by: 'run' },
+    { id: 'pickpocket', title: 'Pickpocket', icon: '🫳', desc: "Steal a hero from another player's team.", by: 'run' },
+    { id: 'hoarder', title: "Dragon's Hoard", icon: '🐉', desc: 'End a run with 100 or more gold unspent.', by: 'run' },
+    { id: 'humble', title: 'Humble Beginnings', icon: '🐣', desc: 'Lose the very first fight of a run. It happens.', by: 'run' },
+    { id: 'lucky', title: 'Lucky Charm', icon: '🍀', desc: 'A secret: every won fight has a small chance to give it.', by: 'run' },
+    { id: 'clover', title: 'Four-Leaf Clover', icon: '☘', desc: 'A rarer secret than the Lucky Charm.', by: 'run' },
+    { id: 'onfire', title: 'On Fire', icon: '🔥', desc: 'Reach a win streak of 3.', by: 'server' },
+    { id: 'unstoppable', title: 'Unstoppable', icon: '☄', desc: 'Reach a win streak of 10.', by: 'server' },
+    { id: 'golden', title: 'Golden', icon: '🥇', desc: 'Reach the Gold league.', by: 'server' },
+    { id: 'celestial', title: 'Celestial Being', icon: '🌌', desc: 'Reach the Celestial league.', by: 'server' },
+    // v74 (review #152): titles the account level gives, dropping from the level chests between the heroes
+    { id: 'lv_squire', title: 'Squire', icon: '🪖', desc: 'Reach account level 4.', by: 'level', lvl: 4 },
+    { id: 'lv_adventurer', title: 'Adventurer', icon: '🧭', desc: 'Reach account level 8.', by: 'level', lvl: 8 },
+    { id: 'lv_veteran', title: 'Veteran', icon: '🎖', desc: 'Reach account level 12.', by: 'level', lvl: 12 },
+    { id: 'lv_champion', title: 'Champion of the Realm', icon: '🏰', desc: 'Reach account level 16.', by: 'level', lvl: 16 },
+    { id: 'lv_warlord', title: 'Warlord', icon: '⚔', desc: 'Reach account level 20.', by: 'level', lvl: 20 },
+    { id: 'lv_legend', title: 'Living Legend', icon: '📜', desc: 'Reach account level 25.', by: 'level', lvl: 25 },
+    { id: 'lv_mythic', title: 'Mythic', icon: '🐲', desc: 'Reach account level 30.', by: 'level', lvl: 30 },
+    { id: 'lv_ascended', title: 'Ascended', icon: '👼', desc: 'Reach account level 36.', by: 'level', lvl: 36 },
+    { id: 'lv_eternal', title: 'The Eternal', icon: '♾', desc: 'Reach account level 43.', by: 'level', lvl: 43 },
+  ];
+  B.ACH = Object.fromEntries(B.ACHIEVEMENTS.map(a => [a.id, a]));
   // v30 (review #28, PC boy): account level. 10 XP per level; XP comes from firsts (each hero's first PvE clear, each
   // Gauntlet floor reached for the first time, each boss beaten for the first time) and from crowns spent in the shop.
   // Every level from 2 to 19 unlocks one new hero, item or relic (locked ones never show up in a run before that).
@@ -1445,6 +1493,7 @@
   // v63 (review #120, David: "restrict the initial pool of champions to 20, and make the xp progression unlock all the rest with the first levels"): a new player has the 20 heroes of
   // START_HEROES; the other 26 come two per level from level 2 to 14, in the order of HERO_UNLOCKS (a mix of damage, support and tank); items and powers keep their own levels
   B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta'];
+  // v74 (review #152): one a level from level 2 to 27
   B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage', 'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist'];
   // v65 (review #131, David: "add hero portraits for profile in xp rewards"): your picture (profile, ladder, the top bar) is a hero portrait. Four are free;
   // every level from 2 on unlocks one more (the starting heroes first, then the ones the levels unlock), so every level has a reward up to level 43
@@ -1456,7 +1505,8 @@
     [7, 'item', 'starcloak'], [8, 'relic', 'compass'], [9, 'relic', 'teapot'], [11, 'item', 'tidepearl'],
     [12, 'relic', 'snowglobe'], [13, 'relic', 'marbles'], [14, 'item', 'moonslippers'], [16, 'relic', 'fireflies'],
     [17, 'item', 'comethammer'], [18, 'relic', 'pinwheel'], [19, 'relic', 'horseshoe'],
-  ].map(([lvl, kind, id]) => ({ lvl, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: 2 + Math.floor(i / 2), kind: 'hero', id })))
+  ].map(([lvl, kind, id]) => ({ lvl, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: 2 + i, kind: 'hero', id })))   // v74 (review #152): one hero a level (2 to 27), not two
+    .concat(B.LEVEL_TAUNTS.map(t => ({ lvl: t.lvl, kind: 'taunt', id: t.id }))).concat(B.ACHIEVEMENTS.filter(a => a.by === 'level').map(a => ({ lvl: a.lvl, kind: 'title', id: a.id })))
     .concat(B.PORTRAIT_UNLOCKS.map((id, i) => ({ lvl: 2 + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);
   // WHAT: the account level a hero's portrait opens at (1 = free from the start, 0 = no such portrait).
   B.portraitLevel = key => B.PORTRAITS_FREE.includes(key) ? 1 : (B.UNLOCKS.find(u => u.kind === 'portrait' && u.id === key) || { lvl: 0 }).lvl;
@@ -1465,7 +1515,7 @@
   B.levelOf = xp => { let l = 1, left = Math.max(0, xp || 0); while (left >= B.xpToNext(l)) { left -= B.xpToNext(l); l++; } return l; };
   // where an XP total sits: its level, the XP into that level and what the level costs
   B.levelProgress = xp => { const lvl = B.levelOf(xp), into = Math.max(0, xp || 0) - B.xpForLevel(lvl); return { lvl, into, need: B.xpToNext(lvl) }; };
-  B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl && u.kind !== 'portrait').map(u => u.id);   // v65: portraits are pictures, they never lock a hero
+  B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl && ['hero', 'item', 'relic'].includes(u.kind)).map(u => u.id);   // v65: portraits are pictures, they never lock a hero
   B.hasPerk = (perks, id) => (perks || []).includes(id) || (id === 'speed4' && (perks || []).includes('king'));   // v64: Content Elo is gone (review #122: the Balance lab has it)
 
   // ---------------------------------------------------------------- terrain (review #39, David)
