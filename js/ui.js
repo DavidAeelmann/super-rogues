@@ -1319,7 +1319,18 @@
     ui.info = null; screen = 'battle'; render();
     tutSpeedArm();
     if (ate) toast(ate);
+    countdown(battle);
     requestAnimationFrame(loop);
+  }
+  // v69 (review #143, David: "after click start fight, short epic countdown hovers over, 3, 2, 1, fight! Then vanishes as fight starts. Should not obstruct view"):
+  // the fight waits (b.hold) while big see-through numbers pop over the top of the board, then FIGHT! and it starts. Not in an automated browser (the tests).
+  // WHAT: the 3, 2, 1, FIGHT! countdown at the start of a battle.
+  function countdown(b) {
+    if (navigator.webdriver) return;
+    const step = B.Juice && B.Juice.reduced() ? 300 : 620, el = document.createElement('div'); el.className = 'cdown'; el.setAttribute('aria-live', 'polite');
+    document.body.appendChild(el); b.hold = performance.now() + step * 3 + 150;
+    ['3', '2', '1', 'FIGHT!'].forEach((t, i) => setTimeout(() => { if (battle !== b) { el.remove(); return; } el.innerHTML = `<b class="${i === 3 ? 'go' : ''}">${t}</b>`; sfx(i === 3 ? 'go' : 'pick'); }, i * step));
+    setTimeout(() => el.remove(), step * 3 + 700);
   }
   // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
   function loop(now) {
@@ -1331,7 +1342,7 @@
     b.slow = Math.max(0, Math.min(60, (b.slow || 0) + (dt > 34 ? 1 : -1)));
     if (b.slow >= 45 && view && view.dpr > 1 && !document.hidden) { b.slow = 0; Render.maxDpr = view.dpr > 1.5 ? 1.5 : 1; view = Render.setup(view.canvas, view.w); }
     const TICK = 1000 / Sim.TPS;
-    if (!b.W.over) { b.acc += dt * ui.speed; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }
+    if (!b.W.over && !(b.hold && now < b.hold)) { b.acc += dt * ui.speed; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }
     // v42 (review #51): the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)
     if (b.W.over && !b.overAt) { b.overAt = now; b.end = { win: b.W.winner === 0, k: 0 }; if (!b.endAt) b.endAt = now + 1800; sfx(b.end.win ? 'win' : 'lose'); }
     const T = b.W.over ? b.W.t + (now - b.overAt) / TICK * 0.3 : b.W.t + b.acc / TICK;

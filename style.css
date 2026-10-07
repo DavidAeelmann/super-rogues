@@ -2696,3 +2696,9 @@ body.desk .vsteam { max-width: none; } body.desk .vsteam span { width: 110px !im
 section.event { position: relative; } .evskipb { position: absolute; top: 4px; right: 10px; z-index: 2; min-height: 34px !important; padding: 4px 12px !important; border-radius: 999px; font: 700 13px var(--fun); } .evskipb svg.ui { width: 14px; height: 14px; }   /* v69 (review #142): skip an event */
 .xpscr .vmtube { min-height: 110px; } .xpscr .vmwrap { margin: 2px 0; } .xpscr .chestzone { padding-top: 22px; } .xpscr .chest { width: 84px; height: 64px; } .xpscr .chest .box { height: 40px; } .xpscr .chest .lid { height: 24px; }
 .loot.lots { gap: 5px; } .loot.lots .lootit { width: 52px; padding: 4px 2px; } .loot.lots .lootit small { display: none; } .loot.lots .lootit .ico, .loot.lots .lootit .por { width: 34px; height: 34px; }
+/* v69 (review #143): 3, 2, 1, FIGHT! over the top of the board, see-through, never in the way of a tap */
+.cdown { position: fixed; left: 0; right: 0; top: 22%; z-index: 60; display: grid; place-items: center; pointer-events: none; }
+.cdown b { font: 900 96px/1 var(--fun); color: #fff; opacity: .85; -webkit-text-stroke: 3px #0d1146; text-shadow: 0 6px 0 #0d1146aa, 0 0 30px #7ee8ffaa; animation: cdpop .62s cubic-bezier(.3, 1.6, .5, 1) both; }
+.cdown b.go { font-size: 72px; color: #ffd23f; text-shadow: 0 6px 0 #3a1f00aa, 0 0 34px #ffd23f; animation: cdgo .7s ease-out both; }
+@keyframes cdpop { 0% { transform: scale(2.4); opacity: 0; } 35% { transform: scale(.9); opacity: .9; } 80% { transform: scale(1); opacity: .85; } 100% { transform: scale(.7); opacity: 0; } }
+@keyframes cdgo { 0% { transform: scale(.4) rotate(-8deg); opacity: 0; } 30% { transform: scale(1.15) rotate(2deg); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
