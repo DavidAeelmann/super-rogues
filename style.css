@@ -2753,3 +2753,9 @@ section.event { position: relative; } .evskipb { position: absolute; top: 4px; r
 @keyframes tutbounce { from { transform: translateY(0); } to { transform: translateY(5px); } }
 .deploy > .dspeed { float: right; position: static; margin: 2px 0 0 6px; padding: 0; background: none; } .deploy > .dspeed button { min-height: 28px; min-width: 34px; font-size: 12px; }
 .tutspeed.dep { top: 4px !important; right: 6px !important; max-width: none !important; white-space: nowrap !important; font-size: 12px !important; padding: 4px 10px !important; }
+/* v72 (review #148, David: "add a text Deploy your units during deployment phase"): a ribbon on the sky of the board while you place your heroes */
+.depban { position: absolute; left: 50%; top: 6px; z-index: 4; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 999px; background: #0d1146cc; color: #fff; font: 800 14px var(--fun); letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; pointer-events: none; box-shadow: 0 0 0 2px #ffffff55, 0 0 16px #4f7cff88; }
+.depban svg.ui { width: 16px; height: 16px; color: #7ee8ff; }
+@media (prefers-reduced-motion: no-preference) { .depban { animation: depglow 1.4s ease-in-out infinite alternate; } }
+@keyframes depglow { to { box-shadow: 0 0 0 2px #fff, 0 0 26px #7ee8ffcc; } }
+.tutspeed.dep { top: 40px !important; }
