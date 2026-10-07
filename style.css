@@ -2702,3 +2702,47 @@ section.event { position: relative; } .evskipb { position: absolute; top: 4px; r
 .cdown b.go { font-size: 72px; color: #ffd23f; text-shadow: 0 6px 0 #3a1f00aa, 0 0 34px #ffd23f; animation: cdgo .7s ease-out both; }
 @keyframes cdpop { 0% { transform: scale(2.4); opacity: 0; } 35% { transform: scale(.9); opacity: .9; } 80% { transform: scale(1); opacity: .85; } 100% { transform: scale(.7); opacity: 0; } }
 @keyframes cdgo { 0% { transform: scale(.4) rotate(-8deg); opacity: 0; } 30% { transform: scale(1.15) rotate(2deg); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+/* v70 (review #144, David: "the league lp and xp screens take too little space, make the stuff bigger and flashier and dopamine inducing"): the meter and the number
+   fill the screen, the tube bubbles and glows, rays turn behind the number, the chest is twice the size with rays when it opens */
+.lpscr, .xpscr { position: relative; overflow: hidden; }
+.lpscr::before, .xpscr::before { content: ''; position: absolute; left: 50%; top: 42%; width: 160vmax; height: 160vmax; margin: -80vmax 0 0 -80vmax; z-index: -1; pointer-events: none; opacity: .5;
+  background: repeating-conic-gradient(from 0deg, #ffffff14 0 7deg, transparent 7deg 14deg), radial-gradient(circle, #ffd23f33, transparent 55%); }
+.xpscr::before { background: repeating-conic-gradient(from 0deg, #ffffff14 0 7deg, transparent 7deg 14deg), radial-gradient(circle, #7ee8ff33, transparent 55%); }
+@media (prefers-reduced-motion: no-preference) { .lpscr::before, .xpscr::before { animation: spin 40s linear infinite; } }
+.lpscr .vmwrap, .xpscr .vmwrap { flex: 1 1 auto; min-height: 0; grid-template-columns: 138px minmax(0, 1fr); gap: 16px; margin: 8px 0; }
+.xpscr .vmwrap { flex: 1.3 1 auto; }
+.lpscr .vmeter, .xpscr .vmeter { padding: 14px 10px 12px; border-radius: 28px; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--lh) 70%, transparent), 0 0 34px color-mix(in srgb, var(--lc) 60%, transparent), 0 10px 24px #0008; }
+@media (prefers-reduced-motion: no-preference) { .lpscr .vmeter, .xpscr .vmeter { animation: meterglow 1.8s ease-in-out infinite alternate; } }
+@keyframes meterglow { to { box-shadow: inset 0 0 0 3px var(--lh), 0 0 56px var(--lc), 0 10px 24px #0008; } }
+.lpscr .vmban .lgem { width: 82px; height: 82px; filter: drop-shadow(0 0 14px var(--lh)); } .lpscr .vmname, .xpscr .vmname { font-size: 19px; }
+.xpscr .vmban .lvb { width: 76px; height: 76px; font-size: 36px; }
+.lpscr .vmtube, .xpscr .vmtube { width: 66px; min-height: 0; flex: 1 1 auto; }
+.lpscr .vmtube i, .xpscr .vmtube i { background: repeating-linear-gradient(0deg, transparent 0 14px, #ffffff22 14px 18px), linear-gradient(0deg, var(--lc), var(--lh)); background-size: 100% 36px, 100% 100%; box-shadow: 0 0 26px var(--lh), inset 0 -4px 10px #fff6; }
+@media (prefers-reduced-motion: no-preference) { .lpscr .vmtube i, .xpscr .vmtube i { animation: tubeflow 1.2s linear infinite; } }
+@keyframes tubeflow { to { background-position: 0 -36px, 0 0; } }
+.lpscr .vmfoot, .xpscr .vmfoot { font-size: 15px; }
+.lpscr .vmbig, .xpscr .vmbig { font-size: 84px; letter-spacing: -2px; text-shadow: 0 5px 0 #0009, 0 0 36px currentColor; } .lpscr .vmbig small, .xpscr .vmbig small { font-size: 28px; }
+@media (prefers-reduced-motion: no-preference) { .lpscr .vmbig, .xpscr .vmbig { animation: bigpulse 1.4s ease-in-out .8s infinite alternate; transform-origin: left center; } }
+@keyframes bigpulse { to { transform: scale(1.06); filter: brightness(1.2); } }
+.lpscr .lpw, .xpscr .lpw { font-size: 14px; padding: 5px 11px; }
+.lpscr .vmpromo { font-size: 24px; text-shadow: 0 0 18px #ffd23f; }
+.lpscr .vmstk { font-size: 16px; } .lpscr .vmstk .flame { font-size: 30px; }
+.lpscr .vmtro .tro { font-size: 14px; padding: 4px 11px; }
+.lpscr .vmcall { font-size: 19px; padding: 12px 14px; background: linear-gradient(90deg, #ffd23f55, #ffd23f11); box-shadow: 0 0 22px #ffd23f44; }
+@media (prefers-reduced-motion: no-preference) { .lpscr .vmcall { animation: callglow 1.6s ease-in-out infinite alternate; } }
+@keyframes callglow { to { box-shadow: 0 0 34px #ffd23f99; } }
+.xpscr .vmwrap.xp .xplines li { font-size: 15px; padding: 7px 12px; } .xpscr .vmwrap.xp .xplines li i svg.ui { width: 18px; height: 18px; }
+.xpscr .chestzone { flex: 1 1 auto; align-content: center; padding-top: 34px; }
+.xpscr .chest { width: 150px; height: 118px; } .xpscr .chest .box { height: 76px; border-radius: 10px 10px 18px 18px; } .xpscr .chest .lid { height: 44px; } .xpscr .chest .box i { width: 22px; height: 26px; margin-left: -11px; top: 12px; }
+.xpscr .chestzone.open .chest::before { content: ''; position: absolute; left: 50%; top: 30%; width: 360px; height: 360px; margin: -180px 0 0 -180px; z-index: -1; border-radius: 50%; background: repeating-conic-gradient(#ffd23f55 0 10deg, transparent 10deg 20deg); -webkit-mask-image: radial-gradient(circle, #000 20%, transparent 68%); mask-image: radial-gradient(circle, #000 20%, transparent 68%); }
+@media (prefers-reduced-motion: no-preference) { .xpscr .chestzone.open .chest::before { animation: spin 9s linear infinite; } }
+.xpscr .cheer { font-size: 44px; } .xpscr .lootit { width: 96px; } .xpscr .lootit .ico, .xpscr .lootit .por { width: 58px; height: 58px; } .xpscr .lootit b { font-size: 12.5px; }
+.xpscr .loot.lots .lootit { width: 62px; } .xpscr .loot.lots .lootit .ico, .xpscr .loot.lots .lootit .por { width: 42px; height: 42px; }
+.xpscr .chestnote { font-size: 15px; }
+@media (max-height: 700px) {
+  .lpscr .vmwrap, .xpscr .vmwrap { grid-template-columns: 118px minmax(0, 1fr); } .lpscr .vmbig, .xpscr .vmbig { font-size: 62px; } .lpscr .vmban .lgem { width: 62px; height: 62px; }
+  .lpscr .vmcall { font-size: 15px; padding: 8px 10px; } .xpscr .chest { width: 110px; height: 86px; } .xpscr .chest .box { height: 56px; } .xpscr .chest .lid { height: 32px; } .xpscr .cheer { font-size: 34px; }
+  .xpscr .lootit { width: 74px; } .xpscr .lootit .ico, .xpscr .lootit .por { width: 44px; height: 44px; } .xpscr .vmwrap.xp .xplines li { font-size: 13px; padding: 5px 9px; }
+}
+.lpscr, .xpscr { isolation: isolate; } .lpscr > :first-child, .xpscr > :first-child { margin-top: 0; }
+.lpscr .vmbig.long, .xpscr .vmbig.long { font-size: 64px; } @media (max-height: 700px) { .lpscr .vmbig.long, .xpscr .vmbig.long { font-size: 50px; } }

@@ -386,6 +386,7 @@
     if (run && screen === 'run' && run.phase === 'map') findDuels();
     if (screen === 'result' && ui.result && !ui.result.fx) celebrate(ui.result);
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'gauntlet' && !run.xpShown) animXp();   // the old Gauntlet end (saves from before v63)
+    if (run && screen === 'run' && run.phase === 'over') fitOver();   // v70 (review #144): the big end screens shrink a step when the page would scroll
     if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !run.lpShown) animLp();   // v68 (review #140)
     if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && run.overStep === 2 && !run.xpShown) animXp2();   // v68 (review #141)
     if (screen === 'title' || !run) startTrailer();
@@ -1129,6 +1130,14 @@
     return `<section class="title over2 xpscr"><h2 class="sc ovh">✨ Account XP <button class="ladb sm" data-act="scores" aria-label="Ladder">${I('trophy')}</button></h2>${xpScreenHTML()}
       <div class="overbar"><button class="primary big cta again" data-act="new-run">${I('play')} Play again</button></div></section>`;
   }
+  // WHAT: makes the end screen fit the phone: adds .tight, then .tighter, while the page is taller than the screen (many XP lines, many rewards).
+  function fitOver() {
+    const s = $('.lpscr, .xpscr'); if (!s) return; const vh = window.visualViewport ? window.visualViewport.height : innerHeight;
+    for (const c of ['tight', 'tighter']) { if (document.documentElement.scrollHeight <= vh + 1) return; s.classList.add(c); }
+    const over = document.documentElement.scrollHeight - vh; if (over <= 1) return;   // still too tall: the meter, the lines and the chest shrink together
+    const parts = [...s.querySelectorAll(':scope > .vmwrap, :scope > .chestzone')], h = parts.reduce((a, e) => a + e.offsetHeight * (+e.style.zoom || 1), 0);
+    if (h) { const z = Math.max(0.5, (h - over - 6) / h); parts.forEach(e => { e.style.zoom = ((+e.style.zoom || 1) * z).toFixed(3); }); }
+  }
   // WHAT: a vertical meter (league or level): the banner on top, the tube, the filling (height in %), a line under it.
   const meterHTML = (id, style, banner, pct, foot) => `<div class="vmeter" id="${id}" style="${style}"><div class="vmban">${banner}</div><div class="vmtube"><i style="height:${pct}%"></i><span class="vmshine"></span></div><small class="vmfoot">${foot}</small></div>`;
   // WHAT: the league screen (end of a run, screen 1): the league meter on the left, the LP in big, why, the streak and the call to beat other players on the right.
@@ -1145,7 +1154,7 @@
     const banner = `${emblem(lgi, 58)}<b class="vmname">${l.name}</b>`;
     const foot = lgi >= L.length - 1 ? `${done ? lg.lp : from.lp} LP` : `${done ? lg.lp : from.lp}/${R.step} LP`;
     return `<div class="vmwrap">${meterHTML('lpmeter', `--lc:${l.color};--lh:${l.hi}`, banner, pct(done ? lg.lp : from.lp), foot)}
-      <div class="vmright"><b class="vmbig ${lg.delta > 0 ? 'win' : lg.delta < 0 ? 'lose' : ''}" ><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : '0'}</span> <small>LP</small></b>
+      <div class="vmright"><b class="vmbig ${lg.delta > 0 ? 'win' : lg.delta < 0 ? 'lose' : ''} ${Math.abs(lg.delta) >= 100 ? 'long' : ''}" ><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : '0'}</span> <small>LP</small></b>
         <div class="lpwhy">${why}</div>
         <div class="vmpromo" id="lppromo">${done && lg.promoted ? `<b>Promoted to ${l.name}!</b>${lg.crowns ? ` <span class="crn">+${lg.crowns} 👑</span>` : ''}` : done && lg.demoted ? `<b class="lose">Dropped to ${l.name}</b>` : ''}</div>
         ${s ? `<div class="vmstk ${s.to > s.from ? 'up' : s.to === 0 ? 'out' : ''}" id="lpstk" data-to="${s.to}">${flameHTML(done ? s.to : s.from)}<span>${s.to > s.from ? (s.to >= 2 ? `${s.to} wins in a row` : 'Win streak!') : s.to === 0 && s.from > 0 ? 'Streak lost' : 'Win streak'} · best ${s.best}</span></div>` : ''}
@@ -1176,6 +1185,7 @@
     } else await go(pct(lg.lp), 1000);
     if (!live()) return;
     foot.textContent = lg.league >= L.length - 1 ? `${lg.lp} LP` : `${lg.lp}/${R.step} LP`;
+    fitOver();
     const st = $('#lpstk'), f = st && st.querySelector('.flame'), b = f && f.querySelector('b');
     if (b) { const to = +st.dataset.to; b.textContent = to; f.classList.toggle('hot', to >= 2); f.classList.toggle('cold', to <= 0); f.classList.add(st.classList.contains('up') ? 'flare' : 'fizzle'); if (st.classList.contains('up')) sfx('star'); }
   }
@@ -1192,7 +1202,7 @@
         ${ups.length ? `<div class="loot ${ups.length > 4 ? 'lots' : ''}">${ups.map((x, i) => `<span class="lootit" style="--i:${i}" title="New ${x.kind}: ${esc(unlockName(x))}">${unlockPic(x, 46)}<b>${esc(unlockName(x))}</b><small>New ${x.kind}</small></span>`).join('')}</div>`
           : u ? `<p class="chestnote">${I('lock')} Next chest at level ${u.lvl}: <b>${esc(unlockName(u))}</b> · ${B.xpForLevel(u.lvl) - to} XP to go</p>` : '<p class="chestnote">🏅 Every reward unlocked!</p>'}</div>`;
     return `<div class="vmwrap xp" id="xppanel" data-from="${from}" data-to="${to}">${meterHTML('xpmeter', '--lc:#7c4dff;--lh:#7ee8ff', banner, Math.round(100 * S.into / S.need), `<span id="xpnum">${S.into}/${S.need}</span> XP`)}
-      <div class="vmright"><b class="vmbig xp"><span id="xpbig">+${done ? got : 0}</span> <small>XP</small></b>
+      <div class="vmright"><b class="vmbig xp ${got >= 100 ? 'long' : ''}"><span id="xpbig">+${done ? got : 0}</span> <small>XP</small></b>
         ${log.length ? `<ul class="xplines">${xpChips(log).map((c, i) => `<li style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i><span>${esc(c.name)}</span><b>+${c.xp}</b></li>`).join('')}</ul>` : note ? `<p class="small">${note}</p>` : ''}</div></div>${chest}`;
   }
   // WHAT: the XP screen's animation: the total counts up, the level tube fills; every level up cheers (LEVEL UP!) and empties the tube; at the end a chest with rewards bursts open.
@@ -1207,7 +1217,7 @@
     while (left > 0) {
       const L = B.levelProgress(cur), room = L.need - L.into, step = Math.min(left, room), ms = 300 + Math.round(700 * step / L.need);
       fill.style.transition = `height ${ms}ms ease-out`; fill.style.height = (step === room ? 100 : Math.round(100 * (L.into + step) / L.need)) + '%';
-      if (B.Juice) B.Juice.countUp(num, L.into, L.into + step, ms);
+      if (B.Juice) B.Juice.countUp(num, L.into, L.into + step, ms, v => v + '/' + L.need);
       await wait(ms + 60); if (!live()) return; cur += step; left -= step;
       if (step === room) {
         const N = B.levelProgress(cur); lv.textContent = N.lvl; sfx('levelup');
@@ -1347,7 +1357,7 @@
     if (b.W.over && !b.overAt) { b.overAt = now; b.end = { win: b.W.winner === 0, k: 0 }; if (!b.endAt) b.endAt = now + 1800; sfx(b.end.win ? 'win' : 'lose'); }
     const T = b.W.over ? b.W.t + (now - b.overAt) / TICK * 0.3 : b.W.t + b.acc / TICK;
     if (b.end) b.end.k = (now - b.overAt) / 1600;
-    if (view) Render.draw(view, b.W, T, b.end ? { end: b.end } : {});
+    if (view) Render.draw(view, b.W, T, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {});   // v70 (review #145): standing tall during the countdown
     const hud = $('#bhud');
     if (hud) {
       const secs = Math.floor(b.W.t / Sim.TPS);

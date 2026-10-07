@@ -246,7 +246,9 @@
     const bx0 = p.x - (pose.face > 0 ? 1 : -1) * flinch, flash = since < 0.09 && !u.dead && FILTER;
     // v55: squash and stretch from the feet: a pop when the fight starts, a squash on the strike and when hit
     const intro = Math.min(1, T / 8), hitK = since < 0.16 ? Math.sin(since / 0.16 * Math.PI) : 0, strike = pose.atk != null && pose.atk > 0.75 ? Math.sin((pose.atk - 0.75) / 0.25 * Math.PI) : 0;
-    const sy = (o.deploy ? 1 : 0.6 + 0.4 * (1 - Math.pow(1 - intro, 3))) * (1 - 0.07 * hitK - 0.05 * strike), sx = 1 + 0.06 * hitK + 0.06 * strike;
+    // v70 (review #145, David: "between deployment then 3 2 1 the whole board and figures are getting squished"): the countdown holds the fight at its first frame,
+    // where the start pop is squashed; while it runs (o.still) the units stand tall and the pop plays when FIGHT! lets the fight go
+    const sy = (o.deploy || o.still ? 1 : 0.6 + 0.4 * (1 - Math.pow(1 - intro, 3))) * (1 - 0.07 * hitK - 0.05 * strike), sx = 1 + 0.06 * hitK + 0.06 * strike;
     if (flash) ctx.filter = 'brightness(1.9) saturate(0.6)';
     ctx.save(); ctx.translate(bx0, p.y); ctx.scale(sx, sy); ctx.translate(-bx0, -p.y);
     if (art) B.Art.draw(ctx, art, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
