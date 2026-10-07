@@ -158,7 +158,7 @@ function memStore() {
     async pickPool(lo, hi, exclude, staleBefore) { const pool = poolOf(M, lo, hi, exclude, staleBefore); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
     // v63 (review #117): a random PvP-day snapshot of another player from about the same day (wins = the day), and a random team that won its final fight
     async pickSnap(day, pid, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => t.status === 'snap' && t.pid !== pid && !ex.has(t.id) && t.wins >= day - 1 && t.wins <= day + 1); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
-    async pickFinal(pid, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => t.status === 'final' && t.pid !== pid && !ex.has(t.id)); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
+    async pickFinal(pid, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => (t.status === 'final' || t.status === 'reached') && t.pid !== pid && !ex.has(t.id)); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
     async countPool(lo, hi, exclude, staleBefore) { return poolOf(M, lo, hi, exclude, staleBefore).length; },
     async pickAbove(w, exclude, staleBefore) { let pool = poolOf(M, w + 1, null, exclude, staleBefore); if (!pool.length) return null; const m = Math.min(...pool.map(t => t.wins)); pool = pool.filter(t => t.wins === m); return Object.assign({}, pool[Math.floor(Math.random() * pool.length)]); },
     async pickGhost(cmp, w, exclude, staleBefore) {
@@ -266,7 +266,7 @@ function pgStore() {
       return r.length ? num(r[0]) : null;
     },
     async pickFinal(pid, exclude) {
-      const r = await q("select * from teams where status = 'final' and pid <> $1 and not (id = any($2::bigint[])) order by random() limit 1", [pid, (exclude || []).map(Number).filter(Number.isFinite)]);
+      const r = await q("select * from teams where status in ('final', 'reached') and pid <> $1 and not (id = any($2::bigint[])) order by random() limit 1", [pid, (exclude || []).map(Number).filter(Number.isFinite)]);
       return r.length ? num(r[0]) : null;
     },
     async pickPool(lo, hi, exclude, staleBefore) {

@@ -2195,7 +2195,8 @@
       } else if (kind === 'gauntlet') {
         const name = f.name.value.trim(); if (!acct.account || isDefaultName(acct.name)) store.set('balance.name', name);
         // v63: the final opponent is a team that won its own final fight; none yet (or no connection) = a made-up one (review #119)
-        let opp = null; try { const r = await Net.post('elo', { op: 'final', pid: pid(), ref: refCode(), name, faced: run.faced || [] }); setElo(r, true); opp = r.opponent || null; } catch (_) { opp = null; }
+        // v75 (review #153): the first ask also leaves your team in the final pool
+        let opp = null; try { const r = await Net.post('elo', Object.assign({ op: 'final', pid: pid(), ref: refCode(), name, faced: run.faced || [] }, run.finalSaved ? {} : { team: Run.teamSnapshot(run), relics: run.relics })); run.finalSaved = true; save(); setElo(r, true); opp = r.opponent || null; } catch (_) { opp = null; }
         Run.startDuel(run, opp || Run.randomGhost(run, 8, true), 'final', run.fightNo + 1); ui.info = null; save(); render(); window.scrollTo(0, 0);
       }
     } catch (err) { toast(err.message); if (btn) btn.disabled = false; }

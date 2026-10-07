@@ -258,6 +258,10 @@ module.exports = async (req, res) => {
       return send(res, 200, me({ snapId: id, opponent: await styled(opp) }));
     }
     if (b.op === 'final') {
+      // v75 (review #153, David: "last hero fights pool from all ghosts who finished the PvE portion, not only the overall winners"): a team that reaches the final fight
+      // joins the pool right away (status 'reached'); the pool is every team that reached it, won or not
+      const team = b.team ? cleanTeam(b.team) : null;
+      if (team && await st.countTeams(pid, Date.now() - 3600e3) < 40) { const id = await st.insertTeam({ pid, name, elo_at: p.elo, team: JSON.stringify(team), relics: JSON.stringify(relicList(b.relics)) }); await st.updateTeam(id, { wins: 8, status: 'reached', opp: null }); }
       const opp = await st.pickFinal(pid, Array.isArray(b.faced) ? b.faced : []);
       return send(res, 200, me({ opponent: await styled(opp) }));
     }
