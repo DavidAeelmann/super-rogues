@@ -1832,6 +1832,7 @@
     return `<div class="shead"><b>${I('crown')} Crown Shop</b><button data-act="close">✕</button></div>
       <div class="wallet"><span class="wc">👑</span><div><b>${a.crowns | 0}</b> crown${(a.crowns | 0) === 1 ? '' : 's'}<span class="small dim">Season ${season} · ${days} day${days === 1 ? '' : 's'} left</span></div></div>
       ${a.account ? '' : '<p class="small center dim">Your account starts when your first game ends. Then crowns, unlocks and your invite link live here.</p>'}
+      ${a.account ? (ui.redeemOpen ? `<form class="row redeem" data-form="redeem"><input name="code" maxlength="40" placeholder="Code" autocomplete="off" autocapitalize="off" spellcheck="false"><button>Redeem</button></form>` : '<div class="center"><button class="linkbtn redeemb" data-act="redeem-open">🎟 Redeem a code</button></div>') : ''}
       <div class="stabs">${[['perks', 'Perks'], ['style', 'Style'], ['king', 'Name & King'], ['earn', 'Earn'], ['invite', 'Invite']].map(([id, n]) => `<button class="${(ui.shopTab || 'perks') === id ? 'on' : ''}" data-act="shop-tab" data-arg="${id}">${n}</button>`).join('')}</div>
       ${(ui.shopTab || 'perks') === 'earn' ? `<h3>Earn crowns</h3>
       <p class="small">🏆 Every duel you win: +1 crown. And the first time you reach a league this season, the crowns on its banner (league points come at the end of each run). A new season every ${B.SEASON.days} days sends everyone back to Bronze, so the crowns come again.</p>
@@ -2075,6 +2076,8 @@
     sound: () => { if (!B.Sfx) return; B.Sfx.toggle(); for (const b of document.querySelectorAll('.sndbtn')) { b.innerHTML = I(B.Sfx.on ? 'sound' : 'mute'); b.setAttribute('aria-label', 'Sound ' + (B.Sfx.on ? 'on' : 'off')); } if (ui.modal === 'home') { openModal(homeMenuHTML()); ui.modal = 'home'; } },
     // Opens the menu sheet; give-up asks, give-up-yes ends the game (and reports the fights it played).
     'shop-tab': id => { ui.shopTab = id; refreshShop(); },
+    // v76 (review #154): the redeem code box under the wallet
+    'redeem-open': () => { ui.redeemOpen = true; refreshShop(); const i = $('form[data-form=redeem] input'); if (i) i.focus(); },
     'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
     language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
@@ -2188,6 +2191,10 @@
         if (t.length < 5) { toast('Write at least a few words'); return; }
         const d = drafts(); if (d.length >= MAX_DRAFTS) { toast('Up to ' + MAX_DRAFTS + ' changes per review'); return; }
         d.push(t); store.set('balance.drafts', d); f.text.value = ''; renderDrafts(); f.text.focus();
+      } else if (kind === 'redeem') {
+        const code = f.code.value.trim();
+        if (!code) { toast('Type a code'); if (btn) btn.disabled = false; return; }
+        const r = await Net.post('player', { op: 'redeem', pid: pid(), code }); setAcct(r); ui.redeemOpen = false; sfx('coin'); toast(`+${r.redeemed} 👑 crowns!`); refreshShop();
       } else if (kind === 'rename') {
         const name = f.name.value.trim().replace(/\s+/g, ' ');
         if (name.length < 2) { toast('Pick a name of 2 to 16 characters'); if (btn) btn.disabled = false; return; }

@@ -61,6 +61,8 @@ const SCHEMA = [
   `alter table players add column if not exists bstreak int not null default 1`,
   `alter table players add column if not exists avatar text`,
   `create table if not exists follows (pid text not null, code text not null, created bigint not null, primary key (pid, code))`,
+  // v76 (review #154): the redeem codes each player already used (one time each)
+  `create table if not exists redeems (pid text not null, code text not null, created bigint not null, primary key (pid, code))`,
   `create index if not exists follows_code on follows(code)`,
   // v66 (review #136): the taunt (comic bubble) and the VS entrance a player shows, picked among the ones bought in the Crown Shop
   `alter table players add column if not exists taunt text`,
@@ -138,6 +140,7 @@ function memStore() {
     async addXp(pid, n) { const p = M.players && M.players[pid]; if (!p) return null; p.axp = (p.axp || 0) + n; return p.axp; },
     async setProgress(pid, f) { const p = M.players && M.players[pid]; if (!p) return; for (const k of ['cleared', 'pfloor', 'bosses', 'xpv', 'achs']) if (f[k] != null) p[k] = f[k]; },
     async setTitle(pid, t) { const p = M.players && M.players[pid]; if (p) p.title = t; },
+    async redeem(pid, code, n) { const R = M.redeems = M.redeems || [], p = M.players && M.players[pid]; if (!p || R.some(r => r.pid === pid && r.code === code)) return null; R.push({ pid, code, created: Date.now() }); p.gems += n; return p.gems; },
     async xpvStep(pid, from, to) { const p = M.players && M.players[pid]; if (!p || (p.xpv | 0) !== from) return false; p.xpv = to; return true; },
     async teamsOf(pid) { return (M.teams || []).filter(t => t.pid === pid).map(t => ({ team: t.team, wins: t.wins })); },
     async ghostRecord(pid) { const T = (M.teams || []).filter(t => t.pid === pid); return { w: T.reduce((a, t) => a + (t.def_w || 0), 0), l: T.reduce((a, t) => a + (t.def_l || 0), 0), n: T.length }; },
@@ -237,6 +240,8 @@ function pgStore() {
     async friendsTop(pid, n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar, title from players where pid=$1 or code in (select code from follows where pid=$1) order by league desc, lp desc limit $2', [pid, n])).map(pubPlayer); },
     async setAvatar(pid, key) { await q('update players set avatar=$2 where pid=$1', [pid, key]); },
     async setTitle(pid, t) { await q('update players set title=$2 where pid=$1', [pid, t]); },
+    // v76 (review #154): one use per player, atomic: the crowns only come when the row is new
+    async redeem(pid, code, n) { const r = await q('with ins as (insert into redeems (pid, code, created) values ($1,$2,$4) on conflict do nothing returning pid) update players set gems = gems + $3 where pid in (select pid from ins) returning gems', [pid, code, n, Date.now()]); return r.length ? Number(r[0].gems) : null; },
     async setStyle(pid, taunt, vsfx) { await q('update players set taunt=$2, vsfx=$3 where pid=$1', [pid, taunt, vsfx]); },
     async addDuel(d) { await q('insert into duels (pid, opp_pid, opp_name, opp_code, final, win, created) values ($1,$2,$3,$4,$5,$6,$7)', [d.pid, d.opp_pid || null, d.opp_name, d.opp_code || null, d.final ? 1 : 0, d.win ? 1 : 0, Date.now()]); },
     async trophiesOf(pid, n) { const c = await q('select count(*)::int n from duels where pid=$1 and win=1', [pid]); const r = await q('select * from duels where pid=$1 and win=1 order by id desc limit $2', [pid, n]); return { n: Number(c[0].n), list: r.map(pubTrophy) }; },

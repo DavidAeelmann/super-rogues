@@ -11,12 +11,16 @@
 //   {op:'avatar', pid, hero}       v65: your picture, a hero portrait your account level has opened (v66: or bought)
 //   {op:'style', pid, taunt, vsfx} v66: the taunt and VS entrance you show (bought in the Crown Shop)
 //   {op:'title', pid, title}       v73: the achievement shown as your title
+//   {op:'redeem', pid, code}       v76: a redeem code (CODES below, server only), once per player
 // 
 // FILE GUIDE. THE ACCOUNT ENDPOINT, POST /api/player { op, pid, ... }: me (wallet and progress), profile (anyone's public profile), buy (Crown Shop), rename, ratings (content Elo, needs the unlock). It never creates a player: accounts start when a first game ends (api/elo.js). The index of the whole project is CODEMAP.md.
 const { send, body, sameOrigin, clean } = require('./_http');
 const getStore = require('./_store');
 const P = require('./_player');
 const D = globalThis.B;
+// v76 (review #154, David): redeem codes -> crowns. Kept here only (never in the game files), so nobody sees them;
+// they will be how bought crowns arrive later. Codes are case-insensitive.
+const CODES = { thanks: 1000 };
 
 // WHAT: the request handler for the ops listed above.
 module.exports = async (req, res) => {
@@ -56,6 +60,14 @@ module.exports = async (req, res) => {
       if (b.on && (await st.followCounts(p.pid, code)).following >= 300) return send(res, 400, { error: 'You follow 300 players already' });
       await st.follow(p.pid, code, !!b.on);
       return send(res, 200, Object.assign({ followed: !!b.on }, await st.followCounts(t.pid, code)));
+    }
+    if (b.op === 'redeem') {
+      const code = String(b.code || '').trim().toLowerCase().slice(0, 40), n = CODES[code];
+      if (!n) return send(res, 400, { error: 'That code does not work' });
+      const left = await st.redeem(pid, code, n);
+      if (left == null) return send(res, 409, { error: 'You already used that code' });
+      p.gems = left;
+      return send(res, 200, Object.assign(await P.ownView(st, p), { redeemed: n }));
     }
     if (b.op === 'title') {   // v73 (review #150): the achievement shown as your title under your name (null = none)
       const t = b.title == null || b.title === '' ? null : String(b.title), own = (() => { try { return JSON.parse(p.achs || '[]'); } catch (_) { return []; } })();

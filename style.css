@@ -2772,3 +2772,6 @@ button.achc.got { cursor: pointer; }
 .loot.lots .lootit .achi { font-size: 30px; line-height: 34px; height: 34px; }
 .pstatb { display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 58px; padding: 6px 4px !important; border-radius: 10px; background: linear-gradient(180deg, #ffd23f33, #ffd23f11); box-shadow: inset 0 0 0 2px #ffd23f88; } .pstatb b { font-size: 16px; color: #ffe9a6; } .pstatb span { font-size: 11px; color: #ffd23f; }
 .upic { display: inline-grid; place-items: center; width: var(--px, 40px); height: var(--px, 40px); border-radius: 12px; background: linear-gradient(180deg, #4a2a8a, #1b2270); font-style: normal; font-size: calc(var(--px, 40px) * .6); line-height: 1; box-shadow: 0 0 0 2px #ff9a3d; }
+/* v76 (review #154): the redeem code link and box under the Crown Shop wallet */
+.redeemb { min-height: 0; padding: 4px 12px; margin: -2px 0 8px; font-size: 12px; border-radius: 10px; background: transparent; border: 1px dashed #ffcf5a55; color: var(--gold-hi); }
+.redeem { margin: -2px 0 8px; gap: 6px; } .redeem input { flex: 1; min-width: 0; text-transform: none; }
