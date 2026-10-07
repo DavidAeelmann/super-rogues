@@ -2746,3 +2746,10 @@ section.event { position: relative; } .evskipb { position: absolute; top: 4px; r
 }
 .lpscr, .xpscr { isolation: isolate; } .lpscr > :first-child, .xpscr > :first-child { margin-top: 0; }
 .lpscr .vmbig.long, .xpscr .vmbig.long { font-size: 64px; } @media (max-height: 700px) { .lpscr .vmbig.long, .xpscr .vmbig.long { font-size: 50px; } }
+/* v71 (review #146): the speed pills on the deploy board (top right, on the sky) and a louder speed hint in the tutorial */
+.boardwrap { position: relative; } .boardwrap .dspeed { position: absolute; top: 6px; right: 6px; z-index: 5; padding: 3px; border-radius: 12px; background: #0d1146b0; }
+.tutspeed { font-size: 16px !important; padding: 8px 14px !important; border-radius: 12px !important; background: linear-gradient(180deg, #ffe46b, #ffb31a) !important; color: #3a1f00 !important; box-shadow: 0 0 0 3px #fff, 0 0 24px #ffd23fcc !important; animation: tutbounce .7s ease-in-out infinite alternate !important; }
+.tutspeed.dep { top: 46px; right: 6px; white-space: normal; max-width: 70%; text-align: center; }
+@keyframes tutbounce { from { transform: translateY(0); } to { transform: translateY(5px); } }
+.deploy > .dspeed { float: right; position: static; margin: 2px 0 0 6px; padding: 0; background: none; } .deploy > .dspeed button { min-height: 28px; min-width: 34px; font-size: 12px; }
+.tutspeed.dep { top: 4px !important; right: 6px !important; max-width: none !important; white-space: nowrap !important; font-size: 12px !important; padding: 4px 10px !important; }
