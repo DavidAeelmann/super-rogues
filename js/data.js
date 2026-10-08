@@ -1389,15 +1389,24 @@
   // WHAT: what each PvP result is worth in league points (B.LP) and the parts of one run's LP (B.lpParts, also the "why" line of the end screen).
   //   g = { done (final fight won), duels (PvP-day duels won), lost (PvP fights lost), streak (the win streak after this run) }. Used by api/elo.js.
   B.LP = { duel: 10, final: 20, loss: 8, streak: 1 };
-  B.lpParts = g => {
+  // v84 (review #162, David: "it should be harder to climb in higher leagues because the pool of opponents is always the same... without changing match-up
+  // logic or giving different lp depending on the elo or league of opponents"). Every league faces the same pool, so a win is worth the same everywhere
+  // and the climb was as easy at the top as at the bottom. Now the league you are IN scales your LP: higher leagues pay less for a win (gain) and charge
+  // more for a loss (loss). That raises the win rate you need just to hold your place: with 2 duels and the final fight a run, about 22% in Bronze,
+  // 30% Silver, 37.5% Gold (as before, x1), 46% Platinum, 53% Diamond, 60% Celestial. Each player settles where their real win rate stops paying.
+  B.LP_LEAGUE = { gain: [1.25, 1.1, 1, 0.85, 0.75, 0.65], loss: [0.6, 0.8, 1, 1.2, 1.4, 1.6] };
+  // WHAT: the league multipliers of a league index: { gain, loss }.
+  B.lpMul = league => { const i = Math.max(0, Math.min(B.LEAGUES.length - 1, league | 0)); return { gain: B.LP_LEAGUE.gain[i], loss: B.LP_LEAGUE.loss[i] }; };
+  B.lpParts = (g, league) => {
+    const M = B.lpMul(league), sc = (n, base) => Math.round(n * base * (base < 0 ? M.loss : M.gain));
     const duels = Math.max(0, Math.min(4, g.duels | 0)), lost = Math.max(0, Math.min(6, g.lost | 0)), streak = g.done ? Math.max(0, Math.min(50, g.streak | 0)) : 0, out = [];
-    if (duels) out.push({ id: 'duel', n: duels, lp: duels * B.LP.duel });
-    if (g.done) out.push({ id: 'final', n: 1, lp: B.LP.final });
-    if (lost) out.push({ id: 'loss', n: lost, lp: -lost * B.LP.loss });
-    if (streak) out.push({ id: 'streak', n: streak, lp: streak * B.LP.streak });
+    if (duels) out.push({ id: 'duel', n: duels, lp: sc(duels, B.LP.duel) });
+    if (g.done) out.push({ id: 'final', n: 1, lp: sc(1, B.LP.final) });
+    if (lost) out.push({ id: 'loss', n: lost, lp: sc(lost, -B.LP.loss) });
+    if (streak) out.push({ id: 'streak', n: streak, lp: sc(streak, B.LP.streak) });
     return out;
   };
-  B.runLp = (g, league) => { const s = B.lpParts(g).reduce((a, x) => a + x.lp, 0); return (league | 0) === 0 ? Math.max(0, s) : s; };
+  B.runLp = (g, league) => { const s = B.lpParts(g, league).reduce((a, x) => a + x.lp, 0); return (league | 0) === 0 ? Math.max(0, s) : s; };
 
   // v27 (owner, 2026-09-29): Crowns, the account currency. Earned the first time you reach each league in a season
   // (leagues reset to Bronze when a season starts) and from friends you referred. Spent in the Crown Shop on perks and

@@ -2794,3 +2794,5 @@ button.achc.got { cursor: pointer; }
 .htip::after { content: ''; position: absolute; left: var(--ax, 50%); width: 12px; height: 12px; margin-left: -6px; background: #10154a; transform: rotate(45deg); }
 .htip.up::after { bottom: -8px; border-right: 2px solid #ffd23f; border-bottom: 2px solid #ffd23f; } .htip.down::after { top: -8px; border-left: 2px solid #ffd23f; border-top: 2px solid #ffd23f; }
 [data-tip] { cursor: help; } [data-tip]:focus { outline: none; }
+/* v84 (review #162): the league multiplier line on the end screen */
+.lpw.mul { opacity: .8; font-style: italic; }
