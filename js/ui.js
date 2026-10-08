@@ -1229,11 +1229,10 @@
     const R = B.LEAGUE_RULES, L = B.LEAGUES, from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) }, done = !!run.lpShown;
     const lgi = done ? lg.league : from.league, l = L[lgi] || L[0], pct = x => Math.max(0, Math.min(100, 100 * x / R.step));
     const parts = B.lpParts({ done: won, duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, streak: lg.streak ? lg.streak.to : 0 }, from.league), raw = parts.reduce((a, x) => a + x.lp, 0);
-    const mul = B.lpMul(from.league), mulNote = mul.gain === 1 && mul.loss === 1 ? '' : `<span class="lpw mul" title="The higher the league, the less a win pays and the more a loss costs">${esc((L[from.league] || L[0]).name)}: wins ×${mul.gain}, losses ×${mul.loss}</span>`;
     const NAME = { duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Final fight', loss: n => `${n} PvP lost`, streak: n => `Streak ${n}` };
     const ICON = { duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥' };
     const why = parts.map(x => `<span class="lpw ${x.lp < 0 ? 'neg' : 'pos'}">${ICON[x.id]} ${NAME[x.id](x.n)} <b>${x.lp > 0 ? '+' : ''}${x.lp}</b></span>`).join('')
-      + (!parts.length ? '<span class="lpw">No PvP fight this run</span>' : from.league === 0 && raw < 0 ? '<span class="lpw">Bronze never loses LP</span>' : '') + (parts.length ? mulNote : '');
+      + (!parts.length ? '<span class="lpw">No PvP fight this run</span>' : from.league === 0 && raw < 0 ? '<span class="lpw">Bronze never loses LP</span>' : '');   // v86 (review #165): the league multipliers are not shown here
     const s = lg.streak, tr = run.trophies || [];
     const banner = `${emblem(lgi, 58)}<b class="vmname">${l.name}</b>`;
     const foot = lgi >= L.length - 1 ? `${done ? lg.lp : from.lp} LP` : `${done ? lg.lp : from.lp}/${R.step} LP`;
@@ -1429,8 +1428,12 @@
   }
   const DPR_STEPS = [1.5, 1, 0.8, 0.65, 0.5];
   // a computer (mouse) also counts 30 fps as slow; a phone not (iPhones in Low Power Mode draw 30 frames a second on purpose)
-  const SLOW_MS = matchMedia('(pointer: fine)').matches ? 26 : 34;
-  { const m = +store.get('balance.maxDpr', 0); if (m >= 0.5 && m <= 2) Render.maxDpr = m; }
+  // v86 (review #164, David: "sometimes the battle pixels get grainy all of a sudden, especially at the start of a fight, even on phone"): the start of a
+  // fight (the countdown, the first frames) and a phone's 30 fps jitter counted as a slow device, the picture dropped a step and the drop was kept for
+  // good. Now: no measuring during the countdown and the first 1.5s; a phone counts only frames under ~22 fps and never goes under 1.5x (its own
+  // pixel ratio when lower); a smooth fight wins a step back for the next one; and the levels kept by v77-v85 are forgotten (new key).
+  const FINE = matchMedia('(pointer: fine)').matches, SLOW_MS = FINE ? 26 : 45, DPR_FLOOR = FINE ? 0.5 : Math.min(1.5, window.devicePixelRatio || 1);
+  { const m = +store.get('balance.maxDpr2', 0); if (m >= DPR_FLOOR && m <= 2) Render.maxDpr = m; }
   // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
   function loop(now) {
     const b = battle; if (!b) return;
@@ -1438,9 +1441,10 @@
     const dt = Math.min(100, now - b.last); b.last = now;
     // v62r: a computer that draws slowly (no graphics acceleration, weak integrated GPU) gets a smaller canvas by itself: frames slower than ~30 fps for about 1.5 s
     // drop the pixel ratio one step (2 -> 1.5 -> 1); the picture keeps its size on screen, just a little softer
-    b.slow = Math.max(0, Math.min(60, (b.slow || 0) + (dt > SLOW_MS ? 1 : -1)));
+    if (!b.t0) b.t0 = now; const warm = now < Math.max(b.hold || 0, b.t0) + 1500;   // the countdown and the first 1.5s are not measured
+    if (!warm && !document.hidden) { b.slow = Math.max(0, Math.min(60, (b.slow || 0) + (dt > SLOW_MS ? 1 : -1))); b.frames = (b.frames || 0) + 1; if (dt <= 20) b.fast = (b.fast || 0) + 1; }
     // v77 (review #156): the steps go on below 1 (a computer without graphics acceleration), and the level found is kept for the next visits
-    if (b.slow >= 30 && view && view.dpr > DPR_STEPS[DPR_STEPS.length - 1] + 0.01 && !document.hidden) { b.slow = 0; Render.maxDpr = DPR_STEPS.find(x => x < view.dpr - 0.01); store.set('balance.maxDpr', Render.maxDpr); view = Render.setup(view.canvas, view.w); }
+    if (b.slow >= 30 && view && view.dpr > DPR_FLOOR + 0.01 && !document.hidden) { const nx = DPR_STEPS.find(x => x < view.dpr - 0.01 && x >= DPR_FLOOR - 0.01); if (nx) { b.slow = 0; b.dropped = true; Render.maxDpr = nx; store.set('balance.maxDpr2', nx); view = Render.setup(view.canvas, view.w); } }
     const TICK = 1000 / Sim.TPS;
     if (!b.W.over && !(b.hold && now < b.hold)) { b.acc += dt * ui.speed; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }
     // v42 (review #51): the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)
@@ -1464,6 +1468,7 @@
   // Also reports boss results for the boss Elo.
   async function endBattle() {
     tutSpeedDisarm();
+    { const b = battle; if (b && !b.dropped && (b.frames | 0) >= 120 && b.fast / b.frames >= 0.9 && Render.maxDpr && Render.maxDpr < 2) { const up = [0.5, 0.65, 0.8, 1, 1.5, 2].find(x => x > Render.maxDpr + 0.01); Render.maxDpr = up; store.set('balance.maxDpr2', up); } }   // v86 (review #164): a smooth fight wins a step back
     const b = battle; battle = null; const W = b.W;
     // review #25: per hero (its summons count for it): damage dealt and taken, kills, standing at the end
     const stats = {}, dmg = {};
