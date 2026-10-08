@@ -392,6 +392,7 @@
     if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && run.overStep === 2 && !run.xpShown) animXp2();   // v68 (review #141)
     if (screen === 'title' || !run) startTrailer();
     autoGear();
+    guide();   // v80 (review #158)
   }
   // WHAT: a short name for "which screen is this" (phase + step + status). render() compares it with the previous one to know the screen really changed.
   function screenKey() {
@@ -800,6 +801,53 @@
     tutSpeedDisarm.h = () => { store.set('balance.tut.speedDismissed', true); const e = document.querySelector('.tutspeed'); if (e) e.remove(); tutSpeedDisarm(); };
     document.addEventListener('pointerdown', tutSpeedDisarm.h, true);
   }
+  // v80 (review #158, David: "update the first run tutorial to the new structure with helpful and visible tips that are non obstructive"): the guide.
+  // One small bubble at a time points at the thing it explains (the road, the lives, a duel, the bag, the shop...). It never blocks: taps go
+  // through it, the first tap anywhere after it showed puts it away for good (balance.guide = the ids seen), and a screen change takes it off.
+  // New players get it during their first runs (an account with 3+ runs never sees it); the deploy and battle hints above stay as they were.
+  // WHAT: the guide tips: id, when it shows, what it points at (a selector), the text.
+  const GUIDE = [
+    { id: 'path', when: () => run.phase === 'map', at: '[data-act=choose]', text: 'Your road to the final fight: one stop a day. Tap a card to choose today\'s stop. Harder fights pay more gold.' },
+    { id: 'duel', when: () => run.phase === 'map', at: '.b-duel:not(.wait)', text: 'A duel: another player\'s team (their ghost). Win it for league points, a crown and something to steal from them.' },
+    { id: 'lives', when: () => run.phase === 'map' && run.step >= 2, at: '#top .lives', text: 'Your lives. Lose a fight and one breaks; lose all three and the run ends.' },
+    { id: 'gear', when: () => (run.phase === 'map' || run.phase === 'shop') && run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in your bag! Open Team and drag it onto a hero.' },
+    { id: 'shop', when: () => run.phase === 'shop', at: '[data-act=reroll]', text: 'Buy gear with your gold. "New" swaps the whole shelf for a few coins.' },
+    { id: 'event', when: () => run.phase === 'event', at: '.evchoices', text: 'An event: pick one choice. If nothing fits, Skip (top right).' },
+    { id: 'level', when: () => run.pending.length && run.phase !== 'deploy', at: '.spec2', text: 'Level up! Pick one of two upgrades. The path below shows what the next levels offer.' },
+    { id: 'steal', when: () => run.phase === 'steal', at: '.tgrid, .opts', text: 'You beat their team: take one thing from it (a hero, an item or a power).' },
+    { id: 'final', when: () => run.phase === 'gauntlet', at: '.gcrest', text: 'The last stop of the run. Win this fight to complete it.' },
+    { id: 'league', when: () => run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1, at: '#lpmeter', text: 'League points: wins add them, losses take a few. Fill the bar to climb to the next league.' },
+    { id: 'chest', when: () => run.phase === 'over' && run.overStep === 2, at: '#chest', text: 'Account XP: every level opens new heroes, items, powers and rewards.' },
+  ];
+  const guideSeen = () => { const s = store.get('balance.guide', []); return Array.isArray(s) ? s : []; };
+  const guideOn = () => !navigator.webdriver && (!!store.get('balance.guide.force', 0) || !(acct.account && (acct.runs | 0) >= 3));
+  // WHAT: after each render, shows the first guide tip that fits this screen and was never seen (or removes the one of a screen that is gone).
+  function guide() {
+    clearTimeout(guide.t); const old = document.querySelector('.gtip'); if (old) old.remove(); guideDisarm();
+    if (!run || screen !== 'run' || !guideOn() || ui.modal) return;
+    const seen = guideSeen(), g = GUIDE.find(x => !seen.includes(x.id) && x.when());
+    if (!g) return;
+    const key = ui.lastKey;
+    // a moment after the screen settles (the entry animation, the map walk), then the bubble finds its target
+    guide.t = setTimeout(() => {
+      if (ui.lastKey !== key || ui.modal || screen !== 'run') return;
+      const el = [...document.querySelectorAll(g.at)].find(e => { const r = e.getBoundingClientRect(); return r.width && r.height; });
+      if (!el) return;
+      const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, tip = document.createElement('div');
+      tip.className = 'gtip'; tip.setAttribute('role', 'status'); tip.innerHTML = `<b>💡</b><span>${esc(g.text)}</span>`;
+      document.body.appendChild(tip);
+      const w = Math.min(300, vw - 24); tip.style.width = w + 'px';
+      const th = tip.offsetHeight, below = r.bottom + th + 14 <= vh, top = below ? r.bottom + 10 : Math.max(8, r.top - th - 10);
+      const cx = Math.max(12 + w / 2, Math.min(vw - 12 - w / 2, r.left + r.width / 2));
+      tip.style.left = (cx - w / 2) + 'px'; tip.style.top = top + 'px'; tip.classList.add(below ? 'down' : 'up');
+      tip.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - (cx - w / 2))) + 'px');
+      // the next tap anywhere (after it had time to be read) puts it away for good; the tap itself still does what it does
+      const shownAt = performance.now();
+      guideDisarm.h = () => { if (performance.now() - shownAt < 700) return; store.set('balance.guide', guideSeen().concat(g.id)); tip.classList.add('bye'); setTimeout(() => tip.remove(), 250); guideDisarm(); };
+      document.addEventListener('pointerdown', guideDisarm.h, true);
+    }, 650);
+  }
+  function guideDisarm() { if (guideDisarm.h) { document.removeEventListener('pointerdown', guideDisarm.h, true); guideDisarm.h = null; } }
   // WHAT: THE DEPLOY SCREEN: the board where you drag your heroes, the formation line, the enemy roster, the Items button and the big Fight button.
   function deployHTML() {
     const gau = run.cur && run.cur.type === 'gauntlet';
@@ -1004,7 +1052,7 @@
   // WHAT: the final fight screen: your team, your lives and the button that finds the opponent.
   function gauntletHTML() {
     return `<section class="title gintro2 final"><div class="gcrest">${I('trophy')}</div><h2 class="sc gtitle">The final fight</h2>
-      <p class="gsub">Your team meets a team that won its own final fight. Win and the run is complete.</p>
+      <p class="gsub">Your team meets a team that also reached its final fight. Win and the run is complete.</p>
       <p class="lifeline">${heartsHTML()} <span>${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left</span></p>
       ${teamRow(Run.teamSnapshot(run), run.relics)}
       ${gateForm()}</section>`;
@@ -1507,7 +1555,7 @@
     if (ui.modal && ui.modal !== 'artlab' && now - (ui.modalT || 0) > 350) closeModal();
   }
   // WHAT: shows a sheet (popup) with the given HTML. closeModal() hides it; toast(msg) shows a bubble at the bottom (info = true for descriptions that must vanish when the screen changes).
-  function openModal(html) { ui.modalT = performance.now(); const m = $('#modal'); m.innerHTML = `<div class="sheet">${html}</div>`; m.hidden = false; ui.modal = true; }
+  function openModal(html) { ui.modalT = performance.now(); clearTimeout(guide.t); const gt = document.querySelector(".gtip"); if (gt) gt.remove(); const m = $('#modal'); m.innerHTML = `<div class="sheet">${html}</div>`; m.hidden = false; ui.modal = true; }
   function closeModal() { if (ui.modal === 'artlab' && B.ArtLab) B.ArtLab.closed(); const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; clearInterval(ui.sugTimer); }
   function toast(msg, info) { toast.info = !!info; toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }
 
@@ -1941,6 +1989,7 @@
       <li>${I('swords')}<span><b>The fight plays by itself.</b> Win for gold and XP. Heroes level up and use their power when the blue bar is full.</span></li>
       <li>${I('skull')}<span><b>You have 3 lives.</b> Win your way through 2 bosses and a duel or two against other players' teams, then the final fight. Lose a fight, lose a life.</span></li>
     </ol>
+    <div class="center"><button class="linkbtn" data-act="guide-again">💡 Show the tips again</button></div>
     <details class="howmore"><summary>All the rules</summary>
     <ol class="small howto">
       <li>Start with 1 hero (3 offered: a tank, a support, a damage dealer), 1 power (3 offered) and a few common items. After each of the first two days a free hero joins (you pick 1 of 3). Each hero has a unique ability that fires when its blue Energy bar is full.</li>
@@ -2038,6 +2087,8 @@
     'continue-run': () => { screen = 'run'; render(); },
     menu: () => { if (battle) return; screen = 'title'; closeModal(); render(); },
     howto: () => openModal(HOWTO),
+    // v80 (review #158): the guide tips come back (even on an account with many runs)
+    'guide-again': () => { store.set('balance.guide', []); store.set('balance.guide.force', 1); closeModal(); toast('The tips will show again as you play'); render(); },
     // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
     'start-pick': k => { ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); },
     // v64 (review #126): the free recruit between days

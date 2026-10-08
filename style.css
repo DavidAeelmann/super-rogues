@@ -2778,3 +2778,13 @@ button.achc.got { cursor: pointer; }
 /* v77 (review #156): on a computer (a mouse) the see-through blur behind the top bar and the sheets is redrawn over the whole big screen at every
    board frame, and a computer without a strong graphics card lags on it: a solid colour instead */
 @media (pointer: fine) { #top { backdrop-filter: none; background: #1e2a8f; } #modal { backdrop-filter: none; background: #0d1146c8; } }
+/* v80 (review #158): the guide bubble. Fixed over the page (no layout change, so no scroll), taps go through it */
+.gtip { position: fixed; z-index: 70; pointer-events: none; display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 14px;
+  background: linear-gradient(180deg, #fff8d6, #ffe58a); color: #3a2400; font: 700 13.5px/1.3 var(--fun, system-ui); box-shadow: 0 6px 18px #0007, 0 0 0 2px #fff inset;
+  animation: gtipin .3s cubic-bezier(.2, 1.4, .4, 1) both; }
+.gtip b { font-size: 17px; line-height: 1; }
+.gtip::after { content: ''; position: absolute; left: var(--ax, 50%); width: 14px; height: 14px; margin-left: -7px; background: #ffe9a0; transform: rotate(45deg); }
+.gtip.down::after { top: -6px; background: #fff8d6; } .gtip.up::after { bottom: -6px; background: #ffe58a; }
+.gtip.bye { opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; }
+@keyframes gtipin { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .gtip { animation: none; } }
