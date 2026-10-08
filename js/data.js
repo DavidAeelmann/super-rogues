@@ -1175,22 +1175,29 @@
     imp: M({ name: 'Imp', glyph: '😈', hp: 180, atk: 18, armor: 0, as: 1.2, range: 1, ms: 3.5, cost: 0.5 }),
   };
   for (const k in B.MOBS) B.MOBS[k].key = k;
-  // WHAT: the four bosses (Gorewarden, The Ashen Sovereign, Mirewitch Morra, the Colossus) with their escort monsters. Their special behaviour is in bossPassives in js/sim.js.
+  // WHAT: the six bosses (floor 1: Gorewarden, Mirewitch Morra, Skorrak the Packlord; floor 2: The Ashen Sovereign, the Iron Colossus, Vaelith the Lich Queen) with their escort monsters. Their special behaviour is in bossPassives in js/sim.js.
   B.BOSSES = {
-    gorewarden: { key: 'gorewarden', name: 'Gorewarden', glyph: '👹', boss: 1, hp: 1800, atk: 45, armor: 35, as: 0.65, range: 1, ms: 1.8, mana: 55, abil: 'cleave',
+    gorewarden: { key: 'gorewarden', name: 'Gorewarden', glyph: '👹', boss: 1, hp: 1950, atk: 49, armor: 35, as: 0.65, range: 1, ms: 1.8, mana: 55, abil: 'cleave',
       desc: 'Cleaves everything around it. Calls the horde at half health and enrages at 25%.', escort: ['grunt', 'grunt', 'archer'] },
-    hollowking: { key: 'hollowking', name: 'The Ashen Sovereign', glyph: '👑', boss: 2, hp: 2250, atk: 48, armor: 45, as: 0.7, range: 2, ms: 2, mana: 60, abil: 'nova',
+    hollowking: { key: 'hollowking', name: 'The Ashen Sovereign', glyph: '👑', boss: 2, hp: 2670, atk: 57, armor: 45, as: 0.7, range: 2, ms: 2, mana: 60, abil: 'nova',
       desc: 'Void Nova stuns everything near it. Rends the weakest hero from afar. Splits its court at 66% and 33%.', escort: ['hexer', 'archer'] },
     // v52 (review #64, David: "Add an additional possibility for each of the bosses (not chosen, is chosen at random at
     // start of each run) and balance it"): slot 1 is the Gorewarden or the Mirewitch, slot 2 the Ashen Sovereign or the
     // Iron Colossus (run.bosses, drawn in Run.newRun). Their strength is tuned with tools/boss-odds.js
-    mirewitch: { key: 'mirewitch', name: 'Mirewitch Morra', glyph: '🧪', boss: 1, slot: 1, hp: 1390, atk: 43, armor: 38, as: 0.7, range: 3, ms: 1.8, mana: 50, abil: 'bog',
+    mirewitch: { key: 'mirewitch', name: 'Mirewitch Morra', glyph: '🧪', boss: 1, slot: 1, hp: 1360, atk: 42, armor: 38, as: 0.7, range: 3, ms: 1.8, mana: 50, abil: 'bog',
       desc: 'Hurls poison bog that stays on the ground. Turns your strongest hero into a frog every 9s. Sinks into the swamp at half health and calls serpents.', escort: ['grunt', 'spitter', 'archer'] },
-    colossus: { key: 'colossus', name: 'The Iron Colossus', glyph: '🗿', boss: 2, slot: 2, hp: 3600, atk: 65, armor: 48, as: 0.55, range: 1, ms: 1.5, mana: 70, abil: 'quake',
+    colossus: { key: 'colossus', name: 'The Iron Colossus', glyph: '🗿', boss: 2, slot: 2, hp: 4280, atk: 77, armor: 48, as: 0.55, range: 1, ms: 1.5, mana: 70, abil: 'quake',
       desc: 'Stomps the ground and shoves heroes away (into stones, they are stunned). Vents steam every 8s and takes more damage while it does. Calls shield bearers at 60%, melts down at 30%.', escort: ['knight', 'bomber'] },
+    // v83 (review #161, David: "add 1 more boss option per each boss floor and balance them"): a third boss for each floor
+    packlord: { key: 'packlord', name: 'Skorrak the Packlord', glyph: '🐺', boss: 1, slot: 1, hp: 1520, atk: 42, armor: 30, as: 0.85, range: 1, ms: 2.6, mana: 55, abil: 'howl',
+      desc: 'Howls for wolves and drives his pack into a frenzy. Pounces on your weakest backline hero every 9s. At half health the Blood Moon heals him and makes him stronger.', escort: ['wolf', 'wolf', 'archer'] },
+    lichqueen: { key: 'lichqueen', name: 'Vaelith the Lich Queen', glyph: '❄️', boss: 2, slot: 2, hp: 2900, atk: 60, armor: 40, as: 0.7, range: 3, ms: 1.8, mana: 60, abil: 'blizzard',
+      desc: 'Calls blizzards that chill and slow a whole group. Freezes your strongest hero every 7s. Raises the dead at 66% and hides in an ice tomb at 33%.', escort: ['hexer', 'knight'] },
   };
-  // WHAT: which bosses can wait in boss slot 1 (fight 4) and slot 2 (fight 8); one is picked per run.
-  B.BOSS_SLOTS = [['gorewarden', 'mirewitch'], ['hollowking', 'colossus']];
+  // v83 (review #161): Health and Attack of all six bosses set by tools/tune-bosses.js so every boss of a floor is won about as often (boss 1 ~62%, boss 2 ~57%,
+  // the same teams for each; before: 72 / 60 / 19% and 76 / 71 / 76%)
+  // WHAT: which bosses can wait in boss slot 1 (fight 4) and slot 2 (fight 8); one is picked per run (v83: three per slot).
+  B.BOSS_SLOTS = [['gorewarden', 'mirewitch', 'packlord'], ['hollowking', 'colossus', 'lichqueen']];
   // WHAT: the elite modifiers (armored, swift, enraged, giant) an enemy can get on harder fights.
   B.ELITES = [
     { id: 'vampiric', name: 'Vampiric', mods: { ls: 0.3 } },

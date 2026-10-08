@@ -2788,3 +2788,9 @@ button.achc.got { cursor: pointer; }
 .gtip.bye { opacity: 0; transform: translateY(-4px); transition: opacity .25s, transform .25s; }
 @keyframes gtipin { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .gtip { animation: none; } }
+/* v82 (review #160): the explain bubble of rewards (data-tip): hover with a mouse, tap on a phone */
+.htip { position: fixed; z-index: 95; pointer-events: none; padding: 9px 12px; border-radius: 12px; background: #10154a; color: #fff; border: 2px solid #ffd23f;
+  font: 600 13px/1.35 var(--fun, system-ui); box-shadow: 0 8px 22px #000a; animation: gtipin .18s ease-out both; }
+.htip::after { content: ''; position: absolute; left: var(--ax, 50%); width: 12px; height: 12px; margin-left: -6px; background: #10154a; transform: rotate(45deg); }
+.htip.up::after { bottom: -8px; border-right: 2px solid #ffd23f; border-bottom: 2px solid #ffd23f; } .htip.down::after { top: -8px; border-left: 2px solid #ffd23f; border-top: 2px solid #ffd23f; }
+[data-tip] { cursor: help; } [data-tip]:focus { outline: none; }

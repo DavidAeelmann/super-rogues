@@ -342,9 +342,17 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     for (let i = 0; i < 10 * 20 && !W.over; i++) Sim.step(W);
     ok(u.crit > 0.6, 'Blaze: crit chance grows on crits');
   }
+  // v83 (review #161): the two new bosses fight with their kit (howl wolves, pounce / blizzard, freeze) and the fight ends cleanly
+  for (const [key, slot, n] of [['packlord', 1, 4], ['lichqueen', 2, 8]]) {
+    const run = Run.newRun(7300 + slot); Run.pickStart(run, ['bastion']); for (const k of ['lumen', 'pyra']) Run.addHero(run, k); for (const h of run.heroes) { h.lvl = slot === 1 ? 2 : 4; h.xp = B.CFG.xpLevels[h.lvl]; }
+    run.bosses = slot === 1 ? [key, 'hollowking'] : ['gorewarden', key]; run.fightNo = n; run.cur = Run.makeFight(run, 'boss', n, slot); run.phase = 'deploy';
+    const W = Run.fightWorld(run), boss = W.units.find(u => u.key === key); let wolves = 0, frozen = 0;
+    for (let i = 0; i < 20 * 120 && !W.over; i++) { Sim.step(W); wolves = Math.max(wolves, W.units.filter(u => !u.dead && u.key === 'wolf' && u.owner === boss.id).length); frozen += W.units.filter(u => u.side === 0 && u.st && u.st.stun > W.t).length ? 1 : 0; }
+    ok(boss && W.units.every(u => isFinite(u.hp)) && (key === 'packlord' ? wolves >= 1 && wolves <= 3 : frozen > 0), 'v83: ' + B.BOSSES[key].name + ' fights with its kit (' + (key === 'packlord' ? 'up to ' + wolves + ' wolves' : frozen + ' frozen ticks') + ')');
+  }
   // v52 (review #64): each boss slot has two bosses; every game draws one of each
   { const seen = [new Set(), new Set()]; for (let i = 0; i < 40; i++) { const r = Run.newRun(4000 + i); seen[0].add(Run.bossOf(r, 1)); seen[1].add(Run.bossOf(r, 2)); }
-    ok(seen[0].size === 2 && seen[1].size === 2 && [...seen[0]].every(k => B.BOSS_SLOTS[0].includes(k)) && [...seen[1]].every(k => B.BOSS_SLOTS[1].includes(k)) && Run.bossOf({}, 1) === 'gorewarden' && Run.bossOf({}, 2) === 'hollowking', 'v52: each game draws one of two bosses per slot (games from before keep the old two)'); }
+    ok(seen[0].size === B.BOSS_SLOTS[0].length && seen[1].size === B.BOSS_SLOTS[1].length && B.BOSS_SLOTS.every(s => s.length === 3) && [...seen[0]].every(k => B.BOSS_SLOTS[0].includes(k)) && [...seen[1]].every(k => B.BOSS_SLOTS[1].includes(k)) && Run.bossOf({}, 1) === 'gorewarden' && Run.bossOf({}, 2) === 'hollowking', 'v52, v83 (review #161): each game draws one of three bosses per slot (games from before keep the old two)'); }
   ok(grew('echo', (W, u) => W.units.filter(a => a.side === 0).reduce((t, a) => t + Sim.asOf(W, a), 0)), 'Echo: allies attack faster over time');
   ok(CFG.maxTeam === 3, 'team size is 3');
 }

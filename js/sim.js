@@ -1233,6 +1233,23 @@
     for (const e of near) { deal(W, u, e, 1.6 * atkOf(W, u), 'phys', { ability: true }); push(W, u, e, 1); }
     return true;
   };
+  // v83 (review #161): the third boss of each floor
+  // WHAT: Skorrak's Howl (boss): a wolf joins the fight (never more than 3 at once) and his whole side attacks 20% faster for 4s.
+  A.howl = (W, u) => {
+    const wolves = W.units.filter(x => !x.dead && x.owner === u.id && x.key === 'wolf').length;
+    fxRing(W, u.c, u.r, 2, '#ff6a3a', 14); fxText(W, u, 'HOWL!', '#ff6a3a');
+    if (wolves < 3) summon(W, u, mobScaleDef('wolf', u.scale || 1));
+    for (const a of W.units) if (!a.dead && a.side === u.side) buff(a, 'asPct', 0.2, sec(4), W);
+    return true;
+  };
+  // WHAT: Vaelith's Blizzard (boss): ice on the densest group of heroes: 120% attack as magic damage, 40% slow for 3s, and the ground stays frozen 4s.
+  A.blizzard = (W, u) => {
+    const t = bestCluster(W, u, 1); if (!t || Hx.dist(u, t) > u.range + 2) return false;
+    const c = t.c, r = t.r; fxRing(W, c, r, 1, '#8fe3ff', 16);
+    for (const e of enemies(W, u)) if (Hx.dist(e, { c, r }) <= 1) { deal(W, u, e, 1.2 * atkOf(W, u), 'magic', { ability: true }); slow(W, e, 0.4, 3); }
+    W.zones.push({ c, r, rad: 1, until: W.t + sec(4), dps: 0.2 * atkOf(W, u), side: u.side, src: u.id, color: '#8fe3ff' });
+    return true;
+  };
   // WHAT: the special behaviour of each BOSS that is not a mana ability: Gorewarden calls the horde at half health and enrages at 25%, the Sovereign's phases, the Mirewitch's frog curse and swamp, the Colossus' stone skin.
   function bossPassives(W, u) {
     const f = u.hp / u.maxHp;
@@ -1253,6 +1270,22 @@
       if (W.t % sec(8) === sec(4)) { u.st.vulnU = W.t + sec(3); u.st.vulnP = Math.max(u.st.vulnP || 0, 0.25); fxText(W, u, 'VENTING STEAM', '#ffffff'); fxRing(W, u.c, u.r, 1, '#ffffff', 12); }
       if (f < 0.6 && !u.once.gen) { u.once.gen = 1; fxText(W, u, 'SHIELD BEARERS', '#ffcf5a'); for (let i = 0; i < 2; i++) summon(W, u, mobScaleDef('shieldbearer', u.scale || 1)); }
       if (f < 0.3 && !u.once.melt) { u.once.melt = 1; fxText(W, u, 'MELTDOWN', '#ff7a3d'); buff(u, 'asPct', 0.6, 1e9); buff(u, 'atkPct', 0.2, 1e9); u.m.dmgReduce = (u.m.dmgReduce || 0) - 0.15; }
+    }
+    if (u.key === 'packlord') {
+      if (W.t % sec(9) === sec(4)) {   // the pounce: onto the weakest hero that stands back (ranged), else the weakest one
+        const hs = enemies(W, u).filter(e => e.kind === 'hero' && targetable(W, e)), back = hs.filter(e => e.range >= 2), t = (back.length ? back : hs).sort((a, b) => a.hp - b.hp)[0];
+        const spot = t && Hx.neighbors(t.c, t.r).find(h => Hx.inside(h.c, h.r) && !W.occ[Hx.key(h.c, h.r)]);
+        if (t && spot) { blink(W, u, spot.c, spot.r); deal(W, u, t, 1.3 * atkOf(W, u), 'phys', { ability: true }); cc(W, t, 'stun', 0.8); fxText(W, t, 'POUNCED!', '#ff6a3a'); }
+      }
+      if (f < 0.5 && !u.once.moon) { u.once.moon = 1; fxText(W, u, 'BLOOD MOON', '#ff3a3a'); heal(W, u, u.maxHp * 0.12, true); buff(u, 'atkPct', 0.2, 1e9); }
+    }
+    if (u.key === 'lichqueen') {
+      if (W.t % sec(7) === 0) {   // frozen: your hero with the most attack stands still for 1.5s
+        const t = enemies(W, u).filter(e => e.kind === 'hero' && targetable(W, e)).sort((a, b) => atkOf(W, b) - atkOf(W, a))[0];
+        if (t) { cc(W, t, 'stun', 1.5); fxText(W, t, 'FROZEN!', '#8fe3ff'); fx(W, { k: 'bolt', pts: [[u.c, u.r], [t.c, t.r]], color: '#8fe3ff', t1: W.t + 8 }); }
+      }
+      if (f < 0.66 && !u.once.dead) { u.once.dead = 1; fxText(W, u, 'THE DEAD RISE', '#8fe3ff'); for (let i = 0; i < 2; i++) summon(W, u, mobScaleDef('skulker', u.scale || 1)); }
+      if (f < 0.33 && !u.once.tomb) { u.once.tomb = 1; fxText(W, u, 'ICE TOMB', '#8fe3ff'); u.st.untarg = W.t + sec(2.5); heal(W, u, u.maxHp * 0.08, true); fxRing(W, u.c, u.r, 1, '#8fe3ff', 18); }
     }
     if (u.key === 'gorewarden') {
       if (f < 0.5 && !u.once.horde) { u.once.horde = 1; fxText(W, u, 'CALL THE HORDE', '#f44'); for (let i = 0; i < 3; i++) summon(W, u, mobScaleDef('grunt', u.scale || 1)); }

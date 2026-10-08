@@ -71,6 +71,8 @@
     hollowking: { type: 'wraith', body: '#2a1f3a', trim: '#a44dff', crown: '#ffcf5a' },
     mirewitch: H({ skin: '#7aa05a', body: '#2f4a2a', trim: '#9ad94a', robe: '#26391f', legs: '#1f2a18', bulk: 1.3, h: 1.15, head: 'hood', hood: '#1f2f18', weapon: 'staff', orb: '#9ad94a', eyes: '#d9ff7a' }),   // v52
     colossus: { type: 'golem', body: '#5a5f6a', trim: '#ffcf5a' },   // v52
+    packlord: { type: 'beast', body: '#4a3628', trim: '#ff6a3a' },   // v83 (review #161)
+    lichqueen: H({ skin: '#cfe9f7', body: '#1f3550', trim: '#8fe3ff', robe: '#16263c', legs: '#12203a', bulk: 1.25, h: 1.2, head: 'tiara', weapon: 'staff', orb: '#8fe3ff', eyes: '#8fe3ff', cape: '#0f1a30' }),   // v83
     // v60 (review #72): Prism, the Citadel and its soldiers
     // v62h (review #99): Prism is not a person but a long crystal that hovers
     prism: { type: 'crystal', body: '#3a9ac0', trim: '#d8fbff', core: '#7dffe0' },

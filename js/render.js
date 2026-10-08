@@ -429,6 +429,14 @@
       g.strokeStyle = '#173a1c'; g.lineWidth = 2; for (let i = 0; i < 28; i++) { const x = rnd() * W, y = top + size * (0.8 + rnd() * 0.5), h = size * (0.5 + rnd() * 0.7); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (rnd() - 0.5) * 8, y - h * 0.5, x + (rnd() - 0.5) * 14, y - h); g.stroke(); }
       for (let i = 0; i < 6; i++) { const y = top * (0.5 + i * 0.28) + rnd() * 20; const gr = g.createLinearGradient(0, y - size * 0.5, 0, y + size * 0.5); gr.addColorStop(0, 'rgba(190,255,200,0)'); gr.addColorStop(0.5, 'rgba(190,255,200,0.28)'); gr.addColorStop(1, 'rgba(190,255,200,0)'); g.fillStyle = gr; g.fillRect(0, y - size * 0.5, W, size); }
       for (let i = 0; i < 14; i++) { const x = rnd() * W, y = top * 0.4 + rnd() * (H - top * 0.4); const gl = g.createRadialGradient(x, y, 0, x, y, 7); gl.addColorStop(0, 'rgba(180,255,120,0.9)'); gl.addColorStop(1, 'rgba(180,255,120,0)'); g.fillStyle = gl; g.fillRect(x - 7, y - 7, 14, 14); }
+    } else if (key === 'packlord') {   // v83 (review #161): a blood moon over the hills
+      tint('#5a2a1a', 0.36);
+      g.fillStyle = 'rgba(255,90,60,0.55)'; g.beginPath(); g.arc(W * 0.78, top * 0.4, size * 0.6, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#2a140c'; for (let i = 0; i < 9; i++) { const x = rnd() * W, y = top + size * (0.7 + rnd() * 0.4), h = size * (0.6 + rnd() * 0.8); g.beginPath(); g.moveTo(x - size * 0.3, y); g.lineTo(x, y - h); g.lineTo(x + size * 0.3, y); g.fill(); }
+    } else if (key === 'lichqueen') {   // v83: falling snow over a frozen field
+      tint('#2a4a6a', 0.38);
+      g.fillStyle = '#e8f6ff'; for (let i = 0; i < 90; i++) { g.globalAlpha = 0.25 + rnd() * 0.6; g.beginPath(); g.arc(rnd() * W, rnd() * H, 0.8 + rnd() * 1.8, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1;
+      g.strokeStyle = 'rgba(160,230,255,0.45)'; g.lineWidth = 1.4; for (let i = 0; i < 8; i++) { let x = rnd() * W, y = top + rnd() * (H - top); g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (rnd() - 0.5) * size; y += (rnd() - 0.5) * size * 0.5; g.lineTo(x, y); } g.stroke(); }
     } else if (key === 'colossus') {
       tint('#6a5a3a', 0.32);
       g.strokeStyle = 'rgba(40,30,16,0.55)'; g.lineWidth = 1.6;

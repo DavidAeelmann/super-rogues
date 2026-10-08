@@ -71,6 +71,18 @@
   // each run with looming rewards. It should be a rewarding dopamine hit and encourage playing again"): the title shows
   // your level, its bar and the next reward; every game keeps the XP it earned (run.xpLog) and the game-over screen fills
   // the bar line by line (level ups burst with confetti) and ends on the next reward waiting for you
+  // v82 (review #160, David: "hovering over the chest rewards should explain what they are"): what a reward IS, for the hover / tap bubble
+  // WHAT: one or two sentences that explain an unlock (hero, item, power, portrait, voice line, title).
+  function unlockInfo(u) {
+    if (u.kind === 'hero') { const d = HEROES[u.id]; return `A new hero for your runs: ${d.role}${d.tag ? ', ' + d.tag.toLowerCase() : ''}. Ability, ${d.abName}: ${d.abDesc}`; }
+    if (u.kind === 'item') { const it = ITEM[u.id]; return `A new item that can show up in shops and events (${it.tier}${it.type ? ' ' + it.type : ''}): ${it.desc}.`; }
+    if (u.kind === 'relic') return `A new power for your whole team, offered at the start and in power shops: ${RELIC[u.id].desc}`;
+    if (u.kind === 'portrait') return `A new profile picture: ${HEROES[u.id].name}. Pick it on your profile (tap your picture).`;
+    if (u.kind === 'taunt') return 'A voice line: your speech bubble on the VS screen and on your profile, also when others face your team. Pick it in the Crown Shop, Style.';
+    if (u.kind === 'title') return `A title shown under your name (${B.ACH[u.id].desc}). Pick it in your profile, Achievements.`;
+    return '';
+  }
+  const unlockTip = u => `New ${KIND_NAME(u.kind)}: ${unlockName(u)}. ${unlockInfo(u)}`;
   const unlockPic = (u, px) => u.kind === 'title' ? `<i class="upic" style="--px:${px}px">${B.ACH[u.id].icon}</i>` : u.kind === 'taunt' ? `<i class="upic" style="--px:${px}px">💬</i>` : u.kind === 'portrait' ? `<span class="pfp">${img(u.id, px, 'por')}</span>` : u.kind === 'hero' ? img(u.id, px, 'por') : ico(u.kind, u.id, px);
   // v65 (review #131): a player's picture is a hero portrait (one of the four free ones, picked from the public code, until they choose one)
   // WHAT: the portrait a player shows (avKey) and its round frame (avatarHTML), on the profile, the ladder and the top bar.
@@ -89,7 +101,7 @@
     return `<button class="lvcard" data-act="player-tab" aria-label="Account level ${L.lvl}: see the rewards">
       <span class="lvb">${L.lvl}</span>
       <span class="lvm"><b>Level ${L.lvl}</b><span class="xpbar big"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span><small>${L.into}/${L.need} XP${u ? ` · next: <b>${esc(unlockName(u))}</b>` : ""}</small></span>
-      ${u ? `<span class="lvnext" title="Level ${u.lvl}: ${esc(unlockName(u))}">${unlockPic(u, 40)}<i>🔒</i><small>Lv ${u.lvl}</small></span>` : '<span class="lvnext done">✓</span>'}
+      ${u ? `<span class="lvnext" data-tip="${esc('Level ' + u.lvl + ': ' + unlockName(u) + '. ' + unlockInfo(u))}">${unlockPic(u, 40)}<i>🔒</i><small>Lv ${u.lvl}</small></span>` : '<span class="lvnext done">✓</span>'}
     </button>`;
   }
   const XP_ICON = { game: I('gamepad'), fight: I('swords'), boss: I('skull'), reach: I('trophy'), duel: I('sword'), champ: I('crown'), first: I('star'), crowns: I('gem') };
@@ -112,7 +124,7 @@
         <span class="xpbar big"><i id="xpfill" style="width:${Math.round(100 * S.into / S.need)}%"></i></span><small id="xpnum">${S.into}/${S.need} XP</small></div>
         <b class="xpgot" id="xpgot">+${done ? got : 0}</b></div>
       ${log.length ? `<ul class="xplines">${xpChips(log).map(c => `<li data-xp="${c.xp}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i><span>${esc(c.name)}</span><b>+${c.xp}</b></li>`).join('')}</ul>` : note ? `<p class="small center">${note}</p>` : ''}
-      ${ups.length ? `<div class="xpups ${ups.length > 3 ? 'lots' : ups.length > 2 ? 'many' : ''}">${ups.length > 3 ? `<b class="xpupn">${ups.length} new unlocks!</b>` : ''}${ups.map(x => `<div class="xpup" data-lvl="${x.lvl}" title="New ${KIND_NAME(x.kind)}: ${esc(unlockName(x))}">${unlockPic(x, 34)}<span><small>New ${KIND_NAME(x.kind)}!</small><b>${esc(unlockName(x))}</b></span></div>`).join('')}</div>` : ''}
+      ${ups.length ? `<div class="xpups ${ups.length > 3 ? 'lots' : ups.length > 2 ? 'many' : ''}">${ups.length > 3 ? `<b class="xpupn">${ups.length} new unlocks!</b>` : ''}${ups.map(x => `<div class="xpup" data-lvl="${x.lvl}" tabindex="0" data-tip="${esc(unlockTip(x))}">${unlockPic(x, 34)}<span><small>New ${KIND_NAME(x.kind)}!</small><b>${esc(unlockName(x))}</b></span></div>`).join('')}</div>` : ''}
       ${u ? `<div class="xpnext">${unlockPic(u, 48)}<span><small>Next reward · level ${u.lvl}</small><b>${esc(unlockName(u))}</b><i>${B.xpForLevel(u.lvl) - to} XP to go</i></span><em>🔒</em></div>` : '<p class="small center">🏅 Every reward unlocked!</p>'}
     </div>`;
   }
@@ -821,9 +833,27 @@
   ];
   const guideSeen = () => { const s = store.get('balance.guide', []); return Array.isArray(s) ? s : []; };
   const guideOn = () => !navigator.webdriver && (!!store.get('balance.guide.force', 0) || !(acct.account && (acct.runs | 0) >= 3));
+  // v82 (review #160): the explain bubble of anything with data-tip (the rewards in the chest, the level road, the next reward). A mouse shows it while
+  // hovering; a tap (or keyboard focus) shows it until the next tap. Fixed over the page like the guide, so nothing moves.
+  // WHAT: shows / hides the data-tip bubble.
+  const htip = { el: null, on: null };
+  function tipShow(t) {
+    tipHide(); const text = t.getAttribute('data-tip'); if (!text) return;
+    const r = t.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, b = document.createElement('div'); b.className = 'htip'; b.textContent = text; document.body.appendChild(b);
+    const w = Math.min(280, vw - 24); b.style.width = w + 'px'; const h = b.offsetHeight, up = r.top - h - 10 >= 8;
+    const cx = Math.max(12 + w / 2, Math.min(vw - 12 - w / 2, r.left + r.width / 2));
+    b.style.left = (cx - w / 2) + 'px'; b.style.top = (up ? r.top - h - 10 : Math.min(vh - h - 8, r.bottom + 10)) + 'px'; b.classList.add(up ? 'up' : 'down');
+    b.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - (cx - w / 2))) + 'px');
+    htip.el = b; htip.on = t; htip.at = performance.now();
+  }
+  function tipHide() { if (htip.el) htip.el.remove(); htip.el = null; htip.on = null; }
+  document.addEventListener('pointerover', e => { if (e.pointerType !== 'mouse') return; const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); else if (!t && htip.on) tipHide(); });
+  document.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); else tipHide(); }, true);
+  document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); });
+  addEventListener('scroll', () => { if (htip.el && performance.now() - htip.at > 300) tipHide(); }, true); addEventListener('resize', tipHide);
   // WHAT: after each render, shows the first guide tip that fits this screen and was never seen (or removes the one of a screen that is gone).
   function guide() {
-    clearTimeout(guide.t); const old = document.querySelector('.gtip'); if (old) old.remove(); guideDisarm();
+    clearTimeout(guide.t); const old = document.querySelector('.gtip'); if (old) old.remove(); guideDisarm(); if (htip.on && !htip.on.isConnected) tipHide();
     if (!run || screen !== 'run' || !guideOn() || ui.modal) return;
     const seen = guideSeen(), g = GUIDE.find(x => !seen.includes(x.id) && x.when());
     if (!g) return;
@@ -1252,7 +1282,7 @@
     const chest = `<div class="chestzone ${n ? (done ? 'open' : 'will') : 'shut'}" id="chest">
         <b class="cheer" id="cheer">LEVEL UP!</b>
         <div class="chest" aria-hidden="true"><span class="lid"></span><span class="box"><i></i></span><span class="glow"></span></div>
-        ${n ? `<div class="loot ${n > 4 ? 'lots' : ''}">${na.map((a, i) => `<span class="lootit ach" style="--i:${i}" title="New title: ${esc(a.title)} · ${esc(a.desc)}"><i class="achi">${a.icon}</i><b>${esc(a.title)}</b><small>New title!</small></span>`).join('')}${ups.map((x, i) => `<span class="lootit" style="--i:${i + na.length}" title="New ${KIND_NAME(x.kind)}: ${esc(unlockName(x))}">${unlockPic(x, 46)}<b>${esc(unlockName(x))}</b><small>New ${KIND_NAME(x.kind)}</small></span>`).join('')}</div>`
+        ${n ? `<div class="loot ${n > 4 ? 'lots' : ''}">${na.map((a, i) => `<span class="lootit ach" style="--i:${i}" tabindex="0" data-tip="${esc('New title: ' + a.title + '. You earned it: ' + a.desc + ' It can show under your name: pick it in your profile, Achievements.')}"><i class="achi">${a.icon}</i><b>${esc(a.title)}</b><small>New title!</small></span>`).join('')}${ups.map((x, i) => `<span class="lootit" style="--i:${i + na.length}" tabindex="0" data-tip="${esc(unlockTip(x))}">${unlockPic(x, 46)}<b>${esc(unlockName(x))}</b><small>New ${KIND_NAME(x.kind)}</small></span>`).join('')}</div>`
           : u ? `<p class="chestnote">${I('lock')} Next chest at level ${u.lvl}: <b>${esc(unlockName(u))}</b> · ${B.xpForLevel(u.lvl) - to} XP to go</p>` : '<p class="chestnote">🏅 Every reward unlocked!</p>'}</div>`;
     return `<div class="vmwrap xp" id="xppanel" data-from="${from}" data-to="${to}">${meterHTML('xpmeter', '--lc:#7c4dff;--lh:#7ee8ff', banner, Math.round(100 * S.into / S.need), `<span id="xpnum">${S.into}/${S.need}</span> XP`)}
       <div class="vmright"><b class="vmbig xp ${got >= 100 ? 'long' : ''}"><span id="xpbig">+${done ? got : 0}</span> <small>XP</small></b>
@@ -1835,7 +1865,7 @@
   function roadmapHTML(me) {
     const xp = me.axp | 0, L = B.levelProgress(xp), lvl = L.lvl, per = L.need, inLv = L.into, max = B.UNLOCKS[B.UNLOCKS.length - 1].lvl, X = B.GAME_XP;
     const pic = u => unlockPic(u, 44);
-    const nodes = B.UNLOCKS.map(u => `<div class="rmn ${u.lvl <= lvl ? 'got' : u.lvl === lvl + 1 ? 'next' : ''}"><span class="rml">Lv ${u.lvl}</span>${pic(u)}<b>${esc(unlockName(u))}</b><i>${KIND_NAME(u.kind)}</i><em>${u.lvl <= lvl ? '✓' : '🔒'}</em></div>`).join('');
+    const nodes = B.UNLOCKS.map(u => `<div class="rmn ${u.lvl <= lvl ? 'got' : u.lvl === lvl + 1 ? 'next' : ''}" tabindex="0" data-tip="${esc('Level ' + u.lvl + ': ' + unlockName(u) + '. ' + unlockInfo(u))}"><span class="rml">Lv ${u.lvl}</span>${pic(u)}<b>${esc(unlockName(u))}</b><i>${KIND_NAME(u.kind)}</i><em>${u.lvl <= lvl ? '✓' : '🔒'}</em></div>`).join('');
     return `<div class="acctlv"><div class="alh"><span class="lvb">${lvl}</span><div class="alb"><b>Account level ${lvl}</b>
         <span class="xpbar big"><i style="width:${lvl > max ? 100 : Math.round(100 * inLv / per)}%"></i></span>
         <span class="small">${lvl > max ? `${xp} XP · every reward unlocked` : `${inLv}/${per} XP to level ${lvl + 1}`}</span></div></div>
