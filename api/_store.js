@@ -134,6 +134,7 @@ function memStore() {
     async follow(pid, code, on) { const F = M.follows = M.follows || [], i = F.findIndex(f => f.pid === pid && f.code === code); if (on && i < 0) F.push({ pid, code, created: Date.now() }); if (!on && i >= 0) F.splice(i, 1); },
     async isFollowing(pid, code) { return (M.follows || []).some(f => f.pid === pid && f.code === code); },
     async followCounts(pid, code) { const F = M.follows || []; return { following: F.filter(f => f.pid === pid).length, followers: F.filter(f => f.code === code).length }; },
+    async rankOf(pid) { const P = Object.values(M.players || {}).filter(p => p.runs > 0), me = M.players && M.players[pid]; if (!me || !(me.runs > 0)) return null; return 1 + P.filter(p => p.pid !== pid && ((p.league | 0) > (me.league | 0) || ((p.league | 0) === (me.league | 0) && (p.lp | 0) > (me.lp | 0)))).length; },
     async friendsTop(pid, n) { const codes = new Set((M.follows || []).filter(f => f.pid === pid).map(f => f.code)); return Object.values(M.players || {}).filter(p => p.pid === pid || codes.has(p.code)).sort((a, b) => (b.league | 0) - (a.league | 0) || (b.lp | 0) - (a.lp | 0)).slice(0, n).map(pubPlayer); },
     async setAvatar(pid, key) { const p = M.players && M.players[pid]; if (p) p.avatar = key; },
     async setStyle(pid, taunt, vsfx) { const p = M.players && M.players[pid]; if (p) { p.taunt = taunt; p.vsfx = vsfx; } },
@@ -241,6 +242,8 @@ function pgStore() {
     async follow(pid, code, on) { if (on) await q('insert into follows (pid, code, created) values ($1,$2,$3) on conflict do nothing', [pid, code, Date.now()]); else await q('delete from follows where pid=$1 and code=$2', [pid, code]); },
     async isFollowing(pid, code) { return (await q('select 1 from follows where pid=$1 and code=$2', [pid, code])).length > 0; },
     async followCounts(pid, code) { const r = await q('select (select count(*)::int from follows where pid=$1) a, (select count(*)::int from follows where code=$2) b', [pid, code]); return { following: Number(r[0].a), followers: Number(r[0].b) }; },
+    // v85 (review #163): your place in the global ranking = 1 + the players above you (higher league, or the same league and more LP)
+    async rankOf(pid) { const r = await q('select 1 + (select count(*)::int from players o where o.runs > 0 and o.pid <> p.pid and (o.league > p.league or (o.league = p.league and o.lp > p.lp))) as rank from players p where p.pid = $1 and p.runs > 0', [pid]); return r.length ? Number(r[0].rank) : null; },
     async friendsTop(pid, n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar, title from players where pid=$1 or code in (select code from follows where pid=$1) order by league desc, lp desc limit $2', [pid, n])).map(pubPlayer); },
     async setAvatar(pid, key) { await q('update players set avatar=$2 where pid=$1', [pid, key]); },
     async setTitle(pid, t) { await q('update players set title=$2 where pid=$1', [pid, t]); },

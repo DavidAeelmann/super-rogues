@@ -11,6 +11,7 @@
 //   {op:'avatar', pid, hero}       v65: your picture, a hero portrait your account level has opened (v66: or bought)
 //   {op:'style', pid, taunt, vsfx} v66: the taunt and VS entrance you show (bought in the Crown Shop)
 //   {op:'title', pid, title}       v73: the achievement shown as your title
+//   {op:'ladder', pid?}            v85: the global top 10, and your place (me + rank) when you are not in it
 //   {op:'redeem', pid, code}       v76: a redeem code (CODES below, server only), once per player
 // 
 // FILE GUIDE. THE ACCOUNT ENDPOINT, POST /api/player { op, pid, ... }: me (wallet and progress), profile (anyone's public profile), buy (Crown Shop), rename, ratings (content Elo, needs the unlock). It never creates a player: accounts start when a first game ends (api/elo.js). The index of the whole project is CODEMAP.md.
@@ -50,7 +51,13 @@ module.exports = async (req, res) => {
       v.followed = !!p && p.pid !== t.pid && await st.isFollowing(p.pid, v.code);
       return send(res, 200, { profile: v, viewerKing: king });
     }
-    if (b.op === 'friends') return send(res, 200, { top: p ? await st.friendsTop(pid, 50) : [] });   // v65 (review #132): the players you follow, and you
+    // v85 (review #163, David: "top players should only show top ten, then if you're not top 10 a ... then you and your place in the global rankings. Friends shows all friends always and you")
+    if (b.op === 'ladder') {
+      const top = await st.topPlayers(10), rank = p ? await st.rankOf(pid) : null;
+      const me = p && rank && rank > 10 ? Object.assign((await st.friendsTop(pid, 1)).find(x => x.code === p.code) || {}, { rank }) : null;
+      return send(res, 200, { top, me, rank });
+    }
+    if (b.op === 'friends') return send(res, 200, { top: p ? await st.friendsTop(pid, 1000) : [] });   // v85: every friend, always   // v65 (review #132): the players you follow, and you
     if (!p) return send(res, 404, { error: 'Your account starts when your first run ends. Play one first!' });
 
     if (b.op === 'follow') {   // v65 (review #132): follow / unfollow a player by the public code

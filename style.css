@@ -2796,3 +2796,5 @@ button.achc.got { cursor: pointer; }
 [data-tip] { cursor: help; } [data-tip]:focus { outline: none; }
 /* v84 (review #162): the league multiplier line on the end screen */
 .lpw.mul { opacity: .8; font-style: italic; }
+/* v85 (review #163): the "…" row between the top 10 and your own place */
+.tbl tr.gap td { text-align: center; padding: 2px 0; opacity: .6; font-weight: 800; letter-spacing: 2px; }
