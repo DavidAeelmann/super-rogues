@@ -23,51 +23,51 @@
   const OFFICIAL = {
     // review #45 (David): Ulfrik (the "Red-Hand" art). His sheet had 5 rows: idle 5, walk 8, attack 7, a charge 6 and a
     // spin 7 frames; his ability (Crimson Spin) plays the charge and then the spin, so every frame is used
-    thorne: { splash: 'art/ravager/splash.jpg', crop: { x: 0.52, y: 0.3, z: 1 }, flip: false, scale: 1,
+    thorne: { splash: 'art/ravager/splash.jpg', crop: { x: 0.517, y: 0.287, z: 1 }, flip: false, scale: 1,
       anims: { idle: seq('ravager', 'idle', 5), move: seq('ravager', 'move', 8), attack: seq('ravager', 'attack', 7), cast: seq('ravager', 'cast', 13) },
       axs: { idle: [0.552, 0.506, 0.534, 0.54, 0.499], move: [0.547, 0.565, 0.57, 0.584, 0.561, 0.552, 0.565, 0.52], attack: [0.457, 0.455, 0.487, 0.479, 0.493, 0.504, 0.469], cast: [0.568, 0.495, 0.543, 0.52, 0.519, 0.468, 0.488, 0.477, 0.494, 0.485, 0.551, 0.544, 0.48] } },
     // review #46 (David): Brutus. Idle 7, walk 8, attack 7 and ability (Ramming Charge) 6 frames; the lab had glued 3
     // attack frames (and 2 ability frames) together through the swoosh arcs, split here and fixed in cutSheet
-    brakk: { splash: 'art/ironhorn/splash.jpg', crop: { x: 0.63, y: 0.34, z: 1.26 }, flip: false, scale: 1,
+    brakk: { splash: 'art/ironhorn/splash.jpg', crop: { x: 0.654, y: 0.329, z: 1.26 }, flip: false, scale: 1,
       anims: { idle: seq('ironhorn', 'idle', 7), move: seq('ironhorn', 'move', 8), attack: seq('ironhorn', 'attack', 7), cast: seq('ironhorn', 'cast', 6) },
       axs: { idle: [0.523, 0.507, 0.508, 0.51, 0.507, 0.514, 0.509], move: [0.561, 0.561, 0.555, 0.525, 0.525, 0.559, 0.508, 0.52], attack: [0.427, 0.436, 0.46, 0.457, 0.479, 0.46, 0.479], cast: [0.492, 0.471, 0.524, 0.5, 0.494, 0.458] } },
     // review #47 (David): Melissa, sent as "Astrid" (the lab opened on the first hero of the list). Her sheet had no space
     // between the frames; cut by the frame pitch here and in cutSheet. Idle 16, walk 15; the attack is her 5 quick
     // throws (drawn smaller, scaled up); the ability (Honey Hive) is the 7 hive-throw frames then the 12 swarm frames;
     // death 11 frames
-    buzzwell: { splash: 'art/stinger/splash.jpg', crop: { x: 0.52, y: 0.3, z: 1 }, flip: false, scale: 1,
+    buzzwell: { splash: 'art/stinger/splash.jpg', crop: { x: 0.538, y: 0.314, z: 1 }, flip: false, scale: 1,
       anims: { idle: seq('stinger', 'idle', 16), move: seq('stinger', 'move', 15), attack: seq('stinger', 'attack', 5), cast: seq('stinger', 'cast', 19), death: seq('stinger', 'death', 11) },
       axs: { idle: [0.55, 0.662, 0.663, 0.67, 0.657, 0.64, 0.592, 0.61, 0.642, 0.64, 0.642, 0.641, 0.642, 0.632, 0.607, 0.602], move: [0.476, 0.529, 0.462, 0.526, 0.463, 0.533, 0.513, 0.447, 0.443, 0.507, 0.548, 0.572, 0.537, 0.525, 0.549], attack: [0.467, 0.46, 0.431, 0.528, 0.496], cast: [0.449, 0.442, 0.464, 0.501, 0.538, 0.5, 0.581, 0.472, 0.459, 0.586, 0.571, 0.591, 0.53, 0.589, 0.618, 0.614, 0.663, 0.64, 0.655], death: [0.496, 0.504, 0.541, 0.585, 0.582, 0.508, 0.52, 0.467, 0.491, 0.48, 0.515] } },
     // review #48 (David): Kagero. A sheet of cards (every frame on a pink tile, with a title and row labels): cut per
     // card by cutCards, 8 frames in each of idle, walk, attack, ability (the smoke bomb flies, then the flash) and death
-    kage: { splash: 'art/eclipse/splash.jpg', crop: { x: 0.46, y: 0.15, z: 1.2 }, flip: false, scale: 1,
+    kage: { splash: 'art/eclipse/splash.jpg', crop: { x: 0.509, y: 0.235, z: 1.2 }, flip: false, scale: 1,
       anims: { idle: seq('eclipse', 'idle', 8), move: seq('eclipse', 'move', 8), attack: seq('eclipse', 'attack', 8), cast: seq('eclipse', 'cast', 8), death: seq('eclipse', 'death', 8) },
       axs: { idle: [0.569, 0.569, 0.578, 0.578, 0.578, 0.569, 0.569, 0.559], move: [0.528, 0.528, 0.528, 0.538, 0.528, 0.528, 0.528, 0.528], attack: [0.492, 0.492, 0.492, 0.5, 0.492, 0.492, 0.492, 0.492], cast: [0.492, 0.492, 0.492, 0.5, 0.492, 0.492, 0.492, 0.492], death: [0.492, 0.492, 0.492, 0.5, 0.492, 0.492, 0.492, 0.492] } },
     // review #59 (PC boy): splash art for 10 heroes (cards, banners and portraits only: their battle figures stay drawn).
     // The crop centres each face for the portrait
-    rex: { splash: 'art/fang/splash.jpg', crop: { x: 0.3, y: 0.44, z: 1.1 }, flip: false, scale: 1 },   // Fang
-    bramble: { splash: 'art/bramble/splash.jpg', crop: { x: 0.55, y: 0.31, z: 1.1 }, flip: false, scale: 1 },   // Bramble
-    mirage: { splash: 'art/mirage/splash.jpg', crop: { x: 0.55, y: 0.29, z: 1.2 }, flip: false, scale: 1 },   // Mirage
-    hippolyta: { splash: 'art/skara/splash.jpg', crop: { x: 0.43, y: 0.37, z: 1.2 }, flip: false, scale: 1 },   // Skara
-    glacia: { splash: 'art/frostbane/splash.jpg', crop: { x: 0.37, y: 0.29, z: 1.2 }, flip: false, scale: 1 },   // Frostbane
-    seraph: { splash: 'art/radiant/splash.jpg', crop: { x: 0.52, y: 0.27, z: 1.2 }, flip: false, scale: 1 },   // Radiant
-    azgul: { splash: 'art/inferno/splash.jpg', crop: { x: 0.5, y: 0.26, z: 1.2 }, flip: false, scale: 1 },   // Inferno
-    pip: { splash: 'art/jinx/splash.jpg', crop: { x: 0.34, y: 0.31, z: 1.2 }, flip: false, scale: 1 },   // Jinx
-    lumen: { splash: 'art/solace/splash.jpg', crop: { x: 0.5, y: 0.29, z: 1.2 }, flip: false, scale: 1 },   // Solace
-    bastion: { splash: 'art/aegir/splash.jpg', crop: { x: 0.38, y: 0.33, z: 1.2 }, flip: false, scale: 1 },   // Aegir
+    rex: { splash: 'art/fang/splash.jpg', crop: { x: 0.32, y: 0.424, z: 1.1 }, flip: false, scale: 1 },   // Fang
+    bramble: { splash: 'art/bramble/splash.jpg', crop: { x: 0.61, y: 0.316, z: 1.1 }, flip: false, scale: 1 },   // Bramble
+    mirage: { splash: 'art/mirage/splash.jpg', crop: { x: 0.563, y: 0.296, z: 1.2 }, flip: false, scale: 1 },   // Mirage
+    hippolyta: { splash: 'art/skara/splash.jpg', crop: { x: 0.437, y: 0.369, z: 1.2 }, flip: false, scale: 1 },   // Skara
+    glacia: { splash: 'art/frostbane/splash.jpg', crop: { x: 0.427, y: 0.298, z: 1.2 }, flip: false, scale: 1 },   // Frostbane
+    seraph: { splash: 'art/radiant/splash.jpg', crop: { x: 0.539, y: 0.288, z: 1.2 }, flip: false, scale: 1 },   // Radiant
+    azgul: { splash: 'art/inferno/splash.jpg', crop: { x: 0.543, y: 0.295, z: 1.2 }, flip: false, scale: 1 },   // Inferno
+    pip: { splash: 'art/jinx/splash.jpg', crop: { x: 0.363, y: 0.321, z: 1.2 }, flip: false, scale: 1 },   // Jinx
+    lumen: { splash: 'art/solace/splash.jpg', crop: { x: 0.533, y: 0.342, z: 1.2 }, flip: false, scale: 1 },   // Solace
+    bastion: { splash: 'art/aegir/splash.jpg', crop: { x: 0.442, y: 0.336, z: 1.2 }, flip: false, scale: 1 },   // Aegir
     // review #68 (PC boy): splash art for 12 more heroes (cards, banners, portraits; battle figures stay drawn)
-    sprocket: { splash: 'art/vial/splash.jpg', crop: { x: 0.37, y: 0.29, z: 1.15 }, flip: false, scale: 1 },   // Vial
-    zephyr: { splash: 'art/kaze/splash.jpg', crop: { x: 0.4, y: 0.19, z: 1.2 }, flip: false, scale: 1 },   // Kaze
-    pyra: { splash: 'art/feuer/splash.jpg', crop: { x: 0.42, y: 0.24, z: 1.2 }, flip: false, scale: 1 },   // Feuer
-    blaze: { splash: 'art/flint/splash.jpg', crop: { x: 0.37, y: 0.23, z: 1.2 }, flip: false, scale: 1 },   // Flint
-    grok: { splash: 'art/boulder/splash.jpg', crop: { x: 0.58, y: 0.4, z: 1.15 }, flip: false, scale: 1 },   // Boulder
-    leonidas: { splash: 'art/phalanx/splash.jpg', crop: { x: 0.55, y: 0.26, z: 1.15 }, flip: false, scale: 1 },   // Phalanx
-    morrow: { splash: 'art/graveborn/splash.jpg', crop: { x: 0.43, y: 0.29, z: 1.2 }, flip: false, scale: 1 },   // Graveborn
-    vex: { splash: 'art/vex/splash.jpg', crop: { x: 0.58, y: 0.21, z: 1.2 }, flip: false, scale: 1 },   // Vex
-    grimhook: { splash: 'art/hookjaw/splash.jpg', crop: { x: 0.4, y: 0.32, z: 1.2 }, flip: false, scale: 1 },   // Hookjaw
-    nyx: { splash: 'art/nyx/splash.jpg', crop: { x: 0.45, y: 0.2, z: 1.2 }, flip: false, scale: 1 },   // Nyx
-    harlequin: { splash: 'art/rapture/splash.jpg', crop: { x: 0.45, y: 0.22, z: 1.2 }, flip: false, scale: 1 },   // Rapture
-    deadshot: { splash: 'art/deadeye/splash.jpg', crop: { x: 0.45, y: 0.22, z: 1.2 }, flip: false, scale: 1 },   // Deadeye
+    sprocket: { splash: 'art/vial/splash.jpg', crop: { x: 0.414, y: 0.273, z: 1.15 }, flip: false, scale: 1 },   // Vial
+    zephyr: { splash: 'art/kaze/splash.jpg', crop: { x: 0.357, y: 0.231, z: 1.2 }, flip: false, scale: 1 },   // Kaze
+    pyra: { splash: 'art/feuer/splash.jpg', crop: { x: 0.441, y: 0.268, z: 1.2 }, flip: false, scale: 1 },   // Feuer
+    blaze: { splash: 'art/flint/splash.jpg', crop: { x: 0.396, y: 0.267, z: 1.2 }, flip: false, scale: 1 },   // Flint
+    grok: { splash: 'art/boulder/splash.jpg', crop: { x: 0.548, y: 0.423, z: 1.15 }, flip: false, scale: 1 },   // Boulder
+    leonidas: { splash: 'art/phalanx/splash.jpg', crop: { x: 0.463, y: 0.26, z: 1.15 }, flip: false, scale: 1 },   // Phalanx
+    morrow: { splash: 'art/graveborn/splash.jpg', crop: { x: 0.467, y: 0.283, z: 1.2 }, flip: false, scale: 1 },   // Graveborn
+    vex: { splash: 'art/vex/splash.jpg', crop: { x: 0.687, y: 0.236, z: 1.2 }, flip: false, scale: 1 },   // Vex
+    grimhook: { splash: 'art/hookjaw/splash.jpg', crop: { x: 0.406, y: 0.353, z: 1.2 }, flip: false, scale: 1 },   // Hookjaw
+    nyx: { splash: 'art/nyx/splash.jpg', crop: { x: 0.51, y: 0.21, z: 1.2 }, flip: false, scale: 1 },   // Nyx
+    harlequin: { splash: 'art/rapture/splash.jpg', crop: { x: 0.514, y: 0.234, z: 1.2 }, flip: false, scale: 1 },   // Rapture
+    deadshot: { splash: 'art/deadeye/splash.jpg', crop: { x: 0.432, y: 0.266, z: 1.2 }, flip: false, scale: 1 },   // Deadeye
   };
   // WHAT: the pictures a player is testing on this device (browser memory). live = pictures currently mounted, subs = who listens for changes.
   const LOCAL = 'balance.artlab';
@@ -131,7 +131,7 @@
     if (mode === 'bust') { sw = Math.min(iw, ih) * 0.55 / clamp(cr.z, 0.3, 4); sh = sw * h / w; }
     else { const r = w / h; sh = Math.min(ih, iw / r); sw = sh * r; }
     sw = Math.min(sw, iw); sh = Math.min(sh, ih);
-    const sx = clamp(cr.x * iw - sw / 2, 0, iw - sw), sy = clamp(cr.y * ih - sh * (mode === 'bust' ? 0.45 : 0.3), 0, ih - sh);
+    const sx = clamp(cr.x * iw - sw / 2, 0, iw - sw), sy = clamp(cr.y * ih - sh * (mode === 'bust' ? 0.5 : 0.3), 0, ih - sh);   // v79 (review #157): x/y = the centre of the face, which sits in the middle of a bust
     const dpr = 3, cv = document.createElement('canvas'); cv.width = w * dpr; cv.height = h * dpr;
     const c = cv.getContext('2d'); c.imageSmoothingQuality = 'high';
     c.drawImage(im, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
