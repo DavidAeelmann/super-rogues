@@ -816,7 +816,7 @@
   // v80 (review #158, David: "update the first run tutorial to the new structure with helpful and visible tips that are non obstructive"): the guide.
   // One small bubble at a time points at the thing it explains (the road, the lives, a duel, the bag, the shop...). It never blocks: taps go
   // through it, the first tap anywhere after it showed puts it away for good (balance.guide = the ids seen), and a screen change takes it off.
-  // New players get it during their first runs (an account with 3+ runs never sees it); the deploy and battle hints above stay as they were.
+  // v87: everyone gets it until a run reaches the final fight (see guideOn); the deploy and battle hints above stay as they were.
   // WHAT: the guide tips: id, when it shows, what it points at (a selector), the text.
   const GUIDE = [
     { id: 'path', when: () => run.phase === 'map', at: '[data-act=choose]', text: 'Your road to the final fight: one stop a day. Tap a card to choose today\'s stop. Harder fights pay more gold.' },
@@ -831,8 +831,11 @@
     { id: 'league', when: () => run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1, at: '#lpmeter', text: 'League points: wins add them, losses take a few. Fill the bar to climb to the next league.' },
     { id: 'chest', when: () => run.phase === 'over' && run.overStep === 2, at: '#chest', text: 'Account XP: every level opens new heroes, items, powers and rewards.' },
   ];
-  const guideSeen = () => { const s = store.get('balance.guide', []); return Array.isArray(s) ? s : []; };
-  const guideOn = () => !navigator.webdriver && (!!store.get('balance.guide.force', 0) || !(acct.account && (acct.runs | 0) >= 3));
+  // v87 (review #166, David: "tutorial now for all players again, and doesn't stop until they reach the final PvP fight"): every player sees the guide
+  // again (new key balance.guide2), whatever their runs, until a run of theirs reaches the final fight; it ends after that run's end screens
+  // (balance.guide.done). "Show the tips again" (How to play) starts it over.
+  const guideSeen = () => { const s = store.get('balance.guide2', []); return Array.isArray(s) ? s : []; };
+  const guideOn = () => !navigator.webdriver && !store.get('balance.guide.done', 0);
   // v82 (review #160): the explain bubble of anything with data-tip (the rewards in the chest, the level road, the next reward). A mouse shows it while
   // hovering; a tap (or keyboard focus) shows it until the next tap. Fixed over the page like the guide, so nothing moves.
   // WHAT: shows / hides the data-tip bubble.
@@ -856,7 +859,7 @@
     clearTimeout(guide.t); const old = document.querySelector('.gtip'); if (old) old.remove(); guideDisarm(); if (htip.on && !htip.on.isConnected) tipHide();
     if (!run || screen !== 'run' || !guideOn() || ui.modal) return;
     const seen = guideSeen(), g = GUIDE.find(x => !seen.includes(x.id) && x.when());
-    if (!g) return;
+    if (!g) { if (run.guideFinal && run.phase === 'over' && run.overStep === 2) store.set('balance.guide.done', 1); return; }   // v87: the run that reached the final fight is over
     const key = ui.lastKey;
     // a moment after the screen settles (the entry animation, the map walk), then the bubble finds its target
     guide.t = setTimeout(() => {
@@ -873,7 +876,7 @@
       tip.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - (cx - w / 2))) + 'px');
       // the next tap anywhere (after it had time to be read) puts it away for good; the tap itself still does what it does
       const shownAt = performance.now();
-      guideDisarm.h = () => { if (performance.now() - shownAt < 700) return; store.set('balance.guide', guideSeen().concat(g.id)); tip.classList.add('bye'); setTimeout(() => tip.remove(), 250); guideDisarm(); };
+      guideDisarm.h = () => { if (performance.now() - shownAt < 700) return; store.set('balance.guide2', guideSeen().concat(g.id)); if (g.id === 'chest' && run && run.guideFinal) store.set('balance.guide.done', 1); tip.classList.add('bye'); setTimeout(() => tip.remove(), 250); guideDisarm(); };
       document.addEventListener('pointerdown', guideDisarm.h, true);
     }, 650);
   }
@@ -1405,6 +1408,7 @@
   // WHAT: the Fight! button: builds the real simulation, shows what Smolder ate, switches to the battle screen and starts the loop.
   function startBattle() {
     const gau = run.cur && run.cur.type === 'gauntlet';
+    if (gau && run.g && run.g.kind === 'final') run.guideFinal = true;   // v87 (review #166): the guide ends after this run
     const W = worldFor(false);
     save();
     const ate = (run.devoured || []).map(x => x.msg).join(' ');   // v62: Smolder's meal
@@ -2126,7 +2130,7 @@
     menu: () => { if (battle) return; screen = 'title'; closeModal(); render(); },
     howto: () => openModal(HOWTO),
     // v80 (review #158): the guide tips come back (even on an account with many runs)
-    'guide-again': () => { store.set('balance.guide', []); store.set('balance.guide.force', 1); closeModal(); toast('The tips will show again as you play'); render(); },
+    'guide-again': () => { store.set('balance.guide2', []); store.set('balance.guide.done', 0); closeModal(); toast('The tips will show again as you play'); render(); },
     // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
     'start-pick': k => { ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); },
     // v64 (review #126): the free recruit between days
