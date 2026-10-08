@@ -1,12 +1,12 @@
 // v29 (owner: "on the PC the framing is horrible"): a photo of every main screen on a phone and on 3 computer screens,
-// for design review. Screens go to tools/tests/.saida/vit-<screen size>-<screen>.png (and a copy to the owner's
+// for design review. Screens go to tools/tests/.output/vit-<screen size>-<screen>.png (and a copy to the owner's
 // Downloads\balance-prints when that folder exists). Checks nothing is wider than the screen and that the board fits.
-// Usage: node tools/tests/vitrine.mjs [only=desk|phone]
+// Usage: node tools/tests/showcase.mjs [only=desk|phone]
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..', '..'), OUT = path.join(AQUI, '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..', '..'), OUT = path.join(HERE, '.output') + path.sep;
 const PRINTS = 'C:/Users/davi_/Downloads/balance-prints/';
 fs.mkdirSync(OUT, { recursive: true });
 const PORT = 3797, CDP = 9437, sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -106,7 +106,7 @@ for (const d of SIZES) {
   await ev(`__bal.ACT.menu()`); await sleep(200);
 }
 ok(errors.length === 0, 'no JS errors' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
-console.log(`vitrine: ${oks} ok, ${fails} fail${printsOk ? ' (copies in ' + PRINTS + ')' : ''}`);
+console.log(`showcase: ${oks} ok, ${fails} fail${printsOk ? ' (copies in ' + PRINTS + ')' : ''}`);
 try { ws.close(); } catch (_) {}
 chrome.kill(); server.kill();
 process.exit(fails ? 1 : 0);

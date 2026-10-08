@@ -1,4 +1,4 @@
-// Engine + run logic checks (Node, no browser). Usage: node tools/tests/motor.js
+// Engine + run logic checks (Node, no browser). Usage: node tools/tests/engine.js
 require('../../js/hex.js'); require('../../js/data.js'); require('../../js/sim.js'); require('../../js/run.js');
 const { Run, Sim, Hex, HEROES, ITEMS, RELICS, CFG } = B;
 B.TUNE.power = {}; B.TUNE.base = 1; B.TUNE.growth = 1; B.CFG.startItems = 0; B.CFG.freeRecruits = 0;   // v63/v64: the starting common items and the free recruits have their own tests at the end   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
@@ -983,6 +983,14 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     const r2 = Run.newRun(78); Object.assign(r2, { result: 'clear', lives: 1, fell: 2, trophies: [], gold: 3 }); const a2 = Run.endAchs(r2); ok(a2.includes('comeback') && !a2.includes('untouchable') && !a2.includes('perfect'), 'v73: the last life = Comeback Kid');
     ok(B.ACHIEVEMENTS.length >= 15 && B.ACHIEVEMENTS.every(x => x.title && x.desc && (x.by === 'run' || x.by === 'server' || (x.by === 'level' && x.lvl > 1))), 'v73: every achievement has a title, a text and who checks it');
     ok(B.UNLOCKS.some(u => u.kind === 'taunt') && B.UNLOCKS.some(u => u.kind === 'title') && [...new Set(B.UNLOCKS.map(u => u.lvl))].every(l => B.UNLOCKS.filter(u => u.lvl === l && u.kind === 'hero').length <= 1), 'v74 (review #152): voice lines and titles drop between the heroes, never two heroes on one level'); }
+  // v78 (review #155): every art folder carries the hero's current name, and every picture art.js lists is there
+  { const fs = require('fs'), path = require('path'), root = path.join(__dirname, '..', '..'), slug = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const src = fs.readFileSync(path.join(root, 'js', 'art.js'), 'utf8'), names = new Set(Object.values(B.HEROES).map(h => slug(h.name)));
+    const pairs = [...src.matchAll(/^ {4}(\w+): \{ splash: 'art\/([\w-]+)\//mg)].map(m => [m[1], m[2]]);
+    ok(pairs.length >= 20 && pairs.every(([k, d]) => B.HEROES[k] && slug(B.HEROES[k].name) === d), 'v78 (review #155): each art folder in art.js is named after the hero as it is called now (' + pairs.filter(([k, d]) => !B.HEROES[k] || slug(B.HEROES[k].name) !== d).map(p => p.join('->')).join(', ') + ')');
+    ok(fs.readdirSync(path.join(root, 'art')).every(d => names.has(d)), 'v78: no art folder with an old or unknown name');
+    const paths = [...src.matchAll(/'art\/([\w-]+\/[\w.-]+)'/g)].map(m => m[1]).concat([...src.matchAll(/seq\('([\w-]+)', '(\w+)', (\d+)\)/g)].flatMap(m => Array.from({ length: +m[3] }, (_, i) => m[1] + '/' + m[2] + '-' + (i + 1) + '.webp')));
+    const missing = paths.filter(p => !fs.existsSync(path.join(root, 'art', p))); ok(paths.length > 100 && !missing.length, 'v78: every picture art.js lists exists (' + paths.length + ' checked' + (missing.length ? ', missing ' + missing.slice(0, 3).join(' ') : '') + ')'); }
 }
-console.log(`motor: ${oks} ok, ${fails} fail`);
+console.log(`engine: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

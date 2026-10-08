@@ -1,9 +1,9 @@
 node_modules/
 .env*
 .vercel/
-tools/tests/.saida/
+tools/tests/.output/
 backups/
-tools/vigia.log
+tools/watcher.log
 art-inbox/
 
 tools/results/*.json

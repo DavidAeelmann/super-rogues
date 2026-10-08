@@ -10,7 +10,7 @@
 //                   whole bullets of rich text through the h table (key = the element's innerHTML).
 //   B.i18n.set(id)  stores the choice and reloads the page; B.i18n.LANGS is the list for the menu.
 //   To add a language: copy js/lang-pt.js, translate the right-hand sides, add it to LANGS here and in js/lang-boot.js.
-//   To find what is still untranslated: open the game with localStorage 'balance.trlog' = '1' (or run tools/idiomas.js): B.i18n.missing lists it.
+//   To find what is still untranslated: open the game with localStorage 'balance.trlog' = '1' (or run tools/languages.js): B.i18n.missing lists it.
 (function (G) {
   const B = G.B = G.B || {};
   const LANGS = [['en', 'English'], ['pt', 'Português'], ['de', 'Deutsch']];

@@ -1,11 +1,11 @@
 // Review #13 (David: "adapt to the screen size and type of screen and device"): plays the opening of a run on 5
 // devices and checks that nothing is wider than the screen (that is what makes phones zoom the page out) and that the
-// board fits the screen height. Screens go to tools/tests/.saida/dev-*.png. Usage: node tools/tests/dispositivos.mjs
+// board fits the screen height. Screens go to tools/tests/.output/dev-*.png. Usage: node tools/tests/devices.mjs
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..', '..'), OUT = path.join(AQUI, '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..', '..'), OUT = path.join(HERE, '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 const PORT = 3799, CDP = 9439, sleep = ms => new Promise(r => setTimeout(r, ms));
 let fails = 0, oks = 0;
@@ -71,5 +71,5 @@ for (const d of DEVICES) {
   await noHScroll(d.name + ' result'); await sleep(1500); if (PHONE(d)) { await noVScroll(d.name + ' result'); await shot('dev-' + d.name + '-result'); }
 }
 ok(errors.length === 0, 'no JS errors' + (errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''));
-console.log(`dispositivos: ${oks} ok, ${fails} fail`);
+console.log(`devices: ${oks} ok, ${fails} fail`);
 chrome.kill(); server.kill(); process.exit(fails ? 1 : 0);

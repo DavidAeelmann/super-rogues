@@ -42,7 +42,7 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 | `js/icons.js`, `js/uiicons.js` | item / power icons and interface icons | add an icon |
 | `js/juice.js`, `js/sfx.js` | confetti and coin effects, sounds (made with Web Audio) | add a sound or an effect |
 | `js/net.js` | the only way the page talks to the server | almost never |
-| `js/i18n.js`, `js/lang-boot.js`, `js/lang-pt.js`, `js/lang-de.js` | languages: the page watcher that swaps English text for its translation, the tiny loader of the chosen dictionary, and the two dictionaries (Portuguese, German) | translate a text, add a language (`node tools/idiomas.js` lists what is missing) |
+| `js/i18n.js`, `js/lang-boot.js`, `js/lang-pt.js`, `js/lang-de.js` | languages: the page watcher that swaps English text for its translation, the tiny loader of the chosen dictionary, and the two dictionaries (Portuguese, German) | translate a text, add a language (`node tools/languages.js` lists what is missing) |
 | `api/elo.js` | the Gauntlet, Elo, leagues, balance ratings, fights per day | change Gauntlet or league rules |
 | `api/player.js`, `api/_player.js` | accounts, Crown Shop, XP, profiles | change the Crown Shop or XP rules |
 | `api/suggest.js` | the suggestion box | change its limits |
@@ -62,7 +62,7 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 
 **Make a hero stronger or weaker.** `js/data.js`, his block in `B.HEROES` (`hp`, `atk`, `armor` = Defense, `as`, `mana` = Energy, `grow`, and the numbers in `ab`). Then `ONLY=hisKey node tools/hero-odds.js 0 100` shows his win rate (aim 54 to 60%, the roster average is about 58%).
 
-**Add a hero.** Copy a block in `B.HEROES`; give it a new key; fill the fields (guide above the table); add a `TAGS` line (10 to 38 characters); add his look in `js/models.js` (`M`); if the ability is new write `A.myability = (W, u) => {...}` in `js/sim.js` and an entry in `SCALE` in `js/ui.js`; update the hero count in `tools/tests/motor.js`; run the tests.
+**Add a hero.** Copy a block in `B.HEROES`; give it a new key; fill the fields (guide above the table); add a `TAGS` line (10 to 38 characters); add his look in `js/models.js` (`M`); if the ability is new write `A.myability = (W, u) => {...}` in `js/sim.js` and an entry in `SCALE` in `js/ui.js`; update the hero count in `tools/tests/engine.js`; run the tests.
 
 **Add an item.** One line in `B.ITEMS` using `N(type, id, name, rarity, mods, description)`; an icon in `js/icons.js` (`IT`). `mods` names are the stats (`atk`, `hpPct`, `asPct`, `crit`, `armor`...): copy a similar item.
 
@@ -99,11 +99,11 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 
 ## 5. Tools and tests (run them from the project folder with Node)
 
-- `node tools/tests/run-all.js` : every check before publishing (takes about 10 minutes). `node tools/tests/motor.js` = rules and engine only (a few seconds). `node tools/tests/api.js` = the server logic. `node tools/tests/telas.mjs` = real Chrome, every screen.
+- `node tools/tests/run-all.js` : every check before publishing (takes about 10 minutes). `node tools/tests/engine.js` = rules and engine only (a few seconds). `node tools/tests/api.js` = the server logic. `node tools/tests/screens.mjs` = real Chrome, every screen.
 - `npm run dev` : the game on http://localhost:3790 with a memory database (owner key for the review form: `dev-key`).
 - Balance: `tools/pve-odds.js`, `tools/tune-pve.js` (fights), `tools/hero-odds.js` (heroes), `tools/item-odds.js`, `tools/relic-odds.js`, `tools/challenge-odds.js` (event challenges), `tools/boss-matrix.js`, `tools/sim-run.js` (a bot plays whole runs).
 - Team model used by the balance tools: `tools/_team.js` (what real runs have at each fight).
-- Owner and assistant: `tools/sugestoes.js` (the suggestion queue), `tools/vigia.js` (the watcher), `tools/deploy.sh` (publishing), `tools/limpar-gauntlet.js` (empties the Gauntlet, owner only).
+- Owner and assistant: `tools/suggestions.js` (the suggestion queue), `tools/watcher.js` (the watcher), `tools/deploy.sh` (publishing), `tools/clear-gauntlet.js` (empties the Gauntlet, owner only).
 
 ## 6. Things not to break
 
@@ -112,46 +112,46 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 - Anything random inside a fight must use `W.rng()` (seeded) so a fight can be replayed. Never `Math.random()` in `js/sim.js` or `js/run.js`.
 - The server never trusts the browser: a team sent as a ghost is cleaned by `cleanTeam`; keep that list of allowed fields.
 - No screen may need scrolling on a phone (390 x 740 and 360 x 640) and no text may be cut off. The Chrome tests check it.
-- After any change: run `node tools/tests/motor.js` at least; before publishing run everything.
+- After any change: run `node tools/tests/engine.js` at least; before publishing run everything.
 
-## 7. Appendix: the older detailed file map (Portuguese, kept for its details such as server limits)
+## 7. Appendix: the older detailed file map (translated from Portuguese, kept for its details such as server limits)
 
 Some numbers in it (hero counts, etc.) are older than the code; trust the code and the tables above when they differ.
 
-| Arquivo | O quê |
+| File | What |
 |---|---|
-| `js/hex.js` | grade 8x8 (terreno por luta: `B.MAPS` no data.js, `Run.mapOf`), pointy-top "odd-r"; linha 0 = topo (inimigo), linhas 4-7 = deploy do jogador |
-| `js/data.js` | TODO o conteúdo: `CFG` (economia, XP, sequência de nós, time máx 3), 36 heróis (habilidade + 4 pares de spec; 3 liberados por nível de conta; 6 com escala passiva; habilidade em % de AD e/ou AP, v28), 120 itens com tipo e raridade (`TYPES`, `RARITIES`, `SETS`), 35 relíquias, 14 mobs, 2 chefes, elites, 12 eventos |
-| `js/sim.js` | motor de combate puro e determinístico (20 ticks/s). Roda no navegador e no Node |
-| `js/run.js` | máquina de estados da run (mapa, lutas, lojas, eventos, XP, itens). JSON puro, salvo no localStorage |
-| `js/models.js` | modelos 2.5D desenhados em código (humanoide, fera, bomba, golem, serpente, espectro, torre) com poses parado/andando/ataque/habilidade/morte; `portrait()` gera os retratos dos menus |
-| `js/splash.js` | splash art de cada unidade (fora da luta): pose heroica com o modelo em modo `detail`, luz na cor do herói, raios, bokeh, névoa, luz de contorno e brilho; `B.Splash.image(key, w, h, 'bust'|'full')`, cache em data: URL |
-| `js/icons.js` | ícones de itens e relíquias desenhados em código (~60 desenhos; cada item/relíquia mapeado em `IT`/`RE`), moldura na cor da raridade (lendário com brilho, mítico com moldura dupla), `B.Icons.slot(tipo)` = espaço vazio, cache em data: URL |
-| `js/art.js` | arte em IMAGEM (v31, Art Lab): splash (recorte busto/banner por foco x/y + zoom) e 4 poses de batalha (parado/andando/ataque/habilidade; o movimento entre elas é feito em código). `OFFICIAL` lista a arte publicada em `art/<herói>/`; o teste do Art Lab fica só no aparelho (`localStorage balance.artlab`). Sem arte = modelo desenhado. `cutSheet` recorta a folha de poses (fundo = cor mais comum na borda) |
-| `js/artlab.js` | tela do Art Lab (botão no fim do menu inicial e link na caixa de sugestões): escolher herói, subir splash e folha de poses, ver nas cartas e numa luta de teste, "Use in my game" (só o aparelho) e **Send for review** (vai junto com um lote normal) |
-| `js/sfx.js` | v42: sons do jogo sintetizados com Web Audio (sem arquivo de áudio, CSP igual): `B.Sfx.play('coin')`; liga/desliga (🔊 no topo do menu e da batalha, guardado em `balance.sound`); sons repetidos (golpe, cura, contagem) têm intervalo mínimo |
-| `js/juice.js` | v42: efeitos de recompensa em DOM numa camada fixa `#fx`: confete, moedas voando até o ouro do topo, número contando, "bump", "+6" subindo, cópia voando (item comprado → Team). Sem animação se o sistema pedir menos movimento |
-| `js/uiicons.js` | v49: o conjunto de ícones da interface (SVG em código, traço redondo de 2,2, cor do texto): `B.UI.i(nome, classe)`, e a marca do logo `B.UI.mark()` (estrela de máscara). Use no lugar de emoji em botões, topo, trilha, lojas, lutas e menus |
-| `js/render.js` | canvas 2.5D: tabuleiro achatado (K=0.6) com espessura, unidades pelos modelos, barras, efeitos. Interpola posição entre hexes |
-| `js/ui.js` | telas DOM + loop da batalha. Sem handler inline (CSP): todo botão tem `data-act` |
-| `js/net.js` | cliente JSON de `/api` |
-| `api/suggest.js` | GET fila pública (agrupada por envio) + status do revisor; POST `{items: [...até 10], name}` = 1 envio (lote). v31: pode levar `art` (herói, splash, poses em data: URL PNG/JPG/WEBP; splash ≤ 900 KB, pose ≤ 300 KB; 6 envios de arte por IP/dia, 60 no total/dia), guardado na tabela `art`, NUNCA servido de volta. Limite por IP: 3 envios/10 min, 12 envios e 40 mudanças/dia; fila máx 300 |
-| `api/elo.js` | Elo por jogador (id aleatório guardado no navegador) + Gauntlet PvP: `fail`, `enter`, `result` (Elo 1v1 K=32 contra o Elo do fantasma; o Elo do jogador só mexe nos duelos desde a v26), `boss`; GET = ladder, `?peak=1`. Elo de conteúdo (lote 14): cada herói/item/relíquia/chefe tem Elo próprio (K=16, tabela `ratings`), só o que agiu na luta (`usedIn`); a leitura (`?ratings=1`) virou desbloqueio da loja (v27) |
-| `api/player.js` | v27: loja de Coroas (`buy`), troca de nome paga (`rename`), perfil público (`profile`; Rei vê mais), `me` (carteira, sem criar jogador), `ratings` (só com Content Elo) |
-| `api/_player.js` | v27: temporadas, pagamento de Coroas por liga (`payLeagues`, atômico via `sreach`), indicação (`linkRef`, 1% mín. 1), jogos por herói (`phero`), visões do perfil |
-| `api/_store.js` | Neon em produção, memória no dev/teste. Tabelas `suggestions`, `kv`, `scores`, `players`, `teams`, `ratings`, `phero` |
-| `tools/vigia.js` | vigia em segundo plano (checa a cada 20 s): sai, e me acorda, assim que chega um envio novo |
-| `tools/sugestoes.js` | fila do meu lado: listar (por lote; avisa "📎 arte"), `lendo`, `feito`, `recusa`, `status`, `pausa`/`retoma`, `arte <lote>` (salva as imagens em `art-inbox/`, fora do git) |
-| `tools/sim-run.js`, `tools/boss-matrix.js`, `tools/tune-heroes.js`, `tools/audit-abilities.js`, `tools/challenge-odds.js` | robô joga runs inteiras / todos os times de 3 contra os 2 chefes / vitória contra chefe por herói e ajuste automático (v34) |
-| `tools/relic-odds.js` | v50, refeito na v61: quanto vale cada relíquia de luta (os mesmos times de `_team.js` jogam Hard 3, Hard 6 e chefe 8 sem e com ela; mede o ganho de "margem" x100 e de vitórias). `node tools/relic-odds.js [times=60] [ids|all]` |
-| `tools/_team.js` | v61: o time típico da luta N de uma run (heróis aleatórios: 1, 2, depois 3; o nível que o XP dá; itens da loja daquele ponto com Auto-equip; relíquias de luta) e `fight()` = vitória + margem (-1..1: vida que sobrou de quem venceu). Base de todas as ferramentas abaixo |
-| `tools/pve-odds.js` | v61: vitória em cada luta da run (1..8, fácil/médio/difícil, chefes 4 e 8). Metas: fácil ~99%, médio ~90%, difícil ~60%, chefe ~55%. `node tools/pve-odds.js [times=60] [semente=9000]` (outra semente = times novos) |
-| `tools/tune-pve.js` | v61: afina a curva PvE (`CFG.fightScale` por luta = médio e chefe; `DIFF.easy.mul` / `DIFF.hard.mul` por luta) até as metas; imprime os valores para colar no data.js. `node tools/tune-pve.js [rodadas=8] [times=80]` |
-| `tools/limpar-gauntlet.js` | v62: PARA O DONO: faz backup e apaga todos os fantasmas da torre (`--dry` só conta). Eu não rodo (o modo automático barra) |
-| `tools/hero-odds.js` | v61: cada herói em times aleatórios (Hard 3 e chefe 4 = começo; Hard 6, Hard 7 e chefe 8 = fim); com rodadas, afina força p (vida/ataque x p, mana / p) e crescimento g (`grow`, 0,5..1,8) para cada um ficar na média no começo e no fim. `node tools/hero-odds.js [rodadas=0] [times=60]`, `ONLY=a,b` |
-| `tools/item-odds.js` | v61: quanto vale cada item (os mesmos times sem e com ele, vestido no herói que mais combina, como item a mais), listado por raridade, e os conjuntos completos. `node tools/item-odds.js [times=60]`, `ONLY=a,b` |
-| `tools/boss-odds.js` | v52: chance de vencer cada chefe de cada posição (times aleatórios um pouco abaixo de uma run típica: posição 1 na luta 4 com Lv 2 e 1 item, posição 2 na luta 8 com Lv 4 e 3 itens; mesmas sementes). `node tools/boss-odds.js [times=80]` |
-| `tools/tests/quadros.mjs` | v55: tira uma sequência de quadros da luta no celular (120 ms entre eles) para ver se o movimento está liso (`.saida/quadros.json`, montar a tira com PIL). `node tools/tests/quadros.mjs [quadros=12]` |
-| `tools/tests/` | `motor.js`, `api.js`, `telas.mjs` (Chrome de verdade, run inteira no celular 390x740, checa que cada tela cabe), `dispositivos.mjs` (5 aparelhos), `vitrine.mjs` (fotos de todas as telas no celular e em 3 PCs, v29), `galeria.mjs` / `icones.mjs` / `splash.mjs` (fotos de modelos, ícones e splash) |
+| `js/hex.js` | 8x8 grid (terrain per fight: `B.MAPS` in data.js, `Run.mapOf`), pointy-top "odd-r"; row 0 = top (enemy), rows 4-7 = player deploy |
+| `js/data.js` | ALL the content: `CFG` (economy, XP, node sequence, max team 3), 36 heroes (ability + 4 spec pairs; 3 unlocked by account level; 6 with passive scaling; ability in % of AD and/or AP, v28), 120 items with type and rarity (`TYPES`, `RARITIES`, `SETS`), 35 relics, 14 mobs, 2 bosses, elites, 12 events |
+| `js/sim.js` | pure, deterministic combat engine (20 ticks/s). Runs in the browser and in Node |
+| `js/run.js` | the run's state machine (map, fights, shops, events, XP, items). Plain JSON, saved in localStorage |
+| `js/models.js` | 2.5D models drawn in code (humanoid, beast, bomb, golem, serpent, specter, tower) with idle/walking/attack/ability/death poses; `portrait()` generates the menu portraits |
+| `js/splash.js` | splash art of each unit (outside the fight): heroic pose with the model in `detail` mode, light in the hero's colour, rays, bokeh, mist, rim light and glow; `B.Splash.image(key, w, h, 'bust'|'full')`, cached as a data: URL |
+| `js/icons.js` | item and relic icons drawn in code (~60 drawings; each item/relic mapped in `IT`/`RE`), frame in the rarity colour (legendary with glow, mythic with double frame), `B.Icons.slot(type)` = empty slot, cached as a data: URL |
+| `js/art.js` | IMAGE art (v31, Art Lab): splash (bust/banner crop by focus x/y + zoom) and 4 battle poses (idle/walking/attack/ability; the movement between them is done in code). `OFFICIAL` lists the published art in `art/<current hero name>/` (js/art.js maps key -> folder); the Art Lab test stays only on the device (`localStorage balance.artlab`). No art = drawn model. `cutSheet` crops the pose sheet (background = most common colour on the edge) |
+| `js/artlab.js` | the Art Lab screen (button at the end of the start menu and link in the suggestion box): pick a hero, upload splash and pose sheet, see them on the cards and in a test fight, "Use in my game" (device only) and **Send for review** (goes along with a normal batch) |
+| `js/sfx.js` | v42: game sounds synthesized with Web Audio (no audio file, same CSP): `B.Sfx.play('coin')`; on/off switch (🔊 at the top of the menu and of the battle, stored in `balance.sound`); repeated sounds (hit, heal, countdown) have a minimum interval |
+| `js/juice.js` | v42: reward effects in DOM on a fixed `#fx` layer: confetti, coins flying to the gold at the top, counting number, "bump", rising "+6", flying copy (bought item -> Team). No animation if the system asks for less motion |
+| `js/uiicons.js` | v49: the interface icon set (SVG in code, round 2.2 stroke, text colour): `B.UI.i(name, class)`, and the logo mark `B.UI.mark()` (mask star). Use it instead of emoji in buttons, top bar, trail, shops, fights and menus |
+| `js/render.js` | 2.5D canvas: flattened board (K=0.6) with thickness, units from the models, bars, effects. Interpolates position between hexes |
+| `js/ui.js` | DOM screens + battle loop. No inline handler (CSP): every button has `data-act` |
+| `js/net.js` | JSON client for `/api` |
+| `api/suggest.js` | GET public queue (grouped by submission) + reviewer status; POST `{items: [...up to 10], name}` = 1 submission (batch). v31: can carry `art` (hero, splash, poses as PNG/JPG/WEBP data: URLs; splash ≤ 900 KB, pose ≤ 300 KB; 6 art submissions per IP/day, 60 in total/day), stored in the `art` table, NEVER served back. Limit per IP: 3 submissions/10 min, 12 submissions and 40 changes/day; max queue 300 |
+| `api/elo.js` | Elo per player (random id stored in the browser) + PvP Gauntlet: `fail`, `enter`, `result` (1v1 Elo K=32 against the ghost's Elo; the player's Elo only moves in duels since v26), `boss`; GET = ladder, `?peak=1`. Content Elo (batch 14): each hero/item/relic/boss has its own Elo (K=16, `ratings` table), only what acted in the fight (`usedIn`); reading it (`?ratings=1`) became a shop unlock (v27) |
+| `api/player.js` | v27: Crown shop (`buy`), paid rename (`rename`), public profile (`profile`; King sees more), `me` (wallet, does not create a player), `ratings` (only with Content Elo) |
+| `api/_player.js` | v27: seasons, Crown payout per league (`payLeagues`, atomic via `sreach`), referral (`linkRef`, 1% min. 1), games per hero (`phero`), profile views |
+| `api/_store.js` | Neon in production, memory in dev/test. Tables `suggestions`, `kv`, `scores`, `players`, `teams`, `ratings`, `phero` |
+| `tools/watcher.js` | background watcher (checks every 20 s): exits, and wakes me up, as soon as a new submission arrives |
+| `tools/suggestions.js` | my side of the queue: list (by batch; warns "📎 art"), `doing`, `done`, `hold`, `decline`, `all`, `status`, `pause`/`resume`, `art <batch>` (saves the images in `art-inbox/`, outside git) |
+| `tools/sim-run.js`, `tools/boss-matrix.js`, `tools/tune-heroes.js`, `tools/audit-abilities.js`, `tools/challenge-odds.js` | a bot plays whole runs / all teams of 3 against the 2 bosses / boss win rate per hero and automatic tuning (v34) |
+| `tools/relic-odds.js` | v50, redone in v61: how much each fight relic is worth (the same teams from `_team.js` play Hard 3, Hard 6 and boss 8 without and with it; measures the gain in "margin" x100 and in wins). `node tools/relic-odds.js [times=60] [ids|all]` |
+| `tools/_team.js` | v61: the typical team of fight N of a run (random heroes: 1, 2, then 3; the level the XP gives; shop items of that point with Auto-equip; fight relics) and `fight()` = win + margin (-1..1: health left of the winner). Base of all the tools below |
+| `tools/pve-odds.js` | v61: win rate in each fight of the run (1..8, easy/medium/hard, bosses 4 and 8). Targets: easy ~99%, medium ~90%, hard ~60%, boss ~55%. `node tools/pve-odds.js [times=60] [seed=9000]` (another seed = new teams) |
+| `tools/tune-pve.js` | v61: tunes the PvE curve (`CFG.fightScale` per fight = medium and boss; `DIFF.easy.mul` / `DIFF.hard.mul` per fight) to the targets; prints the values to paste into data.js. `node tools/tune-pve.js [rounds=8] [times=80]` |
+| `tools/clear-gauntlet.js` | v62: FOR THE OWNER: makes a backup and deletes all the tower ghosts (`--dry` only counts). I do not run it (auto mode blocks it) |
+| `tools/hero-odds.js` | v61: each hero in random teams (Hard 3 and boss 4 = early; Hard 6, Hard 7 and boss 8 = late); with rounds, tunes strength p (health/attack x p, mana / p) and growth g (`grow`, 0.5..1.8) so each one sits at the average early and late. `node tools/hero-odds.js [rounds=0] [times=60]`, `ONLY=a,b` |
+| `tools/item-odds.js` | v61: how much each item is worth (the same teams without and with it, worn by the hero it fits best, as an extra item), listed by rarity, and the complete sets. `node tools/item-odds.js [times=60]`, `ONLY=a,b` |
+| `tools/boss-odds.js` | v52: chance of beating each boss in each position (random teams slightly below a typical run: position 1 at fight 4 with Lv 2 and 1 item, position 2 at fight 8 with Lv 4 and 3 items; same seeds). `node tools/boss-odds.js [times=80]` |
+| `tools/tests/frames.mjs` | v55: takes a sequence of fight frames on the phone (120 ms apart) to check that the movement is smooth (`.output/quadros.json`, assemble the strip with PIL). `node tools/tests/frames.mjs [frames=12]` |
+| `tools/tests/` | `motor.js`, `api.js`, `screens.mjs` (real Chrome, whole run on a 390x740 phone, checks that every screen fits), `devices.mjs` (5 devices), `showcase.mjs` (photos of all screens on the phone and on 3 PCs, v29), `gallery.mjs` / `icons.mjs` / `splash.mjs` (photos of models, icons and splash) |
 
-- `js/abilfx.js` (v62p): uma animação própria para cada habilidade (`B.AbilFx.SPEC[chave da habilidade]`), chamada por render.js para todo efeito com `f.ab`; áreas nos hexágonos reais; ferramenta de conferência `tools/fxlab.mjs`.
+- `js/abilfx.js` (v62p): a dedicated animation for each ability (`B.AbilFx.SPEC[ability key]`), called by render.js for every effect with `f.ab`; areas on the real hexagons; checking tool `tools/fxlab.mjs`.

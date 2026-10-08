@@ -1,10 +1,10 @@
 // FX lab driver (review #112): node tools/fxlab.mjs [abilities comma list | all] [offsets=2,5,9,14,22] [out=name]
-// Opens the game in headless Chrome, stages each ability in a small fight and saves contact sheets to tools/tests/.saida/fx-<name>-<n>.png
+// Opens the game in headless Chrome, stages each ability in a small fight and saves contact sheets to tools/tests/.output/fx-<name>-<n>.png
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..'), OUT = path.join(AQUI, 'tests', '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..'), OUT = path.join(HERE, 'tests', '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 const WHICH = process.argv[2] || 'all', OFFS = (process.argv[3] || '2,5,9,14,22').split(',').map(Number), NAME = process.argv[4] || 'lab', PER = +(process.argv[5] || 8);
 const PORT = 3797, CDP = 9437, sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -20,7 +20,7 @@ const send = (method, params = {}) => new Promise(res => { const i = ++id; pendi
 const ev = async expr => { const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result?.exceptionDetails) { console.log('page error:', JSON.stringify(r.result.exceptionDetails).slice(0, 400)); return null; } return r.result?.result?.value; };
 await send('Runtime.enable'); await send('Page.enable');
 await send('Page.navigate', { url: `http://localhost:${PORT}/` }); await sleep(1500);
-await ev(fs.readFileSync(path.join(AQUI, 'fxlab', 'page.js'), 'utf8'));
+await ev(fs.readFileSync(path.join(HERE, 'fxlab', 'page.js'), 'utf8'));
 let list = WHICH === 'all' ? await ev('Object.keys(__lab.owner)') : WHICH.split(',');
 const seedArg = process.argv[6] ? +process.argv[6] : undefined;
 for (let i = 0, n = 1; i < list.length; i += PER, n++) {

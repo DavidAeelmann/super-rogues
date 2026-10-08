@@ -1,600 +1,602 @@
-# Changelog do Super Rogues (Balance)
+# Super Rogues (Balance) Changelog
 
-**Só acrescentar, no TOPO, uma entrada por versão. NÃO ler este arquivo inteiro a cada sessão** (ele só serve para descobrir por que algo é como é: procurar com Grep pelo número do pedido, "#73", ou pela versão, "v61").
-As instruções permanentes ficam no `CLAUDE.md`; o mapa do código no `CODEMAP.md`.
-- **v76 (2026-10-07), lote 110 do David (#154).** **Código de resgate** na Crown Shop: link "🎟 Redeem a code" sob o saldo abre a caixa (`redeem-open`, form `redeem` em js/ui.js). Op `redeem` em api/player.js; os códigos ficam só no servidor (`CODES`, hoje `thanks` = 1000 coroas, sem divulgar: será o caminho das coroas compradas), sem distinção de maiúsculas; uma vez por jogador pela tabela nova `redeems` (insert + soma de coroas na mesma query). Testes api 199.
-- **v75 (2026-10-07), lote 109 do David (#153).** A luta final sorteia entre **todos os times que chegaram à luta final** (ganhando ou não), não só os vencedores: o primeiro pedido de adversário da run (op `final` com `team`) guarda o time como `reached`; `pickFinal` usa status `final` ou `reached`.
-- **v73/v74 (2026-10-07), lotes 107 e 108 do David (#149 a #152).** #149: sem Hero Shop nos dias de loja/evento enquanto os recrutas grátis não chegaram (`advance` em js/run.js). #150/#151: **conquistas que liberam títulos** (`B.ACHIEVEMENTS`, 21 + 9 de nível): as da run (Flawless, The Untouchable, Duel Master, Hanging by a Thread, Comeback Kid, Boss Slayer, Blitz, Marathon Runner, Last One Standing, Giant Slayer, Pickpocket, Dragon's Hoard, Humble Beginnings, e as secretas Lucky Charm e Four-Leaf Clover, por sorte determinística por run) são vistas em `fightAchs`/`endAchs` e enviadas no fim da run; as da conta (primeira run, todos os heróis, sequências 3 e 10, ligas Ouro e Celestial, títulos de nível) o servidor confere (`grantAchs` em api/_player.js, coluna `achs`). Novas saem do baú da tela de XP como "New title!". Título escolhido (op `title`, coluna `title`) aparece embaixo do nome no perfil, no ranking e na tela VS; o perfil tem um quadro "🏅 n/30 Achievements" que abre a grade (as secretas mostram ???), e no seu perfil tocar uma conquista a vira título. #152: o caminho de níveis intercala recompensas: **1 herói por nível** (2 a 27, antes 2 por nível até 14), **falas** (`B.LEVEL_TAUNTS`, 10, viram o balão do perfil/VS, aparecem na aba Style) e **títulos de nível** (Squire, Adventurer, Veteran... The Eternal no 43).
-- **v72 (2026-10-07), lote 106 do David (#148).** Faixa "Deploy your units" brilhando no céu do tabuleiro durante a preparação (`.depban`, não bloqueia toque).
-- **v71 (2026-10-07), lote 105 do David (#146 #147).** #146: os botões de velocidade (1×/2×/4×) também na preparação, na linha do título (`speedPills` em js/ui.js, a escolha vale para a luta); o aviso do tutorial sobre a velocidade ficou amarelo, maior e pulando, e aparece também na preparação. #147: o botão de pular luta só existe nas lutas PvE; duelos e luta final não podem ser pulados (também bloqueado no `skip`).
-- **v70 (2026-10-07), lotes 103 e 104 do David (#144 #145).** #144: as telas de liga e XP enchem a tela: medidor largo e alto que brilha e borbulha, número gigante pulsando, raios girando no fundo, frase de chamada brilhando, baú do dobro do tamanho com raios ao abrir; se não couber (muitas linhas de XP ou recompensas) a tela encolhe um degrau (`fitOver`: classes `.tight`/`.tighter` e depois `zoom` proporcional), a página nunca rola. #145: durante a contagem 3-2-1 os bonecos apareciam achatados: era o "pulo" de início da luta (render.js, `sy` 0,6 → 1 nos primeiros quadros) congelado no primeiro quadro; agora durante a contagem eles ficam em pé (`o.still`) e o pulo acontece no FIGHT!.
-- **v69 (2026-10-07), lote 102 do David (#143).** Contagem **3, 2, 1, FIGHT!** ao começar a luta: números grandes e semitransparentes por cima do topo do tabuleiro, sem bloquear toque (`pointer-events: none`); a simulação espera (`battle.hold`, `countdown` em js/ui.js). Não roda em navegador automatizado (testes).
-- **v68 (2026-10-07), lotes 100 e 101 do David (#140 a #142).** Fim de run refeito em 2 telas com o botão grande sempre no mesmo lugar embaixo: **1 = liga** (#140): medidor vertical nas cores da liga com o selo em cima, enchendo ou caindo até onde você está (promoção enche até o topo, troca o selo e enche de novo; queda esvazia e cai), os LP em letras grandes à direita, os motivos, a sequência, os troféus e "Beat other players to rise in the league!"; Next. **2 = XP** (#141): o mesmo medidor para o nível da conta; cada nível ganho grita "LEVEL N!" e no fim um **baú** treme, abre e solta as recompensas do nível; sem nível novo o baú fica apagado com a próxima recompensa; Play again (o ranking virou um botão pequeno no título). `lpScreenHTML`/`animLp`, `xpScreenHTML`/`animXp2`, `meterHTML` em js/ui.js (as antigas `leagueCardHTML`/`streakCardHTML` saíram). #142: botão **Skip** no canto dos eventos; o líder anda mais devagar no mapa (2,2 s) e a câmera o acompanha até hoje.
-- **v67 (2026-10-07), lote 99 do David (#137 a #139).** #137: na tela VS o lado de cada jogador ganha as **cores da liga** e uma placa com o selo, LP, nível e sequência (o seu sempre; o do rival no duelo quando é jogador de verdade: `styled` em api/elo.js manda league/lp/streak/level). #138: as estrelas da vitória perderam o texto embaixo (só dica ao passar o mouse). #139: no mapa, quando o dia muda, o **líder anda pela estrada** do ponto de ontem até o de hoje (`layoutMap`, `ui.roadAt`, classe `.rtok.walk`).
-- **v66 (2026-10-07), lote 98 do David (assinou "DavidA"; o dono confirmou que é ele), #135 e #136.** #135: **tela TIME vs TIME** antes de toda luta (PvE, duelos, final, desafios de evento): seu time entra pela esquerda com seu nome e retrato, o VS cresce e a tela treme, o time deles entra pela direita; no PvP mostra o placar entre vocês (via `profile` → `h2h`); toque pula; some sozinha em ~3 s (`showVs` / `closeVs` em js/ui.js, chamada quando a tela `deploy` abre; não aparece em navegador automatizado, os testes chamam `showVs(true)`). #136: aba **Style** na Crown Shop: 8 **provocações** (balão de quadrinho no perfil e na tela VS, inclusive como fantasma), 3 **entradas de VS** (fogo, raio, estrelas) e os **retratos** ainda travados pelo nível (20 coroas cada); `B.TAUNTS`, `B.VSFX`, `B.COSMETICS` (no `B.SHOP_ITEM`, comprados pelo op `buy`), op `style` escolhe qual mostrar (colunas `taunt`/`vsfx`), o adversário do duelo vem com taunt/vsfx/retrato do dono (`styled` em api/elo.js); fantasma inventado ganha uma provocação pelo nome (`ghostTaunt`).
-- **v65 (2026-10-07), lotes 94 a 97 do David (#128 a #134).** #128: a Hero Shop já trocava herói com o time cheio desde a v64 (o aviso "team is full" era da v63, aba aberta antes da atualização); agora os **eventos que oferecem herói** (Mercenary Camp, lenda) também trocam: a escolha pergunta quem sai (`eventChoices` → `eventChoices0` + `target: 'hero', swap: true`, `eventAct` usa `swapIn`). #129: telas de fim de run limpas (barra da run some do topo; tela 1 = medalha + XP + botão Next grande embaixo; tela 2 = sequência + liga + troféus + Play again grande; o botão Next era pequeno porque `.stack.againrow > button:not(.again)` tinha 64px); as **estrelas** da vitória dizem o que valem (Won / Nobody fell / 60%+ health); "★ Elite" escrito nos cartazes; **LP só vem de PvP**: duelo ganho +10, luta final ganha +20, luta PvP perdida −8, + a sequência numa run completa (`B.LP`, `B.lpParts`, `B.runLp`); PvE não mexe em LP; **Bronze nunca perde LP**. #130: o **mapa virou uma estrada vertical** que sobe um vale à noite, do acampamento ao castelo da luta final (`mapRoad`, `layoutMap`, `ROAD`): dias passados em dourado, o líder onde você está, as escolhas de hoje são a bifurcação (cartazes), chefes com aura vermelha, dias de duelo rosa, o resto rola dentro da tela e abre em hoje; no celular o time vira uma faixa embaixo (`mstripHTML`), no PC o painel fica ao lado. #131: **retratos de herói como foto do jogador** (4 grátis, mais 1 por nível do 2 ao 43: `B.PORTRAITS_FREE`, `B.PORTRAIT_UNLOCKS`, unlocks `kind: 'portrait'`, `B.portraitLevel`; `B.lockedFor` ignora retratos); escolher no próprio perfil ("Change picture", op `avatar`); aparece no topo, no perfil e no ranking. #132: botão **Follow** no perfil (op `follow`, tabela `follows` pelo código público) e aba **Friends** no Ladder (op `friends`), abas Player / Global / Friends. #133: **sequência de vitórias** (começa em 1, run completa +1, run perdida ou desistida = 0; colunas `streak`/`bstreak`); chama grande no botão Play e no fim da run (anima subindo ou apagando); +1 LP por run da sequência. #134: o ranking mostra a sequência atual e a maior. Também: a lista do time adversário no duelo cabe em celular pequeno (3 colunas). #135 e #136 ("DavidA") esperando o dono. Textos novos só em inglês.
-- **v64 (2026-10-06), lotes 90 a 93 do David (#121 a #127).** #126: a run começa com **1 herói de 3** (um de cada classe) e, depois de cada um dos 2 primeiros dias, um **recruta grátis** na mesma tela de holofotes (1 de 3, as classes que faltam primeiro; `CFG.freeRecruits`, `Run.recruitOffer/recruit`); 1ª luta volta a ser pequena (`firstFight` 0.3, medido). #124: só o herói escolhido fica aceso (tocar outro move a luz, tocar de novo desmarca; nada de hover preso no celular). #127: Hero Shop com time cheio **troca um herói** (o novo herda nível, XP, lugar e itens; poderes sorteados para esses níveis; `Run.swapIn`, folha "Who steps aside?"); textos de regras/ajuda/perfil/Crown Shop revistos para a run nova; fim de run em **2 telas** (1: tipo de vitória + XP e desbloqueios; Next; 2: cartão da liga com LP, barra, motivo, promoção/queda, troféus da run); perfil de outro jogador mostra o **confronto direto** (W–L) entre vocês. #125: **Perfect / Gold / Bronze** pelas vidas que sobraram; cada duelo vencido = **troféu** com o nome do derrotado + **1 coroa** (tabela `duels`); **Elo saiu de tudo** (topo mostra a liga e os LP; ranking por liga e LP); ligas estilo LoL: 100 LP por liga, mexem só no fim da run (`B.runLp`: vitória paga +35/+28/+22, run sem vidas −24 +3 por luta vencida, +5 por duelo, −2 por liga acima de Bronze; abaixo de 0 cai uma liga com 75 LP). #122: Ladder só com Player e Ranking (Content Elo fica no Balance lab; perk saiu da Crown Shop). #123: o mapa ganhou a **trilha da run** (você no dia de hoje, chefes, dias de duelo, luta final, "boss in N days"). Rebalanceado (bot com 1 herói + recrutas): 31,1% das runs completas, médias 100/94/88 | chefe 71 | 83/82/83 | chefe 59, heróis 26% a 35% (sd 2,1). **#121 (zerar jogadores) não feito:** o script de backup + limpeza do banco foi barrado pela permissão automática; fica para o dono rodar/autorizar. Textos novos só em inglês.
-- **v63 (2026-10-06), lotes 85 a 89 (#115 a #120).** #117/#118 (David) remodelaram a run: começa com **3 heróis** (6 oferecidos, 2 de cada classe) + 1 poder + 2 itens comuns; **3 vidas** (corações no topo; luta perdida custa uma e o dia passa; a terceira encerra); nas lutas 3 e 6 (`CFG.pvpFights`) uma opção do mapa é um **duelo PvP** contra o time de outro jogador que estava mais ou menos no mesmo dia (op `snap`; o cartaz mostra o poder dele e o seu: `Run.powerOf`/`powerLabel`); vencer abre o **saque** (um herói, um item ou um poder do time vencido; herói com time cheio troca um dos seus e os itens dele vão para a bolsa); o último dia é a **luta final** contra um time que completou a própria run (ops `final`, `duel`, `complete`; perder com vida sobrando = outro finalista). O Gauntlet (torre) acabou; `enter`/`result` ficam só para abas antigas; runs salvas dentro da torre vão para a luta final com 3 vidas. Os 2 chefes PvE continuam. #119: sem jogadores ainda, `Run.randomGhost` inventa o adversário (um herói de cada classe, itens e poderes crescendo com o dia; força `CFG.ghostPower` 0.78). #120: conta nova tem 20 heróis (`B.START_HEROES`), os outros 26 abrem 2 por nível do 2 ao 14 (`B.HERO_UNLOCKS`); a tela de fim compacta muitos desbloqueios numa fileira de ícones. Lone Crown saiu das ofertas (precisa de time de 1). Rebalanceado por simulação (bot com 3 heróis, 3 vidas, luta final contra fantasma inventado): 32,8% das runs completas, médias 100/94/93 | chefe 71 | 84/83/81 | chefe 59, heróis 28% a 38% (sd 2,1). #115 (PC boy, log de fim de Gauntlet no perfil) e #116 (David, rating no PvE / tirar a prévia do chefe) recusados: no #117 o David pediu para ignorar os dois pedidos anteriores (e o Gauntlet deixou de existir). Textos novos só em inglês (PT/DE caem no inglês).
-- **v62r (2026-10-06), pedido direto do dono.** Luta travando no PC dele (no celular fica bom). Medi uma luta 8 contra 8 no Chrome (novo `node tools/perf.mjs [segundos] [largura]`, DPR=2 simula tela grande): ~5,5 ms de desenho por quadro, então o JS não é o gargalo; o custo deve ser a placa/aceleração do PC. Correção segura: o loop da luta mede a velocidade e, se passar ~1,5 s abaixo de 30 fps, baixa sozinho a densidade de pixels do canvas (2 → 1,5 → 1, `Render.maxDpr`); a imagem mantém o tamanho, só fica um pouco mais macia.
+**Only add one entry per version, at the TOP. DO NOT read this whole file every session** (it only serves to find out why something is the way it is: search with Grep for the request number, "#73", or for the version, "v61").
+Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
+- **v78 (2026-10-08), batch 111 from David (#155).** Project cleanup: everything in English. Art folders renamed to each hero's current name (`art/eclipse` for key `kage`, `art/aegir` for `bastion`...; js/art.js maps the game key to the folder, keys stay since saved teams and ratings use them; tools/tests/engine.js checks every folder matches a current name and every listed picture exists). Tools and tests renamed: `suggestions.js` (commands `doing`/`done`/`hold`/`decline`/`all`/`pause`/`resume`/`art`), `watcher.js`/`watcher.sh` (prints `SUGGESTIONS ... batch`), `deploys.log`, `languages.js`, `clear-gauntlet.js`, tests `engine.js`, `screens.mjs`, `devices.mjs`, `gallery.mjs`, `icons.mjs`, `frames.mjs`, `showcase.mjs`, output folder `tools/tests/.output/`. CHANGELOG, CLAUDE.md and CODEMAP.md translated to English; the watcher runs with Bash run_in_background (CLAUDE.md updated).
+- **v77 (2026-10-08), batch 111 from David (#156).** Lag on computers: measured 24-30 fps in battle on a PC without graphics acceleration at 1900x960 (phone size stayed smooth). Causes: the board canvas is ~10x the pixels of a phone, the backdrop blur of the top bar/sheets was redrawn over the whole screen, and the slow-frame check (`dt > 34`) never fired at 30 fps. Fix: `PX_CAP` (1.3M canvas pixels) in js/render.js `setup`, `maxDpr` may go below 1 with steps `DPR_STEPS` [1.5, 1, 0.8, 0.65, 0.5] kept in localStorage `balance.maxDpr`, `SLOW_MS` 26 ms on a mouse device (34 on touch: iPhone Low Power Mode is 30 fps on purpose), no `backdrop-filter` under `(pointer: fine)`.
+- **v76 (2026-10-07), batch 110 from David (#154).** **Redeem code** in the Crown Shop: a "🎟 Redeem a code" link under the balance opens the box (`redeem-open`, form `redeem` in js/ui.js). Op `redeem` in api/player.js; codes live only on the server (`CODES`, currently `thanks` = 1000 crowns, not advertised: it will be the path for purchased crowns), case-insensitive; once per player through the new `redeems` table (insert + crown sum in the same query). API tests 199.
+- **v75 (2026-10-07), batch 109 from David (#153).** The final fight draws among **all teams that reached the final fight** (winning or not), not just the winners: the run's first opponent request (op `final` with `team`) stores the team as `reached`; `pickFinal` uses status `final` or `reached`.
+- **v73/v74 (2026-10-07), batches 107 and 108 from David (#149 to #152).** #149: no Hero Shop on shop/event days while the free recruits have not arrived (`advance` in js/run.js). #150/#151: **achievements that unlock titles** (`B.ACHIEVEMENTS`, 21 + 9 level ones): the run ones (Flawless, The Untouchable, Duel Master, Hanging by a Thread, Comeback Kid, Boss Slayer, Blitz, Marathon Runner, Last One Standing, Giant Slayer, Pickpocket, Dragon's Hoard, Humble Beginnings, and the secret Lucky Charm and Four-Leaf Clover, by deterministic per-run luck) are seen in `fightAchs`/`endAchs` and sent at the end of the run; the account ones (first run, all heroes, streaks of 3 and 10, Gold and Celestial leagues, level titles) are checked by the server (`grantAchs` in api/_player.js, column `achs`). New ones come out of the chest on the XP screen as "New title!". The chosen title (op `title`, column `title`) appears under the name on the profile, in the ranking and on the VS screen; the profile has a "🏅 n/30 Achievements" panel that opens the grid (secret ones show ???), and on your own profile tapping an achievement makes it your title. #152: the level path interleaves rewards: **1 hero per level** (2 to 27, before it was 2 per level up to 14), **taunts** (`B.LEVEL_TAUNTS`, 10, they become the profile/VS speech bubble, shown in the Style tab) and **level titles** (Squire, Adventurer, Veteran... The Eternal at 43).
+- **v72 (2026-10-07), batch 106 from David (#148).** "Deploy your units" banner glowing in the board sky during setup (`.depban`, does not block touch).
+- **v71 (2026-10-07), batch 105 from David (#146 #147).** #146: the speed buttons (1×/2×/4×) also in setup, on the title row (`speedPills` in js/ui.js, the choice applies to the fight); the tutorial notice about speed became yellow, bigger and bouncing, and also shows in setup. #147: the skip-fight button only exists in PvE fights; duels and the final fight cannot be skipped (also blocked in `skip`).
+- **v70 (2026-10-07), batches 103 and 104 from David (#144 #145).** #144: the league and XP screens fill the screen: wide, tall meter that glows and bubbles, giant pulsing number, rays spinning in the background, glowing call-out phrase, chest twice the size with rays when opening; if it does not fit (many XP rows or rewards) the screen shrinks one step (`fitOver`: classes `.tight`/`.tighter` and then proportional `zoom`), the page never scrolls. #145: during the 3-2-1 countdown the characters looked flattened: it was the fight-start "jump" (render.js, `sy` 0.6 → 1 in the first frames) frozen on the first frame; now during the countdown they stand upright (`o.still`) and the jump happens at FIGHT!.
+- **v69 (2026-10-07), batch 102 from David (#143).** **3, 2, 1, FIGHT!** countdown when the fight starts: big, semi-transparent numbers over the top of the board, not blocking touch (`pointer-events: none`); the simulation waits (`battle.hold`, `countdown` in js/ui.js). Does not run in an automated browser (tests).
+- **v68 (2026-10-07), batches 100 and 101 from David (#140 to #142).** End of run redone in 2 screens with the big button always in the same place at the bottom: **1 = league** (#140): vertical meter in the league colors with the badge on top, filling or dropping to where you are (promotion fills to the top, swaps the badge and fills again; demotion empties and drops), the LP in big letters on the right, the reasons, the streak, the trophies and "Beat other players to rise in the league!"; Next. **2 = XP** (#141): the same meter for the account level; each level gained shouts "LEVEL N!" and at the end a **chest** shakes, opens and drops the level's rewards; with no new level the chest stays dimmed with the next reward; Play again (the ranking became a small button in the title). `lpScreenHTML`/`animLp`, `xpScreenHTML`/`animXp2`, `meterHTML` in js/ui.js (the old `leagueCardHTML`/`streakCardHTML` are gone). #142: **Skip** button in the corner of events; the leader walks slower on the map (2.2 s) and the camera follows it to today.
+- **v67 (2026-10-07), batch 99 from David (#137 to #139).** #137: on the VS screen each player's side gets the **league colors** and a plate with the badge, LP, level and streak (yours always; the rival's in the duel when they are a real player: `styled` in api/elo.js sends league/lp/streak/level). #138: the victory stars lost the text beneath them (hover tip only). #139: on the map, when the day changes, the **leader walks along the road** from yesterday's point to today's (`layoutMap`, `ui.roadAt`, class `.rtok.walk`).
+- **v66 (2026-10-07), batch 98 from David (signed "DavidA"; the owner confirmed it is him), #135 and #136.** #135: **TEAM vs TEAM screen** before every fight (PvE, duels, final, event challenges): your team enters from the left with its name and portrait, the VS grows and the screen shakes, their team enters from the right; in PvP it shows the score between you (via `profile` → `h2h`); tap skips; disappears by itself in ~3 s (`showVs` / `closeVs` in js/ui.js, called when the `deploy` screen opens; does not appear in an automated browser, the tests call `showVs(true)`). #136: **Style** tab in the Crown Shop: 8 **taunts** (comic speech bubble on the profile and on the VS screen, including as a ghost), 3 **VS entrances** (fire, lightning, stars) and the **portraits** still locked by level (20 crowns each); `B.TAUNTS`, `B.VSFX`, `B.COSMETICS` (in `B.SHOP_ITEM`, bought through op `buy`), op `style` chooses which one to show (columns `taunt`/`vsfx`), the duel opponent comes with the owner's taunt/vsfx/portrait (`styled` in api/elo.js); an invented ghost gets a taunt by name (`ghostTaunt`).
+- **v65 (2026-10-07), batches 94 to 97 from David (#128 to #134).** #128: the Hero Shop had already swapped a hero with a full team since v64 (the "team is full" notice was from v63, a tab opened before the update); now the **events that offer a hero** (Mercenary Camp, legend) also swap: the choice asks who leaves (`eventChoices` → `eventChoices0` + `target: 'hero', swap: true`, `eventAct` uses `swapIn`). #129: clean end-of-run screens (run bar disappears from the top; screen 1 = medal + XP + big Next button at the bottom; screen 2 = streak + league + trophies + big Play again button; the Next button was small because `.stack.againrow > button:not(.again)` had 64px); the victory **stars** say what they are worth (Won / Nobody fell / 60%+ health); "★ Elite" written on the posters; **LP only comes from PvP**: duel won +10, final fight won +20, PvP fight lost −8, + the streak on a completed run (`B.LP`, `B.lpParts`, `B.runLp`); PvE does not touch LP; **Bronze never loses LP**. #130: the **map became a vertical road** climbing a valley at night, from the camp to the final fight's castle (`mapRoad`, `layoutMap`, `ROAD`): past days in gold, the leader where you are, today's choices are the fork (posters), bosses with a red aura, duel days pink, the rest scrolls inside the screen and opens at today; on mobile the team becomes a strip at the bottom (`mstripHTML`), on PC the panel stays at the side. #131: **hero portraits as the player's photo** (4 free, plus 1 per level from 2 to 43: `B.PORTRAITS_FREE`, `B.PORTRAIT_UNLOCKS`, unlocks `kind: 'portrait'`, `B.portraitLevel`; `B.lockedFor` ignores portraits); choose on your own profile ("Change picture", op `avatar`); appears at the top, on the profile and in the ranking. #132: **Follow** button on the profile (op `follow`, table `follows` by public code) and **Friends** tab in the Ladder (op `friends`), tabs Player / Global / Friends. #133: **win streak** (starts at 1, completed run +1, lost or abandoned run = 0; columns `streak`/`bstreak`); big flame on the Play button and at the end of the run (animates rising or going out); +1 LP per run of the streak. #134: the ranking shows the current and the best streak. Also: the opposing team list in the duel fits on a small phone (3 columns). #135 and #136 ("DavidA") waiting for the owner. New texts in English only.
+- **v64 (2026-10-06), batches 90 to 93 from David (#121 to #127).** #126: the run starts with **1 hero out of 3** (one of each class) and, after each of the first 2 days, a **free recruit** on the same spotlight screen (1 of 3, missing classes first; `CFG.freeRecruits`, `Run.recruitOffer/recruit`); 1st fight is small again (`firstFight` 0.3, measured). #124: only the chosen hero stays lit (tapping another moves the light, tapping again unselects; no stuck hover on mobile). #127: Hero Shop with a full team **swaps a hero** (the new one inherits level, XP, place and items; powers drawn for those levels; `Run.swapIn`, sheet "Who steps aside?"); rules/help/profile/Crown Shop texts revised for the new run; end of run in **2 screens** (1: victory type + XP and unlocks; Next; 2: league card with LP, bar, reason, promotion/demotion, run trophies); another player's profile shows the **head-to-head** (W–L) between you. #125: **Perfect / Gold / Bronze** by lives left; each duel won = **trophy** with the defeated player's name + **1 crown** (table `duels`); **Elo is gone from everything** (top shows the league and LP; ranking by league and LP); LoL-style leagues: 100 LP per league, they move only at the end of the run (`B.runLp`: winning run pays +35/+28/+22, run with no lives −24 +3 per fight won, +5 per duel, −2 per league above Bronze; below 0 drops a league with 75 LP). #122: Ladder with only Player and Ranking (Content Elo stays in the Balance lab; perk left the Crown Shop). #123: the map gained the **run trail** (you on today's day, bosses, duel days, final fight, "boss in N days"). Rebalanced (bot with 1 hero + recruits): 31.1% of runs completed, averages 100/94/88 | boss 71 | 83/82/83 | boss 59, heroes 26% to 35% (sd 2.1). **#121 (reset players) not done:** the backup + database cleanup script was blocked by the automatic permission; it is left for the owner to run/authorize. New texts in English only.
+- **v63 (2026-10-06), batches 85 to 89 (#115 to #120).** #117/#118 (David) reshaped the run: it starts with **3 heroes** (6 offered, 2 of each class) + 1 power + 2 common items; **3 lives** (hearts at the top; a lost fight costs one and the day passes; the third ends it); in fights 3 and 6 (`CFG.pvpFights`) one map option is a **PvP duel** against the team of another player who was at roughly the same day (op `snap`; the poster shows their power and yours: `Run.powerOf`/`powerLabel`); winning opens the **loot** (a hero, an item or a power from the winning team; a hero with a full team swaps one of yours and its items go to the bag); the last day is the **final fight** against a team that completed its own run (ops `final`, `duel`, `complete`; losing with a life left = another finalist). The Gauntlet (tower) is over; `enter`/`result` remain only for old tabs; runs saved inside the tower go to the final fight with 3 lives. The 2 PvE bosses remain. #119: with no players yet, `Run.randomGhost` invents the opponent (one hero of each class, items and powers growing with the day; strength `CFG.ghostPower` 0.78). #120: a new account has 20 heroes (`B.START_HEROES`), the other 26 unlock 2 per level from 2 to 14 (`B.HERO_UNLOCKS`); the end screen compacts many unlocks into a row of icons. Lone Crown left the offers (needs a team of 1). Rebalanced by simulation (bot with 3 heroes, 3 lives, final fight against an invented ghost): 32.8% of runs completed, averages 100/94/93 | boss 71 | 84/83/81 | boss 59, heroes 28% to 38% (sd 2.1). #115 (PC boy, Gauntlet end log on the profile) and #116 (David, rating in PvE / remove the boss preview) declined: in #117 David asked to ignore both earlier requests (and the Gauntlet ceased to exist). New texts in English only (PT/DE fall back to English).
+- **v62r (2026-10-06), direct request from the owner.** Fight stuttering on his PC (fine on mobile). I measured an 8 vs 8 fight in Chrome (new `node tools/perf.mjs [seconds] [width]`, DPR=2 simulates a big screen): ~5.5 ms of drawing per frame, so JS is not the bottleneck; the cost must be the PC's graphics card/acceleration. Safe fix: the fight loop measures speed and, if it stays ~1.5 s below 30 fps, lowers the canvas pixel density by itself (2 → 1.5 → 1, `Render.maxDpr`); the image keeps its size, just gets slightly softer.
 
-- **v62q (2026-10-05), lotes 83 e 84 do David (#113, #114).** #113 dificuldade: o balanceador de v62o tinha deixado a curva de luta irregular (escala 1, 0,86, 0,83, 1,03... e hard/easy relativos a ela: lutas difíceis do começo fáceis demais, depois uma explosão). Agora a curva dos inimigos é suave e crescente POR CONSTRUÇÃO: `fightScale[n] = s0 * r^(n-1)` (r ~1,18 por luta, cada chefe com seu degrau; valores em data.js: [1, 0.992, 1.175, 1.391, 1.576, 1.95, 2.309, 2.734, 2.745]) e `DIFF.easy.mul`/`hard.mul` viraram constantes (1,074 / 1,055). O lado dos heróis ganhou duas alavancas globais em `B.TUNE`: `base` (força de todos, 1,279) e `growth` (o que cada nível dá: Vida, Ataque e Magia, e com eles os números das habilidades; 0,615, antes 1), além do `power` por herói. O tuner (`tools/pve/tune.js`) foi reescrito: mede também bots que sempre escolhem luta fácil e difícil, ajusta a reta (s0, r, degraus dos chefes) e joga no `base`/`growth` o que a reta não expressa. Resultado em 46 mil runs novas: 27,8% completam o PvE; lutas médias 98/94/93, boss1 73, 92/86/77, boss2 60; difíceis 62/57/66, 65, 55/45; fáceis 98 a 100; 46 heróis entre 24% e 33% (desvio 1,8 ponto). Graveborn (Morrow) começava fraco demais sozinho (perdia a luta 1 em 64% das runs): Vida 470, Ataque 30, Energia 75, começa com 60, crescimento 1,5. `motor.js` zera também base e growth. #114 primeiros 30 segundos: a escolha do herói é um palco escuro com holofotes (cada herói é um quadro com sua splash sob um cone de luz, os outros escurecidos, o escolhido acende, cresce e ganha aro) e os 3 poderes flutuam sobre pedestais de pedra (o escolhido ganha feixe de luz e brilho dourado); uma mãozinha 👆 balança sobre o herói e depois sobre o poder, só nas 2 primeiras runs que o jogador inicia (`balance.starts` no localStorage, conta em `start-go`).
-- **v62p (2026-10-05), lote 82 do David (#112).** Efeitos refeitos: "exagerei". Sem piscar: saiu o flash colorido da tela inteira, o pilar de luz genérico em todo cast, o chacoalhar aleatório (agora uma ondulação suave e pequena) e o tremular dos raios. Agora CADA uma das 57 habilidades (46 heróis, 7 monstros, 4 chefes) tem animação própria em `js/abilfx.js` (novo, `B.AbilFx`, carregado depois do render.js): o simulador marca cada efeito com a habilidade que o criou (`W.ctx`, campos `f.ab`/`f.by`, só visual; `at()` guarda o contexto dos golpes atrasados; novo efeito `spawn` para invocações) e o render entrega à habilidade. Áreas são desenhadas nos HEXÁGONOS reais do raio (`Hx.within` + contorno da união), então o raio visual = raio do efeito; zonas no chão (fogo, sagrada, mel, pântano, muro de fogo) também por habilidade. Exemplos: Falling Star = marca violeta no chão e uma estrela dourada que CAI do céu (emitida antes do impacto, `t0` no futuro) e explode; Tom arremessa pratinhos (torta, espeto, sopa, pudim, frigideira) até o aliado; Rootsnare = raízes com espinhos brotando em cada hex; Cinder Comet = cometa com cauda; Volley = flechas em arco alto que ficam fincadas; Hook = corrente com gancho; Stoneward = pilares de pedra na borda; Arc Cascade = raio que bifurca; etc. Ferramenta nova: `node tools/fxlab.mjs <habilidades|all> [ticks]` (laboratório que encena cada habilidade e salva folhas de contato em tools/tests/.saida/; `CELL=380` para ampliar). Para uma habilidade nova: acrescentar a chave em `SPEC` de abilfx.js.
-- **v62o (2026-10-05), lote 81 do David (#111).** Balanço do PvE por simulação em massa. Novo `tools/pve/`: motor headless (`engine.js`) com um bot que monta tanque+curandeiro+dano (ou o mais perto, com re-rolagem), compra o item de maior `itemScore` para qualquer herói do time, poderes ao acaso, eventos pelo melhor `act`, nível aleatório; `batch.js` em worker_threads (~20 mil runs em 30 s, 8 ms por run), `analyze.js`/`report.js`, `tune.js` (autônomo), `gear-test.js`. Resultados guardados em `tools/results/` (LATEST.md versionado). Dois botões novos de balanço: `B.TUNE.power[herói]` (multiplica Vida/Ataque/Magia em `heroDef`; bloco `<TUNE-BEGIN>` em data.js reescrito pelo tuner) e a escala por luta `CFG.fightScale` (nova: [1, 0.862, 0.827, 1.031, 1.247, 1.552, 1.775, 2.016, 2.208], antes [1, 1.03, 1.25, 1.27, 1.39, 1.76, 2.1, 2.16, 2.49]). Resultado em 69 mil runs novas: 30% completam o PvE, lutas medianas 96/96/93/92/90/89% e chefes 66/63%, os 46 heróis entre 27% e 35% (antes: 4% a 18% com 7% de runs completas; desvio entre heróis 1,7 ponto, perto do ruído). Poderes e itens: cada um forçado desde o início em 1000 runs; nerfs: Veteran's Medal 25->14 XP por abate (era +40 pontos), Lone Crown +150%->+100%, Last Stand Banner +100%/+50% -> +60%/+30%, Phoenix Egg 50%->30% de vida, Lodestone -10%->-5%, Warm Teapot 1%->0,7%, Mending Spring cura +30%->+20%, Snow Globe 10/100->8/70, Spotlight Lamp +40%->+30%; buffs: Glass Crown -35%->-20% de vida, Pack Horn +35%->+75%; itens: Emberborn Heart (ressuscita 50%, +160 vida), Rampart of Dusk (+380/+30), Wyrmscale Gloves (+30 Defense, 1%), Heart of the Peak (+18%, 1%), Wyrmhide Mail (+240/+22, -8%), Codex Without End (+3 Magia/s), Herald's Horn +55%. Textos de PT/DE desses poderes/itens voltam ao inglês até serem retraduzidos. `motor.js` zera o `B.TUNE.power` e testes dos 3 poderes ajustados.
-- **v62n (2026-10-04), lote 80 do David (#110).** Efeitos das habilidades na batalha bem mais fortes (só render.js, a simulação não mudou): o cast do herói agora tem onda dupla no chão, coluna de luz, fonte de faíscas e estrelas, tom de cor sobre o tabuleiro (`flash`) e tremor; áreas (`ring`) ganham núcleo branco, onda externa, faíscas para fora e coluna; projéteis de habilidade ficam maiores, com rastro longo, brilho e faíscas, e estouram ao chegar no alvo (flecha/lança básicas ficam como eram); raios (`bolt`) com brilho largo + cor + núcleo branco e tremulação (sem shadowBlur); curas soltam estrelas verdes; críticos ganham onda, estrelas e flash; mortes (e chefe) com ondas e faíscas; nome da habilidade maior com brilho. Novos tipos de partícula: `spark`, `star`, `ring`, `pillar`; contorno escuro para ler no céu claro; MAXP 420. Helpers `shock`, `pillar`, `flash` em render.js.
-- **v62m (2026-10-04), lote 79 do David (#109).** Visual novo nas escolhas da run. Mapa: cada opção virou um cartaz com cena própria (`posterHTML`/`optHTML` em ui.js, classes `.banner.v2 .scene`): luta = rostos dos inimigos sobrepostos (x2, ★ elite) e caveiras de dificuldade; chefe = retrato grande com raios vermelhos; loja de heróis = leque de cartas misteriosas com silhuetas e "?"; loja de itens = ícones dos tipos de slot; loja de poderes = ícones de poderes; evento = a figura do evento com raios e selo de raridade. Lojas: heróis em cartas com o splash inteiro, classe, alcance e botão de detalhes redondo sobre a arte (`.v2 .art`); itens em linhas com medalhão brilhante na cor da raridade; poderes em cartas 2 colunas com medalhão dourado; cabeçalho com o título e "Team n/m" na mesma linha. Escolhas de evento: cada uma ganha um ícone redondo do que faz (`EACT`, pelo `act`). Tudo cabe sem rolar (auditoria en/pt/de 110/110).
-- **v62l (2026-10-04), lote 78 do David (#108).** Auditoria de UI em Chrome real (`tools/tests/interface.mjs [en|pt|de]`, no run-all em en): joga uma run em 390x740 e 360x640, toca em tudo (menus, início, mapa, lojas, eventos, equipamento, level-up, deploy com herói/inimigo tocado, batalha, resultado) e falha se a página rola ou se algum botão fica fora da tela (folhas de lista podem rolar por dentro, mas os botões ficam visíveis). Ajustes: o cartão de info de uma unidade ficou compacto (nome, atributos, NOME da habilidade + botão Details; monstros uma frase) e substitui a lista de inimigos no deploy e a faixa na batalha, então o botão Fight não sai mais da tela; telefone baixo (<=700px) compactou mapa, level-up, equipamento, batalha; Crown Shop em 4 abas (Perks / Name & King / Earn / Invite); botões da aba Player do Ranking no topo; Art Lab com barra fixa de ações (`.albar`); Suggest com Refresh no cabeçalho; nomes longos (alemão) cortam nos slots de equipamento. Testes do shop atualizados para as abas.
-- **v62k (2026-10-04), lote 77 do David (#107).** Heróis do tabuleiro (models.js, rig humanoide): cabeça esculpida (`face()`: testa, nariz, lábios, queixo, mandíbula, orelha; capuz com ponta e dobra iluminada) no lugar da bola; movimento próprio por herói (`seedOf(m._k)`: tempo, fase e balanço de repouso, inclina para trás antes do golpe e se joga nele, inclina ao correr e ao lançar, cabeça com atraso); armas únicas (`WS` por herói + `STYLES` em `weapon()`: espada sagrada, cimitarra, florete, cajados com 11 cabeças diferentes, machado de guerra, cutelo, clava com espinhos, tronco, concha, martelo...). Os testes de telas têm falhas aleatórias de semente (ex.: "first map step shows 2 options" quando sai o Quill) que já existiam.
-- **v62j (2026-10-04), lote 76 do David (#106).** Modelos no estilo limpo do Prism: `poly` ganhou linhas claras nas arestas viradas para a luz, `ball` um aro claro, e braços/pernas viraram UMA forma só (`bent` em models.js: sem juntas redondas, um contorno, borda iluminada); proporções mais fortes (membros, cabeça, peito). Vale para todos os humanoides e para os outros corpos que usam `poly`/`ball`.
-- **v62i (2026-10-04), lote 75 do David (#105).** Rohammer (herói 46, tanque): flag `brute` (sem Energia ao atacar; `ab.gain` Energia por 1% de vida perdida, no `deal`), a martelada lentíssima (as 0.35) atordoa 0,2s (`ab.tap`), o especial `A.sweep` varre os inimigos à frente a até 2 hexes, empurra 2 e atordoa 1s. Medido com hero-odds (61%, grow 1.48). Traduzido em pt e de.
-- **v62h (2026-10-04), lotes 70 a 74 do David (#96 a #104) e o travamento da versão web.**
-  - **#96 nomes e Defesa:** na tela os atributos são Health, Attack, Magic, Defense e Energy (código igual: hp, atk, ap, armor, mana). Armadura e resistência mágica viraram UM atributo, Defense (`armor`), que reduz dano físico e mágico (`mrOf` e todos os `mr` saíram; heróis e monstros: média dos dois; itens só com MR viraram Defense x0,65). Os textos foram trocados por script que só mexe dentro de aspas (HP→Health, AP→Magic, AD→Attack, mana→Energy, armor/MR→Defense). O PvE foi reafinado com `tune-pve` (fightScale e DIFF.easy/hard.mul) porque o jogo ficou ~9 pontos mais fácil.
-  - **#98 Plasma Cannon:** não anda (`ms 0`), flag `closest` (re-escolhe o inimigo mais perto a cada tiro), dano x (1 + 12% por hex abaixo de 5) (`plasmaMul`), todo tiro empurra 1 hex, o especial (`A.tripleshot`) são 3 tiros seguidos que empurram 2. **#100 Duelist:** `A.duel`/`challenge`: o mais próximo que não é chefe e o Duelist ficam presos um no outro (taunt dos dois até um morrer; `duelWith`, `duelEnd` no `die`), com bônus de Attack/Defense/lifesteal só durante o duelo. **#101 Combat Medic:** flag `medic` (`medicAct`: o ataque cura o aliado ferido em alcance 2, sem ferido ataca inimigo) e `A.grenade` (cura aliados e fere inimigos no mesmo raio). **#102 Gardener:** `A.plant` planta plantas (thorn, bloom, lily, spore) em hexes livres perto do inimigo; `u.plant`: ninguém mira nem fere nem empurra, bloqueiam o hex, duram `life` s, e NÃO contam para o fim da luta. Tudo medido com `hero-odds` (ONLY=...) e passado pelo teste de 8 ações; classes: Medic e Gardener = support, Plasma e Duelist = damage.
-  - **#99 Prism** agora é um cristal alongado que flutua (rig `crystal` em models.js). **#103** sem o banner "in progress" e sem a lâmpada: a sugestão só no menu; sobra o aviso simples "New version: tap to reload". **#104** ícones de itens e poderes: ~35 desenhos refeitos com mais partes e brilhos (icons.js, `Object.assign(D, ...)`), glifo maior, brilho da cor, 4x de resolução.
-  - **#97 idiomas (pt e de):** `js/i18n.js` (observador da página + `B.T` usado em `fmt()` e no canvas), `js/lang-boot.js` (carrega o dicionário antes dos scripts), `js/lang-pt.js` e `js/lang-de.js` (~2.150 textos cada), linha Language no menu (recarrega a página). O texto que não tem tradução fica em inglês. `node tools/idiomas.js` lista o que falta nos dados; `TRLOG=1 LANG_ID=pt node tools/tests/telas.mjs` lista o que as telas mostraram sem tradução. `plainAb` (descrição curta) só existe em inglês; fora dele mostra o texto inteiro.
-  - **Travamento da web:** o tabuleiro (64 hexágonos) é pintado uma vez num canvas fora da tela e só copiado; o canvas usa no máximo 2x (era 3x); a tela de preparação repinta a ~30/s (antes sem parar) e a luta limita a ~60 fps em telas de 120/144 Hz.
-  - Testes: motor 896, telas (inglês) 199, dispositivos 63 também com `LANG_ID=pt` e `de` (nenhuma tela passa do tamanho do celular nas línguas mais longas).
-- **v62g (2026-10-03), travamento da versão web (relato do dono).**
-  - render.js: os ~64 hexágonos do tabuleiro (faces laterais, textura, bisel) agora são pintados UMA vez num canvas fora da tela (`v.boardC`, `paintTiles`) e só copiados a cada frame; repinta se mudar skin, modo deploy, hex de soltar ou terreno. Lagoas e linha de deploy continuam por frame. Canvas com DPR no máximo 2 (era 3: 45% menos pixels no celular). ui.js: a tela de preparação repinta ~30x/s (antes a cada frame, sem parar) e não repinta com a aba escondida; o loop de luta limita a ~60 fps em telas de 120/144 Hz (o tempo não se perde).
-- **v62f (2026-10-03), lotes 68 e 69 do David (#93 #94 #95).**
-  - **#93 classes:** todo herói é tanque, suporte ou dano (`B.CLASS_OF`, `B.heroClass(key)` em data.js; tanques: bastion, brakk, bramble, seraph, barley, grok, imhotep, leonidas, citadel, smolder; suportes: lumen, echo, vey, buzzwell, coralie, tom, prism, glacia, grimhook, sprocket; o resto é dano). A loja de heróis (`stockBase` em run.js) sempre põe 1 herói de cada classe que o time ainda não tem, depois heróis aleatórios (4 no total, número par); vale também no reroll. Teste: um time de 1 herói de dano vê tanque e suporte em 180 de 180 lojas.
-  - **#94 frase de derrota:** `Run.lossTag(left, timeout)` (left = fração da vida máxima dos inimigos que sobrou) escolhe a linha que aparece no lugar das estrelas na derrota: "SO CLOSE!" (até 8%), "Almost had them!" (25%), "A hard fight." (50%), "They were stronger." (80%), "You were wrecked!" (mais); "Time ran out!" se acabou o tempo. O `left` é calculado no `endBattle` do ui.js (inimigos sem invocações).
-  - **#95 CLAUDE.md sem histórico:** o histórico inteiro foi para este `CHANGELOG.md` (só acrescentar no topo; nunca ler inteiro). O `CLAUDE.md` agora tem só instruções permanentes na ordem pedida (conceito e laço, princípios, arquitetura, convenções de UI, regras do jogo, convenções de código, como rodar/testar, restrições, o que nunca quebrar, definição de pronto, ciclo de revisão). O mapa antigo de arquivos foi para o fim do `CODEMAP.md`. O vigia agora roda como Monitor de 30 min (o Bash em segundo plano morria em 10 min sem avisar).
-- **v62e (2026-10-03), lote 67 do David (#91 notas no código + índice, #92 diretrizes de design).** Passada só de comentários (+~600 linhas): FILE GUIDE em cada arquivo de js/, api/, style.css e index.html, nota WHAT: em cada função e tabela, receitas no cabeçalho do data.js, e o **CODEMAP.md** na raiz (arquivo por arquivo, receitas "quero mudar X", glossário, o que não quebrar). Feita com scripts que inserem linhas de comentário e conferem que o código não mudou (tirando as linhas `//` dos dois lados). A única mudança de código: o banner "THE KING" do Rei (relíquia King) nunca aparecia desde a v61 porque o `fxText(...)` ficou depois de um `//` na mesma linha; agora aparece. As diretrizes do #92 estão na seção nova de cima ("Diretrizes de design") deste arquivo.
-- **v62d (2026-10-03), lotes 63 a 66 (David #82 #86-#90, PC boy #83-#85); o vigia tinha morrido no limite de 10 min do `run_in_background` e o David reclamou que nada rodava (ver memória: sempre `timeout: 600000` e reiniciar).**
-  - **#82 estatísticas:** "Balance stats" é um subitem (linha menor) sob Ladder no menu do início; abre `stats.html` em outra aba. Medição corrigida: cada run entra UMA vez (`runId` = `run.seed`, chave `fl:<pid>:<run>` no KV), cota própria de 120 por IP/hora, e quem desiste (`give-up-yes`) também manda as lutas jogadas (`op: 'flog'`; antes sumiam e a estatística ficava otimista). Seção nova **PvP heroes**: nos duelos do Gauntlet cada herói ganha Elo e vitórias próprios (`ratings` com `kind: 'pvp'`, calculado no `rateContent` quando há dois lados); a aba "Heroes" continua somando PvE + duelos. Só vale a partir de hoje.
-  - **#83 mini tutorial (PC boy):** na primeira partida, "⇇ 👈 Try moving your hero ⇉" animado sobre o tabuleiro em toda tela de preparação até mover um herói (`balance.tut.moved`; só nessa partida, `balance.tut.run`); depois, na batalha, "⬆ Click here to speed up the fight." piscando sob os botões de velocidade até um toque em qualquer lugar (`balance.tut.speedDismissed`). Quem já tinha jogado (viu a dica de arrastar 3 vezes) não vê nada. Os dois avisos são absolutos e não mexem no layout. O texto dele citava `supabase/functions/...` e `js/net.js`, que não existem aqui: adaptei.
-  - **#84 torre vazia (PC boy):** o primeiro a entrar enfrenta um "Gauntlet Champion (fallback)" virtual: a resposta traz `fallback: true, wins: 1`, o histórico mostra a vitória e `best` vira 1; o fantasma guardado continua com 0 vitórias, então os andares não mexem.
-  - **#85 ranking (PC boy):** `topPlayers` só lista quem tem `runs > 0` (terminou uma primeira run, perdendo ou entrando no Gauntlet).
-  - **#86 PvE mais fácil no começo:** `tune-pve` com metas por luta (lutas 1-3: médio 95%, difícil 72%; chefe 1: 62%; depois 91/62/57): `fightScale` [1, 1.03, 1.28, 1.34, 1.37, 1.78, 1.97, 2.15, 2.33] e `easy.mul`/`hard.mul` novos; em sementes que o afinador não viu: fácil 97-100%, médio 87-98%, difícil 56-75%, chefes 61% e 59%.
-  - **#87 Citadel:** nunca mais de 5 soldados ao mesmo tempo, nem com Call to Arms (`GARRISON_CAP`).
-  - **#88 desafios de elite (Bounty Board):** estavam impossíveis desde a v61 (pack 21-35%, horde 15-41% porque `CH` multiplicava a escala nova). `tools/challenge-odds.js` agora usa os times do `_team.js`; `CH` = {solo 0,95, bandits 1,1, pack 1,0, horde 0,8, mimic 1,45, hoard 0,9} e um alívio `early` (x0,8 nas lutas 1-2, x0,9 na 3; duelo solo x0,75 a mais nas duas primeiras): bandidos 77-97%, pack 64-91%, horde 72-94%, mimic 64-97%, duelo 52-69%, tesouro 61-91%.
-  - **#89 caixas de descrição:** ao trocar de tela também zeram `gsel`, `heroInfo`, `selUid`, `confirmBuy`, `rmore`; o toast do `relic-info` virou "de informação" (some na troca de tela, como o do chefe).
-  - **#90 fundo dos chefes:** `backdrop(v, bossKey)` em render.js põe um tom e cenário por chefe sobre o fundo normal: Gorewarden (vermelho, estandartes, respingos), Ashen Sovereign (cinza roxo, lua, árvores mortas, cinzas), Mirewitch (verde, juncos, névoa, vaga-lumes), Colossus (pedra, rachaduras, rochas flutuando, brilhos dourados).
-  - **Gauntlet preso (v62c):** quem estava no meio de um Gauntlet quando a torre foi esvaziada ficava no "Try again" (404 "Unknown gauntlet run"); agora o jogo recomeça o Gauntlet da entrada (`resetTower`).
-- **v62 (2026-10-02), lote 61 do David (#75 a #79; o #74, "PvE mais fácil", o dono mandou cancelar antes de eu começar).**
-  - **#75 Gauntlet fácil demais.** Achado no banco: os fantasmas ganharam 66 duelos e perderam 308 (82% de vitória de quem sobe); os times que caíram com 0 a 6 vitórias têm força quase igual (42-46% contra times aleatórios, só os de 7+ são fortes), então a torre quase não sobe de dificuldade. A simulação é simétrica (jogador x fantasma idênticos = 50/50), o que falta é a vantagem de quem joga: vê o fantasma, escolhe a posição e troca itens. **Correção (a escala por andar `ghostMul` foi feita e REMOVIDA no mesmo dia, #80: o David disse que não faz sentido escalar fantasma de graça):** **Fidelidade do fantasma (3 bugs):** o `cleanTeam` (api/elo.js) só guardava hpPct, atk, armor, mr e cleanseOnce do `bonus`, e jogava fora atkPct, ap, asPct, crit, manaStart das poções e eventos (agora guarda todos, com teto, mais hp, critDmg, ls, dodge, regen, manaRegen do Devour); Snowball e Pack Rat dependiam de `run.snow`/`run.bag` que o fantasma não tem (`teamSnapshot` agora embute esse bônus em `bonus`); a Phoenix Egg não vale para fantasma (fica assim). Os fantasmas JÁ guardados perderam esses bônus para sempre.
-  - **#76 Relíquias viram "Powers".** Só o texto que o jogador lê (lojas, ajuda, abas, eventos, descrições, formulário de sugestão); ids, classes CSS, `kind: 'relic'` e o banco continuam `relic`. Conferir de novo se aparecer "relic" em texto novo.
-  - **#77 balão que ficava.** `ui.info` (painel da unidade/chefe tocada) agora zera sempre que a tela muda (antes só em alguns botões, e o id velho aparecia no preview da tela seguinte); o toast de informação (`form-info`: chefe, formação) some em qualquer troca de tela, sem a janela de 350 ms.
-  - **#78 três heróis novos (41 no total).** **Smolder** (`smolder`, Flamer, `fl: ['devour']`): no começo de cada luta (`Run.devour`, chamado por `fightWorld`/`gauntletWorld` fora do preview) come o primeiro item que segura e guarda os números dele para sempre em `h.bonus` (hp, atk, ap, armor, mr, %, asPct, crit, critDmg, ls, dodge, regen...; nunca o efeito); poderes: 2 itens, +50% do que come. Habilidade **Flamethrower** (`A.flamethrower`): cone = o alvo e os vizinhos dele até 2 hexes, 30% AP + queima 30% AP/s por 4 s. **Tom** (`tom`, Cook, `A.dishes`): serve 2 pratos a aliados aleatórios, cada um um de quatro (torta cura 90% AP, charque +25% ataque, sopa +30% velocidade, pudim escudo 110% AP); poderes: porções +30%, +1 prato, frigideira (dano + atordoa 1 s), Banquete (todos), 2 efeitos por prato. **Ashwing** (`ashwing`, Pyromancer, `fl: ['rebirth']`, `layEgg`/`eggAct`): ao cair deixa UM ovo (50% da vida) por luta; se vive 5 s o herói volta com 60%; se o ovo morre, o herói morre (o ovo conta como herói em pé na regra de derrota); habilidade **Wall of Fire** (`A.firewall`): linha de 3 hexes na fileira do alvo (zonas de raio 0) que queima 50% AP/s por 4 s. Modelos novos em models.js (`chef`, `phoenix`, `egg`). Equilibrados com `ONLY=… TARGET=62,56 node tools/hero-odds.js 8 100` (agora o ONLY mira nas médias do elenco): Smolder 56%, Tom 56%, Ashwing 57%.
-  - **#79 Prism ataca.** Entre um pulso e outro do raio ele também ataca o inimigo mais perto no alcance (`beamAct` chama `startAttack`). Isso o levou a 83%; foi para 62% com força p 0,65 e crescimento 0,54 (o resto do elenco 53-63%).
-  - **#80 (mesmo dia, lote 62 do David): nada de escala artificial nos fantasmas.** Tirei `ghostMul`/`CFG.ghostBase` (e o "+15%" do cartão). O fantasma agora tem TUDO o que o jogador tinha: além dos 3 bugs acima, a **Phoenix Egg** passou a valer para o fantasma (`W.fl1.phoenix`, `W.once.phoenix1`, em sim.js). "Se não tiver certeza, limpe o Gauntlet atual": os 90 fantasmas guardados antes da v62 perderam bônus para sempre, então o certo é limpar a torre, mas o modo automático barrou o `delete from teams` no banco de produção ("Cloud Storage Mass Delete"). Deixei `node tools/limpar-gauntlet.js` (faz backup em backups/ e apaga; `--dry` só conta) para o DONO rodar; até lá os fantasmas velhos ficam lá.
-  - **#81 painel escondido (`stats.html`, sem link no jogo, `noindex`):** `api/stats.js` (GET, só números gerais, nada de jogador) devolve `fights` (tabela nova `fstats`: por número da luta e dificuldade, quantas vezes foi jogada e ganha; os chefes são `boss`) e as vitórias/jogos/Elo de cada herói, item, poder e chefe (tabela `ratings`, mesmo dado da aba Content Elo, mas lista também os que nunca jogaram). O jogo guarda `run.flog` (`[luta, dificuldade, ganhou]`, só lutas normais e chefes, não desafios) e manda na hora que a run acaba (`fail` e `enter` do elo.js, validado por `cleanFlog` e limitado como o resto dos dados de balanço). Só conta runs que terminaram; runs abandonadas não entram. `deploy.sh` e o `dev-server` aprenderam o `stats.html`.
-  - **Testes:** motor 843, api 146 (novos: Smolder/Tom/Ashwing/ovo/muro, fantasma por andar, bônus no fantasma, Prism ataca).
+- **v62q (2026-10-05), batches 83 and 84 from David (#113, #114).** #113 difficulty: the v62o balancer had left the fight curve irregular (scale 1, 0.86, 0.83, 1.03... and hard/easy relative to it: hard early fights too easy, then an explosion). Now the enemy curve is smooth and rising BY CONSTRUCTION: `fightScale[n] = s0 * r^(n-1)` (r ~1.18 per fight, each boss with its own step; values in data.js: [1, 0.992, 1.175, 1.391, 1.576, 1.95, 2.309, 2.734, 2.745]) and `DIFF.easy.mul`/`hard.mul` became constants (1.074 / 1.055). The heroes' side gained two global levers in `B.TUNE`: `base` (strength of all, 1.279) and `growth` (what each level gives: Health, Attack and Magic, and with them the ability numbers; 0.615, before 1), besides the per-hero `power`. The tuner (`tools/pve/tune.js`) was rewritten: it also measures bots that always pick the easy and hard fight, fits the line (s0, r, boss steps), and dumps into `base`/`growth` what the line cannot express. Result in 46 thousand new runs: 27.8% complete the PvE; median fights 98/94/93, boss1 73, 92/86/77, boss2 60; hard ones 62/57/66, 65, 55/45; easy ones 98 to 100; 46 heroes between 24% and 33% (deviation 1.8 points). Graveborn (Morrow) started too weak alone (lost fight 1 in 64% of runs): Health 470, Attack 30, Energy 75, starts with 60, growth 1.5. `motor.js` also zeroes base and growth. #114 first 30 seconds: hero choice is a dark stage with spotlights (each hero is a frame with its splash under a cone of light, the others darkened, the chosen one lights up, grows and gets a ring) and the 3 powers float over stone pedestals (the chosen one gets a light beam and golden glow); a little hand 👆 sways over the hero and then over the power, only in the first 2 runs the player starts (`balance.starts` in localStorage, counted in `start-go`).
+- **v62p (2026-10-05), batch 82 from David (#112).** Effects redone: "I overdid it". No flashing: the colored full-screen flash, the generic light pillar on every cast, the random shaking (now a small smooth ripple) and the bolt flicker are gone. Now EACH of the 57 abilities (46 heroes, 7 monsters, 4 bosses) has its own animation in `js/abilfx.js` (new, `B.AbilFx`, loaded after render.js): the simulator tags each effect with the ability that created it (`W.ctx`, fields `f.ab`/`f.by`, visual only; `at()` keeps the context of delayed hits; new `spawn` effect for summons) and the render hands it to the ability. Areas are drawn on the real HEXAGONS of the radius (`Hx.within` + outline of the union), so the visual radius = the effect radius; ground zones (fire, holy, honey, swamp, fire wall) also per ability. Examples: Falling Star = violet mark on the ground and a golden star that FALLS from the sky (emitted before the impact, `t0` in the future) and explodes; Tom throws little dishes (pie, skewer, soup, pudding, frying pan) at the ally; Rootsnare = thorny roots sprouting in each hex; Cinder Comet = comet with a tail; Volley = arrows in a high arc that stay stuck; Hook = chain with a hook; Stoneward = stone pillars at the edge; Arc Cascade = bolt that forks; etc. New tool: `node tools/fxlab.mjs <abilities|all> [ticks]` (lab that stages each ability and saves contact sheets in tools/tests/.output/; `CELL=380` to enlarge). For a new ability: add the key in `SPEC` of abilfx.js.
+- **v62o (2026-10-05), batch 81 from David (#111).** PvE balance by mass simulation. New `tools/pve/`: headless engine (`engine.js`) with a bot that builds tank+healer+damage (or the closest, with re-roll), buys the highest-`itemScore` item for any hero of the team, powers at random, events by the best `act`, random level; `batch.js` in worker_threads (~20 thousand runs in 30 s, 8 ms per run), `analyze.js`/`report.js`, `tune.js` (autonomous), `gear-test.js`. Results kept in `tools/results/` (LATEST.md versioned). Two new balance knobs: `B.TUNE.power[hero]` (multiplies Health/Attack/Magic in `heroDef`; `<TUNE-BEGIN>` block in data.js rewritten by the tuner) and the per-fight scale `CFG.fightScale` (new: [1, 0.862, 0.827, 1.031, 1.247, 1.552, 1.775, 2.016, 2.208], before [1, 1.03, 1.25, 1.27, 1.39, 1.76, 2.1, 2.16, 2.49]). Result in 69 thousand new runs: 30% complete the PvE, median fights 96/96/93/92/90/89% and bosses 66/63%, the 46 heroes between 27% and 35% (before: 4% to 18% with 7% of runs completed; deviation between heroes 1.7 points, near noise). Powers and items: each forced from the start in 1000 runs; nerfs: Veteran's Medal 25->14 XP per kill (it was +40 points), Lone Crown +150%->+100%, Last Stand Banner +100%/+50% -> +60%/+30%, Phoenix Egg 50%->30% health, Lodestone -10%->-5%, Warm Teapot 1%->0.7%, Mending Spring heals +30%->+20%, Snow Globe 10/100->8/70, Spotlight Lamp +40%->+30%; buffs: Glass Crown -35%->-20% health, Pack Horn +35%->+75%; items: Emberborn Heart (revives 50%, +160 health), Rampart of Dusk (+380/+30), Wyrmscale Gloves (+30 Defense, 1%), Heart of the Peak (+18%, 1%), Wyrmhide Mail (+240/+22, -8%), Codex Without End (+3 Magic/s), Herald's Horn +55%. PT/DE texts of these powers/items go back to English until retranslated. `motor.js` zeroes `B.TUNE.power` and tests of the 3 powers adjusted.
+- **v62n (2026-10-04), batch 80 from David (#110).** Ability effects in battle much stronger (render.js only, the simulation did not change): the hero's cast now has a double wave on the ground, light column, spark fountain and stars, color tone over the board (`flash`) and shake; areas (`ring`) gain a white core, outer wave, sparks outward and column; ability projectiles get bigger, with a long trail, glow and sparks, and burst on reaching the target (basic arrow/spear stay as they were); bolts (`bolt`) with wide glow + color + white core and flicker (no shadowBlur); heals drop green stars; crits gain wave, stars and flash; deaths (and boss) with waves and sparks; bigger ability name with glow. New particle types: `spark`, `star`, `ring`, `pillar`; dark outline to read against the light sky; MAXP 420. Helpers `shock`, `pillar`, `flash` in render.js.
+- **v62m (2026-10-04), batch 79 from David (#109).** New look for the run choices. Map: each option became a poster with its own scene (`posterHTML`/`optHTML` in ui.js, classes `.banner.v2 .scene`): fight = overlapping enemy faces (x2, ★ elite) and difficulty skulls; boss = big portrait with red rays; hero shop = fan of mystery cards with silhouettes and "?"; item shop = slot-type icons; power shop = power icons; event = the event's figure with rays and rarity seal. Shops: heroes in cards with the full splash, class, range and a round details button over the art (`.v2 .art`); items in rows with a glowing medallion in the rarity color; powers in 2-column cards with a golden medallion; header with the title and "Team n/m" on the same line. Event choices: each gets a round icon of what it does (`EACT`, by `act`). Everything fits without scrolling (en/pt/de audit 110/110).
+- **v62l (2026-10-04), batch 78 from David (#108).** UI audit in real Chrome (`tools/tests/interface.mjs [en|pt|de]`, in run-all in en): plays a run at 390x740 and 360x640, taps everything (menus, start, map, shops, events, equipment, level-up, deploy with a tapped hero/enemy, battle, result) and fails if the page scrolls or if any button ends up off screen (list sheets may scroll inside, but the buttons stay visible). Adjustments: a unit's info card became compact (name, attributes, ability NAME + Details button; monsters one sentence) and replaces the enemy list in deploy and the strip in battle, so the Fight button no longer leaves the screen; short phone (<=700px) compacted map, level-up, equipment, battle; Crown Shop in 4 tabs (Perks / Name & King / Earn / Invite); Ranking's Player tab buttons at the top; Art Lab with a fixed action bar (`.albar`); Suggest with Refresh in the header; long names (German) cut off in equipment slots. Shop tests updated for the tabs.
+- **v62k (2026-10-04), batch 77 from David (#107).** Board heroes (models.js, humanoid rig): sculpted head (`face()`: forehead, nose, lips, chin, jaw, ear; hood with a point and a lit fold) in place of the ball; per-hero own movement (`seedOf(m._k)`: timing, phase and idle sway, leans back before the strike and throws itself into it, leans when running and casting, head with lag); unique weapons (`WS` per hero + `STYLES` in `weapon()`: holy sword, scimitar, rapier, staves with 11 different heads, war axe, cleaver, spiked club, log, ladle, hammer...). The screen tests have random seed failures (e.g. "first map step shows 2 options" when Quill comes up) that already existed.
+- **v62j (2026-10-04), batch 76 from David (#106).** Models in Prism's clean style: `poly` gained light lines on the edges facing the light, `ball` a light rim, and arms/legs became ONE single shape (`bent` in models.js: no round joints, one outline, lit edge); stronger proportions (limbs, head, chest). Applies to all humanoids and to the other bodies that use `poly`/`ball`.
+- **v62i (2026-10-04), batch 75 from David (#105).** Rohammer (hero 46, tank): `brute` flag (no Energy on attack; `ab.gain` Energy per 1% of health lost, in `deal`), the very slow hammer blow (as 0.35) stuns 0.2s (`ab.tap`), the special `A.sweep` sweeps the enemies ahead up to 2 hexes away, pushes 2 and stuns 1s. Measured with hero-odds (61%, grow 1.48). Translated into pt and de.
+- **v62h (2026-10-04), batches 70 to 74 from David (#96 to #104) and the web version stutter.**
+  - **#96 names and Defense:** on screen the attributes are Health, Attack, Magic, Defense and Energy (same code: hp, atk, ap, armor, mana). Armor and magic resistance became ONE attribute, Defense (`armor`), which reduces physical and magic damage (`mrOf` and all the `mr` are gone; heroes and monsters: average of the two; items with only MR became Defense x0.65). The texts were swapped by a script that only touches inside quotes (HP→Health, AP→Magic, AD→Attack, mana→Energy, armor/MR→Defense). The PvE was retuned with `tune-pve` (fightScale and DIFF.easy/hard.mul) because the game got ~9 points easier.
+  - **#98 Plasma Cannon:** does not move (`ms 0`), flag `closest` (re-picks the closest enemy at every shot), damage x (1 + 12% per hex below 5) (`plasmaMul`), every shot pushes 1 hex, the special (`A.tripleshot`) is 3 shots in a row that push 2. **#100 Duelist:** `A.duel`/`challenge`: the closest non-boss and the Duelist get locked to each other (taunt of both until one dies; `duelWith`, `duelEnd` in `die`), with Attack/Defense/lifesteal bonus only during the duel. **#101 Combat Medic:** flag `medic` (`medicAct`: the attack heals the wounded ally within range 2, with no wounded it attacks an enemy) and `A.grenade` (heals allies and hurts enemies in the same radius). **#102 Gardener:** `A.plant` plants plants (thorn, bloom, lily, spore) in free hexes near the enemy; `u.plant`: nobody targets, hurts or pushes them, they block the hex, last `life` s, and do NOT count toward the end of the fight. All measured with `hero-odds` (ONLY=...) and passed through the 8-action test; classes: Medic and Gardener = support, Plasma and Duelist = damage.
+  - **#99 Prism** is now an elongated crystal that floats (rig `crystal` in models.js). **#103** no "in progress" banner and no lightbulb: the suggestion only in the menu; what remains is the simple notice "New version: tap to reload". **#104** item and power icons: ~35 drawings redone with more parts and glows (icons.js, `Object.assign(D, ...)`), bigger glyph, color glow, 4x resolution.
+  - **#97 languages (pt and de):** `js/i18n.js` (page observer + `B.T` used in `fmt()` and in the canvas), `js/lang-boot.js` (loads the dictionary before the scripts), `js/lang-pt.js` and `js/lang-de.js` (~2,150 texts each), Language row in the menu (reloads the page). Text without a translation stays in English. `node tools/languages.js` lists what is missing in the data; `TRLOG=1 LANG_ID=pt node tools/tests/screens.mjs` lists what the screens showed without translation. `plainAb` (short description) only exists in English; outside it shows the full text.
+  - **Web stutter:** the board (64 hexagons) is painted once on an offscreen canvas and only copied; the canvas uses at most 2x (it was 3x); the setup screen repaints at ~30/s (before nonstop) and the fight caps at ~60 fps on 120/144 Hz screens.
+  - Tests: engine 896, screens (English) 199, devices 63 also with `LANG_ID=pt` and `de` (no screen goes beyond the phone size in the longest languages).
+- **v62g (2026-10-03), web version stutter (owner's report).**
+  - render.js: the ~64 hexagons of the board (side faces, texture, bevel) are now painted ONCE on an offscreen canvas (`v.boardC`, `paintTiles`) and only copied every frame; it repaints if skin, deploy mode, drop hex or terrain changes. Lagoons and deploy line remain per frame. Canvas with DPR at most 2 (was 3: 45% fewer pixels on mobile). ui.js: the setup screen repaints ~30x/s (before every frame, nonstop) and does not repaint with the tab hidden; the fight loop caps at ~60 fps on 120/144 Hz screens (time is not lost).
+- **v62f (2026-10-03), batches 68 and 69 from David (#93 #94 #95).**
+  - **#93 classes:** every hero is a tank, support or damage dealer (`B.CLASS_OF`, `B.heroClass(key)` in data.js; tanks: bastion, brakk, bramble, seraph, barley, grok, imhotep, leonidas, citadel, smolder; supports: lumen, echo, vey, buzzwell, coralie, tom, prism, glacia, grimhook, sprocket; the rest are damage). The hero shop (`stockBase` in run.js) always puts in 1 hero of each class the team does not have yet, then random heroes (4 in total, an even number); this also applies on reroll. Test: a team with 1 damage hero sees a tank and a support in 180 of 180 shops.
+  - **#94 defeat line:** `Run.lossTag(left, timeout)` (left = fraction of the enemies' max health that was left) picks the line shown in place of the stars on defeat: "SO CLOSE!" (up to 8%), "Almost had them!" (25%), "A hard fight." (50%), "They were stronger." (80%), "You were wrecked!" (more); "Time ran out!" if time ran out. `left` is computed in `endBattle` in ui.js (enemies without summons).
+  - **#95 CLAUDE.md without history:** the entire history went to this `CHANGELOG.md` (only add at the top; never read it whole). `CLAUDE.md` now has only permanent instructions in the requested order (concept and loop, principles, architecture, UI conventions, game rules, code conventions, how to run/test, constraints, what must never break, definition of done, review cycle). The old file map went to the end of `CODEMAP.md`. The watcher now runs as a 30-min Monitor (background Bash was dying at 10 min without warning).
+- **v62e (2026-10-03), batch 67 from David (#91 code notes + index, #92 design guidelines).** A comments-only pass (+~600 lines): FILE GUIDE in every file of js/, api/, style.css and index.html, a WHAT: note on every function and table, recipes in the header of data.js, and **CODEMAP.md** at the root (file by file, "I want to change X" recipes, glossary, what not to break). Done with scripts that insert comment lines and check that the code did not change (removing the `//` lines on both sides). The only code change: the King's "THE KING" banner (King relic) had never appeared since v61 because the `fxText(...)` was left after a `//` on the same line; now it appears. The #92 guidelines are in the new section at the top ("Design guidelines") of this file.
+- **v62d (2026-10-03), batches 63 to 66 (David #82 #86-#90, PC boy #83-#85); the watcher had died at the 10-min limit of `run_in_background` and David complained that nothing was running (see memory: always `timeout: 600000` and restart).**
+  - **#82 statistics:** "Balance stats" is a sub-item (smaller line) under Ladder in the start menu; it opens `stats.html` in another tab. Measurement fixed: each run enters ONCE (`runId` = `run.seed`, key `fl:<pid>:<run>` in the KV), its own quota of 120 per IP/hour, and whoever gives up (`give-up-yes`) also sends the fights played (`op: 'flog'`; before, they vanished and the statistics were optimistic). New **PvP heroes** section: in Gauntlet duels each hero gets its own Elo and wins (`ratings` with `kind: 'pvp'`, computed in `rateContent` when there are two sides); the "Heroes" tab keeps summing PvE + duels. Only valid from today.
+  - **#83 mini tutorial (PC boy):** in the first game, an animated "⇇ 👈 Try moving your hero ⇉" over the board on every preparation screen until a hero is moved (`balance.tut.moved`; only in that game, `balance.tut.run`); then, in battle, a blinking "⬆ Click here to speed up the fight." under the speed buttons until a tap anywhere (`balance.tut.speedDismissed`). Anyone who had already played (saw the drag hint 3 times) sees nothing. Both notices are absolute and do not affect the layout. His text cited `supabase/functions/...` and `js/net.js`, which do not exist here: I adapted it.
+  - **#84 empty tower (PC boy):** the first to enter faces a virtual "Gauntlet Champion (fallback)": the response carries `fallback: true, wins: 1`, the history shows the win and `best` becomes 1; the stored ghost stays at 0 wins, so the floors do not change.
+  - **#85 ranking (PC boy):** `topPlayers` only lists those with `runs > 0` (finished a first run, either losing or entering the Gauntlet).
+  - **#86 easier PvE at the start:** `tune-pve` with per-fight targets (fights 1-3: medium 95%, hard 72%; boss 1: 62%; then 91/62/57): `fightScale` [1, 1.03, 1.28, 1.34, 1.37, 1.78, 1.97, 2.15, 2.33] and new `easy.mul`/`hard.mul`; on seeds the tuner had not seen: easy 97-100%, medium 87-98%, hard 56-75%, bosses 61% and 59%.
+  - **#87 Citadel:** never more than 5 soldiers at the same time, not even with Call to Arms (`GARRISON_CAP`).
+  - **#88 elite challenges (Bounty Board):** they had been impossible since v61 (pack 21-35%, horde 15-41% because `CH` multiplied the new scale). `tools/challenge-odds.js` now uses the teams from `_team.js`; `CH` = {solo 0.95, bandits 1.1, pack 1.0, horde 0.8, mimic 1.45, hoard 0.9} and an `early` relief (x0.8 in fights 1-2, x0.9 in 3; solo duel an extra x0.75 in the first two): bandits 77-97%, pack 64-91%, horde 72-94%, mimic 64-97%, duel 52-69%, treasure 61-91%.
+  - **#89 description boxes:** on screen change they also reset `gsel`, `heroInfo`, `selUid`, `confirmBuy`, `rmore`; the `relic-info` toast became an "info" one (disappears on screen change, like the boss one).
+  - **#90 boss backgrounds:** `backdrop(v, bossKey)` in render.js puts a tone and scenery per boss over the normal background: Gorewarden (red, banners, splatters), Ashen Sovereign (purple gray, moon, dead trees, ashes), Mirewitch (green, reeds, fog, fireflies), Colossus (stone, cracks, floating rocks, golden glints).
+  - **Stuck Gauntlet (v62c):** anyone in the middle of a Gauntlet when the tower was emptied was stuck on "Try again" (404 "Unknown gauntlet run"); now the game restarts the Gauntlet from the entrance (`resetTower`).
+- **v62 (2026-10-02), batch 61 from David (#75 to #79; #74, "easier PvE", the owner told me to cancel before I started).**
+  - **#75 Gauntlet too easy.** Found in the database: ghosts won 66 duels and lost 308 (82% win rate for the climber); the teams that fell with 0 to 6 wins have almost equal strength (42-46% against random teams, only the 7+ ones are strong), so the tower hardly gets harder. The simulation is symmetric (identical player x ghost = 50/50); what is missing is the advantage of the player: sees the ghost, chooses the position and swaps items. **Fix (the per-floor scale `ghostMul` was made and REMOVED the same day, #80: David said it makes no sense to scale a ghost for free):** **Ghost fidelity (3 bugs):** `cleanTeam` (api/elo.js) only kept hpPct, atk, armor, mr and cleanseOnce from `bonus`, and threw away atkPct, ap, asPct, crit, manaStart from potions and events (now it keeps all of them, with a cap, plus hp, critDmg, ls, dodge, regen, manaRegen from Devour); Snowball and Pack Rat depended on `run.snow`/`run.bag`, which the ghost does not have (`teamSnapshot` now embeds this bonus in `bonus`); the Phoenix Egg does not apply to a ghost (stays that way). The ghosts ALREADY stored lost these bonuses forever.
+  - **#76 Relics become "Powers".** Only the text the player reads (shops, help, tabs, events, descriptions, suggestion form); ids, CSS classes, `kind: 'relic'` and the database stay `relic`. Check again if "relic" shows up in new text.
+  - **#77 balloon that stayed.** `ui.info` (panel of the tapped unit/boss) now always resets when the screen changes (before, only on some buttons, and the old id showed up in the preview of the next screen); the info toast (`form-info`: boss, formation) disappears on any screen change, without the 350 ms window.
+  - **#78 three new heroes (41 in total).** **Smolder** (`smolder`, Flamer, `fl: ['devour']`): at the start of each fight (`Run.devour`, called by `fightWorld`/`gauntletWorld` outside the preview) eats the first item he holds and keeps its numbers forever in `h.bonus` (hp, atk, ap, armor, mr, %, asPct, crit, critDmg, ls, dodge, regen...; never the effect); powers: 2 items, +50% of what he eats. **Flamethrower** ability (`A.flamethrower`): cone = the target and its neighbors up to 2 hexes, 30% AP + burn 30% AP/s for 4 s. **Tom** (`tom`, Cook, `A.dishes`): serves 2 dishes to random allies, each one of four (pie heals 90% AP, jerky +25% attack, soup +30% speed, pudding shield 110% AP); powers: portions +30%, +1 dish, frying pan (damage + stuns 1 s), Banquet (everyone), 2 effects per dish. **Ashwing** (`ashwing`, Pyromancer, `fl: ['rebirth']`, `layEgg`/`eggAct`): when it falls it leaves ONE egg (50% of health) per fight; if it lives 5 s the hero returns with 60%; if the egg dies, the hero dies (the egg counts as a standing hero in the defeat rule); **Wall of Fire** ability (`A.firewall`): line of 3 hexes in the target's row (radius-0 zones) that burns 50% AP/s for 4 s. New models in models.js (`chef`, `phoenix`, `egg`). Balanced with `ONLY=… TARGET=62,56 node tools/hero-odds.js 8 100` (now ONLY aims at the cast averages): Smolder 56%, Tom 56%, Ashwing 57%.
+  - **#79 Prism attacks.** Between one beam pulse and the next he also attacks the nearest enemy in range (`beamAct` calls `startAttack`). This took him to 83%; he went to 62% with power p 0.65 and growth 0.54 (the rest of the cast 53-63%).
+  - **#80 (same day, batch 62 from David): no artificial scaling on ghosts.** I removed `ghostMul`/`CFG.ghostBase` (and the "+15%" on the card). The ghost now has EVERYTHING the player had: besides the 3 bugs above, the **Phoenix Egg** now applies to the ghost (`W.fl1.phoenix`, `W.once.phoenix1`, in sim.js). "If you are not sure, clear the current Gauntlet": the 90 ghosts stored before v62 lost bonuses forever, so the right thing is to clear the tower, but auto mode blocked the `delete from teams` on the production database ("Cloud Storage Mass Delete"). I left `node tools/clear-gauntlet.js` (makes a backup in backups/ and deletes; `--dry` only counts) for the OWNER to run; until then the old ghosts stay there.
+  - **#81 hidden panel (`stats.html`, no link in the game, `noindex`):** `api/stats.js` (GET, only general numbers, nothing about players) returns `fights` (new table `fstats`: per fight number and difficulty, how many times it was played and won; bosses are `boss`) and the wins/games/Elo of each hero, item, power and boss (table `ratings`, same data as the Content Elo tab, but it also lists those that never played). The game keeps `run.flog` (`[fight, difficulty, won]`, only normal fights and bosses, not challenges) and sends it the moment the run ends (`fail` and `enter` of elo.js, validated by `cleanFlog` and limited like the rest of the balance data). It only counts runs that ended; abandoned runs do not count. `deploy.sh` and the `dev-server` learned `stats.html`.
+  - **Tests:** engine 843, api 146 (new: Smolder/Tom/Ashwing/egg/wall, ghost per floor, bonus on the ghost, Prism attacks).
 
-- **v61 (2026-10-01), lote 59 do David (#73: equilibrar heróis, itens, relíquias, chefes e lutas simulando runs; "fácil de graça, médio fácil, difícil difícil de verdade, chefes difíceis mas vencíveis com boas decisões"; afinar também o crescimento de heróis, monstros e chefes).**
-  - **Como mede:** `tools/_team.js` monta o time de cada ponto da run com o que 300 runs do robô (`sim-run`) têm de fato: 3 heróis desde a luta 2, nível médio 1,1 na luta 3 e 3,3 na 8 (o XP é lento), itens e relíquias daquele ponto. `fight()` devolve vitória e margem. Ferramentas novas: `pve-odds`, `tune-pve`, `hero-odds`, `item-odds`; `relic-odds` refeita no mesmo molde (ver a tabela). ⚠️ A 1ª versão supunha Lv 2 na luta 3 e deixou o médio da luta 3 com 57% para o robô; conferir sempre com o robô.
-  - **Curva PvE:** `CFG.fightScale` = [1; 1,17; 1,37; 1,4; chefe 1,42; 1,85; 1,98; 2,24; chefe 2,42] (era [1; 0,9; 1; 1,15; 1,55; 1,6; 1,8; 2; 2,45]) e `DIFF.easy.mul` / `DIFF.hard.mul` agora são listas por número de luta (`diffMul` em run.js; um número sozinho ainda vale). Em dois conjuntos de times que o afinador não viu: fácil 96-100%, médio 84-94%, difícil 54-64%, cada chefe 52-58%. Robô (as mesmas 300 runs; escolhe poderes ao acaso, sempre médio): médios 75-92% (v60: 87-100%, de graça), chefe 1 46% (v60: 23%), chefe 2 34% (igual), 23 chegam ao Gauntlet (v60: 20). Mirewitch 1390 HP / 43 ataque, Colossus 3600 / 65.
-  - **Heróis:** vitória dos times com cada herói ia de 45% (Phalanx) a 69% (Vesper); agora 54-59%. Cada herói ganhou `grow` (0,5 a 1,8; 1 = +15% de vida e ataque e +30 AP por nível; em `heroDef`): os fortes no começo que sumiam no fim (Flint, Deadeye, Rapture, Phalanx) crescem mais; os que só apareciam no fim (Solace, Radiant, Prism) crescem menos. O desvio do "começo → fim" caiu para 3,8 pontos; o resto vem do kit (luta longa de chefe favorece cura) e fica como identidade. A ajuda diz agora que o AP cresce "no ritmo de cada herói".
-  - **Itens** (ganho de margem x100 como item a mais): o épico (8 de ouro) rendia quase o mesmo que o raro (5). Agora as médias sobem por raridade: comum 4,2, incomum 5,3, raro 8,4, épico 10,3, lendário 15,8, mítico 22,8; conjuntos completos 18-35. Trollheart 400→200 HP e 0,8% de regen (valia 3x um raro), Asp Claws e Adder Vial com menos veneno, Heartstring e Sanguine Saber menores; os fracos ganharam (Spellward Cloak, Quickstep Boots, Shepherd's Sling sem o -5, Unbound Sash, Farseer Lens, Spirit Tether, Cutpurse Grips, Warband Pennant em 2 hexes, Headsman's Axe, Soulmend Mask, Ironbark Totem, 10 épicos, Shield of First Light, varinhas de AP); Mountain Grips até 15 acúmulos; Wildwarden de 2 peças +15% de velocidade de ataque.
-  - **Relíquias:** Minimalist's Vow agora pede um espaço de item livre (antes "1 item ou nenhum" valia de graça para todos até o Lv 3, que só têm 1 espaço) e dá +30% (era +50%); o Auto-equip deixa um espaço livre quando se tem ela. King +40% (era +60%), Giant +50% (era +60%), Soul Jar a cada 5. As que atrapalhavam passaram a ajudar: Jester's Bell (3 em 4 vezes um inimigo), Earthshaker Drum (só inimigos), Undertaker's Shovel (lápide protege 20%), Two-Faced Coin (sem -10% de ataque, +5% crítico), Swapper's Coin (cura 15%), Gravecaller (-5% de vida), Watchtower Flag (+25% / -5%), Stonefoot (+15% ataque), Tail Gust, Scales (+10%), Mirror Shard (sem a penalidade), Brotherhood Chain (-10% de dano), Unbending Oath, Lucky Sprig, Whetted Mind, Star Compass, Crimson Contract, Pack Horn 35%, Bodyguard Oath (+20 armadura e RM nos corpo a corpo). Mending Spring era idêntica à Warm Teapot: agora é regen 0,5% + cura recebida +30%. Ficam perto de 0 só as de economia/run (Backpack, Crest, Solo, Cursed Coin, Snowball, Pack Rat: não aparecem numa luta só) e Blink Pebble (depende de posição).
-  - **Testes:** Earthshaker (inimigo atordoado, herói não), King 1,4, fantasma com Trollheart 200, Vow com um espaço livre, morte súbita com arredondamento por segundo, Blaze começa com crítico alto (não depende mais do resultado da luta).
-- **v60 (2026-10-01), lote 58 do PC boy (#72): dois heróis novos (38 no total).**
-  - **Prism** (`prism`, Channeler, `fl: ['beam']`, `beamAct` em sim.js): não ataca. A cada 0,25 s cada raio prende na unidade mais perto no alcance (aliado ferido: cura 20% AP/s; inimigo: 32% AP/s mágico, sem número de dano) e o trabalho enche a mana (`/12`). Habilidade **Overcharge**: x2 por 4 s e +1 raio. Poderes: mais um raio, lente, cura +50%, lentidão, +1 alcance, mana mais rápida, +2 raios no Overcharge ou escudo de 15%. O render desenha os raios (`u.beams`, verde = cura, ciano = dano).
-  - **Citadel** (`citadel`, Fortress, ms 0, `fl: ['tower']`, `towerAct`/`soldier`): não anda nem ataca. Sai um soldado no início e outro a cada 7 s, alternando lanceiro (165% AP de vida, 18% AP de ataque) e arqueiro (100% / 16%, alcance 3), até 3 de uma vez. Os golpes dos soldados enchem a mana dele (+5). Habilidade **Call to Arms**: frenesi de 5 s (+50% velocidade, +25% ataque), cura 30% e sai mais um. Poderes: quartel, muralha, veteranos, guarnição maior, escudo, rajada, campeão a cada 3, última defesa. Modelos novos: rig `tower` (torre com ameias e bandeira), `footman`, `bowman`.
-  - **Equilíbrio:** `tools/tune-heroes.js` (agora com `ONLY=a,b`). Saíam 81% e 100% de vitória no chefe; depois de enfraquecer, Prism 48% e Citadel 53% (média 47%).
-- **v59 (2026-10-01), lote 57 do PC boy (#71: "dar mais vida aos nomes"; ele mandou 22 nomes novos e pediu o mesmo estilo para os outros: ousados, evocativos, legais para 12 a 18 anos, nem obscuros nem bobos).**
-  - **Nomes:** Bjornar → Aegir, Sica → Vex, Feuer → Feuer, Snezhana → Frostbane, Brutus → Ironhorn, Brigid → Solace, Strela → Talon, Koschei → Graveborn, Tordis → Tempest, Krok → Hookjaw, Sarab → Mirage, Gizmund → Rivet, Ulfrik → Ravager, Licht → Radiant, Umbra → Nyx, Leshy → Bramble, Orfeo → Lyric, Pólvora → Flint, Hyppolita → Skara, Sokol → Deadeye, Carmina → Vesper, Kagero → Eclipse, Garm → Fang, Luna → Mesmer, Pimples → Jinx, Pivo → Rumble, Azgoth → Inferno, Kivi → Boulder, Khepri → Ankh, Leonteus → Phalanx, Serra → Rapture, Mercurio → Vial, Feng → Kaze, Melissa → Stinger, Nerina → Maelstrom, Astrid → Astral.
-  - **Os 14 que criei** foram conferidos para não repetir item, relíquia, poder, monstro ou conjunto: Rampage, Quiver, Echo, Trance, Pharaoh, Swarm, Riptide, Hive e Undertow foram trocados por isso. Nomes dele que também são palavras de itens ou habilidades (Boulder = Boulder Toss, Phalanx = a própria habilidade, Inferno, Vial) ficaram como ele pediu.
-  - **Onde mudou:** só o texto dentro das strings do data.js (comentários e histórico mantêm os nomes antigos); as chaves não mudaram, então fantasmas, Elo e artes continuam valendo.
-  - **Nome antigo:** fica em `h.was`, e o Art Lab ainda reconhece arquivos com ele (`guessHero`).
-- **v58 (2026-10-01), lote 56 do David (#70, 12 itens de acabamento).**
-  - **Aviso de revisão:** virou uma pílula pequena que flutua sob a barra, sem empurrar a tela ("⏳ #N queued", "✅ … live: tap to reload").
-  - **Relíquias:** todas ganharam uma linha curta (`r.short` em data.js) usada na loja e no início; a regra completa fica em "More" (`relic-info`).
-  - **Lojas:** loja de itens com 4 (6 com o Faded Chart, 2 com o Heirloom Anvil).
-  - **Auto-equip é o padrão:** `run.autoGear` (ligado por omissão). O `autoGear()` roda a cada render e veste o que chega na mochila; uma escolha à mão no Gear desliga (com aviso); o botão roxo religa e mostra "ON".
-  - **Combate:** bonecos com 1,5 do hex; números de dano com tamanho mínimo legível.
-  - **Amarelo só para a ação principal e as recompensas:** seleção e "você está aqui" passaram para branco e ciano (abas do Gear, relíquia escolhida, herói escolhido, passos, andar atual da torre, poder escolhido).
-  - **Áreas seguras:** `env(safe-area-inset-*)` no corpo, nas barras fixas, nas folhas e no aviso.
-  - **Recompensas mais fortes:** clarão no título, estrelas que caem com rotação e confete, moeda brilhando com mais moedas voando, XP contando e barras com brilho correndo.
-  - **Menos bordas e sombras:** sombra única nos cartões; os painéis dentro de painéis perderam borda e sombra.
-  - **Fonte:** Inter (fonts/inter.woff2, OFL) no texto; Fredoka nos títulos.
-  - **Padrões:** tokens de altura de botão (34/46/54) e de cor (`--c-primary` amarelo, `--c-accent` ciano, `--c-magic` roxo, `--c-danger` vermelho); cartões de loja com altura mínima igual.
-- **v57 (2026-10-01), lote 55 do David (#69: "melhorar o Auto-equip: a ideia é boa, a execução péssima; um algoritmo que decida bem sempre; AP em herói de AD não; botão roxo").** `Run.autoEquip` em run.js (testável):
-  - **Perfil por herói** (`heroProfile`): fração de AP, contando "% AP" contra "% AD" na habilidade e nos poderes; tanque pela função ou por corpo a corpo com 850+ de vida; à distância.
-  - **Nota por item** (`itemScore`): cada atributo normalizado (10 de ataque, 20 de AP, 10% de velocidade de ataque... = 1 ponto) vezes o peso do perfil. AP vale ~0 para herói de AD e ataque ~0 para mago; o tanque dá 1,8× à defesa. Os efeitos especiais contam como "no golpe" (AD), "na habilidade" (AP) ou "defesa" (tanque); mais um pouco pela raridade e pelas peças do mesmo conjunto.
-  - **Distribuição global:** junta mochila e itens vestidos e entrega em ordem gulosa, a melhor combinação herói-item primeiro, um por tipo, sem passar das vagas. Item com nota abaixo de 0,2 fica na mochila (AP num time só de AD). Corrige item vestido no herói errado, e apertar de novo não muda nada.
-  - Botão roxo (`.gauto`).
-- **v56 (2026-10-01), lote 54 do PC boy (#68): splash de mais 12 heróis pelo Art Lab.** Mercurio, Feng, Feuer, Pólvora, Kivi, Leonteus, Koschei, Sica, Krok, Umbra, Serra e Sokol. Revisadas numa folha de contato: originais, sem sangue nem conteúdo impróprio, cada uma batendo com o herói (a Serra é um arlequim genérico roxo e o Sokol usa um rifle moderno, ambos aceitos). Só splash; a batalha continua desenhada. O recorte do rosto foi ajustado em duas passadas (PIL, igual ao `art.js`). Agora são 26 de 36 com pintura; faltam Strela, Tordis, Gizmund, Orfeo, Carmina, Luna, Pivo, Khepri, Nerina e Astrid.
-- **v55 (2026-10-01), lote 53 do David (#67: "animações do combate mais suaves, estão tremidas e aos saltos; bonecos mais bonitos; quero ver um jogo, não uma demo crua").** Tudo no render (a simulação não mudou, só guarda `u.lastAtk` para a volta do golpe):
-  - **Movimento:** cada unidade tem um estado de tela (`look`/`glide` em render.js, `v.looks` por mundo). A posição desliza com amortecimento (teleporte acima de 2,2 hex encaixa na hora). A virada vira por escala, sem espelhar de uma vez, e só troca de lado se o alvo estiver claramente do outro lado. O passo segue um ritmo contínuo entre hexes (antes recomeçava a cada hex). O golpe corpo a corpo puxa para trás, bate no tick do acerto e volta suave em 6 ticks (antes voltava de uma vez).
-  - **Impacto:** quem leva golpe recua e pisca branco (`ctx.filter`, com brilho radial onde não existe). Há estica e encolhe a partir dos pés: entrada da luta, golpe e pancada.
-  - **Bonecos:** um pouco maiores (1,38 do hex). O anel duro virou uma aura suave na cor do time (o aro fino fica para o herói selecionado e os elites). As barras de vida são arredondadas, com gradiente e um rastro claro da vida que acabou de perder.
-  - Corrigido também um teste que quebrava quando a relíquia inicial era o Pathfinder's Quill (3 caminhos).
-- **v54 (2026-10-01), lote 52 do David (#66: "equipar itens ainda é difícil e pouco intuitivo, muitos espacinhos; um inventário mais legal que um garoto de 14 anos entenda: arrastar e soltar, fácil, satisfatório, dopamina, fantasia de poder").** A ficha de time virou a tela **Gear** (`gearHTML`/`openGear`; a `teamHTML` antiga saiu):
-  - Abas com os heróis (n/slots). Um herói por vez, grande: a arte (toque = ficha do herói, `hero-info`), HP/ataque/AP e encaixes grandes, tantos quantos ele pode usar; os próximos aparecem trancados com o nível que os abre (Lv 3/4/5).
-  - A mochila mostra peças grandes, a melhor primeiro, em páginas de 10.
-  - **Arrastar e soltar** com ponteiro (dedo ou mouse; `gearDown/Move/Up`, `data-drag`/`data-drop`, fantasma `.gghost`, alvos brilhando):
-    - item da mochila no herói ou na aba de outro herói = veste; mesmo tipo troca, e se estiver cheio troca o encaixe onde caiu ou o pior;
-    - item vestido de volta na mochila = tira; item vestido em outro herói = passa para ele.
-  - Tocar mostra o que o item faz e um botão grande ("Put on X" / "Swap for Y" / "Take off", mais "Sell").
-  - **Auto-equip** (`gearAuto`) veste o time com o melhor (raridade; AP para conjuradores e ataque para os outros).
-  - Cada equipar dá retorno: o encaixe salta com confete, o efeito do item sobe do herói e os números de HP/ataque/AP contam.
-  - Um clique logo depois de soltar é ignorado (`ui.gNoClick`, 250 ms, zerado a cada novo toque).
-  - Testes: o arrastar no telas.mjs usa toque de verdade (`Input.dispatchTouchEvent`); a tela com 3 heróis e 11 itens cabe no celular pequeno (dispositivos).
-  - O `run-all` agora espera até 900 s por passo (a matriz de chefes às vezes passava dos 400 s com o PC ocupado).
-- **v53 (2026-10-01), lote 51 do David (#65: "texto nunca pode ser cortado; Gauntlet mais épico, era só uma lista e me fazia rolar; descrição do herói inimigo vazava; NUNCA, JAMAIS me faça rolar a tela").**
-  - **Regra: nada de "..." nem texto preso em poucas linhas.** Os `line-clamp` e `text-overflow: ellipsis` foram desligados (camada v53 no fim do style.css). O texto quebra linha ou vai para trás de um toque. As etiquetas (`.tier`/`.itag`) quebram só entre palavras.
-  - **Ficha de time:** o conjunto mostra só "◆ nome n/3 ✓" (o bônus em palavras está na ficha do herói), e o caminho de poderes mostra "★ N powers".
-  - **Gauntlet:** a entrada tem um medalhão de troféu, uma linha do que é, a torre, o time e o portão; as regras foram para "How it works" (`g-rules`). A torre afina para o topo, tem a coroa dourada e andares coloridos (verde vencido, vermelho caído); `towerHTML(g, mode)` com `near` (partida) e `end` (fim, sem portão). A partida mostra o cartão "You VS fantasma". Na preparação do duelo, os heróis inimigos mostram a frase curta e um "More".
-  - **Rolagem:** a regra vale também para o celular pequeno (360×640). O `dispositivos.mjs` agora confere título, mapa, as 3 lojas, 4 eventos e o resultado no phone e no phone-small, com a camada `@media (max-height: 700px) and (max-width: 500px)` (cartões, lojas e eventos mais justos). **Toda tela nova precisa caber nos dois.**
-- **v52 (2026-10-01), lote 50 do David (#64).** (1) "Antes da luta, destacar só os inimigos com habilidade, o resto menor": o `foesHTML` dá cartão só aos grupos com `what`; os outros viram fichinhas `.fs`. (2) "Uma possibilidade a mais para cada chefe, sorteada no início de cada run, e equilibrar": `B.BOSS_SLOTS` = [Gorewarden ou **Mirewitch Morra**, Ashen Sovereign ou **Iron Colossus**], sorteados em `newRun` (`run.bosses`; `Run.bossOf(run, n)`; runs antigas ficam com os dois de antes).
-  - **Mirewitch** (alcance 3, `A.bog`): pântano venenoso que fica no chão (`W.zones`); a cada 9 s transforma em sapo o herói de mais ataque (silêncio e lentidão por 2 s); com 50% afunda (intocável por 3 s), chama 2 serpentes e reaparece; com 25%, Witching Hour.
-  - **Iron Colossus** (golem, `A.quake`): pisa e empurra 1 hex quem está a 2 hex (empurrão contra pedra = SLAM); a cada 8 s solta vapor e leva +25% de dano por 3 s; com 60% chama 2 escudeiros; com 30%, Meltdown (mais rápido e mais forte, mas leva +15%).
-  - Equilibrados com `tools/boss-odds.js`: Gorewarden 53% × Mirewitch 55%; Sovereign 66% × Colossus 68%.
-  - Modelos em models.js, cor do retrato em splash.js, na galeria de testes.
+- **v61 (2026-10-01), batch 59 from David (#73: balance heroes, items, relics, bosses and fights by simulating runs; "easy for free, medium easy, hard really hard, bosses hard but beatable with good decisions"; also tune the growth of heroes, monsters and bosses).**
+  - **How it measures:** `tools/_team.js` builds the team of each point of the run with what 300 bot runs (`sim-run`) actually have: 3 heroes from fight 2, average level 1.1 at fight 3 and 3.3 at 8 (XP is slow), items and relics of that point. `fight()` returns win and margin. New tools: `pve-odds`, `tune-pve`, `hero-odds`, `item-odds`; `relic-odds` redone in the same mold (see the table). ⚠️ The 1st version assumed Lv 2 at fight 3 and left medium at fight 3 with 57% for the bot; always check with the bot.
+  - **PvE curve:** `CFG.fightScale` = [1; 1.17; 1.37; 1.4; boss 1.42; 1.85; 1.98; 2.24; boss 2.42] (was [1; 0.9; 1; 1.15; 1.55; 1.6; 1.8; 2; 2.45]) and `DIFF.easy.mul` / `DIFF.hard.mul` are now lists per fight number (`diffMul` in run.js; a single number still works). On two sets of teams the tuner had not seen: easy 96-100%, medium 84-94%, hard 54-64%, each boss 52-58%. Bot (the same 300 runs; picks powers at random, always medium): mediums 75-92% (v60: 87-100%, for free), boss 1 46% (v60: 23%), boss 2 34% (same), 23 reach the Gauntlet (v60: 20). Mirewitch 1390 HP / 43 attack, Colossus 3600 / 65.
+  - **Heroes:** win rate of teams with each hero went from 45% (Phalanx) to 69% (Vesper); now 54-59%. Each hero got `grow` (0.5 to 1.8; 1 = +15% health and attack and +30 AP per level; in `heroDef`): the ones strong at the start that vanished at the end (Flint, Deadeye, Rapture, Phalanx) grow more; the ones that only showed up at the end (Solace, Radiant, Prism) grow less. The "start → end" deviation fell to 3.8 points; the rest comes from the kit (long boss fight favors healing) and stays as identity. The help now says that AP grows "at each hero's pace".
+  - **Items** (margin gain x100 as an extra item): the epic (8 gold) yielded almost the same as the rare (5). Now the averages rise by rarity: common 4.2, uncommon 5.3, rare 8.4, epic 10.3, legendary 15.8, mythic 22.8; complete sets 18-35. Trollheart 400→200 HP and 0.8% regen (was worth 3x a rare), Asp Claws and Adder Vial with less poison, Heartstring and Sanguine Saber smaller; the weak ones got buffed (Spellward Cloak, Quickstep Boots, Shepherd's Sling without the -5, Unbound Sash, Farseer Lens, Spirit Tether, Cutpurse Grips, Warband Pennant at 2 hexes, Headsman's Axe, Soulmend Mask, Ironbark Totem, 10 epics, Shield of First Light, AP wands); Mountain Grips up to 15 stacks; 2-piece Wildwarden +15% attack speed.
+  - **Relics:** Minimalist's Vow now requires a free item slot (before, "1 item or none" held for free for everyone up to Lv 3, who only have 1 slot) and gives +30% (was +50%); Auto-equip leaves a slot free when you have it. King +40% (was +60%), Giant +50% (was +60%), Soul Jar every 5. The ones that got in the way now help: Jester's Bell (3 out of 4 times an enemy), Earthshaker Drum (enemies only), Undertaker's Shovel (tombstone protects 20%), Two-Faced Coin (no -10% attack, +5% crit), Swapper's Coin (heals 15%), Gravecaller (-5% health), Watchtower Flag (+25% / -5%), Stonefoot (+15% attack), Tail Gust, Scales (+10%), Mirror Shard (no penalty), Brotherhood Chain (-10% damage), Unbending Oath, Lucky Sprig, Whetted Mind, Star Compass, Crimson Contract, Pack Horn 35%, Bodyguard Oath (+20 armor and MR on melee). Mending Spring was identical to Warm Teapot: now it is regen 0.5% + healing received +30%. Only the economy/run ones stay near 0 (Backpack, Crest, Solo, Cursed Coin, Snowball, Pack Rat: they do not show up in a single fight) and Blink Pebble (depends on position).
+  - **Tests:** Earthshaker (enemy stunned, hero not), King 1.4, ghost with Trollheart 200, Vow with a free slot, sudden death with per-second rounding, Blaze starts with high crit (no longer depends on the fight result).
+- **v60 (2026-10-01), batch 58 from PC boy (#72): two new heroes (38 in total).**
+  - **Prism** (`prism`, Channeler, `fl: ['beam']`, `beamAct` in sim.js): does not attack. Every 0.25 s each beam locks onto the nearest unit in range (wounded ally: heals 20% AP/s; enemy: 32% AP/s magic, no damage number) and the work fills mana (`/12`). **Overcharge** ability: x2 for 4 s and +1 beam. Powers: one more beam, lens, healing +50%, slow, +1 range, faster mana, +2 beams on Overcharge or a 15% shield. The render draws the beams (`u.beams`, green = heal, cyan = damage).
+  - **Citadel** (`citadel`, Fortress, ms 0, `fl: ['tower']`, `towerAct`/`soldier`): does not move or attack. A soldier comes out at the start and another every 7 s, alternating spearman (165% AP health, 18% AP attack) and archer (100% / 16%, range 3), up to 3 at once. The soldiers' hits fill his mana (+5). **Call to Arms** ability: 5 s frenzy (+50% speed, +25% attack), heals 30% and one more comes out. Powers: barracks, wall, veterans, bigger garrison, shield, burst, champion every 3, last stand. New models: `tower` rig (tower with battlements and flag), `footman`, `bowman`.
+  - **Balance:** `tools/tune-heroes.js` (now with `ONLY=a,b`). They came out at 81% and 100% win rate on the boss; after weakening, Prism 48% and Citadel 53% (average 47%).
+- **v59 (2026-10-01), batch 57 from PC boy (#71: "give more life to the names"; he sent 22 new names and asked for the same style for the others: bold, evocative, cool for 12 to 18 year olds, neither obscure nor silly).**
+  - **Names:** Bjornar → Aegir, Sica → Vex, Feuer → Feuer, Snezhana → Frostbane, Brutus → Ironhorn, Brigid → Solace, Strela → Talon, Koschei → Graveborn, Tordis → Tempest, Krok → Hookjaw, Sarab → Mirage, Gizmund → Rivet, Ulfrik → Ravager, Licht → Radiant, Umbra → Nyx, Leshy → Bramble, Orfeo → Lyric, Pólvora → Flint, Hyppolita → Skara, Sokol → Deadeye, Carmina → Vesper, Kagero → Eclipse, Garm → Fang, Luna → Mesmer, Pimples → Jinx, Pivo → Rumble, Azgoth → Inferno, Kivi → Boulder, Khepri → Ankh, Leonteus → Phalanx, Serra → Rapture, Mercurio → Vial, Feng → Kaze, Melissa → Stinger, Nerina → Maelstrom, Astrid → Astral.
+  - **The 14 I created** were checked so as not to repeat an item, relic, power, monster or set: Rampage, Quiver, Echo, Trance, Pharaoh, Swarm, Riptide, Hive and Undertow were replaced for that reason. Names of his that are also words for items or abilities (Boulder = Boulder Toss, Phalanx = the ability itself, Inferno, Vial) stayed as he asked.
+  - **Where it changed:** only the text inside the strings of data.js (comments and history keep the old names); the keys did not change, so ghosts, Elo and art remain valid.
+  - **Old name:** stays in `h.was`, and the Art Lab still recognizes files with it (`guessHero`).
+- **v58 (2026-10-01), batch 56 from David (#70, 12 polish items).**
+  - **Review notice:** became a small pill that floats under the bar, without pushing the screen ("⏳ #N queued", "✅ … live: tap to reload").
+  - **Relics:** all got a short line (`r.short` in data.js) used in the shop and at the start; the full rule stays under "More" (`relic-info`).
+  - **Shops:** item shop with 4 (6 with the Faded Chart, 2 with the Heirloom Anvil).
+  - **Auto-equip is the default:** `run.autoGear` (on by default). `autoGear()` runs on every render and equips what arrives in the backpack; a manual choice in Gear turns it off (with a notice); the purple button turns it back on and shows "ON".
+  - **Combat:** dolls at 1.5 of the hex; damage numbers with a minimum legible size.
+  - **Yellow only for the main action and rewards:** selection and "you are here" moved to white and cyan (Gear tabs, chosen relic, chosen hero, steps, current tower floor, chosen power).
+  - **Safe areas:** `env(safe-area-inset-*)` on the body, fixed bars, sheets and the notice.
+  - **Stronger rewards:** flash on the title, stars that fall with rotation and confetti, shining coin with more coins flying, XP counting and bars with a running shine.
+  - **Fewer borders and shadows:** a single shadow on cards; panels inside panels lost border and shadow.
+  - **Font:** Inter (fonts/inter.woff2, OFL) for text; Fredoka for titles.
+  - **Standards:** button height tokens (34/46/54) and color tokens (`--c-primary` yellow, `--c-accent` cyan, `--c-magic` purple, `--c-danger` red); shop cards with equal minimum height.
+- **v57 (2026-10-01), batch 55 from David (#69: "improve Auto-equip: the idea is good, the execution terrible; an algorithm that always decides well; no AP on an AD hero; purple button").** `Run.autoEquip` in run.js (testable):
+  - **Profile per hero** (`heroProfile`): AP fraction, counting "% AP" against "% AD" in the ability and powers; tank by role or by melee with 850+ health; ranged.
+  - **Score per item** (`itemScore`): each stat normalized (10 attack, 20 AP, 10% attack speed... = 1 point) times the profile weight. AP is worth ~0 for an AD hero and attack ~0 for a mage; the tank gives 1.8x to defense. Special effects count as "on hit" (AD), "on ability" (AP) or "defense" (tank); plus a little for rarity and for pieces of the same set.
+  - **Global distribution:** gathers backpack and worn items and hands out in greedy order, the best hero-item pairing first, one per type, without exceeding the slots. An item with a score below 0.2 stays in the backpack (AP on an AD-only team). Fixes an item worn on the wrong hero, and pressing again changes nothing.
+  - Purple button (`.gauto`).
+- **v56 (2026-10-01), batch 54 from PC boy (#68): splash art for 12 more heroes through the Art Lab.** Mercurio, Feng, Feuer, Pólvora, Kivi, Leonteus, Koschei, Sica, Krok, Umbra, Serra and Sokol. Reviewed on a contact sheet: original, no blood or improper content, each one matching the hero (Serra is a generic purple harlequin and Sokol uses a modern rifle, both accepted). Splash only; the battle is still drawn. The face crop was adjusted in two passes (PIL, same as `art.js`). Now 26 of 36 have paintings; Strela, Tordis, Gizmund, Orfeo, Carmina, Luna, Pivo, Khepri, Nerina and Astrid are missing.
+- **v55 (2026-10-01), batch 53 from David (#67: "smoother combat animations, they are jittery and jumpy; prettier dolls; I want to see a game, not a raw demo").** All in the render (the simulation did not change, it only keeps `u.lastAtk` for the strike's return):
+  - **Movement:** each unit has a screen state (`look`/`glide` in render.js, `v.looks` per world). Position glides with damping (teleport above 2.2 hex snaps instantly). The turn happens by scale, without mirroring at once, and only switches sides if the target is clearly on the other side. The step follows a continuous rhythm between hexes (before, it restarted on every hex). The melee strike pulls back, hits on the hit tick and returns smoothly in 6 ticks (before, it returned at once).
+  - **Impact:** whoever takes a hit recoils and flashes white (`ctx.filter`, with a radial glow where it does not exist). There is stretch and squash from the feet: fight entrance, strike and hit.
+  - **Dolls:** a bit bigger (1.38 of the hex). The hard ring became a soft aura in the team color (the thin rim stays for the selected hero and elites). Health bars are rounded, with a gradient and a light trail of the health that was just lost.
+  - Also fixed a test that broke when the starting relic was the Pathfinder's Quill (3 paths).
+- **v54 (2026-10-01), batch 52 from David (#66: "equipping items is still hard and not very intuitive, too many little slots; a cooler inventory that a 14-year-old boy understands: drag and drop, easy, satisfying, dopamine, power fantasy").** The team sheet became the **Gear** screen (`gearHTML`/`openGear`; the old `teamHTML` is gone):
+  - Tabs with the heroes (n/slots). One hero at a time, large: the art (tap = hero sheet, `hero-info`), HP/attack/AP and large slots, as many as he can use; the next ones appear locked with the level that opens them (Lv 3/4/5).
+  - The backpack shows large pieces, best first, in pages of 10.
+  - **Drag and drop** with pointer (finger or mouse; `gearDown/Move/Up`, `data-drag`/`data-drop`, `.gghost` ghost, glowing targets):
+    - backpack item onto the hero or another hero's tab = equips; same type swaps, and if full it swaps the slot where it was dropped or the worst one;
+    - worn item back to the backpack = takes off; worn item onto another hero = passes to him.
+  - Tapping shows what the item does and a big button ("Put on X" / "Swap for Y" / "Take off", plus "Sell").
+  - **Auto-equip** (`gearAuto`) dresses the team with the best (rarity; AP for casters and attack for the others).
+  - Every equip gives feedback: the slot jumps with confetti, the item's effect rises from the hero and the HP/attack/AP numbers count up.
+  - A click right after dropping is ignored (`ui.gNoClick`, 250 ms, reset on every new touch).
+  - Tests: the drag in screens.mjs uses a real touch (`Input.dispatchTouchEvent`); the screen with 3 heroes and 11 items fits on the small phone (devices).
+  - `run-all` now waits up to 900 s per step (the boss matrix sometimes went past 400 s with the PC busy).
+- **v53 (2026-10-01), batch 51 from David (#65: "text can never be cut off; more epic Gauntlet, it was just a list and made me scroll; enemy hero description leaked; NEVER, EVER make me scroll the screen").**
+  - **Rule: no "..." and no text stuck in a few lines.** The `line-clamp` and `text-overflow: ellipsis` were turned off (v53 layer at the end of style.css). Text wraps or goes behind a tap. Labels (`.tier`/`.itag`) break only between words.
+  - **Team sheet:** the set shows only "◆ name n/3 ✓" (the bonus in words is on the hero sheet), and the powers path shows "★ N powers".
+  - **Gauntlet:** the entrance has a trophy medallion, a line about what it is, the tower, the team and the gate; the rules went to "How it works" (`g-rules`). The tower tapers to the top, has the golden crown and colored floors (green beaten, red fallen); `towerHTML(g, mode)` with `near` (match) and `end` (end, no gate). The match shows the "You VS ghost" card. In duel preparation, the enemy heroes show the short line and a "More".
+  - **Scrolling:** the rule also applies to the small phone (360×640). `devices.mjs` now checks title, map, the 3 shops, 4 events and the result on phone and phone-small, with the `@media (max-height: 700px) and (max-width: 500px)` layer (tighter cards, shops and events). **Every new screen must fit on both.**
+- **v52 (2026-10-01), batch 50 from David (#64).** (1) "Before the fight, highlight only the enemies with an ability, the rest smaller": `foesHTML` gives a card only to the groups with `what`; the others become small `.fs` chips. (2) "One more possibility for each boss, drawn at the start of each run, and balance it": `B.BOSS_SLOTS` = [Gorewarden or **Mirewitch Morra**, Ashen Sovereign or **Iron Colossus**], drawn in `newRun` (`run.bosses`; `Run.bossOf(run, n)`; old runs keep the two from before).
+  - **Mirewitch** (range 3, `A.bog`): a poison swamp that stays on the ground (`W.zones`); every 9 s it turns the highest-attack hero into a frog (silence and slow for 2 s); at 50% it sinks (untouchable for 3 s), summons 2 serpents and resurfaces; at 25%, Witching Hour.
+  - **Iron Colossus** (golem, `A.quake`): stomps and pushes back 1 hex anyone 2 hexes away (a push into stone = SLAM); every 8 s it vents steam and takes +25% damage for 3 s; at 60% it summons 2 squires; at 30%, Meltdown (faster and stronger, but takes +15%).
+  - Balanced with `tools/boss-odds.js`: Gorewarden 53% × Mirewitch 55%; Sovereign 66% × Colossus 68%.
+  - Models in models.js, portrait color in splash.js, in the test gallery.
 
-  (3) "Menus e mensagens somem ao trocar de tela": `clearLeftovers()` na troca de tela fecha o toast e o sheet abertos antes (os que o próprio toque acabou de abrir ficam, 350 ms) e cancela o toast de XP pendente.
-- **v51 (2026-10-01), lote 49 do David (#63: "loja nunca com número ímpar de coisas; heróis na loja com descrição simples (tipo joga tortas nos inimigos) e um botão de detalhes").** Lojas sempre pares: heróis 4, itens 6 (8 com o Faded Chart, 4 com o Heirloom Anvil), relíquias 4. O `stockFor` tira a última se ainda sair ímpar, e o Shuffled Deck tira 2 por troca até sobrar 2. Cada herói ganhou uma frase curta (`HEROES[k].tag` em data.js), usada na loja e no 1º passo do início. O botão "More"/"Details" (`hero-peek` → `heroPeekHTML`) abre a ficha: a arte, a frase, a habilidade inteira com os números, como escala e os poderes de cada nível.
-- **v50 (2026-10-01), lote 48 do David (#62: "50 relíquias realmente inventivas: momentos memoráveis, mudar posição e montagem do time, interagir com o tabuleiro, mudar o alvo e a IA, sinergias, economia, rota, lojas, recompensas, escolha de herói, itens e risco; cada uma com identidade e troca").** Pausado na noite de 30/09 a pedido do dono ("volte quando o de 5 h resetar") e retomado por agendamento. 100 relíquias agora (50 novas, todas com `fl`). **Combate** (`sim.js`, `flOf`, então o fantasma do Gauntlet usa também):
+  (3) "Menus and messages disappear when switching screens": `clearLeftovers()` on the screen switch closes the open toast and sheet first (the ones the tap itself just opened stay, 350 ms) and cancels the pending XP toast.
+- **v51 (2026-10-01), batch 49 from David (#63: "shop never with an odd number of things; heroes in the shop with a simple description (like throws pies at enemies) and a details button").** Shops are always even: heroes 4, items 6 (8 with the Faded Chart, 4 with the Heirloom Anvil), relics 4. `stockFor` drops the last one if the count still comes out odd, and the Shuffled Deck removes 2 per swap until 2 are left. Each hero got a short phrase (`HEROES[k].tag` in data.js), used in the shop and in step 1 of the start. The "More"/"Details" button (`hero-peek` → `heroPeekHTML`) opens the sheet: the art, the phrase, the full ability with the numbers, how it scales, and the powers of each level.
+- **v50 (2026-10-01), batch 48 from David (#62: "50 truly inventive relics: memorable moments, changing position and team composition, interacting with the board, changing the target and the AI, synergies, economy, route, shops, rewards, hero choice, items and risk; each with its own identity and a trade-off").** Paused on the night of 09/30 at the owner's request ("come back when the 5 h one resets") and resumed by schedule. 100 relics now (50 new, all with `fl`). **Combat** (`sim.js`, `flOf`, so the Gauntlet ghost uses them too):
   - `relicStart`: Scales of Balance, King's Crown, Harmony Chord, Echo Chime, Overflow Cup, Gravity Stone, Siege Sling, Anchor Chain.
-  - Formação: Watchtower Flag e Spotlight Lamp (`formation`).
+  - Formation: Watchtower Flag and Spotlight Lamp (`formation`).
   - `deal`: Mirror Shard, Two-Faced Coin, Glass Crown, Pack Horn, Anchor Chain, Lodestone, Brotherhood Chain.
-  - `relicDeath`: Undertaker's Shovel (lápide vira `rock` no `W.terrain`), Chain Pyre, Plague Flask, Soul Jar, Gravecaller (inimigo volta do seu lado por 6 s, `expireT`), Last Stand Banner, a pane do Rei.
+  - `relicDeath`: Undertaker's Shovel (tombstone becomes `rock` in `W.terrain`), Chain Pyre, Plague Flask, Soul Jar, Gravecaller (enemy comes back on your side for 6 s, `expireT`), Last Stand Banner, the King's pane.
   - `pickTarget`: Lodestone, Pack Horn. `targetable`: Bodyguard Oath. `tryMove`: Stonefoot Idol, Blink Pebble.
-  - Cast: Echo Chime, Ley Line Chalk. Silêncio: Hush Bell (`W.hush[side]`).
+  - Cast: Echo Chime, Ley Line Chalk. Silence: Hush Bell (`W.hush[side]`).
   - `relicTick`: Earthshaker Drum, Thorn Crown, Swapper's Coin, Time Crystal (`W.sdAt`), Jester's Bell.
-  - Fim da luta: Phoenix Egg revive o time uma vez; `W.used.phoenix` faz o run.js tirar a relíquia.
-  - Berserker Chain em `asOf`/`heal`.
+  - End of fight: Phoenix Egg revives the team once; `W.used.phoenix` makes run.js remove the relic.
+  - Berserker Chain in `asOf`/`heal`.
 
   **Run** (`run.js`):
   - `relicStats`: Lone Crown, Curio Cabinet, Snowball, Pack Rat's Sack, Minimalist's Vow.
-  - Giant's Brew (`size`, sem esquiva).
-  - Pathfinder's Quill (3 caminhos, classe `.banners.three`) e Bounty Hunter's Map no `advance`/`makeFight`.
-  - Merchant's Ledger (oferta "Free!"), Treasure Map, Heirloom Anvil, Curio Cabinet e Shuffled Deck no `stockFor`/`reroll`.
+  - Giant's Brew (`size`, no dodge).
+  - Pathfinder's Quill (3 paths, class `.banners.three`) and Bounty Hunter's Map in `advance`/`makeFight`.
+  - Merchant's Ledger ("Free!" offer), Treasure Map, Heirloom Anvil, Curio Cabinet and Shuffled Deck in `stockFor`/`reroll`.
   - Cursed Doubloon (`run.coinN`).
-  - Veteran's Medal, Double or Nothing, Snowball, Anvil e Changeling Mask (`relicsAfterWin`) no `finishFight`.
-  - Two-Faced Coin nas apostas; Treasure Map no `eventAct`.
-  - As só de run entram no `NONCOMBAT`.
+  - Veteran's Medal, Double or Nothing, Snowball, Anvil and Changeling Mask (`relicsAfterWin`) in `finishFight`.
+  - Two-Faced Coin in the bets; Treasure Map in `eventAct`.
+  - The run-only ones go into `NONCOMBAT`.
 
-  Calibradas com `tools/relic-odds.js` (luta 4 e luta 7): as fortes ficam entre +15 e +30%, como as antigas boas; a Phoenix Egg dá +43%, mas é uma vez por jogo; as situacionais ficam perto de 0. Retocadas na medição:
-  - Overflow Cup: o custo virou +10% de mana nas habilidades.
-  - Lodestone: só os inimigos mudam de alvo, e o herói-alvo leva 10% menos dano.
-  - Hush Bell: inimigos calados por 10 s, os seus por 2 s.
-  - Chain Pyre: seus heróis levam 1/10.
-  - Glass Crown: −35% de vida.
-  - Siege Sling: escudo de 30% e 2 s de atordoamento.
-  - Two-Faced Coin: −10% de ataque.
+  Calibrated with `tools/relic-odds.js` (fight 4 and fight 7): the strong ones land between +15 and +30%, like the good old ones; the Phoenix Egg gives +43%, but it is once per game; the situational ones stay near 0. Touched up during measurement:
+  - Overflow Cup: the cost became +10% mana on abilities.
+  - Lodestone: only the enemies change target, and the targeted hero takes 10% less damage.
+  - Hush Bell: enemies silenced for 10 s, your own for 2 s.
+  - Chain Pyre: your heroes take 1/10.
+  - Glass Crown: −35% health.
+  - Siege Sling: 30% shield and 2 s of stun.
+  - Two-Faced Coin: −10% attack.
 
-  Testes: todas as 100 numa luta inteira nos dois lados (sem NaN), mais um teste de comportamento por relíquia não óbvia.
-- **v49 (2026-09-30), lote 47 do David.** #60 ("nova identidade Super Rogues; logo para 14 anos com letras gordas e divertidas; tela inicial super simples, o resto na barra ou em ícones; só o Play, e embaixo o tabuleiro com times aleatórios lutando, como um trailer; com jogo em andamento, sem novo jogo: Continue e uma bandeirinha branca give up; o jogo só conta depois de herói e relíquia"): nome Super Rogues (index.html, favicon de estrela de máscara); logo em CSS (`logoHTML`: marca SVG, fita rosa SUPER, letras ROGUES coloridas com contorno grosso e entrada pulando); tela inicial = logo + Play (ou Continue + "Give up", que pergunta antes e só descarta o jogo, sem contar derrota) + trailer (`trailerWorld`/`trailerLoop`: 3 heróis aleatórios contra uma luta aleatória, 1,5×, mudo via `Render.draw(..., { mute: true })`, recomeça 2,6 s depois do fim; para quando sai da tela ou a aba some). Topo da tela inicial: nível (chip com barra, abre a trilha), coroas, ladder, sugestões e ☰ (`homeMenuHTML`: How to play, recompensas de nível, perfil, Crown Shop, ladder, Art Lab, som, sugestão). Jogo na fase `start` não aparece como Continue. #61 ("acabamento de roguelike comercial: menos cartões iguais, fonte limpa nas descrições, ícones próprios no lugar de emoji, level-up com etiquetas de estilo e caminho ramificado"): `js/uiicons.js` e troca dos emojis de interface (topo, trilha, cartões de luta/loja, preparação, batalha, resultado, lojas, eventos, fim de jogo, cabeçalhos dos menus, How to play; os desenhos dos eventos e das dicas continuam emoji); `--read` (Nunito) nas descrições; o time do mapa e os heróis do resultado viraram linhas num painel só; level-up com até 2 etiquetas por poder (`STYLE`: Damage, Tank, Control, Heal, Speed, Area, Summon; senão Upgrade) e a trilha como árvore (`sp-fork` do galho escolhido; escolhidos em dourado, os de hoje brilhando, os futuros apagados).
-- **v48 (2026-09-30), lote 46 do PC boy (#59): splash de 10 heróis pelo Art Lab.** Garm (rex), Leshy (bramble), Sarab
-  (mirage), Hyppolita (hippolyta), Snezhana (glacia), Licht (seraph), Azgoth (azgul), Pimples (pip), Brigid (lumen) e
-  Bjornar (bastion). Revisadas uma a uma: originais, sem sangue nem conteúdo impróprio, cada uma batendo com o herói. Só
-  splash (cartões, banners, retratos): em `OFFICIAL` sem `anims`, o boneco da batalha continua desenhado. Vieram com o
-  recorte padrão; o foco foi posto no rosto de cada uma (conferido com um recorte em PIL igual ao do `art.js`). Agora
-  são 14 heróis com pintura (4 com animação completa) e 22 só desenhados. O teste do motor passou a aceitar arte só com
+  Tests: all 100 in a full fight on both sides (no NaN), plus one behavior test per non-obvious relic.
+- **v49 (2026-09-30), batch 47 from David.** #60 ("new Super Rogues identity; logo for 14-year-olds with fat, fun letters; super simple home screen, the rest in the bar or in icons; only Play, and below it the board with random teams fighting, like a trailer; with a game in progress, no new game: Continue and a little white flag give up; the game only counts after hero and relic"): name Super Rogues (index.html, mask-star favicon); logo in CSS (`logoHTML`: SVG mark, pink SUPER ribbon, colorful ROGUES letters with a thick outline and a bouncing entrance); home screen = logo + Play (or Continue + "Give up", which asks first and only discards the game, without counting a defeat) + trailer (`trailerWorld`/`trailerLoop`: 3 random heroes against a random fight, 1.5×, muted via `Render.draw(..., { mute: true })`, restarts 2.6 s after the end; stops when leaving the screen or when the tab goes away). Top of the home screen: level (chip with bar, opens the track), crowns, ladder, suggestions and ☰ (`homeMenuHTML`: How to play, level rewards, profile, Crown Shop, ladder, Art Lab, sound, suggestion). A game in the `start` phase does not show up as Continue. #61 ("commercial roguelike polish: fewer identical cards, clean font in the descriptions, own icons in place of emoji, level-up with style tags and a branching path"): `js/uiicons.js` and swap of the interface emoji (top bar, track, fight/shop cards, preparation, battle, result, shops, events, game end, menu headers, How to play; the drawings of the events and tips remain emoji); `--read` (Nunito) in the descriptions; the map team and the result heroes became rows in a single panel; level-up with up to 2 tags per power (`STYLE`: Damage, Tank, Control, Heal, Speed, Area, Summon; otherwise Upgrade) and the track as a tree (`sp-fork` of the chosen branch; chosen ones in gold, today's glowing, future ones faded).
+- **v48 (2026-09-30), batch 46 from PC boy (#59): splash for 10 heroes via the Art Lab.** Garm (rex), Leshy (bramble), Sarab
+  (mirage), Hyppolita (hippolyta), Snezhana (glacia), Licht (seraph), Azgoth (azgul), Pimples (pip), Brigid (lumen) and
+  Bjornar (bastion). Reviewed one by one: original, no blood or inappropriate content, each one matching its hero. Splash
+  only (cards, banners, portraits): in `OFFICIAL` without `anims`, the battle figure is still drawn. They came with the default
+  crop; the focus was set on each one's face (checked with a PIL crop identical to the one in `art.js`). Now there
+  are 14 painted heroes (4 with full animation) and 22 only drawn. The engine test now accepts art with only
   splash.
-- **v47 (2026-09-30), lote 45 do David (#58: "toda decisão entendida em menos de 2 s; sem mecânica, número, porcentagem
-  ou contador novo; menos leitura; linguagem simples; o próximo toque óbvio; o time antes do secundário; profundidade
-  atrás de toques").**
-  - **Trilha e mapa:** a trilha de 17 ícones saiu do mapa, das lojas e dos eventos e abre ao tocar no "Day" do topo
-    (`pathHTML`, com legenda). Os cartões de luta mostram só inimigos e ouro: sem nome do mapa e sem "★ elite" (a ★ fica
-    no inimigo). "Party" virou "Your team". O chefe mostra nome e quando, com o texto num toque.
-  - **Posicionamento:** saíram "deploy" e o nome do mapa; as relíquias de formação viraram só ícone com ✓/✗ (quem ganha o
-    quê fica no toque); "Team & items" virou "🎒 Items".
-  - **Resultado:** tempo, dano, abates e XP por herói ficam atrás de "📊 Details" (`ui.rmore`, classe `.more`).
-  - **Lojas e início:** as habilidades usam `plainAb` (tira as fórmulas "90% AP", mostra só a ativa; o cartão do herói
-    em Team mantém tudo) e ganham "⚔️ Fights up close"/"🏹 Attacks from afar"; o reroll diz "↻ New".
-  - **Evento:** cada escolha tem o nome em negrito e o efeito embaixo (`evLabel`).
-  - **Subir de nível:** "💪 Stronger in every way" (+1 item slot), "Pick a new power" com texto simples e o caminho
-    inteiro num `<details>`.
-  - **Time:** saíram a tabela de status e o "items n/m"; ficam a função e o alcance ("Tap the portrait for stats").
-  - **Fim de jogo:** mais compacto no celular.
-  - **Filtro `plainAb`:** conferido nas 36 habilidades e 288 especializações, sem frase quebrada.
-- **v46 (2026-09-30), lote 44 do David (#57: "trazer a progressão de XP do jogador para a frente; XP por nível
-  crescente; XP depois de cada partida conforme foi; mostrar o progresso com as recompensas por vir; dopamina que chame
-  a jogar de novo").**
-  - **Curva:** o nível L→L+1 custa 80 + 20×(L−1), ou seja 80, 100, 120… (`B.xpToNext`, `B.xpForLevel`, `B.levelOf`,
+- **v47 (2026-09-30), batch 45 from David (#58: "every decision understood in under 2 s; no new mechanic, number, percentage
+  or counter; less reading; simple language; the next tap obvious; the team before the secondary stuff; depth
+  behind taps").**
+  - **Track and map:** the 17-icon track left the map, the shops and the events, and opens when tapping the "Day" at the top
+    (`pathHTML`, with legend). The fight cards show only enemies and gold: no map name and no "★ elite" (the ★ stays
+    on the enemy). "Party" became "Your team". The boss shows its name and when, with the text one tap away.
+  - **Positioning:** "deploy" and the map name are gone; the formation relics became just an icon with ✓/✗ (who gets
+    what is one tap away); "Team & items" became "🎒 Items".
+  - **Result:** time, damage, kills and XP per hero are behind "📊 Details" (`ui.rmore`, class `.more`).
+  - **Shops and start:** abilities use `plainAb` (removes the "90% AP" formulas, shows only the active one; the hero card
+    in Team keeps everything) and get "⚔️ Fights up close"/"🏹 Attacks from afar"; the reroll says "↻ New".
+  - **Event:** each choice has the name in bold and the effect below (`evLabel`).
+  - **Level up:** "💪 Stronger in every way" (+1 item slot), "Pick a new power" with simple text and the whole
+    path in a `<details>`.
+  - **Team:** the status table and the "items n/m" are gone; what stays are the role and the range ("Tap the portrait for stats").
+  - **Game end:** more compact on mobile.
+  - **`plainAb` filter:** checked on the 36 abilities and 288 specializations, no broken sentence.
+- **v46 (2026-09-30), batch 44 from David (#57: "bring the player's XP progression to the front; growing XP per
+  level; XP after each match according to how it went; show progress with the upcoming rewards; dopamine that makes you
+  want to play again").**
+  - **Curve:** level L→L+1 costs 80 + 20×(L−1), that is 80, 100, 120… (`B.xpToNext`, `B.xpForLevel`, `B.levelOf`,
     `B.levelProgress`).
-  - **XP por partida (`B.GAME_XP`, `xpGame`/`xpDuel` em api/_player.js):** +10 por jogar, +8 por luta vencida (máx 14),
-    +25 por chefe (derrota: máx 1; chegar ao Gauntlet vale 2), +30 por chegar, +20 por duelo e +50 pela coroa. O cliente
-    manda `game: { fights, bosses }` no `fail` e no `enter`. O servidor limita os números e só paga 12 partidas por hora
-    por jogador (KV `gxp:<pid>`).
-  - **Primeiras vezes:** passaram a valer ×10 (herói 10, andar 50, chefe 30, 2 por coroa gasta).
-  - **Contas antigas:** `xpv` 1→2 converte a XP uma vez só (`st.xpvStep`, atômico): o jogador mantém o nível e a
-    fração que já tinha.
-  - **Registro:** cada ganho no log tem o tipo `k`.
-  - **Tela:** o título tem um cartão de nível (barra, XP, "next: <recompensa>" e o ícone da próxima trancado pulsando;
-    abre a trilha no Ladder). O fim de jogo tem o painel de XP (`run.xpLog`, `animXp`): etiquetas por tipo entram uma a
-    uma e a barra enche e vira de nível com confete. A recompensa liberada aparece em cartão dourado e termina na
-    "Next reward" pulsando. O "Play again" pulsa, com o Ladder ao lado.
-  - **Fim do Gauntlet:** placar e Elo numa linha só, para caber.
-  - **Aviso de XP:** ficou curto (total e nível).
-- **v45 (2026-09-30), lote 43 do David.** #55 ("os eventos novos estão OP demais: recompensa dos desafios, ouro, XP;
-  gosto das escolhas liberadas por herói"): tudo menor, perto dos números antigos da v43. O crescimento caiu para +5% por
-  luta (era +15%). Cada desafio paga um prêmio só, sem ouro por cima: bandidos → item raro, bando → relíquia, horda →
-  ouro, Mimic → item épico, guardião → lendário, duelo → +8%. As apostas ficaram quase justas. O agiota rende pouco. O
-  Fairy Ring dá nível a um herói só (`levelHero`). A Legend custa 4 de ouro e o herói entra no Lv 1. As "blue options"
-  ficaram, um pouco melhores que as comuns. Medido com `tools/sim-run.js 160`: o robô de eventos chega a 17% no 1º chefe
-  e o de lojas a 19% (antes o de eventos levava vantagem). #56 ("perdendo jogadores novos; início mais simples; 'game' em
-  vez de 'run'; tirar os retratos do menu; não chamar de roguelike; público de 14 anos"): o título mostra 3 passos
-  numerados (Pick heroes, Place them, Watch them fight) e um botão ▶ Play, sem retratos nem slogan. O início virou 2
-  passos (`ui.startStep`, com trilha Hero, Relic, Fight!): no 1º, o herói mostra só a habilidade, sem tabela de status;
-  no 2º, as relíquias vêm com o efeito escrito, e há Back e "Start the game!". O How to play abre com 5 linhas básicas e
-  as regras completas ficam num `<details>`. Todo texto que o jogador lê diz "game" (o código continua `run`).
-- **v44 (2026-09-30), lote 42 do David (#54: "refazer os eventos: pouco interessantes e raramente valem a pena; mais
-  variedade, recompensas, desafios; ver o que jogos parecidos fazem").** 23 eventos (antes 16), com raridade (comum 1,
-  incomum 0,7, raro 0,3; nenhum repete na run, `run.evSeen`; o Dragon's Hoard só depois da luta 2) e peso de evento no mapa
-  0,25 → 0,3. Inspirado em Slay the Spire/Darkest Dungeon (troca de verdade), Hades/Monster Train (**desafios**: luta
-  opcional que começa na hora, `act: 'fight'` → `Run.startChallenge`; perdeu = sem prêmio e a run SEGUE; não conta como
-  luta do dia; `f.challenge`, `f.solo` no duelo), TFT (ver as relíquias/itens reais e escolher: Cursed Altar, Merchant,
-  Fairy Ring), FTL ("blue options": `req` melee/ranged/caster/healer/lvl3 em `B.EVENT_REQ`, visível para todos, trancada
-  sem o herói). Recompensas crescem com a run: `{gN}`/`{xN}` × (1 + 15% por luta depois da 1ª). Novos: Strange Chest
-  (Mimic), Moneylender (investimento/empréstimo em `run.bank`, pago na próxima vitória), Bounty Board (bando de elite,
-  horda), Alchemist (transmutar 2 itens em 1 melhor, poções), Fairy Ring (todo herói +1 nível ou item lendário),
-  Dragon's Hoard (guardião chefe), Wandering Legend (herói grátis no Lv 2). Força dos desafios em `Run.CH`, calibrada
-  com `tools/challenge-odds.js` (depois das lutas 3/5/7: bandidos ~85%, mimic ~70%, horda ~65%, bando ~60%, duelo ~55%,
-  guardião ~60%). Tela: etiquetas (⚔ Challenge, herói que desbloqueia, ⚠ risco), cartão laranja para desafio e
-  turquesa para "blue option", evento raro dourado no mapa, e o resultado mostra o que ganhou em figuras
-  (`run.cur.gains`). O robô que prefere eventos passou de 17% para 32% no 1º chefe.
+  - **XP per match (`B.GAME_XP`, `xpGame`/`xpDuel` in api/_player.js):** +10 for playing, +8 per fight won (max 14),
+    +25 per boss (defeat: max 1; reaching the Gauntlet counts as 2), +30 for reaching it, +20 per duel and +50 for the crown. The client
+    sends `game: { fights, bosses }` in `fail` and in `enter`. The server caps the numbers and only pays 12 matches per hour
+    per player (KV `gxp:<pid>`).
+  - **First times:** now worth ×10 (hero 10, floor 50, boss 30, 2 per crown spent).
+  - **Old accounts:** `xpv` 1→2 converts the XP only once (`st.xpvStep`, atomic): the player keeps the level and the
+    fraction they already had.
+  - **Log:** each gain in the log has the type `k`.
+  - **Screen:** the title has a level card (bar, XP, "next: <reward>" and the icon of the next one locked and pulsing;
+    opens the track in the Ladder). The game end has the XP panel (`run.xpLog`, `animXp`): tags by type come in one by
+    one and the bar fills and levels up with confetti. The unlocked reward appears in a gold card and ends on the
+    pulsing "Next reward". "Play again" pulses, with the Ladder beside it.
+  - **Gauntlet end:** scoreboard and Elo on a single line, to fit.
+  - **XP notice:** now short (total and level).
+- **v45 (2026-09-30), batch 43 from David.** #55 ("the new events are too OP: challenge rewards, gold, XP;
+  I like the choices unlocked per hero"): everything smaller, close to the old v43 numbers. Growth dropped to +5% per
+  fight (was +15%). Each challenge pays a single prize, with no gold on top: bandits → rare item, band → relic, horde →
+  gold, Mimic → epic item, guardian → legendary, duel → +8%. The bets became nearly fair. The moneylender yields little. The
+  Fairy Ring levels up one hero only (`levelHero`). The Legend costs 4 gold and the hero joins at Lv 1. The "blue options"
+  stayed, a bit better than the regular ones. Measured with `tools/sim-run.js 160`: the events robot reaches 17% at the 1st boss
+  and the shops one 19% (before, the events one had the advantage). #56 ("losing new players; simpler start; 'game' instead of
+  'run'; remove the portraits from the menu; don't call it roguelike; 14-year-old audience"): the title shows 3 numbered
+  steps (Pick heroes, Place them, Watch them fight) and a ▶ Play button, with no portraits or slogan. The start became 2
+  steps (`ui.startStep`, with a Hero, Relic, Fight! track): in the 1st, the hero shows only the ability, with no status table;
+  in the 2nd, the relics come with the effect written out, and there are Back and "Start the game!". How to play opens with 5 basic lines
+  and the full rules stay in a `<details>`. All text the player reads says "game" (the code is still `run`).
+- **v44 (2026-09-30), batch 42 from David (#54: "redo the events: not very interesting and rarely worth it; more
+  variety, rewards, challenges; see what similar games do").** 23 events (was 16), with rarity (common 1,
+  uncommon 0.7, rare 0.3; none repeats in the run, `run.evSeen`; the Dragon's Hoard only after fight 2) and event weight on the map
+  0.25 → 0.3. Inspired by Slay the Spire/Darkest Dungeon (real trade-offs), Hades/Monster Train (**challenges**: optional fight
+  that starts immediately, `act: 'fight'` → `Run.startChallenge`; lost = no prize and the run CONTINUES; doesn't count as
+  the day's fight; `f.challenge`, `f.solo` in the duel), TFT (seeing the real relics/items and choosing: Cursed Altar, Merchant,
+  Fairy Ring), FTL ("blue options": `req` melee/ranged/caster/healer/lvl3 in `B.EVENT_REQ`, visible to everyone, locked
+  without the hero). Rewards grow with the run: `{gN}`/`{xN}` × (1 + 15% per fight after the 1st). New: Strange Chest
+  (Mimic), Moneylender (investment/loan in `run.bank`, paid on the next win), Bounty Board (elite band,
+  horde), Alchemist (transmute 2 items into 1 better one, potions), Fairy Ring (every hero +1 level or legendary item),
+  Dragon's Hoard (guardian boss), Wandering Legend (free hero at Lv 2). Challenge strength in `Run.CH`, calibrated
+  with `tools/challenge-odds.js` (after fights 3/5/7: bandits ~85%, mimic ~70%, horde ~65%, band ~60%, duel ~55%,
+  guardian ~60%). Screen: tags (⚔ Challenge, hero that unlocks it, ⚠ risk), orange card for a challenge and
+  turquoise for a "blue option", gold rare event on the map, and the result shows what was gained in figures
+  (`run.cur.gains`). The robot that prefers events went from 17% to 32% at the 1st boss.
 
-- **v43 (2026-09-30), lote 41 do David (#53): ajuda escondida na liga Bronze.** Em luta PvE (não no Gauntlet nem na luta
-  de teste do Art Lab), quem está na Bronze (`acct.league` 0, inclusive quem ainda não tem conta) recebe 80% do dano no
-  lado dos heróis (`takeMul` no `Sim.create` → `W.tm0`, aplicado no fim do `deal()`; execuções continuam matando). Pedido
-  do David: **não divulgar em lugar nenhum** do jogo (sem texto, sem How to play, sem dica). A matriz de chefes e o
-  robô rodam sem a ajuda (medem o jogo "cru").
+- **v43 (2026-09-30), batch 41 from David (#53): hidden help in the Bronze league.** In PvE fights (not in the Gauntlet nor in the
+  Art Lab test fight), whoever is in Bronze (`acct.league` 0, including those who don't yet have an account) receives 80% of the damage on the
+  heroes' side (`takeMul` in `Sim.create` → `W.tm0`, applied at the end of `deal()`; executions still kill). Request
+  from David: **do not advertise it anywhere** in the game (no text, no How to play, no tip). The boss matrix and the
+  robot run without the help (they measure the "raw" game).
 
-- **v42 (2026-09-30), lote 39 do David (#51: "ainda parece jogo amador de gente pobre; precisa de mais dopamina; UI mais
-  profissional; cortar texto inútil").** Camada v42 no fim do style.css: fundo mais fundo (luz de cima, vinheta, padrão
-  de hexágonos quase invisível), cartões com borda de luz em cima, títulos com contorno de logo, barra do topo escura;
-  tela só anima quando MUDA (antes a loja inteira pulava a cada compra; `ui.lastKey`/`screenKey()`), cartões entram um a
-  um; brilho periódico no botão principal. Tabuleiro com céu pintado (nuvens, sol, 3 camadas de morro; `backdrop()` no
-  render.js, em cache por tamanho). Dopamina: sons (js/sfx.js), fim da luta em câmera lenta com VICTORY!/DEFEAT e
-  confete no tabuleiro (`drawEnd`; a morte usa T, não W.t, para seguir tocando), "Double KO!"/"Triple KO!" (2+ abates
-  do mesmo herói em 3 s), resultado com 1-3 estrelas (vitória; ninguém caiu; e 60% da vida do time) e sequência
-  `celebrate()` (confete, estrelas, ouro contando e voando para o topo, XP enchendo, "Level up!" e carimbo MVP; o ouro
-  do topo espera as moedas: `ui.goldHold`), loja com preço só na moeda, carimbo SOLD e item voando para o Team, itens
-  épicos+ brilhando, reroll embaralha as cartas, ouro do topo conta e mostra "+6"/"−3", tela de nível com confete,
-  medalhão com ícone próprio por evento, fim de run como placar. Texto cortado: parágrafo do título, dica da tela de
-  início (virou "🔒 18 more unlock"), "Day N ·" do mapa, "no items", dica de arrastar (só nas 3 primeiras lutas:
-  `balance.tips.deploy`), relíquias de formação viraram chips (tocar = detalhe), "Attacks from range"/"Fights up close"
-  (virou ➶), nota da loja de itens, "(you choose)" (virou ›), "damage/taken/kills" (ícones), inimigos no resultado da
-  vitória, dicas da tela de time. Troféu saiu do topo do menu (o Ladder está logo abaixo) para caber 🔊 no celular;
-  topo do celular com o Elo cabe (chip só com o escudo abaixo de 440 px). Vitrine ganhou 05b-victory e 07b-bought.
+- **v42 (2026-09-30), batch 39 from David (#51: "still feels like an amateur game by poor people; needs more dopamine; more
+  professional UI; cut useless text").** v42 layer at the end of style.css: deeper background (light from above, vignette, nearly invisible
+  hexagon pattern), cards with a light border on top, titles with a logo outline, dark top bar;
+  screen only animates when it CHANGES (before, the whole shop bounced on every purchase; `ui.lastKey`/`screenKey()`), cards come in one
+  by one; periodic shine on the main button. Board with a painted sky (clouds, sun, 3 layers of hills; `backdrop()` in
+  render.js, cached by size). Dopamine: sounds (js/sfx.js), fight end in slow motion with VICTORY!/DEFEAT and
+  confetti on the board (`drawEnd`; death uses T, not W.t, to keep playing), "Double KO!"/"Triple KO!" (2+ kills
+  by the same hero within 3 s), result with 1-3 stars (victory; nobody fell; and 60% of the team's health) and
+  `celebrate()` sequence (confetti, stars, gold counting up and flying to the top, XP filling, "Level up!" and MVP stamp; the gold
+  at the top waits for the coins: `ui.goldHold`), shop with price only on the coin, SOLD stamp and item flying to Team, items
+  epic+ glowing, reroll shuffles the cards, top gold counts and shows "+6"/"−3", level screen with confetti,
+  medallion with its own icon per event, run end as a scoreboard. Text cut: title paragraph, start-screen tip
+  (became "🔒 18 more unlock"), the map's "Day N ·", "no items", drag tip (only in the first 3 fights:
+  `balance.tips.deploy`), formation relics became chips (tap = detail), "Attacks from range"/"Fights up close"
+  (became ➶), item shop note, "(you choose)" (became ›), "damage/taken/kills" (icons), enemies in the victory
+  result, team screen tips. Trophy left the top of the menu (the Ladder is right below) to fit 🔊 on mobile;
+  mobile top bar with the Elo fits (chip with only the shield below 440 px). Showcase gained 05b-victory and 07b-bought.
 
-- **v41 (2026-09-30), lote 38 do David.** (#49) Revisão das 36 habilidades e das 288 especializações contra o código
-  (`tools/audit-abilities.js`: todo valor `ab` é lido pela habilidade ou por um ajudante e aparece no texto; toda chave de
-  spec/mod/flag é lida em algum lugar; nada ficou sem efeito). Corrigido no código: frasco de cura do Mercurio agora vai
-  para o herói mais fraco (antes podia curar uma torreta/esqueleto) e Catalyst devolve mana também nele. Textos
-  corrigidos (faltava número ou dizia outra coisa): Snezhana (lentidão 40% por 2 s), Brutus (30% de roubo de vida por
-  4 s), Strela e Ulfrik (passivas com nome: Focus, Fury), Garm (sangramento 2%/s por 3 s), Koschei Bone Archers (30%
-  menos vida), Krok Barbed Chain (quem envenena são os ataques) e Chain Whirl (30% por 2 s), Ulfrik Momentum (até
-  +40%), Nerina Cold Current (50% em vez de 30%), Feuer Scorched Earth (16% AP/s). (#50) Art Lab: "Splash art for several
-  heroes" (até 12 fotos; herói pelo nome do arquivo, sem acento, ou escolhido na lista; "Use all in my game" e "Send all
-  for review" num lote só: `arts: [...]` no POST, 40 fotos por pessoa/dia, 150 no total/dia).
+- **v41 (2026-09-30), batch 38 from David.** (#49) Review of the 36 abilities and 288 specializations against the code
+  (`tools/audit-abilities.js`: every `ab` value is read by the ability or by a helper and appears in the text; every spec/mod/flag
+  key is read somewhere; nothing was left without effect). Fixed in the code: Mercurio's healing flask now goes
+  to the weakest hero (before it could heal a turret/skeleton) and Catalyst returns mana to him too. Texts
+  fixed (a number was missing or they said something else): Snezhana (40% slow for 2 s), Brutus (30% lifesteal for
+  4 s), Strela and Ulfrik (passives with names: Focus, Fury), Garm (bleed 2%/s for 3 s), Koschei Bone Archers (30%
+  less health), Krok Barbed Chain (the attacks are what poison) and Chain Whirl (30% for 2 s), Ulfrik Momentum (up to
+  +40%), Nerina Cold Current (50% instead of 30%), Feuer Scorched Earth (16% AP/s). (#50) Art Lab: "Splash art for several
+  heroes" (up to 12 photos; hero by file name, without accents, or chosen from the list; "Use all in my game" and "Send all
+  for review" in a single batch: `arts: [...]` in the POST, 40 photos per person/day, 150 total/day).
 
-- **v40 (2026-09-30), lote 37 do David (#48): arte do Kagero (kage) + folhas de cartões + prévias animadas.** A folha
-  dele era de "cartões" (cada quadro num cartão rosa com borda, num fundo escuro, com título, rótulos e uma pose grande
-  embaixo). `cutCards` (art.js): cor do cartão = a mais comum depois do fundo (contando os baldes vizinhos, a cor tem
-  ruído); cartão = bloco dessa cor com o contorno todo preenchido; lacunas na grade da linha (cartão coberto por um
-  clarão) são preenchidas; cada cartão é recortado na própria cor, sem a borda; todos os quadros de uma linha ficam do
-  mesmo tamanho e lugar (a bomba voa, a queda cai); efeito que enche o cartão ganha bordas suaves. Kagero: 8 quadros em
-  cada animação (`art/kage/`). No lab, uma prévia animada por animação (mesmo tempo e mistura da batalha).
+- **v40 (2026-09-30), batch 37 from David (#48): Kagero art (kage) + card sheets + animated previews.** His
+  sheet was made of "cards" (each frame on a pink card with a border, on a dark background, with a title, labels and a large pose
+  below). `cutCards` (art.js): card color = the most common after the background (counting neighboring buckets, since the color has
+  noise); card = block of that color with the whole outline filled in; gaps in the row's grid (card covered by a
+  flash) are filled in; each card is cropped in its own color, without the border; all frames of a row end up
+  the same size and place (the bomb flies, the fall falls); an effect that fills the card gets soft edges. Kagero: 8 frames in
+  each animation (`art/kage/`). In the lab, one animated preview per animation (same timing and blending as the battle).
 
-- **v39 (2026-09-29), lote 36 do David (#47): arte da Melissa (buzzwell).** Veio marcada como "Astrid" porque o lab abria
-  no 1º herói da lista; a arte é claramente a apicultora → aplicada na Melissa e o lab agora abre SEM herói escolhido.
-  A folha tinha as figuras coladas (sem espaço), o lab achou 1 quadro por linha: montada à mão (`art/buzzwell/`, 66
-  quadros: parado 16, andando 15, ataque 5 = os arremessos pequenos ampliados, habilidade 19 = 7 da colmeia + 12 do
-  enxame, morte 11). `cutSheet` agora acha o passo dos quadros de cada linha (repetição mais forte do contorno da metade
-  de baixo, preferindo o período base ao dobro) e corta qualquer caixa com mais de 1,5 passo; pedacinhos só se juntam a
-  caixas da mesma linha. Na reconstrução da folha dele o lab acha 16/15/12/11 quadros (a linha de ataque, misturada com
-  projéteis e figuras menores, precisou de corte à mão). Animação de morte fica no tabuleiro 2 ticks por quadro (máx. 30).
+- **v39 (2026-09-29), batch 36 from David (#47): Melissa art (buzzwell).** It came tagged as "Astrid" because the lab opened
+  on the 1st hero in the list; the art is clearly the beekeeper → applied to Melissa and the lab now opens with NO hero chosen.
+  The sheet had the figures stuck together (no space), the lab found 1 frame per row: assembled by hand (`art/buzzwell/`, 66
+  frames: idle 16, walking 15, attack 5 = the small throws enlarged, ability 19 = 7 of the hive + 12 of the
+  swarm, death 11). `cutSheet` now finds the frame pitch of each row (strongest repetition of the outline of the bottom
+  half, preferring the base period over double) and cuts any box wider than 1.5 pitches; small pieces only join
+  boxes of the same row. On the reconstruction of his sheet the lab finds 16/15/12/11 frames (the attack row, mixed with
+  projectiles and smaller figures, needed a hand cut). Death animation stays on the board 2 ticks per frame (max 30).
 
-- **v38 (2026-09-29), lote 35 do David (#46): arte do Brutus (brakk).** O "bug no ataque" era do recorte: os arcos rosa
-  dos golpes ligavam figuras vizinhas e o lab juntava 3 quadros do ataque (e 2 da habilidade) numa imagem só. Separado à
-  mão (`art/brakk/`: parado 7, andando 8, ataque 7, habilidade 6 + splash) e corrigido no `cutSheet`: caixa com mais de
-  1,7× a largura típica da linha é cortada em N quadros (N pela largura + espaço típico entre quadros) nas colunas mais
-  vazias; e o halo da cor do fundo na borda (rosa no magenta) é tirado ("despill" só nos pixels da borda). Andando 2-4
-  vieram com outra cabeça (erro do gerador de imagem, avisado ao David). A splash lembra o Kratos (careca, barba, faixa
-  vermelha no rosto): avisado ao dono.
+- **v38 (2026-09-29), batch 35 from David (#46): Brutus art (brakk).** The "bug in the attack" came from the crop: the pink
+  arcs of the strikes linked neighboring figures and the lab merged 3 frames of the attack (and 2 of the ability) into one image.
+  Separated by hand (`art/brakk/`: idle 7, walking 8, attack 7, ability 6 + splash) and fixed in `cutSheet`: a box wider than
+  1.7× the row's typical width is cut into N frames (N from the width + typical gap between frames) at the emptiest
+  columns; and the background-color halo on the edge (pink on the magenta) is removed ("despill" only on the edge pixels).
+  Walking 2-4 came with a different head (image generator error, flagged to David). The splash resembles Kratos (bald, beard, red
+  stripe on the face): flagged to the owner.
 
-- **v37 (2026-09-29), lote 34 do David (#45): 1ª arte oficial, Ulfrik (thorne).** A folha reenviada tinha 5 linhas: parado
-  5, andando 8, ataque 7, investida 6 e giro 7 quadros (a 5ª linha NÃO era morte: era o giro). A habilidade dele (Crimson
-  Spin) toca investida + giro = 13 quadros; morte usa o efeito padrão. Arquivos em `art/thorne/` (splash.jpg, idle-1..5,
-  move-1..8, attack-1..7, cast-1..13 .webp, 452 KB) e entrada em `OFFICIAL` do `js/art.js` com um ponto de apoio por
-  quadro (centro de massa da figura, mais estável que o pé). Animação de habilidade longa dura 2 ticks por quadro
-  (`B.Art.castTicks`). O Art Lab ganhou "Use as" por linha (parado/andando/ataque/habilidade/morte/não usar; linhas
-  iguais se juntam) e o ponto de apoio passou a ser o centro de massa. Só o Ulfrik tem arte pintada: o resto continua
-  desenhado (estilos misturados até chegarem as outras).
+- **v37 (2026-09-29), batch 34 from David (#45): 1st official art, Ulfrik (thorne).** The resent sheet had 5 rows: idle
+  5, walking 8, attack 7, charge 6 and spin 7 frames (the 5th row was NOT death: it was the spin). His ability (Crimson
+  Spin) plays charge + spin = 13 frames; death uses the default effect. Files in `art/thorne/` (splash.jpg, idle-1..5,
+  move-1..8, attack-1..7, cast-1..13 .webp, 452 KB) and an entry in `OFFICIAL` of `js/art.js` with one anchor point per
+  frame (the figure's center of mass, more stable than the foot). A long ability animation lasts 2 ticks per frame
+  (`B.Art.castTicks`). The Art Lab gained "Use as" per row (idle/walking/attack/ability/death/don't use; identical rows
+  merge) and the anchor point became the center of mass. Only Ulfrik has painted art: the rest is still
+  drawn (mixed styles until the others arrive).
 
-- **v36 (2026-09-29), lote 33 do David (#44): passada de design** (mesmas cores e tema, nada novo): camada v36 no fim
-  do style.css com tokens (espaço 4/8/12/16/24, um raio, uma sombra suave de cartão, texto secundário mais claro);
-  botões secundários viram "vidro" claro e o amarelo primário fica dominante; barra de status com chips da mesma altura;
-  cartões da loja com faixa e pílula da raridade; espaços vazios tracejados; habilidades como nome → linhas
-  Passive/Active → nota de escala pequena (`abilHTML`); "Continue run" com dia, heróis e ouro; vitrine dos heróis com
-  brilho; no PC, telas curtas (mapa, lojas, eventos, resultado) em `zoom` 1,18/1,32 para não sobrar vazio; na batalha,
-  disco na cor do lado sob cada unidade, moldura da barra de vida na cor do lado e status como bolinhas coloridas
-  (atordoado, congelado, silêncio, provocação, confuso, queimando, veneno, lento, raiz). Vitrine agora fotografa também
-  o Ladder e o perfil.
+- **v36 (2026-09-29), batch 33 from David (#44): design pass** (same colors and theme, nothing new): v36 layer at the end
+  of style.css with tokens (spacing 4/8/12/16/24, one radius, one soft card shadow, lighter secondary text);
+  secondary buttons become light "glass" and the primary yellow becomes dominant; status bar with chips of the same height;
+  shop cards with a strip and rarity pill; empty slots dashed; abilities as name → Passive/Active
+  lines → small scaling note (`abilHTML`); "Continue run" with day, heroes and gold; hero showcase with
+  glow; on PC, short screens (map, shops, events, result) at `zoom` 1.18/1.32 so there is no leftover empty space; in battle,
+  a disc in the side's color under each unit, health bar frame in the side's color and status as colored dots
+  (stunned, frozen, silence, taunt, confused, burning, poison, slow, root). Showcase now also photographs
+  the Ladder and the profile.
 
-- **v35 (2026-09-29), lote 32 do David (#43): Art Lab com animações inteiras.** O David mandou a arte do Redhand
-  (thorne, hoje Ulfrik) com uma folha de animação (várias linhas com rótulo, vários quadros por linha), mas o lab da v31
-  só pegava as 4 primeiras figuras (vieram 4 quadros do "parado" + o rótulo IDLE grudado). Ele pediu para NÃO aplicar sem
-  usar todos os quadros → recusado com explicação e o lab refeito: cada linha da folha = uma animação (parado, andando,
-  ataque, habilidade, morte), até 16 quadros por linha; rótulos e ciscos pequenos e baixos são descartados; os quadros
-  tocam em ordem (parado e andando em loop; ataque/habilidade/morte do 1º ao último durante a ação) e cada quadro segura
-  e depois se mistura no próximo (40% final, mistura linear num canvas auxiliar, pés alinhados). Folha de 1 linha = o
-  formato antigo de 4 poses. Arte guardada como `anims: {idle: [quadros]}` + `axs` (pé de cada quadro); `sugestoes.js
-  arte` exporta `idle-1.webp`, `idle-2.webp`... Esperando o David reenviar.
+- **v35 (2026-09-29), batch 32 from David (#43): Art Lab with whole animations.** David sent the Redhand art
+  (thorne, today Ulfrik) with an animation sheet (several labeled rows, several frames per row), but the v31 lab
+  only picked up the first 4 figures (4 frames of "idle" came out + the IDLE label stuck on). He asked me NOT to apply it without
+  using all the frames → declined with an explanation and the lab redone: each row of the sheet = one animation (idle, walking,
+  attack, ability, death), up to 16 frames per row; labels and small, low specks are discarded; the frames
+  play in order (idle and walking loop; attack/ability/death from the 1st to the last during the action) and each frame holds
+  and then blends into the next (final 40%, linear blend on an auxiliary canvas, feet aligned). 1-row sheet = the old
+  4-pose format. Art stored as `anims: {idle: [frames]}` + `axs` (foot of each frame); `suggestions.js
+  art` exports `idle-1.webp`, `idle-2.webp`... Waiting for David to resend.
 
-- **v34 (2026-09-29), lote 31 do David.** (#41) Heróis com nomes de várias culturas (só o nome exibido; ids iguais):
+- **v34 (2026-09-29), batch 31 from David.** (#41) Heroes with names from several cultures (display name only; same ids):
   Bjornar, Sica, Feuer, Snezhana, Brutus, Brigid, Strela, Koschei, Tordis, Krok, Sarab, Gizmund, Ulfrik, Licht, Umbra,
   Leshy, Orfeo, Pólvora, Hyppolita, Sokol, Carmina, Kagero, Garm, Luna, Pimples, Pivo, Azgoth, Kivi, Khepri, Leonteus,
-  Serra, Mercurio, Feng, Melissa, Nerina, Astrid (evitei "Stark": Marvel/Game of Thrones). (#42) Rebalanceamento de PvE
-  com `tools/tune-heroes.js` (cada herói no 1º espaço + 2 parceiros aleatórios e itens, contra os 2 chefes; as lutas
-  difíceis ~95% todo mundo vence, não discriminam): um botão de força por herói (HP e ataque × p, mana ÷ p), iterado
-  para puxar quem está abaixo de média-8 e aparar quem está acima de média+14. Vitória contra chefe por herói: 12–76%
-  → ~20–48%. Mais fortes aparados (Sarab/mirage, Koschei/morrow, Hyppolita, Brutus/brakk 0,82–0,83; Strela, Brigid,
-  Kagero, Pivo ~0,9); mais fracos ajudados (Snezhana 1,5, Feuer 1,41, Khepri 1,3, Tordis 1,29, Umbra 1,27, Luna 1,26,
-  Serra/Feng 1,24, Nerina 1,23, Leshy 1,21...). Matriz: chefe 1 44% → 55% (times que vencem ao menos 1×: 67% → 88%),
-  chefe 2 31% → 31%; robô igual.
+  Serra, Mercurio, Feng, Melissa, Nerina, Astrid (I avoided "Stark": Marvel/Game of Thrones). (#42) PvE rebalancing
+  with `tools/tune-heroes.js` (each hero in the 1st slot + 2 random partners and items, against the 2 bosses; the
+  hard fights ~95% everyone wins, they don't discriminate): one strength knob per hero (HP and attack × p, mana ÷ p), iterated
+  to pull up whoever is below average-8 and trim whoever is above average+14. Win against boss per hero: 12–76%
+  → ~20–48%. Strongest trimmed (Sarab/mirage, Koschei/morrow, Hyppolita, Brutus/brakk 0.82–0.83; Strela, Brigid,
+  Kagero, Pivo ~0.9); weakest helped (Snezhana 1.5, Feuer 1.41, Khepri 1.3, Tordis 1.29, Umbra 1.27, Luna 1.26,
+  Serra/Feng 1.24, Nerina 1.23, Leshy 1.21...). Matrix: boss 1 44% → 55% (teams that win at least 1×: 67% → 88%),
+  boss 2 31% → 31%; robot unchanged.
 
-- **v33 (2026-09-29), lote 30 do David (#40): relíquias de formação** (`form: true`, `Sim.formation`, aplicadas no
-  `start()` pela posição inicial; linha de frente = 4 para o jogador e 3 para o fantasma, fundo = 7 / 0): Shieldwall
-  Banner (+10 armadura/RM por aliado vizinho), Lone Wolf Pelt (sozinho: +25% vel. ataque, +10% crítico), Vanguard Horn
-  (linha da frente: escudo 25% HP por 6 s), Rearguard Quiver (linha de trás: +20% ataque e AP), Battle Line Pennant
-  (todos na mesma linha: +15% vel. ataque e ataque), Mossy Totem (ao lado de terreno: +15% esquiva, +15 armadura).
-  O posicionamento mostra, ao vivo, quem ganha o quê; na luta aparece o nome do bônus em cima do herói.
+- **v33 (2026-09-29), batch 30 from David (#40): formation relics** (`form: true`, `Sim.formation`, applied in
+  `start()` by starting position; front line = 4 for the player and 3 for the ghost, back = 7 / 0): Shieldwall
+  Banner (+10 armor/MR per neighboring ally), Lone Wolf Pelt (alone: +25% attack speed, +10% crit), Vanguard Horn
+  (front line: 25% HP shield for 6 s), Rearguard Quiver (back line: +20% attack and AP), Battle Line Pennant
+  (all on the same line: +15% attack speed and attack), Mossy Totem (next to terrain: +15% dodge, +15 armor).
+  Positioning shows, live, who gets what; in the fight the bonus name appears above the hero.
 
-- **v32 (2026-09-29), lote 29 do David (#39): terreno no mapa.** `B.TERRAIN` (árvore, pedra, serra, lago) e `B.MAPS`
-  (9 mapas simétricos por (c,r)↔(7-c,7-r), o mesmo espelho dos fantasmas). Luta 1 = Open Meadow (vazio), chefes = Standing
-  Stones, o resto e cada andar do Gauntlet = próximo mapa de `B.MAP_ROTATION` (início pelo seed da run; as 2 lutas de um
-  passo podem ter mapas diferentes). Um mapa só entra se nenhum terreno cair onde um herói está ou onde um inimigo
-  começa (senão o próximo da rotação; último recurso = campo aberto); inimigos nunca nascem em terreno. Terreno bloqueia
-  andar e posicionar (`W.occ` = -1 na sim, `Run.setPos`/`autoPlace` recusam), tiro e magia passam por cima;
-  empurrão contra árvore/pedra/serra = "SLAM" (atordoa 1 s + meio ataque). Tocar no terreno explica o que é; nome do mapa
-  no cabeçalho do posicionamento e nos cartões das lutas. Equilíbrio: matriz dos chefes 44%/31% (antes 44%/29%), robô igual.
+- **v32 (2026-09-29), batch 29 from David (#39): terrain on the map.** `B.TERRAIN` (tree, stone, saw, lake) and `B.MAPS`
+  (9 maps symmetric by (c,r)↔(7-c,7-r), the same mirror as the ghosts). Fight 1 = Open Meadow (empty), bosses = Standing
+  Stones, the rest and each floor of the Gauntlet = next map in `B.MAP_ROTATION` (start from the run's seed; the 2 fights of one
+  step may have different maps). A map only enters if no terrain falls where a hero is or where an enemy
+  starts (otherwise the next one in the rotation; last resort = open field); enemies never spawn on terrain.
+  Terrain blocks walking and positioning (`W.occ` = -1 in the sim, `Run.setPos`/`autoPlace` refuse), shots and spells pass over;
+  a push into tree/stone/saw = "SLAM" (stuns 1 s + half an attack). Tapping the terrain explains what it is; map name
+  in the positioning header and on the fight cards. Balance: boss matrix 44%/31% (before 44%/29%), robot unchanged.
 
-- **v31 (2026-09-29), pedido do dono: Art Lab** ("bota no acesso do David pra ele anexar as imagens e testar como ficam
-  os bonecos"). Botão no fim do menu inicial (para todos; o nome digitado não é login). O David sobe uma splash e uma
-  folha de poses (4 figuras lado a lado num fundo de cor lisa, sem chão/sombra/barra/efeito), o lab recorta, mostra nas
-  cartas e numa luta de teste; "Use in my game" vale só naquele aparelho; **Send for review** cria um lote normal com
-  as imagens anexadas. **Lote com arte**: `node tools/sugestoes.js arte <lote>` → olhar as imagens (Read) → mesma regra
-  de aprovação (David/PC boy direto; outro nome = avisar o dono) e recusar personagem de terceiros, conteúdo sexual ou
-  sangrento demais para o tema infantil → aprovada: copiar para `art/<herói>/` (splash.jpg, idle/move/attack/cast.webp),
-  pôr a entrada em `OFFICIAL` do `js/art.js` com o `meta.json` (crop, flip, scale, ax), testar, publicar (o deploy já
-  copia `art/`). Um herói com imagem no tabuleiro e outros desenhados fica misturado: avisar o dono quando for trocar
-  só alguns.
+- **v31 (2026-09-29), request from the owner: Art Lab** ("put it in David's access so he can attach the images and test how the
+  characters look"). Button at the end of the start menu (for everyone; the typed name is not a login). David uploads a splash and a
+  pose sheet (4 figures side by side on a solid-color background, no ground/shadow/bar/effect), the lab crops it, shows it
+  on the cards and in a test fight; "Use in my game" applies only to that device; **Send for review** creates a normal batch with
+  the attached images. **Batch with art**: `node tools/suggestions.js art <batch>` → look at the images (Read) → same approval rule
+  (David/PC boy directly; any other name = notify the owner) and decline third-party characters, sexual content, or
+  content too bloody for the children's theme → approved: copy to `art/<hero>/` (splash.jpg, idle/move/attack/cast.webp),
+  put the entry in `OFFICIAL` of `js/art.js` with the `meta.json` (crop, flip, scale, ax), test, publish (the deploy already
+  copies `art/`). A hero with an image on the board and others drawn ends up mixed: notify the owner when replacing
+  only some of them.
 
-- **v30 (2026-09-29), lotes 27 e 28 do PC boy** (o dono liberou o PC boy como o David). (#37) **Gauntlet**: o andar s
-  (depois de s vitórias) é o grupo dos fantasmas que PERDERAM naquele andar (terminaram com s vitórias); o topo tem
-  **um único campeão** (`getChampion`/`demoteChampions`; dados antigos com vários campeões ficam só com o maior). Andar
-  logo abaixo do campeão também guarda quem caiu para o campeão. Quem vence o campeão, ou chega num andar que ninguém
-  alcançou, vira o novo campeão e o antigo vira fantasma comum do seu andar. Com campeão de 0 vitórias, o andar 1 sorteia
-  entre ele e os fantasmas 0-1. Andar vazio → o mais próximo acima → o campeão. Isso substitui a regra do #29 do David
-  (andar f = fantasma que terminou f-1). (#38) **Nível de conta**: XP só por primeiras vezes (1 por herói que passa do
-  PvE pela primeira vez, 5 por andar do Gauntlet novo, 3 por chefe vencido pela primeira vez) e 1 XP a cada 5 coroas
-  gastas; 10 XP por nível (`B.ACCOUNT`); jogadores antigos recebem o XP dos times salvos (`xpInit`, uma vez). Níveis 2 a
-  19 liberam **3 heróis novos** (Buzzwell apicultor: colmeia de AP + mel; Coralie das marés: onda de AP que empurra;
-  Stellan astrônomo: estrela de AD + AP com atordoamento), **5 itens** e **10 relíquias** (`B.UNLOCKS`); o que está
-  travado nunca aparece nas runs do jogador (`run.locked`, dado no `newRun`; bots e saves antigos veem tudo). Estrada de
-  recompensas na aba Player (ligas menores), nível no perfil e no menu, avisos de XP. **Loja**: Double XP 50 e Skip
-  fights 100 (o ⏭ virou vantagem paga). Colunas novas: `axp`, `cleared`, `pfloor`, `bosses`, `xpv`.
+- **v30 (2026-09-29), batches 27 and 28 from the PC boy** (the owner cleared the PC boy like David). (#37) **Gauntlet**: floor s
+  (after s victories) is the group of ghosts that LOST on that floor (finished with s victories); the top has
+  **a single champion** (`getChampion`/`demoteChampions`; old data with several champions keeps only the highest). The floor
+  right below the champion also holds whoever fell to the champion. Whoever beats the champion, or reaches a floor that nobody had
+  reached, becomes the new champion and the old one becomes a regular ghost of its floor. With a champion of 0 victories, floor 1 draws
+  between it and the 0-1 ghosts. Empty floor → the nearest one above → the champion. This replaces David's rule from #29
+  (floor f = ghost that finished f-1). (#38) **Account level**: XP only for first times (1 per hero that passes
+  PvE for the first time, 5 per new Gauntlet floor, 3 per boss beaten for the first time) and 1 XP per 5 crowns
+  spent; 10 XP per level (`B.ACCOUNT`); existing players receive the XP of their saved teams (`xpInit`, once). Levels 2 to
+  19 unlock **3 new heroes** (Buzzwell the beekeeper: AP hive + honey; Coralie of the tides: AP wave that pushes;
+  Stellan the astronomer: AD + AP star with stun), **5 items**, and **10 relics** (`B.UNLOCKS`); whatever is
+  locked never shows up in the player's runs (`run.locked`, set in `newRun`; bots and old saves see everything). Reward
+  road in the Player tab (smaller leagues), level in the profile and the menu, XP notices. **Shop**: Double XP 50 and Skip
+  fights 100 (the ⏭ became a paid perk). New columns: `axp`, `cleared`, `pfloor`, `bosses`, `xpv`.
 
-- **v29 (2026-09-29), pedido direto do dono** ("no telemóvel está bem enquadrado, mas para PC está horrível o
-  enquadramento ... deixar mais child friendly, parece ainda um jogo amador"). (1) **Tema infantil em todas as telas**
-  (camada v29 no fim do `style.css`): céu azul com brilhos coloridos, fontes arredondadas **Fredoka** (títulos e
-  botões) e **Nunito** (texto) servidas de `fonts/` (o CSP só aceita fonte do próprio site; licença OFL em
-  `fonts/README.txt`), botões "de bala" com sombra embaixo, cartões arredondados, escolhas do mapa como cartões
-  coloridos (verde fácil, amarelo médio, vermelho difícil, roxo chefe, azul loja, rosa evento), ícones amigáveis (👹
-  chefe, 🏆 Gauntlet, 💥 abates), raridades mais claras, e o **tabuleiro de grama** com céu (o Royal dos Reis continua
-  roxo e dourado). (2) **Palco de PC** (`body.desk`, tela larga de pelo menos 1024x560): cabeçalho na largura toda,
-  cada tela centralizada no espaço que sobra, **tabuleiro dimensionado pela altura** com o painel de 380 px ao lado
-  (`boardWidth`), grupo e próximo chefe no painel de posicionamento, mapa com o grupo numa coluna à direita, título em 2
-  colunas com os heróis grandes. `tools/tests/vitrine.mjs` fotografa as telas principais no celular e em 3 telas de
-  PC (1366x768, 1440x900, 1920x1080) e copia para `C:\Users\davi_\Downloads\balance-prints\` (o dono não vê
-  cartão de arquivo no chat). Celular com o mesmo enquadramento de antes (testes de caber na tela passam).
+- **v29 (2026-09-29), direct request from the owner** ("on the phone the framing is fine, but on PC the
+  framing is horrible ... make it more child friendly, it still looks like an amateur game"). (1) **Children's theme on all screens**
+  (v29 layer at the end of `style.css`): blue sky with colorful sparkles, rounded fonts **Fredoka** (titles and
+  buttons) and **Nunito** (text) served from `fonts/` (the CSP only accepts fonts from the site itself; OFL license in
+  `fonts/README.txt`), "candy" buttons with a shadow underneath, rounded cards, map choices as
+  colored cards (green easy, yellow medium, red hard, purple boss, blue shop, pink event), friendly icons (👹
+  boss, 🏆 Gauntlet, 💥 kills), clearer rarities, and the **grass board** with sky (the Kings' Royal stays
+  purple and gold). (2) **PC stage** (`body.desk`, wide screen of at least 1024x560): full-width header,
+  each screen centered in the remaining space, **board sized by height** with the 380 px panel beside it
+  (`boardWidth`), party and next boss in the placement panel, map with the party in a column on the right, title in 2
+  columns with the big heroes. `tools/tests/showcase.mjs` photographs the main screens on the phone and on 3 PC screens
+  (1366x768, 1440x900, 1920x1080) and copies them to `C:\Users\davi_\Downloads\balance-prints\` (the owner does not see
+  file cards in the chat). Phone keeps the same framing as before (fit-on-screen tests pass).
 
-- **v28 (2026-09-29), lote 26 do David** (#36): (1) **nomes próprios**, sem copiar outros jogos: os 33 heróis (Bastion
-  virou Brannoc, Pyra virou Emberlyn etc.), as habilidades com nome de outro jogo (Fireball → Cinder Comet, Consecrate →
-  Hallowed Ground, Keg Smash → Barrel Breaker, Fan the Hammer → Six-Shot Flurry...), as especializações famosas de
-  outros jogos (Rallying Cry, Divine Shield, Corpse Explosion, Death Lotus...), os 120 itens (os do LoL/TFT sumiram),
-  as 34 relíquias, os 5 conjuntos (Obsidian → Nightglass), a Hollow King (→ The Ashen Sovereign) e o Dark Knight
-  (→ Blackguard). **Só o nome exibido mudou: todo id continua igual** (saves, fantasmas e Elo de conteúdo seguem valendo).
-  (2) **Escala AD/AP**: habilidade escala com AD (ataque), AP ou os dois SOMADOS ("70% AD + 40% AP"); o AP nunca mais
-  multiplica o ataque. AP = 100 no Lv 1, +30 por nível, + itens. Magias, queimaduras de magia e curas usam % de AP
-  (valores convertidos de ab.dmg × ataque base); híbridos (Morvaine, Vorthrax, confete do Jumbles) usam `dmg` (AD) +
-  `apdmg` (AP); o escudo do Brannoc virou só % da vida (33%). Todo texto diz o atributo (descrições, painel "How it
-  scales" com os códigos P/M/MX/A/B/BA/H, How to play, dicas dos atributos). Ajuste por herói medido com um script de
-  vitória por herói contra os chefes (média 34,1% antes, 33,5% depois, todos a ±5 pontos); robô 300 runs: 22% / 49%,
-  25 no Gauntlet; matriz 45% / 29%.
+- **v28 (2026-09-29), batch 26 from David** (#36): (1) **original names**, without copying other games: the 33 heroes (Bastion
+  became Brannoc, Pyra became Emberlyn etc.), the abilities named after another game (Fireball → Cinder Comet, Consecrate →
+  Hallowed Ground, Keg Smash → Barrel Breaker, Fan the Hammer → Six-Shot Flurry...), the famous specializations from
+  other games (Rallying Cry, Divine Shield, Corpse Explosion, Death Lotus...), the 120 items (the LoL/TFT ones are gone),
+  the 34 relics, the 5 sets (Obsidian → Nightglass), the Hollow King (→ The Ashen Sovereign), and the Dark Knight
+  (→ Blackguard). **Only the displayed name changed: every id stays the same** (saves, ghosts, and content Elo remain valid).
+  (2) **AD/AP scaling**: an ability scales with AD (attack), AP, or both ADDED ("70% AD + 40% AP"); AP never again
+  multiplies attack. AP = 100 at Lv 1, +30 per level, + items. Spells, spell burns, and heals use % of AP
+  (values converted from ab.dmg × base attack); hybrids (Morvaine, Vorthrax, Jumbles' confetti) use `dmg` (AD) +
+  `apdmg` (AP); Brannoc's shield became only % of health (33%). Every text states the attribute (descriptions, "How it
+  scales" panel with the codes P/M/MX/A/B/BA/H, How to play, attribute tips). Per-hero adjustment measured with a
+  per-hero win script against the bosses (average 34.1% before, 33.5% after, all within ±5 points); bot 300 runs: 22% / 49%,
+  25 in the Gauntlet; matrix 45% / 29%.
 
-- **v27 (2026-09-29), pedido direto do dono = lote 25 do David** (o #35 é o mesmo texto que o dono colou no chat; #34 =
-  tela pós-batalha). **Coroas** = moeda da conta (coluna `players.gems`; a coluna antiga `crowns` continua contando
-  títulos de campeão, que na API viraram `titles` e no jogo 🏆). Ganha na 1ª vez que alcança cada liga na temporada
-  (`B.CROWNS.league` = Silver 10, Gold 20, Platinum 30, Diamond 50, Celestial 80). **Temporadas** de 28 dias desde
-  2026-09-28 (`B.SEASON`); virou a temporada, todos voltam ao Bronze (ficam `last_league` e `peak_league`); quem é de
-  antes das Coroas (season 0) mantém a liga e recebe pelas ligas já alcançadas (o David, Platinum, recebe 60).
-  **Loja** (`B.SHOP`, ícone 👑 no menu e no topo): 4× de velocidade 25 (2× continua grátis; o ⏭ pular luta continua
-  livre), Content Elo 20 (as abas Heroes/Items/Relics do Ladder e a linha de Elo do chefe ficaram trancadas; o GET
-  público `?ratings=1` responde 403), troca de nome 10 (paga a cada troca; o 1º nome, na porta do Gauntlet, é grátis e
-  o servidor só aceita nome novo por cima do padrão "Player xxxx"; os fantasmas levam o nome novo), **King Tier** 300
-  (tabuleiro Royal violeta e dourado, `B.Render.skin`; 👑 ao lado do nome; vê nos perfis de todos os heróis mais
-  jogados, os de maior taxa de vitória com 3+ jogos e o placar geral dos fantasmas; inclui 4× e Content Elo). Compra
-  com 2 toques. **Indicação**: `?ref=<código>` fica guardado até a 1ª run criar a conta; o indicador ganha 1% (mín. 1)
-  de toda Coroa que o amigo ganha jogando, para sempre (não encadeia). **Perfis**: código público de 12 hex
-  (sha256 de 'pub|'+pid, nunca o pid); todo nome de jogador (ranking, torre, card do fantasma, resultado do duelo)
-  abre o perfil (liga, Elo, melhor Gauntlet, títulos, runs, melhor liga, última temporada). A caixa de sugestões de
-  baixo saiu do menu (ficou o botão 💡 do topo, como o dono pediu). **Tela pós-batalha** (#34): faixa com o que foi
-  lutado, tempo, inimigos abatidos e heróis de pé; recompensas em fichas (ouro, item, XP, subidas de nível, Elo, liga,
-  Coroas); por herói dano causado com a fatia do time, dano recebido, abates (os da invocação contam para o dono) e
-  caído/de pé; a fila de inimigos com quem caiu. Testes: api 103, Chrome 100 (o `dev-server` ganhou `/__dev/grant`).
+- **v27 (2026-09-29), direct request from the owner = batch 25 from David** (#35 is the same text the owner pasted in the chat; #34 =
+  post-battle screen). **Crowns** = account currency (column `players.gems`; the old column `crowns` still counts
+  champion titles, which in the API became `titles` and in the game 🏆). Earned the 1st time each league is reached
+  in the season (`B.CROWNS.league` = Silver 10, Gold 20, Platinum 30, Diamond 50, Celestial 80). **Seasons** of 28 days since
+  2026-09-28 (`B.SEASON`); when the season rolls over, everyone goes back to Bronze (`last_league` and `peak_league` remain); those who are
+  from before the Crowns (season 0) keep their league and receive pay for the leagues already reached (David, Platinum, receives 60).
+  **Shop** (`B.SHOP`, 👑 icon in the menu and at the top): 4× speed 25 (2× is still free; the ⏭ skip fight is still
+  free), Content Elo 20 (the Heroes/Items/Relics tabs of the Ladder and the boss Elo line became locked; the public
+  GET `?ratings=1` answers 403), name change 10 (paid at each change; the 1st name, at the Gauntlet door, is free and
+  the server only accepts a new name over the default "Player xxxx"; ghosts take the new name), **King Tier** 300
+  (violet and gold Royal board, `B.Render.skin`; 👑 next to the name; sees in everyone's profiles the most
+  played heroes, those with the highest win rate with 3+ games, and the overall ghost scoreboard; includes 4× and Content Elo). Purchase
+  with 2 taps. **Referral**: `?ref=<code>` is kept until the 1st run creates the account; the referrer earns 1% (min. 1)
+  of every Crown the friend earns by playing, forever (does not chain). **Profiles**: public code of 12 hex
+  (sha256 of 'pub|'+pid, never the pid); every player name (ranking, tower, ghost card, duel result)
+  opens the profile (league, Elo, best Gauntlet, titles, runs, best league, last season). The suggestion box at the
+  bottom left the menu (the 💡 button at the top stayed, as the owner asked). **Post-battle screen** (#34): strip with what was
+  fought, time, enemies killed, and heroes standing; rewards as chips (gold, item, XP, level-ups, Elo, league,
+  Crowns); per hero damage dealt with the team share, damage taken, kills (summon kills count for the owner) and
+  fallen/standing; the enemy queue with who fell. Tests: api 103, Chrome 100 (the `dev-server` gained `/__dev/grant`).
 
-- **v26 (2026-09-29), lote 24 do David** (5 pedidos): (#29) andar f = fantasma cuja run TERMINOU com exatamente f
-  vitórias (ganhou aquele andar e perdeu o seguinte: "no 3º andar, fantasmas que terminaram 3-1"); o topo é o campeão
-  (nunca perdeu); qualquer jogador, inclusive você; sorteio; sem f exato, o recorde mais próximo acima; no andar 1 sem
-  ninguém, um fantasma de 0 vitórias; Gauntlet abandonado há 6 h conta como terminado (`pickGhost('eq'|'gt')`,
-  `STALE_MS`, `peakOf`); torre com max(1, peak) andares rotulados "k-1" e "campeão k-0". (#30) morte súbita = dano
-  verdadeiro em TODAS as unidades, 1%, 2%, 3%... da vida máx por segundo depois dos 45 s (`CFG.suddenDeathRamp`; saiu o
-  aumento de dano). (#31) o Elo do jogador só muda nos duelos (run perdida e chegada ao Gauntlet não contam mais; o Elo
-  de conteúdo e os pontos de liga continuam). (#32) as defesas do fantasma não mexem no Elo do dono (o Elo e o placar
-  do próprio fantasma continuam). (#33) controle com duração cheia, execuções, puxões e empurrões funcionam em chefes
-  (a redução de 60% dos venenos de % de vida continua). Balanceamento: fightScale [.., 1.55 no chefe 1, .., 2.45 no
-  chefe 2]; bot 300 runs: chefe 1 23%, chefe 2 41%, Gauntlet 24/300 (igual a antes do lote).
+- **v26 (2026-09-29), batch 24 from David** (5 requests): (#29) floor f = ghost whose run ENDED with exactly f
+  victories (won that floor and lost the next: "on the 3rd floor, ghosts that finished 3-1"); the top is the champion
+  (never lost); any player, including you; random draw; without an exact f, the nearest record above; on floor 1 with
+  nobody, a ghost with 0 victories; Gauntlet abandoned for 6 h counts as finished (`pickGhost('eq'|'gt')`,
+  `STALE_MS`, `peakOf`); tower with max(1, peak) floors labeled "k-1" and "champion k-0". (#30) sudden death =
+  true damage on ALL units, 1%, 2%, 3%... of max health per second after 45 s (`CFG.suddenDeathRamp`; the damage
+  increase is gone). (#31) the player's Elo only changes in duels (lost run and reaching the Gauntlet no longer count; content Elo
+  and league points continue). (#32) the ghost's defenses do not touch the owner's Elo (the ghost's own Elo and
+  scoreboard continue). (#33) full-duration crowd control, executions, pulls, and pushes work on bosses
+  (the 60% reduction of %-health poisons continues). Balance: fightScale [.., 1.55 on boss 1, .., 2.45 on boss
+  2]; bot 300 runs: boss 1 23%, boss 2 41%, Gauntlet 24/300 (same as before the batch).
 
-- **v25 (2026-09-28), lote 23 do David** ("all ghosts are saved ... a random ghost is used, not the first ghost ever to
-  lose at a level. The pool expands"): o sorteio pegava só os fantasmas com o MENOR recorde ≥ k (com poucos jogadores,
-  sempre o mesmo) e ignorava fantasmas de Gauntlets abandonados (status 'running' para sempre). Agora
-  `pickOpponent` sorteia entre TODOS os times salvos (qualquer status, menos o próprio) com wins ≥ k; outros jogadores
-  antes dos seus; coluna `teams.faced` guarda quem a run já enfrentou e ele só volta se não houver mais ninguém
-  (`nextOpponent`). `maxWins` (altura da torre) conta todos os status. `run-all.js` repete 1 vez os testes de Chrome
-  quando falham (esperas fixas sob carga) e avisa "(2nd try)".
+- **v25 (2026-09-28), batch 23 from David** ("all ghosts are saved ... a random ghost is used, not the first ghost ever to
+  lose at a level. The pool expands"): the draw picked only the ghosts with the LOWEST record ≥ k (with few players,
+  always the same one) and ignored ghosts from abandoned Gauntlets (status 'running' forever). Now
+  `pickOpponent` draws among ALL saved teams (any status, except your own) with wins ≥ k; other players
+  before yours; column `teams.faced` stores who the run has already faced and that one only comes back if there is nobody else
+  (`nextOpponent`). `maxWins` (tower height) counts all statuses. `run-all.js` repeats the Chrome tests 1 time
+  when they fail (fixed waits under load) and prints "(2nd try)".
 
-- **v24 (2026-09-28), lote 22 do David** (começa com 1 herói e 1 relíquia; +1 luta e +1 loja/evento antes de cada
-  chefe): `CFG.seq` com 17 passos (F X F X F X B X F X F X F X B S G), chefes nas lutas 4 e 8. A run guarda `seq` e
-  `fightScale` (save v5; runs antigas continuam com os 13 passos). Início: 3 heróis e 3 relíquias oferecidos, escolhe 1
-  de cada (`pickStart(run, [key], relic)`); com 1 herói só, a Hero Shop é sempre uma das opções da loja/evento.
-  Balanceamento (bot 300 runs): 1ª luta com metade do orçamento de inimigos (`CFG.firstFight` 0.5; sozinho ele caía em
-  30-70%), `fightScale` [1, .9, 1, 1.15, 1.5, 1.6, 1.8, 2, 2.3]: 1º chefe 24% (igual a antes), 2º 41%, Gauntlet 8% das
-  runs (era ~4%: um pouco mais generoso, como compensação). Matriz: Lv2 + 1 relíquia no chefe 1 (48-51%), Lv3 + 2
-  relíquias no chefe 2 (36-38%). Os testes de Chrome usam esperas fixas: se falharem em cascata logo depois da matriz,
-  rode de novo antes de mexer em código.
+- **v24 (2026-09-28), batch 22 from David** (starts with 1 hero and 1 relic; +1 fight and +1 shop/event before each
+  boss): `CFG.seq` with 17 steps (F X F X F X B X F X F X F X B S G), bosses at fights 4 and 8. The run stores `seq` and
+  `fightScale` (save v5; old runs continue with the 13 steps). Start: 3 heroes and 3 relics offered, pick 1
+  of each (`pickStart(run, [key], relic)`); with only 1 hero, the Hero Shop is always one of the shop/event options.
+  Balance (bot 300 runs): 1st fight with half the enemy budget (`CFG.firstFight` 0.5; alone it fell in
+  30-70%), `fightScale` [1, .9, 1, 1.15, 1.5, 1.6, 1.8, 2, 2.3]: 1st boss 24% (same as before), 2nd 41%, Gauntlet 8% of
+  runs (was ~4%: a bit more generous, as compensation). Matrix: Lv2 + 1 relic on boss 1 (48-51%), Lv3 + 2
+  relics on boss 2 (36-38%). The Chrome tests use fixed waits: if they fail in a cascade right after the matrix,
+  run again before touching code.
 
-- **v23 (2026-09-28), lote 21 do David** (ligas): `B.LEAGUES` Bronze, Silver, Gold, Platinum, Diamond, Celestial;
-  `B.LEAGUE_RULES` {step 10, duelWin +1, pveLoss -2}. Colunas `players.league` (índice) e `players.lp` (pontos dentro
-  da liga); `leaguePoints()` no api/elo.js: 10 pontos sobem uma liga, NUNCA cai (os pontos param em 0; decisão minha,
-  o David não disse), Celestial sem teto. `fail` dá -2, cada duelo vencido no `result` dá +1; respostas trazem
-  `league`, `lp` e `lg` (a mudança). UI: selo da liga + Elo no topo (abre a aba), aba **Player** no Ladder (banners das 6
-  ligas rolando na horizontal com a sua centralizada, o caminho entre elas com a barra de progresso, regras), escudo
-  da liga no Ranking (a antiga aba Players), linha de pontos e "Promoted to X!" nos resultados e no fim do Gauntlet.
-  Quem já jogava começou no Bronze com 0 (sem histórico confiável para recalcular).
+- **v23 (2026-09-28), batch 21 from David** (leagues): `B.LEAGUES` Bronze, Silver, Gold, Platinum, Diamond, Celestial;
+  `B.LEAGUE_RULES` {step 10, duelWin +1, pveLoss -2}. Columns `players.league` (index) and `players.lp` (points within
+  the league); `leaguePoints()` in api/elo.js: 10 points go up a league, NEVER drops (points stop at 0; my decision,
+  David did not say), Celestial with no cap. `fail` gives -2, each duel won in `result` gives +1; responses carry
+  `league`, `lp`, and `lg` (the change). UI: league badge + Elo at the top (opens the tab), **Player** tab in the Ladder (banners of the 6
+  leagues scrolling horizontally with yours centered, the path between them with the progress bar, rules), league
+  shield in the Ranking (the old Players tab), points line and "Promoted to X!" in the results and at the end of the Gauntlet.
+  Those who already played started in Bronze with 0 (no reliable history to recalculate from).
 
-- **v22 (2026-09-28), lote 20 do David** (chefes com Elo na aba de heróis, sem mexer no Elo do jogador): op `boss`
-  no api/elo.js (ratings kind 'boss', K 16, contra o Elo do jogador; conta no limite de 40/h por IP); o cliente manda
-  ao fim de toda luta de chefe (vitória ou derrota) e o resultado mostra "☠ Gorewarden's Elo X (±d)". A aba Heroes do
-  Ladder lista os 2 chefes junto (☠, nome em vermelho).
+- **v22 (2026-09-28), batch 20 from David** (bosses with Elo in the heroes tab, without touching the player's Elo): op `boss`
+  in api/elo.js (ratings kind 'boss', K 16, against the player's Elo; counts toward the 40/h limit per IP); the client sends
+  at the end of every boss fight (victory or defeat) and the result shows "☠ Gorewarden's Elo X (±d)". The Heroes tab of the
+  Ladder lists the 2 bosses together (☠, name in red).
 
-- **v21 (2026-09-28), lote 19 do David** ("not clear how hero abilities scale with AP, attack etc." + ler a habilidade
-  na tela de itens): `SCALE` no ui.js descreve cada uma das 33 habilidades como o sim calcula (P = % do ataque físico;
-  M = % do ataque × AP/100 mágico; A = mágico sem AP (Eclipse); B = queimadura × AP; H = cura % da vida máx × AP;
-  X/S = cura/escudo % da própria vida; D = % da vida do alvo por s; Z = frase). `scalingHTML` mostra os números atuais
-  (inclui specs e itens): no cartão do herói da ficha do time (tocar no retrato ou na linha "ⓘ habilidade"), no painel
-  de info do tabuleiro (compacto); `scaleTag` ("scales with attack · AP") na loja de heróis e na escolha inicial; regra
-  geral no How to play e na dica do atributo AP. SE MUDAR UMA HABILIDADE NO SIM, ATUALIZE `SCALE` (teste: telas checa
-  as 33 sem NaN).
+- **v21 (2026-09-28), batch 19 from David** ("not clear how hero abilities scale with AP, attack etc." + read the ability
+  on the items screen): `SCALE` in ui.js describes each of the 33 abilities as the sim calculates it (P = % of physical attack;
+  M = % of attack × AP/100 magic; A = magic without AP (Eclipse); B = burn × AP; H = heal % of max health × AP;
+  X/S = heal/shield % of own health; D = % of target's health per s; Z = phrase). `scalingHTML` shows the current numbers
+  (includes specs and items): on the hero card of the team sheet (tap the portrait or the "ⓘ ability" line), in the board's
+  info panel (compact); `scaleTag` ("scales with attack · AP") in the hero shop and the initial choice; general
+  rule in How to play and in the AP attribute tip. IF YOU CHANGE AN ABILITY IN THE SIM, UPDATE `SCALE` (test: screens checks
+  all 33 without NaN).
 
-- **v20 (2026-09-28), lote 18 do David** ("another pass of the ui and battle ui ... pretty, functional, visible,
-  engaging"): o celular deixava metade da tela vazia. Batalha: cartão por herói (vida e escudo em números, barra de mana
-  com o nome da habilidade e "READY", selos de controle STUN/SILENCE/..., dano ao vivo com coroa no líder, summons
-  contam para o dono) e a lista de inimigos com vida e "N de M restantes"; relógio m:ss com aviso da morte súbita.
-  Deploy: "You will face" (inimigos agrupados, elite, o que cada um faz; no Gauntlet os heróis do fantasma). Mapa: "Your
-  party" (nível, XP, itens, relíquias) e o próximo chefe com contagem de dias. Resultado: cartões com barra de dano, MVP,
-  barra de XP; prêmio da arena. Level up: splash de corpo inteiro, ganhos e o caminho das 4 specs. Tela larga deitada
-  (`body.side`): painel da batalha/deploy numa coluna ao lado do tabuleiro. Nomes novos no ui.js: `ccHTML`, `CC_STATUS`
-  (já existiam `statusHTML`/`STATUS` da fila de sugestões).
+- **v20 (2026-09-28), batch 18 from David** ("another pass of the ui and battle ui ... pretty, functional, visible,
+  engaging"): the phone left half the screen empty. Battle: card per hero (health and shield in numbers, mana bar
+  with the ability name and "READY", control badges STUN/SILENCE/..., live damage with a crown on the leader, summons
+  count for the owner) and the enemy list with health and "N of M remaining"; m:ss clock with sudden-death warning.
+  Deploy: "You will face" (grouped enemies, elite, what each one does; in the Gauntlet the ghost's heroes). Map: "Your
+  party" (level, XP, items, relics) and the next boss with a day countdown. Result: cards with damage bar, MVP,
+  XP bar; arena prize. Level up: full-body splash, gains, and the path of the 4 specs. Wide landscape screen
+  (`body.side`): battle/deploy panel in a column beside the board. New names in ui.js: `ccHTML`, `CC_STATUS`
+  (`statusHTML`/`STATUS` of the suggestion queue already existed).
 
-- **v19 (2026-09-28), lote 17 do David** ("the pink events are kinda bad ... more strategic depth"): 16 eventos (12
-  refeitos, ids mantidos; novos: scout, arena, armory, collector), todos com 3 escolhas e preço/risco visível. Escolhas
-  com alvo (`target: 'hero'|'item'|'type'`: o jogador escolhe o herói/item/tipo; `Run.eventTargets`), custo em ouro,
-  apostas com chance escrita, trocas (reforjar item para a raridade seguinte do mesmo tipo, apostar item, item por
-  relíquia, vender pelo preço cheio, trocar a última spec), e modificadores da PRÓXIMA luta (`next`: enemyHp/enemyAtk,
-  mana inicial, regen, ataque, ouro, prêmio lendário/ouro se vencer; `run.nextMod` -> `fight.mod`, aparece no mapa e
-  no deploy). Eventos dinâmicos (`dyn`) sorteiam a oferta ao abrir (`run.cur.offer`: 2 heróis nomeados, 3 itens de
-  tipos diferentes, conjunto que você já começou). `canChoose` diz o motivo quando não dá. Bônus de evento nos
-  fantasmas: `cleanTeam` aceita mr, cleanseOnce e hpPct negativo. `sim-run.js ... events` = bot que prefere eventos;
-  300 runs: Gauntlet 16-17 (novos) contra 12 (antigos), igual dentro do ruído.
+- **v19 (2026-09-28), batch 17 from David** ("the pink events are kinda bad ... more strategic depth"): 16 events (12
+  redone, ids kept; new: scout, arena, armory, collector), all with 3 choices and visible price/risk. Choices
+  with a target (`target: 'hero'|'item'|'type'`: the player picks the hero/item/type; `Run.eventTargets`), gold cost,
+  bets with written odds, trades (reforge an item to the next rarity of the same type, bet an item, item for
+  relic, sell at full price, swap the last spec), and modifiers for the NEXT fight (`next`: enemyHp/enemyAtk,
+  starting mana, regen, attack, gold, legendary/gold prize if you win; `run.nextMod` -> `fight.mod`, shown on the map and
+  in the deploy). Dynamic events (`dyn`) draw the offer when opened (`run.cur.offer`: 2 named heroes, 3 items of
+  different types, a set you have already started). `canChoose` gives the reason when it is not possible. Event bonuses on
+  ghosts: `cleanTeam` accepts mr, cleanseOnce, and negative hpPct. `sim-run.js ... events` = bot that prefers events;
+  300 runs: Gauntlet 16-17 (new) against 12 (old), same within the noise.
 
-- **v18 (2026-09-28), lote 16 do David** (Elo dos fantasmas + "cool UI for the gauntlet, moving up"): o duelo conta
-  para o fantasma também: o time guardado tem Elo próprio (`teams.elo_at` muda a cada defesa, K 32) e placar de defesas
-  (`def_w`/`def_l`); o jogador dono ganha/perde Elo quando o fantasma defende (K 16, e não quando é o seu próprio
-  fantasma). Heróis/itens/relíquias do fantasma já entravam no Elo de conteúdo desde a v15. `peak` (mais duelos que um
-  fantasma terminado venceu, `maxWins`) volta no enter/result e em GET `?peak=1` = altura da torre. UI: o Gauntlet é
-  uma torre (coroa no topo, andares de fantasmas, portão embaixo), o marcador (retrato do seu 1º herói) sobe um andar
-  animado a cada vitória; o resultado do duelo mostra o Elo do fantasma e do dono; o cartão mostra as defesas dele.
+- **v18 (2026-09-28), batch 16 from David** (ghost Elo + "cool UI for the gauntlet, moving up"): the duel counts
+  for the ghost too: the stored team has its own Elo (`teams.elo_at` changes at each defense, K 32) and a defense scoreboard
+  (`def_w`/`def_l`); the owner player gains/loses Elo when the ghost defends (K 16, and not when it is their own
+  ghost). The ghost's heroes/items/relics had already counted toward content Elo since v15. `peak` (most duels that a finished
+  ghost won, `maxWins`) comes back in enter/result and in GET `?peak=1` = tower height. UI: the Gauntlet is
+  a tower (crown at the top, floors of ghosts, gate at the bottom), the marker (portrait of your 1st hero) climbs a floor
+  animated at each victory; the duel result shows the ghost's and the owner's Elo; the card shows its defenses.
 
-- **v17 (2026-09-28), lote 15 do David** ("ghosts have items and relics as the player had"): itens e relíquias de
-  atributo do fantasma já valiam (heroDef com as relíquias dele), mas as relíquias de efeito de time (Phoenix Feather,
-  Vengeful Spirit, Frost Sigil, Thunder Totem, War Horn, Last Breath) só funcionavam para o lado do jogador. Agora o sim
-  guarda os efeitos por lado (`W.fl` jogador, `W.fl1` inimigo, `Sim.create({ enemyRelics })`, `flOf`); lutas normais
-  ficaram idênticas (mesmos números na matriz e no bot). O cartão do fantasma mostra os itens de cada herói e as
-  relíquias tocáveis. O fantasma guardado é o time ao entrar no Gauntlet (depois da última loja).
+- **v17 (2026-09-28), batch 15 from David** ("ghosts have items and relics as the player had"): the ghost's attribute items and
+  relics already counted (heroDef with its relics), but team-effect relics (Phoenix Feather,
+  Vengeful Spirit, Frost Sigil, Thunder Totem, War Horn, Last Breath) only worked for the player's side. Now the sim
+  stores the effects per side (`W.fl` player, `W.fl1` enemy, `Sim.create({ enemyRelics })`, `flOf`); normal fights
+  stayed identical (same numbers in the matrix and the bot). The ghost card shows each hero's items and the
+  tappable relics. The stored ghost is the team on entering the Gauntlet (after the last shop).
 
-- **v16 (2026-09-28), pedido direto do dono** ("itemização com itens divididos por tipo e raridade, parecidos com
-  Obsidian Knight"): 7 tipos e 7 raridades (preços 3/4/5/8/7/10/13). Os 78 itens antigos ganharam tipo (ids iguais:
-  saves, fantasmas e Elo de conteúdo seguem valendo); 11 comuns de 2 atributos viraram incomuns. 42 novos: 13 para
-  tipos com poucos itens, 7 lendários e 7 míticos (1 por tipo), 5 conjuntos de 3 peças (Obsidian Guard, Stormcaller,
-  Arcanist, Bloodmoon, Ranger). Loja: lendário/conjunto a partir da 2ª luta, mítico só a partir da 4ª. `addMods` pega
-  o melhor de cada parte da corrente (antes somava "a cada N ataques", o que piorava). Save v4 (`migrate`: 2º item do
-  mesmo tipo volta à bolsa); o servidor (`cleanTeam`) guarda fantasmas com 1 item por tipo. Ficha do time: bolsa em
-  grade de ícones (melhor raridade primeiro) com o cartão do item selecionado no topo; cada herói é um boneco com os 7
-  espaços em volta do retrato e os atributos ao lado; relíquias numa linha (tocar mostra o texto). Balanceamento igual
-  dentro do ruído (bot 150 runs: 1º chefe 24% contra 23%, Gauntlet 6 contra 8; matriz 65% e 45%).
+- **v16 (2026-09-28), direct request from the owner** ("itemization with items split by type and rarity, like
+  Obsidian Knight"): 7 types and 7 rarities (prices 3/4/5/8/7/10/13). The 78 old items got a type (same ids:
+  saves, ghosts, and content Elo remain valid); 11 commons with 2 attributes became uncommons. 42 new: 13 for
+  types with few items, 7 legendary and 7 mythic (1 per type), 5 sets of 3 pieces (Obsidian Guard, Stormcaller,
+  Arcanist, Bloodmoon, Ranger). Shop: legendary/set from the 2nd fight, mythic only from the 4th. `addMods` takes
+  the best of each part of the chain (before it added up "every N attacks", which made it worse). Save v4 (`migrate`: 2nd item of the
+  same type goes back to the bag); the server (`cleanTeam`) stores ghosts with 1 item per type. Team sheet: bag in
+  a grid of icons (best rarity first) with the selected item's card on top; each hero is a doll with the 7
+  slots around the portrait and the attributes beside it; relics in one row (tap shows the text). Balance the same
+  within the noise (bot 150 runs: 1st boss 24% against 23%, Gauntlet 6 against 8; matrix 65% and 45%).
 
-- **v15 (2026-09-28), lote 14 do David** (Elo): chegar ao Gauntlet = vitória contra um adversário de Elo 1000 (antes
-  não mexia no Elo); perder a run = derrota contra 1000 (antes era contra o próprio Elo − 200). Elo separado para cada
-  herói, item e relíquia (tabela `ratings`, K=16), para balanceamento. Só conta o que agiu na luta: heróis em campo,
-  itens equipados e relíquias com efeito de combate (`B.NONCOMBAT` lista os de ouro/XP/loja; Crest só com 4º herói,
-  Pack só se alguém usa o espaço extra). Eventos: run perdida (peças da luta perdida contra 1000), chegada (peças da
-  última luta de chefe contra 1000, `run.lastFight`), duelo (cada lado contra a média das peças do mesmo tipo do outro
-  lado; peça dos dois lados fica de fora). No máximo 40 lutas avaliadas por IP por hora (kv `rated:<iph>`). Abas no
-  🏆 Ladder: Players, Heroes, Items, Relics (Elo, lutas, % de vitória; os não jogados aparecem embaixo).
+- **v15 (2026-09-28), batch 14 from David** (Elo): reaching the Gauntlet = victory against an opponent of Elo 1000 (before it
+  did not touch Elo); losing the run = defeat against 1000 (before it was against their own Elo − 200). Separate Elo for each
+  hero, item, and relic (table `ratings`, K=16), for balancing. Only what acted in the fight counts: heroes on the field,
+  equipped items, and relics with combat effect (`B.NONCOMBAT` lists the gold/XP/shop ones; Crest only with a 4th hero,
+  Pack only if someone uses the extra slot). Events: lost run (pieces from the lost fight against 1000), arrival (pieces from the
+  last boss fight against 1000, `run.lastFight`), duel (each side against the average of the same-type pieces of the other
+  side; a piece on both sides is left out). At most 40 fights rated per IP per hour (kv `rated:<iph>`). Tabs in the
+  🏆 Ladder: Players, Heroes, Items, Relics (Elo, fights, win %; the unplayed ones appear at the bottom).
 
-- **v14 (2026-09-28), lote 13 do David** ("randomly adjusted to 75% of my screen", adaptar a tela/aparelho): causas
-  tratadas: elemento mais largo que a tela faz o celular reduzir a página (agora `overflow-x: hidden` e tudo cabe),
-  campo com fonte < 16px faz o iPhone dar zoom (inputs 16px), e no computador o jogo era uma coluna de 600px.
-  `layoutClasses()` põe `body.landscape` (celular deitado: tabuleiro à esquerda, painel à direita) ou `body.wide`
-  (tablet/computador: até 1180px, lojas em grade, tabuleiro até 1000px); o tabuleiro é dimensionado pela largura E pela
-  altura (`boardWidth`); refaz no resize, na rotação e no visualViewport. `tools/tests/dispositivos.mjs` joga em
-  360x640, 390x740, 740x360, 820x1180 e 1440x900 (está no run-all).
-- **v13 (2026-09-28), lote 12 do David** ("stickman", pediu splash art HD fora da luta e modelo alinhado na luta): o
-  humanoide ganhou volume (braço/antebraço, coxa/canela com articulação, mãos, botas, tronco com ombros e cintura,
-  pescoço, olhos com íris e brilho, sobrancelhas, boca). `js/splash.js` pinta a splash de cada unidade e TODO retrato
-  dos menus virou splash (busto quadrado ou figura inteira nos estandartes/título). Limite honesto: é arte feita em
-  código; não há gerador de imagem disponível (conector Higgsfield sem autorização; IA local reprovada antes). Se o
-  dono autorizar um gerador, dá para trocar por splash pintada de verdade mantendo os mesmos lugares.
-- **v12 (2026-09-28), lote 11 do David** ("many more unique heroes, go wild"): +15 heróis = 33 (Hippolyta amazona
-  lança+veneno, Deadshot sniper, Vesper vampiro, Kage ninja, Rex cão, Vey hipnotizador, Pip palhaço, Barley bebum, Azgul
-  demônio, Grok homem das cavernas, Imhotep múmia, Leonidas hoplita, Harlequin, Sprocket alquimista, Zephyr monge do
-  vento), 120 specs novas, modelos próprios. Mecânicas novas no sim: confusão (`st.confuseU`: ataca os próprios
-  aliados), cegueira (`st.blindU`: ataques erram), empurrão (`push`, com colisão), redução de dano (`buff 'dr'`),
-  fúria por vida perdida (`m.rageDmg`), resistência a controle (`m.ccResist`), truques/frascos aleatórios, morcegos.
-  Matriz com 5456 times: chefe 3 ≈ 62%, chefe 6 ≈ 49%.
-- **v11 (2026-09-28), lote 10 do David** (legibilidade): `fmt()` em ui.js colore termos do jogo (ataque, magia,
-  defesa, vida, controle, dano contínuo, crítico, mana, ouro, XP, alcance), deixa números em negrito e durações em
-  itálico em toda descrição (heróis, specs, itens, relíquias, eventos, chefes, mobs); tokeniza o texto CRU e escapa
-  cada pedaço (não pode receber HTML). Atributos viraram fichas coloridas com símbolo (`chips()`).
-- **v10 (2026-09-28), lote 9 do David** ("too big for my phone ... without scrolling", batalha mais bonita): tudo compacto;
-  o `telas.mjs` roda em 390x740 e checa que título, início, mapa, loja, deploy, batalha, resultado, evento, nível,
-  Team e Gauntlet cabem sem rolar (`noVScroll`). Batalha: painel no topo (título, relógio, 1×/2×/4×/⏭), faixa do time
-  com retrato + vida + mana embaixo, info só ao tocar. Efeitos só no renderer (o sim continua puro): faíscas por golpe,
-  tremor em crítico/golpe em área/morte de chefe, nome da habilidade ao lançar, alma subindo na morte, rastro nos
-  projéteis, brilho nos raios, números que "saltam", brasas no ar, barra de vida do chefe, vinheta vermelha na morte súbita.
-- **v9 (2026-09-28), lote 8 do David** ("more HD", ícones, "less demo, more final game with an identity"): modelos
-  cel-shaded (contorno de tinta, volume com gradiente, luz de borda, brilho), tabuleiro com textura de pedra, relevo e
-  vinheta; ícones para os 78 itens e 35 relíquias (lojas, bolsa, espaços, relíquias, fantasmas); identidade "Balance"
-  (a balança entre ordem e caos): emblema de balança em SVG, ferro escuro + ouro + carmesim, títulos em serifa
-  maiúscula, botões forjados, painéis emoldurados, medalhões no mapa, tela inicial com brasão e trio de heróis.
-  Tudo sem fonte/imagem externa (a CSP continua fechada). `tools/tests/icones.mjs` fotografa todos os ícones.
-- **v8 (2026-09-28), lotes 6 e 7 do David**: Onslaught removido por inteiro (modo, ondas, relíquia Onslaught Banner,
-  ranking de kills e `api/scores.js`; a tabela `scores` ficou no banco, sem uso). Depois da última loja vem direto o
-  Gauntlet. Lote 7 ("should only battle player ghosts"): a companhia aleatória do lote 5 saiu; só fantasmas de
-  jogadores, primeiro de outros jogadores, depois das suas próprias runs antigas (cartão diz "ghost of your own
-  earlier run"). O primeiro fantasma de todos, sem ninguém para enfrentar, é coroado. Saves v2 migram (`Run.migrate`).
-- **v7 (2026-09-28), lote 5 do David** ("the gauntlet isn't working"): ele era coroado sem lutar porque não havia
-  time salvo de outro jogador. Agora, enquanto nenhum time de jogador perdeu um duelo, a rodada 1 é contra uma
-  "companhia" aleatória crível (mesmo tamanho, nível e nº de itens do time dele; `pid 'bot'`, `status 'bot'`); depois
-  da 1ª derrota de um jogador, só times reais (primeiro de outros jogadores, depois os próprios mais antigos). Bug
-  achado pelo teste: chamada sem nome trocava o nome do jogador por "Player xxxx". As 2 coroas automáticas do David
-  (Gauntlet vazio) foram zeradas no banco.
-- **v6 (2026-09-28), lotes 3 e 4 do David**: sem corações (perdeu uma luta = fim da run = derrota de Elo contra
-  Elo−200). Depois do Onslaught vem o Gauntlet: o time é salvo e duela contra times salvos; a rodada k enfrenta um
-  time cujo Gauntlet terminou com k vitórias (ou o mais próximo acima); derrota encerra; se ninguém chegou tão longe,
-  coroa campeão. O lote 3 pedia Elo pela pontuação do Onslaught, o lote 4 mandou tirar: não existe. Eventos de
-  coração viraram ouro/XP. Saves v1 (com corações) são descartados. Robô sem corações: ~8/60 runs chegam ao Onslaught.
-- **v5 (2026-09-28), lote 2 do David**: time máximo 3 (Crest dá 4); +6 heróis com escala passiva (Thorne ataque por
-  golpe, Seraph armadura por segundo, Nyx ataque por morte perto, Bramble vida por segundo, Echo velocidade do time,
-  Blaze crítico por crítico) e 3 specs antigas que passaram a escalar (Iron Hide, Thick Hide, Quick Cast); +20 itens
-  e +11 relíquias (várias de escala); nível ~20% mais lento (30/85/180/330); chefes mais fracos para compensar; menu
-  de equipar com itens à esquerda e heróis à direita. Mods novos no sim: `stackAtk/stackAs/rampAtk/rampAtkPct/
-  rampArmor/rampHpPct/killAtk/critStack/apPerAtk/reap/stasis/manaMaxPct` (cada um com `...Cap`).
-- **v4 (2026-09-28), lote 1 do David**: unidades 2.5D com modelo e animação próprios (parado, andar, ataque, habilidade,
-  morte) no lugar dos emojis; retratos nos menus; escolhas do dia viraram estandartes de pano com textura gasta (SVG de
-  ruído em CSS, sem imagem externa); início com 3 heróis lado a lado estilo Dark Souls (escolhe 2 de 3; antes 2 de 4);
-  "Stage" virou "Day". Status `held` (espera o ok do dono) para envio de quem não é o David.
-- **v3 (2026-09-28)**: barra no topo que acompanha a revisão de quem enviou (na fila / Claude trabalhando / "ready,
-  press F5") e mostra o que entrou depois do F5; aviso "game was just updated" para os outros; aprovação 100%
-  automática. Testes: api 22, Chrome 31 (o `dev-server` tem `/__dev/resolve` e `/__dev/ship` para simular a minha parte).
-- **v2 (2026-09-28)**: revisão por botão no lugar da janela de tempo (a pessoa anota até 10 mudanças e aperta
-  "Send for review"; o envio vira um lote). Saíram `api/review.js` e os "Owner controls". Testes: api 19, Chrome 25.
-- **v1 (2026-09-28)**: jogo completo (12 heróis, 96 specs, 58 itens, 24 relíquias, 14 mobs + 2 chefes, 12 eventos),
-  caixa de sugestões + janela de revisão + vigia, ranking do Onslaught. Testes: motor 203, api 19, Chrome 22.
+- **v14 (2026-09-28), batch 13 from David** ("randomly adjusted to 75% of my screen", adapt to the screen/device): causes
+  addressed: an element wider than the screen makes the phone shrink the page (now `overflow-x: hidden` and everything fits),
+  a field with a font < 16px makes the iPhone zoom (inputs 16px), and on the computer the game was a 600px column.
+  `layoutClasses()` sets `body.landscape` (phone on its side: board on the left, panel on the right) or `body.wide`
+  (tablet/computer: up to 1180px, shops in a grid, board up to 1000px); the board is sized by width AND by
+  height (`boardWidth`); redone on resize, rotation, and visualViewport. `tools/tests/devices.mjs` plays at
+  360x640, 390x740, 740x360, 820x1180, and 1440x900 (it is in run-all).
+- **v13 (2026-09-28), batch 12 from David** ("stickman", asked for HD splash art outside the fight and an aligned model in the fight): the
+  humanoid gained volume (arm/forearm, thigh/shin with joint, hands, boots, torso with shoulders and waist,
+  neck, eyes with iris and shine, eyebrows, mouth). `js/splash.js` paints each unit's splash and EVERY portrait
+  in the menus became a splash (square bust or full figure on the banners/title). Honest limit: it is art made in
+  code; there is no image generator available (Higgsfield connector without authorization; local AI rejected before). If the
+  owner authorizes a generator, it can be swapped for a truly painted splash keeping the same places.
+- **v12 (2026-09-28), batch 11 from David** ("many more unique heroes, go wild"): +15 heroes = 33 (Hippolyta amazon
+  spear+poison, Deadshot sniper, Vesper vampire, Kage ninja, Rex dog, Vey hypnotist, Pip clown, Barley drunkard, Azgul
+  demon, Grok caveman, Imhotep mummy, Leonidas hoplite, Harlequin, Sprocket alchemist, Zephyr wind
+  monk), 120 new specs, own models. New mechanics in the sim: confusion (`st.confuseU`: attacks its own
+  allies), blindness (`st.blindU`: attacks miss), push (`push`, with collision), damage reduction (`buff 'dr'`),
+  rage per health lost (`m.rageDmg`), crowd-control resistance (`m.ccResist`), random tricks/flasks, bats.
+  Matrix with 5456 teams: boss 3 ≈ 62%, boss 6 ≈ 49%.
+- **v11 (2026-09-28), batch 10 from David** (readability): `fmt()` in ui.js colors game terms (attack, magic,
+  defense, health, control, damage over time, crit, mana, gold, XP, range), makes numbers bold and durations
+  italic in every description (heroes, specs, items, relics, events, bosses, mobs); it tokenizes the RAW text and escapes
+  each piece (it must not receive HTML). Attributes became colored chips with a symbol (`chips()`).
+- **v10 (2026-09-28), batch 9 from David** ("too big for my phone ... without scrolling", prettier battle): everything compact;
+  `screens.mjs` runs at 390x740 and checks that title, start, map, shop, deploy, battle, result, event, level,
+  Team, and Gauntlet fit without scrolling (`noVScroll`). Battle: panel at the top (title, clock, 1×/2×/4×/⏭), team strip
+  with portrait + health + mana below, info only on tap. Effects only in the renderer (the sim stays pure): sparks per hit,
+  shake on crit/area hit/boss death, ability name on cast, soul rising on death, trail on
+  projectiles, glow on rays, numbers that "jump", embers in the air, boss health bar, red vignette on sudden death.
+- **v9 (2026-09-28), batch 8 from David** ("more HD", icons, "less demo, more final game with an identity"): cel-shaded
+  models (ink outline, gradient volume, rim light, shine), board with stone texture, relief, and
+  vignette; icons for the 78 items and 35 relics (shops, bag, slots, relics, ghosts); "Balance" identity
+  (the scale between order and chaos): SVG scale emblem, dark iron + gold + crimson, uppercase serif titles, forged
+  buttons, framed panels, medallions on the map, title screen with crest and trio of heroes.
+  All without external fonts/images (the CSP stays closed). `tools/tests/icons.mjs` photographs all the icons.
+- **v8 (2026-09-28), batches 6 and 7 from David**: Onslaught removed entirely (mode, waves, Onslaught Banner relic,
+  kills ranking, and `api/scores.js`; the `scores` table stayed in the database, unused). After the last shop comes the
+  Gauntlet directly. Batch 7 ("should only battle player ghosts"): batch 5's random companion is gone; only ghosts of
+  players, first from other players, then from your own old runs (the card says "ghost of your own
+  earlier run"). The very first ghost, with nobody to face, is crowned. Saves v2 migrate (`Run.migrate`).
+- **v7 (2026-09-28), batch 5 from David** ("the gauntlet isn't working"): he was crowned without fighting because there was no
+  saved team from another player. Now, while no player team has lost a duel, round 1 is against a believable random
+  "companion" (same size, level, and number of items as his team; `pid 'bot'`, `status 'bot'`); after
+  a player's 1st defeat, only real teams (first from other players, then the oldest own ones). Bug
+  found by the test: a call without a name swapped the player's name for "Player xxxx". David's 2 automatic crowns
+  (empty Gauntlet) were zeroed in the database.
+- **v6 (2026-09-28), batches 3 and 4 from David**: no hearts (lost a fight = end of the run = Elo defeat against
+  Elo−200). After the Onslaught comes the Gauntlet: the team is saved and duels against saved teams; round k faces a
+  team whose Gauntlet ended with k victories (or the nearest above); defeat ends it; if nobody got that far,
+  crowns champion. Batch 3 asked for Elo from the Onslaught score, batch 4 ordered it removed: it does not exist. Heart events
+  became gold/XP. Saves v1 (with hearts) are discarded. Bot without hearts: ~8/60 runs reach the Onslaught.
+- **v5 (2026-09-28), batch 2 from David**: max team 3 (Crest gives 4); +6 heroes with passive scaling (Thorne attack per
+  hit, Seraph armor per second, Nyx attack per nearby kill, Bramble health per second, Echo team speed,
+  Blaze crit per crit) and 3 old specs that began to scale (Iron Hide, Thick Hide, Quick Cast); +20 items
+  and +11 relics (several scaling); level ~20% slower (30/85/180/330); weaker bosses to compensate; equip
+  menu with items on the left and heroes on the right. New mods in the sim: `stackAtk/stackAs/rampAtk/rampAtkPct/
+  rampArmor/rampHpPct/killAtk/critStack/apPerAtk/reap/stasis/manaMaxPct` (each with `...Cap`).
+- **v4 (2026-09-28), batch 1 from David**: 2.5D units with their own model and animation (idle, walk, attack, ability,
+  death) in place of emojis; portraits in the menus; daily choices became cloth banners with a worn texture (SVG
+  noise in CSS, no external image); start with 3 heroes side by side Dark Souls style (pick 2 of 3; before 2 of 4);
+  "Stage" became "Day". Status `held` (waits for the owner's ok) for submissions from anyone who is not David.
+- **v3 (2026-09-28)**: bar at the top that follows the review of whoever submitted (in the queue / Claude working / "ready,
+  press F5") and shows what came in after the F5; "game was just updated" notice for the others; 100%
+  automatic approval. Tests: api 22, Chrome 31 (the `dev-server` has `/__dev/resolve` and `/__dev/ship` to simulate my part).
+- **v2 (2026-09-28)**: review by button in place of the time window (the person notes up to 10 changes and presses
+  "Send for review"; the submission becomes a batch). `api/review.js` and the "Owner controls" are gone. Tests: api 19, Chrome 25.
+- **v1 (2026-09-28)**: complete game (12 heroes, 96 specs, 58 items, 24 relics, 14 mobs + 2 bosses, 12 events),
+  suggestion box + review window + watcher, Onslaught ranking. Tests: engine 203, api 19, Chrome 22.

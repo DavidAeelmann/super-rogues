@@ -1,14 +1,14 @@
 // Plays a whole run in a real (headless) Chrome at phone size, clicking the real buttons.
 // Checks: no JS errors, no CSP violations, no horizontal scroll, smooth movement (fractional positions mid-move),
-// suggestion list + 'Send for review' button + leaderboard. Screenshots go to tools/tests/.saida/.
-// Usage: node tools/tests/telas.mjs [baseUrl]   (without baseUrl it starts tools/dev-server.js)
+// suggestion list + 'Send for review' button + leaderboard. Screenshots go to tools/tests/.output/.
+// Usage: node tools/tests/screens.mjs [baseUrl]   (without baseUrl it starts tools/dev-server.js)
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(AQUI, '..', '..');
-const OUT = path.join(AQUI, '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.join(HERE, '..', '..');
+const OUT = path.join(HERE, '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 const PORT = 3791, CDP = 9431;
 const BASE = process.argv[2] || `http://localhost:${PORT}`;
@@ -44,7 +44,7 @@ await send('Runtime.enable'); await send('Page.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 740, deviceScaleFactor: 2, mobile: true });  // review #9: usable height of a phone browser
 await send('Emulation.setTouchEmulationEnabled', { enabled: true });
 if (process.env.LANG_ID) await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('balance.lang', '${process.env.LANG_ID}');` });   // LANG_ID=pt|de: plays the same flow in another language (the checks that read English text then fail; look at the screenshots)
-if (process.env.TRLOG) await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('balance.trlog', '1'); setInterval(() => { try { const all = new Set(JSON.parse(localStorage.getItem('balance.trall') || '[]')); for (const k of (window.B && B.i18n ? B.i18n.missing : [])) all.add(k); localStorage.setItem('balance.trall', JSON.stringify([...all])); } catch (e) {} }, 250);` });   // TRLOG=1: collects every English text the pages show, for tools/idiomas.js
+if (process.env.TRLOG) await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('balance.trlog', '1'); setInterval(() => { try { const all = new Set(JSON.parse(localStorage.getItem('balance.trall') || '[]')); for (const k of (window.B && B.i18n ? B.i18n.missing : [])) all.add(k); localStorage.setItem('balance.trall', JSON.stringify([...all])); } catch (e) {} }, 250);` });   // TRLOG=1: collects every English text the pages show, for tools/languages.js
 await send('Page.addScriptToEvaluateOnNewDocument', { source: `document.addEventListener('securitypolicyviolation', e => console.error('CSP ' + e.violatedDirective + ' ' + e.blockedURI));` });
 await send('Page.navigate', { url: BASE + '/' });
 await sleep(1200);
@@ -629,7 +629,7 @@ await click('#modal [data-act=close]'); await sleep(100);
 }
 if (process.env.TRLOG) { const all = await ev("localStorage.getItem('balance.trall')"); fs.writeFileSync(OUT + 'trlog.json', all || '[]'); console.log('trlog:', JSON.parse(all || '[]').length, 'texts'); }
 ok(errors.length === 0, 'no JS errors / CSP violations' + (errors.length ? ': ' + errors.slice(0, 5).join(' || ') : ''));
-console.log(`telas: ${oks} ok, ${fails} fail (screens in ${OUT})`);
+console.log(`screens: ${oks} ok, ${fails} fail (screens in ${OUT})`);
 try { ws.close(); } catch (_) {}
 chrome.kill(); if (server) server.kill();
 process.exit(fails ? 1 : 0);

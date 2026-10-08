@@ -1,15 +1,15 @@
 // Model gallery: every unit model in 4 poses (idle, walk, attack, cast), rendered in a real Chrome.
-// Writes tools/tests/.saida/galeria.png. Usage: node tools/tests/galeria.mjs
+// Writes tools/tests/.output/gallery.png. Usage: node tools/tests/gallery.mjs
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..', '..'), OUT = path.join(AQUI, '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..', '..'), OUT = path.join(HERE, '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 const PORT = 3794, CDP = 9434, sleep = ms => new Promise(r => setTimeout(r, ms));
 const server = spawn(process.execPath, [path.join(ROOT, 'tools', 'dev-server.js'), String(PORT)], { stdio: 'ignore' });
 await sleep(600);
-const prof = OUT + 'chrome-galeria'; fs.rmSync(prof, { recursive: true, force: true });
+const prof = OUT + 'chrome-gallery'; fs.rmSync(prof, { recursive: true, force: true });
 const chrome = spawn('C:/Program Files/Google/Chrome/Application/chrome.exe', ['--headless=new', `--remote-debugging-port=${CDP}`, '--user-data-dir=' + prof, 'about:blank'], { stdio: 'ignore' });
 let ws, id = 0; const pending = {};
 for (let i = 0; i < 60 && !ws; i++) { try { const p = (await (await fetch(`http://127.0.0.1:${CDP}/json`)).json()).find(x => x.type === 'page'); if (p) { ws = new WebSocket(p.webSocketDebuggerUrl); break; } } catch (_) {} await sleep(250); }
@@ -28,6 +28,6 @@ await send('Runtime.evaluate', { expression: `(() => {
 })()` });
 await sleep(300);
 const r = await send('Page.captureScreenshot', { format: 'png' });
-fs.writeFileSync(OUT + 'galeria.png', Buffer.from(r.result.data, 'base64'));
-console.log('galeria:', OUT + 'galeria.png');
+fs.writeFileSync(OUT + 'gallery.png', Buffer.from(r.result.data, 'base64'));
+console.log('gallery:', OUT + 'gallery.png');
 chrome.kill(); server.kill(); process.exit(0);

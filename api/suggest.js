@@ -1,5 +1,5 @@
 // Suggestion box. A player writes one or more changes (up to 10), then presses "Send for review": that POST is one
-// batch, and the watcher on the owner's PC (tools/vigia.js) wakes Claude right away to review it.
+// batch, and the watcher on the owner's PC (tools/watcher.js) wakes Claude right away to review it.
 // GET: public queue + reviewer status. GET ?batch=N: that batch's items + how many reviews are ahead of it (the page
 // polls this while "waiting for my review"). GET ?lite=1: reviewer status only (lastRun = "an update just shipped").
 // POST {items: [text...], name}. ({text} alone also works = batch of 1.)
@@ -7,7 +7,7 @@
 // meta}: pictures as data: URLs, checked here, kept in the `art` table for Claude's review and never served back by the
 // API. (The first version sent `poses` = one frame per pose; still accepted.)
 // 
-// FILE GUIDE. THE SUGGESTION BOX endpoint (GET the public queue, POST a batch of up to 10 changes + optional Art Lab pictures). Limits per visitor stop spam. The owner's watcher (tools/vigia.js) wakes the assistant when a batch arrives; the assistant answers through tools/sugestoes.js. The index of the whole project is CODEMAP.md.
+// FILE GUIDE. THE SUGGESTION BOX endpoint (GET the public queue, POST a batch of up to 10 changes + optional Art Lab pictures). Limits per visitor stop spam. The owner's watcher (tools/watcher.js) wakes the assistant when a batch arrives; the assistant answers through tools/suggestions.js. The index of the whole project is CODEMAP.md.
 const { send, body, sameOrigin, ipHash, clean } = require('./_http');
 const getStore = require('./_store');
 require('../js/hex.js'); require('../js/data.js');

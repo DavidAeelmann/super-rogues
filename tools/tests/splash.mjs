@@ -1,10 +1,10 @@
-// Splash sheet: every hero's splash art (+ some busts), rendered in a real Chrome. Writes tools/tests/.saida/splash.png.
+// Splash sheet: every hero's splash art (+ some busts), rendered in a real Chrome. Writes tools/tests/.output/splash.png.
 // Usage: node tools/tests/splash.mjs
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..', '..'), OUT = path.join(AQUI, '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..', '..'), OUT = path.join(HERE, '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 const PORT = 3798, CDP = 9438, sleep = ms => new Promise(r => setTimeout(r, ms));
 const server = spawn(process.execPath, [path.join(ROOT, 'tools', 'dev-server.js'), String(PORT)], { stdio: 'ignore' });
@@ -27,5 +27,5 @@ await send('Runtime.evaluate', { expression: `(() => {
 await sleep(300);
 const r = await send('Page.captureScreenshot', { format: 'png' });
 fs.writeFileSync(OUT + 'splash.png', Buffer.from(r.result.data, 'base64'));
-console.log('icones:', OUT + 'splash.png');
+console.log('splash:', OUT + 'splash.png');
 chrome.kill(); server.kill(); process.exit(0);

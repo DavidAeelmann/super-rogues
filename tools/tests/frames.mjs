@@ -1,15 +1,15 @@
-// v55 (review #67): a strip of battle frames to look at how smooth the fight moves (tools/tests/.saida/quadros.png).
-// Each frame is the board 120 ms after the one before, on a phone. Usage: node tools/tests/quadros.mjs [frames=12]
+// v55 (review #67): a strip of battle frames to look at how smooth the fight moves (tools/tests/.output/frames.png).
+// Each frame is the board 120 ms after the one before, on a phone. Usage: node tools/tests/frames.mjs [frames=12]
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..', '..'), OUT = path.join(AQUI, '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..', '..'), OUT = path.join(HERE, '.output') + path.sep;
 const NF = +(process.argv[2] || 12), PORT = 3798, CDP = 9438, sleep = ms => new Promise(r => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
 const server = spawn(process.execPath, [path.join(ROOT, 'tools', 'dev-server.js'), String(PORT)], { stdio: 'ignore' });
 await sleep(700);
-const prof = OUT + 'chrome-quadros'; fs.rmSync(prof, { recursive: true, force: true });
+const prof = OUT + 'chrome-frames'; fs.rmSync(prof, { recursive: true, force: true });
 const chrome = spawn('C:/Program Files/Google/Chrome/Application/chrome.exe', ['--headless=new', `--remote-debugging-port=${CDP}`, '--user-data-dir=' + prof, 'about:blank'], { stdio: 'ignore' });
 let ws, id = 0; const pending = {};
 for (let i = 0; i < 60 && !ws; i++) { try { const p = (await (await fetch(`http://127.0.0.1:${CDP}/json`)).json()).find(x => x.type === 'page'); if (p) { ws = new WebSocket(p.webSocketDebuggerUrl); break; } } catch (_) {} await sleep(250); }
@@ -34,6 +34,6 @@ for (let i = 0; i < NF; i++) {
   const s = await send('Page.captureScreenshot', { format: 'png', clip: { x: r[0], y: r[1], width: r[2], height: r[3], scale: 1 } });
   shots.push(s.result.data); await sleep(120);
 }
-fs.writeFileSync(OUT + 'quadros.json', JSON.stringify(shots));
-console.log('quadros: ' + shots.length + ' frames in ' + OUT + 'quadros.json');
+fs.writeFileSync(OUT + 'frames.json', JSON.stringify(shots));
+console.log('frames: ' + shots.length + ' frames in ' + OUT + 'frames.json');
 chrome.kill(); server.kill(); process.exit(0);

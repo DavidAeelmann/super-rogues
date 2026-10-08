@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Publishes Balance on Vercel (personal account "pokerush", project "balance"). Usage: bash tools/deploy.sh
-# Same pattern as kart-da-galera/risk-profitability: copy only the served files to a folder outside git (Hobby accounts
+# How: copy only the served files to a folder outside git (Hobby accounts
 # block deploys whose commit author is not the owner) and use the personal login kept in a separate global config.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -19,5 +19,5 @@ echo "$out"
 cd "$ROOT"
 if [ -f "$STAGE/.vercel/project.json" ]; then mkdir -p .vercel && cp "$STAGE/.vercel/project.json" .vercel/; fi
 url=$(echo "$out" | grep -o 'https://balance-[a-z0-9-]*\.vercel\.app' | head -n 1 || true)
-if [ $code -eq 0 ]; then echo "$(date +%F_%T) ${url:-?}" >> tools/publicacoes.log; fi
+if [ $code -eq 0 ]; then echo "$(date +%F_%T) ${url:-?}" >> tools/deploys.log; fi
 exit $code

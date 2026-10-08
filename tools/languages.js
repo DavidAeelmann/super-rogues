@@ -1,8 +1,8 @@
 // Lists the texts of the game data (names, descriptions, shop lines...) that have no translation yet in js/lang-pt.js and js/lang-de.js.
-// Usage: node tools/idiomas.js [pt|de]        (no argument = both)      exit code 1 when something is missing
+// Usage: node tools/languages.js [pt|de]        (no argument = both)      exit code 1 when something is missing
 // Add a missing text by hand: one line "English": "translation" in the x table of the language file (js/lang-pt.js, js/lang-de.js).
-// What is not in the data (menus, buttons, messages of the screens) is found by playing: node tools/tests/telas.mjs with TRLOG=1 LANG_ID=pt
-// writes tools/tests/.saida/trlog.json with every text the pages showed that has no translation (see js/i18n.js).
+// What is not in the data (menus, buttons, messages of the screens) is found by playing: node tools/tests/screens.mjs with TRLOG=1 LANG_ID=pt
+// writes tools/tests/.output/trlog.json with every text the pages showed that has no translation (see js/i18n.js).
 global.window = global;
 for (const f of ['hex', 'data', 'sim', 'run']) require('../js/' + f + '.js');
 const KEYS = new Set(['name', 'desc', 'abName', 'abDesc', 'role', 'text', 'label', 'title', 'tip', 'risk', 'hint', 'blurb', 'info', 'msg', 'sub', 'story', 'tag', 'short']);

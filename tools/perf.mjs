@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..'), OUT = path.join(AQUI, 'tests', '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..'), OUT = path.join(HERE, 'tests', '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 const SECS = +(process.argv[2] || 20), WIDTH = +(process.argv[3] || 900);
 const PORT = 3798, CDP = 9438, sleep = ms => new Promise(r => setTimeout(r, ms));

@@ -1,15 +1,15 @@
-// Icon sheet: every item and relic icon, rendered in a real Chrome. Writes tools/tests/.saida/icones.png.
-// Usage: node tools/tests/icones.mjs
+// Icon sheet: every item and relic icon, rendered in a real Chrome. Writes tools/tests/.output/icons.png.
+// Usage: node tools/tests/icons.mjs
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..', '..'), OUT = path.join(AQUI, '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..', '..'), OUT = path.join(HERE, '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 const PORT = 3797, CDP = 9437, sleep = ms => new Promise(r => setTimeout(r, ms));
 const server = spawn(process.execPath, [path.join(ROOT, 'tools', 'dev-server.js'), String(PORT)], { stdio: 'ignore' });
 await sleep(600);
-const prof = OUT + 'chrome-icones'; fs.rmSync(prof, { recursive: true, force: true });
+const prof = OUT + 'chrome-icons'; fs.rmSync(prof, { recursive: true, force: true });
 const chrome = spawn('C:/Program Files/Google/Chrome/Application/chrome.exe', ['--headless=new', `--remote-debugging-port=${CDP}`, '--user-data-dir=' + prof, 'about:blank'], { stdio: 'ignore' });
 let ws, id = 0; const pending = {};
 for (let i = 0; i < 60 && !ws; i++) { try { const p = (await (await fetch(`http://127.0.0.1:${CDP}/json`)).json()).find(x => x.type === 'page'); if (p) { ws = new WebSocket(p.webSocketDebuggerUrl); break; } } catch (_) {} await sleep(250); }
@@ -26,6 +26,6 @@ await send('Runtime.evaluate', { expression: `(() => {
 })()` });
 await sleep(300);
 const r = await send('Page.captureScreenshot', { format: 'png' });
-fs.writeFileSync(OUT + 'icones.png', Buffer.from(r.result.data, 'base64'));
-console.log('icones:', OUT + 'icones.png');
+fs.writeFileSync(OUT + 'icons.png', Buffer.from(r.result.data, 'base64'));
+console.log('icons:', OUT + 'icons.png');
 chrome.kill(); server.kill(); process.exit(0);

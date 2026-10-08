@@ -8,7 +8,7 @@
 //   RECIPES.  Make fights easier or harder: edit B.CFG.fightScale and B.DIFF, then run "node tools/pve-odds.js" to see the win rates (easy ~99%, medium ~90%, hard ~60%, bosses ~55%).
 //             Change a price or the gold rewards: B.CFG.  Change a hero's power: edit his block here, then "node tools/hero-odds.js" shows his win rate against the others (aim 54-60%).
 //             Add a hero: copy a block in B.HEROES, give it a new key, fill the fields (see the guide above B.HEROES), add its TAGS line (10 to 38 characters), a model in js/models.js, and if the ability is new:
-//             A.<ability> in js/sim.js and an entry in SCALE in js/ui.js. Then update the hero count in tools/tests/motor.js.  Add an item or power: add one line to B.ITEMS (N(...)) or B.RELICS (R(...)).
+//             A.<ability> in js/sim.js and an entry in SCALE in js/ui.js. Then update the hero count in tools/tests/engine.js.  Add an item or power: add one line to B.ITEMS (N(...)) or B.RELICS (R(...)).
 //             "mods" is the shared vocabulary of stats (atk, hpPct, asPct, crit, armor...); run.js adds them up (heroMods) and sim.js reacts to the special ones. Read the existing items to see which names exist.
 //   Texts you see in the game for heroes, items, powers and events are all in this file. Renaming something here renames it everywhere (ids stay the same, so saves keep working).
 (function (G) {

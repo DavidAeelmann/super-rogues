@@ -5,7 +5,7 @@
 //   (titleHTML, startHTML, mapHTML, deployHTML, battleHTML, resultHTML, shopHTML, eventHTML, gauntletHTML, overHTML...). Buttons never have code inside: each one has data-act="name"
 //   and one listener at the bottom calls ACT[name]. So to change what a button does: find its data-act in the HTML, then the same name in the ACT = { ... } table near the end.
 //   To change a TEXT you see on screen: search for it in this file (or in data.js for names of heroes, items, powers and events).
-//   Rule of the game owner: no screen may need scrolling at 390 x 740 and 360 x 640, and no text may be cut off (the Chrome tests check it: tools/tests/telas.mjs).
+//   Rule of the game owner: no screen may need scrolling at 390 x 740 and 360 x 640, and no text may be cut off (the Chrome tests check it: tools/tests/screens.mjs).
 //   Sections, top to bottom: tiny helpers (store, esc, icons) -> account / XP / league -> text helpers (fmt colours keywords, ability scaling) -> header and render() ->
 //   title + start -> map -> level up -> deploy + battle -> result -> Gauntlet -> shop -> event -> game over -> board input -> battle loop -> modals + toast -> gear (items) screen ->
 //   suggestion box -> ladder and profiles -> crown shop -> how to play -> review notice -> ACT table -> boot. The index of the whole project is CODEMAP.md.
@@ -1679,7 +1679,7 @@
   // WHAT: SUGGESTION BOX. "Send for review" lets anyone propose changes; they go to api/suggest.js and the owner's assistant reads them. ago() = "5 min ago".
   function ago(ms, now) { const s = Math.max(0, Math.round((now - ms) / 1000)); return s < 60 ? s + 's ago' : s < 3600 ? Math.round(s / 60) + ' min ago' : Math.round(s / 3600) + ' h ago'; }
   // Suggestions: the player writes changes into a local list (up to 10), then presses "Send for review".
-  // That sends the whole list as one batch and wakes Claude (tools/vigia.js) right away.
+  // That sends the whole list as one batch and wakes Claude (tools/watcher.js) right away.
   // WHAT: the list of drafted changes kept in the browser before sending (max 10).
   const MAX_DRAFTS = 10;
   const drafts = () => store.get('balance.drafts', []);

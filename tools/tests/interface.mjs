@@ -1,12 +1,12 @@
 // UI audit (review #108, David: "make sure no screen must ever scroll to click on any button"): plays a run in a real (headless) Chrome at phone sizes, taps
 // around (menus, start, map, shops, events, level up, deploy with a hero or an enemy selected, battle, result) and on EVERY state checks that the page does not
 // scroll and every button / link that is on screen is fully inside the screen (nothing hidden below the lower edge).
-// Usage: node tools/tests/interface.mjs [en|pt|de]     (default: en; run-all.js runs en)      Screenshots of every failure go to tools/tests/.saida/ia-*.png
+// Usage: node tools/tests/interface.mjs [en|pt|de]     (default: en; run-all.js runs en)      Screenshots of every failure go to tools/tests/.output/ia-*.png
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const AQUI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(AQUI, '..', '..'), OUT = path.join(AQUI, '.saida') + path.sep;
+const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..', '..'), OUT = path.join(HERE, '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 const LANGS = process.argv[2] ? [process.argv[2]] : ['en'];
 const PORT = 3796, CDP = 9436, sleep = ms => new Promise(r => setTimeout(r, ms));
