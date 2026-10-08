@@ -2775,3 +2775,6 @@ button.achc.got { cursor: pointer; }
 /* v76 (review #154): the redeem code link and box under the Crown Shop wallet */
 .redeemb { min-height: 0; padding: 4px 12px; margin: -2px 0 8px; font-size: 12px; border-radius: 10px; background: transparent; border: 1px dashed #ffcf5a55; color: var(--gold-hi); }
 .redeem { margin: -2px 0 8px; gap: 6px; } .redeem input { flex: 1; min-width: 0; text-transform: none; }
+/* v77 (review #156): on a computer (a mouse) the see-through blur behind the top bar and the sheets is redrawn over the whole big screen at every
+   board frame, and a computer without a strong graphics card lags on it: a solid colour instead */
+@media (pointer: fine) { #top { backdrop-filter: none; background: #1e2a8f; } #modal { backdrop-filter: none; background: #0d1146c8; } }

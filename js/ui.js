@@ -1348,6 +1348,10 @@
     ['3', '2', '1', 'FIGHT!'].forEach((t, i) => setTimeout(() => { if (battle !== b) { el.remove(); return; } el.innerHTML = `<b class="${i === 3 ? 'go' : ''}">${t}</b>`; sfx(i === 3 ? 'go' : 'pick'); }, i * step));
     setTimeout(() => el.remove(), step * 3 + 700);
   }
+  const DPR_STEPS = [1.5, 1, 0.8, 0.65, 0.5];
+  // a computer (mouse) also counts 30 fps as slow; a phone not (iPhones in Low Power Mode draw 30 frames a second on purpose)
+  const SLOW_MS = matchMedia('(pointer: fine)').matches ? 26 : 34;
+  { const m = +store.get('balance.maxDpr', 0); if (m >= 0.5 && m <= 2) Render.maxDpr = m; }
   // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
   function loop(now) {
     const b = battle; if (!b) return;
@@ -1355,8 +1359,9 @@
     const dt = Math.min(100, now - b.last); b.last = now;
     // v62r: a computer that draws slowly (no graphics acceleration, weak integrated GPU) gets a smaller canvas by itself: frames slower than ~30 fps for about 1.5 s
     // drop the pixel ratio one step (2 -> 1.5 -> 1); the picture keeps its size on screen, just a little softer
-    b.slow = Math.max(0, Math.min(60, (b.slow || 0) + (dt > 34 ? 1 : -1)));
-    if (b.slow >= 45 && view && view.dpr > 1 && !document.hidden) { b.slow = 0; Render.maxDpr = view.dpr > 1.5 ? 1.5 : 1; view = Render.setup(view.canvas, view.w); }
+    b.slow = Math.max(0, Math.min(60, (b.slow || 0) + (dt > SLOW_MS ? 1 : -1)));
+    // v77 (review #156): the steps go on below 1 (a computer without graphics acceleration), and the level found is kept for the next visits
+    if (b.slow >= 30 && view && view.dpr > DPR_STEPS[DPR_STEPS.length - 1] + 0.01 && !document.hidden) { b.slow = 0; Render.maxDpr = DPR_STEPS.find(x => x < view.dpr - 0.01); store.set('balance.maxDpr', Render.maxDpr); view = Render.setup(view.canvas, view.w); }
     const TICK = 1000 / Sim.TPS;
     if (!b.W.over && !(b.hold && now < b.hold)) { b.acc += dt * ui.speed; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }
     // v42 (review #51): the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)
