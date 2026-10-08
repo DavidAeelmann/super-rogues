@@ -56,7 +56,7 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 
 ## 3. "I want to..." recipes
 
-**Change how hard the fights are.** `js/data.js`: `B.CFG.fightScale` (strength of fight 1 to 8) and `B.DIFF` (easy / medium / hard per fight). Then run `node tools/pve-odds.js` to see the win rates (aim: easy about 99%, medium about 90%, hard about 60%, bosses about 55%). To let the computer find the numbers: `node tools/tune-pve.js`.
+**Change how hard the fights are.** `js/data.js`: `B.CFG.fightScale` (strength of fight 1 to 8) and `B.DIFF` (easy / medium / hard per fight). Then run `node tools/pve-odds.js` to see the win rates (aim: easy about 99%, medium about 90%, hard about 60%, bosses about 55%). To let the computer find the numbers: `node tools/tune-pve.js`. Or let the balance mechanism decide from the evidence: `node tools/balance/run.js` (report only) or `--apply`.
 
 **Change a price or a gold reward.** `js/data.js`, `B.CFG` (`heroCost`, `itemCost`, `relicCost`, `reroll`, `gold`).
 
@@ -145,6 +145,7 @@ Some numbers in it (hero counts, etc.) are older than the code; trust the code a
 | `tools/sim-run.js`, `tools/boss-matrix.js`, `tools/tune-heroes.js`, `tools/audit-abilities.js`, `tools/challenge-odds.js` | a bot plays whole runs / all teams of 3 against the 2 bosses / boss win rate per hero and automatic tuning (v34) |
 | `tools/relic-odds.js` | v50, redone in v61: how much each fight relic is worth (the same teams from `_team.js` play Hard 3, Hard 6 and boss 8 without and with it; measures the gain in "margin" x100 and in wins). `node tools/relic-odds.js [times=60] [ids|all]` |
 | `tools/_team.js` | v61: the typical team of fight N of a run (random heroes: 1, 2, then 3; the level the XP gives; shop items of that point with Auto-equip; fight relics) and `fight()` = win + margin (-1..1: health left of the winner). Base of all the tools below |
+| `tools/balance/run.js` | v81 (review #159): THE BALANCE MECHANISM. Evidence from the simulation (controlled: start hero dealt evenly, one item / power forced) and from live data (ratings, fstats, and the `picks` table: pick rate and pick win rate), Wilson intervals, empirical-Bayes shrink, z vs peers, measured elasticities; changes only what passes |z| >= 2 and the tolerance, in damped capped steps; `--apply` writes them (`tools/balance/apply.js`: hero power, item / power numbers and their text and translations, enemy strength) and `tools/balance/verify.js` re-measures. Report: `tools/results/BALANCE.md`. `node tools/balance/run.js [--apply] [--heroes 600] [--items 300] [--relics 300]` |
 | `tools/pve-odds.js` | v61: win rate in each fight of the run (1..8, easy/medium/hard, bosses 4 and 8). Targets: easy ~99%, medium ~90%, hard ~60%, boss ~55%. `node tools/pve-odds.js [times=60] [seed=9000]` (another seed = new teams) |
 | `tools/tune-pve.js` | v61: tunes the PvE curve (`CFG.fightScale` per fight = medium and boss; `DIFF.easy.mul` / `DIFF.hard.mul` per fight) to the targets; prints the values to paste into data.js. `node tools/tune-pve.js [rounds=8] [times=80]` |
 | `tools/clear-gauntlet.js` | v62: FOR THE OWNER: makes a backup and deletes all the tower ghosts (`--dry` only counts). I do not run it (auto mode blocks it) |

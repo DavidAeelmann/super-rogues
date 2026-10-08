@@ -80,7 +80,14 @@
     run.heroes.push(h); autoPlace(run, h); return h;
   }
   // WHAT: finishes the start screen: adds the chosen heroes and the chosen starting power, then moves to the first day.
+  // v81 (review #159): the balance evidence (tools/balance). run.tele counts what the run was OFFERED and what it TOOK, by 'kind:id' (hero, item, relic,
+  // event = 'event:<id>#<choice>' or '#skip'); the server adds them up at the end of the run with its result (table picks), which gives the pick rate and
+  // the win rate of the runs that picked each thing. Nothing here changes the game.
+  // WHAT: counts things offered (seen) and taken (took) in run.tele.
+  function seen(run, kind, ids) { const t = run.tele = run.tele || { o: {}, p: {} }; for (const id of ids || []) if (id) t.o[kind + ':' + id] = (t.o[kind + ':' + id] || 0) + 1; }
+  function took(run, kind, id) { const t = run.tele = run.tele || { o: {}, p: {} }; if (id) t.p[kind + ':' + id] = (t.p[kind + ':' + id] || 0) + 1; }
   function pickStart(run, keys, relic) {
+    seen(run, 'hero', run.startOffer); seen(run, 'relic', run.relicOffer); for (const k of keys.slice(0, C.maxTeam)) took(run, 'hero', k); took(run, 'relic', relic);
     for (const k of keys.slice(0, C.maxTeam)) addHero(run, k);
     if (relic && B.RELIC[relic]) gainRelic(run, relic);
     for (let i = 0; i < (C.startItems || 0); i++) run.bag.push(randomItem(run, 'common'));   // v63 (review #118): a few common items to start with
@@ -424,6 +431,7 @@
   // WHAT: the player picked a free recruit: the hero joins (level 1) and the run goes on to the next day.
   function recruit(run, key) {
     if (run.phase !== 'recruit' || !(run.recruitOffer || []).includes(key)) return 'Pick one of the offered heroes';
+    seen(run, 'hero', run.recruitOffer); took(run, 'hero', key);
     addHero(run, key); run.recruits = (run.recruits || 0) + 1; run.recruitOffer = null;
     advance(run); return null;
   }
@@ -523,6 +531,8 @@
   // WHAT: takes steal option i. A hero joins the team; with a full team it needs replaceUid (the hero it replaces, whose items go to the bag). Then the run moves on. Returns an error text or null.
   function steal(run, i, replaceUid) {
     const o = run.steal && run.steal[i]; if (!o) return 'Nothing to take';
+    for (const x of run.steal) seen(run, x.kind, [x.kind === 'hero' ? x.hero.key : x.id]);
+    took(run, o.kind, o.kind === 'hero' ? o.hero.key : o.id);
     if (o.kind === 'hero') {
       const full = run.heroes.length >= teamMax(run), old = full ? run.heroes.find(h => h.uid === replaceUid) : null;
       if (full && !old) return 'Pick the hero it replaces';
@@ -705,14 +715,14 @@
     return pickN(run, relicsOf(run).filter(r => !run.relics.includes(r.id)).map(r => r.id), 4).map(id => ({ kind: 'relic', id, price: Math.max(1, C.relicCost - seal(run)) + (has(run, 'cabinet') ? 3 : 0) }));
   }
   // WHAT: a new shop object { kind, stock, rerolls }.
-  function makeShop(run, kind) { return { type: 'shop', kind, stock: stockFor(run, kind), rerolls: 0 }; }
+  function makeShop(run, kind) { const stock = stockFor(run, kind); for (const s of stock) seen(run, s.kind, [s.id]); return { type: 'shop', kind, stock, rerolls: 0 }; }
   // WHAT: gold cost to refresh a shop (free with some powers).
   function rerollCost(run) { return has(run, 'deck') || (run.relics.includes('dice') && run.cur.rerolls === 0) ? 0 : C.reroll; }
   // WHAT: refreshes the stock of the open shop. Returns false when you cannot afford it.
   function reroll(run) {
     const c = rerollCost(run); if (run.gold < c) return false;
     if (has(run, 'deck') && run.cur.stock.length <= 2) return false;   // v50: the Shuffled Deck has run out of cards
-    const n = run.cur.stock.length; run.gold -= c; run.cur.rerolls++; run.cur.stock = stockFor(run, run.cur.kind);
+    const n = run.cur.stock.length; run.gold -= c; run.cur.rerolls++; run.cur.stock = stockFor(run, run.cur.kind); for (const s of run.cur.stock) seen(run, s.kind, [s.id]);
     if (has(run, 'deck')) run.cur.stock = run.cur.stock.slice(0, Math.max(2, n - 2));   // v51: two at a time, so it stays even
     return true;
   }
@@ -726,6 +736,7 @@
     }
     else if (s.kind === 'item') run.bag.push(s.id);
     else gainRelic(run, s.id);
+    took(run, s.kind, s.id);
     run.gold -= s.price; s.sold = true; return null;
   }
   // WHAT: gives the run a power (relic). Some powers pay out the moment you take them (gold, XP): that is here.
@@ -737,7 +748,7 @@
     if (id === 'cursecoin') { run.gold += 25; run.coinN = 0; }   // v50
   }
   // WHAT: leave the shop / event and go to the next day.
-  function leave(run) { run.cur = null; advance(run); }
+  function leave(run) { if (run.cur && run.cur.type === 'event') { seen(run, 'event', [run.cur.id]); if (!run.cur.done) took(run, 'event', run.cur.id + '#skip'); } run.cur = null; advance(run); }
 
   // ------------------------------------------------------------------ items
   // one item per type: equipping onto a hero that already wears that type swaps them (the old one goes to the bag)
@@ -895,6 +906,7 @@
     let tgt = null;
     if (ch.target) { tgt = eventTargets(run, ch).find(x => x.arg === String(arg)); if (!tgt) return null; }
     if (ch.cost) run.gold -= ch.cost;
+    if (run.cur && run.cur.type === 'event') took(run, 'event', run.cur.id + '#' + (ch.id || i));
     const [a, x, y, z] = ch.act.split(':'); let msg = 'Nothing happens.';
     // v44: what the choice gave, shown as pictures on the event's result (kind: gold | xp | item | relic | hero | boost)
     const gains = [], got = (kind, v, t) => gains.push({ kind, v, t });

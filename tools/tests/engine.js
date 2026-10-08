@@ -149,7 +149,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const m0 = Run.heroMods(run, h);
   h.items = ['obs_helm', 'obs_plate'];
   const m2 = Run.heroMods(run, h);
-  ok(Math.round((m2.armor || 0) - (m0.armor || 0)) === 20 + 25 + 25 && Run.setBonuses(h.items).length === 1, 'Nightglass Guard 2 pieces: +25 armor on top of the pieces');
+  ok(Math.round((m2.armor || 0) - (m0.armor || 0)) === B.ITEM.obs_helm.mods.armor + B.ITEM.obs_plate.mods.armor + 25 && Run.setBonuses(h.items).length === 1, 'Nightglass Guard 2 pieces: +25 armor on top of the pieces');
   h.items.push('obs_blade');
   const m3 = Run.heroMods(run, h);
   ok(m3.shieldStartPct >= 0.2 && m3.thorns >= 0.25 && Run.setBonuses(h.items).length === 2, 'Nightglass Guard 3 pieces: shield, thorns and attack');
@@ -186,7 +186,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const W = Run.gauntletWorld(run);
   const ghost = W.units.filter(u => u.side === 1), mine = W.units.filter(u => u.side === 0);
   const exp = Run.heroDef({ relics }, other.heroes[0]);
-  ok(ghost.length === 2 && Math.round(ghost.find(u => u.key === 'bastion').maxHp) === Math.round(exp.hp) && ghost.find(u => u.key === 'bastion').m.hp >= 200 + 150, 'ghost heroes wear their items and stat relics (Warmog + Giant Tooth)');
+  ok(ghost.length === 2 && Math.round(ghost.find(u => u.key === 'bastion').maxHp) === Math.round(exp.hp) && ghost.find(u => u.key === 'bastion').m.hp >= B.ITEM.warmog.mods.hp + B.RELIC.tooth.mods.hp, 'ghost heroes wear their items and stat relics (Warmog + Giant Tooth)');
   ok(mine.every(u => u.st.slowU > W.t) && ghost.every(u => u.buffs.some(b => b.s === 'asPct' && b.v === 0.3)) && !mine.some(u => u.buffs.some(b => b.s === 'asPct' && b.v === 0.3)), "the ghost's team relics work for the ghost: its Frost Sigil slows us, its War Horn speeds up its own heroes");
   for (const u of ghost) u.hp = 5;  // so a ghost hero surely dies
   let phoenix = 0; for (let k = 0; k < 20 * 90 && !W.over; k++) { Sim.step(W); for (const f of W.fx) if (f.k === 'text' && f.text === 'ASHEN PLUME' && W.byId[f.id] && W.byId[f.id].side === 1) phoenix = 1; }
@@ -983,6 +983,10 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     const r2 = Run.newRun(78); Object.assign(r2, { result: 'clear', lives: 1, fell: 2, trophies: [], gold: 3 }); const a2 = Run.endAchs(r2); ok(a2.includes('comeback') && !a2.includes('untouchable') && !a2.includes('perfect'), 'v73: the last life = Comeback Kid');
     ok(B.ACHIEVEMENTS.length >= 15 && B.ACHIEVEMENTS.every(x => x.title && x.desc && (x.by === 'run' || x.by === 'server' || (x.by === 'level' && x.lvl > 1))), 'v73: every achievement has a title, a text and who checks it');
     ok(B.UNLOCKS.some(u => u.kind === 'taunt') && B.UNLOCKS.some(u => u.kind === 'title') && [...new Set(B.UNLOCKS.map(u => u.lvl))].every(l => B.UNLOCKS.filter(u => u.lvl === l && u.kind === 'hero').length <= 1), 'v74 (review #152): voice lines and titles drop between the heroes, never two heroes on one level'); }
+  // v81 (review #159): a run counts what it was offered and what it took (run.tele), for the balance evidence
+  { const { playRun } = require('../pve/engine.js'); const r = Run.newRun(4242); Run.pickStart(r, r.startOffer.slice(0, 1), r.relicOffer[0]);
+    const t = r.tele || { o: {}, p: {} }; ok(r.startOffer.every(k => t.o['hero:' + k] >= 1) && t.p['hero:' + r.startOffer[0]] === 1 && t.p['relic:' + r.relicOffer[0]] === 1, 'v81: the start offers and picks are counted');
+  }
   // v78 (review #155): every art folder carries the hero's current name, and every picture art.js lists is there
   { const fs = require('fs'), path = require('path'), root = path.join(__dirname, '..', '..'), slug = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const src = fs.readFileSync(path.join(root, 'js', 'art.js'), 'utf8'), names = new Set(Object.values(B.HEROES).map(h => slug(h.name)));

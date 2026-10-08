@@ -1476,7 +1476,7 @@
   async function reportRunEnd() {
     ui.result.pending = true; render();
     run.xpWait = true;   // v46: the game's XP (fights won, the boss beaten) comes back with the answer
-    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, achs: Run.endAchs(run), game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; run.newAchs = Array.isArray(r.achs) ? r.achs.filter(id => B.ACH[id]) : []; Object.assign(ui.result, { lg: r.lg }); }
+    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, tele: run.tele || null, achs: Run.endAchs(run), game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0 } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; run.newAchs = Array.isArray(r.achs) ? r.achs.filter(id => B.ACH[id]) : []; Object.assign(ui.result, { lg: r.lg }); }
     catch (e) { ui.result.error = e.message; run.xpErr = true; }
     run.xpWait = false;
     ui.result.pending = false; save(); render();
@@ -2138,7 +2138,7 @@
     language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
-    'give-up-yes': () => { if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // v65 (review #133): giving up ends the win streak
+    'give-up-yes': () => { if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], tele: run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // v65 (review #133): giving up ends the win streak
     // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.
     'form-info': t => toast(t, true),
     'hero-peek': k => { if (HEROES[k]) { openModal(heroPeekHTML(k)); ui.modal = 'peek'; } },

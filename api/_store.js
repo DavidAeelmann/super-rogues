@@ -61,6 +61,9 @@ const SCHEMA = [
   `alter table players add column if not exists bstreak int not null default 1`,
   `alter table players add column if not exists avatar text`,
   `create table if not exists follows (pid text not null, code text not null, created bigint not null, primary key (pid, code))`,
+  // v81 (review #159): the balance evidence. k = 'kind:id' (hero, item, relic, event:<id>#<choice>); offered / picked = times seen / taken over all runs;
+  // pruns / pwins = runs that took it at least once / of those, runs completed (tools/balance reads it)
+  `create table if not exists picks (k text primary key, offered int not null default 0, picked int not null default 0, pruns int not null default 0, pwins int not null default 0)`,
   // v76 (review #154): the redeem codes each player already used (one time each)
   `create table if not exists redeems (pid text not null, code text not null, created bigint not null, primary key (pid, code))`,
   `create index if not exists follows_code on follows(code)`,
@@ -140,6 +143,7 @@ function memStore() {
     async addXp(pid, n) { const p = M.players && M.players[pid]; if (!p) return null; p.axp = (p.axp || 0) + n; return p.axp; },
     async setProgress(pid, f) { const p = M.players && M.players[pid]; if (!p) return; for (const k of ['cleared', 'pfloor', 'bosses', 'xpv', 'achs']) if (f[k] != null) p[k] = f[k]; },
     async setTitle(pid, t) { const p = M.players && M.players[pid]; if (p) p.title = t; },
+    async addPicks(rows) { const P = M.picks = M.picks || {}; for (const r of rows) { const x = P[r.k] = P[r.k] || { k: r.k, offered: 0, picked: 0, pruns: 0, pwins: 0 }; x.offered += r.o; x.picked += r.p; x.pruns += r.p ? 1 : 0; x.pwins += r.p && r.w ? 1 : 0; } },
     async redeem(pid, code, n) { const R = M.redeems = M.redeems || [], p = M.players && M.players[pid]; if (!p || R.some(r => r.pid === pid && r.code === code)) return null; R.push({ pid, code, created: Date.now() }); p.gems += n; return p.gems; },
     async xpvStep(pid, from, to) { const p = M.players && M.players[pid]; if (!p || (p.xpv | 0) !== from) return false; p.xpv = to; return true; },
     async teamsOf(pid) { return (M.teams || []).filter(t => t.pid === pid).map(t => ({ team: t.team, wins: t.wins })); },
@@ -240,6 +244,8 @@ function pgStore() {
     async friendsTop(pid, n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar, title from players where pid=$1 or code in (select code from follows where pid=$1) order by league desc, lp desc limit $2', [pid, n])).map(pubPlayer); },
     async setAvatar(pid, key) { await q('update players set avatar=$2 where pid=$1', [pid, key]); },
     async setTitle(pid, t) { await q('update players set title=$2 where pid=$1', [pid, t]); },
+    async addPicks(rows) { if (!rows.length) return; await q(`insert into picks (k, offered, picked, pruns, pwins) select k, o, p, (p > 0)::int, (p > 0 and w)::int from unnest($1::text[], $2::int[], $3::int[], $4::bool[]) as u(k, o, p, w)
+      on conflict (k) do update set offered = picks.offered + excluded.offered, picked = picks.picked + excluded.picked, pruns = picks.pruns + excluded.pruns, pwins = picks.pwins + excluded.pwins`, [rows.map(r => r.k), rows.map(r => r.o), rows.map(r => r.p), rows.map(r => !!r.w)]); },
     // v76 (review #154): one use per player, atomic: the crowns only come when the row is new
     async redeem(pid, code, n) { const r = await q('with ins as (insert into redeems (pid, code, created) values ($1,$2,$4) on conflict do nothing returning pid) update players set gems = gems + $3 where pid in (select pid from ins) returning gems', [pid, code, n, Date.now()]); return r.length ? Number(r[0].gems) : null; },
     async setStyle(pid, taunt, vsfx) { await q('update players set taunt=$2, vsfx=$3 where pid=$1', [pid, taunt, vsfx]); },

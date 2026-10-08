@@ -71,6 +71,26 @@ function cleanFlog(x) {
 // v62 (review #82: "make sure runs are being measured correctly"): a run is counted ONCE (a key per player + run, so a retry or a
 // give-up after a defeat does not double it) and has its own hourly allowance, apart from the rated fights
 // WHAT: counts the fights of a finished run in the dashboard table, ONCE per run (key = player + run id) and with an hourly limit per visitor.
+// v81 (review #159): the offers and picks of a finished run (js/run.js run.tele), once per run, only real ids, small numbers
+const evIds = () => logPicks.ev || (logPicks.ev = new Set((D.EVENTS || []).map(e => e.id)));
+function realPick(k) {
+  const i = k.indexOf(':'), kind = k.slice(0, i), rest = k.slice(i + 1);
+  if (kind === 'hero') return !!D.HEROES[rest];
+  if (kind === 'item') return !!D.ITEM[rest];
+  if (kind === 'relic') return !!D.RELIC[rest];
+  if (kind === 'event') return /^[a-z0-9_]{1,30}(#[a-z0-9_]{1,30})?$/i.test(rest) && evIds().has(rest.split('#')[0]);
+  return false;
+}
+async function logPicks(st, pid, runId, tele, won) {
+  try {
+    if (!tele || typeof tele !== 'object') return;
+    const id = String(runId == null ? '' : runId).replace(/[^0-9a-z-]/gi, '').slice(0, 14); if (!id) return;
+    const kk = 'pk:' + pid + ':' + id; if (await st.getKV(kk)) return; await st.setKV(kk, '1');
+    const n = v => Math.max(0, Math.min(50, v | 0)), o = tele.o || {}, p = tele.p || {};
+    const keys = [...new Set(Object.keys(o).concat(Object.keys(p)))].filter(k => typeof k === 'string' && k.length < 70 && realPick(k)).slice(0, 400);
+    await st.addPicks(keys.map(k => ({ k, o: n(o[k]), p: n(p[k]), w: !!won })));
+  } catch (_) {}
+}
 async function logFights(st, req, pid, runId, flog) {
   try {
     const rows = cleanFlog(flog); if (!rows.length) return;
@@ -219,6 +239,7 @@ module.exports = async (req, res) => {
     if (b.op === 'flog') {  // v62 (review #82): a game given up reports the fights it played (no league points either way)
       if (b.gaveUp && (p.streak == null || (p.streak | 0) > 0)) { p.streak = 0; await save(); }   // v65 (review #133): giving a run up ends the win streak
       await logFights(st, req, pid, b.runId, b.flog);
+      if (b.gaveUp) await logPicks(st, pid, b.runId, b.tele, false);   // v81 (review #159)
       return send(res, 200, { ok: true });
     }
 
@@ -241,6 +262,7 @@ module.exports = async (req, res) => {
       await save({});
       const used = cleanTeam(b.team); if (used) { await rateContent(st, ipHash(req), [{ used: usedIn(used, relicList(b.relics)), score: 0 }]); await P.heroGames(st, pid, used, false); }
       await logFights(st, req, pid, b.runId, b.flog);
+      await logPicks(st, pid, b.runId, b.tele, false);   // v81 (review #159)
       await P.xpGame(st, p, b.game, xp);   // v46 (review #57): XP for the game, by how far it went
       const achs = await P.grantAchs(st, p, b.achs);   // v73 (reviews #150 #151)
       return send(res, 200, me({ lg, achs }));
@@ -294,6 +316,7 @@ module.exports = async (req, res) => {
       await rateContent(st, ipHash(req), [{ used: usedIn(team, relics), score: 1 }]);
       await P.heroGames(st, pid, team, true);
       await logFights(st, req, pid, b.runId, b.flog);
+      await logPicks(st, pid, b.runId, b.tele, true);   // v81 (review #159)
       await P.xpGame(st, p, { fights: b.game && b.game.fights, reached: true }, xp);
       await P.xpClear(st, p, team, xp);
       const achs = await P.grantAchs(st, p, b.achs);   // v73 (reviews #150 #151)
