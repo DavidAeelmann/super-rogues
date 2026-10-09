@@ -1052,5 +1052,19 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     const paths = [...src.matchAll(/'art\/([\w-]+\/[\w.-]+)'/g)].map(m => m[1]).concat([...src.matchAll(/seq\('([\w-]+)', '(\w+)', (\d+)\)/g)].flatMap(m => Array.from({ length: +m[3] }, (_, i) => m[1] + '/' + m[2] + '-' + (i + 1) + '.webp')));
     const missing = paths.filter(p => !fs.existsSync(path.join(root, 'art', p))); ok(paths.length > 100 && !missing.length, 'v78: every picture art.js lists exists (' + paths.length + ' checked' + (missing.length ? ', missing ' + missing.slice(0, 3).join(' ') : '') + ')'); }
 }
+// v100 (review #182): the free picks go through every available hero of a class before any repeats, then in a new order
+{
+  let deck = null; const seen = {}; let first = null, second = null; const locked = B.lockedFor(1);
+  for (let g = 0; g < 80; g++) {
+    const r = Run.newRun(5000 + g, { locked, deck });
+    for (const k of r.startOffer) { const cl = B.heroClass(k); (seen[cl] = seen[cl] || []).push(k); }
+    deck = r.freeDeck;
+  }
+  const cl0 = B.CLASSES[0], n = Object.keys(HEROES).filter(k => B.heroClass(k) === cl0 && !locked.includes(k)).length, s0 = seen[cl0];
+  first = s0.slice(0, n); second = s0.slice(n, 2 * n);
+  ok(new Set(first).size === n && new Set(second).size === n && first.join() !== second.join(), `v100 (review #182): the start offers show all ${n} ${cl0} heroes before one repeats, then all again in a new order`);
+  const r = Run.newRun(9, { locked, deck: null }); Run.pickStart(r, [r.startOffer[0]], r.relicOffer[0]);
+  const o = Run.recruitOffer(r); ok(o.length === 3 && !o.includes(r.heroes[0].key) && new Set(o.map(k => B.heroClass(k))).size === 3, 'v100: a free recruit offer still shows one hero of each class, none you have');
+}
 console.log(`engine: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

@@ -29,7 +29,7 @@
   let battle = null, view = null, preview = null;
   const ui = { startPick: [], gsel: null, selUid: 0, info: null, result: null, speed: store.get('balance.speed', 1), drag: null, modal: null };
   // WHAT: writes the run to the browser memory. Call it after every change of the run.
-  const save = () => { if (run) store.set(SAVE, run); };
+  const save = () => { if (run) { store.set(SAVE, run); if (run.freeDeck) store.set('balance.freeDeck', run.freeDeck); } };   // v100 (review #182): the free-pick queues outlive the game
   // player identity for Elo (reviews #3 #4): a random id kept in this browser
   // WHAT: this browser's anonymous player id (made once). The server only ever knows players by this, never by name or email.
   function pid() {
@@ -2241,7 +2241,7 @@
   // To make a new button work: put data-act="my-name" in its HTML and add my-name: (arg, el) => {...} here. arg is the data-arg value. Names with a dash must be quoted.
   const ACT = {
     // Play / Play again: starts a fresh run.
-    'new-run': () => { run = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()) }); ui.startPick = []; ui.startRelic = null; ui.focusRelic = null; ui.focus = null; ui.startStep = 1; ui.lastGold = null; ui.goldHold = null; screen = 'run'; save(); render(); },
+    'new-run': () => { run = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()), deck: store.get('balance.freeDeck', null) }); ui.startPick = []; ui.startRelic = null; ui.focusRelic = null; ui.focus = null; ui.startStep = 1; ui.lastGold = null; ui.goldHold = null; screen = 'run'; save(); render(); },
     // Continue: back into the saved run.
     'continue-run': () => { screen = 'run'; render(); },
     menu: () => { if (battle) return; screen = 'title'; closeModal(); render(); },

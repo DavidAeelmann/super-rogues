@@ -69,8 +69,9 @@
     const run = { v: 5, seed: seed >>> 0, rs: seed | 0, gold: C.startGold, heroes: [], bag: [], relics: [], nuid: 0,
       step: -1, fightNo: 0, phase: 'start', opts: [], cur: null, pending: [], curse: 0, log: [], won: 0, lost: 0, score: 0, startOffer: [],
       seq: C.seq.slice(), fightScale: C.fightScale.slice(), locked: ((opts && opts.locked) || []).slice() };
-    // v63 (review #118): heroes offered by class (v64, review #126: one of each class, the player picks one)
-    run.startOffer = [].concat(...B.CLASSES.map(cl => pickN(run, heroKeysOf(run).filter(k => B.heroClass(k) === cl), C.startOffer / B.CLASSES.length)));
+    run.freeDeck = JSON.parse(JSON.stringify((opts && opts.deck) || {}));   // v100 (review #182): the free-pick queues, carried from game to game by ui.js
+    // v63 (review #118): heroes offered by class (v64, review #126: one of each class, the player picks one); v100: drawn from the free-pick queues
+    run.startOffer = [].concat(...B.CLASSES.map(cl => { const o = []; for (let i = 0; i < C.startOffer / B.CLASSES.length; i++) { const k = drawFree(run, cl, new Set(o)); if (k) o.push(k); } return o; }));
     run.relicOffer = pickN(run, relicsOf(run).map(r => r.id), C.startRelics || 3);  // review #22: the run also starts with a relic
     run.lives = C.lives;
     run.bosses = B.BOSS_SLOTS.map(s => pick(run, s));   // v52 (review #64): which boss waits in each slot this game
@@ -437,9 +438,21 @@
   }
   // ------------------------------------------------------------------ PvP days and the final fight (v63, reviews #117 #118 #119)
   // WHAT: the three heroes offered on the free recruit screen: one of each class, the classes the team lacks first (never a hero already in the team).
+  // v100 (review #182, David: "Force diversity in which heros appear in the free picks. All available heroes must appear before the list resets, and then it
+  // is in a new order"): each class keeps a queue of its available heroes in a shuffled order (run.freeDeck, saved across games by ui.js). A free pick
+  // (the start and the free recruits) shows the next heroes of each queue; a hero you already have is skipped and stays first in line. When a queue has
+  // nothing left to show, every available hero of that class is added again in a new order.
+  // WHAT: the next hero of class cl to show in a free pick (not in exclude), taken off its queue.
+  function drawFree(run, cl, exclude) {
+    const D = run.freeDeck || (run.freeDeck = {}), avail = heroKeysOf(run).filter(k => B.heroClass(k) === cl);
+    let q = (D[cl] || []).filter(k => avail.includes(k));
+    if (!q.some(k => !exclude.has(k))) { const add = avail.filter(k => !q.includes(k)); for (let i = add.length - 1; i > 0; i--) { const j = Math.floor(rnd(run) * (i + 1)); [add[i], add[j]] = [add[j], add[i]]; } q = q.concat(add); }
+    const k = q.find(x => !exclude.has(x)) || null;
+    D[cl] = k ? q.filter(x => x !== k) : q; return k;
+  }
   function recruitOffer(run) {
     const have = new Set(run.heroes.map(h => h.key)), pool = heroKeysOf(run).filter(k => !have.has(k));
-    const out = []; for (const cl of B.CLASSES) { const c = pool.filter(k => B.heroClass(k) === cl && !out.includes(k)); if (c.length) out.push(pick(run, c)); }
+    const out = []; for (const cl of B.CLASSES) { const k = drawFree(run, cl, new Set([...have, ...out])); if (k) out.push(k); }
     while (out.length < 3) { const c = pool.filter(k => !out.includes(k)); if (!c.length) break; out.push(pick(run, c)); }
     return out;
   }
