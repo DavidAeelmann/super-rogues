@@ -599,7 +599,7 @@
     });
   }
   // WHAT: builds the simulation of a Gauntlet duel: your team against the ghost of another player (the ghost's own powers apply to it, its formation is mirrored).
-  function gauntletWorld(run, preview) {
+  function gauntletWorld(run, preview, o2) {
     if (!preview) devour(run);
     const o = run.g.opp, ghost = { relics: o.relics || [], heroes: o.team || [], bag: [] };
     if (!run.g.map) run.g.map = gauntletMap(run, o, run.g.round);
@@ -608,7 +608,8 @@
     return B.Sim.create({
       terrain: terrainOf(run),
       // review #15: the ghost fights with its own relics too (stat relics via heroDef, team effects via enemyRelics)
-      mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: 7, relics: run.relics, enemyRelics: o.relics || [],
+      mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: 7, relics: run.relics, enemyRelics: o.relics || [], takeMul: o2 && o2.takeMul,   // v95 (reviews #176 #177): see B.PVP_TAKE
+     
       heroes: run.heroes.map(h => ({ def: pvpDef(heroDef(run, h), h.key), c: h.pos.c, r: h.pos.r })),   // v88: pvpDef = the PvP-only balance (B.TUNE.pvp)
       // their formation, mirrored so it faces ours: rows 4..7 -> 3..0
       enemies: o.team.map(h => { const d = pvpDef(heroDef(ghost, h), h.key); d.uid = 0; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),

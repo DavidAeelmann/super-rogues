@@ -1415,6 +1415,9 @@
   //   LP_GAP = per league between you and the PvP opponent: a win against a lower league pays 25% less per league (a higher one 25% more), a loss
   //   against a higher league costs 25% less per league (a lower one 25% more); between x0.25 and x2. A made-up opponent counts as your league.
   B.LP_PVE = [20, 10, 0, 0, 0, 0];
+  // v95 (reviews #176 #177, David, not announced in the game): in PvP your own heroes (never your ghost) take less damage while you are low on the ladder:
+  // Bronze x0.5, Silver x0.75 (the PvE help of review #53 is apart)
+  B.PVP_TAKE = [0.5, 0.75, 1, 1, 1, 1];
   B.LP_GAP = 0.25;
   // WHAT: the factor of one PvP fight's LP: win or loss, opponent's league minus yours (null = same league).
   B.lpGap = (win, d) => Math.max(0.25, Math.min(2, 1 + B.LP_GAP * (win ? 1 : -1) * (d == null ? 0 : Math.max(-4, Math.min(4, d | 0)))));

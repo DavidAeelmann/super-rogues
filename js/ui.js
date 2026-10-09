@@ -1384,7 +1384,7 @@
   // WHAT: builds the simulation of the current fight (normal or Gauntlet) for the preview or the real battle.
   function worldFor(preview) {
     const t = run.cur && run.cur.type;
-    return t === 'gauntlet' ? Run.gauntletWorld(run, preview) : Run.fightWorld(run, preview, { takeMul: (acct.league | 0) === 0 ? 0.8 : 1 });   // review #53 (David)
+    return t === 'gauntlet' ? Run.gauntletWorld(run, preview, { takeMul: B.PVP_TAKE[Math.max(0, Math.min(B.PVP_TAKE.length - 1, acct.league | 0))] }) : Run.fightWorld(run, preview, { takeMul: (acct.league | 0) === 0 ? 0.8 : 1 });   // review #53 (David)
   }
   // review #13 (David: "randomly adjusted to 75% of my screen ... adapt to the screen size and device"):
   // the board takes the width AND the height left on screen, on phones (portrait/landscape), tablets and desktops.
