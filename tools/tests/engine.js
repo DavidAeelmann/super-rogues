@@ -1000,6 +1000,13 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   { const { playRun } = require('../pve/engine.js'); const r = Run.newRun(4242); Run.pickStart(r, r.startOffer.slice(0, 1), r.relicOffer[0]);
     const t = r.tele || { o: {}, p: {} }; ok(r.startOffer.every(k => t.o['hero:' + k] >= 1) && t.p['hero:' + r.startOffer[0]] === 1 && t.p['relic:' + r.relicOffer[0]] === 1, 'v81: the start offers and picks are counted');
   }
+  // v90 (review #171): a Gauntlet floor after the run: no XP, no lives lost, the climb goes on after a win and ends after a loss
+  { const r = Run.newRun(4711); Run.pickStart(r, ['bastion'], null); r.phase = 'over'; r.result = 'clear'; const lv = r.lives;
+    r.tower = { status: 'climb', floor: 2, wins: 1, lp: 1 }; Run.startDuel(r, Run.randomGhost(r, 8, true), 'tower', 9);
+    let W = Run.gauntletWorld(r); W.over = true; W.winner = 0; let res = Run.finishDuel(r, W);
+    ok(res.tower && res.win && res.floor === 2 && r.phase === 'tower' && r.tower.wins === 2 && r.tower.status === 'climb' && r.lives === lv && !r.pending.length && r.result === 'clear', 'v90: a floor won keeps the climb going (no XP, no lives, the run stays complete)');
+    Run.startDuel(r, Run.randomGhost(r, 8, true), 'tower', 9); W = Run.gauntletWorld(r); W.over = true; W.winner = 1; res = Run.finishDuel(r, W);
+    ok(!res.win && r.tower.status === 'over' && r.lives === lv && r.phase === 'tower', 'v90: a floor lost ends the climb and costs nothing'); }
   // v88 (review #167): no ability is defined twice in sim.js (v83's boss Howl and Blizzard had silently replaced Fang's and Frostbane's own abilities)
   { const src = require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'js', 'sim.js'), 'utf8'), names = [...src.matchAll(/^\s*A\.(\w+) = /mg)].map(m => m[1]);
     const dup = names.filter((n, i) => names.indexOf(n) !== i); ok(names.length > 40 && !dup.length, 'v88: every ability name in sim.js is defined once' + (dup.length ? ' (twice: ' + dup.join(', ') + ')' : '')); }

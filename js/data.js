@@ -1402,6 +1402,8 @@
   // 30% Silver, 37.5% Gold (as before, x1), 46% Platinum, 53% Diamond, 60% Celestial. Each player settles where their real win rate stops paying.
   B.LP_LEAGUE = { gain: [1.25, 1.1, 1, 0.85, 0.75, 0.65], loss: [0.6, 0.8, 1, 1.2, 1.4, 1.6] };
   // WHAT: the league multipliers of a league index: { gain, loss }.
+  // v90 (review #171): a Gauntlet floor won pays its number in LP (floor 1: +1, floor 2: +2...); a loss in the Gauntlet costs nothing
+  B.towerLp = floor => Math.max(1, Math.min(50, floor | 0));
   B.lpMul = league => { const i = Math.max(0, Math.min(B.LEAGUES.length - 1, league | 0)); return { gain: B.LP_LEAGUE.gain[i], loss: B.LP_LEAGUE.loss[i] }; };
   B.lpParts = (g, league) => {
     const M = B.lpMul(league), sc = (n, base) => Math.round(n * base * (base < 0 ? M.loss : M.gain));

@@ -495,6 +495,16 @@
     const g = run.g, f = run.cur, final = g.kind === 'final', win = W.winner === 0;
     const res = { win, duel: true, final, gold: 0, xp: [], timeout: !!W.timeout, boss: false };
     run.lastFight = { team: teamSnapshot(run), relics: run.relics.slice() };
+    // v90 (review #171): a Gauntlet floor, after the run: no XP, lives or spoils (the run is already complete); the server's answer says what comes next
+    if (g.kind === 'tower') {
+      const T = run.tower || (run.tower = { status: 'climb', floor: 1, lp: 0 });
+      res.tower = true; res.floor = T.floor;
+      for (const u of W.units) if (u.kind === 'hero' && u.uid && run.heroes.some(h => h.uid === u.uid)) { const h = run.heroes.find(x => x.uid === u.uid); res.xp.push({ uid: h.uid, name: B.HEROES[h.key].name, gained: 0, from: h.lvl, to: h.lvl }); }
+      (T.history = T.history || []).push({ name: g.opp.name, floor: T.floor, win });
+      if (win) T.wins = T.floor; else T.status = 'over';
+      run.cur = null; run.g = null; run.phase = 'tower';
+      return res;
+    }
     for (const u of W.units) {
       if (u.kind !== 'hero' || !u.uid) continue;
       const h = run.heroes.find(x => x.uid === u.uid); if (!h) continue;

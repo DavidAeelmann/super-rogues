@@ -347,10 +347,10 @@
       h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button><button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
-    if (run.phase === 'over' && screen === 'run') { h.innerHTML = `<span class="grow"></span><button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
+    if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span><button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
     const stepN = Math.max(0, run.step);
     const g = run.g;
-    const prog = run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + Run.seqOf(run).length;
+    const prog = g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + Run.seqOf(run).length;
     const lgs = store.get('balance.league', null);
     h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
       <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey">${prog}</button>
@@ -387,6 +387,7 @@
     else if (run.phase === 'steal') m.innerHTML = stealHTML();
     else if (run.phase === 'recruit') m.innerHTML = recruitHTML();
     else if (run.phase === 'gauntlet') m.innerHTML = gauntletHTML();
+    else if (run.phase === 'tower') m.innerHTML = towerHTML();
     else if (run.phase === 'start') m.innerHTML = startHTML();
     else if (run.phase === 'map') { m.innerHTML = mapHTML(); layoutMap(keepMap); }
     else if (run.phase === 'deploy') { m.innerHTML = deployHTML(); mountBoard(); }
@@ -400,7 +401,8 @@
     if (screen === 'result' && ui.result && !ui.result.fx) celebrate(ui.result);
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'gauntlet' && !run.xpShown) animXp();   // the old Gauntlet end (saves from before v63)
     if (run && screen === 'run' && run.phase === 'over') fitOver();   // v70 (review #144): the big end screens shrink a step when the page would scroll
-    if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !run.lpShown) animLp();   // v68 (review #140)
+    if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !run.lpShown) animLp();
+    if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'over' && !run.tower.cheered) { run.tower.cheered = true; save(); sfx(run.tower.champion ? 'unlock' : run.tower.wins ? 'levelup' : 'back'); if (run.tower.wins && B.Juice) setTimeout(() => B.Juice.confettiAt('.towerart .tcrown', run.tower.champion ? 110 : 40), 450); }   // v90: the end of the climb cheers   // v68 (review #140)
     if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && run.overStep === 2 && !run.xpShown) animXp2();   // v68 (review #141)
     if (screen === 'title' || !run) startTrailer();
     autoGear();
@@ -889,14 +891,14 @@
     const f = run.cur;
     const map = Run.mapOf(run);
     return `<section class="deploy">
-      ${speedPills(false, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : 'Duel'} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f.diff === 'boss' ? I('skull') + ' Boss fight' : I('swords') + ' ' + B.DIFF[f.diff].name + ' fight'}</div>
+      ${speedPills(false, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f.diff === 'boss' ? I('skull') + ' Boss fight' : I('swords') + ' ' + B.DIFF[f.diff].name + ' fight'}</div>
       ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
         : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
       ${run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
       <div class="boardwrap"><canvas id="board"></canvas><div class="depban" aria-hidden="true">${I('shield')} Deploy your units</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}</div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
-      <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big" data-act="fight">${gau ? (run.g.kind === 'final' ? 'Final fight!' : 'Duel!') : 'Fight!'}</button></div>
+      <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big" data-act="fight">${gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>
       <div class="dparty">${partyHTML()}</div>
     </section>`;
   }
@@ -995,7 +997,7 @@
     const hs = r.xp.map(x => ({ x, h: run.heroes.find(q => q.uid === x.uid), s: S[x.uid] || { dmg: (r.dmg || {})[x.uid] || 0, taken: 0, kills: 0, alive: true } })).filter(o => o.h);
     const top = Math.max(1, ...hs.map(o => o.s.dmg)), total = Math.max(1, hs.reduce((a, o) => a + o.s.dmg, 0));
     const mvpUid = hs.length > 1 || r.win ? (hs.slice().sort((a, b) => b.s.dmg - a.s.dmg)[0] || {}).x : null;
-    const what = r.duel ? `${r.final ? 'Final fight' : 'Duel'} · vs ${plink(r.opp.name, r.opp.code)}` : r.boss ? `👹 ${esc(r.bossName || 'Boss')}` : esc(r.fightName || 'Fight');
+    const what = r.duel ? `${r.tower ? 'Gauntlet · Floor ' + r.floor : r.final ? 'Final fight' : 'Duel'} · vs ${plink(r.opp.name, r.opp.code)}` : r.boss ? `👹 ${esc(r.bossName || 'Boss')}` : esc(r.fightName || 'Fight');
     const foesDown = r.foes ? r.foes.filter(f => f.dead).length : null, fx = r.fx || {};
     // v42 (review #51): short meta (time, foes down, heroes standing) as icons; 1-3 stars on a win: 1 for the win, 1 if
     // nobody fell, 1 more if the team also kept 60% of its health. They light up one by one (celebrate()).
@@ -1034,8 +1036,8 @@
         <div class="rst"><span title="Damage taken">🛡 ${kfmt(st.taken)}</span><span title="Kills">💥 ${st.kills}</span>${`<span class="rxp"><span class="xpbar"><i style="width:${fx.xp ? w1 : w0}%" data-w="${w1}"></i></span><span class="kw-xp">+${x.gained} XP</span></span>`}</div></div></div>`;
     }).join('');
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
-    const lostRun = r.win ? '' : r.challenge ? '<p class="small dim center">The challenge beat you. No reward, but the game goes on.</p>' : run.lives > 0 ? `<p class="small center lifelost">${heartsHTML()} You lost a life. ${run.lives} left.</p>` : '<p class="small dim center">Out of lives. Game over.</p>';
-    const spoils = r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
+    const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.challenge ? '<p class="small dim center">The challenge beat you. No reward, but the game goes on.</p>' : run.lives > 0 ? `<p class="small center lifelost">${heartsHTML()} You lost a life. ${run.lives} left.</p>` : '<p class="small dim center">Out of lives. Game over.</p>';
+    const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
     return `<section class="result v2 ${ui.rmore ? 'more' : ''}"><div class="rhead ${r.win ? 'win' : 'lose'}"><span class="rays"></span><h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Victory' : 'Defeat'}</h2>
         ${starRow}${loseTag}<p class="rwhat">${what}</p><p class="rmeta">${meta}</p></div>
       ${eloLine(r)}${spoils}${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}${promo}${lostRun}
@@ -1091,6 +1093,38 @@
       <p class="lifeline">${heartsHTML()} <span>${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left</span></p>
       ${teamRow(Run.teamSnapshot(run), run.relics)}
       ${gateForm()}</section>`;
+  }
+  // v90 (review #171, David: "Add the gauntlet again... After pve run win but before xp a button appears enter gauntlet explaining briefly what it is with a cool
+  // visual. Then seamless experience as always, beat teams until you lose or crowned champion... Gauntlet wins add +1 LP for floor 1, 2 for 2 etc. No penalty")
+  // WHAT: a duel's name on screen: Final fight, Duel, or Gauntlet · Floor N.
+  const duelName = g => !g ? 'Duel' : g.kind === 'final' ? 'Final fight' : g.kind === 'tower' ? 'Gauntlet · Floor ' + ((run && run.tower && run.tower.floor) || 1) : 'Duel';
+  // WHAT: the tower drawing: floors stacked up to the crown; cleared floors lit, the current one glowing.
+  function towerArt(T) {
+    const top = Math.max(3, (T.peak || 1), (T.floor || 1) + 1), shown = Math.min(top, 7), from = Math.max(1, Math.min((T.floor || 1) - 2, top - shown + 1));
+    let fl = ''; for (let k = from + shown - 1; k >= from; k--) fl += `<span class="tfl ${k < (T.floor || 1) || (T.status === 'over' && T.champion && k <= T.wins) ? 'done' : k === (T.floor || 1) && T.status !== 'over' ? 'cur' : k === (T.floor || 1) && !T.champion ? 'fell' : ''}" style="--k:${k - from}"><b>${k}</b></span>`;
+    return `<div class="towerart ${T.champion ? 'crowned' : ''}" aria-hidden="true"><span class="tcrown">👑</span><div class="tfloors">${fl}</div><span class="tdoor"></span><span class="tglow"></span></div>`;
+  }
+  // WHAT: THE GAUNTLET screen (after a completed run): the gate (enter or skip) and the end of the climb (floor reached, LP won, the crown).
+  function towerHTML() {
+    const T = run.tower || { status: 'gate', floor: 1 };
+    if (T.status === 'over') {
+      const head = T.champion ? '👑 Champion of the Gauntlet!' : T.wins ? `Floor ${T.floor} reached` : 'The Gauntlet held';
+      const sub = T.champion ? 'You stand at the top. The next climbers have to beat you.' : `${T.wins} floor${T.wins === 1 ? '' : 's'} cleared. Your team stays on floor ${T.floor} as a ghost.`;
+      return `<section class="title towerscr over ${T.champion ? 'champ' : ''}"><h2 class="sc ovh">${head}</h2><p class="ovsub">${sub}</p>${towerArt(T)}
+        <p class="tlp"><b>+${T.lp | 0}</b> LP</p>${T.err ? `<p class="small dim center">${esc(T.err)}</p>` : ''}
+        <div class="overbar"><button class="primary big cta" data-act="tower-done">Next ${I('arrow')}</button></div></section>`;
+    }
+    return `<section class="title towerscr gate"><h2 class="sc gtitle">The Gauntlet</h2>
+      <p class="gsub">A tower of other players' teams. Beat them floor by floor until you fall or take the crown.</p>${towerArt(T)}
+      <ul class="trules"><li>🏰 Each floor won: <b>+LP equal to the floor</b> (floor 3 = +3)</li><li>🛡 Losing costs nothing</li><li>👑 Beat the top and you are the champion</li></ul>
+      <div class="overbar two"><button data-act="tower-skip">Skip</button><button class="primary big cta" data-act="tower-enter" ${ui.towerBusy ? 'disabled' : ''}>${I('trophy')} Enter the Gauntlet</button></div></section>`;
+  }
+  // WHAT: applies the server's answer to a Gauntlet floor: LP won, the next opponent, or the end (fell / crowned).
+  function towerAnswer(r, res) {
+    const T = run.tower; if (!T) return;
+    if (r.lg) { T.lp = (T.lp | 0) + (r.lg.delta | 0); run.lgTower = r.lg; }
+    if (r.over) { T.status = 'over'; T.champion = !!r.champion; T.next = null; if (res) res.champion = !!r.champion; }
+    else if (r.opponent) { T.floor = r.floor || (T.floor + 1); T.next = r.opponent; }
   }
   // v63 (review #118): a won duel lets you steal one of three things from the team you beat (a hero, an item, a power)
   // WHAT: the steal screen: three things to take from the beaten team; a hero asks which of your heroes it replaces when the team is full.
@@ -1466,7 +1500,7 @@
     const hud = $('#bhud');
     if (hud) {
       const secs = Math.floor(b.W.t / Sim.TPS);
-      const title = b.gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final fight' : 'Duel'} · ${esc(run.g.opp.name)}` : run.cur.challenge ? I('bolt') + ' ' + esc(run.cur.challenge.name) : run.cur.diff === 'boss' ? I('skull') + ' Boss' : I('swords') + ' ' + B.DIFF[run.cur.diff].name;
+      const title = b.gau ? `${I('trophy')} ${duelName(run.g)} · ${esc(run.g.opp.name)}` : run.cur.challenge ? I('bolt') + ' ' + esc(run.cur.challenge.name) : run.cur.diff === 'boss' ? I('skull') + ' Boss' : I('swords') + ' ' + B.DIFF[run.cur.diff].name;
       const toSd = CFG.suddenDeath - secs, clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
       const str = `<b>${title}</b><span class="clock ${toSd <= 0 ? 'sd' : toSd <= 10 ? 'warn' : ''}">⏱ ${clock}${toSd <= 0 ? ' · SUDDEN DEATH' : toSd <= 10 ? ' · sudden death in ' + toSd + 's' : ''}</span>`;
       if (str !== b.hudStr) { hud.innerHTML = str; b.hudStr = str; }
@@ -1495,6 +1529,15 @@
     const stars = W.winner === 0 ? 1 + (hs.every(u => !u.dead) ? 1 : 0) + (hs.every(u => !u.dead) && hpLeft >= 0.6 ? 1 : 0) : 0;
     const fu = W.units.filter(u => u.side === 1 && u.kind !== 'summon'), left = fu.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, fu.reduce((a, u) => a + u.maxHp, 0));   // v62 (review #94): how much of the enemy was left
     const extra = { stats, dmg, foes, time: W.t / Sim.TPS, stars, left };
+    if (b.gau && run.g.kind === 'tower') {   // v90 (review #171): a Gauntlet floor
+      const opp = run.g.opp, res = Run.finishDuel(run, W), req = { op: 'towerResult', pid: pid(), ref: refCode(), teamId: run.tower.teamId, win: res.win, oppName: opp.name, team: run.lastFight.team, relics: run.lastFight.relics };
+      ui.result = Object.assign(res, extra, { fightName: 'Gauntlet · Floor ' + res.floor, opp, pending: true, req }); screen = 'result';
+      save(); render(); window.scrollTo(0, 0);
+      try { const r = await Net.post('elo', req); setElo(r); logGameXp(r); towerAnswer(r, ui.result); ui.result.pending = false; }
+      catch (e) { Object.assign(ui.result, { pending: false, error: e.message }); if (run.tower) { run.tower.status = 'over'; run.tower.err = 'The last result could not be saved (no connection).'; } }
+      save(); render();
+      return;
+    }
     if (b.gau) {
       // v63 (reviews #117 #118): a duel on a PvP day or the final fight: XP, lives and the spoils are the run's; the server hears the result for the Elo
       const opp = run.g.opp, final = run.g.kind === 'final';
@@ -1555,7 +1598,7 @@
     let theirs, name, taunt = null, fx = null, av = '', tag, code = null;
     if (duel) {
       const o = g.opp; theirs = (o.team || []).map(h => h.key); name = esc(o.name || 'Rival'); code = o.code || null;
-      taunt = o.code ? o.taunt || null : ghostTaunt(o.name); fx = o.vsfx || null; tag = g.kind === 'final' ? `${I('trophy')} Final fight` : `${I('ghost')} Duel`;
+      taunt = o.code ? o.taunt || null : ghostTaunt(o.name); fx = o.vsfx || null; tag = g.kind === 'final' ? `${I('trophy')} Final fight` : g.kind === 'tower' ? `${I('trophy')} ${duelName(g)}` : `${I('ghost')} Duel`;
       av = avatarHTML(o.avatar, o.code || o.name, 40);
     } else {
       theirs = []; for (const e of f.enemies || []) if (!theirs.includes(e.key)) theirs.push(e.key);
@@ -1913,11 +1956,11 @@
       // v65 (reviews #132 #134): Global or Friends (the players you follow, and you); every row has the win streak now and the best one
       // v85 (review #163): Global = the top 10, then '…' and your own row with your place when you are not in it; Friends = all of them and you
       const e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.post('player', { op: 'ladder', pid: pid() });
-      const rowOf = (p, rank) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${rank}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}${p.title ? `<small class="ltitle">${esc(p.title)}</small>` : ''}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td></tr>`;
-      const eRows = e.top.map((p, i) => rowOf(p, i + 1)).join('') + (tab !== 'friends' && e.me && e.me.code ? `<tr class="gap"><td colspan="5">…</td></tr>` + rowOf(e.me, e.me.rank || e.rank) : '');
+      const rowOf = (p, rank) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${rank}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}${p.title ? `<small class="ltitle">${esc(p.title)}</small>` : ''}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td><td class="stk" title="Best Gauntlet floor reached">${p.best ? `<small>${p.best}</small>` : '<small class="dim">·</small>'}</td></tr>`;
+      const eRows = e.top.map((p, i) => rowOf(p, i + 1)).join('') + (tab !== 'friends' && e.me && e.me.code ? `<tr class="gap"><td colspan="6">…</td></tr>` + rowOf(e.me, e.me.rank || e.rank) : '');
       const none = tab === 'friends' ? `<p class="dim">${acct.account ? 'Follow players from their profile (tap a name) and they show up here.' : 'Your account starts when your first run ends; then follow players from their profile.'}</p>` : '<p class="dim">No ranked players yet.</p>';
-      if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="dim small ladnote">${tab === 'friends' ? 'You and the players you follow. ' : ''}By league, then league points (LP), which come from PvP fights: duels and the final fight. 🔥 = runs won in a row now, Best = the longest streak, 👑 = King Tier. Tap a name to open the profile.</p>
-        ${eRows ? `<table class="tbl"><tr><th>#</th><th>Name</th><th>LP</th><th title="Win streak">🔥</th><th>Best</th></tr>${eRows}</table>` : ''}${!eRows || (tab === 'friends' && e.top.length <= 1) ? none : ''}`);
+      if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="dim small ladnote">${tab === 'friends' ? 'You and the players you follow. ' : ''}By league, then league points (LP), which come from PvP fights: duels and the final fight. 🔥 = runs won in a row now, Best = the longest streak, 🏰 = the best Gauntlet floor reached, 👑 = King Tier. Tap a name to open the profile.</p>
+        ${eRows ? `<table class="tbl"><tr><th>#</th><th>Name</th><th>LP</th><th title="Win streak">🔥</th><th>Best</th><th title="Best Gauntlet floor reached">🏰</th></tr>${eRows}</table>` : ''}${!eRows || (tab === 'friends' && e.top.length <= 1) ? none : ''}`);
     } catch (err) { if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="err">${esc(err.message)}</p>`); }
   }
   // ---------------- v27 (owner + review #25 by David): Crown Shop, profiles, invites
@@ -2053,6 +2096,7 @@
       <li>Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes; with a full team a hero from the Hero Shop takes the place of one of yours (its level and items, powers picked at random). You have 3 lives: a lost fight costs one and the third ends the game. Heroes always heal after a fight.</li>
       <li>⚔ Duels: on some days one choice is a duel against the team another player had at about the same day (its power is shown next to yours). Win and you steal a hero, an item or a power from it and earn a trophy (+1 crown); lose and you lose a life. When no player has been there yet, a made-up team stands in. After the second boss and a last shop comes the final fight, against a team that won its own final fight: win it and the run is complete.</li>
       <li>Leagues: League points (LP) come only from PvP fights: every duel won +${B.LP.duel}, the final fight won +${B.LP.final}, every PvP fight lost −${B.LP.loss}; a completed run also adds its 🔥 win streak (+${B.LP.streak} LP per run in the streak). PvE fights give XP, not LP. In Bronze a run never takes LP away. Higher leagues are harder to climb: a win pays less (×${B.LP_LEAGUE.gain[0]} in Bronze to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Celestial) and a loss costs more (×${B.LP_LEAGUE.loss[0]} to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}). A completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
+      <li>🏰 The Gauntlet: after a completed run you may climb a tower of other players' teams, floor by floor, until you fall or take the crown at the top. Each floor won gives as many LP as its number (floor 3 = +3); losing there costs nothing. Your best floor shows on the ladder.</li>
       <li>🔥 Win streak: the runs you completed in a row (everyone starts at 1). Losing a run, or giving it up, puts it back to 0.</li>
       <li>🏆 Trophies: every duel you win is a trophy with the name of the player you beat, and 1 crown. A profile shows its trophies and your duels against that player.</li>
       <li>👑 Crowns: earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: 4× battle speed, Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles).</li>
@@ -2157,9 +2201,22 @@
     speed: s => { if (+s === 4 && !hasPerk('speed4')) { toast(`4× speed is a Crown Shop unlock (👑 ${B.SHOP_ITEM.speed4.price}). 2× is free.`); return; } ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
     skip: () => { if (battle && battle.gau) { toast('Duels and the final fight cannot be skipped.'); return; } if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; } skipBattle(); },
     // Continue on the result screen: next day, the Gauntlet or the game-over screen.
-    'result-ok': () => { ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
-    'over-next': () => { run.overStep = 2; run.lpShown = true; save(); render(); window.scrollTo(0, 0); },
-    'retry-elo': () => { const r0 = ui.result; if (r0 && r0.req) { r0.pending = true; render(); Net.post('elo', r0.req).then(r => { setElo(r); logGameXp(r); Object.assign(r0, { trophy: r.trophy || null, pending: false, error: null }); save(); render(); }).catch(e => { Object.assign(r0, { pending: false, error: e.message }); render(); }); } else if (run && run.phase === 'over') { reportRunEnd(); } },
+    'result-ok': () => { if (run && run.phase === 'tower' && run.tower && run.tower.status === 'climb' && run.tower.next) { const o = run.tower.next; run.tower.next = null; Run.startDuel(run, o, 'tower', 9); save(); }
+      ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
+    'tower-skip': () => { run.tower = Object.assign(run.tower || {}, { status: 'skipped' }); run.phase = 'over'; run.overStep = 2; save(); render(); window.scrollTo(0, 0); },
+    'tower-done': () => { run.phase = 'over'; run.overStep = 2; save(); render(); window.scrollTo(0, 0); },
+    'tower-enter': async () => {
+      if (ui.towerBusy) return; ui.towerBusy = true; render();
+      let r = null; try { r = await Net.post('elo', { op: 'tower', pid: pid(), ref: refCode(), team: Run.teamSnapshot(run), relics: run.relics }); setElo(r, true); } catch (e) { ui.towerBusy = false; toast(e.message || 'No connection'); render(); return; }
+      ui.towerBusy = false;
+      // an empty tower: a made-up champion guards it until the first real one
+      const opp = r.opponent || Object.assign(Run.randomGhost(run, 8, true), { name: 'Gauntlet Champion' });
+      run.tower = { status: 'climb', teamId: r.teamId, floor: 1, wins: 0, lp: 0, peak: r.peak || 1, history: [] };
+      Run.startDuel(run, opp, 'tower', 9); ui.info = null; save(); render(); window.scrollTo(0, 0);
+    },
+    'over-next': () => { if (run.result === 'clear' && !run.tower) { run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; run.lpShown = true; save(); render(); window.scrollTo(0, 0); return; }
+      run.overStep = 2; run.lpShown = true; save(); render(); window.scrollTo(0, 0); },
+    'retry-elo': () => { const r0 = ui.result; if (r0 && r0.req) { r0.pending = true; render(); Net.post('elo', r0.req).then(r => { setElo(r); logGameXp(r); if (r0.tower) towerAnswer(r, r0); Object.assign(r0, { trophy: r.trophy || null, pending: false, error: null }); save(); render(); }).catch(e => { Object.assign(r0, { pending: false, error: e.message }); render(); }); } else if (run && run.phase === 'over') { reportRunEnd(); } },
     // The steal screen after a won duel: take a hero (it asks which hero steps aside when the team is full), an item or a power.
     steal: i => { const o = run.steal && run.steal[+i]; if (!o) return; if (o.kind === 'hero' && run.heroes.length >= Run.teamMax(run)) { ui.stealPick = +i; render(); return; } const err = Run.steal(run, +i); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },
     'steal-swap': uid => { const err = Run.steal(run, ui.stealPick, +uid); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },
@@ -2187,7 +2244,8 @@
     language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
-    'give-up-yes': () => { if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], tele: run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // v65 (review #133): giving up ends the win streak
+    'give-up-yes': () => { if (run && run.tower) { closeModal(); run.tower.status = 'over'; run.tower.next = null; run.g = null; run.cur = null; run.phase = 'over'; run.overStep = 2; run.lpShown = true; save(); screen = 'run'; render(); return; }   // v90: leaving the Gauntlet only ends the climb (the run is complete)
+      if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], tele: run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // v65 (review #133): giving up ends the win streak
     // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.
     'form-info': t => toast(t, true),
     'hero-peek': k => { if (HEROES[k]) { openModal(heroPeekHTML(k)); ui.modal = 'peek'; } },
