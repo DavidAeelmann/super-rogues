@@ -1008,6 +1008,12 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     ok(!err && h && h.lvl === 3 && h.specs.length === 2 && h.specs.every((id, k) => B.HEROES.vex.specs[k].some(sp => sp.id === id)) && h.xp === B.CFG.xpLevels[3] && Run.shopHeroLevel(r) === 3, 'v92: a shop hero joins at your lowest hero level (Lv ' + (h && h.lvl) + ') with random powers'); }
   // v93 (review #174): every hero's role is one of the nine standard ones
   ok(B.ROLES.length === 9 && Object.values(B.HEROES).every(h => B.ROLES.includes(h.role)) && B.ROLES.every(r => Object.values(B.HEROES).some(h => h.role === r)), 'v93 (review #174): every hero has one of the 9 standard roles, and every role is used');
+  // v94 (review #175): LP for finishing the PvE by league, and each PvP fight weighed by the league gap
+  { const lp = (g, l) => B.runLp(g, l);
+    ok(lp({ done: false, pve: true, lost: 1, pvp: [[0, 2, 1]] }, 0) > 0 && lp({ done: false, pve: true, lost: 1, pvp: [[0, 1, 1]] }, 1) > 0, 'v94: Bronze and Silver climb even when they lose the final fight after finishing the PvE');
+    const goldVsBronze = lp({ done: true, duels: 2, pvp: [[1, 0, 0], [1, 0, 0], [1, 0, 1]] }, 2), goldVsGold = lp({ done: true, duels: 2, pvp: [[1, 2, 0], [1, 2, 0], [1, 2, 1]] }, 2);
+    ok(goldVsBronze < goldVsGold && lp({ done: false, pve: true, lost: 1, pvp: [[0, 0, 1]] }, 2) < lp({ done: false, pve: true, lost: 1, pvp: [[0, 3, 1]] }, 2) && B.LP_PVE[2] === 0, 'v94: Gold beating Bronze earns less than beating Gold; losing to a higher league costs less; Gold gets nothing for the PvE');
+    ok(lp({ done: true, duels: 1, lost: 1 }, 2) === lp({ done: true, duels: 1, lost: 1, pvp: [[1, null, 0], [0, null, 0]] }, 2), 'v94: a made-up opponent counts as your own league'); }
   // v90 (review #171): a Gauntlet floor after the run: no XP, no lives lost, the climb goes on after a win and ends after a loss
   { const r = Run.newRun(4711); Run.pickStart(r, ['bastion'], null); r.phase = 'over'; r.result = 'clear'; const lv = r.lives;
     r.tower = { status: 'climb', floor: 2, wins: 1, lp: 1 }; Run.startDuel(r, Run.randomGhost(r, 8, true), 'tower', 9);

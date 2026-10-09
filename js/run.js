@@ -513,6 +513,8 @@
       res.xp.push({ uid: h.uid, name: B.HEROES[h.key].name, gained: h.xp - xp0, from: before, to: h.lvl });
     }
     if (W.used && W.used.phoenix) { run.relics = run.relics.filter(id => id !== 'phoenix'); res.phoenix = true; }
+    // v94 (review #175): every PvP fight with the opponent's league (null for a made-up team), so the league points can weigh the gap
+    (run.pvpLog = run.pvpLog || []).push([win ? 1 : 0, g.opp && g.opp.league != null && !g.opp.random ? g.opp.league | 0 : null, final ? 1 : 0]);
     fightAchs(run, W, win, false, false);
     if (win && g.opp && ghostPower(g.opp) >= 1.3 * powerOf(run, run.heroes)) ach(run, 'giant');
     run.log.push((win ? 'Won ' : 'Lost ') + (final ? 'the final fight' : 'a duel on fight ' + f.fightNo));
@@ -666,7 +668,7 @@
       run.opts = pickN(run, ['heroShop', 'itemShop', 'relicShop'].filter(k => k !== 'heroShop' || !has(run, 'solo')), has(run, 'quill') ? 3 : 2).map(k => ({ type: 'shop', kind: k, final: true }));
     } else if (t === 'G') {
       // the gauntlet (reviews #3 #4 #9 #10): duels against ghosts of other players' runs
-      run.phase = 'gauntlet'; run.g = { status: 'intro', history: [] }; run.cur = null;
+      run.phase = 'gauntlet'; run.g = { status: 'intro', history: [] }; run.cur = null; run.reachedFinal = true;   // v94 (review #175): the PvE part is finished
     }
   }
   // v44 (review #54): common events come up more than uncommon and rare ones, and an event is offered once per run

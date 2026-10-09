@@ -1409,9 +1409,32 @@
   // v90 (review #171): a Gauntlet floor won pays its number in LP (floor 1: +1, floor 2: +2...); a loss in the Gauntlet costs nothing
   B.towerLp = floor => Math.max(1, Math.min(50, floor | 0));
   B.lpMul = league => { const i = Math.max(0, Math.min(B.LEAGUES.length - 1, league | 0)); return { gain: B.LP_LEAGUE.gain[i], loss: B.LP_LEAGUE.loss[i] }; };
+  // v94 (review #175, David: "give bronze players 20 lp for finishing pve, silver 10, gold above zero, and adjust lp gain loss depending on pvp fight league
+  // discrepancy. Gold beating bronze gives less to gold, bronze loses less. Goal is for bronze to climb even losing pvp"):
+  //   LP_PVE = LP for reaching the final fight (the PvE part finished), by your league: Bronze 20, Silver 10, Gold and up 0.
+  //   LP_GAP = per league between you and the PvP opponent: a win against a lower league pays 25% less per league (a higher one 25% more), a loss
+  //   against a higher league costs 25% less per league (a lower one 25% more); between x0.25 and x2. A made-up opponent counts as your league.
+  B.LP_PVE = [20, 10, 0, 0, 0, 0];
+  B.LP_GAP = 0.25;
+  // WHAT: the factor of one PvP fight's LP: win or loss, opponent's league minus yours (null = same league).
+  B.lpGap = (win, d) => Math.max(0.25, Math.min(2, 1 + B.LP_GAP * (win ? 1 : -1) * (d == null ? 0 : Math.max(-4, Math.min(4, d | 0)))));
   B.lpParts = (g, league) => {
     const M = B.lpMul(league), sc = (n, base) => Math.round(n * base * (base < 0 ? M.loss : M.gain));
     const duels = Math.max(0, Math.min(4, g.duels | 0)), lost = Math.max(0, Math.min(6, g.lost | 0)), streak = g.done ? Math.max(0, Math.min(50, g.streak | 0)) : 0, out = [];
+    const pve = g.done || g.pve ? B.LP_PVE[Math.max(0, Math.min(B.LP_PVE.length - 1, league | 0))] : 0;
+    if (pve) out.push({ id: 'pve', n: 1, lp: pve });
+    // v94: with the list of PvP fights ([won, opponent's league, final]) each fight is scored with its league gap; without it, by the counts as before
+    const P = Array.isArray(g.pvp) ? g.pvp.slice(0, 12).filter(x => Array.isArray(x)) : null;
+    if (P && P.length) {
+      const me = league | 0, gap = x => x[1] == null || !Number.isFinite(+x[1]) ? null : Math.round(+x[1]) - me;
+      const wd = P.filter(x => x[0] && !x[2]).slice(0, duels || 4), wf = g.done ? P.filter(x => x[0] && x[2]).slice(0, 1) : [], ls = P.filter(x => !x[0]).slice(0, lost || 6);
+      const sum = (L, base, win) => Math.round(L.reduce((a, x) => a + base * (base < 0 ? M.loss : M.gain) * B.lpGap(win, gap(x)), 0));
+      if (wd.length) out.push({ id: 'duel', n: wd.length, lp: sum(wd, B.LP.duel, true) });
+      if (g.done) out.push({ id: 'final', n: 1, lp: wf.length ? sum(wf, B.LP.final, true) : sc(1, B.LP.final) });
+      if (ls.length) out.push({ id: 'loss', n: ls.length, lp: sum(ls, -B.LP.loss, false) });
+      if (streak) out.push({ id: 'streak', n: streak, lp: sc(streak, B.LP.streak) });
+      return out;
+    }
     if (duels) out.push({ id: 'duel', n: duels, lp: sc(duels, B.LP.duel) });
     if (g.done) out.push({ id: 'final', n: 1, lp: sc(1, B.LP.final) });
     if (lost) out.push({ id: 'loss', n: lost, lp: sc(lost, -B.LP.loss) });
