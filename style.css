@@ -736,6 +736,9 @@ body.wide .gauntlet { max-width: 1000px; margin: 0 auto; }
 .lulv { display: block; color: var(--dim); margin: 2px 0 4px; } .lulv b { color: var(--gold); }
 .spec2 .opt { border-color: #6a5a2a; } .spec2 .opt:hover, .spec2 .opt:focus-visible { border-color: var(--gold); box-shadow: 0 0 14px #ffcf5a33; }
 .sp-path { margin-top: 10px; }
+/* v88 (review #167): a level-up power's balance factor */
+.sp-tune { display: inline-block; font-weight: 700; white-space: nowrap; }
+.sp-tune.up { color: #7dff9a; } .sp-tune.down { color: #ff9a7d; }
 .sp-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #ffffff0d; }
 .sp-row .sp-lv { width: 34px; color: var(--dim); font-weight: 700; } .sp-row i { color: var(--dim); font-size: 11px; font-style: italic; }
 .sp-n { padding: 1px 7px; border-radius: 6px; border: 1px solid var(--line); color: #cfc6b4; }
@@ -1519,6 +1522,7 @@ button.primary:disabled::after { display: none; }
 #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
 #fx .cf { position: absolute; margin: -4px 0 0 -4px; border-radius: 2px; will-change: transform; }
 #fx .cf.round { border-radius: 50%; }
+#fx .dust { position: absolute; margin: -4px 0 0 -4px; border-radius: 50%; filter: blur(0.6px); will-change: transform, opacity; }   /* v88 (review #168): the puff where a hero lands */
 #fx .fcoin { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; will-change: transform;
   background: radial-gradient(circle at 35% 32%, #fff8d2, #ffd23f 45%, #c47f00); box-shadow: 0 0 0 1.5px #8a5a14, 0 0 12px #ffd23fcc; }
 #fx .floater { position: absolute; font-family: var(--fun); font-weight: 700; font-size: 18px; color: #ffe46b; white-space: nowrap;

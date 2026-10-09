@@ -63,6 +63,7 @@
     tap: () => { tone(740, 0.05, { vol: 0.16 }); tone(1110, 0.04, { vol: 0.07, at: 0.012 }); },
     pick: () => { tone(NOTE(72), 0.09, { type: 'triangle', vol: 0.22 }); tone(NOTE(79), 0.14, { type: 'triangle', vol: 0.2, at: 0.06 }); },
     back: () => { tone(NOTE(76), 0.07, { type: 'triangle', vol: 0.16 }); tone(NOTE(69), 0.1, { type: 'triangle', vol: 0.14, at: 0.05 }); },
+    place: () => { noise(0.07, { f: 420, vol: 0.2 }); tone(140, 0.08, { to: 70, vol: 0.16 }); },   // v88 (review #168): a hero set down on the board
     deny: () => { tone(196, 0.1, { type: 'square', vol: 0.07 }); tone(147, 0.14, { type: 'square', vol: 0.07, at: 0.08 }); },
     coin: () => { tone(NOTE(88), 0.06, { type: 'square', vol: 0.07 }); tone(NOTE(93), 0.16, { type: 'square', vol: 0.07, at: 0.055 }); },
     tick: i => tone(NOTE(84 + Math.min(12, (i | 0) % 13)), 0.035, { type: 'square', vol: 0.04 }),

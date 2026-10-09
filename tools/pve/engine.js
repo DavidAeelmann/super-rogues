@@ -161,6 +161,8 @@ function playRun(seed, opt = {}) {
 function applyTune(t) {
   if (!t) return;
   if (t.power) B.TUNE.power = Object.assign({}, t.power);
+  if (t.spec) B.TUNE.spec = Object.assign({}, t.spec);   // v88 (review #167): the level-up powers' and the PvP-only tables
+  if (t.pvp) B.TUNE.pvp = Object.assign({}, t.pvp);
   if (t.fightScale) C.fightScale = t.fightScale.slice();
   if (t.growth != null) B.TUNE.growth = t.growth;
   if (t.ghostPower != null) C.ghostPower = t.ghostPower;

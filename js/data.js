@@ -36,7 +36,7 @@
     // and after each of the first days a free hero joins (picked from 3, the same screen) until the team has 3 (freeRecruits); 1 power and a few common items to start;
     // on the fight days in pvpFights one of the choices is a duel against another player's team that reached about the same day (a win steals a hero, an item or a power);
     // the last day (G) is the final fight against a team that won its own final fight
-    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 2, lives: 3, pvpFights: [3, 6], ghostPower: 0.78,
+    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 2, lives: 3, pvpFights: [3, 6], ghostPower: 0.76,
   };
 
   // ---------------------------------------------------------------- heroes
@@ -1189,9 +1189,9 @@
     colossus: { key: 'colossus', name: 'The Iron Colossus', glyph: '🗿', boss: 2, slot: 2, hp: 4280, atk: 77, armor: 48, as: 0.55, range: 1, ms: 1.5, mana: 70, abil: 'quake',
       desc: 'Stomps the ground and shoves heroes away (into stones, they are stunned). Vents steam every 8s and takes more damage while it does. Calls shield bearers at 60%, melts down at 30%.', escort: ['knight', 'bomber'] },
     // v83 (review #161, David: "add 1 more boss option per each boss floor and balance them"): a third boss for each floor
-    packlord: { key: 'packlord', name: 'Skorrak the Packlord', glyph: '🐺', boss: 1, slot: 1, hp: 1520, atk: 42, armor: 30, as: 0.85, range: 1, ms: 2.6, mana: 55, abil: 'howl',
+    packlord: { key: 'packlord', name: 'Skorrak the Packlord', glyph: '🐺', boss: 1, slot: 1, hp: 1520, atk: 42, armor: 30, as: 0.85, range: 1, ms: 2.6, mana: 55, abil: 'packhowl',
       desc: 'Howls for wolves and drives his pack into a frenzy. Pounces on your weakest backline hero every 9s. At half health the Blood Moon heals him and makes him stronger.', escort: ['wolf', 'wolf', 'archer'] },
-    lichqueen: { key: 'lichqueen', name: 'Vaelith the Lich Queen', glyph: '❄️', boss: 2, slot: 2, hp: 2900, atk: 60, armor: 40, as: 0.7, range: 3, ms: 1.8, mana: 60, abil: 'blizzard',
+    lichqueen: { key: 'lichqueen', name: 'Vaelith the Lich Queen', glyph: '❄️', boss: 2, slot: 2, hp: 2900, atk: 60, armor: 40, as: 0.7, range: 3, ms: 1.8, mana: 60, abil: 'lichstorm',
       desc: 'Calls blizzards that chill and slow a whole group. Freezes your strongest hero every 7s. Raises the dead at 66% and hides in an ice tomb at 33%.', escort: ['hexer', 'knight'] },
   };
   // v83 (review #161): Health and Attack of all six bosses set by tools/tune-bosses.js so every boss of a floor is won about as often (boss 1 ~62%, boss 2 ~57%,
@@ -1346,8 +1346,14 @@
   B.heroClass = key => B.CLASS_OF[key] || 'damage';
   // v62o (review #111, David: simulate thousands of PvE runs and balance by the results): the PvE balance tuner (tools/pve/tune.js) rewrites this block.
   // power = a multiplier on a hero's Health, Attack and Magic (1 = as designed); the tuner nudges it until every hero clears the PvE about as often as the others.
+  // v88 (review #167, David: "some build paths are comically bad. Please make it an actual choice between two in the level ups"; tools/balance/pvp.js):
+  //   spec = a multiplier on Health, Attack and Magic that a level-up power adds while the hero has it. The two powers of a pair move in opposite
+  //          directions (the weaker one up, the stronger one down), so the pair becomes a real choice and the hero's average strength stays put.
+  //          The level-up card and the hero sheets show it next to the power ("+8% Health, Attack and Magic").
+  //   pvp  = a multiplier on Health, Attack and Magic in PvP fights only (duels and the final fight, both teams): a healer that is fair in the
+  //          PvE can be weak against players and the reverse, and one number cannot fit both, so PvP has its own.
   // <TUNE-BEGIN>
-  B.TUNE = { base: 1.173, growth: 0.711, power: { ashwing: 0.921, azgul: 1.135, barley: 1.151, bastion: 1.186, blaze: 0.945, brakk: 1.248, bramble: 1.19, buzzwell: 0.856, citadel: 1.637, coralie: 0.856, deadshot: 0.735, duelist: 1.03, echo: 0.89, gardener: 0.81, glacia: 0.653, grimhook: 0.889, grok: 1.325, harlequin: 1.274, hippolyta: 1.258, imhotep: 1.188, kage: 1.214, kestrel: 0.974, leonidas: 1.269, lumen: 0.757, medic: 0.773, mirage: 1.054, morrow: 0.736, nyx: 1.33, pip: 0.928, plasma: 0.694, prism: 0.835, pyra: 0.919, rex: 1.321, rohammer: 1.069, rook: 1.038, seraph: 1.218, smolder: 1.077, sprocket: 0.887, stellan: 0.814, tempest: 0.875, thorne: 1.126, tom: 0.851, vesper: 1.068, vex: 1.003, vey: 0.887, zephyr: 1.049 } };
+  B.TUNE = { base: 1.173, growth: 0.711, power: { ashwing: 0.921, azgul: 1.135, barley: 1.151, bastion: 1.186, blaze: 0.945, brakk: 1.248, bramble: 1.19, buzzwell: 0.856, citadel: 1.637, coralie: 0.856, deadshot: 0.735, duelist: 1.03, echo: 0.89, gardener: 0.81, glacia: 0.653, grimhook: 0.889, grok: 1.325, harlequin: 1.274, hippolyta: 1.258, imhotep: 1.188, kage: 1.214, kestrel: 0.974, leonidas: 1.269, lumen: 0.757, medic: 0.773, mirage: 1.054, morrow: 0.736, nyx: 1.33, pip: 0.928, plasma: 0.694, prism: 0.835, pyra: 0.919, rex: 1.321, rohammer: 1.069, rook: 1.038, seraph: 1.218, smolder: 1.077, sprocket: 0.887, stellan: 0.814, tempest: 0.875, thorne: 1.126, tom: 0.851, vesper: 1.068, vex: 1.003, vey: 0.887, zephyr: 1.049 }, spec: { ash2a: 1.02, ash2b: 0.98, ash3a: 0.98, ash3b: 1.02, ash4a: 0.99, ash4b: 1.01, azg2a: 0.99, azg2b: 1.01, azg3a: 1.05, azg3b: 0.95, azg4a: 0.95, azg4b: 1.05, azg5a: 0.97, azg5b: 1.03, bar3a: 1.03, bar3b: 0.97, bar4a: 1.04, bar4b: 0.96, bar5a: 0.98, bar5b: 1.02, bas2a: 0.93, bas2b: 1.07, bas3a: 0.93, bas3b: 1.07, bas5a: 0.86, bas5b: 1.14, blz2a: 1.02, blz2b: 0.98, blz3a: 0.98, blz3b: 1.02, blz5a: 0.99, blz5b: 1.01, bra2a: 1.04, bra2b: 0.96, bra4a: 1.1, bra4b: 0.9, bra5a: 0.99, bra5b: 1.01, brm2a: 1.04, brm2b: 0.96, brm3a: 0.96, brm3b: 1.04, brm4a: 0.88, brm4b: 1.12, buz3a: 1.01, buz3b: 0.99, buz4a: 1.04, buz4b: 0.96, buz5a: 1.03, buz5b: 0.97, cit2a: 0.98, cit2b: 1.02, cit3a: 0.93, cit3b: 1.07, cit4a: 1.02, cit4b: 0.98, cit5a: 0.92, cit5b: 1.08, cor3a: 1.15, cor3b: 0.85, cor4a: 0.92, cor4b: 1.08, cor5a: 1.01, cor5b: 0.99, dsh3a: 0.95, dsh3b: 1.05, dsh5a: 1.13, dsh5b: 0.87, due2a: 0.98, due2b: 1.02, due3a: 1.01, due3b: 0.99, due4a: 1.03, due4b: 0.97, due5a: 0.95, due5b: 1.05, ech3a: 1.02, ech3b: 0.98, ech4a: 1.03, ech4b: 0.97, gar5a: 1.03, gar5b: 0.97, gla2a: 0.96, gla2b: 1.04, gla3a: 0.97, gla3b: 1.03, gla4a: 0.87, gla4b: 1.13, gla5a: 0.87, gla5b: 1.13, gri2a: 0.9, gri2b: 1.1, gri3a: 0.92, gri3b: 1.08, gri4a: 1.02, gri4b: 0.98, gri5a: 0.94, gri5b: 1.06, grk2a: 0.98, grk2b: 1.02, grk3a: 1.01, grk3b: 0.99, grk4a: 1.04, grk4b: 0.96, grk5a: 1.02, grk5b: 0.98, har3a: 1.02, har3b: 0.98, har4a: 1.04, har4b: 0.96, har5a: 0.94, har5b: 1.06, hip2a: 1.03, hip2b: 0.97, hip3a: 0.93, hip3b: 1.07, hip4a: 0.98, hip4b: 1.02, hip5a: 1.03, hip5b: 0.97, imh2a: 1.02, imh2b: 0.98, imh3a: 0.9, imh3b: 1.1, imh4a: 1.03, imh4b: 0.97, imh5a: 1.06, imh5b: 0.94, kag2a: 1.04, kag2b: 0.96, kag3a: 1.01, kag3b: 0.99, kag4a: 1.04, kag4b: 0.96, kes2a: 1.03, kes2b: 0.97, kes3a: 1.01, kes3b: 0.99, kes5a: 1.15, kes5b: 0.85, leo2a: 0.95, leo2b: 1.05, leo4a: 0.99, leo4b: 1.01, leo5a: 0.93, leo5b: 1.07, lum2a: 1.12, lum2b: 0.88, lum3a: 1.01, lum3b: 0.99, lum4a: 1.05, lum4b: 0.95, lum5a: 0.95, lum5b: 1.05, med2a: 0.96, med2b: 1.04, med3a: 1.02, med3b: 0.98, med4a: 1.02, med4b: 0.98, med5a: 1.05, med5b: 0.95, mir2a: 0.97, mir2b: 1.03, mir3a: 0.98, mir3b: 1.02, mir4a: 0.97, mir4b: 1.03, mir5a: 0.95, mir5b: 1.05, mor2a: 0.97, mor2b: 1.03, mor3a: 0.95, mor3b: 1.05, mor5a: 0.92, mor5b: 1.08, nyx2a: 1.02, nyx2b: 0.98, nyx5a: 1.08, nyx5b: 0.92, pip4a: 1.03, pip4b: 0.97, pip5a: 0.95, pip5b: 1.05, pla2a: 0.99, pla2b: 1.01, pla3a: 1.03, pla3b: 0.97, pla4a: 0.98, pla4b: 1.02, pla5a: 0.99, pla5b: 1.01, pri2a: 0.95, pri2b: 1.05, pri4a: 0.96, pri4b: 1.04, pri5a: 1.09, pri5b: 0.91, pyr2a: 1.09, pyr2b: 0.91, pyr3a: 0.98, pyr3b: 1.02, pyr4a: 0.95, pyr4b: 1.05, pyr5a: 0.85, pyr5b: 1.15, rex3a: 1.07, rex3b: 0.93, rex5a: 0.95, rex5b: 1.05, roh2a: 0.9, roh2b: 1.1, roh3a: 0.95, roh3b: 1.05, roh4a: 0.96, roh4b: 1.04, roh5a: 1.03, roh5b: 0.97, roo2a: 0.98, roo2b: 1.02, roo3a: 0.9, roo3b: 1.1, roo4a: 0.92, roo4b: 1.08, roo5a: 0.9, roo5b: 1.1, ser2a: 0.99, ser2b: 1.01, ser4a: 0.95, ser4b: 1.05, ser5a: 0.97, ser5b: 1.03, smo2a: 1.07, smo2b: 0.93, smo3a: 1.02, smo3b: 0.98, smo4a: 1.02, smo4b: 0.98, smo5a: 0.95, smo5b: 1.05, spr2a: 0.92, spr2b: 1.08, spr3a: 0.9, spr3b: 1.1, spr4a: 0.92, spr4b: 1.08, spr5a: 1.05, spr5b: 0.95, ste3a: 0.96, ste3b: 1.04, ste5a: 1.02, ste5b: 0.98, tem3a: 0.92, tem3b: 1.08, tem5a: 1.15, tem5b: 0.85, thr2a: 0.93, thr2b: 1.07, thr3a: 0.97, thr3b: 1.03, thr4a: 0.97, thr4b: 1.03, thr5a: 1.07, thr5b: 0.93, tom2a: 1.08, tom2b: 0.92, tom3a: 1.02, tom3b: 0.98, tom5a: 1.12, tom5b: 0.88, ves2a: 1.02, ves2b: 0.98, ves4a: 1.04, ves4b: 0.96, ves5a: 1.03, ves5b: 0.97, vex2a: 1.05, vex2b: 0.95, vex3a: 1.06, vex3b: 0.94, vex4a: 1.02, vex4b: 0.98, vey2a: 0.95, vey2b: 1.05, vey3a: 0.93, vey3b: 1.07, vey4a: 1.15, vey4b: 0.85, vey5a: 1.03, vey5b: 0.97, zep2a: 1.09, zep2b: 0.91, zep3a: 1.09, zep3b: 0.91, zep4a: 0.99, zep4b: 1.01, zep5a: 0.97, zep5b: 1.03 }, pvp: { ashwing: 1.009, azgul: 0.692, barley: 1.051, blaze: 0.877, brakk: 0.799, bramble: 1.108, buzzwell: 1.189, citadel: 1.115, coralie: 0.983, deadshot: 0.836, echo: 1.322, gardener: 1.295, glacia: 0.865, grimhook: 1.057, grok: 0.653, harlequin: 0.646, hippolyta: 0.744, imhotep: 0.645, kage: 0.788, kestrel: 1.092, leonidas: 0.776, lumen: 1.384, medic: 1.6, mirage: 1.159, morrow: 1.308, nyx: 0.85, plasma: 1.171, prism: 1.256, pyra: 0.771, rex: 0.785, rohammer: 0.81, rook: 1.122, seraph: 1.137, smolder: 0.933, sprocket: 1.041, stellan: 0.99, tempest: 0.764, tom: 1.063, vesper: 1.15, vex: 0.907, vey: 0.901, zephyr: 0.9 } };
   // <TUNE-END>
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
@@ -1504,8 +1510,10 @@
   // (B.GAME_XP, at most perHour games an hour count), and the firsts stay as bonuses, x10 to match the new numbers.
   // Players from before keep their level (api/_player.js xpInit converts their XP once).
   // WHAT: ACCOUNT LEVEL. XP needed per level (B.ACCOUNT), XP for each thing done in a game (B.GAME_XP), and B.UNLOCKS = which hero / item / power each level unlocks.
-  B.ACCOUNT = { base: 80, step: 20, heroClear: 10, floor: 50, boss: 30, crownXp: 2 };
-  B.GAME_XP = { played: 10, fight: 8, boss: 25, reached: 30, duel: 20, champion: 50, perHour: 12, maxFights: 14 };
+  // v88 (review #168, David: "ppl level too fast"): about 40% less XP for the same game (the level costs stay, so nobody loses a level): a first run now
+  // gives about one level instead of three, and each level's chest feels earned
+  B.ACCOUNT = { base: 80, step: 20, heroClear: 6, floor: 30, boss: 18, crownXp: 2 };
+  B.GAME_XP = { played: 6, fight: 5, boss: 15, reached: 18, duel: 12, champion: 30, perHour: 12, maxFights: 14 };
   // v63 (review #120, David: "restrict the initial pool of champions to 20, and make the xp progression unlock all the rest with the first levels"): a new player has the 20 heroes of
   // START_HEROES; the other 26 come two per level from level 2 to 14, in the order of HERO_UNLOCKS (a mix of damage, support and tank); items and powers keep their own levels
   B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta'];
@@ -1513,8 +1521,12 @@
   B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage', 'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist'];
   // v65 (review #131, David: "add hero portraits for profile in xp rewards"): your picture (profile, ladder, the top bar) is a hero portrait. Four are free;
   // every level from 2 on unlocks one more (the starting heroes first, then the ones the levels unlock), so every level has a reward up to level 43
+  // v88 (review #168, David: "too many rewards in current chest... everything must add value or go"): a hero the levels unlock brings its own portrait
+  // (one reward, not two), and the other starting heroes' portraits are the rewards of levels 28 to 43, after the last hero. So a chest holds one main
+  // thing (a hero, or a portrait), sometimes an item or power, rarely a title or voice line besides.
   B.PORTRAITS_FREE = ['bastion', 'lumen', 'pyra', 'kestrel'];
-  B.PORTRAIT_UNLOCKS = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k)).concat(B.HERO_UNLOCKS);
+  B.PORTRAITS_LATE = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k));   // levels 28..43
+  B.PORTRAIT_UNLOCKS = B.HERO_UNLOCKS.concat(B.PORTRAITS_LATE);
   for (const k of B.PORTRAIT_UNLOCKS) { const it = { id: 'pt_' + k, kind: 'portrait', hero: k, icon: '🖼', name: (B.HEROES[k] || {}).name + ' portrait', price: B.PORTRAIT_PRICE, desc: 'Use this portrait before your level opens it.' }; B.COSMETICS.push(it); B.SHOP_ITEM[it.id] = it; }   // v66 (review #136)
   B.UNLOCKS = [
     [2, 'relic', 'beehive'], [3, 'item', 'honeycomb'], [4, 'relic', 'seashell'], [6, 'relic', 'kite'],
@@ -1523,9 +1535,9 @@
     [17, 'item', 'comethammer'], [18, 'relic', 'pinwheel'], [19, 'relic', 'horseshoe'],
   ].map(([lvl, kind, id]) => ({ lvl, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: 2 + i, kind: 'hero', id })))   // v74 (review #152): one hero a level (2 to 27), not two
     .concat(B.LEVEL_TAUNTS.map(t => ({ lvl: t.lvl, kind: 'taunt', id: t.id }))).concat(B.ACHIEVEMENTS.filter(a => a.by === 'level').map(a => ({ lvl: a.lvl, kind: 'title', id: a.id })))
-    .concat(B.PORTRAIT_UNLOCKS.map((id, i) => ({ lvl: 2 + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);
+    .concat(B.PORTRAITS_LATE.map((id, i) => ({ lvl: 2 + B.HERO_UNLOCKS.length + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);   // v88: a new hero's portrait comes with the hero
   // WHAT: the account level a hero's portrait opens at (1 = free from the start, 0 = no such portrait).
-  B.portraitLevel = key => B.PORTRAITS_FREE.includes(key) ? 1 : (B.UNLOCKS.find(u => u.kind === 'portrait' && u.id === key) || { lvl: 0 }).lvl;
+  B.portraitLevel = key => B.PORTRAITS_FREE.includes(key) ? 1 : B.HERO_UNLOCKS.includes(key) ? 2 + B.HERO_UNLOCKS.indexOf(key) : (B.UNLOCKS.find(u => u.kind === 'portrait' && u.id === key) || { lvl: 0 }).lvl;
   B.xpToNext = lvl => B.ACCOUNT.base + B.ACCOUNT.step * (Math.max(1, lvl) - 1);
   B.xpForLevel = lvl => { let s = 0; for (let l = 1; l < lvl; l++) s += B.xpToNext(l); return s; };   // total XP to reach it
   B.levelOf = xp => { let l = 1, left = Math.max(0, xp || 0); while (left >= B.xpToNext(l)) { left -= B.xpToNext(l); l++; } return l; };

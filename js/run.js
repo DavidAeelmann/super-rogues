@@ -123,6 +123,10 @@
   }
   // WHAT: finds a hero power ("spec") by its id, e.g. specOf('pyra', 'pyr2a').
   function specOf(key, id) { for (const pair of B.HEROES[key].specs) for (const s of pair) if (s.id === id) return s; return null; }
+  // WHAT (v88, review #167): the balance factor of a level-up power on Health, Attack and Magic (B.TUNE.spec, 1 = none).
+  const specTune = id => (B.TUNE && B.TUNE.spec && B.TUNE.spec[id]) || 1;
+  // WHAT (v88): the PvP-only factor of a hero (B.TUNE.pvp): scales a fighting unit made by heroDef.
+  function pvpDef(d, key) { const f = (B.TUNE && B.TUNE.pvp && B.TUNE.pvp[key]) || 1; if (f !== 1) { d.hp *= f; d.atk *= f; d.ap *= f; } return d; }
   // WHAT: ALL the extra stats a hero has right now, summed: his own mods, picked powers, worn items, set bonuses, team powers (relics), permanent bonus, run-based bonuses.
   function heroMods(run, h) {
     const m = {};
@@ -158,7 +162,8 @@
     const b = B.HEROES[h.key], m = heroMods(run, h), L = h.lvl - 1, all = m.allPct || 0;
     // v61 (review #73): each hero grows at its own pace per level (b.grow, 1 = +15% HP and attack and +30 AP per level),
     // so heroes that were strong early and fell off late (or the reverse) stay in line through the whole run
-    const g = (b.grow || 1) * ((B.TUNE && B.TUNE.growth) || 1), tp = ((B.TUNE && B.TUNE.power[h.key]) || 1) * ((B.TUNE && B.TUNE.base) || 1);   // v62o: tp = the balance tuner's power factor for this hero; v62q (review #113): g also takes the global growth (what a level gives: Health, Attack, Magic and so the ability numbers)
+    let g = (b.grow || 1) * ((B.TUNE && B.TUNE.growth) || 1), tp = ((B.TUNE && B.TUNE.power[h.key]) || 1) * ((B.TUNE && B.TUNE.base) || 1);
+    for (const id of h.specs) tp *= specTune(id);   // v88 (review #167): the level-up powers' own balance factor   // v62o: tp = the balance tuner's power factor for this hero; v62q (review #113): g also takes the global growth (what a level gives: Health, Attack, Magic and so the ability numbers)
     const ab = Object.assign({}, b.ab), fl = (b.fl || []).slice();
     for (const id of h.specs) {
       const s = specOf(h.key, id); if (!s) continue;
@@ -592,9 +597,9 @@
       terrain: terrainOf(run),
       // review #15: the ghost fights with its own relics too (stat relics via heroDef, team effects via enemyRelics)
       mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: 7, relics: run.relics, enemyRelics: o.relics || [],
-      heroes: run.heroes.map(h => ({ def: heroDef(run, h), c: h.pos.c, r: h.pos.r })),
+      heroes: run.heroes.map(h => ({ def: pvpDef(heroDef(run, h), h.key), c: h.pos.c, r: h.pos.r })),   // v88: pvpDef = the PvP-only balance (B.TUNE.pvp)
       // their formation, mirrored so it faces ours: rows 4..7 -> 3..0
-      enemies: o.team.map(h => { const d = heroDef(ghost, h); d.uid = 0; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
+      enemies: o.team.map(h => { const d = pvpDef(heroDef(ghost, h), h.key); d.uid = 0; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
     });
   }
   // apply an api/elo.js answer to the run
@@ -1098,7 +1103,7 @@
   }
 
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
-  B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
+  B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
     eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };

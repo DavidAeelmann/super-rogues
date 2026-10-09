@@ -1235,7 +1235,7 @@
   };
   // v83 (review #161): the third boss of each floor
   // WHAT: Skorrak's Howl (boss): a wolf joins the fight (never more than 3 at once) and his whole side attacks 20% faster for 4s.
-  A.howl = (W, u) => {
+  A.packhowl = (W, u) => {   // v88 (review #167): was A.howl, which overwrote Fang's own Howl & Pounce (v83-v87)
     const wolves = W.units.filter(x => !x.dead && x.owner === u.id && x.key === 'wolf').length;
     fxRing(W, u.c, u.r, 2, '#ff6a3a', 14); fxText(W, u, 'HOWL!', '#ff6a3a');
     if (wolves < 3) summon(W, u, mobScaleDef('wolf', u.scale || 1));
@@ -1243,7 +1243,7 @@
     return true;
   };
   // WHAT: Vaelith's Blizzard (boss): ice on the densest group of heroes: 120% attack as magic damage, 40% slow for 3s, and the ground stays frozen 4s.
-  A.blizzard = (W, u) => {
+  A.lichstorm = (W, u) => {   // v88: was A.blizzard, which overwrote Frostbane's Rime Squall (v83-v87)
     const t = bestCluster(W, u, 1); if (!t || Hx.dist(u, t) > u.range + 2) return false;
     const c = t.c, r = t.r; fxRing(W, c, r, 1, '#8fe3ff', 16);
     for (const e of enemies(W, u)) if (Hx.dist(e, { c, r }) <= 1) { deal(W, u, e, 1.2 * atkOf(W, u), 'magic', { ability: true }); slow(W, e, 0.4, 3); }

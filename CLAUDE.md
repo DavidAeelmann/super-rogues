@@ -34,6 +34,13 @@ David's rules that always apply (each one came from a request of his):
 - The Bronze "assist" is **not advertised anywhere** (#53).
 - Low friction: tap, drag, no pointless menus; help hints (balloons) disappear when the screen changes.
 
+**UI principles (requests #168 and #169, David). Every screen and every change is checked against these five:**
+- **Feedback:** every action answers at once: a button press reacts (press, sound), a moved hero leaves a puff of dust, a purchase / pick / level shows its effect where it lands. Nothing the player does goes silent.
+- **Consistency:** one design language: the same button shapes, sizes and places for the same role (main action, secondary, back), one palette (yellow = the main action and key rewards only), one type scale and spacing, the same hierarchy on every screen.
+- **Hierarchy:** the next action is obvious; one main button per screen; the screen is understood at a glance (minimal cognitive load): the important thing biggest and first, details on demand.
+- **Minimalism:** no clutter. Every element must add value or go: fewer, bigger rewards rather than many small ones (a chest gives a few things that matter), progression paced so a level-up still feels earned, no decorative text or duplicated information.
+- **Hook:** the player always sees what is next and wants it (the next unlock, the next league, the next reward within reach); payoff moments (wins, level-ups, unlocks, chests, promotions) get dopamine-inducing screens and effects: a build-up, a burst, a clear "you got X".
+
 ## Architecture and important files
 
 The complete map, file by file, with "I want to change X" recipes, is in **`CODEMAP.md`** (read it when you need to find something). In short:

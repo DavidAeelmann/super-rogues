@@ -74,7 +74,7 @@
   // v82 (review #160, David: "hovering over the chest rewards should explain what they are"): what a reward IS, for the hover / tap bubble
   // WHAT: one or two sentences that explain an unlock (hero, item, power, portrait, voice line, title).
   function unlockInfo(u) {
-    if (u.kind === 'hero') { const d = HEROES[u.id]; return `A new hero for your runs: ${d.role}${d.tag ? ', ' + d.tag.toLowerCase() : ''}. Ability, ${d.abName}: ${d.abDesc}`; }
+    if (u.kind === 'hero') { const d = HEROES[u.id]; return `A new hero for your runs: ${d.role}${d.tag ? ', ' + d.tag.toLowerCase() : ''}. Ability, ${d.abName}: ${d.abDesc} Its portrait comes with it.`; }
     if (u.kind === 'item') { const it = ITEM[u.id]; return `A new item that can show up in shops and events (${it.tier}${it.type ? ' ' + it.type : ''}): ${it.desc}.`; }
     if (u.kind === 'relic') return `A new power for your whole team, offered at the start and in power shops: ${RELIC[u.id].desc}`;
     if (u.kind === 'portrait') return `A new profile picture: ${HEROES[u.id].name}. Pick it on your profile (tap your picture).`;
@@ -747,6 +747,8 @@
     ['Control', 'lock', /stun|root|slow|freez|taunt|blind|pull|push|knock|silence|hypno|charm|fear|longer/i], ['Tank', 'shield', /defense|max health|shield|invulnerab|untargetable|less damage|damage taken/i],
     ['Area', 'swords', /radius|every enemy|all enemies|adjacent|within \d+ hex|group|bounce|chain|splash|nearby|around|more enemies|more targets|\d+ targets/i],
     ['Speed', 'bolt', /attack speed|move speed|faster|sooner|dodge|blink|dash|energy|cooldown|twice|range/i], ['Damage', 'sword', /damage|crit|execut|burn|poison|bleed|\battack\b|\bmagic\b|strike|kill|double|\d+% more|more (?:knives|flasks|shots|arrows)/i]];
+  // v88 (review #167): a power's balance factor, shown next to it when it has one (B.TUNE.spec)
+  const specNote = sp => { const f = Run.specTune(sp.id); if (Math.abs(f - 1) < 0.005) return ''; const p = Math.round((f - 1) * 100); return ` <span class="sp-tune ${p > 0 ? 'up' : 'down'}">${p > 0 ? '+' : ''}${p}% Health, Attack and Magic</span>`; };
   const specTags = sp => { const t = STYLE.filter(x => x[2].test(sp.desc)).slice(0, 2); return (t.length ? t : [['Upgrade', 'star']]).map(([n, ic]) => `<span class="ptag pt-${n.toLowerCase()}">${I(ic)}${n}</span>`).join(''); };
   // WHAT: the level-up screen: pick one of two powers for the hero that levelled.
   function levelHTML() {
@@ -763,7 +765,7 @@
       <div class="luhero"><img class="lufull" src="${por(h.key, 104, true)}" alt=""><div><b class="luname">${esc(d.name)}</b><span class="lulv">Lv ${p.lvl - 1} → <b>Lv ${p.lvl}</b></span>
         <p class="small lugain" title="+15% Health and Attack, +30 Magic, +4 Defense">${I('up')} Stronger in every way${p.lvl >= 3 ? `<br><b class="kw-gold">${I('bag')} +1 item slot</b>` : ''}</p></div></div>
       <h3>Pick a new power</h3>
-      <div class="opts spec2">${pair.map((sp, i) => `<button class="card opt" data-act="spec" data-arg="${i}" title="${esc(sp.desc)}"><div class="ptags">${specTags(sp)}</div><div class="ctitle spec">${esc(sp.name)}</div><div class="small">${fmt(plainAb(sp.desc))}</div></button>`).join('')}</div>
+      <div class="opts spec2">${pair.map((sp, i) => `<button class="card opt" data-act="spec" data-arg="${i}" title="${esc(sp.desc)}"><div class="ptags">${specTags(sp)}</div><div class="ctitle spec">${esc(sp.name)}</div><div class="small">${fmt(plainAb(sp.desc))}${specNote(sp)}</div></button>`).join('')}</div>
       <div class="sp-path tree"><div class="bph"><b>Power path</b><span class="dim small">one of two at each level</span></div>${path}</div></section>`;
   }
 
@@ -1391,14 +1393,16 @@
   }
   function onMove(e) { if (!ui.drag || battle) return; const { x, y, h } = evHex(e); drawPreview({ drop: h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r) ? h : null, dragGhost: { x, y, key: ui.drag.key } }); }
   // review #39: a hero can't be placed on a tree, boulder, ridge or pond
-  function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
+  function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) sfx('deny'); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
   // WHAT: pointer up on the board: drop the hero on the new hex (rows 4-7 only, not on terrain) or select it; the first move ends the tutorial prompt.
   function onUp(e) {
     if (battle) return;
     const { h } = evHex(e); const d = ui.drag; ui.drag = null;
-    if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(run, d.uid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); } }
-    else if (d) ui.selUid = ui.selUid === d.uid ? 0 : d.uid;
-    else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); }
+    // v88 (review #168): a hero set down raises a puff of dust and a soft thud where it lands
+    const landed = () => { sfx('place'); if (!B.Juice) return; const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); };
+    if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(run, d.uid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); } }
+    else if (d) { ui.selUid = ui.selUid === d.uid ? 0 : d.uid; if (ui.selUid) sfx('tap'); }
+    else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); }
     preview = worldFor(true);
     const fl = $('#formline'); if (fl) fl.innerHTML = formHTML(preview);
     drawPreview();
@@ -1753,7 +1757,7 @@
     return `<div class="shead"><b>${esc(d.name)}</b><button data-act="close" aria-label="Close">✕</button></div>
       <div class="peek"><img class="peekart" src="${por(key, 110, true)}" alt=""><div class="peekt"><span class="role">${esc(d.role)} · ${d.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span><p class="htag big">${esc(d.tag || '')}</p></div></div>
       <div class="abil peekab">${abilHTML(d)}</div>${scalingHTML(def)}
-      <h3 class="peekh">Powers it can learn</h3><div class="peekpow">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span><div>${pr.map(sp => `<p><b class="spec">${esc(sp.name)}</b> ${fmt(plainAb(sp.desc))}</p>`).join('')}</div></div>`).join('')}</div>`;
+      <h3 class="peekh">Powers it can learn</h3><div class="peekpow">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span><div>${pr.map(sp => `<p><b class="spec">${esc(sp.name)}</b> ${fmt(plainAb(sp.desc))}${specNote(sp)}</p>`).join('')}</div></div>`).join('')}</div>`;
   }
   // WHAT: a hero card inside sheets.
   function heroCardHTML(h) {
@@ -1761,7 +1765,7 @@
     return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(d.name)}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}</span>
         <div class="small">${abilHTML(d)}</div></div><button class="chip" data-act="hero-info" data-arg="0" aria-label="Close">✕</button></div>
       ${scalingHTML(def)}
-      ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
+      ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}${specNote(sp)}</div>`).join('')}</div>` : ''}
       ${Object.entries(Run.setCounts(h.items)).filter(([, n]) => n >= 2).map(([sid, n]) => `<div class="small setfull">◆ <b>${esc(B.SETS[sid].name)}</b> ${n}/3 · ${fmt(B.SETS[sid].bonus[2].desc)}${n >= 3 ? ' · ' + fmt(B.SETS[sid].bonus[3].desc) : ''}</div>`).join('')}</div>`;
   }
   // WHAT: SUGGESTION BOX. "Send for review" lets anyone propose changes; they go to api/suggest.js and the owner's assistant reads them. ago() = "5 min ago".

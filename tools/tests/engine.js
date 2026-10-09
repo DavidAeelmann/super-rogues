@@ -978,7 +978,8 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   { const be = Lg => { const m = B.lpMul(Lg); return 24 * m.loss / (40 * m.gain + 24 * m.loss); }, Ls = B.LEAGUES.map((_, i) => i);
     ok(Ls.every(i => !i || (B.lpMul(i).gain < B.lpMul(i - 1).gain && B.lpMul(i).loss > B.lpMul(i - 1).loss && be(i) > be(i - 1))) && be(0) < 0.3 && be(Ls.length - 1) > 0.55, 'v84: wins pay less and losses cost more in each higher league (break-even win rate ' + Ls.map(i => Math.round(100 * be(i)) + '%').join(' ') + ')');
     ok(B.runLp({ done: true, duels: 2, lost: 0, streak: 3 }, 0) > B.runLp({ done: true, duels: 2, lost: 0, streak: 3 }, 5) && B.runLp({ done: false, duels: 0, lost: 2 }, 5) < B.runLp({ done: false, duels: 0, lost: 2 }, 1), 'v84: the same run gives more LP in Bronze than in Celestial, and a loss costs more in Celestial'); }
-  ok(B.UNLOCKS.filter(u => u.kind === 'portrait').length === 42 && B.portraitLevel('bastion') === 1 && B.portraitLevel(B.PORTRAIT_UNLOCKS[0]) === 2 && B.portraitLevel('nope') === 0 && B.lockedFor(1).filter(id => HEROES[id]).length === 26 && B.lockedFor(1).length === B.UNLOCKS.filter(u => u.lvl > 1 && ['hero', 'item', 'relic'].includes(u.kind)).length, 'v65 (review #131): 42 hero portraits, one a level from level 2; a portrait never locks a hero');
+  ok(B.UNLOCKS.filter(u => u.kind === 'portrait').length === 16 && B.portraitLevel('bastion') === 1 && B.portraitLevel(B.HERO_UNLOCKS[0]) === 2 && B.portraitLevel(B.HERO_UNLOCKS[5]) === B.UNLOCKS.find(u => u.kind === 'hero' && u.id === B.HERO_UNLOCKS[5]).lvl && B.portraitLevel(B.PORTRAITS_LATE[0]) === 28 && B.portraitLevel('nope') === 0 && B.lockedFor(1).filter(id => HEROES[id]).length === 26 && B.lockedFor(1).length === B.UNLOCKS.filter(u => u.lvl > 1 && ['hero', 'item', 'relic'].includes(u.kind)).length, 'v65 (review #131), v88 (review #168): a new hero brings its portrait; the other 16 are the rewards of levels 28-43; a portrait never locks a hero');
+  { const per = {}; for (const u of B.UNLOCKS) per[u.lvl] = (per[u.lvl] || 0) + 1; ok(Object.values(per).every(n => n <= 3) && Object.keys(per).length >= 40, 'v88 (review #168): a level chest holds at most 3 rewards (most levels: 1 or 2)'); }
   // the trophies of a run
   const t = Run.newRun(33); Run.pickStart(t, t.startOffer.slice(0, 3), t.relicOffer[0]); Run.startDuel(t, Run.randomGhost(t, 3), 'pvp', 3);
   const Wt = Run.gauntletWorld(t); Wt.over = true; Wt.winner = 0; Run.finishDuel(t, Wt);
@@ -999,6 +1000,20 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   { const { playRun } = require('../pve/engine.js'); const r = Run.newRun(4242); Run.pickStart(r, r.startOffer.slice(0, 1), r.relicOffer[0]);
     const t = r.tele || { o: {}, p: {} }; ok(r.startOffer.every(k => t.o['hero:' + k] >= 1) && t.p['hero:' + r.startOffer[0]] === 1 && t.p['relic:' + r.relicOffer[0]] === 1, 'v81: the start offers and picks are counted');
   }
+  // v88 (review #167): no ability is defined twice in sim.js (v83's boss Howl and Blizzard had silently replaced Fang's and Frostbane's own abilities)
+  { const src = require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'js', 'sim.js'), 'utf8'), names = [...src.matchAll(/^\s*A\.(\w+) = /mg)].map(m => m[1]);
+    const dup = names.filter((n, i) => names.indexOf(n) !== i); ok(names.length > 40 && !dup.length, 'v88: every ability name in sim.js is defined once' + (dup.length ? ' (twice: ' + dup.join(', ') + ')' : '')); }
+  // v88 (review #167): the level-up powers' balance factor (B.TUNE.spec) and the PvP-only hero factor (B.TUNE.pvp)
+  { const sv = B.TUNE.spec, pv = B.TUNE.pvp; B.TUNE.spec = {}; B.TUNE.pvp = {};
+    const r = Run.newRun(91); Run.pickStart(r, ['bastion'], null); const h = r.heroes[0]; h.lvl = 2; h.specs = ['bas2b'];
+    const d0 = Run.heroDef(r, h); B.TUNE.spec = { bas2b: 1.1 }; const d1 = Run.heroDef(r, h);
+    ok(Math.abs(d1.hp / d0.hp - 1.1) < 1e-9 && Math.abs(d1.atk / d0.atk - 1.1) < 1e-9 && Math.abs(d1.ap / d0.ap - 1.1) < 1e-9, 'v88 (review #167): a level-up power\'s factor scales Health, Attack and Magic');
+    B.TUNE.spec = {}; Run.startDuel(r, Run.randomGhost(r, 8, true), 'final', 9); const g0 = Run.gauntletWorld(r, true).units.find(u => u.side === 0 && u.kind === 'hero').hp;
+    B.TUNE.pvp = { bastion: 0.8 }; const g1 = Run.gauntletWorld(r, true).units.find(u => u.side === 0 && u.kind === 'hero').hp; const f0 = Run.fightWorld ? Run.heroDef(r, h).hp : 0;
+    ok(Math.abs(g1 / g0 - 0.8) < 1e-6 && Math.abs(f0 - d0.hp) < 1e-6, 'v88: the PvP factor counts in duels only (' + (g1 / g0).toFixed(3) + ')');
+    B.TUNE.spec = sv; B.TUNE.pvp = pv;
+    const vals = Object.values(sv || {}).concat(Object.values(pv || {})); ok(vals.every(x => x >= 0.5 && x <= 1.6), 'v88: the tuned factors stay in a sane range');
+    ok(Object.keys(sv || {}).every(id => Object.values(B.HEROES).some(x => x.specs.some(p => p.some(s => s.id === id)))) && Object.keys(pv || {}).every(k => B.HEROES[k]), 'v88: every tuned power and hero exists'); }
   // v78 (review #155): every art folder carries the hero's current name, and every picture art.js lists is there
   { const fs = require('fs'), path = require('path'), root = path.join(__dirname, '..', '..'), slug = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const src = fs.readFileSync(path.join(root, 'js', 'art.js'), 'utf8'), names = new Set(Object.values(B.HEROES).map(h => slug(h.name)));

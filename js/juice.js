@@ -34,6 +34,20 @@
       p.animate(frames, { duration: T * 1000, easing: 'linear', delay: Math.random() * 120 }).onfinish = () => p.remove();
     }
   }
+  // v88 (review #168, David: "tiny dust particles when heroes are redeployed"): a puff of dust at a screen point, where a hero lands
+  // WHAT: a small puff of dust (soft round grains rolling out low and fading).
+  function dust(x, y, n = 12) {
+    if (reduced()) return;
+    const L = fx();
+    for (let i = 0; i < n; i++) {
+      const p = doc.createElement('i'), s = 5 + Math.random() * 7, a = (i / n) * Math.PI * 2 + Math.random() * 0.4, d = 16 + Math.random() * 22;
+      p.className = 'dust'; p.style.cssText = `left:${x}px;top:${y}px;width:${s}px;height:${s}px;background:${['#d9c7a3', '#bfae8c', '#efe3c8'][i % 3]}`;
+      L.appendChild(p);
+      const dx = Math.cos(a) * d, dy = Math.sin(a) * d * 0.45 - 6 - Math.random() * 8;
+      p.animate([{ transform: 'translate(0,0) scale(0.5)', opacity: 0.9 }, { transform: `translate(${dx * 0.7}px,${dy * 0.7}px) scale(1.25)`, opacity: 0.65, offset: 0.45 }, { transform: `translate(${dx}px,${dy - 6}px) scale(1.6)`, opacity: 0 }],
+        { duration: 420 + Math.random() * 200, easing: 'cubic-bezier(.2,.7,.3,1)' }).onfinish = () => p.remove();
+    }
+  }
   const confettiAt = (el, n, o) => { el = el$(el); if (!el) return; const c = center(el); confetti(c.x, c.y, n, o); };
 
   // n coins fly from one element to another along an arc; onEach(i) fires as each one lands
@@ -92,5 +106,5 @@
     const dx = b.x - a.x, dy = b.y - a.y;
     c.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${dx * 0.35}px, ${dy * 0.35 - 70}px) scale(1.25) rotate(-8deg)`, opacity: 1, offset: 0.4 }, { transform: `translate(${dx}px, ${dy}px) scale(.3) rotate(10deg)`, opacity: 0.6 }], { duration: 640, easing: 'ease-in' }).onfinish = () => { c.remove(); bump(el$(to) || T); onLand && onLand(); };
   }
-  B.Juice = { confetti, confettiAt, flyCoins, countUp, bump, floater, flyCopy, reduced, wait: ms => new Promise(r => setTimeout(r, reduced() ? 0 : ms)) };
+  B.Juice = { confetti, confettiAt, dust, flyCoins, countUp, bump, floater, flyCopy, reduced, wait: ms => new Promise(r => setTimeout(r, reduced() ? 0 : ms)) };
 })(typeof window !== 'undefined' ? window : globalThis);
