@@ -747,8 +747,8 @@
     ['Control', 'lock', /stun|root|slow|freez|taunt|blind|pull|push|knock|silence|hypno|charm|fear|longer/i], ['Tank', 'shield', /defense|max health|shield|invulnerab|untargetable|less damage|damage taken/i],
     ['Area', 'swords', /radius|every enemy|all enemies|adjacent|within \d+ hex|group|bounce|chain|splash|nearby|around|more enemies|more targets|\d+ targets/i],
     ['Speed', 'bolt', /attack speed|move speed|faster|sooner|dodge|blink|dash|energy|cooldown|twice|range/i], ['Damage', 'sword', /damage|crit|execut|burn|poison|bleed|\battack\b|\bmagic\b|strike|kill|double|\d+% more|more (?:knives|flasks|shots|arrows)/i]];
-  // v88 (review #167): a power's balance factor, shown next to it when it has one (B.TUNE.spec)
-  const specNote = sp => { const f = Run.specTune(sp.id); if (Math.abs(f - 1) < 0.005) return ''; const p = Math.round((f - 1) * 100); return ` <span class="sp-tune ${p > 0 ? 'up' : 'down'}">${p > 0 ? '+' : ''}${p}% Health, Attack and Magic</span>`; };
+  // v89 (review #170, David: "remove those weird minus or plus effects in level up choices, keep it simple"): the level-up powers' balance factor
+  // (B.TUNE.spec, v88) still applies, silently, like a hero's power factor; the cards show only the power itself
   const specTags = sp => { const t = STYLE.filter(x => x[2].test(sp.desc)).slice(0, 2); return (t.length ? t : [['Upgrade', 'star']]).map(([n, ic]) => `<span class="ptag pt-${n.toLowerCase()}">${I(ic)}${n}</span>`).join(''); };
   // WHAT: the level-up screen: pick one of two powers for the hero that levelled.
   function levelHTML() {
@@ -765,7 +765,7 @@
       <div class="luhero"><img class="lufull" src="${por(h.key, 104, true)}" alt=""><div><b class="luname">${esc(d.name)}</b><span class="lulv">Lv ${p.lvl - 1} → <b>Lv ${p.lvl}</b></span>
         <p class="small lugain" title="+15% Health and Attack, +30 Magic, +4 Defense">${I('up')} Stronger in every way${p.lvl >= 3 ? `<br><b class="kw-gold">${I('bag')} +1 item slot</b>` : ''}</p></div></div>
       <h3>Pick a new power</h3>
-      <div class="opts spec2">${pair.map((sp, i) => `<button class="card opt" data-act="spec" data-arg="${i}" title="${esc(sp.desc)}"><div class="ptags">${specTags(sp)}</div><div class="ctitle spec">${esc(sp.name)}</div><div class="small">${fmt(plainAb(sp.desc))}${specNote(sp)}</div></button>`).join('')}</div>
+      <div class="opts spec2">${pair.map((sp, i) => `<button class="card opt" data-act="spec" data-arg="${i}" title="${esc(sp.desc)}"><div class="ptags">${specTags(sp)}</div><div class="ctitle spec">${esc(sp.name)}</div><div class="small">${fmt(plainAb(sp.desc))}</div></button>`).join('')}</div>
       <div class="sp-path tree"><div class="bph"><b>Power path</b><span class="dim small">one of two at each level</span></div>${path}</div></section>`;
   }
 
@@ -1443,10 +1443,13 @@
   const FINE = matchMedia('(pointer: fine)').matches, SLOW_MS = FINE ? 26 : 45, DPR_FLOOR = FINE ? 0.5 : Math.min(1.5, window.devicePixelRatio || 1);
   { const m = +store.get('balance.maxDpr2', 0); if (m >= DPR_FLOOR && m <= 2) Render.maxDpr = m; }
   // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
+  // v89 (review #170): the fights play 25% faster at every speed (1x, 2x, 4x are 1.25x, 2.5x, 5x real time); the fight itself is the same
+  const PACE = 1.25;
   function loop(now) {
     const b = battle; if (!b) return;
     if (now - b.last < 12) { requestAnimationFrame(loop); return; }   // v62b: a 120 / 144 Hz screen draws about 60 frames a second, not 144 (the time is not lost, the next frame adds it)
-    const dt = Math.min(100, now - b.last); b.last = now;
+    // v89 (review #170, David: "fights are a bit slow on mobile"): a slow phone frame (up to 250 ms) no longer loses game time (the cap was 100 ms)
+    const dt = Math.min(250, now - b.last); b.last = now;
     // v62r: a computer that draws slowly (no graphics acceleration, weak integrated GPU) gets a smaller canvas by itself: frames slower than ~30 fps for about 1.5 s
     // drop the pixel ratio one step (2 -> 1.5 -> 1); the picture keeps its size on screen, just a little softer
     if (!b.t0) b.t0 = now; const warm = now < Math.max(b.hold || 0, b.t0) + 1500;   // the countdown and the first 1.5s are not measured
@@ -1454,7 +1457,7 @@
     // v77 (review #156): the steps go on below 1 (a computer without graphics acceleration), and the level found is kept for the next visits
     if (b.slow >= 30 && view && view.dpr > DPR_FLOOR + 0.01 && !document.hidden) { const nx = DPR_STEPS.find(x => x < view.dpr - 0.01 && x >= DPR_FLOOR - 0.01); if (nx) { b.slow = 0; b.dropped = true; Render.maxDpr = nx; store.set('balance.maxDpr2', nx); view = Render.setup(view.canvas, view.w); } }
     const TICK = 1000 / Sim.TPS;
-    if (!b.W.over && !(b.hold && now < b.hold)) { b.acc += dt * ui.speed; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }
+    if (!b.W.over && !(b.hold && now < b.hold)) { b.acc += dt * ui.speed * PACE; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }
     // v42 (review #51): the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)
     if (b.W.over && !b.overAt) { b.overAt = now; b.end = { win: b.W.winner === 0, k: 0 }; if (!b.endAt) b.endAt = now + 1800; sfx(b.end.win ? 'win' : 'lose'); }
     const T = b.W.over ? b.W.t + (now - b.overAt) / TICK * 0.3 : b.W.t + b.acc / TICK;
@@ -1757,7 +1760,7 @@
     return `<div class="shead"><b>${esc(d.name)}</b><button data-act="close" aria-label="Close">✕</button></div>
       <div class="peek"><img class="peekart" src="${por(key, 110, true)}" alt=""><div class="peekt"><span class="role">${esc(d.role)} · ${d.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span><p class="htag big">${esc(d.tag || '')}</p></div></div>
       <div class="abil peekab">${abilHTML(d)}</div>${scalingHTML(def)}
-      <h3 class="peekh">Powers it can learn</h3><div class="peekpow">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span><div>${pr.map(sp => `<p><b class="spec">${esc(sp.name)}</b> ${fmt(plainAb(sp.desc))}${specNote(sp)}</p>`).join('')}</div></div>`).join('')}</div>`;
+      <h3 class="peekh">Powers it can learn</h3><div class="peekpow">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span><div>${pr.map(sp => `<p><b class="spec">${esc(sp.name)}</b> ${fmt(plainAb(sp.desc))}</p>`).join('')}</div></div>`).join('')}</div>`;
   }
   // WHAT: a hero card inside sheets.
   function heroCardHTML(h) {
@@ -1765,7 +1768,7 @@
     return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(d.name)}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}</span>
         <div class="small">${abilHTML(d)}</div></div><button class="chip" data-act="hero-info" data-arg="0" aria-label="Close">✕</button></div>
       ${scalingHTML(def)}
-      ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}${specNote(sp)}</div>`).join('')}</div>` : ''}
+      ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
       ${Object.entries(Run.setCounts(h.items)).filter(([, n]) => n >= 2).map(([sid, n]) => `<div class="small setfull">◆ <b>${esc(B.SETS[sid].name)}</b> ${n}/3 · ${fmt(B.SETS[sid].bonus[2].desc)}${n >= 3 ? ' · ' + fmt(B.SETS[sid].bonus[3].desc) : ''}</div>`).join('')}</div>`;
   }
   // WHAT: SUGGESTION BOX. "Send for review" lets anyone propose changes; they go to api/suggest.js and the owner's assistant reads them. ago() = "5 min ago".

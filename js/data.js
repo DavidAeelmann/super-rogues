@@ -1349,7 +1349,7 @@
   // v88 (review #167, David: "some build paths are comically bad. Please make it an actual choice between two in the level ups"; tools/balance/pvp.js):
   //   spec = a multiplier on Health, Attack and Magic that a level-up power adds while the hero has it. The two powers of a pair move in opposite
   //          directions (the weaker one up, the stronger one down), so the pair becomes a real choice and the hero's average strength stays put.
-  //          The level-up card and the hero sheets show it next to the power ("+8% Health, Attack and Magic").
+  //          v89 (review #170): applied silently (the cards show only the power itself), like power.
   //   pvp  = a multiplier on Health, Attack and Magic in PvP fights only (duels and the final fight, both teams): a healer that is fair in the
   //          PvE can be weak against players and the reverse, and one number cannot fit both, so PvP has its own.
   // <TUNE-BEGIN>
