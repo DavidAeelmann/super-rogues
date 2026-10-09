@@ -167,6 +167,7 @@ while (steps++ < 160) {
       ok(await ev(`!document.querySelector('.result.v2.more') && getComputedStyle(document.querySelector('.rmeta')).display === 'none' && !!document.querySelector('[data-act=result-more]')`), 'v47: the result shows the win and the rewards; the numbers wait behind Details'); await click('[data-act=result-more]'); await sleep(80); ok(await ev(`!!document.querySelector('.result.v2.more') && getComputedStyle(document.querySelector('.rmeta')).display !== 'none'`), 'v47: Details shows the time, the damage and the kills'); await click('[data-act=result-more]'); await sleep(80); }
       ok(await ev(`(() => { const r = __bal.result; return !r || r.win || r.duel || (!!document.querySelector('.rhead .losetag') && document.querySelector('.losetag').textContent.length > 3); })()`), 'v62 (review #94): a lost fight says how close it was (SO CLOSE! ... You were wrecked!)');
       await click('[data-act=result-ok]'); await sleep(100); continue; }
+  if (st.phase === 'tower' && await ev(`!!document.querySelector('[data-act=tower-skip]')`)) { await click('[data-act=tower-skip]'); await sleep(200); continue; }   // v91: a completed run meets the Gauntlet gate first
   if (st.phase === 'over') break;
   if (await ev(`!!document.querySelector('[data-act=spec]')`)) { if (!sawLevel) { await shot('07-levelup'); await noVScroll('level up'); sawLevel = true; } await click('[data-act=spec]'); await sleep(80); continue; }
   if (st.phase === 'map') {
@@ -377,19 +378,9 @@ if (!REMOTE) {
   for (let k = 0; k < 80 && !(await ev(`!!document.querySelector('[data-act=result-ok]') && !__bal.result.pending`)); k++) await sleep(100);
   await shot('18e-final-result'); await noVScroll('final result');
   await click('[data-act=result-ok]'); await sleep(200);
-  const g = await ev(`({ phase: __bal.run.phase, result: __bal.run.result, lives: __bal.run.lives })`);
-  ok(g.phase === 'over' && g.result === 'clear', `the final fight is won and the run is complete (${g.result}, ${g.lives} lives)`);
-  ok(await ev(`/victory!/.test(document.querySelector('.ovh').textContent)`), 'v64 (review #125): the end screen names the kind of victory');
-  await shot('19-run-complete');
-  await noVScroll('run complete');
-  for (let k = 0; k < 60 && !(await ev(`!!document.querySelector('#lpmeter')`)); k++) await sleep(100);
-  ok(await ev(`document.querySelectorAll('.vmtro .tro').length === 2 && /Rival/.test(document.querySelector('.vmtro').textContent) && !!document.querySelector('.vmtro .tro.fin')`), 'v64: the league screen shows the trophies of the run (the duel and the final)');
-  await shot('19c-complete-league'); await noHScroll('run complete, league'); await noVScroll('run complete, league');
-  for (let k = 0; k < 50 && !(await ev(`!!document.querySelector('[data-act=over-next]')`)); k++) await sleep(100);
-  await click('[data-act=over-next]');
   for (let k = 0; k < 40 && !(await ev(`!!document.querySelector('.towerscr')`)); k++) await sleep(100);
-  // v90 (review #171): the Gauntlet gate between the league and the XP: the tower drawing, the rules, Enter / Skip; entering opens floor 1, leaving goes on to the XP
-  ok(await ev(`__bal.run.phase === 'tower' && /The Gauntlet/.test(document.querySelector('.towerscr h2').textContent) && document.querySelectorAll('.towerart .tfl').length >= 3 && document.querySelectorAll('.trules li').length === 3 && !!document.querySelector('[data-act=tower-enter]') && !!document.querySelector('[data-act=tower-skip]')`), 'v90: a completed run reaches the Gauntlet gate before the XP (tower, rules, Enter / Skip)');
+  // v90 (review #171): the Gauntlet gate before the league screen (v91, review #172): the tower drawing, the rules, Enter / Skip; entering opens floor 1, leaving goes on to the XP
+  ok(await ev(`__bal.run.phase === 'tower' && /The Gauntlet/.test(document.querySelector('.towerscr h2').textContent) && document.querySelectorAll('.towerart .tfl').length >= 3 && document.querySelectorAll('.trules li').length === 3 && !!document.querySelector('[data-act=tower-enter]') && !!document.querySelector('[data-act=tower-skip]')`), 'v90: a completed run reaches the Gauntlet gate before the league screen (tower, rules, Enter / Skip)');
   await sleep(900); await shot('19a-gauntlet-gate'); await noHScroll('gauntlet gate'); await noVScroll('gauntlet gate');
   await click('[data-act=tower-enter]');
   for (let k = 0; k < 60 && !(await ev(`__bal.run.phase === 'deploy'`)); k++) await sleep(100);
@@ -399,6 +390,16 @@ if (!REMOTE) {
   ok(await ev(`/Floor 3 reached/.test(document.querySelector('.towerscr h2').textContent) && /[+]3/.test(document.querySelector('.tlp').textContent)`), 'v90: the end of the climb shows the floor reached and the LP won');
   await shot('19a-gauntlet-over'); await noVScroll('gauntlet over');
   await click('[data-act=tower-done]'); await sleep(400);
+  const g = await ev(`({ phase: __bal.run.phase, result: __bal.run.result, lives: __bal.run.lives })`);
+  ok(g.phase === 'over' && g.result === 'clear', `the final fight is won and the run is complete (${g.result}, ${g.lives} lives)`);
+  ok(await ev(`/victory!/.test(document.querySelector('.ovh').textContent)`), 'v64 (review #125): the end screen names the kind of victory');
+  await shot('19-run-complete');
+  await noVScroll('run complete');
+  for (let k = 0; k < 60 && !(await ev(`!!document.querySelector('#lpmeter')`)); k++) await sleep(100);
+  ok(await ev(`document.querySelectorAll('.vmtro .tro').length === 2 && /Rival/.test(document.querySelector('.vmtro').textContent) && !!document.querySelector('.vmtro .tro.fin')`), 'v64: the league screen shows the trophies of the run (the duel and the final)');
+  await shot('19c-complete-league'); await noHScroll('run complete, league'); await noVScroll('run complete, league');
+  for (let k = 0; k < 50 && !(await ev(`!!document.querySelector('[data-act=over-next]')`)); k++) await sleep(100);
+  await click('[data-act=over-next]'); await sleep(400);
   for (let k = 0; k < 150 && !(await ev(xpDone)); k++) await sleep(100);
   ok(await ev(`document.querySelectorAll('.vmwrap.xp .xplines li').length >= 2`), 'v46: the completed run pays XP (played, the final fight, firsts)');
   await shot('19b-complete-xp'); await noVScroll('run complete, XP counted');

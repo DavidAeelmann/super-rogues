@@ -1122,7 +1122,7 @@
   // WHAT: applies the server's answer to a Gauntlet floor: LP won, the next opponent, or the end (fell / crowned).
   function towerAnswer(r, res) {
     const T = run.tower; if (!T) return;
-    if (r.lg) { T.lp = (T.lp | 0) + (r.lg.delta | 0); run.lgTower = r.lg; }
+    if (r.lg) { T.lp = (T.lp | 0) + (r.lg.delta | 0); T.lgLast = r.lg; T.crowns = (T.crowns | 0) + (r.lg.crowns | 0); }
     if (r.over) { T.status = 'over'; T.champion = !!r.champion; T.next = null; if (res) res.champion = !!r.champion; }
     else if (r.opponent) { T.floor = r.floor || (T.floor + 1); T.next = r.opponent; }
   }
@@ -1247,7 +1247,7 @@
     // Play again
     const won = run.result === 'clear', V = won ? B.victoryOf(run.lives) : null;
     const head = `<h2 class="sc ovh">${won ? `${V.icon} ${V.name} victory!` : `${I('flag')} Out of lives`}</h2><p class="ovsub">${won ? (run.lives === CFG.lives ? 'No fight lost' : `${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left`) : `${run.won} fight${run.won === 1 ? '' : 's'} won`}</p>`;
-    if ((run.overStep || 1) === 1) return `<section class="title over1 lpscr">${head}${lpScreenHTML(run.lgEnd, won)}
+    if ((run.overStep || 1) === 1) return `<section class="title over1 lpscr">${head}${lpScreenHTML(lgAll(), won)}
         <div class="overbar"><button class="primary big cta" data-act="over-next">Next ${I('arrow')}</button></div></section>`;
     return `<section class="title over2 xpscr"><h2 class="sc ovh">✨ Account XP <button class="ladb sm" data-act="scores" aria-label="Ladder">${I('trophy')}</button></h2>${xpScreenHTML()}
       <div class="overbar"><button class="primary big cta again" data-act="new-run">${I('play')} Play again</button></div></section>`;
@@ -1263,6 +1263,13 @@
   // WHAT: a vertical meter (league or level): the banner on top, the tube, the filling (height in %), a line under it.
   const meterHTML = (id, style, banner, pct, foot) => `<div class="vmeter" id="${id}" style="${style}"><div class="vmban">${banner}</div><div class="vmtube"><i style="height:${pct}%"></i><span class="vmshine"></span></div><small class="vmfoot">${foot}</small></div>`;
   // WHAT: the league screen (end of a run, screen 1): the league meter on the left, the LP in big, why, the streak and the call to beat other players on the right.
+  // v91 (review #172): the league screen comes after the Gauntlet and adds its LP: the run's change (op complete) and then the tower's floors
+  // WHAT: the run's league change merged with the Gauntlet's (the league and LP after the last floor, the deltas added).
+  function lgAll() {
+    const lg = run.lgEnd, T = run.tower; if (!lg || !T || !T.lgLast) return lg;
+    const from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) };
+    return Object.assign({}, lg, { from, league: T.lgLast.league, lp: T.lgLast.lp, delta: (lg.delta | 0) + (T.lp | 0), promoted: T.lgLast.league > from.league, demoted: T.lgLast.league < from.league, crowns: (lg.crowns | 0) + (T.crowns | 0) || null });
+  }
   function lpScreenHTML(lg, won) {
     if (!lg) return `<p class="dim center">${run.xpWait ? 'Counting your league points…' : run.xpErr ? 'Your league points could not be saved (no connection).' : 'No league points this time.'}</p>`;
     const R = B.LEAGUE_RULES, L = B.LEAGUES, from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) }, done = !!run.lpShown;
@@ -1271,6 +1278,7 @@
     const NAME = { duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Final fight', loss: n => `${n} PvP lost`, streak: n => `Streak ${n}` };
     const ICON = { duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥' };
     const why = parts.map(x => `<span class="lpw ${x.lp < 0 ? 'neg' : 'pos'}">${ICON[x.id]} ${NAME[x.id](x.n)} <b>${x.lp > 0 ? '+' : ''}${x.lp}</b></span>`).join('')
+      + (run.tower && run.tower.lp ? `<span class="lpw pos">🏰 Gauntlet <b>+${run.tower.lp}</b></span>` : '')
       + (!parts.length ? '<span class="lpw">No PvP fight this run</span>' : from.league === 0 && raw < 0 ? '<span class="lpw">Bronze never loses LP</span>' : '');   // v86 (review #165): the league multipliers are not shown here
     const s = lg.streak, tr = run.trophies || [];
     const banner = `${emblem(lgi, 58)}<b class="vmname">${l.name}</b>`;
@@ -1285,7 +1293,7 @@
   }
   // WHAT: the league meter's animation: the LP count up or down; the tube fills or falls; a promotion fills to the top, swaps the banner and fills again; a drop empties, swaps and falls.
   async function animLp() {
-    const m = $('#lpmeter'), lg = run.lgEnd; if (!m || !lg || run.lpShown) return;
+    const m = $('#lpmeter'), lg = lgAll(); if (!m || !lg || run.lpShown) return;
     run.lpShown = true; save();
     const fast = B.Juice && B.Juice.reduced(), wait = ms => new Promise(r => setTimeout(r, fast ? 0 : ms)), R = B.LEAGUE_RULES, L = B.LEAGUES;
     const fill = m.querySelector('.vmtube i'), foot = m.querySelector('.vmfoot'), big = $('#lpbig'), live = () => fill.isConnected;
@@ -2202,9 +2210,10 @@
     skip: () => { if (battle && battle.gau) { toast('Duels and the final fight cannot be skipped.'); return; } if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; } skipBattle(); },
     // Continue on the result screen: next day, the Gauntlet or the game-over screen.
     'result-ok': () => { if (run && run.phase === 'tower' && run.tower && run.tower.status === 'climb' && run.tower.next) { const o = run.tower.next; run.tower.next = null; Run.startDuel(run, o, 'tower', 9); save(); }
+      if (run && run.phase === 'over' && run.result === 'clear' && !run.tower) { run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); }   // v91 (review #172): the Gauntlet comes before the league screen
       ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
-    'tower-skip': () => { run.tower = Object.assign(run.tower || {}, { status: 'skipped' }); run.phase = 'over'; run.overStep = 2; save(); render(); window.scrollTo(0, 0); },
-    'tower-done': () => { run.phase = 'over'; run.overStep = 2; save(); render(); window.scrollTo(0, 0); },
+    'tower-skip': () => { run.tower = Object.assign(run.tower || {}, { status: 'skipped' }); run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
+    'tower-done': () => { run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
     'tower-enter': async () => {
       if (ui.towerBusy) return; ui.towerBusy = true; render();
       let r = null; try { r = await Net.post('elo', { op: 'tower', pid: pid(), ref: refCode(), team: Run.teamSnapshot(run), relics: run.relics }); setElo(r, true); } catch (e) { ui.towerBusy = false; toast(e.message || 'No connection'); render(); return; }
@@ -2244,7 +2253,7 @@
     language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
-    'give-up-yes': () => { if (run && run.tower) { closeModal(); run.tower.status = 'over'; run.tower.next = null; run.g = null; run.cur = null; run.phase = 'over'; run.overStep = 2; run.lpShown = true; save(); screen = 'run'; render(); return; }   // v90: leaving the Gauntlet only ends the climb (the run is complete)
+    'give-up-yes': () => { if (run && run.tower) { closeModal(); run.tower.status = 'over'; run.tower.next = null; run.g = null; run.cur = null; run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); screen = 'run'; render(); return; }   // v90: leaving the Gauntlet only ends the climb (the run is complete)
       if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], tele: run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // v65 (review #133): giving up ends the win streak
     // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.
     'form-info': t => toast(t, true),

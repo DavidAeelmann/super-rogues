@@ -1527,19 +1527,24 @@
   // (one reward, not two), and the other starting heroes' portraits are the rewards of levels 28 to 43, after the last hero. So a chest holds one main
   // thing (a hero, or a portrait), sometimes an item or power, rarely a title or voice line besides.
   B.PORTRAITS_FREE = ['bastion', 'lumen', 'pyra', 'kestrel'];
-  B.PORTRAITS_LATE = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k));   // levels 28..43
+  B.PORTRAITS_LATE = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k));   // the levels after the last hero (v91: 22..37)
   B.PORTRAIT_UNLOCKS = B.HERO_UNLOCKS.concat(B.PORTRAITS_LATE);
   for (const k of B.PORTRAIT_UNLOCKS) { const it = { id: 'pt_' + k, kind: 'portrait', hero: k, icon: '🖼', name: (B.HEROES[k] || {}).name + ' portrait', price: B.PORTRAIT_PRICE, desc: 'Use this portrait before your level opens it.' }; B.COSMETICS.push(it); B.SHOP_ITEM[it.id] = it; }   // v66 (review #136)
+  // v91 (review #172, David: "Early chests give two heroes per level"): the first 12 heroes come two a level (levels 2 to 7), the other 14 one a level (8 to 21)
+  B.EARLY_PAIRS = 6;
+  // WHAT: the account level that unlocks the i-th hero of B.HERO_UNLOCKS.
+  B.heroUnlockLevel = i => i < 2 * B.EARLY_PAIRS ? 2 + Math.floor(i / 2) : 2 + B.EARLY_PAIRS + (i - 2 * B.EARLY_PAIRS);
+  // v91: the items and powers the levels unlock come one a level after the two-hero levels (8 to 22), so an early chest holds its two heroes and little else
   B.UNLOCKS = [
     [2, 'relic', 'beehive'], [3, 'item', 'honeycomb'], [4, 'relic', 'seashell'], [6, 'relic', 'kite'],
     [7, 'item', 'starcloak'], [8, 'relic', 'compass'], [9, 'relic', 'teapot'], [11, 'item', 'tidepearl'],
     [12, 'relic', 'snowglobe'], [13, 'relic', 'marbles'], [14, 'item', 'moonslippers'], [16, 'relic', 'fireflies'],
     [17, 'item', 'comethammer'], [18, 'relic', 'pinwheel'], [19, 'relic', 'horseshoe'],
-  ].map(([lvl, kind, id]) => ({ lvl, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: 2 + i, kind: 'hero', id })))   // v74 (review #152): one hero a level (2 to 27), not two
+  ].map(([lvl, kind, id], i) => ({ lvl: 2 + B.EARLY_PAIRS + i, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: B.heroUnlockLevel(i), kind: 'hero', id })))   // v74 (review #152): one hero a level; v91 (review #172): two a level at first
     .concat(B.LEVEL_TAUNTS.map(t => ({ lvl: t.lvl, kind: 'taunt', id: t.id }))).concat(B.ACHIEVEMENTS.filter(a => a.by === 'level').map(a => ({ lvl: a.lvl, kind: 'title', id: a.id })))
-    .concat(B.PORTRAITS_LATE.map((id, i) => ({ lvl: 2 + B.HERO_UNLOCKS.length + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);   // v88: a new hero's portrait comes with the hero
+    .concat(B.PORTRAITS_LATE.map((id, i) => ({ lvl: B.heroUnlockLevel(B.HERO_UNLOCKS.length - 1) + 1 + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);   // v88: a new hero's portrait comes with the hero
   // WHAT: the account level a hero's portrait opens at (1 = free from the start, 0 = no such portrait).
-  B.portraitLevel = key => B.PORTRAITS_FREE.includes(key) ? 1 : B.HERO_UNLOCKS.includes(key) ? 2 + B.HERO_UNLOCKS.indexOf(key) : (B.UNLOCKS.find(u => u.kind === 'portrait' && u.id === key) || { lvl: 0 }).lvl;
+  B.portraitLevel = key => B.PORTRAITS_FREE.includes(key) ? 1 : B.HERO_UNLOCKS.includes(key) ? B.heroUnlockLevel(B.HERO_UNLOCKS.indexOf(key)) : (B.UNLOCKS.find(u => u.kind === 'portrait' && u.id === key) || { lvl: 0 }).lvl;
   B.xpToNext = lvl => B.ACCOUNT.base + B.ACCOUNT.step * (Math.max(1, lvl) - 1);
   B.xpForLevel = lvl => { let s = 0; for (let l = 1; l < lvl; l++) s += B.xpToNext(l); return s; };   // total XP to reach it
   B.levelOf = xp => { let l = 1, left = Math.max(0, xp || 0); while (left >= B.xpToNext(l)) { left -= B.xpToNext(l); l++; } return l; };
