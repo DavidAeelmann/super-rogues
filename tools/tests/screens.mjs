@@ -129,7 +129,7 @@ await sleep(200);
 ok(await ev(`document.querySelectorAll('[data-act=choose]').length === (__bal.run.relics.includes('quill') ? 3 : 2)`), "first map step shows 2 options (3 with the Pathfinder's Quill)");
 await shot('03-map'); await noHScroll('map'); await noVScroll('map');
 // v47 (review #58): the journey sits behind the Day chip; the map itself has no 17-icon strip
-ok(await ev(`(() => { const seq = B.Run.seqOf(__bal.run), r = __bal.run, wm = document.querySelector('#wmap'); if (!wm) return false; const w = wm.getBoundingClientRect(); return !!wm.querySelector('.rtok') && wm.querySelectorAll('.rn:not(.camp)').length === seq.length - 1 && !!wm.querySelector('.rn.camp') && wm.querySelectorAll('.rn.boss').length === 2 && wm.querySelectorAll('.rn.pvp').length === 2 && !!wm.querySelector('.rn.final .castle') && /Day 1.17/.test(wm.querySelector('.rday').textContent) && wm.querySelectorAll('.rtoday [data-act=choose]').length === r.opts.length && wm.scrollHeight > wm.clientHeight && wm.scrollTop > 0 && [...wm.querySelectorAll('.rtoday .banner')].every(b => { const q = b.getBoundingClientRect(); return q.top >= w.top - 1 && q.bottom <= w.bottom + 1; }) && !!document.querySelector('#top button.prog[data-act=path]'); })()`), "v65 (review #130): the map is a vertical road: the camp, every day ahead (2 bosses, 2 duel days, the castle of the final fight), your leader, and today's choices as the fork, in view");
+ok(await ev(`(() => { const seq = B.Run.seqOf(__bal.run), r = __bal.run, wm = document.querySelector('#wmap'); if (!wm) return false; const w = wm.getBoundingClientRect(); return !!wm.querySelector('.rtok') && wm.querySelectorAll('.rn:not(.camp)').length === seq.length - 1 && !!wm.querySelector('.rn.camp') && wm.querySelectorAll('.rn.boss').length === 2 && wm.querySelectorAll('.rn.pvp').length === 0 && !!wm.querySelector('.rn.final .castle') && /Day 1.17/.test(wm.querySelector('.rday').textContent) && wm.querySelectorAll('.rtoday [data-act=choose]').length === r.opts.length && wm.scrollHeight > wm.clientHeight && wm.scrollTop > 0 && [...wm.querySelectorAll('.rtoday .banner')].every(b => { const q = b.getBoundingClientRect(); return q.top >= w.top - 1 && q.bottom <= w.bottom + 1; }) && !!document.querySelector('#top button.prog[data-act=path]'); })()`), "v65 (review #130): the map is a vertical road: the camp, every day ahead (2 bosses, v96: no duel days, the castle of the victory), your leader, and today's choices as the fork, in view");
 await click('#top [data-act=path]'); await sleep(150);
 ok(await ev(`document.querySelectorAll('#modal .track .node').length > 10 && document.querySelectorAll('#modal .plegend li').length === 5`), 'v47: tapping the Day chip shows the whole journey with a legend');
 await click('[data-act=close]'); await sleep(100);
@@ -265,6 +265,8 @@ await shot('11-over'); await noHScroll('over');
 // v68 (reviews #140 #141): the end of a run: the league screen first (a meter in the league's colours, the LP in big, Next), then the XP screen (a level meter, the chest)
 const xpDone = `!!__bal.run.xpShown && !document.querySelector('#chest.will')`;
 if (fin.phase === 'over' && !REMOTE) {
+  // v96 (review #178): a completed run shows the victory screen, then the Gauntlet gate (skipped here)
+  if (fin.result === 'clear') { for (let k = 0; k < 60 && !(await ev(`!!document.querySelector('[data-act=victory-next]:not([disabled])')`)); k++) await sleep(100); await click('[data-act=victory-next]'); await sleep(300); if (await ev(`!!document.querySelector('[data-act=tower-skip]')`)) { await click('[data-act=tower-skip]'); await sleep(300); } }
   for (let k = 0; k < 60 && !(await ev(`!!__bal.run.lpShown`)); k++) await sleep(100);
   await sleep(2200);
   ok(await ev(`!!__bal.run.lgEnd && !!document.querySelector('#lpmeter .vmtube i') && !!document.querySelector('#lpmeter .lgem') && /LP/.test(document.querySelector('.vmbig').textContent) && /Beat other players/.test(document.querySelector('.vmcall').textContent) && !!document.querySelector('.overbar [data-act=over-next]') && !document.querySelector('[data-act=new-run]') && !document.querySelector('#top .gold') && !!document.querySelector('#lpstk .flame')`), 'v68 (review #140): the league screen: the meter with the league banner, the LP in big, the streak, "beat other players", Next at the bottom');
@@ -326,7 +328,8 @@ if (!REMOTE) {
   await ev(`(() => { __bal.run.phase = 'over'; __bal.run.result = 'defeat'; __bal.run.overStep = 2; __bal.render(); })()`); await sleep(100);
 }
 
-// ---- v63 (reviews #117 #118): a PvP day (the duel poster shows the rival and its power), the steal screen, then the final fight against a team that completed its run
+// ---- v96 (review #178): no PvP inside the run: the old duel day offers PvE fights only; after the last shop comes the victory screen, then the Gauntlet gate
+// (Rival completed a run, so it can stand in the tower)
 if (!REMOTE) {
   const post = body => ev(`fetch('/api/elo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(${JSON.stringify(body)}) }).then(r => r.json())`);
   const rival = [{ key: 'bastion', lvl: 3, specs: [], items: ['warmog', 'longsword'], bonus: {}, pos: { c: 3, r: 4 } }];
@@ -338,65 +341,42 @@ if (!REMOTE) {
   await ev(`(() => { const r = __bal.run; r.recruits = 2; while (r.heroes.length < 3) B.Run.addHero(r, Object.keys(B.HEROES).find(k => !r.heroes.some(h => h.key === k)));
     r.heroes.forEach(h => { h.lvl = 5; h.specs = B.HEROES[h.key].specs.map(p => p[0].id); h.items = ['bloodthirster', 'warmog', 'deathcap', 'guardian']; }); r.heroes[0].items = ['obs_blade', 'obs_plate', 'obs_helm', 'mountainheart']; r.bag.push('worldsplitter', 'aegis', 'storm_boots'); r.autoGear = false;
     r.relics.push('drum'); r.step = 3; r.fightNo = 2; B.Run.advance(r); __bal.render(); })()`);
-  // the PvP day: a duel next to the PvE fight, with the rival's team and its power next to yours
-  for (let k = 0; k < 30 && !(await ev(`!!document.querySelector('.banner.b-duel:not(.wait)')`)); k++) await sleep(100);
-  ok(await ev(`document.querySelectorAll('[data-act=choose]').length === (__bal.run.relics.includes('quill') ? 3 : 2) && document.querySelectorAll('.banner.b-duel').length === 1 && /Rival/.test(document.querySelector('.banner.b-duel .bt').textContent) && /Power [0-9]+/.test(document.querySelector('.banner.b-duel .rw').textContent) && /yours [0-9]+/.test(document.querySelector('.banner.b-duel .rw').textContent)`), 'v63 (review #117): a PvP day offers a duel against another player team (its power next to yours) beside the PvE fight');
-  await shot('16-duel-poster'); await noHScroll('duel poster'); await noVScroll('duel poster');
-  await click('.banner.b-duel'); await sleep(250);
-  ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.g.kind === 'pvp' && /Duel/.test(document.querySelector('.bhead').textContent) && /Rival/.test(document.querySelector('.bhead').textContent) && /Power [0-9]+/.test(document.querySelector('.bhead').textContent)`), 'the duel deploy screen names the rival and compares power');
-  await shot('17-duel-deploy'); await noHScroll('duel deploy'); await noVScroll('duel deploy');
-  await ev('__bal.showVs(true)'); await sleep(1500);
-  ok(await ev(`!!document.querySelector('#vs .vsword') && document.querySelectorAll('#vs .me .vsteam span').length === __bal.run.heroes.length && document.querySelectorAll('#vs .them .vsteam span').length === Math.min(5, __bal.run.g.opp.team.length) && /Duel/.test(document.querySelector('#vs .vsmid').textContent)`), 'v66 (review #135): before a fight, the VS screen: your team on the left, VS, theirs on the right');
-  await shot('17b-vs'); await ev('__bal.closeVs()'); await sleep(350); ok(await ev(`!document.querySelector('#vs')`), '...and it goes away');
-  await click('[data-act=fight]'); await sleep(1200); await ev('__bal.skipBattle()');
-  for (let k = 0; k < 80 && !(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /trophy/.test(x.textContent))`)); k++) await sleep(100);
-  ok(await ev(`[...document.querySelectorAll('.rewards2 .rw')].some(x => /trophy/.test(x.textContent) && /Rival/.test(x.textContent)) && ![...document.querySelectorAll('.rewards2 .rw')].some(x => /Elo/.test(x.textContent))`), 'v64 (review #125): a won duel shows a trophy with the name beaten (no Elo)');
-  await shot('18b-duel-result'); await noVScroll('duel result');
-  await click('[data-act=result-ok]'); await sleep(200);
-  ok(await ev(`__bal.run.phase === 'steal' && document.querySelectorAll('button.steal').length === 3 && !!document.querySelector('button.steal.k-hero') && !!document.querySelector('button.steal.k-item') && !!document.querySelector('button.steal.k-relic')`), 'v63 (review #118): a won duel offers three spoils: a hero, an item, a power');
-  await shot('18c-steal'); await noHScroll('steal'); await noVScroll('steal');
-  await click('button.steal.k-hero'); await sleep(150);
-  ok(await ev(`document.querySelectorAll('[data-act=steal-swap]').length === 3 && /steps aside/.test(document.querySelector('#screen').textContent)`), 'a stolen hero asks which of your heroes steps aside when the team is full');
-  await shot('18d-steal-swap'); await noVScroll('steal swap');
-  const before = await ev(`__bal.run.steal[0].hero.key`);
-  await click('[data-act=steal-swap]'); await sleep(200);
-  ok(await ev(`__bal.run.phase === 'map' && __bal.run.heroes.length === 3 && __bal.run.heroes.some(h => h.key === ${JSON.stringify(before)})`), 'the stolen hero joined the team and the run moved on');
-  // the last shop leads to the final fight
-  await ev(`(() => { const r = __bal.run; r.bag = ['worldsplitter', 'aegis', 'storm_boots']; r.step = B.Run.seqOf(r).length - 2; r.fightNo = 8; B.Run.advance(r); __bal.render(); })()`);
-  ok(await ev(`__bal.run.phase === 'gauntlet' && !!document.querySelector('form[data-form=gauntlet]') && !document.querySelector('form[data-form=score]') && /final fight/i.test(document.querySelector('#screen').textContent) && !/Onslaught/.test(document.body.textContent)`), 'after the last shop comes the final fight (no tower, no Onslaught)');
-  await shot('16-final-intro'); await noHScroll('final intro'); await noVScroll('final intro');
+  for (let k = 0; k < 10 && !(await ev(`__bal.run.phase === 'map'`)); k++) await sleep(100); await sleep(400);
+  ok(await ev(`__bal.run.phase === 'map' && document.querySelectorAll('[data-act=choose]').length >= 2 && !document.querySelector('.banner.b-duel') && !__bal.run.opts.some(o => o.type === 'duel')`), 'v96 (review #178): the old PvP day offers PvE fights only (no duel)');
   // itemization v16: the team sheet with 3 heroes at Lv 5, a full set and items in the bag still fits the phone
   await click('[data-act=team]'); await sleep(250); await click('#modal .gitem'); await sleep(150);
   ok(await ev(`document.querySelectorAll('#modal .gtab').length === 3 && [...document.querySelectorAll('#modal .gtab')].filter(t => /4.4/.test(t.textContent)).length >= 2`), 'gear: 3 hero tabs, the Lv 5 heroes with every socket full');
   await shot('16b-team-full'); await noHScroll('team sheet full'); await noVScroll('team sheet, 3 heroes with items');
   await click('[data-act=close]'); await sleep(100);
-  await ev(`(() => { const f = document.querySelector('form[data-form=gauntlet]'); f.name.value = 'TestBot'; f.querySelector('button').click(); })()`); await sleep(900);
-  ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.g.kind === 'final' && __bal.run.g.opp.name === 'Rival' && __bal.run.g.opp.status === 'final' && __bal.run.g.opp.relics.includes('feather') && /Final/.test(document.querySelector('.bhead').textContent) && /Rival/.test(document.querySelector('.bhead').textContent)`), 'the final fight faces a team that completed its run (Rival), shown on the deploy screen');
-  ok(await ev(`document.querySelectorAll('.foes .fs, .foes .fo').length >= 1 && !!document.querySelector('[data-act=fight]')`), "review #15: the rival's team is listed before the fight");
-  await shot('18-final-deploy'); await noHScroll('final deploy'); await noVScroll('final deploy');
-  await click('[data-act=fight]'); await sleep(1200); await ev('__bal.skipBattle()');
-  for (let k = 0; k < 80 && !(await ev(`!!document.querySelector('[data-act=result-ok]') && !__bal.result.pending`)); k++) await sleep(100);
-  await shot('18e-final-result'); await noVScroll('final result');
-  await click('[data-act=result-ok]'); await sleep(200);
+  // the last shop leads to the victory screen (no final fight)
+  await ev(`(() => { const r = __bal.run; r.bag = ['worldsplitter', 'aegis', 'storm_boots']; r.step = B.Run.seqOf(r).length - 2; r.fightNo = 8; B.Run.advance(r); __bal.render(); })()`); await sleep(300);
+  ok(await ev(`__bal.run.phase === 'over' && __bal.run.result === 'clear' && !!document.querySelector('.vicscr .vicart') && /victory!/.test(document.querySelector('.vicscr .ovh').textContent) && document.querySelectorAll('.vicscr .gteam .gh').length === 3 && !!document.querySelector('[data-act=victory-next]') && !/final fight|Onslaught/i.test(document.querySelector('#screen').textContent)`), 'v96 (review #178): after the last shop the run is won: the victory screen (kind of victory, the team, Next)');
+  for (let k = 0; k < 60 && !(await ev(`!!__bal.run.lgEnd && !__bal.run.xpWait`)); k++) await sleep(100);
+  ok(await ev(`!!__bal.run.lgEnd && !document.querySelector('[data-act=victory-next]').disabled`), 'v96: the completed run is sent to the server from the victory screen (league points back)');
+  await sleep(500); await shot('18-victory'); await noHScroll('victory'); await noVScroll('victory');
+  await click('[data-act=victory-next]'); await sleep(200);
   for (let k = 0; k < 40 && !(await ev(`!!document.querySelector('.towerscr')`)); k++) await sleep(100);
   // v90 (review #171): the Gauntlet gate before the league screen (v91, review #172): the tower drawing, the rules, Enter / Skip; entering opens floor 1, leaving goes on to the XP
   ok(await ev(`__bal.run.phase === 'tower' && /The Gauntlet/.test(document.querySelector('.towerscr h2').textContent) && document.querySelectorAll('.towerart .tfl').length >= 3 && document.querySelectorAll('.trules li').length === 3 && !!document.querySelector('[data-act=tower-enter]') && !!document.querySelector('[data-act=tower-skip]')`), 'v90: a completed run reaches the Gauntlet gate before the league screen (tower, rules, Enter / Skip)');
   await sleep(900); await shot('19a-gauntlet-gate'); await noHScroll('gauntlet gate'); await noVScroll('gauntlet gate');
+  ok(await ev(`!!document.querySelector('#tname')`), 'v96: a player with no name picks it at the Gauntlet gate (it used to be the final fight)');
+  await ev(`document.querySelector('#tname').value = 'TestBot'`);
   await click('[data-act=tower-enter]');
   for (let k = 0; k < 60 && !(await ev(`__bal.run.phase === 'deploy'`)); k++) await sleep(100);
   ok(await ev(`__bal.run.g && __bal.run.g.kind === 'tower' && !!__bal.run.tower.teamId && /Floor 1/.test(document.body.textContent)`), 'v90: Enter the Gauntlet opens the floor 1 fight');
-  await shot('19a-gauntlet-floor1');
+  ok(await ev(`document.querySelectorAll('.foes .fs, .foes .fo').length >= 1 && !!document.querySelector('[data-act=fight]')`), "review #15: the rival's team is listed before the fight");
+  await shot('19a-gauntlet-floor1'); await noHScroll('gauntlet deploy'); await noVScroll('gauntlet deploy');
   await ev(`(() => { if (__bal.closeVs) __bal.closeVs(); __bal.run.tower.status = 'over'; __bal.run.tower.lp = 3; __bal.run.tower.wins = 2; __bal.run.tower.floor = 3; __bal.run.g = null; __bal.run.cur = null; __bal.run.phase = 'tower'; __bal.render(); })()`); await sleep(900);
   ok(await ev(`/Floor 3 reached/.test(document.querySelector('.towerscr h2').textContent) && /[+]3/.test(document.querySelector('.tlp').textContent)`), 'v90: the end of the climb shows the floor reached and the LP won');
   await shot('19a-gauntlet-over'); await noVScroll('gauntlet over');
   await click('[data-act=tower-done]'); await sleep(400);
   const g = await ev(`({ phase: __bal.run.phase, result: __bal.run.result, lives: __bal.run.lives })`);
-  ok(g.phase === 'over' && g.result === 'clear', `the final fight is won and the run is complete (${g.result}, ${g.lives} lives)`);
+  ok(g.phase === 'over' && g.result === 'clear', `the run is complete (${g.result}, ${g.lives} lives)`);
   ok(await ev(`/victory!/.test(document.querySelector('.ovh').textContent)`), 'v64 (review #125): the end screen names the kind of victory');
   await shot('19-run-complete');
   await noVScroll('run complete');
   for (let k = 0; k < 60 && !(await ev(`!!document.querySelector('#lpmeter')`)); k++) await sleep(100);
-  ok(await ev(`document.querySelectorAll('.vmtro .tro').length === 2 && /Rival/.test(document.querySelector('.vmtro').textContent) && !!document.querySelector('.vmtro .tro.fin')`), 'v64: the league screen shows the trophies of the run (the duel and the final)');
+  ok(await ev(`!document.querySelector('.vmtro') && /Run complete/.test(document.querySelector('.lpwhy').textContent) && !/duel|PvP lost/.test(document.querySelector('.lpwhy').textContent)`), 'v96: the league screen counts the completed run (no duels, no trophies)');
   await shot('19c-complete-league'); await noHScroll('run complete, league'); await noVScroll('run complete, league');
   for (let k = 0; k < 50 && !(await ev(`!!document.querySelector('[data-act=over-next]')`)); k++) await sleep(100);
   await click('[data-act=over-next]'); await sleep(400);
@@ -443,7 +423,7 @@ if (!REMOTE) {
   // v27: tap a name, see the profile; a King also sees most played heroes, best win rate and the ghost record
   await ev(`[...document.querySelectorAll('#modal .plink')].find(b => b.textContent === 'Rival').click()`);
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .prof')`)); i++) await sleep(100);
-  ok(await ev(`(() => { const t = document.querySelector('#modal .prof').textContent; return /Rival/.test(t) && /Trophies/.test(t) && !/Elo/.test(t) && /league/i.test(t) && !!document.querySelector('.h2h') && /You vs Rival/.test(document.querySelector('.h2h').textContent) && document.querySelector('.h2h .win').textContent === '2' && document.querySelector('.h2h .lose').textContent === '0' && !!document.querySelector('.pmore') && /Most played/.test(t); })()`), "v64 (reviews #125 #127): a player's profile: league, trophies and your duels against them (2-0); the King's view adds heroes and ghosts");
+  ok(await ev(`(() => { const t = document.querySelector('#modal .prof').textContent; return /Rival/.test(t) && /Trophies/.test(t) && !/Elo/.test(t) && /league/i.test(t) && !!document.querySelector('.pmore') && /Most played/.test(t); })()`), "v64 (reviews #125 #127): a player's profile: league, trophies (v96: no duels against Rival in this run); the King's view adds heroes and ghosts");
   await shot('25-profile'); await noHScroll('profile');
   await click('#modal [data-act=follow]'); for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal [data-act=follow].on')`)); i++) await sleep(100);
   ok(await ev(`/Following/.test(document.querySelector('#modal [data-act=follow]').textContent) && /1 follower/.test(document.querySelector('#pfcount').textContent) && !!document.querySelector('#modal .phead .pfp') && !!document.querySelector('#modal .pstats .flame')`), "v65 (reviews #131 #132 #133): a profile has the player's portrait, the win streak, and Follow");
@@ -642,6 +622,29 @@ await click('#modal [data-act=close]'); await sleep(100);
   ok(await ev(`__bal.run.autoGear === false && __bal.run.bag.includes('longsword')`), 'v58: taking gear off by hand turns Auto-equip off (and it stays off)');
   await click('#modal [data-act=close]'); await sleep(150);
   ok(await ev(`__bal.run.bag.includes('longsword')`), '...so the item stays where you put it');
+}
+// v97 (review #179): the very first Play: pick a hero, the battlefield at once, the hero drops in; once moved, a Grunt walks in, "!" and the fight starts
+if (!REMOTE) {
+  await ev(`(() => { localStorage.removeItem('balance.intro'); localStorage.setItem('balance.starts', '0'); localStorage.setItem('balance.introTest', '1'); localStorage.removeItem('balance.run'); })()`);
+  await ev(`__bal.ACT['new-run']()`); await sleep(200);
+  await pickHero(); await click('[data-act=start-next]'); await sleep(150);
+  ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.onb && __bal.run.cur.enemies.length === 1 && __bal.run.cur.enemies[0].key === 'grunt' && !!document.querySelector('.deploy.intro #board') && !document.querySelector('[data-act=fight]') && __bal.run.relics.length === 1`), 'v97 (review #179): the first Play goes from the hero straight to the battlefield (one Grunt, no map, no Fight button)');
+  for (let k = 0; k < 40 && !(await ev(`__bal.run.onb.stage === 'move'`)); k++) await sleep(100);
+  ok(await ev(`__bal.run.onb.stage === 'move' && /Drag your hero/.test(document.querySelector('.tutmove').textContent)`), 'v97: the hero drops in, then the hint says to drag it');
+  await shot('40-intro-move'); await noHScroll('intro'); await noVScroll('intro');
+  await ev(`(() => { const cv = document.querySelector('#board'), h = __bal.run.heroes[0], tgt = { c: h.pos.c === 0 ? 1 : 0, r: 6 };
+    const a = __bal.hexScreen(h.pos.c, h.pos.r), b = __bal.hexScreen(tgt.c, tgt.r), r = cv.getBoundingClientRect();
+    const fire = (type, p) => cv.dispatchEvent(new PointerEvent(type, { bubbles: true, clientX: p.x, clientY: p.y, pointerId: 1 }));
+    fire('pointerdown', a); fire('pointermove', b); fire('pointerup', b); })()`);
+  await sleep(200);
+  ok(await ev(`__bal.run.onb.stage === 'enter'`), 'v97: moving the hero brings the enemy in');
+  for (let k = 0; k < 30 && !(await ev(`!!document.querySelector('.bang')`)); k++) await sleep(100);
+  ok(await ev(`!!document.querySelector('.bang') && document.querySelector('.bang').textContent === '!'`), 'v97: the hero shouts "!" in a speech bubble');
+  await shot('41-intro-bang');
+  for (let k = 0; k < 30 && !(await ev(`!!__bal.battle`)); k++) await sleep(100);
+  ok(await ev(`!!__bal.battle && __bal.run.onb.stage === 'done' && !document.querySelector('.cdown')`), 'v97: the fight starts by itself, with no countdown');
+  await ev('__bal.skipBattle()'); await sleep(300);
+  await ev(`localStorage.removeItem('balance.introTest')`);
 }
 if (process.env.TRLOG) { const all = await ev("localStorage.getItem('balance.trall')"); fs.writeFileSync(OUT + 'trlog.json', all || '[]'); console.log('trlog:', JSON.parse(all || '[]').length, 'texts'); }
 ok(errors.length === 0, 'no JS errors / CSP violations' + (errors.length ? ': ' + errors.slice(0, 5).join(' || ') : ''));

@@ -36,7 +36,9 @@
     // and after each of the first days a free hero joins (picked from 3, the same screen) until the team has 3 (freeRecruits); 1 power and a few common items to start;
     // on the fight days in pvpFights one of the choices is a duel against another player's team that reached about the same day (a win steals a hero, an item or a power);
     // the last day (G) is the final fight against a team that won its own final fight
-    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 2, lives: 3, pvpFights: [3, 6], ghostPower: 0.76,
+    // v96 (review #178, David: "Remove pvp from the pve part, both in the middle and end. The gauntlet is all there is for pvp. You win pve, get a victory screen,
+    // and then gauntlet"): no duel days (pvpFights empty) and G is no longer a fight: reaching it completes the run (victory screen, then the Gauntlet gate)
+    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 2, lives: 3, pvpFights: [], ghostPower: 0.76,
   };
 
   // ---------------------------------------------------------------- heroes
@@ -1095,63 +1097,110 @@
   // v58 (review #70, David: "Simplify the relic descriptions"): a short line for every relic (what it does, in a few words)
   // for shops, the start and the map; the full rule is one tap away (r.desc)
   // WHAT: a shorter description for each Power, used on small cards. If a Power has none, its full description is used.
+  // v98 (review #180, David: "The descriptions of powers are very hard to understand... make it so that anybody with no experience can understand them. Even if
+  // it doesnt give all the info. They can click for more info"): every power has a plain line with no game words (no crit, Energy, regen, crowd control);
+  // the exact numbers stay in the full rule (r.desc), one tap away (More)
   const SHORT = {
-    wind: 'Faster heroes that hit hard on the move.', ironwill: 'Ignore the first crowd control, +80 Health.', spring: 'Slow regen, and healing works better.',   // v61
-    beehive: 'Heroes +10 Magic; attacks poison.',
-    shieldwall: 'Heroes side by side get tougher.',
-    lonewolf: 'Heroes standing alone attack faster.',
-    vanguard: 'Front-row heroes start with a shield.',
-    rearguard: 'Back-row heroes hit 20% harder.',
-    battleline: 'All in one row: everyone attacks faster.',
-    cover: 'Heroes next to terrain dodge and block more.',
-    gravestone: 'Fallen enemies leave walls that shelter you.',
-    quakedrum: 'Every 8s, foes next to terrain are stunned.',
-    bramblecrown: 'Terrain hurts the enemies next to it.',
-    catapult: 'Fling your front hero into their back line.',
-    gravity: 'Enemies start bunched together.',
-    anchor: 'Heroes that stay put take 25% less damage.',
-    stonefoot: 'Heroes never walk, but shoot farther.',
-    blinkstone: 'Melee heroes teleport to their target.',
-    trickcoin: 'Your hurt hero swaps with a healthy one.',
-    highground: 'Back row hits harder, front row less.',
-    center: 'Your middle hero becomes a Star.',
-    lodestone: 'Enemies all chase your biggest hero.',
-    bodyguard: 'Ranged heroes are safe behind melee ones.',
-    packhorn: 'Your team hunts one enemy at a time.',
-    jesterbell: 'Every 8s someone, mostly a foe, is confused.',
-    mirrorshield: 'The first ability on each hero bounces back.',
-    phoenix: 'Your wiped team rises once.',
-    souljar: 'Every 5 kills bring a fallen hero back.',
-    gravecaller: 'Fallen enemies fight for you a while.',
-    lastone: 'Your last hero heals and goes berserk.',
-    pyre: 'Fallen enemies explode on their friends.',
-    contagion: 'Burns and poisons spread when enemies fall.',
-    king: 'Your best hero is King, much stronger.',
-    echo: 'Each hero\'s first ability fires twice.',
-    fullmana: 'Heroes start fights with full Energy.',
-    hush: 'Enemies can\'t use abilities for 10s.',
-    leyline: 'Casting fills Energy for the same row.',
-    scales: 'All your heroes get the same max Health.',
-    giant: 'Heroes are huge: tougher, but slower.',
-    berserk: 'Heroes attack faster as they get hurt.',
-    bond: 'Your heroes share the damage they take.',
-    loaded: 'Crits and dodges roll twice for you.',
-    timecrystal: 'Every 12s the enemies freeze.',
-    harmony: 'An all-melee or all-ranged team hits harder.',
-    ledger: 'One free offer in every shop.',
-    deck: 'Free rerolls that shrink the shop.',
-    quill: '3 paths to choose from every step.',
-    huntmap: 'Hard fights pay double gold.',
-    anvil: 'Your gear upgrades after every win.',
-    cabinet: 'Stronger for every power you own.',
-    solo: 'One hero only, but a huge one.',
-    changeling: 'Your weakest hero changes after each win.',
-    cursecoin: '+25 gold now; enemies grow every fight.',
-    xmap: 'More events, each with a free item.',
-    medal: 'Heroes level up from kills only.',
-    double: 'No one falls: double gold. Else: none.',
-    snowball: 'Clean wins stack up power for good.',
-    packrat: 'Items in your bag make everyone stronger.',
+    idol: "Earn 3 extra gold after every fight you win.",
+    drum: "Your heroes attack a bit faster.",
+    standard: "Your heroes take less damage.",
+    lens: "Your heroes level up faster.",
+    feather: "The first hero to fall each fight gets back up.",
+    seal: "Everything in shops is 1 gold cheaper.",
+    dice: "The first \"New\" in each shop is free.",
+    font: "Heroes use their special ability much sooner.",
+    bloodstone: "Heroes heal a little when they hit.",
+    tooth: "Your heroes have more Health.",
+    wits: "Your heroes' abilities hit harder.",
+    clover: "Heroes land big hits more often.",
+    backpack: "Each hero can carry one more item.",
+    crest: "You can have 4 heroes instead of 3.",
+    vengeance: "When a hero falls, the others hit harder.",
+    frostsigil: "Enemies start every fight slowed down.",
+    thunder: "Lightning hits a random enemy every few seconds.",
+    spring: "Heroes heal over time, and healing on them is stronger.",
+    firststrike: "Heroes start every fight with a shield.",
+    purse: "Get 10 gold now, and more gold the more you save.",
+    tome: "Your heroes get a chunk of XP right now.",
+    wind: "Heroes move and attack faster.",
+    mark: "More damage to bosses and strong enemies.",
+    ember: "Heroes' attacks set enemies on fire.",
+    warhorn: "Heroes attack much faster at the start of a fight.",
+    ironwill: "Heroes shrug off the first stun and have more Health.",
+    seed: "Heroes get stronger the longer a fight lasts.",
+    bounty: "Earn gold for each enemy you defeat.",
+    bloodpact: "Heroes hit much harder but have a bit less Health.",
+    lastbreath: "A hero that falls explodes and hurts nearby enemies.",
+    whetset: "Your heroes hit a bit harder.",
+    battery: "Heroes use their special ability more often.",
+    treasure: "Item shops have 2 more items.",
+    rally: "Heroes standing together take less damage.",
+    beehive: "Heroes' attacks poison enemies.",
+    seashell: "Heroes take less damage and attack a bit faster.",
+    kite: "Heroes move faster and sometimes dodge attacks.",
+    compass: "Heroes land more big hits, and they hurt more.",
+    teapot: "Heroes slowly heal during fights.",
+    snowglobe: "Heroes are a bit tougher.",
+    marbles: "Heroes use their special ability a bit sooner.",
+    fireflies: "Heroes hit harder with attacks and abilities.",
+    pinwheel: "Heroes attack faster and use abilities more often.",
+    horseshoe: "Heroes dodge more and land more big hits.",
+    shieldwall: "Heroes placed next to each other are tougher.",
+    lonewolf: "Heroes placed alone attack faster.",
+    vanguard: "Heroes placed in the front row start with a shield.",
+    rearguard: "Heroes placed in the back row hit harder.",
+    battleline: "Place all heroes in one row and they all get stronger.",
+    cover: "Heroes placed next to trees or rocks are harder to hit.",
+    gravestone: "Defeated enemies leave stones you can hide behind.",
+    quakedrum: "Every few seconds, enemies near trees or rocks are stunned.",
+    bramblecrown: "Trees and rocks hurt the enemies standing next to them.",
+    catapult: "Your front hero is thrown right into the enemy back line.",
+    gravity: "Enemies start the fight bunched together.",
+    anchor: "Heroes that don't move take less damage.",
+    stonefoot: "Heroes stand still but shoot from farther away.",
+    blinkstone: "Close-range heroes teleport to their target.",
+    trickcoin: "Your most hurt hero swaps places with a healthy one.",
+    highground: "Back-row heroes hit harder, front-row ones a bit less.",
+    center: "Your hero in the middle becomes much stronger.",
+    lodestone: "All enemies go after your toughest hero.",
+    bodyguard: "Your close-range heroes protect your ranged ones.",
+    packhorn: "Your heroes all attack the same enemy, much harder.",
+    jesterbell: "Every few seconds someone, usually an enemy, attacks its own team.",
+    mirrorshield: "The first ability that hits each hero bounces back.",
+    phoenix: "If your whole team falls, it gets back up once.",
+    souljar: "Defeating enemies brings fallen heroes back.",
+    gravecaller: "Defeated enemies fight for you for a short time.",
+    lastone: "Your last hero standing heals fully and gets much stronger.",
+    pyre: "Defeated enemies explode and hurt their friends.",
+    contagion: "Fire and poison spread when an enemy falls.",
+    king: "Your highest-level hero becomes a much stronger King.",
+    echo: "Each hero's first ability goes off twice.",
+    fullmana: "Heroes use their special ability right away.",
+    hush: "Enemies can't use abilities for the first 10 seconds.",
+    leyline: "Using an ability helps heroes in the same row use theirs sooner.",
+    scales: "All your heroes get the same Health.",
+    glass: "Heroes deal double damage but have less Health.",
+    giant: "Heroes grow huge: tougher and stronger, but slower.",
+    berserk: "Heroes attack faster the more hurt they are.",
+    bond: "Your heroes share the damage they take.",
+    loaded: "Luck is on your side: more big hits and dodges.",
+    timecrystal: "Every few seconds, the enemies freeze for a moment.",
+    harmony: "A team of all close-range or all ranged heroes hits harder.",
+    ledger: "One thing in every shop is free, the rest costs more.",
+    deck: "\"New\" in shops is free, but each one leaves fewer items.",
+    quill: "Choose from 3 paths instead of 2.",
+    huntmap: "One path is always a hard fight that pays double gold.",
+    anvil: "After each win, one of your items gets better.",
+    cabinet: "Heroes get stronger for every power you own.",
+    solo: "Play with one hero only, but it is much stronger.",
+    changeling: "After each win, your weakest hero becomes a new hero.",
+    cursecoin: "Get 25 gold now, but enemies get a bit tougher every fight.",
+    xmap: "More events, and each one gives a free item.",
+    medal: "Heroes only get XP from defeating enemies, but a lot of it.",
+    double: "Win with nobody falling: double gold. Otherwise: no gold.",
+    snowball: "Win with nobody falling and your heroes get stronger for good.",
+    packrat: "Items kept in your bag make all heroes stronger.",
+    vow: "Heroes with an empty item slot are much stronger.",
   };
   for (const r of B.RELICS) r.short = SHORT[r.id] || r.desc;
   B.RELIC = {}; for (const r of B.RELICS) B.RELIC[r.id] = r;
@@ -1548,9 +1597,12 @@
   B.GAME_XP = { played: 6, fight: 5, boss: 15, reached: 18, duel: 12, champion: 30, perHour: 12, maxFights: 14 };
   // v63 (review #120, David: "restrict the initial pool of champions to 20, and make the xp progression unlock all the rest with the first levels"): a new player has the 20 heroes of
   // START_HEROES; the other 26 come two per level from level 2 to 14, in the order of HERO_UNLOCKS (a mix of damage, support and tank); items and powers keep their own levels
-  B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta'];
-  // v74 (review #152): one a level from level 2 to 27
-  B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage', 'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist'];
+  // v99 (review #181, David: "More heroes are unlocked at the start. Then 2 per level until all unlocked at level 5"): 38 heroes from the start, the last 8 two a
+  // level from level 2 to 5
+  B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta',
+    'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist'];
+  // v74 (review #152): one a level from level 2 to 27; v99 (review #181): two a level from 2 to 5
+  B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage'];
   // v65 (review #131, David: "add hero portraits for profile in xp rewards"): your picture (profile, ladder, the top bar) is a hero portrait. Four are free;
   // every level from 2 on unlocks one more (the starting heroes first, then the ones the levels unlock), so every level has a reward up to level 43
   // v88 (review #168, David: "too many rewards in current chest... everything must add value or go"): a hero the levels unlock brings its own portrait
@@ -1561,7 +1613,7 @@
   B.PORTRAIT_UNLOCKS = B.HERO_UNLOCKS.concat(B.PORTRAITS_LATE);
   for (const k of B.PORTRAIT_UNLOCKS) { const it = { id: 'pt_' + k, kind: 'portrait', hero: k, icon: '🖼', name: (B.HEROES[k] || {}).name + ' portrait', price: B.PORTRAIT_PRICE, desc: 'Use this portrait before your level opens it.' }; B.COSMETICS.push(it); B.SHOP_ITEM[it.id] = it; }   // v66 (review #136)
   // v91 (review #172, David: "Early chests give two heroes per level"): the first 12 heroes come two a level (levels 2 to 7), the other 14 one a level (8 to 21)
-  B.EARLY_PAIRS = 6;
+  B.EARLY_PAIRS = 4;   // v99 (review #181): every unlocked hero comes two a level (2 to 5); the items and powers then one a level from 6, the portraits after them
   // WHAT: the account level that unlocks the i-th hero of B.HERO_UNLOCKS.
   B.heroUnlockLevel = i => i < 2 * B.EARLY_PAIRS ? 2 + Math.floor(i / 2) : 2 + B.EARLY_PAIRS + (i - 2 * B.EARLY_PAIRS);
   // v91: the items and powers the levels unlock come one a level after the two-hero levels (8 to 22), so an early chest holds its two heroes and little else

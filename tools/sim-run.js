@@ -68,7 +68,7 @@ for (let n = 0; n < RUNS; n++) {
       }
     }
   }
-  if (run.phase === 'gauntlet') stats.reached++;
+  if (run.phase === 'gauntlet' || run.result === 'clear') stats.reached++;   // v96 (review #178): a completed run ends on the map (no final fight)
   for (const h of run.heroes) stats.lv[h.lvl]++;
 }
 const pct = (a) => a[1] ? Math.round(100 * a[0] / a[1]) + '% (' + a[0] + '/' + a[1] + ')' : '-';

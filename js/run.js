@@ -56,6 +56,9 @@
     if (run.v === 5) {
       if (run.lives == null) run.lives = C.lives;   // v63 (review #117): runs saved before lives got the full three
       if (run.g && run.g.teamId != null && run.phase !== 'over') { run.phase = 'gauntlet'; run.cur = null; run.g = { status: 'intro', history: [] }; }   // the old tower is gone: the run goes to the final fight
+      // v96 (review #178): no PvP inside the run. A saved run waiting for (or deploying for) the final fight is complete; duel options leave the map
+      if (run.phase === 'gauntlet' || (run.phase === 'deploy' && run.cur && run.cur.type === 'gauntlet' && run.g && run.g.kind === 'final')) completeRun(run);
+      if (run.phase === 'map' && (run.opts || []).some(o => o.type === 'duel')) run.opts = run.opts.filter(o => o.type !== 'duel');
     }
     return run.v === 5 ? run : null;
   }
@@ -93,6 +96,13 @@
     for (let i = 0; i < (C.startItems || 0); i++) run.bag.push(randomItem(run, 'common'));   // v63 (review #118): a few common items to start with
     autoEquip(run);
     run.phase = 'map'; advance(run);
+  }
+  // v97 (review #179, David: "The very first time you press play, and choose a hero, cut to the battlefield and that hero drops in. Then after he is moved,
+  // per indicated, an enemy weak unit comes in from the other side, the hero gets an exclamation mark in a speech bubble, and fight starts seamlessly"):
+  // WHAT: turns day 1 of the very first run into the intro fight: one Grunt, no map; ui.js plays the drop, the move and the enemy's entrance (run.onb).
+  function startIntro(run) {
+    run.cur = makeFight(run, 'easy', 1, 0, { keys: ['grunt'] }); run.fightNo = 1; run.opts = []; run.phase = 'deploy';
+    const h = run.heroes[0]; run.onb = { stage: 'drop', from: h && h.pos ? { c: h.pos.c, r: h.pos.r } : null };
   }
   // WHAT: how many heroes the team may have (B.CFG.maxTeam, +1 with the Hero's Crest power).
   const teamMax = run => C.maxTeam + (run.relics.includes('crest') ? 1 : 0);
@@ -421,7 +431,7 @@
     if (run.result !== 'clear') return run.achs || [];
     if (run.lives >= C.lives) ach(run, 'perfect'); if (run.lives === 1) ach(run, 'comeback');
     if (!run.fell) ach(run, 'untouchable');
-    if ((run.trophies || []).filter(t => !t.final).length >= (C.pvpFights || []).length && !run.pvpLost) ach(run, 'duelmaster');
+    if ((C.pvpFights || []).length && (run.trophies || []).filter(t => !t.final).length >= C.pvpFights.length && !run.pvpLost) ach(run, 'duelmaster');   // v96: no duel days, no Duel Master
     if (run.gold >= 100) ach(run, 'hoarder');
     return run.achs || [];
   }
@@ -668,9 +678,14 @@
     } else if (t === 'S') {
       run.opts = pickN(run, ['heroShop', 'itemShop', 'relicShop'].filter(k => k !== 'heroShop' || !has(run, 'solo')), has(run, 'quill') ? 3 : 2).map(k => ({ type: 'shop', kind: k, final: true }));
     } else if (t === 'G') {
-      // the gauntlet (reviews #3 #4 #9 #10): duels against ghosts of other players' runs
-      run.phase = 'gauntlet'; run.g = { status: 'intro', history: [] }; run.cur = null; run.reachedFinal = true;   // v94 (review #175): the PvE part is finished
+      completeRun(run);   // v96 (review #178): the last day is the victory (the Gauntlet comes after it)
     }
+  }
+  // WHAT (v96, review #178): the PvE part is won: the run is complete (victory screen, then the Gauntlet gate in ui.js); the team as it is now is the one sent to the server.
+  function completeRun(run) {
+    run.reachedFinal = true; run.guideFinal = true; run.cur = null; run.g = null; run.opts = [];
+    if (Array.isArray(run.heroes) && run.heroes.length) run.lastFight = { team: teamSnapshot(run), relics: (run.relics || []).slice() };
+    (run.log = run.log || []).push('Completed the run'); run.phase = 'over'; run.result = 'clear';
   }
   // v44 (review #54): common events come up more than uncommon and rare ones, and an event is offered once per run
   // WHAT: picks an event for a day: common ones likelier, none repeated in the same run.
@@ -1120,7 +1135,7 @@
   }
 
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
-  B.Run = { shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
+  B.Run = { startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
     eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };

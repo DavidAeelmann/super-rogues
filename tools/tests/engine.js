@@ -94,7 +94,7 @@ for (const r of RELICS) {
     else if (run.phase === 'shop' || run.phase === 'event') Run.leave(run);
     while (run.pending.length) Run.chooseSpec(run, 0);
   }
-  ok(seen.join(' ') === 'F2 X2 F2 X2 F2 X2 B1 X2 F2 X2 F2 X2 F2 X2 B1 S2 G0' && run.phase === 'gauntlet', 'node sequence ' + seen.join(' '));
+  ok(seen.join(' ') === 'F2 X2 F2 X2 F2 X2 B1 X2 F2 X2 F2 X2 F2 X2 B1 S2 G0' && run.phase === 'over' && run.result === 'clear', 'node sequence (v96: the last day completes the run) ' + seen.join(' '));
   ok(run.fightNo === 8, 'eight fights before the gauntlet');
 }
 // review #22: 1 hero and 1 relic at the start, the hero shop is offered while you have a single hero, old runs keep 13 steps
@@ -361,7 +361,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const other = Run.newRun(123); Run.pickStart(other, ['bastion', 'kestrel']); Run.addHero(other, 'pyra');
   const run = Run.newRun(124); Run.pickStart(run, ['brakk', 'lumen']); Run.addHero(run, 'tempest');
   run.phase = 'gauntlet'; run.g = { status: 'match', history: [], round: 0, opp: { name: 'X', elo: 1000, team: Run.teamSnapshot(other), relics: ['drum'] } };
-  ok(Run.migrate({ v: 2, step: 12, phase: 'deploy', cur: { type: 'onslaught' }, relics: ['onslaught', 'drum'], opts: [] }).phase === 'gauntlet', 'a saved run standing at the old Onslaught moves to the gauntlet');
+  ok(Run.migrate({ v: 2, step: 12, phase: 'deploy', cur: { type: 'onslaught' }, relics: ['onslaught', 'drum'], opts: [] }).result === 'clear', 'a saved run standing at the old Onslaught is complete (v96: no final fight)');
   run.cur = { type: 'gauntlet' };
   const W = Run.gauntletWorld(run); Sim.run(W, 20 * 200);
   const foes = W.units.filter(u => u.side === 1 && u.kind === 'hero');
@@ -880,20 +880,21 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   lose(); ok(r.lives === 2 && r.phase === 'map', 'first loss: two lives left, the run goes on');
   lose(); ok(r.lives === 1 && r.phase === 'map', 'second loss: one life left');
   lose(); ok(r.lives === 0 && r.phase === 'over' && r.result === 'defeat', 'third loss ends the run');
-  // PvP days: fights 3 and 6 offer a duel next to PvE fights
+  // v96 (review #178): no PvP days; the last shop completes the run (the old duel code stays for saved runs)
   const q = Run.newRun(23); Run.pickStart(q, q.startOffer.slice(0, 3), q.relicOffer[0]);
   const days = [];
-  for (let i = 0; i < 17 && q.phase !== 'gauntlet'; i++) {
+  for (let i = 0; i < 17 && q.phase !== 'over'; i++) {
     const t = Run.seqOf(q)[q.step]; days.push(t + (q.opts.some(o => o.type === 'duel') ? 'P' : ''));
     const k = q.opts.findIndex(o => o.type !== 'duel'); Run.choose(q, k);
     if (q.phase === 'deploy') { const W = Run.fightWorld(q); W.over = true; W.winner = 0; Run.finishFight(q, W); }
     else if (q.phase === 'shop' || q.phase === 'event') Run.leave(q);
     while (q.pending.length) Run.chooseSpec(q, 0);
   }
-  ok(days.join(' ') === 'F X F X FP X B X F X FP X F X B S', 'the PvP days are fights 3 and 6: ' + days.join(' '));
-  ok(q.phase === 'gauntlet', 'after the last shop comes the final fight');
+  ok(days.join(' ') === 'F X F X F X B X F X F X F X B S', 'v96: no day offers a duel: ' + days.join(' '));
+  ok(q.phase === 'over' && q.result === 'clear' && q.reachedFinal && q.lastFight && q.lastFight.team.length === q.heroes.length, 'v96: after the last shop the run is complete (no final fight), with the team to send');
   // a duel: an opponent must be found first, then a win opens the steal choice and a loss costs a life
   const d = Run.newRun(24); Run.pickStart(d, d.startOffer.slice(0, 3), d.relicOffer[0]);
+  d.opts.push({ type: 'duel', fightNo: d.fightNo + 1, opp: null });   // v96: no duel days any more; the duel code is checked on a hand-made one
   while (!d.opts.some(o => o.type === 'duel')) { Run.choose(d, 0); if (d.phase === 'deploy') { const W = Run.fightWorld(d); W.over = true; W.winner = 0; Run.finishFight(d, W); } else Run.leave(d); while (d.pending.length) Run.chooseSpec(d, 0); }
   const di = d.opts.findIndex(o => o.type === 'duel'); Run.choose(d, di);
   ok(d.phase === 'map', 'a duel with no opponent found yet cannot be chosen');
@@ -930,17 +931,21 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(fz.phase === 'over' && fz.result === 'defeat' && fz.lives === 0, 'the last life lost in the final fight ends the run');
   // old saved runs get their lives; one inside the old tower goes to the final fight
   const old = Run.migrate({ v: 5, step: 4, heroes: [], bag: [], relics: [], fightNo: 2, phase: 'deploy', cur: { type: 'gauntlet' }, g: { teamId: 7, status: 'match', history: [] } });
-  ok(old.lives === 3 && old.phase === 'gauntlet' && old.g.status === 'intro' && old.cur === null, 'a run saved inside the old tower continues at the final fight with three lives');
+  ok(old.lives === 3 && old.phase === 'over' && old.result === 'clear' && old.cur === null, 'a run saved inside the old tower is complete (v96: no final fight) with three lives');
+  const fin = Run.migrate({ v: 5, step: 16, heroes: [], bag: [], relics: [], fightNo: 8, lives: 2, phase: 'gauntlet', g: { status: 'intro', history: [] }, opts: [] });
+  ok(fin.phase === 'over' && fin.result === 'clear' && fin.reachedFinal, 'v96: a run saved at the final fight is complete');
+  const dd = Run.migrate({ v: 5, step: 4, heroes: [], bag: [], relics: [], fightNo: 2, lives: 3, phase: 'map', opts: [{ type: 'fight' }, { type: 'duel', fightNo: 3 }] });
+  ok(dd.opts.length === 1 && dd.opts[0].type === 'fight', 'v96: a saved duel option leaves the map');
   // random ghosts grow with the day
   const G1 = Run.randomGhost(d, 1), G6 = Run.randomGhost(d, 6), GF = Run.randomGhost(d, 8, true);
   const nit = g => g.team.reduce((a, h) => a + h.items.length, 0);
   ok(nit(G1) <= nit(G6) && nit(G6) <= nit(GF) && G1.relics.length <= G6.relics.length && G6.relics.length <= GF.relics.length && GF.team.every(h => h.lvl === 5), 'made-up ghosts get more items, powers and levels as the days pass');
   // account level: 20 heroes at the start, the other 26 two per level from level 2 to 14
   const locked1 = B.lockedFor(1).filter(id => HEROES[id]), open1 = Object.keys(HEROES).filter(k => !locked1.includes(k));
-  ok(open1.length === 20 && open1.every(k => B.START_HEROES.includes(k)) && B.HERO_UNLOCKS.length === 26, 'level 1 opens 20 heroes');
-  ok(B.lockedFor(21).filter(id => HEROES[id]).length === 0 && B.lockedFor(2).filter(id => HEROES[id]).length === 24 && B.lockedFor(8).filter(id => HEROES[id]).length === 13, 'v74 (review #152), v91 (review #172): two heroes a level up to level 7, then one a level: all of them open by level 21');
-  ok(B.UNLOCKS.filter(u => u.kind === 'hero').length === 26 && B.UNLOCKS.every((u, i, a) => !i || a[i - 1].lvl <= u.lvl), 'the unlock road is in level order');
-  const lk = Run.newRun(25, { locked: B.lockedFor(1) }); ok(lk.startOffer.every(k => B.START_HEROES.includes(k)), 'a level 1 player is only offered the 20 starting heroes');
+  ok(open1.length === 38 && open1.every(k => B.START_HEROES.includes(k)) && B.HERO_UNLOCKS.length === 8, 'v99 (review #181): level 1 opens 38 heroes');
+  ok(B.lockedFor(5).filter(id => HEROES[id]).length === 0 && B.lockedFor(2).filter(id => HEROES[id]).length === 6 && B.lockedFor(4).filter(id => HEROES[id]).length === 2, 'v99 (review #181): two heroes a level: all of them open by level 5');
+  ok(B.UNLOCKS.filter(u => u.kind === 'hero').length === 8 && B.UNLOCKS.every((u, i, a) => !i || a[i - 1].lvl <= u.lvl), 'the unlock road is in level order');
+  const lk = Run.newRun(25, { locked: B.lockedFor(1) }); ok(lk.startOffer.every(k => B.START_HEROES.includes(k)), 'a level 1 player is only offered the 38 starting heroes');
 }
 // v64 (reviews #126 #127 #125): start with 1 of 3, a free recruit after each of the first days, hero shops swap a hero in, victory kinds and league points
 {
@@ -978,7 +983,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   { const be = Lg => { const m = B.lpMul(Lg); return 24 * m.loss / (40 * m.gain + 24 * m.loss); }, Ls = B.LEAGUES.map((_, i) => i);
     ok(Ls.every(i => !i || (B.lpMul(i).gain < B.lpMul(i - 1).gain && B.lpMul(i).loss > B.lpMul(i - 1).loss && be(i) > be(i - 1))) && be(0) < 0.3 && be(Ls.length - 1) > 0.55, 'v84: wins pay less and losses cost more in each higher league (break-even win rate ' + Ls.map(i => Math.round(100 * be(i)) + '%').join(' ') + ')');
     ok(B.runLp({ done: true, duels: 2, lost: 0, streak: 3 }, 0) > B.runLp({ done: true, duels: 2, lost: 0, streak: 3 }, 5) && B.runLp({ done: false, duels: 0, lost: 2 }, 5) < B.runLp({ done: false, duels: 0, lost: 2 }, 1), 'v84: the same run gives more LP in Bronze than in Celestial, and a loss costs more in Celestial'); }
-  ok(B.UNLOCKS.filter(u => u.kind === 'portrait').length === 16 && B.portraitLevel('bastion') === 1 && B.portraitLevel(B.HERO_UNLOCKS[0]) === 2 && B.portraitLevel(B.HERO_UNLOCKS[5]) === B.UNLOCKS.find(u => u.kind === 'hero' && u.id === B.HERO_UNLOCKS[5]).lvl && B.portraitLevel(B.PORTRAITS_LATE[0]) === B.heroUnlockLevel(B.HERO_UNLOCKS.length - 1) + 1 && B.portraitLevel('nope') === 0 && B.lockedFor(1).filter(id => HEROES[id]).length === 26 && B.lockedFor(1).length === B.UNLOCKS.filter(u => u.lvl > 1 && ['hero', 'item', 'relic'].includes(u.kind)).length, 'v65 (review #131), v88 (review #168): a new hero brings its portrait; the other 16 are the rewards of levels 28-43; a portrait never locks a hero');
+  ok(B.UNLOCKS.filter(u => u.kind === 'portrait').length === 34 && B.portraitLevel('bastion') === 1 && B.portraitLevel(B.HERO_UNLOCKS[0]) === 2 && B.portraitLevel(B.HERO_UNLOCKS[5]) === B.UNLOCKS.find(u => u.kind === 'hero' && u.id === B.HERO_UNLOCKS[5]).lvl && B.portraitLevel(B.PORTRAITS_LATE[0]) === B.heroUnlockLevel(B.HERO_UNLOCKS.length - 1) + 1 && B.portraitLevel('nope') === 0 && B.lockedFor(1).filter(id => HEROES[id]).length === 8 && B.lockedFor(1).length === B.UNLOCKS.filter(u => u.lvl > 1 && ['hero', 'item', 'relic'].includes(u.kind)).length, 'v65 (review #131), v88 (review #168): a new hero brings its portrait; v99: the other 34 are the rewards of levels 6-39; a portrait never locks a hero');
   { const per = {}; for (const u of B.UNLOCKS) per[u.lvl] = (per[u.lvl] || 0) + 1; ok(Object.values(per).every(n => n <= 3) && Object.keys(per).length >= 35, 'v88 (review #168): a level chest holds at most 3 rewards (most levels: 1 or 2)'); }
   // the trophies of a run
   const t = Run.newRun(33); Run.pickStart(t, t.startOffer.slice(0, 3), t.relicOffer[0]); Run.startDuel(t, Run.randomGhost(t, 3), 'pvp', 3);
@@ -992,7 +997,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     ok(xs > 5 && shops === 0, 'v73 (review #149): no Hero Shop until the third hero joined (' + xs + ' shop-or-event days checked)'); }
   // v73 (reviews #150 #151): achievements of a run
   { const r = Run.newRun(77); Object.assign(r, { result: 'clear', lives: 3, fell: 0, trophies: [{ name: 'a' }, { name: 'b' }, { name: 'c', final: true }], pvpLost: 0, gold: 120 });
-    const a = Run.endAchs(r); ok(['perfect', 'untouchable', 'duelmaster', 'hoarder'].every(id => a.includes(id)) && !a.includes('comeback'), 'v73: a perfect run without a fallen hero, every duel won and 100+ gold: Flawless, Untouchable, Duel Master, Dragon\'s Hoard');
+    const a = Run.endAchs(r); ok(['perfect', 'untouchable', 'hoarder'].every(id => a.includes(id)) && !a.includes('comeback') && !a.includes('duelmaster'), 'v73: a perfect run without a fallen hero and 100+ gold (v96: no Duel Master without duel days): Flawless, Untouchable, Dragon\'s Hoard');
     const r2 = Run.newRun(78); Object.assign(r2, { result: 'clear', lives: 1, fell: 2, trophies: [], gold: 3 }); const a2 = Run.endAchs(r2); ok(a2.includes('comeback') && !a2.includes('untouchable') && !a2.includes('perfect'), 'v73: the last life = Comeback Kid');
     ok(B.ACHIEVEMENTS.length >= 15 && B.ACHIEVEMENTS.every(x => x.title && x.desc && (x.by === 'run' || x.by === 'server' || (x.by === 'level' && x.lvl > 1))), 'v73: every achievement has a title, a text and who checks it');
     ok(B.UNLOCKS.some(u => u.kind === 'taunt') && B.UNLOCKS.some(u => u.kind === 'title') && [...new Set(B.UNLOCKS.map(u => u.lvl))].every(l => B.UNLOCKS.filter(u => u.lvl === l && u.kind === 'hero').length <= (l <= 1 + B.EARLY_PAIRS ? 2 : 1)), 'v74 (review #152): voice lines and titles drop between the heroes; v91: two heroes a level only on the early levels'); }
@@ -1001,7 +1006,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     const t = r.tele || { o: {}, p: {} }; ok(r.startOffer.every(k => t.o['hero:' + k] >= 1) && t.p['hero:' + r.startOffer[0]] === 1 && t.p['relic:' + r.relicOffer[0]] === 1, 'v81: the start offers and picks are counted');
   }
   // v91 (review #172): the early chests hold two heroes each, later ones one
-  { const hl = l => B.UNLOCKS.filter(u => u.kind === 'hero' && u.lvl === l).length; ok([2, 3, 4, 5, 6, 7].every(l => hl(l) === 2) && hl(8) === 1 && B.UNLOCKS.filter(u => u.kind === 'hero').length === B.HERO_UNLOCKS.length && Math.max(...B.UNLOCKS.filter(u => u.kind === 'hero').map(u => u.lvl)) === 21, 'v91: two heroes a level from 2 to 7, then one a level up to 21'); }
+  { const hl = l => B.UNLOCKS.filter(u => u.kind === 'hero' && u.lvl === l).length; ok([2, 3, 4, 5].every(l => hl(l) === 2) && hl(6) === 0 && B.UNLOCKS.filter(u => u.kind === 'hero').length === B.HERO_UNLOCKS.length && Math.max(...B.UNLOCKS.filter(u => u.kind === 'hero').map(u => u.lvl)) === 5, 'v99 (review #181): two heroes a level from 2 to 5, all open at 5'); }
   // v92 (review #173): a hero bought into a free slot joins at the level of your lowest hero, with random powers for those levels
   { const r = Run.newRun(9393); Run.pickStart(r, ['bastion'], null); Run.addHero(r, 'lumen'); r.heroes[0].lvl = 4; r.heroes[1].lvl = 3; r.gold = 99;
     r.cur = { kind: 'heroShop', stock: [{ kind: 'hero', id: 'vex', price: 5 }] }; const err = Run.buy(r, 0), h = r.heroes.find(x => x.key === 'vex');
