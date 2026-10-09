@@ -6,6 +6,8 @@
   B.LANG.pt = {
     x: {
       "Tank": "Tanque",
+      "Fighter": "Lutador",   // v93 (review #174)
+      "Support": "Suporte",
       "Stoneward": "Muralha de Pedra",
       "Raises a stone ward: a shield of 33% of his max Health. Taunts enemies within 2 hexes for 2.5s.": "Ergue uma muralha de pedra: um escudo de 33% da Vida máx. Provoca inimigos a até 2 hexes por 2,5s.",
       "Iron Hide": "Pele de Ferro",

@@ -1006,6 +1006,8 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   { const r = Run.newRun(9393); Run.pickStart(r, ['bastion'], null); Run.addHero(r, 'lumen'); r.heroes[0].lvl = 4; r.heroes[1].lvl = 3; r.gold = 99;
     r.cur = { kind: 'heroShop', stock: [{ kind: 'hero', id: 'vex', price: 5 }] }; const err = Run.buy(r, 0), h = r.heroes.find(x => x.key === 'vex');
     ok(!err && h && h.lvl === 3 && h.specs.length === 2 && h.specs.every((id, k) => B.HEROES.vex.specs[k].some(sp => sp.id === id)) && h.xp === B.CFG.xpLevels[3] && Run.shopHeroLevel(r) === 3, 'v92: a shop hero joins at your lowest hero level (Lv ' + (h && h.lvl) + ') with random powers'); }
+  // v93 (review #174): every hero's role is one of the nine standard ones
+  ok(B.ROLES.length === 9 && Object.values(B.HEROES).every(h => B.ROLES.includes(h.role)) && B.ROLES.every(r => Object.values(B.HEROES).some(h => h.role === r)), 'v93 (review #174): every hero has one of the 9 standard roles, and every role is used');
   // v90 (review #171): a Gauntlet floor after the run: no XP, no lives lost, the climb goes on after a win and ends after a loss
   { const r = Run.newRun(4711); Run.pickStart(r, ['bastion'], null); r.phase = 'over'; r.result = 'clear'; const lv = r.lives;
     r.tower = { status: 'climb', floor: 2, wins: 1, lp: 1 }; Run.startDuel(r, Run.randomGhost(r, 8, true), 'tower', 9);

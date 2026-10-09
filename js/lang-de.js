@@ -6,6 +6,8 @@
   B.LANG.de = {
     x: {
       "Tank": "Tank",
+      "Fighter": "Kämpfer",   // v93 (review #174)
+      "Support": "Unterstützer",
       "Stoneward": "Steinwall",
       "Raises a stone ward: a shield of 33% of his max Health. Taunts enemies within 2 hexes for 2.5s.": "Errichtet einen Steinwall: ein Schild in Höhe von 33% des max. Lebens. Provoziert Gegner im Umkreis von 2 Feldern für 2,5s.",
       "Iron Hide": "Eisenhaut",
