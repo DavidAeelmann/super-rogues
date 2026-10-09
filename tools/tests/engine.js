@@ -1002,10 +1002,10 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   }
   // v91 (review #172): the early chests hold two heroes each, later ones one
   { const hl = l => B.UNLOCKS.filter(u => u.kind === 'hero' && u.lvl === l).length; ok([2, 3, 4, 5, 6, 7].every(l => hl(l) === 2) && hl(8) === 1 && B.UNLOCKS.filter(u => u.kind === 'hero').length === B.HERO_UNLOCKS.length && Math.max(...B.UNLOCKS.filter(u => u.kind === 'hero').map(u => u.lvl)) === 21, 'v91: two heroes a level from 2 to 7, then one a level up to 21'); }
-  // v93 (review #173): a hero bought into a free slot joins at the level of your lowest hero, with random powers for those levels
+  // v92 (review #173): a hero bought into a free slot joins at the level of your lowest hero, with random powers for those levels
   { const r = Run.newRun(9393); Run.pickStart(r, ['bastion'], null); Run.addHero(r, 'lumen'); r.heroes[0].lvl = 4; r.heroes[1].lvl = 3; r.gold = 99;
     r.cur = { kind: 'heroShop', stock: [{ kind: 'hero', id: 'vex', price: 5 }] }; const err = Run.buy(r, 0), h = r.heroes.find(x => x.key === 'vex');
-    ok(!err && h && h.lvl === 3 && h.specs.length === 2 && h.specs.every((id, k) => B.HEROES.vex.specs[k].some(sp => sp.id === id)) && h.xp === B.CFG.xpLevels[3] && Run.shopHeroLevel(r) === 3, 'v93: a shop hero joins at your lowest hero level (Lv ' + (h && h.lvl) + ') with random powers'); }
+    ok(!err && h && h.lvl === 3 && h.specs.length === 2 && h.specs.every((id, k) => B.HEROES.vex.specs[k].some(sp => sp.id === id)) && h.xp === B.CFG.xpLevels[3] && Run.shopHeroLevel(r) === 3, 'v92: a shop hero joins at your lowest hero level (Lv ' + (h && h.lvl) + ') with random powers'); }
   // v90 (review #171): a Gauntlet floor after the run: no XP, no lives lost, the climb goes on after a win and ends after a loss
   { const r = Run.newRun(4711); Run.pickStart(r, ['bastion'], null); r.phase = 'over'; r.result = 'clear'; const lv = r.lives;
     r.tower = { status: 'climb', floor: 2, wins: 1, lp: 1 }; Run.startDuel(r, Run.randomGhost(r, 8, true), 'tower', 9);

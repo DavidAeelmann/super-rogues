@@ -2247,7 +2247,7 @@ body.wide section.shop .grid.rows { max-width: 640px; }
 .v2 .art .splash { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: 112%; width: auto; filter: drop-shadow(0 4px 6px #0009); }
 .v2 .rolechip, .v2 .rngchip { position: absolute; z-index: 2; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: #0d1146d0; color: #fff; font: 700 10.5px var(--fun); text-transform: uppercase; letter-spacing: .4px; }
 .v2 .rolechip { top: 6px; left: 6px; } .v2 .rngchip { bottom: 6px; left: 6px; text-transform: none; letter-spacing: 0; } .v2 .rngchip svg.ui { width: 12px; height: 12px; }
-.v2 .shoplv { position: absolute; z-index: 2; bottom: 6px; right: 6px; padding: 2px 9px; border-radius: 999px; background: #0d1146d0; color: #ffe46b; font: 700 12px var(--fun); }   /* v93 (review #173): the level a shop hero joins at */
+.v2 .shoplv { position: absolute; z-index: 2; bottom: 6px; right: 6px; padding: 2px 9px; border-radius: 999px; background: #0d1146d0; color: #ffe46b; font: 700 12px var(--fun); }   /* v92 (review #173): the level a shop hero joins at */
 .v2 .art .hdet { position: absolute; z-index: 2; top: 5px; right: 5px; width: 30px; height: 30px; min-height: 0; margin: 0; padding: 0; justify-content: center; border-radius: 50%; background: #0d1146d0 !important; border: 2px solid #fff8 !important; box-shadow: none !important; }
 .v2 .art .hdet svg.ui { width: 16px; height: 16px; }
 .card.stock.v2 .meta { padding: 8px 10px 2px; min-width: 0; }
