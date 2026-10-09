@@ -741,11 +741,15 @@
     if (has(run, 'deck')) run.cur.stock = run.cur.stock.slice(0, Math.max(2, n - 2));   // v51: two at a time, so it stays even
     return true;
   }
+  // v93 (review #173, David: "Heroes in hero shop are the level of your lowest hero (skills chosen randomly)"): a hero bought into a free slot starts at the level of
+  // your lowest hero, with its level-up powers picked at random (a hero that takes a full team's place keeps that hero's level, as before)
+  // WHAT: the level a hero bought in the Hero Shop starts at: your lowest hero's (1 with no hero).
+  function shopHeroLevel(run) { return run.heroes.length ? Math.min(...run.heroes.map(h => h.lvl)) : 1; }
   // WHAT: buys product i of the open shop. Returns an error text or null when it worked.
   function buy(run, i, replaceUid) {
     const s = run.cur.stock[i]; if (!s || s.sold || run.gold < s.price) return 'Not enough gold';
     if (s.kind === 'hero') {
-      if (run.heroes.length < teamMax(run)) addHero(run, s.id);
+      if (run.heroes.length < teamMax(run)) { const lv = shopHeroLevel(run), h = addHero(run, s.id); if (lv > 1) { h.lvl = lv; h.xp = C.xpLevels[lv]; h.specs = B.HEROES[s.id].specs.slice(0, lv - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id); } }   // v93 (review #173)
       else if (!run.heroes.some(h => h.uid === replaceUid)) return 'Pick the hero it replaces';   // v64 (review #127): a full team swaps
       else swapIn(run, replaceUid, s.id);
     }
@@ -1113,7 +1117,7 @@
   }
 
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
-  B.Run = { mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
+  B.Run = { shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
     eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };
