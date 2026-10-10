@@ -54,7 +54,8 @@
     // v5 (review #22): the sequence and the fight scale live in the run; runs started before keep the old 13 steps
     if (run.v === 4) { run.v = 5; run.seq = ['F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'B', 'S', 'G']; run.fightScale = [1, 0.9, 1.1, 1.3, 1.5, 1.75, 2]; }
     if (run.v === 5) {
-      if (run.lives == null) run.lives = C.lives;   // v63 (review #117): runs saved before lives got the full three
+      if (run.lives == null) run.lives = 3;   // v63 (review #117): runs saved before lives got the full three (v101: turned into the Ward below)
+      if (!run.wardV) { run.wardV = 1; run.lives = run.lives >= 3 ? 1 : 0; }   // v101 (review #186): three lives become the Ward (whole only if no fight was lost)
       if (run.g && run.g.teamId != null && run.phase !== 'over') { run.phase = 'gauntlet'; run.cur = null; run.g = { status: 'intro', history: [] }; }   // the old tower is gone: the run goes to the final fight
       // v96 (review #178): no PvP inside the run. A saved run waiting for (or deploying for) the final fight is complete; duel options leave the map
       if (run.phase === 'gauntlet' || (run.phase === 'deploy' && run.cur && run.cur.type === 'gauntlet' && run.g && run.g.kind === 'final')) completeRun(run);
@@ -73,7 +74,7 @@
     // v63 (review #118): heroes offered by class (v64, review #126: one of each class, the player picks one); v100: drawn from the free-pick queues
     run.startOffer = [].concat(...B.CLASSES.map(cl => { const o = []; for (let i = 0; i < C.startOffer / B.CLASSES.length; i++) { const k = drawFree(run, cl, new Set(o)); if (k) o.push(k); } return o; }));
     run.relicOffer = pickN(run, relicsOf(run).map(r => r.id), C.startRelics || 3);  // review #22: the run also starts with a relic
-    run.lives = C.lives;
+    run.lives = C.lives; run.wardV = 1;
     run.bosses = B.BOSS_SLOTS.map(s => pick(run, s));   // v52 (review #64): which boss waits in each slot this game
     return run;
   }
@@ -407,10 +408,11 @@
     if (W.used && W.used.phoenix) { run.relics = run.relics.filter(id => id !== 'phoenix'); res.phoenix = true; }   // v50: the egg hatched
     run.log.push((win ? 'Won ' : 'Lost ') + (f.challenge ? f.challenge.name : f.diff === 'boss' ? 'boss' : f.diff) + ' fight ' + f.fightNo);
     run.cur = null;
-    // v44: a challenge from an event pays its reward on a win; lost, the run goes on (only the reward is gone)
-    if (f.challenge) { res.challenge = f.challenge.name; if (win) challengeReward(run, f, res); advance(run); return res; }
-    // v63 (review #117): three lives. A lost fight costs one and the day passes; the third lost fight ends the run
-    if (!win) { run.lives--; res.lives = run.lives; if (run.lives <= 0) { run.phase = 'over'; run.result = 'defeat'; } else advance(run); } else advance(run);
+    // v44: a challenge from an event pays its reward on a win
+    if (f.challenge) { res.challenge = f.challenge.name; if (win) challengeReward(run, f, res); }
+    // v101 (reviews #186 #189): every lost PvE fight (event fights too) breaks the Ward and the day starts over with new choices (a boss waits again);
+    // lost with the Ward already broken, the run ends
+    if (!win) { if (run.lives > 0) { run.lives--; res.lives = run.lives; res.retry = true; redoDay(run, f); } else { res.lives = 0; run.phase = 'over'; run.result = 'defeat'; } } else advance(run);
     return res;
   }
   // v73 (reviews #150 #151): achievements the run sees (B.ACHIEVEMENTS by 'run'); the account ones are checked by the server at the end of the run
@@ -430,7 +432,7 @@
   }
   function endAchs(run) {
     if (run.result !== 'clear') return run.achs || [];
-    if (run.lives >= C.lives) ach(run, 'perfect'); if (run.lives === 1) ach(run, 'comeback');
+    if (run.lives >= C.lives) ach(run, 'perfect'); if (run.lives === 0) ach(run, 'comeback');
     if (!run.fell) ach(run, 'untouchable');
     if ((C.pvpFights || []).length && (run.trophies || []).filter(t => !t.final).length >= C.pvpFights.length && !run.pvpLost) ach(run, 'duelmaster');   // v96: no duel days, no Duel Master
     if (run.gold >= 100) ach(run, 'hoarder');
@@ -662,14 +664,15 @@
   // WHAT: the fight number of the n-th boss in this run's sequence (4 and 8 normally).
   function bossFight(run, n) { let f = 0, b = 0; for (const t of seqOf(run)) { if (t === 'F' || t === 'B') f++; if (t === 'B' && ++b === n) return f; } return f; }
   // WHAT (important): moves to the next day and builds what the map offers: two fights (easy / medium / hard), a boss, two shops or events, the last shop, or the start of the Gauntlet.
-  function advance(run) {
+  function advance(run, redo) {
     // v64 (review #126): after each of the first days, while the team is short, a free hero joins: the recruit screen comes before the next day
-    if (run.phase !== 'recruit' && run.step >= 0 && (run.recruits || 0) < (C.freeRecruits || 0) && run.heroes.length < C.maxTeam) {
+    if (!redo && run.phase !== 'recruit' && run.step >= 0 && (run.recruits || 0) < (C.freeRecruits || 0) && run.heroes.length < C.maxTeam) {
       run.phase = 'recruit'; run.recruitOffer = recruitOffer(run); run.cur = null; run.opts = []; return;
     }
     run.step++;
     const t = seqOf(run)[run.step];
     run.phase = 'map'; run.opts = [];
+    if (t === undefined && run.tower) { run.phase = 'tower'; run.tower.status = 'ready'; return; }   // v101 (review #183): the Gauntlet shop is done: the climb starts
     if (t === 'F' || t === 'B') {
       const n = run.fightNo + 1;
       if (t === 'B') run.opts = [makeFight(run, 'boss', n, seqOf(run).slice(0, run.step + 1).filter(x => x === 'B').length)];
@@ -700,6 +703,14 @@
     if (Array.isArray(run.heroes) && run.heroes.length) run.lastFight = { team: teamSnapshot(run), relics: (run.relics || []).slice() };
     (run.log = run.log || []).push('Completed the run'); run.phase = 'over'; run.result = 'clear';
   }
+  // WHAT (v101, review #186): the day lost is played again: a fight day gets new choices, a boss day the same boss, an event day new options.
+  function redoDay(run, f) {
+    if (!f.challenge && f.fightNo) run.fightNo = f.fightNo - 1;
+    run.step--; run.phase = 'map'; advance(run, true);
+    run.log.push('The Ward broke: day ' + (run.step + 1) + ' again');
+  }
+  // WHAT (v101): the days of the PvE part (up to the victory G), for the road and the day counter; the last shop after G opens in the Gauntlet.
+  const pveSeq = run => { const s = seqOf(run), g = s.indexOf('G'); return g >= 0 ? s.slice(0, g + 1) : s; };
   // v44 (review #54): common events come up more than uncommon and rare ones, and an event is offered once per run
   // WHAT: picks an event for a day: common ones likelier, none repeated in the same run.
   function pickEvent(run) {
@@ -1148,7 +1159,7 @@
   }
 
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
-  B.Run = { startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
+  B.Run = { pveSeq, startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
     eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };

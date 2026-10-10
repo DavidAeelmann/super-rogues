@@ -337,7 +337,8 @@
   // WHAT: the top bar (gold, day, Team button, review notice, menu). Called by render() and after gold changes.
   // v63 (review #117): three lives, shown as hearts in the top bar
   // WHAT: the hearts (lives left) shown in the top bar.
-  const heartsHTML = () => run && run.lives != null ? `<span class="lives" title="Lives left: ${run.lives}" aria-label="${run.lives} of ${CFG.lives} lives left">${Array.from({ length: CFG.lives }, (_, i) => `<i class="hrt ${i < run.lives ? 'on' : ''}">♥</i>`).join('')}</span>` : '';
+  // v101 (review #186): the Ward (one), whole or broken
+  const heartsHTML = () => run && run.lives != null ? `<span class="lives ward ${run.lives > 0 ? 'on' : 'broken'}" title="${run.lives > 0 ? 'Ward: whole. A lost fight breaks it and the day starts over.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${run.lives > 0 ? 'on' : ''}">${I('shield')}</i></span>` : '';
   function header() {
     const h = $('#top');
     if (!run || screen === 'title') {
@@ -350,7 +351,7 @@
     if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span><button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
     const stepN = Math.max(0, run.step);
     const g = run.g;
-    const prog = g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + Run.seqOf(run).length;
+    const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + Run.pveSeq(run).length;
     const lgs = store.get('balance.league', null);
     h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
       <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey">${prog}</button>
@@ -402,6 +403,7 @@
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'gauntlet' && !run.xpShown) animXp();   // the old Gauntlet end (saves from before v63)
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.endAsked && !run.lgEnd && !run.xpErr) { run.endAsked = true; save(); setTimeout(reportRunEnd, 0); }   // v96 (review #178): a run completed on the map (no last fight)
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.tower && !run.vicCheered) { run.vicCheered = true; save(); sfx('win'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('.vicart', 90), 250); }
+    if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'ready' && !ui.towerBusy) setTimeout(() => ACT['tower-enter'](), 0);   // v101: back from the Gauntlet shop
     if (run && screen === 'run' && run.phase === 'over') fitOver();   // v70 (review #144): the big end screens shrink a step when the page would scroll
     if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !run.lpShown) animLp();
     if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'over' && !run.tower.cheered) { run.tower.cheered = true; save(); sfx(run.tower.champion ? 'unlock' : run.tower.wins ? 'levelup' : 'back'); if (run.tower.wins && B.Juice) setTimeout(() => B.Juice.confettiAt('.towerart .tcrown', run.tower.champion ? 110 : 40), 450); }   // v90: the end of the climb cheers   // v68 (review #140)
@@ -440,7 +442,7 @@
     return `<section class="title home">
       ${logoHTML()}
       <div class="stack">
-        ${has ? `<button class="primary big cta" data-act="continue-run"><span>${I('play')} Continue</span><small>${run.phase === 'gauntlet' ? 'Final fight' : 'Day ' + (Math.max(0, run.step) + 1) + '/' + Run.seqOf(run).length} · ${run.heroes.length} hero${run.heroes.length === 1 ? '' : 'es'} · ${run.gold} gold</small></button>
+        ${has ? `<button class="primary big cta" data-act="continue-run"><span>${I('play')} Continue</span><small>${run.phase === 'gauntlet' ? 'Final fight' : 'Day ' + (Math.max(0, run.step) + 1) + '/' + Run.pveSeq(run).length} · ${run.heroes.length} hero${run.heroes.length === 1 ? '' : 'es'} · ${run.gold} gold</small></button>
         <button class="giveup" data-act="give-up">${I('flag')} Give up</button>`
         : `<button class="primary big cta play" data-act="new-run">${I('play')} Play</button>`}
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
@@ -585,7 +587,7 @@
   const ROAD = { row: 74, top: 150, bottom: 92 };
   const roadToday = () => document.body.classList.contains('desk') ? 400 : 262;
   function mapRoad() {
-    const seq = Run.seqOf(run), n = seq.length, step = Math.max(0, Math.min(n - 1, run.step)), today = roadToday(), opts = run.opts || [];
+    const seq = Run.pveSeq(run), n = seq.length, step = Math.max(0, Math.min(n - 1, run.step)), today = roadToday(), opts = run.opts || [];
     const ahead = Math.max(0, n - 2 - step), todayTop = ROAD.top + ahead * ROAD.row, H = todayTop + today + step * ROAD.row + ROAD.bottom;
     const yOf = i => i === n - 1 && i !== step ? 74 : i > step ? todayTop - (i - step - 0.5) * ROAD.row : i === step ? todayTop + today / 2 : todayTop + today + (step - 1 - i + 0.5) * ROAD.row;
     const xOf = i => i === n - 1 ? 50 : Math.round(50 + 29 * Math.sin(i * 1.05 + 0.6));
@@ -616,12 +618,12 @@
       const left = x > 55, label = st === 'done' ? '' : `<span class="rl ${left ? 'lft' : 'rgt'}" style="--room:${left ? x : 100 - x}"><b>Day ${d.i + 1}</b> ${what(d)}</span>`;
       return `<span class="rn ${d.kind} ${st} ${far ? 'far' : ''}" style="left:${x}%;top:${y}px" title="Day ${d.i + 1}">${d.kind === 'final' ? '<span class="castle" aria-hidden="true"></span>' : ''}<span class="ri">${st === 'done' ? '✓' : icon(d)}</span>${label}</span>`;
     }).join('');
-    const t = seq[step], title = t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : t === 'G' ? 'The final fight' : 'Choose your path';
+    const t = seq[step], title = run.result === 'clear' ? '🏰 Gauntlet shop: gear up for the climb' : t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';   // v101 (review #183)
     const leader = run.heroes[0];
     return `<div class="wmap" id="wmap" data-today="${todayTop}" data-key="${run.seed}:${step}"><div class="wtrack" style="height:${H}px"><span class="wsky"></span><span class="wpeaks"></span>${decor.join('')}${road}
       <span class="rn camp done" style="left:50%;top:${start[1]}px"><span class="ri">⛺</span><span class="rl rgt"><b>Start</b></span></span>${nodes}
       ${leader ? `<span class="rtok" style="left:${last[0]}%;top:${last[1]}px" data-to="${last[0]},${last[1]}" data-from="${prev[0]},${prev[1]}">${img(leader.key, 44, 'por')}</span>` : ''}
-      <div class="rtoday" style="top:${todayTop}px;height:${today}px"><div class="rday"><b>Day ${step + 1}/${n}</b> ${title}</div>
+      <div class="rtoday" style="top:${todayTop}px;height:${today}px"><div class="rday">${run.result === 'clear' ? '' : `<b>Day ${step + 1}/${n}</b> `}${title}</div>
         ${run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(run.nextMod))}</p>` : ''}
         <div class="banners rb${k}">${opts.map(optHTML).join('')}</div></div></div></div>`;
   }
@@ -658,7 +660,7 @@
   }
   // WHAT: the little progress track shown above the map.
   function trackHTML() {
-    return `<div class="track">${Run.seqOf(run).map((t, i) => `<span class="node ${i < run.step ? 'done' : i === run.step ? 'cur' : ''} ${t === 'B' ? 'boss' : ''}" title="${t}">${NODE_ICON[t]}</span>`).join('')}</div>`;
+    return `<div class="track">${Run.pveSeq(run).map((t, i) => `<span class="node ${i < run.step ? 'done' : i === run.step ? 'cur' : ''} ${t === 'B' ? 'boss' : ''}" title="${t}">${NODE_ICON[t]}</span>`).join('')}</div>`;
   }
   // WHAT: the list of enemies of a fight as small chips.
   function enemyList(f) {
@@ -733,7 +735,7 @@
         <span class="pmi">${h.items.map(id => `<img class="ico xs" src="${B.Icons.item(id, 20)}" alt="">`).join('') || '<i class="noitem" title="No items yet"></i>'}</span></span></button>`;
     }).join('');
     let boss = '';
-    const seq = Run.seqOf(run);
+    const seq = Run.pveSeq(run);
     for (let k = Math.max(0, run.step); k < seq.length; k++) if (seq[k] === 'B') {
       const nth = seq.slice(0, k + 1).filter(x => x === 'B').length, b = B.BOSSES[Run.bossOf(run, nth)], d = k - run.step;
       boss = `<button class="nextboss" data-act="form-info" data-arg="${esc(b.name + ': ' + b.desc)}">${img(b.key, 40, 'por')}<div><b>${I('skull')} ${esc(b.name)}</b> <span class="dim">${d <= 0 ? 'today' : 'in ' + d + ' day' + (d > 1 ? 's' : '')}</span></div>${I('info', 'chev')}</button>`;
@@ -828,7 +830,7 @@
   const GUIDE = [
     { id: 'path', when: () => run.phase === 'map', at: '[data-act=choose]', text: 'Your road to victory: one stop a day. Tap a card to choose today\'s stop. Harder fights pay more gold.' },
     { id: 'duel', when: () => run.phase === 'map', at: '.b-duel:not(.wait)', text: 'A duel: another player\'s team (their ghost). Win it for league points, a crown and something to steal from them.' },
-    { id: 'lives', when: () => run.phase === 'map' && run.step >= 2, at: '#top .lives', text: 'Your lives. Lose a fight and one breaks; lose all three and the run ends.' },
+    { id: 'lives', when: () => run.phase === 'map' && run.step >= 2, at: '#top .lives', text: 'Your Ward. Lose a fight and it breaks: the day starts over. Lose again with it broken and the run ends.' },
     { id: 'gear', when: () => (run.phase === 'map' || run.phase === 'shop') && run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in your bag! Open Team and drag it onto a hero.' },
     { id: 'shop', when: () => run.phase === 'shop', at: '[data-act=reroll]', text: 'Buy gear with your gold. "New" swaps the whole shelf for a few coins.' },
     { id: 'event', when: () => run.phase === 'event', at: '.evchoices', text: 'An event: pick one choice. If nothing fits, Skip (top right).' },
@@ -1040,7 +1042,7 @@
         <div class="rst"><span title="Damage taken">🛡 ${kfmt(st.taken)}</span><span title="Kills">💥 ${st.kills}</span>${`<span class="rxp"><span class="xpbar"><i style="width:${fx.xp ? w1 : w0}%" data-w="${w1}"></i></span><span class="kw-xp">+${x.gained} XP</span></span>`}</div></div></div>`;
     }).join('');
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
-    const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.challenge ? '<p class="small dim center">The challenge beat you. No reward, but the game goes on.</p>' : run.lives > 0 ? `<p class="small center lifelost">${heartsHTML()} You lost a life. ${run.lives} left.</p>` : '<p class="small dim center">Out of lives. Game over.</p>';
+    const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';   // v101 (reviews #186 #189)
     const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
     return `<section class="result v2 ${ui.rmore ? 'more' : ''}"><div class="rhead ${r.win ? 'win' : 'lose'}"><span class="rays"></span><h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Victory' : 'Defeat'}</h2>
         ${starRow}${loseTag}<p class="rwhat">${what}</p><p class="rmeta">${meta}</p></div>
@@ -1251,7 +1253,7 @@
     // the same kind of meter for the account level; a level up cheers and a chest bursts open with the level's rewards (no level up = the chest stays shaded);
     // Play again
     const won = run.result === 'clear', V = won ? B.victoryOf(run.lives) : null;
-    const head = `<h2 class="sc ovh">${won ? `${V.icon} ${V.name} victory!` : `${I('flag')} Out of lives`}</h2><p class="ovsub">${won ? (run.lives === CFG.lives ? 'No fight lost' : `${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left`) : `${run.won} fight${run.won === 1 ? '' : 's'} won`}</p>`;
+    const head = `<h2 class="sc ovh">${won ? `${V.icon} ${V.name} victory!` : `${I('flag')} The Ward is broken`}</h2><p class="ovsub">${won ? (run.lives >= CFG.lives ? 'No fight lost' : 'Your Ward broke on the way') : `${run.won} fight${run.won === 1 ? '' : 's'} won`}</p>`;
     // v96 (review #178, David: "You win pve, get a victory screen, and then gauntlet"): the victory screen of a completed run, before the Gauntlet gate
     if (won && !run.tower) return `<section class="title vicscr">${head}<div class="vicart" aria-hidden="true">${V.icon}</div>
         <p class="vicline">PvE complete · ${run.won} fight${run.won === 1 ? '' : 's'} won</p>${teamRow(Run.teamSnapshot(run), run.relics)}
@@ -2145,7 +2147,7 @@
       <li>${I('map')}<span><b>Every day, pick a path:</b> a fight, a shop or an event.</span></li>
       <li>${I('shield')}<span><b>Before a fight, drag your heroes onto the board.</b> Tanks in front, ranged behind.</span></li>
       <li>${I('swords')}<span><b>The fight plays by itself.</b> Win for gold and XP. Heroes level up and use their power when the blue bar is full.</span></li>
-      <li>${I('skull')}<span><b>You have 3 lives.</b> Win your way through 2 bosses to complete the run, then climb the Gauntlet against other players' teams. Lose a fight, lose a life.</span></li>
+      <li>${I('skull')}<span><b>You carry a Ward.</b> Beat 2 bosses to complete the run, then shop and climb the Gauntlet against other players' teams. Lose a fight and the Ward breaks: that day starts over. Lose again with it broken and the run ends.</span></li>
     </ol>
     <div class="center"><button class="linkbtn" data-act="guide-again">💡 Show the tips again</button></div>
     <details class="howmore"><summary>All the rules</summary>
@@ -2277,10 +2279,13 @@
     'tower-done': () => { run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
     'tower-enter': async () => {
       if (ui.towerBusy) return;
+      const ni0 = $('#tname'); if (ni0 && !ni0.value.trim()) { toast('Pick your name for the ladder first.'); ni0.focus(); return; }
+      // v101 (review #183): the last shop is the Gauntlet's: entering opens it once, leaving it starts the climb (status 'ready')
+      if (run.tower && !run.tower.shopped && Run.seqOf(run)[run.step + 1] === 'S') { if (ni0) store.set('balance.name', ni0.value.trim().slice(0, 16)); run.tower.shopped = true; Run.advance(run); save(); render(); window.scrollTo(0, 0); return; }
       // v96 (review #178): with no final fight, the Gauntlet gate is where a new player picks the name shown on the ladder
-      const ni = $('#tname'), name = ni ? ni.value.trim().slice(0, 16) : ''; if (ni && !name) { toast('Pick your name for the ladder first.'); ni.focus(); return; } if (name) store.set('balance.name', name);
+      const ni = $('#tname'), name = ni ? ni.value.trim().slice(0, 16) : run.tower && run.tower.status === 'ready' && !(acct.account && !isDefaultName(acct.name)) ? myName() : ''; if (ni && !name) { toast('Pick your name for the ladder first.'); ni.focus(); return; } if (name) store.set('balance.name', name);
       ui.towerBusy = true; render();
-      let r = null; try { r = await Net.post('elo', Object.assign({ op: 'tower', pid: pid(), ref: refCode(), team: Run.teamSnapshot(run), relics: run.relics }, name ? { name } : {})); setElo(r, true); } catch (e) { ui.towerBusy = false; toast(e.message || 'No connection'); render(); return; }
+      let r = null; try { r = await Net.post('elo', Object.assign({ op: 'tower', pid: pid(), ref: refCode(), team: Run.teamSnapshot(run), relics: run.relics }, name ? { name } : {})); setElo(r, true); } catch (e) { ui.towerBusy = false; if (run.tower && run.tower.status === 'ready') run.tower.status = 'gate'; toast(e.message || 'No connection'); render(); return; }
       ui.towerBusy = false;
       // an empty tower: a made-up champion guards it until the first real one
       const opp = r.opponent || Object.assign(Run.randomGhost(run, 8, true), { name: 'Gauntlet Champion' });

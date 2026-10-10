@@ -26,6 +26,8 @@ const SCHEMA = [
   // v18 (review #16): a ghost keeps its own Elo (elo_at moves with every duel it defends) and a defense record
   `alter table teams add column if not exists def_w int not null default 0`,
   `alter table teams add column if not exists def_l int not null default 0`,
+  // v102 (review #188): a hidden Elo per Gauntlet ghost, from simulated fights against other ghosts (api/_ghostelo.js)
+  `alter table teams add column if not exists gelo real not null default 1000`,
   // v23 (review #21): player leagues (index into B.LEAGUES) and league points inside the league
   `alter table players add column if not exists league int not null default 0`,
   `alter table players add column if not exists lp int not null default 0`,
@@ -149,7 +151,11 @@ function memStore() {
     async xpvStep(pid, from, to) { const p = M.players && M.players[pid]; if (!p || (p.xpv | 0) !== from) return false; p.xpv = to; return true; },
     async teamsOf(pid) { return (M.teams || []).filter(t => t.pid === pid).map(t => ({ team: t.team, wins: t.wins })); },
     async ghostRecord(pid) { const T = (M.teams || []).filter(t => t.pid === pid); return { w: T.reduce((a, t) => a + (t.def_w || 0), 0), l: T.reduce((a, t) => a + (t.def_l || 0), 0), n: T.length }; },
-    async insertTeam(t) { const T = M.teams = M.teams || []; const r = Object.assign({ id: ++M.id, wins: 0, status: 'running', opp: null, def_w: 0, def_l: 0, created: Date.now() }, t); T.push(r); return r.id; },
+    async insertTeam(t) { const T = M.teams = M.teams || []; const r = Object.assign({ id: ++M.id, wins: 0, status: 'running', opp: null, def_w: 0, def_l: 0, gelo: 1000, created: Date.now() }, t); T.push(r); return r.id; },
+    // v102 (review #188): the hidden ghost Elo. listPool = the ghosts of a floor range (like pickPool, every one, up to limit); poolSample = n random ended ghosts of any floor
+    async setGelo(id, v) { const t = (M.teams || []).find(x => x.id === id); if (t) t.gelo = v; },
+    async listPool(lo, hi, exclude, staleBefore, limit) { return poolOf(M, lo, hi, exclude, staleBefore).slice(-(limit || 200)).map(t => Object.assign({}, t)); },
+    async poolSample(n, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => t.status === 'lost' && !ex.has(t.id)).sort(() => Math.random() - 0.5); return pool.slice(0, n).map(t => Object.assign({}, t)); },
     async getTeam(id) { const r = (M.teams || []).find(t => t.id === id); return r ? Object.assign({}, r) : null; },
     async updateTeam(id, f) { const t = (M.teams || []).find(x => x.id === id); Object.assign(t, f, { updated: Date.now() }); if (f.faced) t.faced = JSON.stringify(f.faced); },
     async ghostResult(id, elo, won) { const t = (M.teams || []).find(x => x.id === id); if (!t) return; t.elo_at = elo; if (won) t.def_w = (t.def_w || 0) + 1; else t.def_l = (t.def_l || 0) + 1; },
@@ -265,6 +271,13 @@ function pgStore() {
     async teamsOf(pid) { return (await q('select team, wins from teams where pid=$1', [pid])).map(r => ({ team: r.team, wins: Number(r.wins) })); },
     async ghostRecord(pid) { const r = (await q('select coalesce(sum(def_w),0)::int w, coalesce(sum(def_l),0)::int l, count(*)::int n from teams where pid=$1', [pid]))[0]; return { w: Number(r.w), l: Number(r.l), n: Number(r.n) }; },
     async insertTeam(t) { return Number((await q('insert into teams (pid, name, elo_at, team, relics, created) values ($1,$2,$3,$4,$5,$6) returning id', [t.pid, t.name, t.elo_at, t.team, t.relics, Date.now()]))[0].id); },
+    async setGelo(id, v) { await q('update teams set gelo=$2 where id=$1', [id, v]); },
+    async listPool(lo, hi, exclude, staleBefore, limit) {
+      const r = await q(`select * from teams where not (id = any($1::bigint[])) and (status = 'lost' or (status = 'running' and coalesce(updated, created) < $4))
+        and wins >= $2 and ($3::int is null or wins <= $3) order by id desc limit $5`, [(exclude || []).map(Number).filter(Number.isFinite), lo, hi == null ? null : hi, staleBefore || 0, limit || 200]);
+      return r.map(num);
+    },
+    async poolSample(n, exclude) { return (await q("select * from teams where status = 'lost' and not (id = any($1::bigint[])) order by random() limit $2", [(exclude || []).map(Number).filter(Number.isFinite), n])).map(num); },
     async getTeam(id) { const r = await q('select * from teams where id=$1', [id]); return r.length ? num(r[0]) : null; },
     async updateTeam(id, f) {
       if (f.faced) await q('update teams set wins=$2, status=$3, opp=$4, updated=$5, faced=$6 where id=$1', [id, f.wins, f.status, f.opp, Date.now(), JSON.stringify(f.faced)]);
@@ -331,7 +344,7 @@ function pgStore() {
 function pub(s) { return { id: Number(s.id), batch: Number(s.batch || s.id), name: s.name, text: s.text, status: s.status, reply: s.reply || null, created: Number(s.created), updated: s.updated ? Number(s.updated) : null }; }
 // Neon returns bigint/real columns as strings: normalise numbers
 // WHAT: Postgres returns big numbers as text; this turns the known number columns back into numbers.
-function num(r) { for (const k of ['id', 'elo', 'runs', 'crowns', 'best', 'elo_at', 'wins', 'opp', 'def_w', 'def_l', 'league', 'lp', 'created', 'updated', 'gems', 'season', 'sreach', 'peak_league', 'last_league', 'ref_gems', 'axp', 'pfloor', 'xpv', 'streak', 'bstreak']) if (r[k] != null) r[k] = Number(r[k]); return r; }
+function num(r) { for (const k of ['id', 'elo', 'runs', 'crowns', 'best', 'elo_at', 'wins', 'opp', 'def_w', 'def_l', 'gelo', 'league', 'lp', 'created', 'updated', 'gems', 'season', 'sreach', 'peak_league', 'last_league', 'ref_gems', 'axp', 'pfloor', 'xpv', 'streak', 'bstreak']) if (r[k] != null) r[k] = Number(r[k]); return r; }
 // v27: `titles` = champion titles (column crowns); `code` = public id for the profile; `king` = owns the King Tier
 function pubPlayer(p) { return { name: p.name, code: p.code || codeOf(p.pid), elo: Math.round(Number(p.elo)), runs: Number(p.runs), titles: Number(p.crowns), best: Number(p.best), league: Number(p.league) || 0, lp: Number(p.lp) || 0, king: /"king"/.test(p.perks || ''),
   streak: p.streak == null ? 1 : Number(p.streak), bstreak: p.bstreak == null ? 1 : Number(p.bstreak), avatar: p.avatar || null, title: p.title && globalThis.B && B.ACH && B.ACH[p.title] ? B.ACH[p.title].title : null }; }   // v65: win streak, best streak, portrait; v73: title

@@ -5,6 +5,16 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.pt = {
     x: {
+      "Your Ward broke! Beat this day again.": "Sua Proteção quebrou! Vença este dia de novo.",
+      "Your Ward was already broken. The run is over.": "Sua Proteção já estava quebrada. A run acabou.",
+      "The Ward is broken": "A Proteção quebrou",
+      "Your Ward broke on the way": "Sua Proteção quebrou no caminho",
+      "🏰 Gauntlet shop: gear up for the climb": "🏰 Loja do Gauntlet: equipe-se para a escalada",
+      "Your Ward. Lose a fight and it breaks: the day starts over. Lose again with it broken and the run ends.": "Sua Proteção. Perca uma luta e ela quebra: o dia recomeça. Perca de novo com ela quebrada e a run acaba.",
+      "Ward: whole. A lost fight breaks it and the day starts over.": "Proteção: inteira. Uma luta perdida a quebra e o dia recomeça.",
+      "Ward: broken. One more lost fight ends the run.": "Proteção: quebrada. Mais uma luta perdida acaba a run.",
+      "Ward whole": "Proteção inteira",
+      "Ward broken": "Proteção quebrada",
       "Pick your name for the ladder first.": "Escolha seu nome para o ranking primeiro.",
       "Earn 3 extra gold after every fight you win.": "Ganhe 3 de ouro extra após cada luta vencida.",
       "Your heroes attack a bit faster.": "Seus heróis atacam um pouco mais rápido.",

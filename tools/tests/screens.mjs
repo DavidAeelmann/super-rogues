@@ -129,7 +129,7 @@ await sleep(200);
 ok(await ev(`document.querySelectorAll('[data-act=choose]').length === (__bal.run.relics.includes('quill') ? 3 : 2)`), "first map step shows 2 options (3 with the Pathfinder's Quill)");
 await shot('03-map'); await noHScroll('map'); await noVScroll('map');
 // v47 (review #58): the journey sits behind the Day chip; the map itself has no 17-icon strip
-ok(await ev(`(() => { const seq = B.Run.seqOf(__bal.run), r = __bal.run, wm = document.querySelector('#wmap'); if (!wm) return false; const w = wm.getBoundingClientRect(); return !!wm.querySelector('.rtok') && wm.querySelectorAll('.rn:not(.camp)').length === seq.length - 1 && !!wm.querySelector('.rn.camp') && wm.querySelectorAll('.rn.boss').length === 2 && wm.querySelectorAll('.rn.pvp').length === 0 && !!wm.querySelector('.rn.final .castle') && /Day 1.17/.test(wm.querySelector('.rday').textContent) && wm.querySelectorAll('.rtoday [data-act=choose]').length === r.opts.length && wm.scrollHeight > wm.clientHeight && wm.scrollTop > 0 && [...wm.querySelectorAll('.rtoday .banner')].every(b => { const q = b.getBoundingClientRect(); return q.top >= w.top - 1 && q.bottom <= w.bottom + 1; }) && !!document.querySelector('#top button.prog[data-act=path]'); })()`), "v65 (review #130): the map is a vertical road: the camp, every day ahead (2 bosses, v96: no duel days, the castle of the victory), your leader, and today's choices as the fork, in view");
+ok(await ev(`(() => { const seq = B.Run.pveSeq(__bal.run), r = __bal.run, wm = document.querySelector('#wmap'); if (!wm) return false; const w = wm.getBoundingClientRect(); return !!wm.querySelector('.rtok') && wm.querySelectorAll('.rn:not(.camp)').length === seq.length - 1 && !!wm.querySelector('.rn.camp') && wm.querySelectorAll('.rn.boss').length === 2 && wm.querySelectorAll('.rn.pvp').length === 0 && !!wm.querySelector('.rn.final .castle') && /Day 1.16/.test(wm.querySelector('.rday').textContent) && wm.querySelectorAll('.rtoday [data-act=choose]').length === r.opts.length && wm.scrollHeight > wm.clientHeight && wm.scrollTop > 0 && [...wm.querySelectorAll('.rtoday .banner')].every(b => { const q = b.getBoundingClientRect(); return q.top >= w.top - 1 && q.bottom <= w.bottom + 1; }) && !!document.querySelector('#top button.prog[data-act=path]'); })()`), "v65 (review #130): the map is a vertical road: the camp, every day ahead (2 bosses, v96: no duel days, the castle of the victory), your leader, and today's choices as the fork, in view");
 await click('#top [data-act=path]'); await sleep(150);
 ok(await ev(`document.querySelectorAll('#modal .track .node').length > 10 && document.querySelectorAll('#modal .plegend li').length === 5`), 'v47: tapping the Day chip shows the whole journey with a legend');
 await click('[data-act=close]'); await sleep(100);
@@ -317,7 +317,7 @@ if (!REMOTE) {
   await shot('09g-challenge-deploy');
   await click('[data-act=fight]'); await sleep(300); await ev(`__bal.skipBattle()`);
   for (let k = 0; k < 40 && !(await ev(`!!document.querySelector('[data-act=result-ok]')`)); k++) await sleep(100);
-  ok(await ev(`/Challenge · Elite Pack/.test(document.querySelector('.rwhat').textContent) && (document.querySelector('.rhead.win') ? true : /game goes on/.test(document.querySelector('#screen').textContent))`), 'the challenge result names it (a loss says the game goes on)');
+  ok(await ev(`/Challenge · Elite Pack/.test(document.querySelector('.rwhat').textContent) && (document.querySelector('.rhead.win') ? true : /Ward/.test(document.querySelector('#screen').textContent))`), 'the challenge result names it (v101, review #189: a loss breaks the Ward)');
   await click('[data-act=result-ok]'); await sleep(150);
   ok(await ev(`__bal.run.phase !== 'over'`), 'after the challenge the run goes on');
   // review #18: the level-up screen (splash, gains, the 2 choices, the whole specialization path)
@@ -337,7 +337,7 @@ if (!REMOTE) {
   await post({ op: 'complete', pid: 'b'.repeat(32), name: 'Rival', team: rival, relics: ['feather'], runId: 77, game: { fights: 6 } });
   await click('[data-act=new-run]'); await sleep(150);
   await pickHero(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
-  ok(await ev(`__bal.run.heroes.length === 1 && __bal.run.lives === 3 && document.querySelectorAll('#top .lives .hrt.on').length === 3`), 'v64: one hero at the start and three hearts in the top bar');
+  ok(await ev(`__bal.run.heroes.length === 1 && __bal.run.lives === 1 && document.querySelectorAll('#top .lives.ward.on .hrt').length === 1`), 'v64: one hero at the start; v101 (review #186): the Ward in the top bar');
   await ev(`(() => { const r = __bal.run; r.recruits = 2; while (r.heroes.length < 3) B.Run.addHero(r, Object.keys(B.HEROES).find(k => !r.heroes.some(h => h.key === k)));
     r.heroes.forEach(h => { h.lvl = 5; h.specs = B.HEROES[h.key].specs.map(p => p[0].id); h.items = ['bloodthirster', 'warmog', 'deathcap', 'guardian']; }); r.heroes[0].items = ['obs_blade', 'obs_plate', 'obs_helm', 'mountainheart']; r.bag.push('worldsplitter', 'aegis', 'storm_boots'); r.autoGear = false;
     r.relics.push('drum'); r.step = 3; r.fightNo = 2; B.Run.advance(r); __bal.render(); })()`);
@@ -349,7 +349,7 @@ if (!REMOTE) {
   await shot('16b-team-full'); await noHScroll('team sheet full'); await noVScroll('team sheet, 3 heroes with items');
   await click('[data-act=close]'); await sleep(100);
   // the last shop leads to the victory screen (no final fight)
-  await ev(`(() => { const r = __bal.run; r.bag = ['worldsplitter', 'aegis', 'storm_boots']; r.step = B.Run.seqOf(r).length - 2; r.fightNo = 8; B.Run.advance(r); __bal.render(); })()`); await sleep(300);
+  await ev(`(() => { const r = __bal.run; r.bag = ['worldsplitter', 'aegis', 'storm_boots']; r.step = B.Run.seqOf(r).indexOf('G') - 1; r.fightNo = 8; B.Run.advance(r); __bal.render(); })()`); await sleep(300);
   ok(await ev(`__bal.run.phase === 'over' && __bal.run.result === 'clear' && !!document.querySelector('.vicscr .vicart') && /victory!/.test(document.querySelector('.vicscr .ovh').textContent) && document.querySelectorAll('.vicscr .gteam .gh').length === 3 && !!document.querySelector('[data-act=victory-next]') && !/final fight|Onslaught/i.test(document.querySelector('#screen').textContent)`), 'v96 (review #178): after the last shop the run is won: the victory screen (kind of victory, the team, Next)');
   for (let k = 0; k < 60 && !(await ev(`!!__bal.run.lgEnd && !__bal.run.xpWait`)); k++) await sleep(100);
   ok(await ev(`!!__bal.run.lgEnd && !document.querySelector('[data-act=victory-next]').disabled`), 'v96: the completed run is sent to the server from the victory screen (league points back)');
@@ -361,7 +361,11 @@ if (!REMOTE) {
   await sleep(900); await shot('19a-gauntlet-gate'); await noHScroll('gauntlet gate'); await noVScroll('gauntlet gate');
   ok(await ev(`!!document.querySelector('#tname')`), 'v96: a player with no name picks it at the Gauntlet gate (it used to be the final fight)');
   await ev(`document.querySelector('#tname').value = 'TestBot'`);
-  await click('[data-act=tower-enter]');
+  await click('[data-act=tower-enter]'); await sleep(300);
+  // v101 (review #183): entering the Gauntlet opens the last shop first; leaving it starts the climb
+  ok(await ev(`__bal.run.phase === 'map' && __bal.run.opts.length >= 2 && __bal.run.opts.every(o => o.type === 'shop') && /Gauntlet shop/.test(document.querySelector('.rday').textContent)`), 'v101 (review #183): the last shop opens on entering the Gauntlet');
+  await shot('19a-gauntlet-shop'); await noVScroll('gauntlet shop');
+  await click('[data-act=choose]'); await sleep(200); await click('[data-act=leave]'); await sleep(300);
   for (let k = 0; k < 60 && !(await ev(`__bal.run.phase === 'deploy'`)); k++) await sleep(100);
   ok(await ev(`__bal.run.g && __bal.run.g.kind === 'tower' && !!__bal.run.tower.teamId && /Floor 1/.test(document.body.textContent)`), 'v90: Enter the Gauntlet opens the floor 1 fight');
   ok(await ev(`document.querySelectorAll('.foes .fs, .foes .fo').length >= 1 && !!document.querySelector('[data-act=fight]')`), "review #15: the rival's team is listed before the fight");

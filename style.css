@@ -2843,3 +2843,8 @@ button.achc.got { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .bang { animation: none; } }
 .srmore { display: block; margin: 6px auto 0; }   /* v98 (review #180) */
 .tname { display: block; width: min(100%, 320px); margin: 10px auto 0; padding: 10px 14px; border-radius: 12px; border: 2px solid #ffffff60; background: #0d1146b0; color: #fff; font: 700 16px var(--fun); text-align: center; }   /* v96 (review #178) */
+/* v101 (review #186): the Ward in the top bar: whole = a bright shield, broken = grey and cracked */
+#top .lives.ward .hrt, .lives.ward .hrt { display: inline-flex; color: #7ee8ff; text-shadow: none; filter: drop-shadow(0 0 5px #7ee8ffaa); position: relative; }
+.lives.ward .hrt svg { width: 18px; height: 18px; }
+#top .lives.ward.broken .hrt, .lives.ward.broken .hrt { color: #8a8fb0; filter: none; }
+.lives.ward.broken .hrt::after { content: ''; position: absolute; left: 45%; top: 8%; width: 2px; height: 84%; background: #ff5a6e; transform: rotate(18deg); border-radius: 2px; }

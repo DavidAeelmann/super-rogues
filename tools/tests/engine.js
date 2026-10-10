@@ -94,7 +94,7 @@ for (const r of RELICS) {
     else if (run.phase === 'shop' || run.phase === 'event') Run.leave(run);
     while (run.pending.length) Run.chooseSpec(run, 0);
   }
-  ok(seen.join(' ') === 'F2 X2 F2 X2 F2 X2 B1 X2 F2 X2 F2 X2 F2 X2 B1 S2 G0' && run.phase === 'over' && run.result === 'clear', 'node sequence (v96: the last day completes the run) ' + seen.join(' '));
+  ok(seen.join(' ') === 'F2 X2 F2 X2 F2 X2 B1 X2 F2 X2 F2 X2 F2 X2 B1 G0' && run.phase === 'over' && run.result === 'clear', 'node sequence (v96: the victory completes the run; v101: right after the second boss) ' + seen.join(' '));
   ok(run.fightNo === 8, 'eight fights before the gauntlet');
 }
 // review #22: 1 hero and 1 relic at the start, the hero shop is offered while you have a single hero, old runs keep 13 steps
@@ -372,7 +372,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(run.phase === 'over' && run.result === 'gauntlet' && run.g.status === 'champion' && run.g.history.length === 1, 'crowned champion ends the run');
   const r2 = Run.newRun(5); Run.pickStart(r2, ['vex', 'rook']); r2.cur = Run.makeFight(r2, 'hard', 2);
   const W2 = Run.fightWorld(r2); W2.over = true; W2.winner = 1; Run.finishFight(r2, W2);
-  ok(r2.phase === 'map' && r2.lives === 2, 'v63 (review #117): a lost fight costs one of three lives and the day passes');
+  ok(r2.phase === 'map' && r2.lives === 0 && r2.step === 0 && r2.opts.length === 2 && r2.fightNo === 1, 'v101 (review #186): a lost fight breaks the Ward and the day starts over with new choices');
 }
 // v12 (review #11): new mechanics work as described
 {
@@ -870,16 +870,27 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
 {
   B.CFG.startItems = 2;
   const run = Run.newRun(21);
-  ok(run.lives === 3, 'the run has three lives');
+  ok(run.lives === 1, 'v101 (review #186): the run has one Ward');
   Run.pickStart(run, run.startOffer.slice(0, 3), run.relicOffer[0]);
   ok(run.heroes.length === 3 && run.relics.length === 1 && run.heroes.reduce((a, h) => a + h.items.length, 0) + run.bag.length === 2, 'the run starts with 3 heroes, 1 power and 2 common items');
   B.CFG.startItems = 0;
   // lives: the third lost fight ends the run
   const r = Run.newRun(22); Run.pickStart(r, r.startOffer.slice(0, 3), r.relicOffer[0]);
   const lose = () => { while (!r.opts.some(o => o.type === 'fight')) { Run.choose(r, 0); Run.leave(r); } Run.choose(r, r.opts.findIndex(o => o.type === 'fight')); const W = Run.fightWorld(r); W.over = true; W.winner = 1; return Run.finishFight(r, W); };
-  lose(); ok(r.lives === 2 && r.phase === 'map', 'first loss: two lives left, the run goes on');
-  lose(); ok(r.lives === 1 && r.phase === 'map', 'second loss: one life left');
-  lose(); ok(r.lives === 0 && r.phase === 'over' && r.result === 'defeat', 'third loss ends the run');
+  const st0 = r.step; lose(); ok(r.lives === 0 && r.phase === 'map' && r.step === st0, 'v101: the first loss breaks the Ward and the same day starts over');
+  lose(); ok(r.lives === 0 && r.phase === 'over' && r.result === 'defeat', 'v101: a loss with the Ward broken ends the run');
+  // v101 (review #189): an event fight counts too; (review #186) a boss day comes back with the same boss
+  { const e = Run.newRun(31); Run.pickStart(e, e.startOffer.slice(0, 1), e.relicOffer[0]); e.step = 1; e.fightNo = 1; e.phase = 'event';
+    Run.startChallenge(e, { name: 'Bandits', kind: 'bandits', win: { gold: 5 } }); const We = Run.fightWorld(e); We.over = true; We.winner = 1; const re = Run.finishFight(e, We);
+    ok(re.retry && e.lives === 0 && e.phase === 'map' && e.step === 1 && e.opts.length >= 2 && e.opts.every(o => o.type !== 'fight'), 'v101 (review #189): a lost event fight breaks the Ward and the event day starts over');
+    const b = Run.newRun(32); Run.pickStart(b, b.startOffer.slice(0, 1), b.relicOffer[0]); b.step = 5; b.fightNo = 3; Run.advance(b); const boss0 = b.opts[0].enemies[0].key;
+    Run.choose(b, 0); const Wb = Run.fightWorld(b); Wb.over = true; Wb.winner = 1; Run.finishFight(b, Wb);
+    ok(b.phase === 'map' && b.step === 6 && b.opts.length === 1 && b.opts[0].diff === 'boss' && b.opts[0].enemies[0].key === boss0 && b.fightNo === 3, 'v101: a lost boss day brings the same boss back'); }
+  // v101 (review #183): the run ends after the second boss; the last shop opens on entering the Gauntlet, and leaving it starts the climb
+  { const g = Run.newRun(33); Run.pickStart(g, g.startOffer.slice(0, 1), g.relicOffer[0]); g.step = Run.seqOf(g).indexOf('G') - 1; g.fightNo = 8; Run.advance(g);
+    ok(g.phase === 'over' && g.result === 'clear' && Run.pveSeq(g).length === Run.seqOf(g).length - 1 && Run.seqOf(g)[Run.seqOf(g).length - 1] === 'S', 'v101: the victory comes right after the second boss; the shop waits after it');
+    g.tower = { status: 'gate', shopped: true }; Run.advance(g); ok(g.phase === 'map' && g.opts.length >= 2 && g.opts.every(o => o.type === 'shop'), 'v101: entering the Gauntlet opens the last shop');
+    Run.choose(g, 0); Run.leave(g); ok(g.phase === 'tower' && g.tower.status === 'ready', 'v101: leaving the Gauntlet shop starts the climb'); }
   // v96 (review #178): no PvP days; the last shop completes the run (the old duel code stays for saved runs)
   const q = Run.newRun(23); Run.pickStart(q, q.startOffer.slice(0, 3), q.relicOffer[0]);
   const days = [];
@@ -890,10 +901,10 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     else if (q.phase === 'shop' || q.phase === 'event') Run.leave(q);
     while (q.pending.length) Run.chooseSpec(q, 0);
   }
-  ok(days.join(' ') === 'F X F X F X B X F X F X F X B S', 'v96: no day offers a duel: ' + days.join(' '));
+  ok(days.join(' ') === 'F X F X F X B X F X F X F X B', 'v96: no day offers a duel: ' + days.join(' '));
   ok(q.phase === 'over' && q.result === 'clear' && q.reachedFinal && q.lastFight && q.lastFight.team.length === q.heroes.length, 'v96: after the last shop the run is complete (no final fight), with the team to send');
   // a duel: an opponent must be found first, then a win opens the steal choice and a loss costs a life
-  const d = Run.newRun(24); Run.pickStart(d, d.startOffer.slice(0, 3), d.relicOffer[0]);
+  const d = Run.newRun(24); Run.pickStart(d, d.startOffer.slice(0, 3), d.relicOffer[0]); d.lives = 3;   // the old duel code still counts three lives
   d.opts.push({ type: 'duel', fightNo: d.fightNo + 1, opp: null });   // v96: no duel days any more; the duel code is checked on a hand-made one
   while (!d.opts.some(o => o.type === 'duel')) { Run.choose(d, 0); if (d.phase === 'deploy') { const W = Run.fightWorld(d); W.over = true; W.winner = 0; Run.finishFight(d, W); } else Run.leave(d); while (d.pending.length) Run.chooseSpec(d, 0); }
   const di = d.opts.findIndex(o => o.type === 'duel'); Run.choose(d, di);
@@ -931,7 +942,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(fz.phase === 'over' && fz.result === 'defeat' && fz.lives === 0, 'the last life lost in the final fight ends the run');
   // old saved runs get their lives; one inside the old tower goes to the final fight
   const old = Run.migrate({ v: 5, step: 4, heroes: [], bag: [], relics: [], fightNo: 2, phase: 'deploy', cur: { type: 'gauntlet' }, g: { teamId: 7, status: 'match', history: [] } });
-  ok(old.lives === 3 && old.phase === 'over' && old.result === 'clear' && old.cur === null, 'a run saved inside the old tower is complete (v96: no final fight) with three lives');
+  ok(old.lives === 1 && old.phase === 'over' && old.result === 'clear' && old.cur === null, 'a run saved inside the old tower is complete (v96: no final fight) with three lives');
   const fin = Run.migrate({ v: 5, step: 16, heroes: [], bag: [], relics: [], fightNo: 8, lives: 2, phase: 'gauntlet', g: { status: 'intro', history: [] }, opts: [] });
   ok(fin.phase === 'over' && fin.result === 'clear' && fin.reachedFinal, 'v96: a run saved at the final fight is complete');
   const dd = Run.migrate({ v: 5, step: 4, heroes: [], bag: [], relics: [], fightNo: 2, lives: 3, phase: 'map', opts: [{ type: 'fight' }, { type: 'duel', fightNo: 3 }] });
@@ -975,7 +986,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const nw = s.heroes.find(h => h.key === key);
   ok(nw && nw.lvl === 4 && nw.xp === old.xp && nw.specs.length === 3 && nw.specs.every((id, i) => B.HEROES[key].specs[i].some(p => p.id === id)) && nw.items.join() === 'longsword,chainmail' && nw.pos && nw.pos.c === old.pos.c, 'it takes the level, XP, place and items of the one it replaces, with powers picked for its levels');
   // victory kinds and league points
-  ok(B.victoryOf(3).id === 'perfect' && B.victoryOf(2).id === 'gold' && B.victoryOf(1).id === 'bronze', 'victory kinds: Perfect (no fight lost), Gold, Bronze');
+  ok(B.victoryOf(1).id === 'perfect' && B.victoryOf(0).id === 'gold' && B.VICTORY.length === 2, 'v101: victory kinds: Perfect (the Ward whole), Gold (broken)');
   ok(B.runLp({ done: true, duels: 2, lost: 0, streak: 3 }, 2) === 43 && B.runLp({ done: true, duels: 1, lost: 1, streak: 1 }, 2) === 23, 'v65 (review #129): a completed run: +10 a duel, +20 the final, -8 a PvP fight lost, +1 per run of the streak');
   ok(B.runLp({ done: false, duels: 0, lost: 2 }, 0) === 0 && B.runLp({ done: false, duels: 0, lost: 2 }, 2) === -16 && B.runLp({ done: false, duels: 1, lost: 1 }, 2) === 2 && B.runLp({ done: false, fights: 9, streak: 4 }, 1) === 0, 'v65 (review #129): only PvP fights move LP (PvE none, no streak on a lost run); Bronze never loses LP');
   ok(B.lpParts({ done: true, duels: 1, lost: 1, streak: 2 }, 2).map(x => x.id + x.lp).join() === 'duel10,final20,loss-8,streak2', 'v65: the parts of a run\'s LP, for the end screen');
@@ -996,9 +1007,9 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
       r.phase = 'recruit'; r.recruits = 1; r.step = ix - 1; Run.advance(r); if (Run.seqOf(r)[r.step] !== 'X') continue; xs++; if (r.opts.some(o => o.kind === 'heroShop')) shops++; } B.CFG.freeRecruits = fr0;
     ok(xs > 5 && shops === 0, 'v73 (review #149): no Hero Shop until the third hero joined (' + xs + ' shop-or-event days checked)'); }
   // v73 (reviews #150 #151): achievements of a run
-  { const r = Run.newRun(77); Object.assign(r, { result: 'clear', lives: 3, fell: 0, trophies: [{ name: 'a' }, { name: 'b' }, { name: 'c', final: true }], pvpLost: 0, gold: 120 });
+  { const r = Run.newRun(77); Object.assign(r, { result: 'clear', lives: 1, fell: 0, trophies: [{ name: 'a' }, { name: 'b' }, { name: 'c', final: true }], pvpLost: 0, gold: 120 });
     const a = Run.endAchs(r); ok(['perfect', 'untouchable', 'hoarder'].every(id => a.includes(id)) && !a.includes('comeback') && !a.includes('duelmaster'), 'v73: a perfect run without a fallen hero and 100+ gold (v96: no Duel Master without duel days): Flawless, Untouchable, Dragon\'s Hoard');
-    const r2 = Run.newRun(78); Object.assign(r2, { result: 'clear', lives: 1, fell: 2, trophies: [], gold: 3 }); const a2 = Run.endAchs(r2); ok(a2.includes('comeback') && !a2.includes('untouchable') && !a2.includes('perfect'), 'v73: the last life = Comeback Kid');
+    const r2 = Run.newRun(78); Object.assign(r2, { result: 'clear', lives: 0, fell: 2, trophies: [], gold: 3 }); const a2 = Run.endAchs(r2); ok(a2.includes('comeback') && !a2.includes('untouchable') && !a2.includes('perfect'), 'v73: won with the Ward broken (v101) = Comeback Kid');
     ok(B.ACHIEVEMENTS.length >= 15 && B.ACHIEVEMENTS.every(x => x.title && x.desc && (x.by === 'run' || x.by === 'server' || (x.by === 'level' && x.lvl > 1))), 'v73: every achievement has a title, a text and who checks it');
     ok(B.UNLOCKS.some(u => u.kind === 'taunt') && B.UNLOCKS.some(u => u.kind === 'title') && [...new Set(B.UNLOCKS.map(u => u.lvl))].every(l => B.UNLOCKS.filter(u => u.lvl === l && u.kind === 'hero').length <= (l <= 1 + B.EARLY_PAIRS ? 2 : 1)), 'v74 (review #152): voice lines and titles drop between the heroes; v91: two heroes a level only on the early levels'); }
   // v81 (review #159): a run counts what it was offered and what it took (run.tele), for the balance evidence
@@ -1021,7 +1032,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     ok(lp({ done: true, duels: 1, lost: 1 }, 2) === lp({ done: true, duels: 1, lost: 1, pvp: [[1, null, 0], [0, null, 0]] }, 2), 'v94: a made-up opponent counts as your own league'); }
   // v95 (reviews #176 #177): in PvP your own heroes take less damage in Bronze (x0.5) and Silver (x0.75); the ghost side never does
   { const r = Run.newRun(9595); Run.pickStart(r, ['bastion'], null); Run.startDuel(r, Run.randomGhost(r, 8, true), 'final', 9);
-    ok(B.PVP_TAKE[0] === 0.5 && B.PVP_TAKE[1] === 0.75 && B.PVP_TAKE[2] === 1 && Run.gauntletWorld(r, true, { takeMul: B.PVP_TAKE[0] }).tm0 === 0.5 && Run.gauntletWorld(r, true).tm0 === 1 && B.LP_PVE[0] === 20, 'v95: Bronze heroes take half damage in PvP, Silver 25% less, only on the player side'); }
+    ok(B.PVP_TAKE.every(x => x === 1) && Run.gauntletWorld(r, true, { takeMul: 0.5 }).tm0 === 0.5 && Run.gauntletWorld(r, true).tm0 === 1 && B.LP_PVE[0] === 20, 'v101 (review #187): no PvP damage protection in any league (the hook stays)'); }
   // v90 (review #171): a Gauntlet floor after the run: no XP, no lives lost, the climb goes on after a win and ends after a loss
   { const r = Run.newRun(4711); Run.pickStart(r, ['bastion'], null); r.phase = 'over'; r.result = 'clear'; const lv = r.lives;
     r.tower = { status: 'climb', floor: 2, wins: 1, lp: 1 }; Run.startDuel(r, Run.randomGhost(r, 8, true), 'tower', 9);

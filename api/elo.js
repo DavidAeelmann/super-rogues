@@ -29,6 +29,7 @@
 const { send, body, sameOrigin, ipHash, clean } = require('./_http');
 const getStore = require('./_store');
 const P = require('./_player');
+const GE = require('./_ghostelo');   // v102 (review #188): the ghosts' hidden Elo
 require('../js/hex.js'); require('../js/data.js');
 const D = globalThis.B;
 
@@ -195,9 +196,10 @@ async function nextOpponent(st, wins, pid, teamId, faced) {
       if (T > 0) return champ;
       const n = await st.countPool(0, 0, ex, stale);
       if (!n || Math.random() < 1 / (n + 1)) return champ;
-      return st.pickPool(0, 0, ex, stale);
+      return GE.pickBalanced(st, 0, 0, ex, stale);
     }
-    const g = (await st.pickPool(wins, wins === T - 1 ? null : wins, ex, stale)) || (await st.pickAbove(wins, ex, stale));
+    // v102 (review #188): a ghost of this floor from the middle of its hidden Elo (p25..p75)
+    const g = (await GE.pickBalanced(st, wins, wins === T - 1 ? null : wins, ex, stale)) || (await st.pickAbove(wins, ex, stale));
     if (g) return g;
   }
   return champ;
@@ -356,6 +358,7 @@ module.exports = async (req, res) => {
       await st.addDuel({ pid, opp_pid: opp ? opp.pid : null, opp_name: opp ? opp.name : (clean(b.oppName, 16) || 'Gauntlet Champion'), opp_code: opp ? P.codeOf(opp.pid) : null, final: false, win });
       if (!win) {   // no penalty: the team stays on this floor as a ghost for the next climbers
         await st.updateTeam(t.id, { wins: t.wins, status: 'lost', opp: null }); p.best = Math.max(p.best | 0, floor); await save();
+        try { await GE.rateNew(st, Object.assign({}, t, { status: 'lost' })); } catch (_) {}   // v102 (review #188): the new ghost of this floor fights 10 others for its hidden Elo
         return send(res, 200, me({ teamId: t.id, win, wins: t.wins, floor, over: true }));
       }
       const wins = floor, lg = leaguePoints(p, D.towerLp(floor));

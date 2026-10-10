@@ -31,14 +31,16 @@
     // node sequence: F = fight (2 of easy/medium/hard), X = shop or event (2 options), B = boss (no option),
     // S = final shop choice (2 shops), G = the PvP gauntlet against player ghosts (review #9 removed the Onslaught)
     // Review #22 (David): the run starts with 1 hero and 1 relic, and each boss gets 1 more fight and 1 more shop/event
-    seq: ['F', 'X', 'F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'F', 'X', 'B', 'S', 'G'],
+    // v101 (review #183, David: "Final shop is in gauntlet. Pve ends after boss2nd"): G (the victory) comes right after the second boss; the last shop (S)
+    // sits after it and opens when you enter the Gauntlet
+    seq: ['F', 'X', 'F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'F', 'X', 'B', 'G', 'S'],
     // v63 (review #117 / #118, David): 3 lives (a lost fight costs one, the third ends the run); v64 (review #126): the run starts with 1 hero picked from 3 (one of each class),
     // and after each of the first days a free hero joins (picked from 3, the same screen) until the team has 3 (freeRecruits); 1 power and a few common items to start;
     // on the fight days in pvpFights one of the choices is a duel against another player's team that reached about the same day (a win steals a hero, an item or a power);
     // the last day (G) is the final fight against a team that won its own final fight
     // v96 (review #178, David: "Remove pvp from the pve part, both in the middle and end. The gauntlet is all there is for pvp. You win pve, get a victory screen,
     // and then gauntlet"): no duel days (pvpFights empty) and G is no longer a fight: reaching it completes the run (victory screen, then the Gauntlet gate)
-    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 2, lives: 3, pvpFights: [], ghostPower: 0.76,
+    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 2, lives: 1, pvpFights: [], ghostPower: 0.76,   // v101 (review #186): lives = the Ward (one)
   };
 
   // ---------------------------------------------------------------- heroes
@@ -1436,11 +1438,15 @@
   B.LEAGUE_RULES = { step: 100, demoteTo: 75, duelWin: 0, pveLoss: 0 };   // duelWin / pveLoss: only the old Gauntlet ops (old tabs) still read them
   // v64 (review #125): a completed run is a victory of a kind by the lives left: Perfect (no fight lost), Gold, Bronze
   // WHAT: the three kinds of victory (by lives left). v65: only a name and a medal (league points come from PvP fights).
+  // v101 (review #186): one Ward: Perfect with the Ward whole, Gold with it broken
   B.VICTORY = [
-    { lives: 3, id: 'perfect', name: 'Perfect', icon: '💎', color: '#7ee8ff' },
-    { lives: 2, id: 'gold', name: 'Gold', icon: '🥇', color: '#ffd23f' },
-    { lives: 1, id: 'bronze', name: 'Bronze', icon: '🥉', color: '#e09a5c' },
+    { lives: 1, id: 'perfect', name: 'Perfect', icon: '💎', color: '#7ee8ff' },
+    { lives: 0, id: 'gold', name: 'Gold', icon: '🥇', color: '#ffd23f' },
   ];
+  // v101 (review #186, David: "Losing a life in pve doesn't let you progress. It refresh the choices of the day (except bosses) and you must beat that day.
+  // Make it only one life and give it a flavorful name"): the Ward, a guardian charm. The first lost fight breaks it and the day starts over; a fight lost
+  // with the Ward already broken ends the run
+  B.WARD = { name: 'Ward', icon: '🛡' };
   B.victoryOf = lives => B.VICTORY.find(v => v.lives === (lives | 0)) || B.VICTORY[B.VICTORY.length - 1];
   // v65 (review #129, David: "only pvp fights should count to increase league LP. Bronze cannot lose LP"; review #133: "+1 LP for each streak"): league points
   // come only from PvP fights. Each duel won +10, the final fight won +20, each PvP fight lost (a duel or a try at the final) -8, and a completed run adds
@@ -1466,7 +1472,7 @@
   B.LP_PVE = [20, 10, 0, 0, 0, 0];
   // v95 (reviews #176 #177, David, not announced in the game): in PvP your own heroes (never your ghost) take less damage while you are low on the ladder:
   // Bronze x0.5, Silver x0.75 (the PvE help of review #53 is apart)
-  B.PVP_TAKE = [0.5, 0.75, 1, 1, 1, 1];
+  B.PVP_TAKE = [1, 1, 1, 1, 1, 1];   // v101 (review #187, David: "Turn off all gauntlet pvp protection for bronze and silver"): off
   B.LP_GAP = 0.25;
   // WHAT: the factor of one PvP fight's LP: win or loss, opponent's league minus yours (null = same league).
   B.lpGap = (win, d) => Math.max(0.25, Math.min(2, 1 + B.LP_GAP * (win ? 1 : -1) * (d == null ? 0 : Math.max(-4, Math.min(4, d | 0)))));
