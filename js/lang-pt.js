@@ -5,6 +5,8 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.pt = {
     x: {
+      "A lost run costs no LP in Bronze": "Uma run perdida não custa LP no Bronze",
+      "Run lost": "Run perdida",
       "Tutorial: On": "Tutorial: ligado",
       "Tutorial: Off": "Tutorial: desligado",
       "Shell": "Casco",

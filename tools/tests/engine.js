@@ -1077,5 +1077,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const r = Run.newRun(9, { locked, deck: null }); Run.pickStart(r, [r.startOffer[0]], r.relicOffer[0]);
   const o = Run.recruitOffer(r); ok(o.length === 3 && !o.includes(r.heroes[0].key) && new Set(o.map(k => B.heroClass(k))).size === 3, 'v100: a free recruit offer still shows one hero of each class, none you have');
 }
+// v107 (review #194): a lost run costs 5 LP per league above Bronze
+{ const lp = (g, l) => B.runLp(g, l); ok(lp({ done: false, failed: true }, 0) === 0 && lp({ done: false, failed: true }, 1) === -5 && lp({ done: false, failed: true }, 2) === -10 && lp({ done: false, failed: true }, 5) === -25, 'v107 (review #194): a lost run: Bronze 0, Silver -5, Gold -10, +5 per league'); }
 console.log(`engine: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

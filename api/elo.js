@@ -258,7 +258,7 @@ module.exports = async (req, res) => {
     if (b.op === 'fail') {  // review #24: a lost run no longer moves the player's Elo (league points and the pieces' Elo still do)
       p.runs++;
       const s0 = p.streak == null ? 1 : p.streak | 0; p.streak = 0;   // v65 (review #133): a lost run ends the win streak
-      const lg = leaguePoints(p, D.runLp({ done: false, pve: !!(b.game && b.game.pve), pvp: b.game && b.game.pvp, duels: b.game && b.game.duels, lost: b.game && b.game.lost }, p.league));   // v65 (review #129): only PvP fights move the league
+      const lg = leaguePoints(p, D.runLp({ done: false, failed: true, pve: !!(b.game && b.game.pve), pvp: b.game && b.game.pvp, duels: b.game && b.game.duels, lost: b.game && b.game.lost }, p.league));   // v65 (review #129): only PvP fights move the league
       lg.streak = { from: s0, to: 0, best: p.bstreak == null ? 1 : p.bstreak | 0 };
       if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
       await save({});

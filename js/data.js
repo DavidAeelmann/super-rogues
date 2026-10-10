@@ -1514,6 +1514,7 @@
     const M = B.lpMul(league), sc = (n, base) => Math.round(n * base * (base < 0 ? M.loss : M.gain));
     const duels = Math.max(0, Math.min(4, g.duels | 0)), lost = Math.max(0, Math.min(6, g.lost | 0)), streak = g.done ? Math.max(0, Math.min(50, g.streak | 0)) : 0, out = [];
     const pve = g.done || g.pve ? B.LP_PVE[Math.max(0, Math.min(B.LP_PVE.length - 1, league | 0))] : 0;
+    if (g.failed && B.lpFail(league)) out.push({ id: 'fail', n: 1, lp: -B.lpFail(league) });   // v107 (review #194)
     if (pve) out.push({ id: 'pve', n: 1, lp: pve });
     // v94: with the list of PvP fights ([won, opponent's league, final]) each fight is scored with its league gap; without it, by the counts as before
     const P = Array.isArray(g.pvp) ? g.pvp.slice(0, 12).filter(x => Array.isArray(x)) : null;
@@ -1533,6 +1534,8 @@
     if (streak) out.push({ id: 'streak', n: streak, lp: sc(streak, B.LP.streak) });
     return out;
   };
+  // v107 (review #194, David: "Losing pve loses you 0 in bronze, 5 lp in silver, 10 in gold, etc increasing 5 per league"): a lost run (the Ward broken twice)
+  B.lpFail = league => 5 * Math.max(0, league | 0);
   B.runLp = (g, league) => { const s = B.lpParts(g, league).reduce((a, x) => a + x.lp, 0); return (league | 0) === 0 ? Math.max(0, s) : s; };
 
   // v27 (owner, 2026-09-29): Crowns, the account currency. Earned the first time you reach each league in a season
