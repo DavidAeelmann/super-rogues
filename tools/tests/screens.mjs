@@ -650,6 +650,21 @@ if (!REMOTE) {
   await ev('__bal.skipBattle()'); await sleep(300);
   await ev(`localStorage.removeItem('balance.introTest')`);
 }
+// v103 (reviews #190 #191): the tutorial: short tips one at a time; Menu -> Tutorial turns it off and on again
+{
+  await ev(`(() => { localStorage.setItem('balance.guide.v', '0'); localStorage.setItem('balance.guide3', '[]'); __bal.ACT.menu && 0; })()`);
+  await ev(`(() => { if (__bal.ACT['close']) __bal.ACT['close'](); })()`); await ev(`__bal.ACT['home-menu']()`); await sleep(200);
+  ok(await ev(`!!document.querySelector('#modal .mrow[data-act=tutorial]') && /On/.test(document.querySelector('#modal .mrow[data-act=tutorial]').textContent)`), 'v103 (review #190): the menu has a Tutorial row (on)');
+  await click('#modal .mrow[data-act=tutorial]'); await sleep(150);
+  ok(await ev(`localStorage.getItem('balance.guide.v') === '3' && /Off/.test(document.querySelector('#modal .mrow[data-act=tutorial]').textContent)`), 'v103: Tutorial off');
+  await click('#modal .mrow[data-act=tutorial]'); await sleep(150);
+  ok(await ev(`localStorage.getItem('balance.guide.v') === '0' && localStorage.getItem('balance.guide3') === '[]'`), 'v103: Tutorial on again, from the start');
+  await click('#modal [data-act=close]'); await sleep(100); await ev(`(() => { if (__bal.battle) return; __bal.ACT.menu(); })()`); await sleep(1200);
+  const tip = await ev(`(() => { const t = document.querySelector('.gtip'); return t ? t.textContent : ''; })()`);
+  ok(/Tap Play|menu/.test(tip) && tip.length < 90, 'v103 (review #191): a short tip shows (' + tip + ')');
+  await shot('42-tutorial-tip');
+  await ev(`localStorage.setItem('balance.guide.v', '3')`);
+}
 if (process.env.TRLOG) { const all = await ev("localStorage.getItem('balance.trall')"); fs.writeFileSync(OUT + 'trlog.json', all || '[]'); console.log('trlog:', JSON.parse(all || '[]').length, 'texts'); }
 ok(errors.length === 0, 'no JS errors / CSP violations' + (errors.length ? ': ' + errors.slice(0, 5).join(' || ') : ''));
 console.log(`screens: ${oks} ok, ${fails} fail (screens in ${OUT})`);

@@ -464,6 +464,7 @@
       <button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span>${I('arrow', 'chev')}</button>
       ${row('art-lab', 'palette', 'Art Lab', 'Your art on the heroes')}
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
+      ${row('tutorial', 'help', 'Tutorial', guideOn() ? 'On: short tips as you play' : 'Off: tap to see it again')}
       ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}
       ${row('suggest', 'bulb', 'Suggest a change', 'Help build the game')}</div>`;
   }
@@ -826,25 +827,42 @@
   // One small bubble at a time points at the thing it explains (the road, the lives, a duel, the bag, the shop...). It never blocks: taps go
   // through it, the first tap anywhere after it showed puts it away for good (balance.guide = the ids seen), and a screen change takes it off.
   // v87: everyone gets it until a run reaches the final fight (see guideOn); the deploy and battle hints above stay as they were.
-  // WHAT: the guide tips: id, when it shows, what it points at (a selector), the text.
+  // v103 (reviews #190 #191, David: "Make a complete tutorial from the ground up that can be reactivated in the settings. But dont make it too invasive.
+  // But people must understand what hero deployment is and why it's useful, what powers are, what the objective of the journey is (days, choices, until
+  // gauntlet), and the menu/general options... it should only be there in a person's first run or whenever the tutorial changes"; "The tutorial must be
+  // piecewise in small texts to not bore people"): the guide below IS the tutorial. Each tip is one short line in a bubble pointing at what it explains;
+  // a screen with several tips shows them one after the other (the next one comes a moment after the last was tapped away). It runs through a player's
+  // first run and ends with that run's end screens; TUT_V is its version: raise it when the tips change and everyone sees the new tutorial once.
+  // Menu -> Tutorial turns it on again (from the start) or off.
+  // WHAT: the tutorial tips, in the order they come: id, scr ('title' or the run), when it shows, what it points at (a selector), the text.
+  const TUT_V = 3;
   const GUIDE = [
-    { id: 'path', when: () => run.phase === 'map', at: '[data-act=choose]', text: 'Your road to victory: one stop a day. Tap a card to choose today\'s stop. Harder fights pay more gold.' },
-    { id: 'duel', when: () => run.phase === 'map', at: '.b-duel:not(.wait)', text: 'A duel: another player\'s team (their ghost). Win it for league points, a crown and something to steal from them.' },
-    { id: 'lives', when: () => run.phase === 'map' && run.step >= 2, at: '#top .lives', text: 'Your Ward. Lose a fight and it breaks: the day starts over. Lose again with it broken and the run ends.' },
-    { id: 'gear', when: () => (run.phase === 'map' || run.phase === 'shop') && run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in your bag! Open Team and drag it onto a hero.' },
-    { id: 'shop', when: () => run.phase === 'shop', at: '[data-act=reroll]', text: 'Buy gear with your gold. "New" swaps the whole shelf for a few coins.' },
-    { id: 'event', when: () => run.phase === 'event', at: '.evchoices', text: 'An event: pick one choice. If nothing fits, Skip (top right).' },
-    { id: 'level', when: () => run.pending.length && run.phase !== 'deploy', at: '.spec2', text: 'Level up! Pick one of two upgrades. The path below shows what the next levels offer.' },
-    { id: 'steal', when: () => run.phase === 'steal', at: '.tgrid, .opts', text: 'You beat their team: take one thing from it (a hero, an item or a power).' },
-    { id: 'final', when: () => run.phase === 'gauntlet', at: '.gcrest', text: 'The last stop of the run. Win this fight to complete it.' },
-    { id: 'league', when: () => run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1, at: '#lpmeter', text: 'League points: wins add them, losses take a few. Fill the bar to climb to the next league.' },
-    { id: 'chest', when: () => run.phase === 'over' && run.overStep === 2, at: '#chest', text: 'Account XP: every level opens new heroes, items, powers and rewards.' },
+    { id: 't_play', scr: 'title', when: () => true, at: '.title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start a journey.' },
+    { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'The menu: how to play, sound, language and this tutorial.' },
+    { id: 't_hero', when: () => run.phase === 'start' && (ui.startStep || 1) === 1, at: '[data-act=start-pick]', text: 'Pick your first hero. Two more join you for free soon.' },
+    { id: 't_power', when: () => run.phase === 'start' && ui.startStep === 2, at: '.srelics', text: 'Powers boost your whole team for the whole run.' },
+    { id: 't_goal', when: () => run.phase === 'map' && run.result !== 'clear', at: '.rday', text: 'Your journey: one stop a day. Beat the 2 bosses to win.' },
+    { id: 't_path', when: () => run.phase === 'map' && run.result !== 'clear', at: '[data-act=choose]', text: 'Pick today\'s stop. Harder fights pay more gold.' },
+    { id: 't_ward', when: () => run.phase === 'map' && run.step >= 1, at: '#top .lives', text: 'Your Ward. Lose a fight and it breaks: that day starts over. Lose again and the run ends.' },
+    { id: 't_gaunt', when: () => run.phase === 'map' && run.step >= 2 && run.result !== 'clear', at: '.rn.final', text: 'After the last boss: the Gauntlet, a tower of other players\' teams.' },
+    { id: 't_dep1', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Before each fight, place your heroes on your half of the board.' },
+    { id: 't_dep2', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Tanks in front take the hits. Ranged heroes and healers stay behind them.' },
+    { id: 't_foes', when: () => run.phase === 'deploy' && !introStage(), at: '.foes', text: 'The enemies. Tap any unit on the board to see what it does.' },
+    { id: 't_fight', when: () => run.phase === 'deploy' && !introStage(), at: '[data-act=fight]', text: 'Ready? Fight! Your heroes act on their own.' },
+    { id: 'gear', when: () => (run.phase === 'map' || run.phase === 'shop') && run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in your bag! Open Team to put it on a hero.' },
+    { id: 'shop', when: () => run.phase === 'shop', at: '[data-act=reroll]', text: 'Buy with your gold. "New" swaps the shelf for a few coins.' },
+    { id: 't_rshop', when: () => run.phase === 'shop' && run.cur && run.cur.kind === 'relicShop', at: '.shop, .stock', text: 'Powers work for every hero, for the rest of the run.' },
+    { id: 'event', when: () => run.phase === 'event', at: '.evchoices', text: 'An event: pick one choice. A fight here counts like any other.' },
+    { id: 'level', when: () => run.pending.length && run.phase !== 'deploy', at: '.spec2', text: 'Level up! Pick one of two upgrades for this hero.' },
+    { id: 't_win', when: () => run.phase === 'over' && run.result === 'clear' && !run.tower, at: '.vicart', text: 'You beat the bosses! Next comes the Gauntlet.' },
+    { id: 't_tower', when: () => run.phase === 'tower' && (!run.tower || run.tower.status === 'gate'), at: '.trules', text: 'Climb floor by floor. Each floor won gives LP; falling costs nothing.' },
+    { id: 'league', when: () => run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !!document.querySelector('#lpmeter'), at: '#lpmeter', text: 'League points: fill the bar to climb to the next league.' },
+    { id: 'chest', when: () => run.phase === 'over' && run.overStep === 2, at: '#chest', text: 'Account XP: every level opens new heroes, items and rewards.' },
   ];
-  // v87 (review #166, David: "tutorial now for all players again, and doesn't stop until they reach the final PvP fight"): every player sees the guide
-  // again (new key balance.guide2), whatever their runs, until a run of theirs reaches the final fight; it ends after that run's end screens
-  // (balance.guide.done). "Show the tips again" (How to play) starts it over.
-  const guideSeen = () => { const s = store.get('balance.guide2', []); return Array.isArray(s) ? s : []; };
-  const guideOn = () => !navigator.webdriver && !store.get('balance.guide.done', 0);
+  // the tips seen in this version of the tutorial; the version finished (or turned off)
+  const guideSeen = () => { const s = store.get('balance.guide3', []); return Array.isArray(s) ? s : []; };
+  const guideOn = () => !navigator.webdriver && (store.get('balance.guide.v', 0) | 0) < TUT_V;
+  const guideEnd = () => store.set('balance.guide.v', TUT_V);
   // v82 (review #160): the explain bubble of anything with data-tip (the rewards in the chest, the level road, the next reward). A mouse shows it while
   // hovering; a tap (or keyboard focus) shows it until the next tap. Fixed over the page like the guide, so nothing moves.
   // WHAT: shows / hides the data-tip bubble.
@@ -866,13 +884,13 @@
   // WHAT: after each render, shows the first guide tip that fits this screen and was never seen (or removes the one of a screen that is gone).
   function guide() {
     clearTimeout(guide.t); const old = document.querySelector('.gtip'); if (old) old.remove(); guideDisarm(); if (htip.on && !htip.on.isConnected) tipHide();
-    if (!run || screen !== 'run' || !guideOn() || ui.modal) return;
-    const seen = guideSeen(), g = GUIDE.find(x => !seen.includes(x.id) && x.when());
-    if (!g) { if (run.guideFinal && run.phase === 'over' && run.overStep === 2) store.set('balance.guide.done', 1); return; }   // v87: the run that reached the final fight is over
+    if (!guideOn() || ui.modal || (screen !== 'run' && screen !== 'title') || (screen === 'run' && !run)) return;
+    const seen = guideSeen(), g = GUIDE.find(x => !seen.includes(x.id) && (x.scr === 'title' ? screen === 'title' : screen === 'run' && x.when()));
+    if (!g) { if (screen === 'run' && run.phase === 'over' && run.overStep === 2) guideEnd(); return; }   // v103: the first run is over: so is the tutorial
     const key = ui.lastKey;
     // a moment after the screen settles (the entry animation, the map walk), then the bubble finds its target
     guide.t = setTimeout(() => {
-      if (ui.lastKey !== key || ui.modal || screen !== 'run') return;
+      if (ui.lastKey !== key || ui.modal) return;
       const el = [...document.querySelectorAll(g.at)].find(e => { const r = e.getBoundingClientRect(); return r.width && r.height; });
       if (!el) return;
       const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, tip = document.createElement('div');
@@ -885,7 +903,7 @@
       tip.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - (cx - w / 2))) + 'px');
       // the next tap anywhere (after it had time to be read) puts it away for good; the tap itself still does what it does
       const shownAt = performance.now();
-      guideDisarm.h = () => { if (performance.now() - shownAt < 700) return; store.set('balance.guide2', guideSeen().concat(g.id)); if (g.id === 'chest' && run && run.guideFinal) store.set('balance.guide.done', 1); tip.classList.add('bye'); setTimeout(() => tip.remove(), 250); guideDisarm(); };
+      guideDisarm.h = () => { if (performance.now() - shownAt < 700) return; store.set('balance.guide3', guideSeen().concat(g.id)); if (g.id === 'chest') guideEnd(); tip.classList.add('bye'); setTimeout(() => { tip.remove(); guide(); }, 350); guideDisarm(); };   // v103: the next tip of the same screen follows
       document.addEventListener('pointerdown', guideDisarm.h, true);
     }, 650);
   }
@@ -2249,7 +2267,9 @@
     menu: () => { if (battle) return; screen = 'title'; closeModal(); render(); },
     howto: () => openModal(HOWTO),
     // v80 (review #158): the guide tips come back (even on an account with many runs)
-    'guide-again': () => { store.set('balance.guide2', []); store.set('balance.guide.done', 0); closeModal(); toast('The tips will show again as you play'); render(); },
+    'guide-again': () => { store.set('balance.guide3', []); store.set('balance.guide.v', 0); closeModal(); toast('The tutorial will show again as you play'); render(); },
+    // v103 (review #190): Menu -> Tutorial: on = from the start again, off = no more tips
+    tutorial: () => { if (guideOn()) { guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); toast('Tutorial on: the tips show again as you play'); } openModal(homeMenuHTML()); ui.modal = 'home'; },
     // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
     'start-pick': k => { ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); },
     // v64 (review #126): the free recruit between days
