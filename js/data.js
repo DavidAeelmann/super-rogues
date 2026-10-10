@@ -1496,9 +1496,6 @@
   B.LP_LEAGUE = { gain: [1.25, 1.1, 1, 0.85, 0.75, 0.65], loss: [0.6, 0.8, 1, 1.2, 1.4, 1.6] };
   // WHAT: the league multipliers of a league index: { gain, loss }.
   // v90 (review #171): a Gauntlet floor won pays its number in LP (floor 1: +1, floor 2: +2...); a loss in the Gauntlet costs nothing
-  // v106 (review #192): the Gauntlet has a fixed number of floors; the last one is the champion (floor 1 = the lowest 10% of the ghosts' hidden Elo, the
-  // others = equal percentile ranges, see api/_ghostelo.js)
-  B.TOWER_FLOORS = 5;
   B.towerLp = floor => Math.max(1, Math.min(50, floor | 0));
   B.lpMul = league => { const i = Math.max(0, Math.min(B.LEAGUES.length - 1, league | 0)); return { gain: B.LP_LEAGUE.gain[i], loss: B.LP_LEAGUE.loss[i] }; };
   // v94 (review #175, David: "give bronze players 20 lp for finishing pve, silver 10, gold above zero, and adjust lp gain loss depending on pvp fight league

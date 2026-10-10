@@ -6,7 +6,7 @@
 // defeated, but can help seed ghosts").
 //   rateNew(st, ghost)     SEEDING: a new ghost (a completed run, a fallen climber, a new champion) fights RIVALS ghosts (the champion included) in the
 //                          real simulation, from both sides of the board; its Elo moves with K_NEW, each rival's with K_OLD. Players never see it.
-//   towerOpp(st, floor...) the opponent of a floor (B.TOWER_FLOORS floors, the top one = the champion): floor 1 = a random ghost of the lowest 10% of
+//   towerOpp(st, floor...) the opponent of a floor (the champion's wins + 1 floors, the top one = the champion): floor 1 = a random ghost of the lowest 10% of
 //                          Elo; floor x (2..N-1) = a random ghost of the x-th of N-1 equal percentile ranges; floor N = the champion.
 //   playerResult(...)      a player's floor fight moves the player's hidden Elo (players.elo) and the ghost's.
 // The simulation files (sim.js, run.js) load on the first rating only.
@@ -47,9 +47,13 @@ async function rateNew(st, ghost) {
 }
 // WHAT: the opponent of a Gauntlet floor (see the guide above). exclude = this climb's own team and the ghosts already met; a player's own ghosts are
 // skipped while the pool has others. null = nobody to fight (an empty top: the climber is crowned).
+// v106b (review #193, David: "the gauntlet has variable steps as always: beat the champ and new step arrives and you adjust that formula of percentile"):
+// the tower is as tall as the champion's climb (its wins + 1, at least 2), so every new champion adds a floor and the percentile ranges follow.
+// WHAT: the number of floors right now (the top one = the champion).
+async function floors(st, teamId) { const c = await st.getChampion(teamId); return c ? Math.max(2, (c.wins | 0) + 1) : 2; }
 async function towerOpp(st, floor, pid, teamId, faced, staleBefore) {
-  const N = B.TOWER_FLOORS || 5;
-  const top = async () => { const c = await st.getChampion(teamId); return c && !(faced || []).includes(c.id) ? c : null; };
+  const c0 = await st.getChampion(teamId), N = c0 ? Math.max(2, (c0.wins | 0) + 1) : 2;
+  const top = async () => c0 && !(faced || []).includes(c0.id) ? c0 : null;
   if (floor >= N) return top();
   let pool = await st.listGhosts([teamId].concat(faced || []), staleBefore, 3000);
   const others = pool.filter(t => t.pid !== pid); if (others.length >= 4) pool = others;
@@ -74,4 +78,4 @@ async function pickBalanced(st, lo, hi, exclude, staleBefore) {
   const from = mid.length ? mid : pool;
   return from[Math.floor(Math.random() * from.length)];
 }
-module.exports = { rateNew, towerOpp, playerResult, pickBalanced, duel, match, teamOf, expect };
+module.exports = { floors, rateNew, towerOpp, playerResult, pickBalanced, duel, match, teamOf, expect };

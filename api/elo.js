@@ -340,11 +340,11 @@ module.exports = async (req, res) => {
         const f = (await st.pickFinal(pid, [])) || (await st.pickFinal('', []));
         if (f) { const cid = await st.insertTeam({ pid: f.pid, name: f.name, elo_at: f.elo_at, team: f.team, relics: f.relics }); await st.updateTeam(cid, { wins: 0, status: 'champion', opp: null }); }
       }
-      // v106 (review #192): floor 1 = a ghost of the lowest 10% of hidden Elo (api/_ghostelo.js); the tower has B.TOWER_FLOORS floors, the top = the champion
+      // v106 (review #192): floor 1 = a ghost of the lowest 10% of hidden Elo (api/_ghostelo.js); v106b (review #193): the tower is the champion's wins + 1 floors
       const opp = await GE.towerOpp(st, 1, pid, id, [], Date.now() - STALE_MS);
       await st.updateTeam(id, { wins: 0, status: 'running', opp: opp ? opp.id : null, faced: opp ? [opp.id] : [] });
       p.best = Math.max(p.best | 0, 1); await save();
-      return send(res, 200, me({ teamId: id, wins: 0, floor: 1, peak: D.TOWER_FLOORS, opponent: await styled(opp), fallback: !opp }));
+      return send(res, 200, me({ teamId: id, wins: 0, floor: 1, peak: await GE.floors(st, id), opponent: await styled(opp), fallback: !opp }));
     }
     if (b.op === 'towerResult') {
       const t = await st.getTeam(Math.floor(Number(b.teamId)));
@@ -367,7 +367,7 @@ module.exports = async (req, res) => {
       if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
       let faced = []; try { faced = JSON.parse(t.faced || '[]'); } catch (_) {}
       // v106: the next floor's ghost by hidden Elo; beating the top floor (the champion), or an empty tower, crowns you
-      const next = opp && opp.status !== 'champion' && wins < D.TOWER_FLOORS ? await GE.towerOpp(st, wins + 1, pid, t.id, faced, Date.now() - STALE_MS) : null;
+      const next = opp && opp.status !== 'champion' && wins < await GE.floors(st, t.id) ? await GE.towerOpp(st, wins + 1, pid, t.id, faced, Date.now() - STALE_MS) : null;
       await P.xpDuel(st, p, !next, xp); await P.xpFloor(st, p, wins + 1, xp);
       if (!next) {
         await st.updateTeam(t.id, { wins, status: 'champion', opp: null }); await st.demoteChampions(t.id);
