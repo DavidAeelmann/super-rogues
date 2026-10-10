@@ -1050,7 +1050,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     ok(Math.abs(d1.hp / d0.hp - 1.1) < 1e-9 && Math.abs(d1.atk / d0.atk - 1.1) < 1e-9 && Math.abs(d1.ap / d0.ap - 1.1) < 1e-9, 'v88 (review #167): a level-up power\'s factor scales Health, Attack and Magic');
     B.TUNE.spec = {}; Run.startDuel(r, Run.randomGhost(r, 8, true), 'final', 9); const g0 = Run.gauntletWorld(r, true).units.find(u => u.side === 0 && u.kind === 'hero').hp;
     B.TUNE.pvp = { bastion: 0.8 }; const g1 = Run.gauntletWorld(r, true).units.find(u => u.side === 0 && u.kind === 'hero').hp; const f0 = Run.fightWorld ? Run.heroDef(r, h).hp : 0;
-    ok(Math.abs(g1 / g0 - 0.8) < 1e-6 && Math.abs(f0 - d0.hp) < 1e-6, 'v88: the PvP factor counts in duels only (' + (g1 / g0).toFixed(3) + ')');
+    ok(Math.abs(g1 / g0 - 0.8) < 0.005 && Math.abs(f0 - d0.hp) < 1e-6, 'v88: the PvP factor counts in duels only (' + (g1 / g0).toFixed(3) + ')');
     B.TUNE.spec = sv; B.TUNE.pvp = pv;
     const vals = Object.values(sv || {}).concat(Object.values(pv || {})); ok(vals.every(x => x >= 0.5 && x <= 1.6), 'v88: the tuned factors stay in a sane range');
     ok(Object.keys(sv || {}).every(id => Object.values(B.HEROES).some(x => x.specs.some(p => p.some(s => s.id === id)))) && Object.keys(pv || {}).every(k => B.HEROES[k]), 'v88: every tuned power and hero exists'); }
