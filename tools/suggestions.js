@@ -52,7 +52,7 @@ const fmt = ms => new Date(Number(ms)).toLocaleString('en-GB');
   } else if (cmd === 'done' || cmd === 'decline') {
     const [id, ...rest] = args; const reply = rest.join(' ').trim();
     if (!id || !reply) { console.log('usage: ' + cmd + ' <id> "reply"'); process.exit(1); }
-    await q('update suggestions set status=$2, reply=$3, updated=$4 where id=$1', [+id, cmd === 'done' ? 'done' : 'declined', reply.slice(0, 600), Date.now()]);
+    await q('update suggestions set status=$2, reply=$3, updated=$4 where id=$1', [+id, cmd === 'done' ? 'done' : 'declined', reply.slice(0, 4000), Date.now()]);
     if (cmd === 'done') await q("insert into kv (k, v) values ('lastRun',$1) on conflict (k) do update set v=excluded.v", [String(Date.now())]);
     console.log(`#${id} -> ${cmd === 'done' ? 'done' : 'declined'}`);
   } else if (cmd === 'status') {

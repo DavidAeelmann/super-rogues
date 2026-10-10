@@ -123,6 +123,8 @@ main section { padding: 4px 14px; }
 .sug.done .st { background: #1f4a2c; color: var(--green); } .sug.declined .st { background: #4a1f25; color: #ff8a8a; } .sug.doing .st { background: #4a3f1f; color: var(--gold); }
 .sug .txt { white-space: pre-wrap; word-break: break-word; margin-top: 4px; font-size: 14px; }
 .sug .reply { margin-top: 6px; font-size: 13px; color: #cfd6e6; border-left: 3px solid var(--gold); padding-left: 8px; white-space: pre-wrap; }
+/* v108 (review #195, David: "Your replies are cut off after a while. Add a scroller"): a long reply scrolls inside its own box */
+.sug .reply { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
 .owner { margin-top: 16px; } .owner summary { color: var(--dim); cursor: pointer; }
 .owner label { display: grid; gap: 4px; }
 
