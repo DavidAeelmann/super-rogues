@@ -309,6 +309,7 @@ module.exports = async (req, res) => {
       const relics = relicList(b.relics);
       let id = null;
       if (await st.countTeams(pid, Date.now() - 3600e3) < 40) { id = await st.insertTeam({ pid, name, elo_at: p.elo, team: JSON.stringify(team), relics: JSON.stringify(relics) }); await st.updateTeam(id, { wins: 8, status: 'final', opp: null }); }
+      if (id) { try { await GE.rateNew(st, { id, team: JSON.stringify(team), relics: JSON.stringify(relics), gelo: 1000 }); } catch (_) {} }   // v106 (review #192): a completed run joins the Gauntlet's ghosts, seeded
       p.runs++; p.crowns++;   // v90: best = the best Gauntlet floor reached (op tower), no longer set here
       const s0 = p.streak == null ? 1 : p.streak | 0; p.streak = s0 + 1; p.bstreak = Math.max(p.bstreak == null ? 1 : p.bstreak | 0, p.streak);   // v65 (review #133): one more run in the streak
       const lg = leaguePoints(p, D.runLp({ done: true, pvp: b.game && b.game.pvp, duels: b.game && b.game.duels, lost: b.game && b.game.lost, streak: p.streak }, p.league));   // v65 (review #129): PvP fights and the streak move the league
@@ -339,10 +340,11 @@ module.exports = async (req, res) => {
         const f = (await st.pickFinal(pid, [])) || (await st.pickFinal('', []));
         if (f) { const cid = await st.insertTeam({ pid: f.pid, name: f.name, elo_at: f.elo_at, team: f.team, relics: f.relics }); await st.updateTeam(cid, { wins: 0, status: 'champion', opp: null }); }
       }
-      const opp = await nextOpponent(st, 0, pid, id), peak = await peakOf(st, id);
+      // v106 (review #192): floor 1 = a ghost of the lowest 10% of hidden Elo (api/_ghostelo.js); the tower has B.TOWER_FLOORS floors, the top = the champion
+      const opp = await GE.towerOpp(st, 1, pid, id, [], Date.now() - STALE_MS);
       await st.updateTeam(id, { wins: 0, status: 'running', opp: opp ? opp.id : null, faced: opp ? [opp.id] : [] });
       p.best = Math.max(p.best | 0, 1); await save();
-      return send(res, 200, me({ teamId: id, wins: 0, floor: 1, peak: Math.max(0, peak) + 1, opponent: await styled(opp), fallback: !opp }));
+      return send(res, 200, me({ teamId: id, wins: 0, floor: 1, peak: D.TOWER_FLOORS, opponent: await styled(opp), fallback: !opp }));
     }
     if (b.op === 'towerResult') {
       const t = await st.getTeam(Math.floor(Number(b.teamId)));
@@ -354,21 +356,23 @@ module.exports = async (req, res) => {
       if (opp) sides.push({ used: usedIn(JSON.parse(opp.team), JSON.parse(opp.relics)), score: win ? 0 : 1 });
       await rateContent(st, ipHash(req), sides);
       await P.heroGames(st, pid, mine, win);
-      if (opp) await st.ghostResult(opp.id, opp.elo_at, !win);
+      if (opp) { await st.ghostResult(opp.id, opp.elo_at, !win); p.elo = await GE.playerResult(st, p, opp, win); }   // v106 (review #192): the player's and the ghost's hidden Elo
       await st.addDuel({ pid, opp_pid: opp ? opp.pid : null, opp_name: opp ? opp.name : (clean(b.oppName, 16) || 'Gauntlet Champion'), opp_code: opp ? P.codeOf(opp.pid) : null, final: false, win });
       if (!win) {   // no penalty: the team stays on this floor as a ghost for the next climbers
         await st.updateTeam(t.id, { wins: t.wins, status: 'lost', opp: null }); p.best = Math.max(p.best | 0, floor); await save();
-        try { await GE.rateNew(st, Object.assign({}, t, { status: 'lost' })); } catch (_) {}   // v102 (review #188): the new ghost of this floor fights 10 others for its hidden Elo
+        try { await GE.rateNew(st, Object.assign({}, t, { status: 'lost' })); } catch (_) {}   // v102, v106: the new ghost is seeded against other ghosts
         return send(res, 200, me({ teamId: t.id, win, wins: t.wins, floor, over: true }));
       }
       const wins = floor, lg = leaguePoints(p, D.towerLp(floor));
       if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
       let faced = []; try { faced = JSON.parse(t.faced || '[]'); } catch (_) {}
-      const next = opp ? await nextOpponent(st, wins, pid, t.id, faced) : null;   // beating the made-up champion of an empty tower crowns you
+      // v106: the next floor's ghost by hidden Elo; beating the top floor (the champion), or an empty tower, crowns you
+      const next = opp && opp.status !== 'champion' && wins < D.TOWER_FLOORS ? await GE.towerOpp(st, wins + 1, pid, t.id, faced, Date.now() - STALE_MS) : null;
       await P.xpDuel(st, p, !next, xp); await P.xpFloor(st, p, wins + 1, xp);
       if (!next) {
         await st.updateTeam(t.id, { wins, status: 'champion', opp: null }); await st.demoteChampions(t.id);
         p.crowns++; p.best = Math.max(p.best | 0, wins); await save();
+        try { await GE.rateNew(st, Object.assign({}, t, { status: 'champion' })); } catch (_) {}   // v106: the new champion is seeded too (it helps seed others)
         return send(res, 200, me({ teamId: t.id, win, wins, floor, lg, champion: true, over: true }));
       }
       await st.updateTeam(t.id, { wins, status: 'running', opp: next.id, faced: faced.concat(next.id) });

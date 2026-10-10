@@ -155,7 +155,9 @@ function memStore() {
     // v102 (review #188): the hidden ghost Elo. listPool = the ghosts of a floor range (like pickPool, every one, up to limit); poolSample = n random ended ghosts of any floor
     async setGelo(id, v) { const t = (M.teams || []).find(x => x.id === id); if (t) t.gelo = v; },
     async listPool(lo, hi, exclude, staleBefore, limit) { return poolOf(M, lo, hi, exclude, staleBefore).slice(-(limit || 200)).map(t => Object.assign({}, t)); },
-    async poolSample(n, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => t.status === 'lost' && !ex.has(t.id)).sort(() => Math.random() - 0.5); return pool.slice(0, n).map(t => Object.assign({}, t)); },
+    // v106 (review #192): listGhosts = every Gauntlet ghost (fallen climbers and completed runs, or climbs abandoned before staleBefore), any floor
+    async listGhosts(exclude, staleBefore, limit) { const ex = new Set(exclude || []); return (M.teams || []).filter(t => !ex.has(t.id) && (t.status === 'lost' || t.status === 'final' || (t.status === 'running' && (t.updated || t.created) < (staleBefore || 0)))).slice(-(limit || 3000)).map(t => Object.assign({}, t)); },
+    async poolSample(n, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => ['lost', 'final', 'champion'].includes(t.status) && !ex.has(t.id)).sort(() => Math.random() - 0.5); return pool.slice(0, n).map(t => Object.assign({}, t)); },
     async getTeam(id) { const r = (M.teams || []).find(t => t.id === id); return r ? Object.assign({}, r) : null; },
     async updateTeam(id, f) { const t = (M.teams || []).find(x => x.id === id); Object.assign(t, f, { updated: Date.now() }); if (f.faced) t.faced = JSON.stringify(f.faced); },
     async ghostResult(id, elo, won) { const t = (M.teams || []).find(x => x.id === id); if (!t) return; t.elo_at = elo; if (won) t.def_w = (t.def_w || 0) + 1; else t.def_l = (t.def_l || 0) + 1; },
@@ -277,7 +279,10 @@ function pgStore() {
         and wins >= $2 and ($3::int is null or wins <= $3) order by id desc limit $5`, [(exclude || []).map(Number).filter(Number.isFinite), lo, hi == null ? null : hi, staleBefore || 0, limit || 200]);
       return r.map(num);
     },
-    async poolSample(n, exclude) { return (await q("select * from teams where status = 'lost' and not (id = any($1::bigint[])) order by random() limit $2", [(exclude || []).map(Number).filter(Number.isFinite), n])).map(num); },
+    async listGhosts(exclude, staleBefore, limit) {
+      return (await q(`select * from teams where not (id = any($1::bigint[])) and (status in ('lost', 'final') or (status = 'running' and coalesce(updated, created) < $2)) order by id desc limit $3`, [(exclude || []).map(Number).filter(Number.isFinite), staleBefore || 0, limit || 3000])).map(num);
+    },
+    async poolSample(n, exclude) { return (await q("select * from teams where status in ('lost', 'final', 'champion') and not (id = any($1::bigint[])) order by random() limit $2", [(exclude || []).map(Number).filter(Number.isFinite), n])).map(num); },
     async getTeam(id) { const r = await q('select * from teams where id=$1', [id]); return r.length ? num(r[0]) : null; },
     async updateTeam(id, f) {
       if (f.faced) await q('update teams set wins=$2, status=$3, opp=$4, updated=$5, faced=$6 where id=$1', [id, f.wins, f.status, f.opp, Date.now(), JSON.stringify(f.faced)]);
