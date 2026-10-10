@@ -226,7 +226,9 @@
   function bsum(W, u, s) { let x = 0; for (const b of u.buffs) if (b.s === s && b.until > W.t) x += b.v; return x; }
   // WHAT: the CURRENT stat of a unit with buffs applied: atkOf (attack), armorOf (Defense, v62h: one stat for physical and magic damage), lsOf (lifesteal), apOf (ability power), asOf (attacks per second), msOf (moves per second). Always read stats through these.
   const atkOf = (W, u) => Math.max(1, u.atk * (1 + bsum(W, u, 'atkPct') + u.bAtkPct) + u.titan * 3 + u.bAtk);
-  const armorOf = (W, u) => u.armor + bsum(W, u, 'armor') + u.titan * 3 + u.bArm;
+  // v104: Onyx's Living Fortress gives the allies next to him 30% of his Defense
+  const shellAura = (W, u) => { let s = 0; if (W.shellAura === undefined) W.shellAura = W.units.some(a => a.fl.has('shellaura')); if (W.shellAura) for (const a of W.units) if (a !== u && !a.dead && a.side === u.side && a.fl.has('shellaura') && Hx.dist(a, u) === 1) s += a.armor * 0.3; return s; };
+  const armorOf = (W, u) => u.armor + bsum(W, u, 'armor') + u.titan * 3 + u.bArm + shellAura(W, u);
   const lsOf = (W, u) => u.ls + bsum(W, u, 'ls');
   // review #26 (David): abilities scale with AD (attack), AP (ability power) or both, ADDED: "95% AP", "60% AD + 30% AP".
   // AP is never a multiplier of attack any more.
@@ -351,6 +353,7 @@
       if (o.ability && src.m.omni) heal(W, src, total * src.m.omni);
       if (o.ability && src.m.abilityBurn && !o.dot) dot(W, tgt, 'burn', src.m.abilityBurn * tgt.maxHp, 3, src);
       if (o.atk && !o.noThorns && tgt.m.thorns && Hx.dist(src, tgt) <= 1) deal(W, tgt, src, total * tgt.m.thorns, 'magic', { noThorns: true });
+      if (o.atk && !o.noThorns && tgt.fl.has('spikes') && tgt.ab.spike && alive(tgt)) deal(W, tgt, src, armorOf(W, tgt) * tgt.ab.spike, 'phys', { noThorns: true });   // v104: Onyx's Spiked Shell
     }
     if (tgt.fl.has('brute') && tgt.maxMana > 0) tgt.mana = Math.min(tgt.maxMana, tgt.mana + total / tgt.maxHp * 100 * (tgt.ab.gain || 2));   // v62i (review #105): Rohammer fills its Energy only from damage taken
     else if (tgt.maxMana > 0 && !o.dot) tgt.mana = Math.min(tgt.maxMana, tgt.mana + 3 * manaGain(W, tgt));
@@ -377,6 +380,7 @@
 
   // WHAT: a unit reaches 0 HP. First the "second life" effects (Phase Shift, Undying, Revive, Ashen Plume), then it really dies: death effects, kills counted, Phoenix egg for Ashwing, Gravepact mana, the Resurrect chance.
   function die(W, u, src) {
+    if (u.fl.has('shell') && (u.once.shell || 0) < 1 + (u.ab.shells || 0) && !u.suicide) { shellUp(W, u); return; }   // v104 (review #184): Onyx hides in his shell
     if (u.fl.has('phaseshift') && !u.once.phase) {
       u.once.phase = 1; u.hp = 1; heal(W, u, u.maxHp * 0.3, true); u.st.untarg = W.t + sec(2); fxText(W, u, 'PHASE SHIFT', '#ff6fb5'); return;
     }
@@ -563,7 +567,7 @@
     u.moved = false;
     if (u.fl.has('sniper')) mult *= 1 + 0.08 * Hx.dist(u, tgt);
     if (u.fl.has('plasma')) mult *= plasmaMul(u, Hx.dist(u, tgt));   // v62h (review #98)
-    const atk = atkOf(W, u);
+    const atk = atkOf(W, u) + (u.ab && u.ab.biteArmor ? u.ab.biteArmor * armorOf(W, u) : 0);   // v104: Onyx's Snapping Jaws
     const dealt = deal(W, u, tgt, atk * mult, 'phys', { atk: true });
     u.atkN++;
     if (u.garrison && dealt > 0) { const t = W.byId[u.garrison]; if (t && !t.dead && t.maxMana) t.mana = Math.min(t.maxMana, t.mana + 5); }   // v60: Citadel
@@ -1406,6 +1410,55 @@
     }
     return true;
   };
+  // ---- v104 (review #184): ONYX and the EMBER WYRM
+  // WHAT: Onyx's Shell. Passive: shellguard never fires; the shell and the spikes live in die() and deal().
+  A.shellguard = () => false;
+  // WHAT: Onyx falls: he hides in his shell (cannot be hurt or targeted, cannot act, still blocks his hex), then bursts out.
+  function shellUp(W, u) {
+    const ab = u.ab, T = sec(ab.shellT); u.once.shell = (u.once.shell || 0) + 1;
+    u.hp = 1; u.dots = []; u.st.invuln = W.t + T; u.st.untarg = W.t + T; u.st.stun = W.t + T; u.shellU = W.t + T;
+    fxText(W, u, 'SHELL', '#3fae8a'); fxRing(W, u.c, u.r, 0, '#3fae8a', 10);
+    if (ab.shellTaunt) for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 2) { e.st.tauntU = W.t + T; e.st.tauntBy = u.id; e.tgt = u.id; }
+    at(W, W.t + T, () => {
+      if (u.dead || W.over) return;
+      u.hp = Math.max(u.hp, Math.round(u.maxHp * ab.shellHp)); u.shellU = 0;
+      const rad = 1 + (ab.burstRad || 0), dmg = ab.burst * atkOf(W, u) + (ab.burstArmor || 0) * armorOf(W, u);
+      for (const e of enemies(W, u)) if (Hx.dist(e, u) <= rad) { deal(W, u, e, dmg, 'phys', { ability: true }); cc(W, e, 'stun', ab.burstStun); }
+      fxText(W, u, 'BURST', '#3fae8a'); fxRing(W, u.c, u.r, rad, '#3fae8a', 14);
+    });
+  }
+  // WHAT: the ability "Skyfire Dive" of the Ember Wyrm. Picks the straight line (6 directions) with the most enemies, flies to its farthest free hex
+  // (untouchable in the air), hurts every enemy flown over and leaves burning hexes in his wake. Returns false when no line holds an enemy.
+  A.skydive = (W, u) => {
+    const ab = u.ab; let best = null, bn = 0;
+    for (let d = 0; d < 6; d++) {
+      const ray = Hx.ray(u.c, u.r, d), n = ray.filter(h => enemies(W, u).some(e => e.c === h.c && e.r === h.r)).length;
+      if (n > bn) { bn = n; best = ray; }
+    }
+    if (!best) return false;
+    let land = -1; for (let i = best.length - 1; i >= 0; i--) if (!W.occ[Hx.key(best[i].c, best[i].r)]) { land = i; break; }
+    if (land < 0) return false;
+    const start = { c: u.c, r: u.r }, over = best.slice(0, land), dur = Math.max(4, Math.round(sec(0.14) * (land + 1)));
+    u.st.invuln = Math.max(u.st.invuln || 0, W.t + dur); u.st.untarg = Math.max(u.st.untarg || 0, W.t + dur); u.flyU = W.t + dur;
+    place(W, u, best[land].c, best[land].r, dur);
+    fxText(W, u, 'SKYFIRE', '#ff7a3d');
+    over.forEach((h, i) => at(W, W.t + Math.round(dur * (i + 1) / (land + 1)), () => {
+      for (const e of enemies(W, u)) if (e.c === h.c && e.r === h.r) { deal(W, u, e, ab.dmg * apOf(u), 'magic', { ability: true }); if (ab.lineSlow) slow(W, e, ab.lineSlow, 2); }
+    }));
+    const trail = [start].concat(over), seen = new Set(trail.map(h => Hx.key(h.c, h.r)));
+    if (ab.wide) for (const h of trail.slice()) for (const n of Hx.neighbors(h.c, h.r)) { const k = Hx.key(n.c, n.r); if (!seen.has(k) && !(n.c === best[land].c && n.r === best[land].r)) { seen.add(k); trail.push(n); } }
+    trail.forEach((h, i) => at(W, W.t + Math.round(dur * Math.min(1, i / (land + 1))), () => {
+      if (W.occ[Hx.key(h.c, h.r)] === BLOCK) return;
+      W.zones.push({ c: h.c, r: h.r, rad: 0, until: W.t + sec(ab.dur), dps: ab.dps * apOf(u), side: u.side, src: u.id, color: '#ff6a2a' }); fxRing(W, h.c, h.r, 0, '#ff6a2a', 12);
+    }));
+    at(W, W.t + dur, () => {
+      if (!alive(u)) return; u.flyU = 0; fxRing(W, u.c, u.r, 1, '#ff7a3d', 14);
+      if (ab.landStun) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) cc(W, e, 'stun', ab.landStun);
+      if (ab.landShield) shield(W, u, u.maxHp * ab.landShield, 5);
+      if (ab.refund) u.mana = Math.min(u.maxMana, u.mana + u.maxMana * ab.refund);
+    });
+    return true;
+  };
   // the egg Ashwing leaves when it falls: it hatches after a few seconds and the hero rises, unless the egg is destroyed first
   // WHAT: ASHWING. When it falls (once per fight) it leaves an egg on its hex; eggAct hatches it after a few seconds (the hero returns) unless the egg is destroyed first.
   function layEgg(W, u) {
@@ -1622,6 +1675,7 @@
   function periodic(W, u) {
     if (u.expireT && W.t >= u.expireT) { u.suicide = 1; die(W, u, null); return; }   // v50: the Gravecaller's risen
     const m = u.m;
+    if (u.ab && u.ab.aura && W.t % 10 === 0 && !(u.flyU > W.t)) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) deal(W, u, e, u.ab.aura * apOf(u) * 0.5, 'magic', { dot: true });   // v104: the Wyrm's Smoldering Scales
     if (m.regen) heal(W, u, u.maxHp * m.regen / TPS);
     if (m.manaRegen && u.maxMana) u.mana = Math.min(u.maxMana, u.mana + m.manaRegen / TPS);
     if (W.t % 10 === 0) {

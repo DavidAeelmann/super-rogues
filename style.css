@@ -2848,3 +2848,4 @@ button.achc.got { cursor: pointer; }
 .lives.ward .hrt svg { width: 18px; height: 18px; }
 #top .lives.ward.broken .hrt, .lives.ward.broken .hrt { color: #8a8fb0; filter: none; }
 .lives.ward.broken .hrt::after { content: ''; position: absolute; left: 45%; top: 8%; width: 2px; height: 84%; background: #ff5a6e; transform: rotate(18deg); border-radius: 2px; }
+.mpair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .mpair .mrow { min-width: 0; }   /* v104: Balance stats and Tutorial share a row */

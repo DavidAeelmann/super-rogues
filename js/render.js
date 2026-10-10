@@ -208,6 +208,7 @@
     else if (u.m1t > u.m0t && T < u.m1t && u.c !== u.fc) want = u.c > u.fc ? 1 : -1;
     else if (!tgt) want = u.side === 0 ? 1 : -1;
     pose.face = want;
+    if (u.shellU > s) pose.shell = 1; if (u.flyU > s) pose.fly = 1;   // v104: Onyx in his shell, the Wyrm in the air
     if (d) {
       d.faceT = want; if (d.face == null) d.face = want;
       d.face += (want - d.face) * (1 - Math.exp(-(dt || 0.016) * 16));

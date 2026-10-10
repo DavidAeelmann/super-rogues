@@ -251,6 +251,8 @@
     dishes: ab => [['Z', d => `hot pie: heals ${Math.round(ab.heal * (1 + ab.big) * d.ap)}; jerky: +${pct(ab.atk * (1 + ab.big))} attack and pepper soup: +${pct(ab.as * (1 + ab.big))} attack speed for ${ab.dur}s; pudding: a ${Math.round(ab.shield * (1 + ab.big) * d.ap)} shield`], ['Z', `${ab.all ? 'every ally' : ab.dishes + ' random allies'} get a dish${ab.double ? ', two effects each' : ''}`], ab.pan && ['M', ab.pan, 'to the nearest enemy (pan), 1s stun']],   // v62
     sweep: ab => [['P', ab.dmg, `to every enemy within ${ab.reach} hexes in front, knocked back ${ab.push} hexes, stunned ${ab.stun}s`], ['Z', `its hammer blows stun for ${ab.tap}s; it gets Energy only from damage taken`]],   // v62i
     tripleshot: ab => [['P', ab.dmg, `per shot, ${ab.shots} shots in a row, each shoves ${ab.push} hexes; +${pct(ab.close)} per hex nearer than 5`], ['Z', `every normal shot shoves ${ab.knock} hex${ab.knock > 1 ? 'es' : ''}`]],   // v62h
+    shellguard: ab => [['Z', `the first time it falls (${1 + (ab.shells || 0)}x a fight): in its shell for ${ab.shellT}s, then out with ${pct(ab.shellHp)} Health`], ['P', ab.burst, `to enemies within ${1 + (ab.burstRad || 0)} hex${ab.burstRad ? 'es' : ''} on the burst, stunned ${ab.burstStun}s`], ['Z', `attackers take ${pct(ab.spike)} of its Defense`]],   // v104
+    skydive: ab => [['M', ab.dmg, 'to every enemy it flies over'], ['M', ab.dps, `per second in its burning wake, ${ab.dur}s`]],
     duel: ab => [['Z', 'challenges the nearest enemy (never a boss): the two can only fight each other until one falls'], ['Z', `in the duel: +${pct(ab.edge)} Attack, +${ab.guard} Defense, ${pct(ab.ls)} lifesteal${ab.parry ? ', ' + pct(ab.parry) + ' less damage taken' : ''}`], ab.strike && ['P', ab.strike, `opening strike, stuns ${ab.stun}s`], ab.winHeal && ['X', ab.winHeal, 'when it wins'], ab.rematch && ['Z', 'a win challenges the next enemy at once']],
     grenade: ab => [['M', ab.dmg, `to every enemy within ${ab.radius} hex of the blast`], ['H', ab.healNade, 'to every ally in the blast'], ['Z', d => `its attacks heal ${Math.round(ab.heal * d.atk)} per hit (+${pct(ab.triage)} under 40% Health)`], ab.stun && ['Z', `stuns enemies for ${ab.stun}s`], ab.shield && ['S', ab.shield, 'shield for allies in the blast']],
     plant: ab => [['Z', `${ab.count} plants for ${ab.life}s (at most ${ab.cap}): nothing can attack them and they block movement`], ['M', ab.dmg, 'per Thornbush shot'], ['H', ab.heal, 'per Healing Bloom pulse'], ['Z', d => `Shield Lily: a ${Math.round(ab.shield * d.ap)} shield; Spore Pod: ${Math.round(ab.poison * d.ap)} poison per second`]],
@@ -461,10 +463,9 @@
       ${row('my-profile', 'user', 'Profile', esc(acct.account && acct.name ? acct.name : 'You'))}
       ${row('shop', 'crown', 'Crown Shop', (acct.crowns | 0) + ' crown' + ((acct.crowns | 0) === 1 ? '' : 's'))}
       ${row('scores', 'trophy', 'Ladder', 'Top players and leagues')}
-      <button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span>${I('arrow', 'chev')}</button>
+      <div class="mpair"><button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span></button><button class="mrow sub" data-act="tutorial">${I('help')}<span><b>Tutorial: ${guideOn() ? 'On' : 'Off'}</b></span></button></div>
       ${row('art-lab', 'palette', 'Art Lab', 'Your art on the heroes')}
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
-      ${row('tutorial', 'help', 'Tutorial', guideOn() ? 'On: short tips as you play' : 'Off: tap to see it again')}
       ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}
       ${row('suggest', 'bulb', 'Suggest a change', 'Help build the game')}</div>`;
   }

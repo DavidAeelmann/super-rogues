@@ -88,6 +88,8 @@
     rohammer: H({ skin: '#c8906a', body: '#8a4a2a', trim: '#e8943a', legs: '#4a3020', bulk: 1.6, head: 'bald', hair: '#2a1a10', weapon: 'club', pauldrons: '#6a5a4a' }),
     // v62h (reviews #98, #100, #101, #102)
     plasma: { type: 'cannon', body: '#4a5a78', trim: '#5fe0ff' },
+    onyx: { type: 'turtle', body: '#3fae8a', trim: '#1f4a3c', shell: '#2d6a52', spikes: '#e8e0c8' },   // v104 (review #184)
+    dragon: { type: 'dragon', body: '#c7432c', trim: '#ffcf5a', belly: '#f2b46a', wing: '#8a2a1f' },
     duelist: H({ skin: '#e0b48a', body: '#2a3f7a', trim: '#ffd23f', legs: '#1c2748', head: 'tricorn', hat: '#2a3f7a', hair: '#3a2a1a', weapon: 'rapier', cape: '#a4262f' }),
     medic: H({ skin: '#e8b890', body: '#f4f6f8', trim: '#e0405a', legs: '#4a5a6a', head: 'goggles', hair: '#5a3a1a', weapon: 'flask', orb: '#9dff7a', pack: true }),
     gardener: H({ skin: '#e0b48a', body: '#3f8f4a', trim: '#e8d36a', robe: '#2f7a3a', head: 'hat', hat: '#d9b86a', hair: '#7a4a22', weapon: 'staff', orb: '#7ee08e' }),
@@ -636,7 +638,41 @@
     c.restore();
   }
   // WHAT: the list of rigs by name. A unit's "type" in M picks one.
-  const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg, crystal, cannon, plant };
+  // v104 (review #184): ONYX, a spiky turtle (in his shell: only the shell, a little sunk)
+  function turtle(c, m, S, p) {
+    const s = S * 0.95, step = p.walk != null ? p.walk * TAU : 0, bob = p.walk != null ? Math.abs(Math.sin(step)) * s * 0.03 : Math.sin(p.t * 2) * s * 0.01;
+    const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.18 : 0, sy = -s * 0.3 - bob + (p.shell ? s * 0.1 : 0);
+    if (!p.shell) {
+      for (const [x, ph] of [[-s * 0.32, 0], [s * 0.3, Math.PI], [-s * 0.15, Math.PI], [s * 0.15, 0]]) { const a = p.walk != null ? Math.sin(step + ph) * 0.4 : 0; limb(c, x, sy + s * 0.02, x + Math.sin(a) * s * 0.1, -s * 0.03, s * 0.15, shade(m.body, -0.2)); }
+      const hx = s * 0.52 + lunge, hy = sy - s * 0.02; limb(c, s * 0.3, sy, hx, hy, s * 0.12, m.body); ball(c, hx, hy, s * 0.16, m.body, OUT); ball(c, hx + s * 0.07, hy - s * 0.05, s * 0.035, '#111');
+      if (p.atk != null && p.atk > 0.6) poly(c, [[hx + s * 0.1, hy + s * 0.02], [hx + s * 0.22, hy + s * 0.07], [hx + s * 0.1, hy + s * 0.1]], '#fff');
+    }
+    const g = c.createLinearGradient(0, sy - s * 0.4, 0, sy + s * 0.2); g.addColorStop(0, shade(m.shell, 0.3)); g.addColorStop(1, shade(m.shell, -0.35));
+    c.fillStyle = g; c.beginPath(); c.ellipse(0, sy, s * 0.48, s * 0.36, 0, Math.PI, TAU); c.lineTo(s * 0.48, sy + s * 0.08); c.lineTo(-s * 0.48, sy + s * 0.08); c.closePath(); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.3; c.stroke();
+    for (let i = -2; i <= 2; i++) { const x = i * s * 0.17, y = sy - Math.sqrt(Math.max(0, 1 - (x / (s * 0.48)) ** 2)) * s * 0.34; poly(c, [[x - s * 0.06, y + s * 0.03], [x, y - s * 0.14], [x + s * 0.06, y + s * 0.03]], m.spikes, OUT); }
+    for (const x of [-0.24, 0, 0.24]) poly(c, [[s * (x - 0.09), sy - s * 0.12], [s * x, sy - s * 0.2], [s * (x + 0.09), sy - s * 0.12], [s * x, sy - s * 0.04]], shade(m.trim, 0.1));
+    limb(c, -s * 0.47, sy + s * 0.06, s * 0.47, sy + s * 0.06, s * 0.05, m.trim);
+  }
+  // v104 (review #184): the EMBER WYRM, a squat dragon; wings spread and the body lifts while it flies
+  function dragon(c, m, S, p) {
+    const s = S * 1.05, step = p.walk != null ? p.walk * TAU : p.t * 1.2, lift = p.fly ? s * 0.55 : 0, bob = p.walk != null ? Math.abs(Math.sin(step)) * s * 0.04 : Math.sin(p.t * 2) * s * 0.015;
+    const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.18 : 0, by = -s * 0.5 - bob - lift, flap = p.fly ? Math.sin(p.t * 22) * 0.5 : Math.sin(p.t * 2) * 0.12;
+    poly(c, [[-s * 0.1, by - s * 0.1], [-s * 0.55, by - s * (0.55 + flap * 0.4)], [-s * 0.7, by - s * (0.15 + flap * 0.2)], [-s * 0.35, by + s * 0.02]], shade(m.wing, -0.15), OUT);
+    if (!p.fly) for (const [x, ph] of [[-s * 0.25, 0], [s * 0.2, Math.PI]]) { const a = p.walk != null ? Math.sin(step + ph) * 0.45 : 0; limb(c, x, by + s * 0.15, x + Math.sin(a) * s * 0.2, -s * 0.02, s * 0.11, shade(m.body, -0.25)); }
+    limb(c, -s * 0.4, by + s * 0.05, -s * 0.8, by + s * 0.22 + Math.sin(p.t * 3) * s * 0.05, s * 0.09, m.body); poly(c, [[-s * 0.8, by + s * 0.12], [-s * 0.98, by + s * 0.24], [-s * 0.78, by + s * 0.32]], m.trim, OUT);
+    const g = c.createLinearGradient(0, by - s * 0.25, 0, by + s * 0.25); g.addColorStop(0, shade(m.body, 0.25)); g.addColorStop(1, shade(m.body, -0.3));
+    c.fillStyle = g; c.beginPath(); c.ellipse(lunge * 0.4, by, s * 0.45, s * 0.27, 0, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.3; c.stroke();
+    c.fillStyle = m.belly; c.beginPath(); c.ellipse(lunge * 0.4 + s * 0.05, by + s * 0.1, s * 0.3, s * 0.13, 0, 0, TAU); c.fill();
+    const nx = s * 0.35 + lunge, ny = by - s * 0.2, hx = s * 0.55 + lunge, hy = by - s * 0.42; limb(c, nx, ny, hx, hy, s * 0.13, m.body);
+    c.fillStyle = m.body; c.beginPath(); c.ellipse(hx + s * 0.06, hy, s * 0.2, s * 0.13, -0.15, 0, TAU); c.fill(); c.strokeStyle = OUT; c.stroke();
+    poly(c, [[hx - s * 0.08, hy - s * 0.08], [hx - s * 0.2, hy - s * 0.3], [hx + s * 0.0, hy - s * 0.11]], m.trim, OUT); poly(c, [[hx + s * 0.02, hy - s * 0.1], [hx - s * 0.02, hy - s * 0.32], [hx + s * 0.12, hy - s * 0.12]], m.trim, OUT);
+    ball(c, hx + s * 0.1, hy - s * 0.03, s * 0.035, '#ffcf5a');
+    if ((p.atk != null && p.atk > 0.5) || p.fly || p.cast != null) for (let i = 0; i < 4; i++) ball(c, hx + s * (0.3 + i * 0.12), hy + s * 0.04 + Math.sin(p.t * 30 + i) * s * 0.03, s * (0.08 - i * 0.012), i % 2 ? '#ffcf5a' : '#ff7a3d');
+    const wy = flap * 0.5; poly(c, [[s * 0.1, by - s * 0.14], [-s * 0.12, by - s * (0.78 + wy)], [-s * 0.42, by - s * (0.62 + wy * 0.8)], [-s * 0.5, by - s * (0.3 + wy * 0.3)], [-s * 0.2, by - s * 0.12]], m.wing, OUT);
+    limb(c, s * 0.1, by - s * 0.14, -s * 0.12, by - s * (0.78 + wy), s * 0.035, shade(m.wing, -0.3)); limb(c, -s * 0.12, by - s * (0.78 + wy), -s * 0.42, by - s * (0.62 + wy * 0.8), s * 0.03, shade(m.wing, -0.3));
+    for (let i = 0; i < 3; i++) poly(c, [[-s * (0.15 + i * 0.15), by - s * 0.24], [-s * (0.1 + i * 0.15), by - s * 0.38], [-s * (0.04 + i * 0.15), by - s * 0.24]], m.trim);
+  }
+  const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg, crystal, cannon, plant, turtle, dragon };
 
   // ------------------------------------------------------------------ public
   // WHAT: PUBLIC. get(key) = the line of M for a unit (grunt if unknown); draw(...) paints it; portrait(key, px, bust) makes a cached picture for cards.
