@@ -35,7 +35,8 @@ const match = (A, Bt, seed) => (duel(A, Bt, seed) + (1 - duel(Bt, A, seed + 1)))
 async function rateNew(st, ghost) {
   const me = teamOf(ghost); if (!me.team.length) return;
   const rivals = await st.poolSample(RIVALS, [ghost.id]);
-  let mine = elo(ghost);
+  // v112 (review #199, David: "whenever a ghost is added, it is seeded by playing against many ghosts, starting elo 1000"): every new ghost starts at 1000
+  let mine = 1000;
   for (const o of rivals) {
     const them = teamOf(o); if (!them.team.length) continue;
     const s = match(me, them, (ghost.id * 7919 + o.id) >>> 0), e = expect(mine, elo(o));
@@ -45,8 +46,8 @@ async function rateNew(st, ghost) {
   await st.setGelo(ghost.id, Math.round(mine * 10) / 10);
   return mine;
 }
-// WHAT: the opponent of a Gauntlet floor (see the guide above). exclude = this climb's own team and the ghosts already met; a player's own ghosts are
-// skipped while the pool has others. null = nobody to fight (an empty top: the climber is crowned).
+// WHAT: the opponent of a Gauntlet floor (see the guide above). exclude = this climb's own team and the ghosts already met (v112: a player's own
+// ghosts may come up too, at random). null = nobody to fight (an empty top: the climber is crowned).
 // v106b (review #193, David: "the gauntlet has variable steps as always: beat the champ and new step arrives and you adjust that formula of percentile"):
 // the tower is as tall as the champion's climb (its wins + 1, at least 2), so every new champion adds a floor and the percentile ranges follow.
 // WHAT: the number of floors right now (the top one = the champion).
@@ -55,8 +56,8 @@ async function towerOpp(st, floor, pid, teamId, faced, staleBefore) {
   const c0 = await st.getChampion(teamId), N = c0 ? Math.max(2, (c0.wins | 0) + 1) : 2;
   const top = async () => c0 && !(faced || []).includes(c0.id) ? c0 : null;
   if (floor >= N) return top();
-  let pool = await st.listGhosts([teamId].concat(faced || []), staleBefore, 3000);
-  const others = pool.filter(t => t.pid !== pid); if (others.length >= 4) pool = others;
+  // v112 (review #199, David: "A player may play their own ghosts as well in gauntlet, its random"): your own ghosts are in the draw like anyone's
+  const pool = await st.listGhosts([teamId].concat(faced || []), staleBefore, 3000); void pid;
   if (!pool.length) return top();
   pool.sort((a, b) => elo(a) - elo(b));
   const n = pool.length, lo = floor <= 1 ? 0 : (floor - 1) / (N - 1), hi = floor <= 1 ? 0.1 : floor / (N - 1);
