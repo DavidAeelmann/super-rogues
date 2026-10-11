@@ -931,16 +931,15 @@ button.cprice.confirm { background: linear-gradient(180deg, #ff9a7a, #e0604a); b
 /* =====================================================================================================
    v29 (owner, 2026-09-29: "on the PC the game's framing is horrible ... improve the UI/UX, make it more child
    friendly, it still looks amateur"). Two parts:
-   1. a bright cartoon theme on every screen: a sky backdrop, rounded fonts (Fredoka for titles and buttons, Nunito for
+   1. a bright cartoon theme on every screen: a sky backdrop, rounded fonts (Fredoka for titles and buttons, Inter for
       text, served from /fonts), chunky candy buttons, soft rounded cards, colourful choice cards, a meadow board;
    2. a full-screen stage on computers (body.desk): the header spans the screen, every screen is centred in the space
       left, the board is sized by the screen height with the panel beside it, the map puts the party in a side column
       and the title screen becomes two columns.
    ===================================================================================================== */
 @font-face { font-family: 'Fredoka'; src: url(fonts/fredoka.woff2) format('woff2'); font-weight: 400 700; font-display: swap; }
-@font-face { font-family: 'Nunito'; src: url(fonts/nunito.woff2) format('woff2'); font-weight: 400 800; font-display: swap; }
 :root {
-  --fun: 'Fredoka', 'Nunito', system-ui, sans-serif; --serif: var(--fun);
+  --fun: 'Fredoka', 'Inter', system-ui, sans-serif; --serif: var(--fun);
   --bg: #3a45c8; --text: #fff; --dim: #cdd5ff; --line: #ffffff30;
   --panel: #2f3a9e; --panel2: #3a47b3; --well: #1c2478;
   --card: linear-gradient(180deg, #3b4bbd 0%, #2e3a9f 100%); --card-line: #ffffff33;
@@ -948,7 +947,7 @@ button.cprice.confirm { background: linear-gradient(180deg, #ff9a7a, #e0604a); b
   --gold: #ffd23f; --gold-hi: #ffe98a; --gold-lo: #e09b00; --green: #3ddc84; --red: #ff6b7e; --blue: #4aa3ff; --purple: #c29bff;
   --r: 16px;
 }
-html, body { font-family: 'Nunito', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background-color: #3d4fd8; }
+html, body { font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background-color: #3d4fd8; }
 body {
   color: var(--text);
   background:
@@ -1005,7 +1004,7 @@ button.big { font-size: 18px; min-height: 50px; border-radius: 16px; }
 button.on { outline: 3px solid var(--gold); outline-offset: 2px; }
 .chip { background: linear-gradient(180deg, #6f97ff, #4a70f0); border-radius: 999px; }
 .chip.on { background: linear-gradient(180deg, #ffe46b, #ffc21a); color: #5a3000; text-shadow: none; }
-input, select, textarea { background: #fff; color: #1b2270; border: 2px solid #c9d2ff; border-radius: 12px; box-shadow: inset 0 2px 0 #0000000d; font-family: 'Nunito', system-ui, sans-serif; }
+input, select, textarea { background: #fff; color: #1b2270; border: 2px solid #c9d2ff; border-radius: 12px; box-shadow: inset 0 2px 0 #0000000d; font-family: 'Inter', system-ui, sans-serif; }
 input::placeholder, textarea::placeholder { color: #8a92c4; }
 input:focus, textarea:focus { outline: 3px solid var(--gold); border-color: var(--gold-lo); }
 
@@ -1424,7 +1423,7 @@ h2 { margin: var(--s2) 0 var(--s3); } h3 { margin: var(--s4) 0 var(--s2); font-s
 .title .lineup img { border-radius: 20px; box-shadow: 0 0 0 4px #fff, 0 14px 30px #0b115c66; }
 .title .lineup img.mid { box-shadow: 0 0 0 4px var(--gold), 0 0 34px #ffd23f99, 0 16px 34px #0b115c77; }
 button.cta { display: grid; justify-items: center; gap: 1px; line-height: 1.15; padding-top: 8px; padding-bottom: 8px; }
-button.cta small { font-family: 'Nunito', system-ui, sans-serif; font-weight: 700; font-size: 12.5px; letter-spacing: 0; color: #6b3d00; }
+button.cta small { font-family: 'Inter', system-ui, sans-serif; font-weight: 700; font-size: 12.5px; letter-spacing: 0; color: #6b3d00; }
 .labtile { box-shadow: 0 3px 0 #6a3fb0aa, 0 8px 18px #0b115c38; }
 /* results, profile, ladder: tighter, cleaner grids */
 .rh { padding: 10px 12px; }
@@ -1859,7 +1858,7 @@ body.desk .logo-big .mark { width: 96px; height: 96px; } body.desk .logo-big .w1
 .mrow:hover { background: #ffffff14 !important; }
 .mrow.on { background: #ffd23f22 !important; }   /* v62h: the language in use */
 .mrow > svg.ui { width: 26px; height: 26px; color: #ffd23f; }
-.mrow span { flex: 1; min-width: 0; display: grid; gap: 1px; } .mrow b { font: 600 17px/1.2 var(--fun); } .mrow small { font: 600 13px/1.3 'Nunito', system-ui, sans-serif; color: #ffffffb3; }
+.mrow span { flex: 1; min-width: 0; display: grid; gap: 1px; } .mrow b { font: 600 17px/1.2 var(--fun); } .mrow small { font: 600 13px/1.3 'Inter', system-ui, sans-serif; color: #ffffffb3; }
 .mrow .chev { width: 18px; height: 18px; opacity: .6; }
 .mrow.sub { min-height: 40px; padding: 4px 12px 4px 38px; } .mrow.sub b { font-size: 15px; } .mrow.sub > svg.ui { width: 20px; height: 20px; }   /* v62 (review #82): a sub item under Ladder */
 .mlist .mrow + .mrow { border-top: 1px solid #ffffff14 !important; border-radius: 0; }
@@ -1871,7 +1870,7 @@ body.desk .logo-big .mark { width: 96px; height: 96px; } body.desk .logo-big .w1
 body.desk .logo-big .mark { width: 112px; height: 112px; } body.desk .logo-big .w1 { font-size: 30px; } body.desk .logo-big .w2 i { font-size: 116px; -webkit-text-stroke-width: 14px; text-shadow: 0 9px 0 #1a1f6b, 0 16px 24px #050a4a88; }
 
 /* v49 (review #61): descriptions in the reading font (titles and buttons keep the chunky one) */
-:root { --read: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+:root { --read: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 .small, .abil, .abl, .eve, .srd, .rangeline, .fw, .card .small, .stock .small, .opt .small, .evch .t .eve, .idetail .small, .setline, .ssub, .hint, .mrow small, .rmeta, .xpnext i, .lugain, .howbasics li span { font-family: var(--read); }
 .card.opt .small, .evch .t .eve, .stock .small, .srelic .srd { font-weight: 600; }
 svg.ui + b, b + svg.ui { margin-left: 2px; }
@@ -2084,7 +2083,7 @@ body.desk .sheet.gearsheet { max-width: 640px; }
 /* ==================================================================== v58 (review #70, David): the polish batch */
 /* a more readable body typeface (Inter, self-hosted, OFL); titles and buttons keep Fredoka */
 @font-face { font-family: 'Inter'; src: url(fonts/inter.woff2) format('woff2'); font-weight: 400 800; font-display: swap; }
-:root { --read: 'Inter', 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+:root { --read: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* standard sizes and colour meanings: yellow = the main action and key rewards only */
   --btn-h: 46px; --btn-h-big: 54px; --btn-h-sm: 34px; --radius: 16px;
   --c-primary: #ffc21a; --c-accent: #5fd0ff; --c-pick: #7dffb0; --c-magic: #9a6bff; --c-danger: #e0474f;
@@ -2865,3 +2864,46 @@ button.achc.got { cursor: pointer; }
 .champcard .ccteam { display: flex; flex-wrap: wrap; justify-content: flex-end; max-width: 92px; gap: 2px; } .champcard .ccteam img { width: 28px; height: 28px; border-radius: 8px; }
 @media (max-height: 680px) { .towerscr.gate .gsub { font-size: 13px; margin: 2px auto 2px; } .towerscr.gate .trules { gap: 4px; margin-top: 4px; } .towerscr.gate .trules li { padding: 5px 10px; font-size: 13px; }
   .towerscr.gate .trules li.champcard { padding: 4px 8px; } .champcard .ccteam img { width: 24px; height: 24px; } .towerscr.gate .towerart { transform: scale(.82); margin: -14px auto -16px; } }
+
+/* ==== v110 (review #197, David: "Key Style Guide Guidelines. Typography: max 2 font families (one punchy header font, one ultra-legible clean sans-serif
+   for body descriptions). Color Palette: all text passes WCAG AA contrast against dark blue/purple backgrounds. Buttons & States: explicit Hover/Pressed/
+   Disabled visual feedback states across all interactive buttons").
+   FONTS: Fredoka (--fun: titles, buttons, numbers) + Inter (--read: body text and descriptions). Nunito is gone.
+   CONTRAST: tools/tests/interface.mjs checks every text of every state against AA (4.5:1, large text 3:1) and fails below it.
+   STATES: one shared layer for every tappable thing: hover = brighter (mouse only), pressed = darker and pushed down, disabled = faded grey with no
+   press, keyboard focus = a yellow ring. ==== */
+:root { --read: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --fun: 'Fredoka', 'Inter', system-ui, sans-serif; }
+html, body, input, select, textarea, button.cta small { font-family: var(--read); }
+
+/* contrast: event choices (deeper colours so white and the coloured keywords read) */
+.evch { background: linear-gradient(180deg, #5b2bb5, #3f1a8c); }
+.evch.isfight { background: linear-gradient(180deg, #9a3418, #5e1a08); }
+.evch.isreq { background: linear-gradient(180deg, #0e5f63, #083a45); }
+.evch.isreq.locked { background: linear-gradient(180deg, #4a5490, #353d70); }
+/* hero role tags */
+.pt-damage { --tc: #c0392b; } .pt-tank { --tc: #2563eb; } .pt-control { --tc: #7c3aed; } .pt-heal { --tc: #15803d; } .pt-speed { --tc: #b45309; } .pt-area { --tc: #be185d; } .pt-summon { --tc: #0f766e; } .pt-upgrade { --tc: #475569; }
+/* enemy cards, the fight tag, the auto-equip button */
+.fo { background: linear-gradient(180deg, #c43a55, #9a2440); }
+.etag.efight { background: #c2410c; }
+.gbar button.gauto { background: linear-gradient(180deg, #7a4fe0, #5a2fc8) !important; }
+.gauto .gon { background: #00000040; }
+.shead .chip { background: #00000040; }
+/* small light texts that were a little too faint */
+.pstatb span { color: #ffe9a0; } .klock p { color: #f2eee6; } .peekt .role { color: #fff3b0; }
+.sp-lv, .pp .sp-lv, .sp-row .sp-lv { color: #ffffffe0; } .gtab i { color: #ffffffeb; } .gsock span { color: #ffffffd9; }
+.rewards2 .rw.rw-up b, .rewards2 .rw.rw-pos b { color: #6ff5a8; }
+.klock button:not(.primary) { background: #34409e; }
+/* the chosen power on the start pedestal keeps white text (the dark text is for the bright card style) */
+.srelics.big .srelic.ped.on .srt b, .srelics.big .srelic.ped.on .srd, .srelics.big .srelic.ped.on .srd * { color: #fff !important; }
+/* names on the VS splash sit on the league colour: a dark outline keeps them readable */
+.vsname b { text-shadow: 0 2px 0 #000a, 1px 1px 0 #0009, -1px -1px 0 #0009, 1px -1px 0 #0009, -1px 1px 0 #0009; }
+
+/* states */
+:where(button, a[href], .evch, .card.opt, .banner, .srelic, .tpick, .gitem, .gsock, .chip, .plink, .mrow, .pm, .fr, .lvchip, .relicbtn, .gpg) { -webkit-tap-highlight-color: transparent; transition: filter .08s, transform .08s; }
+@media (hover: hover) {
+  :where(button, a[href], .evch, .card.opt, .banner, .srelic, .tpick, .gitem, .gsock, .chip, .plink, .mrow, .pm, .fr, .lvchip, .relicbtn, .gpg):hover:not(:disabled):not([disabled]) { filter: brightness(1.12); cursor: pointer; }
+}
+:where(button, a[href], .evch, .card.opt, .banner, .srelic, .tpick, .gitem, .gsock, .chip, .plink, .mrow, .pm, .fr, .lvchip, .relicbtn, .gpg):active:not(:disabled):not([disabled]) { filter: brightness(.86); }
+button:active:not(:disabled):not(.v2):not(.banner) { translate: 0 2px; }
+:where(button, a[href], .evch, .card.opt, .banner, .srelic, .tpick, .gitem, .gsock, .chip, .plink, .mrow, .pm, .fr, .lvchip, .relicbtn, .gpg):focus-visible { outline: 3px solid #ffe46b; outline-offset: 2px; }
+button:disabled, button[disabled], .evch[disabled] { opacity: .5; filter: grayscale(.7); cursor: not-allowed; translate: none; }

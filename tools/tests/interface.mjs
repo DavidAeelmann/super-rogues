@@ -37,9 +37,43 @@ const AUDIT = `(() => {
   }
   return bad;
 })()`;
+// v110 (review #197, David: "Ensure all text passes WCAG AA contrast standards against dark blue/purple backgrounds"): every visible text on every state
+// is checked against the colour behind it (solid colours and gradients of its boxes blended down to the page; the average of a gradient's stops).
+// AA = 4.5:1, or 3:1 for large text (24px, or 18.66px bold). Text with an outline (-webkit-text-stroke or a dark text-shadow ring) counts as passing.
+const CONTRAST = `(() => {
+  const P = s => { const m = /rgba?\\(([^)]+)\\)/.exec(s); if (!m) return null; const v = m[1].split(/[ ,\\/]+/).filter(Boolean).map(Number); return [v[0], v[1], v[2], v.length > 3 ? v[3] : 1]; };
+  const stops = s => (s.match(/rgba?\\([^)]+\\)/g) || []).map(P);
+  const L = c => { const f = x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+  const over = (top, bot) => { const a = top[3]; return [top[0] * a + bot[0] * (1 - a), top[1] * a + bot[1] * (1 - a), top[2] * a + bot[2] * (1 - a), 1]; };
+  const layers = el => { const out = []; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (+cs.opacity < 0.99 || /url\\(/.test(cs.backgroundImage)) return null;
+      const g = cs.backgroundImage && cs.backgroundImage !== 'none' && /gradient/.test(cs.backgroundImage) ? stops(cs.backgroundImage).filter(Boolean) : [];
+      if (g.length) { const avg = [0, 1, 2, 3].map(i => g.reduce((a, c) => a + c[i], 0) / g.length); out.push(avg); if (avg[3] > 0.95) break; }
+      const b = P(cs.backgroundColor); if (b && b[3] > 0) { out.push(b); if (b[3] > 0.95) break; } }
+    return out; };
+  const res = [], seen = new Set(), vh = innerHeight;
+  const root = document.querySelector('#modal:not([hidden])') || document.body;
+  const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) {
+    const t = n.textContent.trim(); if (!t || !/[A-Za-z0-9À-ÿ]/.test(t)) continue;
+    const el = n.parentElement; if (!el || seen.has(el) || el.closest('[hidden],[aria-hidden=true],canvas,svg')) continue; seen.add(el);
+    const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2 || r.bottom < 0 || r.top > vh) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden') continue;
+    if (parseFloat(cs.webkitTextStrokeWidth) >= 1) continue;
+    if (/(-?[0-9.]+px\\s+){2}[0-9.]+px/.test(cs.textShadow) && (cs.textShadow.match(/rgba?\\(/g) || []).length >= 4) continue;
+    if (el.closest('[disabled], .locked')) continue;   // inactive controls are exempt (WCAG 1.4.3)
+    let fg = P(cs.color); if (!fg) continue;
+    const ls = layers(el); if (!ls) continue; let bg = [61, 79, 216, 1]; for (let i = ls.length - 1; i >= 0; i--) bg = over(ls[i], bg);
+    const f = over(fg, bg), a = L(f), b = L(bg), ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    const px = parseFloat(cs.fontSize), large = px >= 24 || (px >= 18.66 && +cs.fontWeight >= 700), need = large ? 3 : 4.5;
+    if (ratio + 0.01 < need) { const cls = (el.className && el.className.baseVal == null ? '.' + String(el.className).trim().split(/\\s+/).join('.') : ''); const par = el.parentElement; res.push({ sel: el.tagName.toLowerCase() + cls + ' < ' + (par ? par.tagName.toLowerCase() + (par.className && typeof par.className === 'string' ? '.' + par.className.trim().split(/\\s+/)[0] : '') : ''), text: t.slice(0, 30), ratio: Math.round(ratio * 100) / 100, need, fg: cs.color, bg: 'rgb(' + bg.slice(0, 3).map(Math.round).join(',') + ')' }); }
+  }
+  return res;
+})()`;
+const lowC = new Map();
 let dev = '', lang = '';
 const audit = async label => {
   checks++; const bad = await ev(AUDIT);
+  for (const c of (await ev(CONTRAST)) || []) { const k = c.sel + ' ' + c.fg + ' on ' + c.bg; if (!lowC.has(k)) lowC.set(k, Object.assign(c, { where: dev + ' ' + lang + ' ' + label })); }
   if (bad && bad.length) { fails++; console.log(`FAIL ${dev} ${lang} ${label}: ${bad.slice(0, 3).join('; ')}`); await shot(`ia-${dev}-${lang}-${label.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}`); } else oks++;
 };
 const DEVICES = [{ name: 'phone', w: 390, h: 740 }, { name: 'phone-small', w: 360, h: 640 }];
@@ -114,6 +148,7 @@ for (dev of DEVICES.map(d => d)) {
     errors.length && console.log('errors so far:', errors.slice(0, 2));
   }
 }
+if (lowC.size) { fails++; console.log(`FAIL contrast: ${lowC.size} text style(s) below WCAG AA`); for (const c of lowC.values()) console.log(`  LOW ${c.ratio}:1 (needs ${c.need}) ${c.sel} "${c.text}" ${c.fg} on ${c.bg} [${c.where}]`); } else console.log('contrast: every text passes WCAG AA');
 console.log(`interface: ${oks} of ${checks} states fine, ${fails} with a problem (${LANGS.join(',')})${errors.length ? ', JS errors: ' + errors.slice(0, 3).join(' | ') : ''}`);
 try { ws.close(); } catch (_) {}
 chrome.kill(); server.kill();

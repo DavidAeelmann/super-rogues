@@ -275,7 +275,7 @@
     ctx.fillStyle = hg; rr(bx, by, bw * Math.max(0, u.hp / u.maxHp), 4.5, 2); ctx.fill();
     if (u.shield > 0 && u.shieldU > s) { ctx.fillStyle = '#e8ecff'; ctx.fillRect(bx, by, Math.min(bw, bw * u.shield / u.maxHp), 2); }
     if (u.maxMana > 0) { ctx.fillStyle = '#000b'; ctx.fillRect(bx - 1, by + 5, bw + 2, 3); ctx.fillStyle = '#5fa8ff'; ctx.fillRect(bx, by + 5, bw * Math.min(1, u.mana / u.maxMana), 2); }
-    if (u.lvl > 1 && hero && u.kind === 'hero') { ctx.font = "700 10px 'Fredoka', 'Nunito', system-ui, sans-serif"; ctx.fillStyle = '#ffcf5a'; ctx.textAlign = 'left'; ctx.fillText(u.lvl, bx + bw + 2, by + 5); }
+    if (u.lvl > 1 && hero && u.kind === 'hero') { ctx.font = "700 10px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.fillStyle = '#ffcf5a'; ctx.textAlign = 'left'; ctx.fillText(u.lvl, bx + bw + 2, by + 5); }
     // review #44: status effects as coloured badges (glyph on a disc) above the bars, one colour per effect
     const marks = [];
     if (u.st.frozenU > s) marks.push(['❄', '#3fb8e8']);
@@ -353,7 +353,7 @@
       if (f.k === 'num' || f.k === 'text') {
         const u = W.byId[f.id]; const p = u ? unitPos(v, W, u, T) : hexScreen(v, f.c, f.r);
         ctx.globalAlpha = 1 - k * k;
-        ctx.font = (f.k === 'text' ? '700 ' + Math.max(12, Math.round(size * 0.55)) : (f.big ? '700 ' : '600 ') + Math.max(f.big ? 16 : 13, Math.round(size * (f.big ? 0.78 : 0.58)))) + "px 'Fredoka', 'Nunito', system-ui, sans-serif";   // v58: numbers big enough to read
+        ctx.font = (f.k === 'text' ? '700 ' + Math.max(12, Math.round(size * 0.55)) : (f.big ? '700 ' : '600 ') + Math.max(f.big ? 16 : 13, Math.round(size * (f.big ? 0.78 : 0.58)))) + "px 'Fredoka', 'Inter', system-ui, sans-serif";   // v58: numbers big enough to read
         ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
         const y = p.y - size * 2.2 - k * size * (f.k === 'text' ? 0.6 : 1.0), x = p.x + (f.k === 'num' ? ((f.t0 * 7) % 11 - 5) * size * 0.05 : 0);
         const pop = k < 0.15 ? 1 + (1 - k / 0.15) * (f.big ? 0.8 : 0.35) : 1;
@@ -389,7 +389,7 @@
         ctx.globalAlpha = (1 - k) * 0.3; ctx.fillStyle = f.color || '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y - size * 0.7, size * (0.4 + k * 0.5), 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 1;
       } else if (f.k === 'banner') {
-        ctx.globalAlpha = k < 0.8 ? 1 : (1 - k) / 0.2; ctx.font = '700 ' + Math.round(size * 0.9) + "px 'Fredoka', 'Nunito', system-ui, sans-serif";
+        ctx.globalAlpha = k < 0.8 ? 1 : (1 - k) / 0.2; ctx.font = '700 ' + Math.round(size * 0.9) + "px 'Fredoka', 'Inter', system-ui, sans-serif";
         ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.strokeText(TT(f.text).toUpperCase(), v.w / 2, v.h * 0.4);
         ctx.fillStyle = '#ffcf5a'; ctx.fillText(TT(f.text).toUpperCase(), v.w / 2, v.h * 0.4); ctx.globalAlpha = 1;
       }
@@ -499,7 +499,7 @@
     }
     ctx.translate(v.w / 2, y); ctx.scale(pop, pop);
     const txt = TT(win ? 'VICTORY!' : 'DEFEAT'), fs = Math.round(Math.min(v.w * 0.14, size * 1.8));
-    ctx.font = `700 ${fs}px 'Fredoka', 'Nunito', system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    ctx.font = `700 ${fs}px 'Fredoka', 'Inter', system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.lineWidth = fs * 0.22; ctx.strokeStyle = win ? '#1b2270' : '#2a0610'; ctx.strokeText(txt, 0, fs * 0.08);
     ctx.lineWidth = fs * 0.12; ctx.strokeStyle = win ? '#d08600' : '#b52c3c'; ctx.strokeText(txt, 0, 0);
     const gr = ctx.createLinearGradient(0, -fs / 2, 0, fs / 2);
@@ -604,7 +604,7 @@
       const u = W.byId[c.id]; if (!u) continue;
       const p = unitPos(v, W, u, T), k = c.t / (c.big ? 1.5 : 1.1), pop = c.t < 0.12 ? 0.7 + c.t / 0.12 * (c.big ? 0.8 : 0.45) : (c.big ? 1.5 : 1.15) - Math.min(c.big ? 0.4 : 0.15, (c.t - 0.12));
       ctx.save(); ctx.globalAlpha = k < 0.75 ? 1 : (1 - k) / 0.25; ctx.translate(p.x, p.y - size * 2.6 - k * size * 0.4); ctx.scale(pop, pop);
-      ctx.font = '700 ' + Math.round(size * (c.big ? 0.8 : 0.62)) + "px 'Fredoka', 'Nunito', system-ui, sans-serif"; ctx.textAlign = 'center';
+      ctx.font = '700 ' + Math.round(size * (c.big ? 0.8 : 0.62)) + "px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.textAlign = 'center';
       ctx.lineJoin = 'round'; ctx.lineWidth = 11; ctx.strokeStyle = c.col; ctx.globalAlpha *= 0.35; ctx.strokeText(TT(c.text).toUpperCase(), 0, 0); ctx.globalAlpha /= 0.35;
       ctx.lineWidth = 4.5; ctx.strokeStyle = '#000'; ctx.strokeText(TT(c.text).toUpperCase(), 0, 0); ctx.fillStyle = c.col; ctx.fillText(TT(c.text).toUpperCase(), 0, 0);
       ctx.restore();
@@ -620,7 +620,7 @@
     ctx.fillStyle = g; ctx.fillRect(x, y + 12, w * Math.max(0, b.hp / b.maxHp), 6);
     ctx.strokeStyle = '#e8b84a88'; ctx.lineWidth = 1; ctx.strokeRect(x, y + 12, w, 6);
     for (const f of [0.25, 0.5, 0.75]) { ctx.fillStyle = '#000a'; ctx.fillRect(x + w * f, y + 12, 1, 6); }
-    ctx.font = "700 12px 'Fredoka', 'Nunito', system-ui, sans-serif"; ctx.textAlign = 'left'; ctx.fillStyle = '#f3e6c4'; ctx.fillText(TT(b.name).toUpperCase(), x, y + 9);
+    ctx.font = "700 12px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.textAlign = 'left'; ctx.fillStyle = '#f3e6c4'; ctx.fillText(TT(b.name).toUpperCase(), x, y + 9);
     ctx.textAlign = 'right'; ctx.fillStyle = '#e8b84a'; ctx.fillText(Math.max(0, Math.round(b.hp)) + ' / ' + b.maxHp, x + w, y + 9);
   }
 
