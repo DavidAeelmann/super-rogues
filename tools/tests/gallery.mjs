@@ -18,13 +18,13 @@ ws.onmessage = m => { const d = JSON.parse(m.data); if (d.id && pending[d.id]) {
 const send = (method, params = {}) => new Promise(res => { const i = ++id; pending[i] = res; ws.send(JSON.stringify({ id: i, method, params })); });
 const keys = ['bastion', 'vex', 'pyra', 'glacia', 'brakk', 'lumen', 'kestrel', 'morrow', 'tempest', 'grimhook', 'mirage', 'rook', 'thorne', 'seraph', 'nyx', 'bramble', 'echo', 'blaze', 'hippolyta', 'deadshot', 'vesper', 'kage', 'rex', 'vey', 'pip', 'barley', 'azgul', 'grok', 'imhotep', 'leonidas', 'harlequin', 'sprocket', 'zephyr', 'bat', 'grunt', 'wolf', 'archer', 'brute', 'skulker', 'shaman', 'bomber', 'shieldbearer', 'hexer', 'golem', 'summoner', 'spitter', 'knight', 'imp', 'gorewarden', 'hollowking', 'mirewitch', 'colossus', 'skeleton', 'turret', 'prism', 'citadel', 'smolder', 'tom', 'ashwing', 'egg', 'footman', 'bowman'];
 if (process.env.KEYS) keys.splice(0, keys.length, ...process.env.KEYS.split(','));   // KEYS=onyx,dragon: only those
-const W = 6 * 90 + 110, H = keys.length * 92 + 20;
+const NP = process.env.POSES ? JSON.parse(process.env.POSES).length : 6, W = NP * 90 + 110, H = keys.length * 92 + 20;
 await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 2, mobile: false });
 await send('Page.navigate', { url: `http://localhost:${PORT}/` }); await sleep(1200);
 await send('Runtime.evaluate', { expression: `(() => {
   document.body.innerHTML = ''; const cv = document.createElement('canvas'); cv.width = ${W} * 2; cv.height = ${H} * 2; cv.style.width = '${W}px'; cv.style.height = '${H}px'; document.body.appendChild(cv);
   const c = cv.getContext('2d'); c.scale(2, 2); c.fillStyle = '#1a1f2b'; c.fillRect(0, 0, ${W}, ${H}); c.font = '11px sans-serif'; c.fillStyle = '#ccc';
-  const keys = ${JSON.stringify(keys)}; const poses = [{ t: 1 }, { t: 1, walk: 0.25 }, { t: 1, atk: 0.55 }, { t: 1, cast: 0.5 }, { t: 1, shell: 1 }, { t: 1, fly: 1 }];
+  const keys = ${JSON.stringify(keys)}; const poses = ${process.env.POSES || "[{ t: 1 }, { t: 1, walk: 0.25 }, { t: 1, atk: 0.55 }, { t: 1, cast: 0.5 }, { t: 1, shell: 1 }, { t: 1, fly: 1 }]"};   // v111: POSES='[{"t":1,"atk":0.9}]' for other frames
   keys.forEach((k, i) => { c.fillStyle = '#ccc'; c.fillText(k, 6, i * 92 + 56); poses.forEach((p, j) => B.Models.draw(c, k, 150 + j * 90, i * 92 + 86, 42, Object.assign({ face: 1 }, p), '#9df')); });
 })()` });
 await sleep(300);

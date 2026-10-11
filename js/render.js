@@ -220,6 +220,7 @@
       if (moving) { d.ph += dT * Math.max(1.2, u.ms) / 20; pose.walk = d.ph % 1; }
     } else if (u.m1t > u.m0t && T >= u.m0t && T < u.m1t && u.ms > 0) pose.walk = ((T - u.m0t) / Math.max(1, u.m1t - u.m0t)) % 1;
     const a = u.anim; if (a && a.k === 'atk' && T >= a.t0 && T <= a.t1) pose.atk = (T - a.t0) / Math.max(1, a.t1 - a.t0);
+    else if (a && a.k === 'atk' && T > a.t1 && T < a.t1 + 5) pose.rec = (T - a.t1) / 5;   // v111 (review #198): the follow-through after a blow
     const cd = B.Art && B.Art.castTicks ? B.Art.castTicks(u.key === 'clone' ? 'mirage' : u.key) : 14;   // review #45: long art animations
     if (T - u.castT >= 0 && T - u.castT < cd) pose.cast = (T - u.castT) / cd;
     if (u.dead) pose.dead = Math.max(0, Math.min(1, (T - u.deathT) / deadTicks(u)));   // v42: T, so the last death plays on in the slow motion after the fight
