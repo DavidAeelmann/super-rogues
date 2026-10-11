@@ -5,6 +5,14 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.de = {
     x: {
+      "Enemies come from the top. Tough heroes go in FRONT: they take the hits.": "Gegner kommen von oben. Zähe Helden stehen VORNE: sie fangen die Treffer ab.",
+      "Ranged heroes and healers are fragile: keep them in the BACK, behind a tank.": "Fernkämpfer und Heiler sind zerbrechlich: stell sie HINTEN hinter einen Tank.",
+      "Trees, rocks and ponds block the way. Enemies must walk around them: use them as walls.": "Bäume, Felsen und Teiche versperren den Weg. Gegner müssen außen herum: nutze sie als Mauern.",
+      "A gap between blockers is a CHOKEPOINT: one tank there holds back many enemies.": "Eine Lücke zwischen Hindernissen ist ein ENGPASS: ein Tank dort hält viele Gegner auf.",
+      "Assassins jump to your back row. Keep a fighter next to your ranged heroes.": "Assassinen springen in deine hintere Reihe. Stell einen Kämpfer neben deine Fernkämpfer.",
+      "Spread out against area attacks: heroes in a clump all get hit at once.": "Verteilt euch gegen Flächenangriffe: Helden im Haufen werden alle zugleich getroffen.",
+      "Got it": "Verstanden",
+      "When your team is full, a hero you buy replaces one of yours and takes its level, place and items.": "Ist dein Team voll, ersetzt ein gekaufter Held einen deiner Helden und übernimmt dessen Stufe, Platz und Gegenstände.",
       "Very tough": "Sehr zäh",
       "Area damage": "Flächenschaden",
       "Big single hits": "Wuchtige Einzeltreffer",

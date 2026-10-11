@@ -220,6 +220,15 @@ while (steps++ < 160) {
   }
   if (st.phase === 'deploy' && !st.battle) {
     fightsSeen++;
+    if (fightsSeen === 2) {   // v118 (review #205): the positioning coach: a tip over the board with its hexes glowing; Got it puts it away for good
+      const keep = await ev(`localStorage.getItem('balance.starts')`);
+      await ev(`__bal.closeVs && __bal.closeVs(); localStorage.setItem('balance.guide3', JSON.stringify(JSON.parse(localStorage.getItem('balance.guide3') || '[]').concat(['t_dep1', 't_dep2', 't_foes', 't_fight']))); localStorage.setItem('balance.starts', '2'); localStorage.removeItem('balance.coach'); __bal.ui.coachId = null; __bal.render()`); await sleep(900);
+      ok(await ev(`!!document.querySelector('.boardwrap .coach .cok') && /FRONT/.test(document.querySelector('.coach').textContent)`), 'v118 (review #205): the first positioning tip shows over the board (tough heroes in front)');
+      await shot('04b-coach'); await noVScroll('deploy with the coach');
+      await click('[data-act=coach-ok]'); await sleep(200);
+      ok(await ev(`JSON.parse(localStorage.getItem('balance.coach') || '[]').includes('c_front') && (!document.querySelector('.coach') || !/FRONT/.test(document.querySelector('.coach').textContent))`), 'v118: Got it marks the tip as seen; the next one may follow on a later screen');
+      await ev(`localStorage.setItem('balance.coach', JSON.stringify(['c_front','c_back','c_terrain','c_choke','c_dive','c_spread'])); localStorage.setItem('balance.starts', ${JSON.stringify(keep || '0')}); __bal.render()`); await sleep(150);
+    }
     if (fightsSeen === 1) {
       await shot('04-deploy'); await noHScroll('deploy'); await noVScroll('deploy');
       ok(await ev(`[...document.querySelectorAll('.foes .fo')].every(f => !!f.querySelector('.fw')) && document.querySelectorAll('.foes .fo, .foes .fs').length >= 1`), 'v52: before a fight, only enemies with abilities get a card; plain ones are small chips');

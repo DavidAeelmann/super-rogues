@@ -830,6 +830,35 @@
     return first === run.seed;
   }
   const tutSpeedOn = () => { tutVeteran(); return !!store.get('balance.tut.moved', false) && !store.get('balance.tut.speedDismissed', false); };
+  // v118 (review #205, David: "Improve the tutorial with more content. Specifically in hero positioning for battle, people dont understand the value or the
+  // point... Implement some nice visualizations why positioning is important, maybe explaining exploiting terrain, chokepoints, rangers are more fragile, etc.
+  // Tips that appear in the first few runs but only once each"): the COACH. On the deploy screen of a player's first runs, one tip at a time, each once
+  // (balance.coach = the ids seen): a short line over the board, and the hexes it talks about glow on the board (Render: o.coach) with arrows where enemies come.
+  // WHAT: the positioning tips: when it may show, which hexes glow, the colour and icon on them, the line.
+  const COACH = [
+    { id: 'c_front', hexes: () => coachRow(4), color: '#3ddc84', icon: '🛡', arrows: true, text: 'Enemies come from the top. Tough heroes go in FRONT: they take the hits.' },
+    { id: 'c_back', hexes: () => coachRow(7), color: '#4aa3ff', icon: '🏹', text: 'Ranged heroes and healers are fragile: keep them in the BACK, behind a tank.' },
+    { id: 'c_terrain', when: () => ((Run.mapOf(run) || { cells: [] }).cells).length > 0, hexes: () => ((Run.mapOf(run) || { cells: [] }).cells).map(t => ({ c: t.c, r: t.r })), color: '#ffb347', icon: '⛔', text: 'Trees, rocks and ponds block the way. Enemies must walk around them: use them as walls.' },
+    { id: 'c_choke', when: () => coachChokes().length > 0, hexes: coachChokes, color: '#ff5a8a', icon: '🚪', text: 'A gap between blockers is a CHOKEPOINT: one tank there holds back many enemies.' },
+    { id: 'c_dive', when: () => run.step >= 3, hexes: () => coachRow(7).concat(coachRow(6)), color: '#c77dff', icon: '🗡', text: 'Assassins jump to your back row. Keep a fighter next to your ranged heroes.' },
+    { id: 'c_spread', when: () => run.step >= 5, hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#ffd23f', icon: '💥', text: 'Spread out against area attacks: heroes in a clump all get hit at once.' },
+  ];
+  const coachRow = r => B.Hex.all().filter(h => h.r === r && !Run.blockedAt(run, h.c, h.r));
+  // WHAT: the free hexes on your side or in the middle with two or more blocked neighbours (gaps an enemy has to squeeze through).
+  function coachChokes() { const bl = (c, r) => Run.blockedAt(run, c, r); return B.Hex.all().filter(h => h.r >= 2 && h.r <= 5 && !bl(h.c, h.r) && B.Hex.neighbors(h.c, h.r).filter(n => bl(n.c, n.r)).length >= 2); }
+  const coachSeen = () => { const s = store.get('balance.coach', []); return Array.isArray(s) ? s : []; };
+  // WHAT: the coach tip to show on this deploy screen (null = none): the first runs only, never during the intro or the first fight of the first run (the tutorial bubbles talk there).
+  function coachTip() {
+    if (!run || run.phase !== 'deploy' || introStage() || (+store.get('balance.starts', 0) || 0) > 6) return null;
+    if ((+store.get('balance.starts', 0) || 0) <= 1 && run.step < 1) return null;
+    if (guideOn() && ['t_dep1', 't_dep2', 't_foes', 't_fight'].some(id => !guideSeen().includes(id))) return null;   // one bubble at a time: the tutorial's deploy tips first
+    if (ui.coachId && !coachSeen().includes(ui.coachId)) return COACH.find(t => t.id === ui.coachId) || null;
+    const seen = coachSeen(), t = COACH.find(x => !seen.includes(x.id) && (!x.when || x.when()));
+    ui.coachId = t ? t.id : null; return t || null;
+  }
+  // WHAT: what the board draws for the coach tip (glowing hexes, icon, arrows).
+  function coachDraw() { const t = coachTip(); return t ? { coach: { hexes: t.hexes(), color: t.color, icon: t.icon, arrows: !!t.arrows } } : {}; }
+  function coachDone() { const t = ui.coachId; if (!t) return; const s = coachSeen(); if (!s.includes(t)) store.set('balance.coach', s.concat(t)); ui.coachId = null; }
   function tutMoved() { if (!store.get('balance.tut.moved', false)) store.set('balance.tut.moved', true); const e = document.querySelector('.tutmove'); if (e) e.remove(); }
   function tutSpeedDisarm() { if (tutSpeedDisarm.h) { document.removeEventListener('pointerdown', tutSpeedDisarm.h, true); tutSpeedDisarm.h = null; } }
   function tutSpeedArm() {
@@ -933,7 +962,7 @@
       ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
         : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
       ${run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
-      <div class="boardwrap"><canvas id="board"></canvas><div class="depban" aria-hidden="true">${I('shield')} Deploy your units</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}</div>
+      <div class="boardwrap"><canvas id="board"></canvas><div class="depban" aria-hidden="true">${I('shield')} Deploy your units</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}</div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
       <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big" data-act="fight">${gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>
@@ -1222,7 +1251,9 @@
   function shopHTML() {
     const c = run.cur, rc = Run.rerollCost(run);
     const note = c.kind === 'heroShop' ? `<span class="lockpill">${run.heroes.length >= Run.teamMax(run) ? 'Full team: a new hero swaps in' : `Team ${run.heroes.length}/${Run.teamMax(run)}`}</span>` : '';
-    return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${note}</div>
+    // v118 (review #205, David: "In first hero shop visited put bubble saying when team is full, buying hero replaces an existing one of the same level"): once
+    const swapTip = c.kind === 'heroShop' && !store.get('balance.hint.hswap', 0) ? `<div class="coach shopcoach" style="--cc:#ffd23f"><span class="ci">🔄</span><span class="ct">When your team is full, a hero you buy replaces one of yours and takes its level, place and items.</span><button class="cok" data-act="hswap-ok">Got it</button></div>` : '';
+    return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${note}</div>${swapTip}
       <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div>
       <div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
   }
@@ -1471,7 +1502,7 @@
     cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', () => { ui.drag = null; drawPreview(); });
   }
   // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
-  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid }, introDraw(), extra || {})); }
+  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid }, introDraw(), coachDraw(), extra || {})); }
   // ---- v97 (review #179, David: "The very first time you press play, and choose a hero, cut to the battlefield and that hero drops in. Then after he is
   // moved, per indicated, an enemy weak unit comes in from the other side, the hero gets an exclamation mark in a speech bubble, and fight starts
   // seamlessly. Thats the first fight"). run.onb.stage: 'drop' (the hero falls onto the board) -> 'move' (the hint; the enemy is hidden) -> 'enter'
@@ -1522,16 +1553,23 @@
   // WHAT: converts a pointer event into a board hex (c, r).
   function evHex(e) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y) }; }
   function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
+  // v118 (review #205, "drag and drop heroes in hex grid, simple, and if dropped on another hero they swap places"): a hero is picked up by its whole figure
+  // (it stands taller than its hex), and dragging over another hero shows that one moving to the empty spot (they swap on drop)
+  // WHAT: your hero whose drawn figure is under the point (x, y), the nearest one.
+  function heroBodyAt(W, x, y) { if (!W || !view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead || u.side !== 0 || !u.uid) continue; const p = Render.hexScreen(view, u.c, u.r), s = view.size;
+    if (Math.abs(x - p.x) < s * 0.55 && y > p.y - s * 1.7 && y < p.y + s * 0.45) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
   // WHAT: pointer down on the board: pick up a hero (start of a drag) or tap a unit to see its info.
   function onDown(e) {
-    const { h } = evHex(e); const W = battle ? battle.W : preview; const u = unitAt(W, h);
+    const { x, y, h: h0 } = evHex(e); const W = battle ? battle.W : preview; let h = h0, u = unitAt(W, h);
+    if (!battle && (!u || u.side !== 0)) { const b = heroBodyAt(W, x, y); if (b) { u = b; h = { c: b.c, r: b.r }; } }
     const tk = !u && h && W && W.tk ? W.tk[B.Hex.key(h.c, h.r)] : null;
     if (u || tk) { ui.info = u ? u.id : tk; const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } }
     if (battle || !h) return;
     if (introStage() && introStage() !== 'move') return;   // v97: the intro lets the hero move once
     if (u && u.side === 0 && u.uid) { ui.drag = { uid: u.uid, from: h, key: u.key }; view.canvas.setPointerCapture(e.pointerId); }
   }
-  function onMove(e) { if (!ui.drag || battle) return; const { x, y, h } = evHex(e); drawPreview({ drop: h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r) ? h : null, dragGhost: { x, y, key: ui.drag.key } }); }
+  function onMove(e) { if (!ui.drag || battle) return; const { x, y, h } = evHex(e), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r), o = ok ? unitAt(preview, h) : null;
+    drawPreview({ drop: ok ? h : null, dragGhost: { x, y, key: ui.drag.key }, swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null }); }
   // review #39: a hero can't be placed on a tree, boulder, ridge or pond
   function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) sfx('deny'); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
   // WHAT: pointer up on the board: drop the hero on the new hex (rows 4-7 only, not on terrain) or select it; the first move ends the tutorial prompt.
@@ -2303,6 +2341,8 @@
     'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (introOn() && (run.relicOffer || []).length) { ui.startRelic = run.relicOffer[0]; ACT['start-go'](); return; }   // v97 (review #179): straight to the battlefield
       if ((run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
     'start-back': () => { ui.startStep = 1; render(); },
+    'coach-ok': () => { coachDone(); sfx('tap'); render(); },
+    'hswap-ok': () => { store.set('balance.hint.hswap', 1); render(); },
     'start-relic': id => { const was = ui.startRelic; ui.focusRelic = id; ui.startRelic = id; render(); if (was !== id && B.Juice) B.Juice.confettiAt('.start .srelic.ped.on .orb', 30); },
     'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((run.relicOffer || []).length && !ui.startRelic)) return; const intro = introOn(); store.set('balance.starts', (+store.get('balance.starts', 0) || 0) + 1); Run.pickStart(run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1;
       if (intro) { store.set('balance.intro', 1); Run.startIntro(run); ui.introT0 = 0; }   // v97 (review #179): the first fight is the intro
@@ -2312,7 +2352,7 @@
     // A power was picked at a level-up.
     spec: i => { Run.chooseSpec(run, +i); save(); render(); },
     // The big Fight! button on the deploy screen.
-    fight: () => startBattle(),
+    fight: () => { coachDone(); startBattle(); },
     // Battle speed 1x / 2x / 4x (4x is a Crown Shop perk). skip plays the fight at once (also a perk).
     speed: s => { if (+s === 4 && !hasPerk('speed4')) { toast(`4× speed is a Crown Shop unlock (👑 ${B.SHOP_ITEM.speed4.price}). 2× is free.`); return; } ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
     skip: () => { if (battle && battle.gau) { toast('Duels and the final fight cannot be skipped.'); return; } if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; } skipBattle(); },

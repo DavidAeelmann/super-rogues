@@ -183,6 +183,20 @@
     ctx.restore();
   }
 
+  // v118 (review #205): the coach on the deploy board: the hexes a tip talks about pulse in its colour with its icon, and (front-row tip) arrows show where enemies come from
+  // WHAT: draws a coach tip's glowing hexes, icons and arrows over the board.
+  function drawCoach(v, co, now) {
+    const { ctx, size } = v, k = 0.5 + 0.5 * Math.sin(now * 4);
+    ctx.save();
+    for (const h of co.hexes || []) { path(ctx, corners(v, h.c, h.r, size * 0.9)); ctx.globalAlpha = 0.5 + 0.3 * k; ctx.fillStyle = co.color; ctx.fill(); ctx.globalAlpha = 1; ctx.lineWidth = 3.5; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    ctx.globalAlpha = 1; ctx.font = `${Math.round(size * 0.5)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const h of co.hexes || []) { const p = hexScreen(v, h.c, h.r), y = p.y - size * 0.05 - k * size * 0.08; ctx.fillStyle = '#0b0f3fcc'; ctx.beginPath(); ctx.arc(p.x, y, size * 0.34, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(co.icon || '', p.x, y + size * 0.02); }
+    if (co.arrows) { ctx.strokeStyle = '#ff5c6e'; ctx.fillStyle = '#ff5c6e'; ctx.lineWidth = Math.max(2.5, size * 0.09); ctx.lineCap = 'round';
+      for (const c of [1, Math.floor(Hx.COLS / 2), Hx.COLS - 2]) { const a = hexScreen(v, c, 0), b = hexScreen(v, c, 3), y = a.y + (b.y - a.y) * ((now * 0.6) % 1);
+        ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y - size * 0.3); ctx.stroke(); ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - size * 0.25, b.y - size * 0.4); ctx.lineTo(b.x + size * 0.25, b.y - size * 0.4); ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(a.x, y, size * 0.1, 0, Math.PI * 2); ctx.fill(); } }
+    ctx.restore();
+  }
   // ------------------------------------------------------------------ terrain (review #39): cartoon trees, boulders,
   // ridges (standing things, depth-sorted with the units) and ponds (flat, part of the board)
   // WHAT: TERRAIN pictures (cartoon trees, boulders, ridges, ponds). drawTerrain draws one terrain hex; units behind a tree make it see-through.
@@ -347,6 +361,7 @@
     if (S.shake > 0.2 && !o.deploy) { S.shake = Math.min(S.shake, 4); ctx.translate(Math.sin(now * 61) * S.shake * 0.45, Math.cos(now * 47) * S.shake * 0.45); S.shake *= Math.pow(0.004, dt); } else S.shake = 0;   // v62p (review #112): no more flicker
     const boss = W && W.units.find(u => u.boss && u.side === 1), bd = backdrop(v, boss ? boss.key : null); if (bd) ctx.drawImage(bd, -12, -12, v.w + 24, v.h + 24); else { ctx.fillStyle = royal() ? '#1a1228' : '#9fd4ff'; ctx.fillRect(0, 0, v.w, v.h); }
     drawBoard(v, o, W);
+    if (o.coach) drawCoach(v, o.coach, now);
     if (!W) return;
     for (const z of W.zones) if (z.until > W.t) {
       const owner = z.src && W.byId[z.src], zs = owner && AF && AF.SPEC[owner.abil] && AF.SPEC[owner.abil].zone;
@@ -439,6 +454,8 @@
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, sd ? `rgba(200,20,40,${sd})` : royal() ? 'rgba(0,0,0,0.45)' : 'rgba(20,40,120,0.18)'); ctx.fillStyle = vg; ctx.fillRect(-10, -10, v.w + 20, v.h + 20);
     if (!o.deploy) bossBar(v, W);
     if (o.end) drawEnd(v, W, o.end, S, dt);
+    if (o.swapGhost) { const g = o.swapGhost, p = hexScreen(v, g.c, g.r); ctx.globalAlpha = 0.55; B.Models.draw(ctx, g.key, p.x, p.y, size * 1.3, { t: T / 20, face: 1 }); ctx.globalAlpha = 1;
+      ctx.font = `800 ${Math.round(size * 0.55)}px 'Fredoka', sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#0b0f3f'; ctx.strokeText('⇄', p.x, p.y - size * 1.5); ctx.fillStyle = '#ffe066'; ctx.fillText('⇄', p.x, p.y - size * 1.5); }   // v118: the hero that swaps into the empty spot
     if (o.dragGhost) {
       const g = o.dragGhost, art = B.Art && B.Art.sprite(g.key); ctx.globalAlpha = 0.65;
       if (art) B.Art.draw(ctx, art, g.x, g.y + size * 0.5, size * 1.3, { t: T / 20, face: 1 }); else B.Models.draw(ctx, g.key, g.x, g.y + size * 0.5, size * 1.3, { t: T / 20, face: 1 });
