@@ -5,6 +5,9 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.de = {
     x: {
+      "Toughness": "Zähigkeit",
+      "by Lv 5": "bis Stufe 5",
+      "Lv 1": "Stufe 1",
       "Raid the bandit camp: win a rare item": "Das Banditenlager überfallen: gewinne einen seltenen Gegenstand",
       "Hunt the elite pack: win a power": "Die Elite-Meute jagen: gewinne eine Kraft",
       "Break the horde: win +{g10} gold": "Die Horde zerschlagen: gewinne +{g10} Gold",

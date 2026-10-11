@@ -1061,7 +1061,8 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     ok(pairs.length >= 20 && pairs.every(([k, d]) => B.HEROES[k] && slug(B.HEROES[k].name) === d), 'v78 (review #155): each art folder in art.js is named after the hero as it is called now (' + pairs.filter(([k, d]) => !B.HEROES[k] || slug(B.HEROES[k].name) !== d).map(p => p.join('->')).join(', ') + ')');
     ok(fs.readdirSync(path.join(root, 'art')).every(d => names.has(d)), 'v78: no art folder with an old or unknown name');
     const paths = [...src.matchAll(/'art\/([\w-]+\/[\w.-]+)'/g)].map(m => m[1]).concat([...src.matchAll(/seq\('([\w-]+)', '(\w+)', (\d+)\)/g)].flatMap(m => Array.from({ length: +m[3] }, (_, i) => m[1] + '/' + m[2] + '-' + (i + 1) + '.webp')));
-    const missing = paths.filter(p => !fs.existsSync(path.join(root, 'art', p))); ok(paths.length > 100 && !missing.length, 'v78: every picture art.js lists exists (' + paths.length + ' checked' + (missing.length ? ', missing ' + missing.slice(0, 3).join(' ') : '') + ')'); }
+    // v116: since v113 (review #200) art.js lists splash pictures only (no battle sheets)
+    const missing = paths.filter(p => !fs.existsSync(path.join(root, 'art', p))); ok(paths.length >= 20 && !missing.length, 'v78: every picture art.js lists exists (' + paths.length + ' checked' + (missing.length ? ', missing ' + missing.slice(0, 3).join(' ') : '') + ')'); }
 }
 // v100 (review #182): the free picks go through every available hero of a class before any repeats, then in a new order
 {

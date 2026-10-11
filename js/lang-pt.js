@@ -5,6 +5,9 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.pt = {
     x: {
+      "Toughness": "Resistência",
+      "by Lv 5": "até o Nv 5",
+      "Lv 1": "Nv 1",
       "Raid the bandit camp: win a rare item": "Atacar o acampamento de bandidos: vença e ganhe um item raro",
       "Hunt the elite pack: win a power": "Caçar o bando de elite: vença e ganhe um poder",
       "Break the horde: win +{g10} gold": "Esmagar a horda: vença e ganhe +{g10} de ouro",

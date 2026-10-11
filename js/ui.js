@@ -571,11 +571,14 @@
   // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
   // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
   // WHAT: four bars of a hero's strengths, each against the best hero of the game.
-  let statMax = null;
+  // v116 (review #203, David: "The hero stats in selection dont make sense. Frost mage higher health than onyx? Use actual useful stats that take the role of the
+  // champ and scaling and abilities into account"): the four bars are MEASURED in the simulation (tools/hero-ratings.js writes B.HERO_RATE): Damage,
+  // Toughness (how long it stands alone: armor, shields, heals, rebirth...), Support (heals, shields and buffs on allies), Control (stuns, roots, taunts...).
+  // The solid part is Lv 1, the lighter part how far it grows by Lv 5.
   function statBars(h) {
-    if (!statMax) { statMax = { hp: 1, atk: 1, as: 0.01, range: 1 }; for (const k in HEROES) { const x = HEROES[k]; if (!x || x.summon || x.mob || x.boss || !x.hp) continue; for (const s in statMax) statMax[s] = Math.max(statMax[s], +x[s] || 0); } }
-    const bar = (label, s, cls) => `<span class="stb ${cls}"><i>${label}</i><u><b style="--v:${Math.max(0.08, Math.min(1, (+h[s] || 0) / statMax[s])).toFixed(2)}"></b></u></span>`;
-    return `<div class="sbars">${bar('Health', 'hp', 'hp')}${bar('Attack', 'atk', 'atk')}${bar('Speed', 'as', 'as')}${bar('Range', 'range', 'rg')}</div>`;
+    const R = B.HERO_RATE && B.HERO_RATE[h.key]; if (!R) return '';
+    const bar = (label, i, cls) => `<span class="stb ${cls}"><i>${label}</i><u><s style="--v:${Math.max(0.04, R[i + 4]).toFixed(2)}"></s><b style="--v:${Math.max(0.04, Math.min(R[i], R[i + 4])).toFixed(2)}"></b></u></span>`;
+    return `<div class="sbars">${bar('Damage', 0, 'atk')}${bar('Toughness', 1, 'hp')}${bar('Support', 2, 'sp')}${bar('Control', 3, 'cc')}</div><p class="sbkey"><b></b>Lv 1 <s></s>by Lv 5</p>`;
   }
   // WHAT: 'deal' the first time a start step shows (its cards fly in), '' on the redraws after a tap.
   function dealIn(step) { const k = (run && run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
