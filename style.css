@@ -2995,3 +2995,4 @@ body.desk .start.v3 .stage { max-height: 520px; }
 @keyframes goldGlow { 50% { box-shadow: 0 0 0 3px #fff6c0, 0 0 0 7px #ffd23fcc, 0 14px 30px #000c, 0 0 48px #ffd23f !important; } }
 .start.v3 .stage.pedestals .srelic.ped.on { outline: 0 !important; border: 0 !important; }
 .start.v3 .stage.pedestals .srelic.ped { border: 0 !important; outline: 0 !important; }
+.abname:has(+ .abl)::after { content: none; }   /* v115 (review #202): no dangling dot when the passive / active lines follow */

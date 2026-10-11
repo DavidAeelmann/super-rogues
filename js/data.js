@@ -242,7 +242,7 @@
     seraph: H({ name: 'Radiant', glyph: '😇', role: 'Tank', color: '#f0d27a',
       hp: 755, atk: 38, armor: 33, as: 0.7, range: 1, ms: 2, mana: 92, m0: 30, grow: 0.5,
       mods: { rampArmor: 2, rampArmorCap: 40 },
-      abil: 'consecrate', abName: 'Hallowed Ground', abDesc: 'Passive: +2 Defense every second (up to +40). Active: hallows the ground around her for 4s: enemies on it take 30% Magic as magic damage per second, allies on it heal 3% of their max Health per second.',
+      abil: 'consecrate', abName: 'Hallowed Ground', abDesc: 'Passive: +2 Defense per second (up to +40). Active: blesses the ground around her for 4s: enemies on it take 30% Magic per second, allies heal 3% max Health per second.',
       ab: { radius: 1, dur: 4, dps: 0.3, heal: 0.03, shield: 0 },
       specs: [
         [{ id: 'ser2a', name: 'Judgement', desc: 'Enemies on her holy ground take 20% more damage from everyone.', ab: { judge: 0.2 } },
@@ -257,7 +257,7 @@
     nyx: H({ name: 'Nyx', glyph: '🌑', role: 'Fighter', color: '#35c6d6',
       hp: 540, atk: 53, armor: 23, as: 0.9, range: 1, ms: 3, mana: 66, m0: 20, grow: 1.25,
       mods: { killAtk: 8, killAtkCap: 80 },
-      abil: 'eclipse', abName: 'Umbral Edge', abDesc: 'Passive: +8 Attack whenever an enemy dies within 3 hexes (up to +80). Active: her next 3 attacks deal an extra 100% Attack as magic damage and heal her for 20% of it.',
+      abil: 'eclipse', abName: 'Umbral Edge', abDesc: 'Passive: +8 Attack when an enemy dies within 3 hexes (up to +80). Active: her next 3 attacks deal +100% Attack as magic damage and heal her 20% of it.',
       ab: { hits: 3, bonus: 1, heal: 0.2 },
       specs: [
         [{ id: 'nyx2a', name: 'Hunger', desc: 'Each nearby death gives +4 more attack.', mods: { killAtk: 4 } },
@@ -287,7 +287,7 @@
     echo: H({ name: 'Lyric', glyph: '🎻', role: 'Support', color: '#c77dff',
       hp: 645, atk: 39, armor: 24, as: 0.75, range: 3, ms: 2, mana: 61, m0: 30, grow: 0.61,
       fl: ['crescendo'],
-      abil: 'anthem', abName: 'Rallying Refrain', abDesc: 'Passive: every 4s all allies gain +3% attack speed (Crescendo, stacks 10x). Active: allies within 2 hexes heal 90% Magic and gain +25% Attack for 4s.',
+      abil: 'anthem', abName: 'Rallying Refrain', abDesc: 'Passive: every 4s all allies get +3% attack speed (up to 10x). Active: allies within 2 hexes heal 90% Magic and get +25% Attack for 4s.',
       ab: { radius: 2, heal: 0.9, atk: 0.25, slow: 0, stun: 0 },
       specs: [
         [{ id: 'ech2a', name: 'Encore', desc: 'Rallying Refrain also gives +25% attack speed.', ab: { tempoAs: 0.25 } },
@@ -318,7 +318,7 @@
     hippolyta: H({ name: 'Skara', glyph: '🔱', role: 'Ranger', color: '#c98a3a',
       hp: 400, atk: 32, armor: 21, as: 1.0, range: 2, ms: 2.5, mana: 92, m0: 10, grow: 0.5,
       mods: { stackAs: 0.04, stackAsCap: 10, poisonOnHit: 0.012 },
-      abil: 'javelin', abName: 'Skyspear Barrage', abDesc: 'Passive: +4% attack speed per hit (10x) and her spear poisons. Active: hurls javelins at 3 enemies, 150% Attack as physical damage each, poisoning them for 2% of their max Health per second.',
+      abil: 'javelin', abName: 'Skyspear Barrage', abDesc: 'Passive: +4% attack speed per hit (up to 10x); her spear poisons. Active: javelins hit 3 enemies for 150% Attack each and poison them for 2% max Health per second.',
       ab: { count: 3, dmg: 1.5, poison: 0.02, root: 0 },
       specs: [
         [{ id: 'hip2a', name: 'Spear Dance', desc: 'Attack speed stacks 10 more times.', mods: { stackAsCap: 10 } },
@@ -332,7 +332,7 @@
       ] }),
     deadshot: H({ name: 'Deadeye', glyph: '🎯', role: 'Ranger', color: '#6a7a5a',
       hp: 625, atk: 115, armor: 12, as: 0.45, range: 7, ms: 1.8, mana: 54, m0: 20, crit: 0.2, fl: ['sniper'], grow: 1.8,
-      abil: 'headshot', abName: 'Longwatch Round', abDesc: 'Passive: +8% damage per hex to the target. Active: aims at the weakest enemy anywhere and fires for 400% Attack as physical damage, executing it below 15% Health.',
+      abil: 'headshot', abName: 'Longwatch Round', abDesc: 'Passive: +8% damage per hex of distance. Active: shoots the weakest enemy anywhere for 400% Attack; finishes it below 15% Health.',
       ab: { dmg: 4, shots: 1, stun: 0, camo: 0, exec: 0.15 },
       specs: [
         [{ id: 'dsh2a', name: 'Next in Line', desc: 'If Longwatch Round kills, he fires again at the next weakest enemy.', ab: { chainKill: 1 } },
@@ -375,7 +375,7 @@
       ] }),
     rex: H({ name: 'Fang', glyph: '🐕', role: 'Fighter', color: '#a0703a',
       hp: 515, atk: 34, armor: 23, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.71,
-      abil: 'howl', abName: 'Howl & Pounce', abDesc: 'Passive: regenerates 1% Health per second. Active: allies within 3 hexes gain +20% Attack and attack speed for 4s; Fang pounces on the nearest enemy and bites for 150% Attack as physical damage plus a bleed of 2% max Health per second for 3s.',
+      abil: 'howl', abName: 'Howl & Pounce', abDesc: 'Passive: regenerates 1% Health per second. Active: allies within 3 hexes get +20% Attack and attack speed for 4s, then Fang pounces on the nearest enemy: 150% Attack and a bleed of 2% max Health per second for 3s.',
       ab: { radius: 3, buff: 0.2, dmg: 1.5, bleed: 0.02, stun: 0, taunt: 0, reach: 0, cleave: 0 },
       specs: [
         [{ id: 'rex2a', name: 'Loyal', desc: 'His Howl also heals allies in range for 10% of their max Health.', ab: { howlHeal: 0.1 } },
@@ -403,7 +403,7 @@
       ] }),
     pip: H({ name: 'Jinx', glyph: '🤡', role: 'Controller', color: '#e0406a',
       hp: 740, atk: 53, armor: 22, as: 0.9, range: 2, ms: 2.5, mana: 49, m0: 25, dodge: 0.1, grow: 1.34,
-      abil: 'trick', abName: 'Grab Bag', abDesc: 'Pulls a random trick: a pie (150% Attack as physical damage, stuns 2s), balloons (every ally heals 85% Magic), juggling knives (5 knives, 100% Attack each), a confetti bomb (40% Attack + 20% Magic as magic damage, slows 50%) or a squirting flower (blinds 3s).',
+      abil: 'trick', abName: 'Grab Bag', abDesc: 'A random trick: a pie (150% Attack, 2s stun), balloons (all allies heal 85% Magic), 5 juggling knives (100% Attack each), a confetti bomb (40% Attack + 20% Magic, 50% slow) or a squirting flower (3s blind).',
       ab: { pie: 2, heal: 0.85, knives: 5, silence: 0, encore: 0 },
       specs: [
         [{ id: 'pip2a', name: 'Bigger Pie', desc: 'The pie stuns 1s longer.', ab: { pie: 1 } },
@@ -417,7 +417,7 @@
       ] }),
     barley: H({ name: 'Rumble', glyph: '🍺', role: 'Tank', color: '#b8792a',
       hp: 685, atk: 40, armor: 25, as: 0.8, range: 1, ms: 2, mana: 85, m0: 30, dodge: 0.2, grow: 0.83,
-      abil: 'keg', abName: 'Barrel Breaker', abDesc: 'Passive: drunken stagger gives 20% dodge. Active: smashes a barrel on adjacent enemies for 150% Attack as physical damage, stunning 1s and slowing, then takes a swig healing 15% of his max Health.',
+      abil: 'keg', abName: 'Barrel Breaker', abDesc: 'Passive: his drunken stagger gives 20% dodge. Active: smashes a barrel on adjacent enemies: 150% Attack, a 1s stun and a slow. Then a swig heals him 15% max Health.',
       ab: { radius: 1, dmg: 1.5, stun: 1, heal: 0.15, burn: 0 },
       specs: [
         [{ id: 'bar2a', name: 'Liquid Courage', desc: 'Every swig gives him +30% attack speed for 4s.', ab: { swigAs: 0.3 } },
@@ -431,7 +431,7 @@
       ] }),
     azgul: H({ name: 'Inferno', glyph: '😈', role: 'Fighter', color: '#c8321e',
       hp: 565, atk: 46, armor: 25, as: 0.8, range: 1, ms: 2.5, mana: 89, m0: 30, mods: { rageDmg: 1 }, grow: 1.34,
-      abil: 'hellfire', abName: 'Brimstone Nova', abDesc: 'Passive: +1% damage for every 1% Health missing. Active: sacrifices 10% of his current Health to blast every enemy within 2 hexes for 120% Attack + 70% Magic as magic damage, and burns them for 40% Attack per second for 3s.',
+      abil: 'hellfire', abName: 'Brimstone Nova', abDesc: 'Passive: +1% damage per 1% Health missing. Active: spends 10% of his Health to blast enemies within 2 hexes for 120% Attack + 70% Magic, then burns them for 40% Attack per second for 3s.',
       ab: { radius: 2, dmg: 1.2, apdmg: 0.7, burn: 0.4, cost: 0.1, imps: 0 },
       specs: [
         [{ id: 'azg2a', name: 'Sulfur Stoke', desc: 'Brimstone Nova burns twice as hard.', ab: { burn: 0.4 } },
@@ -445,7 +445,7 @@
       ] }),
     grok: H({ name: 'Boulder', glyph: '🪨', role: 'Tank', color: '#8a6a4a',
       hp: 900, atk: 56, armor: 23, as: 0.7, range: 1, ms: 2, mana: 76, m0: 30, mods: { ccResist: 0.5 }, grow: 1.02,
-      abil: 'boulder', abName: 'Boulder Toss', abDesc: 'Passive: thick skull halves crowd control on him. Active: hurls a boulder at the farthest enemy within 5 hexes: 200% Attack as physical damage and a 1.5s stun, and 100% Attack to enemies next to it.',
+      abil: 'boulder', abName: 'Boulder Toss', abDesc: 'Passive: crowd control on him lasts half as long. Active: hurls a boulder at the farthest enemy within 5 hexes: 200% Attack and a 1.5s stun, plus 100% Attack to enemies next to it.',
       ab: { dmg: 2, stun: 1.5, radius: 1, frenzy: 0 },
       specs: [
         [{ id: 'grk2a', name: 'Big Rock', desc: 'Enemies hit by the splash are stunned too, half as long.', ab: { splashStun: 0.5 } },
@@ -459,7 +459,7 @@
       ] }),
     imhotep: H({ name: 'Ankh', glyph: '🧟', role: 'Tank', color: '#c8b88a',
       hp: 860, atk: 48, armor: 30, as: 0.7, range: 1, ms: 1.8, mana: 71, m0: 30, mods: { revive: 0.3 }, grow: 0.5,
-      abil: 'wrap', abName: 'Linen of Ages', abDesc: 'Passive: once per fight, rises again at 30% Health. Active: bandages the 2 nearest enemies: rooted 2s, healing halved, and they decay for 3% of their max Health per second.',
+      abil: 'wrap', abName: 'Linen of Ages', abDesc: 'Passive: once per fight, rises again at 30% Health. Active: wraps the 2 nearest enemies: rooted 2s, healing halved, losing 3% max Health per second.',
       ab: { count: 2, root: 2, decay: 0.03, shield: 0, vuln: 0 },
       specs: [
         [{ id: 'imh2a', name: 'Mummify', desc: 'Wrapped enemies cannot use abilities while rooted.', ab: { mummify: 1 } },
@@ -473,7 +473,7 @@
       ] }),
     leonidas: H({ name: 'Phalanx', glyph: '🏛', role: 'Tank', color: '#b8322a',
       hp: 765, atk: 43, armor: 33, as: 0.75, range: 2, ms: 2, mana: 92, m0: 30, mods: { aura: [{ r: 1, stat: 'armor', val: 10 }] }, grow: 1.8,
-      abil: 'phalanx', abName: 'Phalanx', abDesc: 'Passive: adjacent allies gain +10 Defense. Active: raises his shield (allies within 1 hex take 30% less damage for 4s), then thrusts his spear through the 2 nearest enemies for 180% Attack as physical damage.',
+      abil: 'phalanx', abName: 'Phalanx', abDesc: 'Passive: adjacent allies get +10 Defense. Active: raises his shield (allies within 1 hex take 30% less damage for 4s), then spears the 2 nearest enemies for 180% Attack.',
       ab: { radius: 1, dr: 0.3, dmg: 1.8, hits: 2, stun: 0, taunt: 0 },
       specs: [
         [{ id: 'leo2a', name: 'Shield Bash', desc: 'Raising his shield stuns adjacent enemies for 0.75s.', ab: { bash: 0.75 } },
@@ -501,7 +501,7 @@
       ] }),
     sprocket: H({ name: 'Vial', glyph: '⚗', role: 'Support', color: '#5ab88a',
       hp: 710, atk: 51, armor: 22, as: 0.8, range: 3, ms: 2, mana: 50, m0: 20, grow: 0.83,
-      abil: 'flask', abName: 'Unstable Flasks', abDesc: 'Throws 3 random flasks: acid (65% Magic as magic damage, -20 Defense), healing (120% Magic to the weakest ally), frost (stun 1s) or poison (3% of max Health per second).',
+      abil: 'flask', abName: 'Unstable Flasks', abDesc: 'Throws 3 random flasks: acid (65% Magic, -20 Defense), healing (120% Magic to the weakest ally), frost (1s stun) or poison (3% max Health per second).',
       ab: { count: 3, radius: 0, heal: 1.2, acid: 0.65, mana: 0 },
       specs: [
         [{ id: 'spr2a', name: 'Bigger Batch', desc: 'Throws 1 more flask.', ab: { count: 1 } },
@@ -530,7 +530,7 @@
     // v30 (review #28, PC boy): three heroes unlocked by the account level (B.UNLOCKS)
     buzzwell: H({ name: 'Stinger', glyph: '🐝', role: 'Mage', color: '#ffc21a',
       hp: 655, atk: 42, armor: 23, as: 0.8, range: 3, ms: 2, mana: 65, m0: 25, grow: 1.1,
-      abil: 'hive', abName: 'Honey Hive', abDesc: 'Drops a honey hive on the densest enemy group: for 4s the bees sting everyone within 1 hex for 30% Magic as magic damage per second, and the weakest ally eats honey, healing 120% Magic.',
+      abil: 'hive', abName: 'Honey Hive', abDesc: 'Drops a beehive on the densest enemy group: bees sting everyone within 1 hex for 30% Magic per second for 4s, and the weakest ally heals 120% Magic.',
       ab: { radius: 1, dur: 4, dps: 0.3, honey: 1.2, slow: 0, twin: 0 },
       specs: [
         [{ id: 'buz2a', name: 'Busy Bees', desc: 'The hive lasts 1s longer.', ab: { dur: 1 } },
@@ -575,7 +575,7 @@
     // healing is dealt; ultimate is supercharging the beams"
     prism: H({ name: 'Prism', glyph: '🔆', role: 'Support', color: '#5fe0ff', fl: ['beam'],
       hp: 615, atk: 34, armor: 27, as: 1, range: 3, ms: 2, mana: 83, m0: 0, grow: 0.74,
-      abil: 'overcharge', abName: 'Overcharge', abDesc: 'Passive (Beam): attacks normally, and a beam also locks onto the nearest unit in range: it heals a hurt ally for 20% Magic per second or burns an enemy for 32% Magic per second, and fills Energy as it works. Active: for 4s the beams deal and heal double and split into one more beam.',
+      abil: 'overcharge', abName: 'Overcharge', abDesc: 'Passive (Beam): besides attacking, a beam locks onto the nearest unit in range: it heals an ally 20% Magic per second or burns an enemy 32% Magic per second, and fills Energy. Active: for 4s the beams are twice as strong and split into one more.',
       ab: { dmg: 0.32, heal: 0.2, rays: 1, dur: 4, mult: 2, extra: 1, gain: 1, shield: 0 },
       specs: [
         [{ id: 'pri2a', name: 'Twin Beam', desc: 'One more beam at all times.', ab: { rays: 1 } },
@@ -592,7 +592,7 @@
     // charges mana. Ultimate is putting all his units in a frenzy"
     citadel: H({ name: 'Citadel', glyph: '🏰', role: 'Summoner', color: '#c9a26a', fl: ['tower'],
       hp: 775, atk: 29, armor: 35, as: 0.5, range: 2, ms: 0, mana: 101, m0: 0, grow: 0.84,
-      abil: 'garrison', abName: 'Call to Arms', abDesc: 'Passive (Garrison): cannot move or attack. Every 7s it sends out a soldier, by turns a footman (165% Magic as Health, 18% Magic as attack) or an archer (100% Magic as Health, 16% Magic as attack, range 3), up to 3 at once. Its soldiers\' hits fill its Energy. Active: every soldier goes into a frenzy for 5s (+50% attack speed, +25% Attack) and heals 30%, and one more soldier marches out (never more than 5 soldiers at once).',
+      abil: 'garrison', abName: 'Call to Arms', abDesc: 'Passive (Garrison): cannot move or attack. Every 7s it sends out a soldier (up to 3): a footman (165% Magic as Health, 18% Magic as attack) or an archer (100% Magic as Health, 16% Magic as attack, range 3). Their hits fill its Energy. Active: soldiers heal 30% and frenzy for 5s (+50% attack speed, +25% Attack), and one more marches out (max 5).',
       ab: { every: 7, max: 3, frenzy: 5, fhp: 1.65, fatk: 0.18, ahp: 1.0, aatk: 0.16, vet: 0, shields: 0, champion: 0, last: 0 },
       specs: [
         [{ id: 'cit2a', name: 'Barracks', desc: 'A soldier every 5s instead of 7s.', ab: { every: -2 } },
@@ -612,7 +612,7 @@
     // short but still range ability is making a wall of fire on target, line 3 hexes that does dot damage for a time."
     smolder: H({ name: 'Smolder', glyph: '🌋', role: 'Tank', color: '#ff6a2a', fl: ['devour'],
       hp: 1040, atk: 42, armor: 27, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.8,
-      abil: 'flamethrower', abName: 'Flamethrower', abDesc: 'Passive (Devour): at the start of every fight it eats one item it holds and keeps the stats for good (not the effect of the item). Active: a cone of fire up to 2 hexes in front of it hits the enemies there for 30% Magic as magic damage and burns them for 30% Magic per second for 4s.',
+      abil: 'flamethrower', abName: 'Flamethrower', abDesc: 'Passive (Devour): at the start of each fight it eats one of its items and keeps its stats for good (not its effect). Active: a cone of fire 2 hexes ahead: 30% Magic, then a burn of 30% Magic per second for 4s.',
       ab: { dmg: 0.3, burn: 0.3, dur: 4, reach: 2, spread: 1, devour: 1, boost: 1, vuln: 0, heal: 0 },
       specs: [
         [{ id: 'smo2a', name: 'Second Helping', desc: 'Eats two items per fight.', ab: { devour: 1 } },
@@ -626,7 +626,7 @@
       ] }),
     tom: H({ name: 'Tom', glyph: '🍲', role: 'Support', color: '#e8d9b0',
       hp: 1040, atk: 54, armor: 23, as: 0.9, range: 2, ms: 2, mana: 39, m0: 15, grow: 0.5,
-      abil: 'dishes', abName: 'Daily Special', abDesc: 'Serves 2 dishes to random allies. Each one is a different pick of four: a hot pie that heals 90% Magic, spiced jerky (+25% Attack for 8s), pepper soup (+30% attack speed for 8s) or a pudding that shields for 110% Magic.',
+      abil: 'dishes', abName: 'Daily Special', abDesc: 'Serves 2 different dishes to random allies: hot pie (heals 90% Magic), jerky (+25% Attack for 8s), pepper soup (+30% attack speed for 8s) or pudding (a shield of 110% Magic).',
       ab: { dishes: 2, heal: 0.9, atk: 0.25, as: 0.3, shield: 1.1, big: 0, dur: 8, all: 0, double: 0, mana: 0, pan: 0 },
       specs: [
         [{ id: 'tom2a', name: 'Big Portions', desc: 'Every dish is 30% stronger.', ab: { big: 0.3 } },
@@ -640,7 +640,7 @@
       ] }),
     ashwing: H({ name: 'Ashwing', glyph: '🦅', role: 'Mage', color: '#ff8a2a', fl: ['rebirth'],
       hp: 640, atk: 45, armor: 23, as: 0.9, range: 2, ms: 2, mana: 56, m0: 15, grow: 1.8,
-      abil: 'firewall', abName: 'Wall of Fire', abDesc: 'Passive (Rebirth): once a fight, when it falls it leaves an egg with half its max Health. If the egg lives for 5s the hero is reborn at 60% Health; if the egg is destroyed, the hero is gone. Active: a wall of fire 3 hexes wide on a target up to 3 hexes away burns every enemy on it for 50% Magic per second for 4s.',
+      abil: 'firewall', abName: 'Wall of Fire', abDesc: 'Passive (Rebirth): once per fight it falls into an egg with half its max Health; if the egg survives 5s it is reborn at 60% Health. Active: a wall of fire 3 hexes wide, up to 3 hexes away, burns enemies on it for 50% Magic per second for 4s.',
       ab: { dps: 0.5, dur: 4, reach: 3, width: 1, burn: 0.2, slow: 0, eggHp: 0.5, hatch: 5, revive: 0.6, burst: 0 },
       specs: [
         [{ id: 'ash2a', name: 'Wide Wall', desc: 'The wall is 5 hexes wide.', ab: { width: 1 } },
@@ -655,7 +655,7 @@
     // v62i (review #105, David): Rohammer, a huge brute with a very slow hammer
     rohammer: H({ name: 'Rohammer', glyph: '🔨', role: 'Tank', color: '#e8943a', fl: ['brute'],
       hp: 1040, atk: 78, armor: 30, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 0.98,
-      abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): its very slow hammer blows stun for 0.2s, and it gets Energy only from the damage it takes (2 per 1% of its max Health lost). Active: sweeps every enemy within 2 hexes in front of it for 150% Attack as physical damage, knocks them back 2 hexes and stuns them for 1s.',
+      abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): slow hammer blows stun for 0.2s; it gains Energy only from damage taken (2 per 1% of max Health). Active: sweeps enemies within 2 hexes in front: 150% Attack, knocked back 2 hexes and stunned 1s.',
       ab: { dmg: 1.5, reach: 2, push: 2, stun: 1, tap: 0.2, gain: 2 },
       specs: [
         [{ id: 'roh2a', name: 'Earthbreaker', desc: 'The sweep cracks the ground: enemies hit are slowed by 40% for 3s.', ab: { crack: 0.4 } },
@@ -670,7 +670,7 @@
     // v62h (reviews #98, #100, #101, #102, David): a stationary plasma cannon, a duelist, a combat medic and a gardener
     plasma: H({ name: 'Plasma Cannon', glyph: '💥', role: 'Ranger', color: '#5fe0ff', fl: ['closest', 'plasma'],
       hp: 695, atk: 68, armor: 22, as: 0.6, range: 6, ms: 0, mana: 55, m0: 20, grow: 1.11,
-      abil: 'tripleshot', abName: 'Triple Shot', abDesc: 'Passive (Overload): never moves, always shoots the closest enemy, hits harder the closer it is (+12% per hex nearer than 5) and shoves it back 1 hex with every shot. Active: three plasma shots in a row at the closest enemy, 150% Attack each, each shoving it back 2 hexes.',
+      abil: 'tripleshot', abName: 'Triple Shot', abDesc: 'Passive (Overload): never moves; shoots the closest enemy, +12% damage per hex nearer than 5, and shoves it back 1 hex. Active: three shots at the closest enemy, 150% Attack each, each shoving it back 2 hexes.',
       ab: { dmg: 1.5, shots: 3, push: 2, knock: 1, close: 0.12 },
       specs: [
         [{ id: 'pla2a', name: 'Overclock', desc: 'After Triple Shot, its attacks are 50% faster for 3s.', ab: { overclock: 0.5 } },
@@ -684,7 +684,7 @@
       ] }),
     duelist: H({ name: 'Duelist', glyph: '🤺', role: 'Fighter', color: '#ffd23f', fl: ['duelist'],
       hp: 780, atk: 60, armor: 24, as: 1, range: 1, ms: 3, mana: 40, m0: 25, grow: 1.68,
-      abil: 'duel', abName: 'Challenge', abDesc: 'Challenges the nearest enemy (never a boss): the two can only fight each other until one falls. During the duel the Duelist has +30% Attack, +15 Defense and 10% lifesteal.',
+      abil: 'duel', abName: 'Challenge', abDesc: 'Challenges the nearest enemy (never a boss): they only fight each other until one falls. In the duel: +30% Attack, +15 Defense and 10% lifesteal.',
       ab: { edge: 0.3, guard: 15, ls: 0.1, parry: 0, strike: 0, stun: 0, winHeal: 0, winMana: 0, rematch: 0 },
       specs: [
         [{ id: 'due2a', name: 'Sharper Blade', desc: 'The duel gives +15% more Attack.', ab: { edge: 0.15 } },
@@ -701,7 +701,7 @@
     // autoattack get damaged x% of his defense"): two passives, no cast (shellguard never fires)
     onyx: H({ name: 'Onyx', glyph: '🐢', role: 'Tank', color: '#3fae8a', fl: ['shell', 'spikes'],
       hp: 810, atk: 32, armor: 46, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1.06,
-      abil: 'shellguard', abName: 'Shell', abDesc: 'Passive (Shell): the first time he falls, he hides in his shell for 4s: he cannot be hurt and nobody can walk through him. Then he bursts out with 40% Health, dealing 150% Attack as physical damage to adjacent enemies and stunning them for 1.5s. Passive (Spiked Shell): enemies that hit him with attacks take 60% of his Defense as damage.',
+      abil: 'shellguard', abName: 'Shell', abDesc: 'Passive (Shell): the first time he falls, he hides in his shell for 4s (untouchable, blocks the way), then bursts out at 40% Health: 150% Attack and a 1.5s stun to adjacent enemies. Passive (Spiked Shell): attackers take 60% of his Defense as damage.',
       ab: { shellT: 4, shellHp: 0.4, burst: 1.5, burstStun: 1.5, burstRad: 0, burstArmor: 0, spike: 0.6, shells: 0, shellTaunt: 0, biteArmor: 0 },
       specs: [
         [{ id: 'ony2a', name: 'Sharper Spines', desc: 'Attackers take 100% of his Defense instead of 60%.', ab: { spike: 0.4 } },
@@ -717,7 +717,7 @@
     // fire in his wake, then lands at the end (the farthest hex in that line still in the map). Invulnerable while flying")
     dragon: H({ name: 'Ember Wyrm', glyph: '🐉', role: 'Tank', color: '#e2543a',
       hp: 865, atk: 42, armor: 34, as: 0.7, range: 1, ms: 2, mana: 98, m0: 35, grow: 0.97,
-      abil: 'skydive', abName: 'Skyfire Dive', abDesc: 'Flies in the straight line with the most enemies and lands on the farthest free hex of it, untouchable in the air. Enemies he flies over take 80% Magic as magic damage, and his wake burns for 4s (25% Magic per second).',
+      abil: 'skydive', abName: 'Skyfire Dive', abDesc: 'Flies along the line with the most enemies and lands at its far end, untouchable in the air. Enemies below take 80% Magic, and his trail burns for 4s (25% Magic per second).',
       ab: { dmg: 0.8, dps: 0.25, dur: 4, landStun: 0, refund: 0, lineSlow: 0, wide: 0, landShield: 0, aura: 0 },
       specs: [
         [{ id: 'dra2a', name: 'White Flame', desc: 'His wake burns 2s longer and 60% hotter.', ab: { dur: 2, dps: 0.15 } },
@@ -731,7 +731,7 @@
       ] }),
     medic: H({ name: 'Combat Medic', glyph: '⛑️', role: 'Healer', color: '#7dffb0', fl: ['medic'],
       hp: 525, atk: 33, armor: 22, as: 0.9, range: 2, ms: 2, mana: 93, m0: 15, grow: 0.5,
-      abil: 'grenade', abName: 'Field Grenade', abDesc: 'Passive (Triage): its attacks heal a hurt ally within 2 hexes for 110% Attack (+60% under 40% Health) instead of hitting; with no hurt ally in range it attacks enemies. Active: throws a grenade up to 4 hexes away at the spot with the most enemies and hurt allies within 1 hex: enemies take 40% Magic as magic damage, allies heal 50% Magic.',
+      abil: 'grenade', abName: 'Field Grenade', abDesc: 'Passive (Triage): its attacks heal a hurt ally within 2 hexes for 110% Attack (+60% if under 40% Health); with nobody hurt, it attacks. Active: a grenade up to 4 hexes away: enemies within 1 hex take 40% Magic, allies heal 50% Magic.',
       ab: { heal: 1.1, triage: 0.6, stim: 0, dmg: 0.4, healNade: 0.5, radius: 1, reach: 4, stun: 0, shield: 0 },
       specs: [
         [{ id: 'med2a', name: 'Better Bandages', desc: 'Its attacks heal 30% more.', ab: { heal: 0.33 } },
@@ -745,7 +745,7 @@
       ] }),
     gardener: H({ name: 'Gardener', glyph: '🌿', role: 'Summoner', color: '#7ee08e',
       hp: 475, atk: 31, armor: 20, as: 0.8, range: 3, ms: 2, mana: 80, m0: 15, grow: 0.5,
-      abil: 'plant', abName: 'Overgrowth', abDesc: 'Plants 3 plants on free hexes within 3 hexes, the ones closest to the enemy first. Nothing can attack them, they block movement and last 9s (at most 4 at once). By turns: a Thornbush that shoots the nearest enemy (27% Magic), a Healing Bloom (heals 25% Magic), a Shield Lily (shields 38% Magic) and a Spore Pod (poisons enemies within 2 hexes, 13% Magic per second).',
+      abil: 'plant', abName: 'Overgrowth', abDesc: 'Plants 3 plants within 3 hexes, nearest the enemy first. They cannot be attacked, block the way and last 9s (max 4). In turn: Thornbush (shoots for 27% Magic), Healing Bloom (heals 25% Magic), Shield Lily (shields 38% Magic), Spore Pod (poisons within 2 hexes, 13% Magic per second).',
       ab: { count: 3, life: 9, cap: 4, reach: 3, pace: 0.7, dmg: 0.27, heal: 0.25, shield: 0.38, poison: 0.13 },
       specs: [
         [{ id: 'gar2a', name: 'Fertile Soil', desc: 'Plants last 4s longer.', ab: { life: 4 } },
@@ -1345,84 +1345,84 @@
   // WHAT: EVENTS (the ? days). Each: { id, rar (rarity), icon, name, text, choices: [{ label, act, cost?, req?, target?, fight?, mods?, risk? }] }.
   //   "act" is a short command read by eventAct in js/run.js (gold:5, xpAll:20, relic, hire:key...). {g10} / {x20} in a label = 10 gold / 20 XP scaled by how far in the run you are. {dyn: true} events build their choices in code (rollOffer / eventChoices).
   B.EVENTS = [
-    { id: 'training', rar: 'common', icon: '🎯', name: 'Training Grounds', text: 'Old veterans offer to drill your team.', choices: [
+    { id: 'training', rar: 'common', icon: '🎯', name: 'Training Grounds', text: 'Train your heroes for XP.', choices: [
       { label: 'Drill everyone: +{x15} XP to all heroes', act: 'xpAll:{x15}' },
       { label: 'Private lessons: +{x40} XP to one hero', act: 'xpHero:{x40}', target: 'hero' },
       { label: 'Hire the masters: +{x30} XP to all heroes', act: 'xpAll:{x30}', cost: 6 },
       { label: 'Your veteran runs the drill: +{x30} XP to all heroes', act: 'xpAll:{x30}', req: 'lvl3' }] },
-    { id: 'merchant', rar: 'common', icon: '🧳', name: 'Wandering Merchant', text: 'A cloaked merchant opens a heavy chest. Today, everything is cheap.', dyn: true },
-    { id: 'gambler', rar: 'common', icon: '🎲', name: "Gambler's Den", text: 'Double or nothing, stranger?', choices: [
+    { id: 'merchant', rar: 'common', icon: '🧳', name: 'Wandering Merchant', text: 'Rare goods, cheaper than in shops.', dyn: true },
+    { id: 'gambler', rar: 'common', icon: '🎲', name: "Gambler's Den", text: 'Bet gold or an item: double it or lose it.', choices: [
       { label: 'Small bet: 50% to win {g11} gold', act: 'gamble:5:0.5:{g11}', cost: 5, risk: 'You may lose the 5 gold' },
       { label: 'High stakes: 40% to win {g30} gold', act: 'gamble:12:0.4:{g30}', cost: 12, risk: 'You may lose the 12 gold' },
       { label: 'Bet an item: 50% it goes up one rarity, 50% it is lost', act: 'gambleItem', target: 'item', risk: 'The item may be lost' }] },
-    { id: 'altar', rar: 'uncommon', icon: '🗿', name: 'Cursed Altar', text: 'Three powers rest on a humming altar. Each one asks a different price.', dyn: true },
-    { id: 'fountain', rar: 'common', icon: '⛲', name: 'Fountain of Vigor', text: 'Clear water that glows faintly.', choices: [
+    { id: 'altar', rar: 'uncommon', icon: '🗿', name: 'Cursed Altar', text: 'Take a power. Each one has a price.', dyn: true },
+    { id: 'fountain', rar: 'common', icon: '⛲', name: 'Fountain of Vigor', text: 'Drink for more max Health.', choices: [
       { label: 'Everyone drinks: +8% max Health to all heroes', act: 'hpAll:0.08' },
       { label: 'One hero bathes: +20% max Health to that hero', act: 'hpHero:0.2', target: 'hero' },
       { label: 'Fish out the coins: +{g5} gold', act: 'gold:{g5}' },
       { label: 'Your healer blesses the water: +8% max Health and +10 Magic to all heroes', act: 'buffAll', mods: { hpPct: 0.08, ap: 10 }, req: 'healer' }] },
-    { id: 'mercs', rar: 'uncommon', icon: '🪖', name: 'Mercenary Camp', text: 'Two sellswords look for work.', dyn: true },
-    { id: 'smith', rar: 'common', icon: '⚒️', name: 'Blacksmith', text: 'The forge is still hot.', choices: [
+    { id: 'mercs', rar: 'uncommon', icon: '🪖', name: 'Mercenary Camp', text: 'Hire a hero for gold.', dyn: true },
+    { id: 'smith', rar: 'common', icon: '⚒️', name: 'Blacksmith', text: 'Upgrade a hero or an item.', choices: [
       { label: 'Sharpen: +10 Attack to one hero', act: 'buffHero', mods: { atk: 10 }, target: 'hero' },
       { label: 'Reinforce: +15 Defense to one hero', act: 'buffHero', mods: { armor: 15 }, target: 'hero' },
-      { label: 'Reforge: an item becomes a random item of the same type, one rarity higher', act: 'upgradeItem', cost: 5, target: 'item' },
+      { label: 'Reforge: an item becomes another of its type, one rarity higher', act: 'upgradeItem', cost: 5, target: 'item' },
       { label: 'Your fighter works the bellows: reforge an item for free', act: 'upgradeItem', target: 'item', req: 'melee' }] },
-    { id: 'library', rar: 'common', icon: '📜', name: 'Ancient Library', text: 'Dusty tomes about forgotten wars.', choices: [
+    { id: 'library', rar: 'common', icon: '📜', name: 'Ancient Library', text: 'Study for Energy, an upgrade swap or loot.', choices: [
       { label: 'Battle tactics: your heroes start the next fight with +40 Energy', act: 'none', next: { manaStart: 40 } },
-      { label: 'Forbidden tome: one hero swaps its latest specialization for the other one', act: 'respec', target: 'hero' },
+      { label: 'Forbidden tome: one hero swaps its latest upgrade for the other one', act: 'respec', target: 'hero' },
       { label: 'Loot the shelves: a random item', act: 'item:any' },
       { label: 'Your caster studies a spellbook: +20 Magic to that hero for good', act: 'buffHero', mods: { ap: 20 }, target: 'hero', req: 'caster' }] },
-    { id: 'caravan', rar: 'common', icon: '🐪', name: 'Lost Caravan', text: 'An abandoned caravan, still loaded. Its tracks lead to a bandit camp.', choices: [
+    { id: 'caravan', rar: 'common', icon: '🐪', name: 'Lost Caravan', text: 'Free loot, or raid the bandits for more.', choices: [
       { label: 'Take the gold: +{g6} gold', act: 'gold:{g6}' },
       { label: 'Take the crate: a random item', act: 'item:any' },
-      { label: 'Raid the bandit camp now. Win: a rare item', act: 'fight', fight: { kind: 'bandits', name: 'Bandit Camp', win: { item: 'rare' } }, risk: 'A fight: lose it and you get nothing' }] },
-    { id: 'shrine', rar: 'uncommon', icon: '🕯️', name: 'Shrine of Sacrifice', text: 'The shrine accepts offerings in exchange for power.', choices: [
+      { label: 'Raid the bandit camp: win a rare item', act: 'fight', fight: { kind: 'bandits', name: 'Bandit Camp', win: { item: 'rare' } }, risk: 'A fight: lose it and you get nothing' }] },
+    { id: 'shrine', rar: 'uncommon', icon: '🕯️', name: 'Shrine of Sacrifice', text: 'Trade gold or an item for a power.', choices: [
       { label: 'Offer gold: a random power', act: 'relic', cost: 7 },
       { label: 'Offer an item (rare or better): a random power', act: 'relicItem', target: 'item', minRarity: 'rare' },
       { label: 'Pray: +{x10} XP to all heroes', act: 'xpAll:{x10}' }] },
-    { id: 'hut', rar: 'common', icon: '🌿', name: 'Herbalist', text: 'A quiet herbalist sorts roots and powders.', choices: [
-      { label: 'Healing tonic: in the next fight your heroes regenerate 2% max Health per second', act: 'none', next: { regen: 0.02 } },
+    { id: 'hut', rar: 'common', icon: '🌿', name: 'Herbalist', text: 'Potions for your next fights.', choices: [
+      { label: 'Healing tonic: next fight, heroes regenerate 2% max Health per second', act: 'none', next: { regen: 0.02 } },
       { label: 'Calming draught: one hero ignores the first crowd control of every fight', act: 'buffHero', mods: { cleanseOnce: 1 }, cost: 4, target: 'hero' },
       { label: 'Sell her your spare herbs: +{g4} gold', act: 'gold:{g4}' },
       { label: 'Your caster brews an Energy draught: every hero starts every fight with +10 Energy', act: 'buffAll', mods: { manaStart: 10 }, req: 'caster' }] },
-    { id: 'recruit', rar: 'common', icon: '🛡️', name: 'Village Militia', text: 'Villagers want to learn from your heroes.', choices: [
+    { id: 'recruit', rar: 'common', icon: '🛡️', name: 'Village Militia', text: 'Teach for gold, learn for XP, or rally them.', choices: [
       { label: 'Teach them: +{g6} gold', act: 'gold:{g6}' },
       { label: 'Learn from them: +{x10} XP to all heroes', act: 'xpAll:{x10}' },
       { label: 'Rally them: your heroes get +10% Attack in the next fight', act: 'none', next: { atkPct: 0.1 } }] },
-    { id: 'scout', rar: 'common', icon: '🔭', name: "Scout's Report", text: 'A scout has seen the camp ahead.', choices: [
+    { id: 'scout', rar: 'common', icon: '🔭', name: "Scout's Report", text: 'Weaken the next fight, or sell the map.', choices: [
       { label: "Ambush: the next fight's enemies start with 20% less Health", act: 'none', next: { enemyHp: -0.2 } },
       { label: "Sabotage: the next fight's enemies have 15% less attack", act: 'none', next: { enemyAtk: -0.15 } },
       { label: 'Sell the map: +{g5} gold', act: 'gold:{g5}' },
       { label: "Your archer picks off their captain: the next fight's enemies have 25% less Health", act: 'none', next: { enemyHp: -0.25 }, req: 'ranged' }] },
-    { id: 'arena', rar: 'uncommon', icon: '🏟️', name: 'Arena', text: 'The crowd roars. A champion waits in the pit.', choices: [
-      { label: 'Fight for glory. The next fight: enemies +35% Health, win it for a legendary item', act: 'none', next: { enemyHp: 0.35, reward: 'legendary' } },
-      { label: 'Duel of champions: one hero fights the champion alone now. Win: that hero gets +8% Health and Attack for good', act: 'fight', target: 'hero', fight: { kind: 'solo', name: 'Duel of Champions', win: { boost: { hpPct: 0.08, atkPct: 0.08 } } }, risk: 'Only that hero fights' },
+    { id: 'arena', rar: 'uncommon', icon: '🏟️', name: 'Arena', text: 'Risk a harder fight for big rewards.', choices: [
+      { label: 'Fight for glory: next fight, enemies +35% Health. Win a legendary item', act: 'none', next: { enemyHp: 0.35, reward: 'legendary' } },
+      { label: 'Duel: one hero fights the champion alone. Win +8% Health and Attack for good', act: 'fight', target: 'hero', fight: { kind: 'solo', name: 'Duel of Champions', win: { boost: { hpPct: 0.08, atkPct: 0.08 } } }, risk: 'Only that hero fights' },
       { label: 'Watch and learn: +{x10} XP to all heroes', act: 'xpAll:{x10}' }] },
-    { id: 'chest', rar: 'uncommon', icon: '🧰', name: 'Strange Chest', text: 'An iron chest sits alone in the grass. Did it just breathe?', choices: [
+    { id: 'chest', rar: 'uncommon', icon: '🧰', name: 'Strange Chest', text: 'A free chest. It might bite.', choices: [
       { label: 'Open it: 60% a rare item, 40% it is a Mimic (beat it for an epic item)', act: 'mimic', risk: 'It may be a fight' },
       { label: 'Pick the lock slowly: a rare item', act: 'item:rare', cost: 5 },
       { label: 'Kick it and walk away: +{g3} gold', act: 'gold:{g3}' },
       { label: 'Your archer shoots it from afar first: a rare item, safely', act: 'item:rare', req: 'ranged' }] },
-    { id: 'lender', rar: 'uncommon', icon: '💰', name: 'Moneylender', text: 'A smiling banker counts coins. "Money makes money, friend."', choices: [
+    { id: 'lender', rar: 'uncommon', icon: '💰', name: 'Moneylender', text: 'Invest gold now, get more after your next win.', choices: [
       { label: 'Invest 8 gold: get {g10} back after your next won fight', act: 'invest:{g10}', cost: 8 },
       { label: 'Invest 15 gold: get {g19} back after your next won fight', act: 'invest:{g19}', cost: 15 },
       { label: 'Take a loan: +{g10} gold now, pay back {g15} after your next won fight', act: 'loan:{g10}:{g15}', risk: 'You pay back more' }] },
-    { id: 'bounty', rar: 'uncommon', icon: '📌', name: 'Bounty Board', text: 'Wanted posters flap in the wind. Big rewards, big dangers.', choices: [
-      { label: 'Hunt the elite pack now. Win: a power', act: 'fight', fight: { kind: 'pack', name: 'Elite Pack', win: { relic: 1 } }, risk: 'A hard fight with elites' },
-      { label: 'Break the horde now. Win: +{g10} gold', act: 'fight', fight: { kind: 'horde', name: 'The Horde', win: { gold: '{g10}' } }, risk: 'Twice as many enemies' },
+    { id: 'bounty', rar: 'uncommon', icon: '📌', name: 'Bounty Board', text: 'Take a hard fight for a big reward.', choices: [
+      { label: 'Hunt the elite pack: win a power', act: 'fight', fight: { kind: 'pack', name: 'Elite Pack', win: { relic: 1 } }, risk: 'A hard fight with elites' },
+      { label: 'Break the horde: win +{g10} gold', act: 'fight', fight: { kind: 'horde', name: 'The Horde', win: { gold: '{g10}' } }, risk: 'Twice as many enemies' },
       { label: 'Take an easy bounty: +{g5} gold', act: 'gold:{g5}' }] },
-    { id: 'alchemist', rar: 'uncommon', icon: '⚗️', name: 'Alchemist', text: 'Bubbling flasks everywhere. "Everything can become something better."', choices: [
-      { label: 'Transmute: your two weakest items become one item a rarity above the better of the two', act: 'transmute', risk: 'Two items become one' },
+    { id: 'alchemist', rar: 'uncommon', icon: '⚗️', name: 'Alchemist', text: 'Upgrade your items or brew a lasting boost.', choices: [
+      { label: 'Transmute: your 2 weakest items become 1 item, one rarity higher', act: 'transmute', risk: 'Two items become one' },
       { label: 'Potion of might: one hero gets +12% Attack for good, but 10% less max Health', act: 'buffHero', mods: { atkPct: 0.12, hpPct: -0.1 }, target: 'hero' },
       { label: 'Mystery potion: a random hero gets a random lasting boost', act: 'potion', cost: 4 }] },
-    { id: 'fairy', rar: 'rare', icon: '🧚', name: 'Fairy Ring', text: 'Tiny lights dance in a ring of mushrooms. A rare sight!', dyn: true },
-    { id: 'hoard', rar: 'rare', after: 2, icon: '🐉', name: "Dragon's Hoard", text: 'Gold glitters in a cave. Something huge sleeps on it.', choices: [
-      { label: 'Wake the guardian and fight it now. Win: a legendary item', act: 'fight', fight: { kind: 'hoard', name: "The Hoard's Guardian", win: { item: 'legendary' } }, risk: 'A boss-sized fight' },
+    { id: 'fairy', rar: 'rare', icon: '🧚', name: 'Fairy Ring', text: 'A rare gift: a level or a legendary item.', dyn: true },
+    { id: 'hoard', rar: 'rare', after: 2, icon: '🐉', name: "Dragon's Hoard", text: 'Fight the guardian for a legendary item, or sneak some loot.', choices: [
+      { label: 'Wake the guardian: win a legendary item', act: 'fight', fight: { kind: 'hoard', name: "The Hoard's Guardian", win: { item: 'legendary' } }, risk: 'A boss-sized fight' },
       { label: 'Steal a pouch quietly: +{g8} gold', act: 'gold:{g8}' },
       { label: 'Grab one piece of the treasure: a random rare item', act: 'item:rare' }] },
-    { id: 'legend', rar: 'rare', icon: '🌟', name: 'Wandering Legend', text: 'A famous hero rests by the road and sizes up your team.', dyn: true },
-    { id: 'armory', rar: 'uncommon', icon: '🗡️', name: 'Armory', text: 'Racks of gear. The quartermaster lets you take one piece.', dyn: true },
-    { id: 'collector', rar: 'uncommon', icon: '💎', name: 'Collector', text: 'A collector trades in matched gear.', dyn: true },
+    { id: 'legend', rar: 'rare', icon: '🌟', name: 'Wandering Legend', text: 'A famous hero may join you.', dyn: true },
+    { id: 'armory', rar: 'uncommon', icon: '🗡️', name: 'Armory', text: 'Take one piece of gear for free.', dyn: true },
+    { id: 'collector', rar: 'uncommon', icon: '💎', name: 'Collector', text: 'Get pieces to complete a set.', dyn: true },
   ];
   B.EVENT = {}; for (const e of B.EVENTS) B.EVENT[e.id] = e;
   B.EVENT_RARITY = { common: 1, uncommon: 0.7, rare: 0.3 };
