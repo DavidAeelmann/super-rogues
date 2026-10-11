@@ -543,30 +543,42 @@
     const relics = run.relicOffer || [], n = ui.startPick.length;
     if (ui.startStep === 2 && n === CFG.startHeroes && relics.length) {
       const rsel = ui.startRelic && relics.includes(ui.startRelic) ? ui.startRelic : null;
-      return `<section class="start s2">${stepsHTML(2)}<h2 class="sc">Pick a power</h2><p class="ssub">A bonus for your whole team, all game long.</p>
-        <div class="stage pedestals srelics big">${relics.map((id, i) => `<button class="srelic ped ${rsel === id ? 'on' : ''}" data-act="start-relic" data-arg="${id}"><span class="shaft"></span><span class="orb">${ico('relic', id, 56)}</span><span class="plinth"><i></i><u></u></span><span class="srt"><b class="relic">${esc(RELIC[id].name)}</b><small class="srd">${esc(RELIC[id].short)}</small></span>${rsel === id ? '<span class="chk">✓</span>' : ''}${i === 1 && !rsel && startHint() ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`).join('')}</div>
+      return `<section class="start s2 v3 ${dealIn(2)}">${stepsHTML(2)}<h2 class="sc">Pick a power</h2><p class="ssub">A bonus for your whole team, all game long.</p>
+        <div class="stage pedestals srelics big">${relics.map((id, i) => `<button class="srelic ped ${rsel === id ? 'on' : rsel ? 'off' : ''}" data-act="start-relic" data-arg="${id}" style="--i:${i}"><span class="rays"></span><span class="shaft"></span><span class="orb">${ico('relic', id, 56)}</span><span class="plinth"><i></i><u></u></span><span class="srt"><b class="relic">${esc(RELIC[id].name)}</b><small class="srd">${esc(RELIC[id].short)}</small></span>${rsel === id ? '<span class="chk">✓</span>' : ''}${i === 1 && !rsel && startHint() ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`).join('')}</div>
         ${rsel ? `<button class="hdet more srmore" data-act="relic-info" data-arg="${rsel}">${I('info')} More about ${esc(RELIC[rsel].name)}</button>` : ''}
-        <div class="bar"><button data-act="start-back">◀ Back</button><button class="primary big" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a power'}</button></div></section>`;
+        <div class="bar sbar"><button data-act="start-back">◀ Back</button><button class="primary big ${rsel ? 'ready' : ''}" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a power'}</button></div></section>`;
     }
     const f = ui.startPick[0] || null;
-    return `<section class="start s1">${stepsHTML(1)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
+    return `<section class="start s1 v3 ${dealIn(1)}">${stepsHTML(1)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
       ${heroStage(run.startOffer, f, 'start-pick', startHint())}${heroDetail(f)}
       ${(run.locked || []).length ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : ''}
-      <div class="bar"><button class="primary big" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${n === CFG.startHeroes ? (relics.length && !introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero'}</button></div></section>`;
+      <div class="bar sbar"><button class="primary big ${n === CFG.startHeroes ? 'ready' : ''}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${n === CFG.startHeroes ? (relics.length && !introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero'}</button></div></section>`;
   }
   // v64 (review #124, David: "hero selection highlights are a bit wonky and persist after you choose another or deselect"): only the picked hero is lit;
   // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
   // WHAT: the stage of heroes under spotlights (sel = the picked one, act = the button action) and the card that says what the picked hero does.
   function heroStage(offer, sel, act, hint) {
     return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => { const d = HEROES[k], on = sel === k;
-      return `<button class="hbanner spot ${on ? 'on' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color}" aria-pressed="${on}">
-        <span class="cone"></span><img class="splash" src="${por(k, 150, true)}" alt=""><span class="plate"></span><b>${esc(d.name)}</b><i>${d.role}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`; }).join('')}</div>`;
+      return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
+        <span class="cone"></span><span class="shine"></span>${(src => `<img class="splash ${src.startsWith('data:image/png') ? 'drawn' : ''}" src="${src}" alt="">`)(por(k, 150, true))}<span class="plate"></span><b>${esc(d.name)}</b><i>${d.role}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`; }).join('')}</div>`;
   }
   function heroDetail(f) {
     const h = f && HEROES[f];
     return h ? `<div class="card detail"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
-        <p class="htag">${esc(h.tag || h.abName)}</p><button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
+        <p class="htag">${esc(h.tag || h.abName)}</p>${statBars(h)}<button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
   }
+  // v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
+  // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
+  // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
+  // WHAT: four bars of a hero's strengths, each against the best hero of the game.
+  let statMax = null;
+  function statBars(h) {
+    if (!statMax) { statMax = { hp: 1, atk: 1, as: 0.01, range: 1 }; for (const k in HEROES) { const x = HEROES[k]; if (!x || x.summon || x.mob || x.boss || !x.hp) continue; for (const s in statMax) statMax[s] = Math.max(statMax[s], +x[s] || 0); } }
+    const bar = (label, s, cls) => `<span class="stb ${cls}"><i>${label}</i><u><b style="--v:${Math.max(0.08, Math.min(1, (+h[s] || 0) / statMax[s])).toFixed(2)}"></b></u></span>`;
+    return `<div class="sbars">${bar('Health', 'hp', 'hp')}${bar('Attack', 'atk', 'atk')}${bar('Speed', 'as', 'as')}${bar('Range', 'range', 'rg')}</div>`;
+  }
+  // WHAT: 'deal' the first time a start step shows (its cards fly in), '' on the redraws after a tap.
+  function dealIn(step) { const k = (run && run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
   // v64 (review #126, David: "hero select at start is 1 out of 3. After each day, add 1 more hero select free, same style screen, until 3")
   // WHAT: the free recruit screen between days: three heroes (one of each class, the ones your team lacks first), pick one and it joins.
   function recruitHTML() {
@@ -2283,14 +2295,14 @@
     // v103 (review #190): Menu -> Tutorial: on = from the start again, off = no more tips
     tutorial: () => { if (guideOn()) { guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); toast('Tutorial on: the tips show again as you play'); } openModal(homeMenuHTML()); ui.modal = 'home'; },
     // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
-    'start-pick': k => { ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); },
+    'start-pick': k => { ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); if (ui.startPick[0] === k && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 26); },
     // v64 (review #126): the free recruit between days
     'recruit-pick': k => { ui.recruitPick = ui.recruitPick === k ? null : k; render(); },
     'recruit-go': () => { if (!ui.recruitPick) return; const err = Run.recruit(run, ui.recruitPick); if (err) { toast(err); return; } ui.recruitPick = null; sfx('levelup'); save(); render(); window.scrollTo(0, 0); },
     'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (introOn() && (run.relicOffer || []).length) { ui.startRelic = run.relicOffer[0]; ACT['start-go'](); return; }   // v97 (review #179): straight to the battlefield
       if ((run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
     'start-back': () => { ui.startStep = 1; render(); },
-    'start-relic': id => { ui.focusRelic = id; ui.startRelic = id; render(); },
+    'start-relic': id => { const was = ui.startRelic; ui.focusRelic = id; ui.startRelic = id; render(); if (was !== id && B.Juice) B.Juice.confettiAt('.start .srelic.ped.on .orb', 30); },
     'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((run.relicOffer || []).length && !ui.startRelic)) return; const intro = introOn(); store.set('balance.starts', (+store.get('balance.starts', 0) || 0) + 1); Run.pickStart(run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1;
       if (intro) { store.set('balance.intro', 1); Run.startIntro(run); ui.introT0 = 0; }   // v97 (review #179): the first fight is the intro
       save(); render(); },

@@ -2907,3 +2907,91 @@ html, body, input, select, textarea, button.cta small { font-family: var(--read)
 button:active:not(:disabled):not(.v2):not(.banner) { translate: 0 2px; }
 :where(button, a[href], .evch, .card.opt, .banner, .srelic, .tpick, .gitem, .gsock, .chip, .plink, .mrow, .pm, .fr, .lvchip, .relicbtn, .gpg):focus-visible { outline: 3px solid #ffe46b; outline-offset: 2px; }
 button:disabled, button[disabled], .evch[disabled] { opacity: .5; filter: grayscale(.7); cursor: not-allowed; translate: none; }
+
+/* ==== v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience.
+   Optimize for screen size, no lost space at the bottom"). The start steps (.start.v3) fill the screen: the stage grows into the free height and the button
+   sits at the bottom. Hero cards are tall posters; the pick lifts, wears a turning gold frame and a shine; the others step back. Powers stand on altars with
+   turning rays; the pick gets a beam. "deal" = the cards fly in the first time a step shows. ==== */
+.start.v3 { display: flex; flex-direction: column; min-height: calc(100dvh - 70px); padding-bottom: 6px; }
+.start.v3 .ssteps { margin-bottom: 2px; }
+.start.v3 h2.sc { margin: 4px 0 0; }
+.start.v3 .ssub { margin: 2px 0 6px; }
+.start.v3 .stage { flex: 1 1 auto; min-height: 210px; max-height: 560px; display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch; padding: 10px 8px 12px !important; }
+.start.v3 .bar.sbar { margin-top: auto; padding-top: 10px; }
+.start.v3 .bar.sbar .primary.ready { animation: readyPulse 1.6s ease-in-out infinite; }
+@keyframes readyPulse { 0%, 100% { box-shadow: 0 5px 0 #c47f00, 0 0 0 0 #ffd23f00; } 50% { box-shadow: 0 5px 0 #c47f00, 0 0 0 8px #ffd23f40, 0 0 26px #ffd23f99; transform: scale(1.02); } }
+
+/* hero posters */
+.start.v3 .stage .hbanner.spot { position: relative; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; min-height: 0; padding: 0 !important; border-radius: 16px; overflow: visible;
+  transition: transform .25s cubic-bezier(.3, 1.6, .5, 1), filter .2s; }
+.start.v3 .stage .hbanner.spot .splash { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none !important; object-fit: cover; object-position: 50% 18%; border-radius: 16px; transform: none !important; }
+.start.v3 .stage .hbanner.spot::after { top: auto; bottom: 0; height: 55%; aspect-ratio: auto; border-radius: 0 0 16px 16px; background: linear-gradient(180deg, transparent, #0b0f3fe6 75%); z-index: 1; }
+.start.v3 .stage .hbanner.spot b { position: relative !important; z-index: 2; margin: 0 4px 0 !important; font: 800 clamp(13px, 3.8vw, 17px)/1.1 var(--fun); color: #fff; text-shadow: 0 2px 0 #000a; }
+.start.v3 .stage .hbanner.spot i { position: relative; z-index: 2; margin: 2px auto 8px !important; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--cloth) 70%, #0b0f3f); color: #fff; font: 700 10.5px/1.3 var(--fun); letter-spacing: .5px; text-transform: uppercase; font-style: normal; }
+.start.v3 .stage .hbanner.spot .cone { display: none; }
+.start.v3 .stage .hbanner.spot:not(.on) { filter: none !important; }
+.start.v3 .stage .hbanner.spot.off { filter: brightness(.6) saturate(.6) !important; transform: scale(.95); }
+.start.v3 .stage .hbanner.spot.on { transform: translateY(-8px) scale(1.04); z-index: 3; }
+.start.v3 .stage .hbanner.spot.on .splash { box-shadow: 0 0 0 3px #fff, 0 14px 30px #000c, 0 0 36px var(--cloth) !important; }
+.start.v3 .stage .hbanner.spot.on .cone { display: block !important; opacity: 1 !important; position: absolute; inset: -5px !important; left: -5px !important; right: -5px !important; top: -5px !important; bottom: -5px !important; border-radius: 20px; z-index: 0; background: conic-gradient(from var(--ang, 0deg), #ffd23f, #fff6c0, #ff9a3d, #ffd23f, #fff6c0, #ffd23f); animation: frameSpin 2.4s linear infinite; }
+@property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes frameSpin { to { --ang: 360deg; } }
+.start.v3 .stage .hbanner.spot .splash { z-index: 0; }
+.start.v3 .stage .hbanner.spot.on .splash { z-index: 1; }
+.start.v3 .stage .hbanner.spot .shine { position: absolute; inset: 0; z-index: 2; border-radius: 16px; overflow: hidden; pointer-events: none; }
+.start.v3 .stage .hbanner.spot.on .shine::after { content: ''; position: absolute; top: -20%; bottom: -20%; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, #ffffff70, transparent); transform: skewX(-18deg); animation: shineSweep 2.2s ease-in-out infinite; }
+@keyframes shineSweep { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+.start.v3 .stage .hbanner.spot .chk { z-index: 4; }
+.start.v3 .stage .hbanner.spot.on::after { z-index: 2; }
+.start.v3 .stage .hbanner.spot.on b, .start.v3 .stage .hbanner.spot.on i { z-index: 3; }
+@media (hover: hover) { .start.v3 .stage .hbanner.spot.off:hover { filter: brightness(.85) saturate(.9) !important; } }
+
+/* the picked hero's card: four strength bars */
+.start.v3 .card.detail { margin: 2px 0 0; padding: 10px 12px; }
+.start.v3 .card.detail .htag { margin: 4px 0 6px; }
+.sbars { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; margin: 2px 0 8px; }
+.sbars .stb { display: grid; grid-template-columns: 54px 1fr; align-items: center; gap: 6px; }
+.sbars .stb i { font: 700 11.5px/1 var(--fun); font-style: normal; color: #eef1ff; }
+.sbars .stb u { position: relative; display: block; height: 9px; border-radius: 999px; background: #0b0f3f88; box-shadow: inset 0 1px 2px #0008; overflow: hidden; }
+.sbars .stb u b { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--v) * 100%); border-radius: 999px; animation: barGrow .6s cubic-bezier(.2, 1.2, .4, 1) both; }
+.sbars .stb.hp u b { background: linear-gradient(90deg, #2fbf6a, #7dffb0); } .sbars .stb.atk u b { background: linear-gradient(90deg, #e8553a, #ffb38a); }
+.sbars .stb.as u b { background: linear-gradient(90deg, #e8a10b, #ffe066); } .sbars .stb.rg u b { background: linear-gradient(90deg, #3b82f6, #9fd0ff); }
+@keyframes barGrow { from { width: 0; } }
+.start.v3 .card.detail .hdet { margin: 0; }
+
+/* power altars */
+.start.v3 .stage.pedestals .srelic.ped { height: 100%; min-height: 0 !important; justify-content: center !important; gap: 4px; padding: 10px 4px 8px; border-radius: 16px; background: linear-gradient(180deg, #ffffff10, #0b0f3f55); box-shadow: inset 0 0 0 1.5px #ffffff22; overflow: hidden;
+  transition: transform .25s cubic-bezier(.3, 1.6, .5, 1), filter .2s; }
+.start.v3 .ped .rays { position: absolute; left: 50%; top: 32%; width: 230%; aspect-ratio: 1; translate: -50% -50%; z-index: 0; opacity: .25; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, #fff6c0 0 8deg, transparent 8deg 24deg); -webkit-mask: radial-gradient(circle, #000 0 18%, transparent 55%); mask: radial-gradient(circle, #000 0 18%, transparent 55%); animation: raySpin 14s linear infinite; }
+.start.v3 .ped.on .rays { opacity: .65; animation-duration: 6s; }
+@keyframes raySpin { to { rotate: 360deg; } }
+.start.v3 .ped .orb { width: clamp(64px, 20vw, 92px) !important; height: clamp(64px, 20vw, 92px) !important; animation: orbBob 2.6s ease-in-out infinite; animation-delay: calc(var(--i) * -0.8s); }
+.start.v3 .ped .orb .ico { width: 62% !important; height: 62% !important; }
+@keyframes orbBob { 50% { translate: 0 -6px; } }
+.start.v3 .ped.on .orb { transform: scale(1.15); }
+.start.v3 .ped .srt { position: relative; z-index: 2; margin-top: 4px; }
+.start.v3 .ped .srt b { font: 800 clamp(13px, 3.6vw, 16px)/1.15 var(--fun) !important; }
+.start.v3 .ped .srt small { font-size: clamp(11.5px, 3.2vw, 13.5px) !important; line-height: 1.3 !important; }
+.start.v3 .stage.pedestals .srelic.ped.off { filter: brightness(.6) saturate(.6); transform: scale(.95); }
+.start.v3 .stage.pedestals .srelic.ped.on { transform: translateY(-6px) scale(1.03); background: linear-gradient(180deg, #ffd23f2e, #0b0f3f66); box-shadow: inset 0 0 0 2.5px #ffd23f, 0 0 26px #ffd23f66; }
+.start.v3 .srmore { margin: 6px auto 0; }
+
+/* deal in */
+.start.v3.deal .stage > * { animation: dealCard .55s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(var(--i, 0) * 110ms + 80ms); }
+@keyframes dealCard { from { opacity: 0; transform: translateY(60px) rotate(calc((var(--i, 1) - 1) * 9deg)) scale(.8); } }
+.start.v3.deal h2.sc { animation: titlePop .5s cubic-bezier(.3, 1.8, .5, 1) both; }
+@keyframes titlePop { from { opacity: 0; transform: scale(.6); } }
+@media (prefers-reduced-motion: reduce) { .start.v3 *, .start.v3 *::before, .start.v3 *::after { animation: none !important; } }
+
+/* small phones: tighter */
+@media (max-height: 680px) { .start.v3 .stage { min-height: 170px; gap: 8px; padding: 8px 6px 8px !important; } .start.v3 .card.detail { padding: 8px 10px; } .sbars { gap: 3px 10px; margin-bottom: 6px; } .start.v3 .ssub { font-size: 13px; } }
+body.desk .start.v3 .stage { max-height: 520px; }
+.start.v3 .stage.pedestals .srelic.ped.on { background: linear-gradient(180deg, #ffd23f33, #0b0f3f77) !important; border-color: #ffd23f !important; box-shadow: inset 0 0 0 2.5px #ffd23f, 0 0 26px #ffd23f66 !important; }
+.start.v3 .stage.pedestals .srelic.ped.on .srt b, .start.v3 .stage.pedestals .srelic.ped.on .srd, .start.v3 .stage.pedestals .srelic.ped.on .srd * { color: #fff !important; }
+.start.v3 .bar.sbar { align-self: stretch; width: 100%; display: flex; gap: 10px; } .start.v3 .bar.sbar .primary { flex: 1; }
+.start.v3 .stage .hbanner.spot.on .cone { display: none !important; }
+.start.v3 .stage .hbanner.spot.on .splash { box-shadow: 0 0 0 3px #ffd23f, 0 0 0 6px #fff6c0aa, 0 14px 30px #000c, 0 0 34px #ffd23fcc !important; animation: goldGlow 1.5s ease-in-out infinite; }
+@keyframes goldGlow { 50% { box-shadow: 0 0 0 3px #fff6c0, 0 0 0 7px #ffd23fcc, 0 14px 30px #000c, 0 0 48px #ffd23f !important; } }
+.start.v3 .stage.pedestals .srelic.ped.on { outline: 0 !important; border: 0 !important; }
+.start.v3 .stage.pedestals .srelic.ped { border: 0 !important; outline: 0 !important; }
