@@ -1459,15 +1459,15 @@
   // ---------------------------------------------------------------- leagues (review #21, David)
   // Everyone starts in Bronze. v64 (review #125, David: "remove all elos, a lol style system where you go up and down leagues at the end of each run"):
   // each league has 100 league points (LP); the end of every run moves them (B.runLp): 100 LP = the next league, below 0 = the league below
-  // (you land on demoteTo LP). Bronze has a floor at 0, Celestial has no ceiling.
-  // WHAT: LEAGUES from Bronze to Celestial and how points move (B.LEAGUE_RULES). Seasons last B.SEASON.days days.
+  // (you land on demoteTo LP). Bronze has a floor at 0, Master has no ceiling.
+  // WHAT: LEAGUES from Bronze to Master and how points move (B.LEAGUE_RULES). Seasons last B.SEASON.days days.
   B.LEAGUES = [
     { id: 'bronze', name: 'Bronze', color: '#b8733d', hi: '#f3bd88' },
     { id: 'silver', name: 'Silver', color: '#8e9aab', hi: '#eef3fa' },
     { id: 'gold', name: 'Gold', color: '#d19b22', hi: '#ffe38f' },
     { id: 'platinum', name: 'Platinum', color: '#2fa89a', hi: '#b5f7ec' },
     { id: 'diamond', name: 'Diamond', color: '#3f7dff', hi: '#c5dcff' },
-    { id: 'celestial', name: 'Celestial', color: '#9a4dff', hi: '#f3dcff' },
+    { id: 'celestial', name: 'Master', color: '#9a4dff', hi: '#f3dcff' },
   ];
   B.LEAGUE_RULES = { step: 100, demoteTo: 75, duelWin: 0, pveLoss: 0 };   // duelWin / pveLoss: only the old Gauntlet ops (old tabs) still read them
   // v64 (review #125): a completed run is a victory of a kind by the lives left: Perfect (no fight lost), Gold, Bronze
@@ -1492,7 +1492,7 @@
   // logic or giving different lp depending on the elo or league of opponents"). Every league faces the same pool, so a win is worth the same everywhere
   // and the climb was as easy at the top as at the bottom. Now the league you are IN scales your LP: higher leagues pay less for a win (gain) and charge
   // more for a loss (loss). That raises the win rate you need just to hold your place: with 2 duels and the final fight a run, about 22% in Bronze,
-  // 30% Silver, 37.5% Gold (as before, x1), 46% Platinum, 53% Diamond, 60% Celestial. Each player settles where their real win rate stops paying.
+  // 30% Silver, 37.5% Gold (as before, x1), 46% Platinum, 53% Diamond, 60% Master. Each player settles where their real win rate stops paying.
   B.LP_LEAGUE = { gain: [1.25, 1.1, 1, 0.85, 0.75, 0.65], loss: [0.6, 0.8, 1, 1.2, 1.4, 1.6] };
   // WHAT: the league multipliers of a league index: { gain, loss }.
   // v90 (review #171): a Gauntlet floor won pays its number in LP (floor 1: +1, floor 2: +2...); a loss in the Gauntlet costs nothing
@@ -1510,7 +1510,11 @@
   B.LP_GAP = 0.25;
   // WHAT: the factor of one PvP fight's LP: win or loss, opponent's league minus yours (null = same league).
   B.lpGap = (win, d) => Math.max(0.25, Math.min(2, 1 + B.LP_GAP * (win ? 1 : -1) * (d == null ? 0 : Math.max(-4, Math.min(4, d | 0)))));
+  // v119 (review #206, David: "At celestial, get 0 LP from pve win"): in the top league (Master, review #207) a completed run pays nothing (no run, PvE or
+  // streak LP): only the Gauntlet floors (and a lost run's cost) move your LP there.
+  B.lpTop = league => (league | 0) >= B.LEAGUES.length - 1;
   B.lpParts = (g, league) => {
+    if (B.lpTop(league)) g = Object.assign({}, g, { done: false, pve: false, duels: 0, streak: 0, pvp: null });
     const M = B.lpMul(league), sc = (n, base) => Math.round(n * base * (base < 0 ? M.loss : M.gain));
     const duels = Math.max(0, Math.min(4, g.duels | 0)), lost = Math.max(0, Math.min(6, g.lost | 0)), streak = g.done ? Math.max(0, Math.min(50, g.streak | 0)) : 0, out = [];
     const pve = g.done || g.pve ? B.LP_PVE[Math.max(0, Math.min(B.LP_PVE.length - 1, league | 0))] : 0;
@@ -1546,7 +1550,7 @@
   B.seasonEnds = n => B.SEASON.epoch + n * B.SEASON.days * 864e5;
   // WHAT: CROWNS (the paid-in-play currency): what each league first reached pays. B.SHOP = the Crown Shop perks and prices.
   B.CROWNS = {
-    league: [0, 10, 20, 30, 50, 80],   // crowns for reaching Bronze..Celestial the first time in a season (Bronze is the start)
+    league: [0, 10, 20, 30, 50, 80],   // crowns for reaching Bronze..Master the first time in a season (Bronze is the start)
     referPct: 0.01, referMin: 1,       // a referrer gets 1% (at least 1) of every crown their friend earns by playing
   };
   B.SHOP = [
@@ -1612,7 +1616,7 @@
     { id: 'onfire', title: 'On Fire', icon: '🔥', desc: 'Reach a win streak of 3.', by: 'server' },
     { id: 'unstoppable', title: 'Unstoppable', icon: '☄', desc: 'Reach a win streak of 10.', by: 'server' },
     { id: 'golden', title: 'Golden', icon: '🥇', desc: 'Reach the Gold league.', by: 'server' },
-    { id: 'celestial', title: 'Celestial Being', icon: '🌌', desc: 'Reach the Celestial league.', by: 'server' },
+    { id: 'celestial', title: 'Grand Master', icon: '🌌', desc: 'Reach the Master league.', by: 'server' },
     // v74 (review #152): titles the account level gives, dropping from the level chests between the heroes
     { id: 'lv_squire', title: 'Squire', icon: '🪖', desc: 'Reach account level 4.', by: 'level', lvl: 4 },
     { id: 'lv_adventurer', title: 'Adventurer', icon: '🧭', desc: 'Reach account level 8.', by: 'level', lvl: 8 },

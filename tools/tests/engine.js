@@ -1080,5 +1080,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
 }
 // v107 (review #194): a lost run costs 5 LP per league above Bronze
 { const lp = (g, l) => B.runLp(g, l); ok(lp({ done: false, failed: true }, 0) === 0 && lp({ done: false, failed: true }, 1) === -5 && lp({ done: false, failed: true }, 2) === -10 && lp({ done: false, failed: true }, 5) === -25, 'v107 (review #194): a lost run: Bronze 0, Silver -5, Gold -10, +5 per league'); }
+// v119 (reviews #206 #207): the top league is Master, and there a completed run pays no LP (the Gauntlet still does, a lost run still costs)
+{ ok(B.LEAGUES[B.LEAGUES.length - 1].name === 'Master' && B.runLp({ done: true, streak: 4, pve: true }, B.LEAGUES.length - 1) === 0 && B.runLp({ done: true, streak: 4 }, B.LEAGUES.length - 2) > 0 && B.runLp({ failed: true }, B.LEAGUES.length - 1) < 0, 'v119 (reviews #206 #207): Master is the top league; a completed run pays 0 LP there'); }
 console.log(`engine: ${oks} ok, ${fails} fail`);
 process.exit(fails ? 1 : 0);

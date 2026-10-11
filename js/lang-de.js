@@ -5,6 +5,9 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.de = {
     x: {
+      "Master": "Meister",
+      "Grand Master": "Großmeister",
+      "Reach the Master league.": "Erreiche die Meister-Liga.",
       "Enemies come from the top. Tough heroes go in FRONT: they take the hits.": "Gegner kommen von oben. Zähe Helden stehen VORNE: sie fangen die Treffer ab.",
       "Ranged heroes and healers are fragile: keep them in the BACK, behind a tank.": "Fernkämpfer und Heiler sind zerbrechlich: stell sie HINTEN hinter einen Tank.",
       "Trees, rocks and ponds block the way. Enemies must walk around them: use them as walls.": "Bäume, Felsen und Teiche versperren den Weg. Gegner müssen außen herum: nutze sie als Mauern.",

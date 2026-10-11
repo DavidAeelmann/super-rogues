@@ -9,7 +9,7 @@
 //   and a defense record (def_w / def_l); review #24: its player's Elo does not move for it. Review #20: every BOSS has its own Elo too (ratings kind 'boss', K 16), op 'boss': it rises when the boss
 //   beats a player and falls when it loses, against that player's Elo; the player's own Elo never moves for it.
 //   Review #21: leagues (B.LEAGUES): +1 league point per duel won, -2 per run lost before the gauntlet; 10 points move
-//   the player up one league, never down; Celestial has no ceiling. Answers carry league, lp and `lg` (the change).
+//   the player up one league, never down; Master has no ceiling. Answers carry league, lp and `lg` (the change).
 //   Answers carry `peak` = the most duels any finished ghost won: the height of the gauntlet tower.
 // - v27 (owner + review #25): seasons and Crowns (api/_player.js). Every call rolls the player into the current season;
 //   a promotion pays crowns the first time a league is reached in a season (`lg.crowns`). A new player's first call can
@@ -165,7 +165,7 @@ function cleanTeam(team) {
 const oppView = (t, pid) => t && { teamId: t.id, name: t.name, code: P.codeOf(t.pid), elo: Math.round(t.elo_at), wins: t.wins, status: t.status, own: t.pid === pid, defW: t.def_w || 0, defL: t.def_l || 0, team: JSON.parse(t.team), relics: JSON.parse(t.relics) };
 // review #21: league points; returns what changed
 // WHAT: moves league points (+1 per duel won, -2 for a game lost before the Gauntlet, 10 points = next league; never drops a league).
-// v64 (review #125): ranked leagues. 100 LP a league; reaching 100 moves you up (the rest carries over), going below 0 moves you down to demoteTo LP; Bronze has a floor, Celestial no ceiling
+// v64 (review #125): ranked leagues. 100 LP a league; reaching 100 moves you up (the rest carries over), going below 0 moves you down to demoteTo LP; Bronze has a floor, Master no ceiling
 function leaguePoints(p, delta) {
   const R = D.LEAGUE_RULES, top = D.LEAGUES.length - 1, l0 = p.league | 0, lp0 = p.lp | 0;
   p.league = l0; p.lp = lp0 + Math.round(delta);
