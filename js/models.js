@@ -16,7 +16,9 @@
     vex: H({ body: '#3b2553', trim: '#a05cff', legs: '#1d1328', bulk: 0.85, head: 'hood', hood: '#2a1a3d', weapon: 'daggers', cape: '#5d2d8f', eyes: '#d9b3ff' }),
     pyra: H({ body: '#b8452a', trim: '#ffb347', robe: '#8e2f1c', head: 'hat', hat: '#5a1d12', weapon: 'staff', orb: '#ff7a3d', hair: '#ff9d3d' }),
     glacia: H({ body: '#9fd8ef', trim: '#ffffff', robe: '#5aa9cc', head: 'tiara', hair: '#e6f7ff', weapon: 'staff', orb: '#bff4ff', skin: '#f0dcd0' }),
-    brakk: H({ body: '#7a3b2a', trim: '#c9a26a', legs: '#3d2218', bulk: 1.4, head: 'boar', skin: '#8a5a44', weapon: 'axe', pauldrons: '#5a4a3a' }),
+    // v113 (review #200, David: "Remove the custom spritesheet heroes and create for them the art, effects, svgs etc in line with the others"): Ironhorn, Ravager,
+    // Stinger and Eclipse lost their picture sheets in battle and are drawn here after their official art
+    brakk: H({ skin: '#c8906a', body: '#6a5a48', trim: '#c9a26a', legs: '#3a3028', bulk: 1.5, head: 'beard', bald: true, hair: '#2a1a12', weapon: 'club', pauldrons: '#9a8258', cape: '#8a1f1a', gloves: '#6a5a48' }),   // Brutus: bald, bearded, bronze plate, red cloak, a stone hammer
     lumen: H({ body: '#f2ead0', trim: '#ffcf5a', robe: '#e6dcb8', head: 'halo', hair: '#c9a26a', weapon: 'staff', orb: '#fff3a0' }),
     kestrel: H({ body: '#3f7a3a', trim: '#b5d68b', legs: '#2d3b22', bulk: 0.9, head: 'hood', hood: '#2f5a2b', weapon: 'bow', quiver: true, eyes: '#e8ffd0' }),
     morrow: H({ body: '#4a4f5c', trim: '#9aa3b5', robe: '#2c3038', head: 'skull', weapon: 'scythe', cape: '#1c1f26', eyes: '#6effc4' }),
@@ -24,7 +26,7 @@
     grimhook: H({ body: '#2f7f73', trim: '#e0c07a', legs: '#1f3b37', bulk: 1.2, head: 'tricorn', hat: '#1b2a28', skin: '#c89a7a', weapon: 'hook', cape: '#173c37' }),
     mirage: H({ body: '#c2447f', trim: '#ffd1e8', legs: '#4a1d33', bulk: 0.85, head: 'mask', hair: '#2a1020', weapon: 'rapier', cape: '#7a2450' }),
     rook: H({ body: '#b8792a', trim: '#6e6e6e', legs: '#4a3520', bulk: 1.05, head: 'goggles', hair: '#5a3a1a', weapon: 'wrench', pack: true }),
-    thorne: H({ skin: '#d9a07a', body: '#7a2a22', trim: '#c9a26a', legs: '#3a1f18', bulk: 1.3, head: 'bald', hair: '#d4483b', weapon: 'axe', pauldrons: '#5a3a2a', paint: true }),
+    thorne: H({ skin: '#d9a07a', body: '#c88a66', trim: '#5a3a2a', legs: '#3a2a22', bulk: 1.3, head: 'spiky', hair: '#2a1a14', weapon: 'none', bare: true, gloves: '#c41e2a', paint: true, cape: '#7a1a18' }),   // Ulfrik: shirtless, wild hair, red hands
     seraph: H({ body: '#f2e4b8', trim: '#ffcf5a', legs: '#b8a878', bulk: 1.2, head: 'helm', plume: '#ffcf5a', pauldrons: '#fff3c8', weapon: 'sword', wings: '#fffaf0' }),
     nyx: H({ skin: '#9ab', body: '#1a2a36', trim: '#35c6d6', legs: '#101820', bulk: 0.9, head: 'hood', hood: '#0f1c26', eyes: '#35c6d6', weapon: 'sword', cape: '#123a44' }),
     bramble: { type: 'golem', body: '#6a5236', trim: '#9fe07a', leaves: '#4f8a2f' },
@@ -34,7 +36,7 @@
     hippolyta: H({ skin: '#c89a70', body: '#8a5a2a', trim: '#e8c070', legs: '#6a4a2a', head: 'bald', hair: '#3a2210', weapon: 'spear', cape: '#c98a3a', pauldrons: '#c9a26a' }),
     deadshot: H({ body: '#4a5a3a', trim: '#8a9a6a', legs: '#2a3a22', head: 'hood', hood: '#3a4a2a', eyes: '#ff5050', weapon: 'rifle', cape: '#34402a' }),
     vesper: H({ skin: '#ece4ee', body: '#1f1426', trim: '#c0284a', legs: '#140a18', head: 'bald', hair: '#101014', collar: '#7a1030', cape: '#5a0f1f', weapon: 'rapier' }),
-    kage: H({ skin: '#d9b08a', body: '#1e2230', trim: '#c43a3a', legs: '#14161e', bulk: 0.85, head: 'hood', hood: '#1a1e2a', eyes: '#ffffff', weapon: 'daggers' }),
+    kage: H({ skin: '#d9b08a', body: '#2a2228', trim: '#c43a3a', legs: '#1e1a20', bulk: 0.85, head: 'ninja', hood: '#1e1a20', hair: '#141014', weapon: 'daggers', sash: '#c43a3a' }),   // Kagero: black ninja, red sash and scarf
     rex: { type: 'beast', body: '#a0703a', trim: '#f0dcb0' },
     vey: H({ body: '#6a4ac8', trim: '#ffcf5a', robe: '#3e2470', head: 'hat', hat: '#2a1a55', hair: '#d0c0ff', weapon: 'orb', orb: '#c9a2ff' }),
     pip: H({ skin: '#f5f0ea', body: '#e0406a', trim: '#ffe066', legs: '#3a5ac4', head: 'clown', hair: '#ff8a3a', weapon: 'orb', orb: '#fff6e0', diamonds: '#ffe066' }),
@@ -47,7 +49,7 @@
     sprocket: H({ skin: '#d9a07a', body: '#3a7a5a', trim: '#e8c070', legs: '#2a3a2a', head: 'goggles', hair: '#e8e0c0', weapon: 'flask', orb: '#7ee08e', pack: true }),
     zephyr: H({ skin: '#d9a07a', body: '#e8e0c8', trim: '#3aa8a8', legs: '#c8c0a8', head: 'bald', weapon: 'none', sash: '#3aa8a8' }),
     // v30 (review #28): the heroes unlocked by the account level
-    buzzwell: H({ skin: '#e8b890', body: '#ffc21a', trim: '#3a2a10', legs: '#6a4a1a', robe: '#e0a010', head: 'hood', hood: '#f2ead0', eyes: '#3a2a10', weapon: 'staff', orb: '#ffe066', diamonds: '#3a2a10' }),
+    buzzwell: H({ skin: '#f0c8a8', body: '#efe6d6', trim: '#e8c040', legs: '#e2d8c4', head: 'beehat', hat: '#f2ead8', hair: '#7a4a22', weapon: 'staff', orb: '#ffe066', gloves: '#e8c040', boot: '#6a4a2a' }),   // Melissa: a beekeeper's suit, veiled hat, yellow gloves
     coralie: H({ skin: '#f0d0c0', body: '#2fb8d8', trim: '#fff3c4', robe: '#1a86a8', head: 'tiara', hair: '#1a5a8a', weapon: 'staff', orb: '#9ff0ff' }),
     stellan: H({ skin: '#e0b48a', body: '#3a3a8a', trim: '#ffe066', legs: '#24245a', head: 'hat', hat: '#2a2a6a', hair: '#e8e8ff', weapon: 'orb', orb: '#fff6a0', cape: '#5a4ab8', sparks: true }),
     bat: H({ skin: '#3a2a3a', body: '#2a1a2a', trim: '#8a1f3a', legs: '#1a101a', h: 0.5, bulk: 0.7, head: 'ears', weapon: 'none', wings: '#2a1a2a' }),
@@ -106,7 +108,7 @@
   // (see STYLES in weapon()); and every model knows its key so that it gets its own idle tempo, phase and posture
   const WS = { seraph: 'holy', nyx: 'scimitar', knight: 'broad', footman: 'broad', skeleton: 'rusty', mirage: 'foil', vesper: 'crimson', duelist: 'duel', vex: 'curved', kage: 'kunai', harlequin: 'jest',
     pyra: 'flame', glacia: 'crystal', lumen: 'sun', tempest: 'bolt', buzzwell: 'hive', coralie: 'shell', shaman: 'skullstaff', summoner: 'candle', mirewitch: 'crook', smolder: 'nozzle', gardener: 'sprout',
-    thorne: 'war', azgul: 'cleaver', gorewarden: 'cleaver', brakk: 'double', grok: 'spiked', brute: 'log', tom: 'ladle', rohammer: 'hammer', vey: 'ring', stellan: 'star', hexer: 'eyeorb' };
+    thorne: 'war', azgul: 'cleaver', gorewarden: 'cleaver', brakk: 'hammer', grok: 'spiked', brute: 'log', tom: 'ladle', rohammer: 'hammer', vey: 'ring', stellan: 'star', hexer: 'eyeorb' };
   for (const k in WS) if (M[k]) M[k].ws = WS[k];
   for (const k in M) if (!M[k]._k) M[k]._k = k;
   const seedOf = s => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
@@ -295,7 +297,6 @@
     vex: { runes: '#c08aff', tatters: 1, scarf: '#7a3ab8', pr: { head: 0.95, leg: 1.05, hunch: 0.05 } },
     pyra: { aura: 'embers', ac: '#ffb347', hemFlame: '#ff7a3d', em: ['flame', '#ffb347'] },
     glacia: { aura: 'snow', ac: '#e6f7ff', em: ['gem', '#bff4ff'], robeStars: '#e6f7ff' },
-    brakk: { fur: '#8a6a4a', scar: 1, necklace: '#f2ead0', pr: { head: 0.95, sh: 1.1 } },
     lumen: { aura: 'motes', ac: '#fff3a0', em: ['sun', '#ffcf5a'], robeStars: '#ffcf5a' },
     kestrel: { feather: '#e8d36a', pouches: '#6a4a2a', aura: 'leaves', ac: '#7ac25a', pr: { leg: 1.08, head: 0.95 } },
     morrow: { aura: 'wisps', ac: '#6effc4', tatters: 1, chain: '#9aa3b5', pr: { hunch: 0.08, leg: 1.04 } },
@@ -303,7 +304,7 @@
     grimhook: { eyepatch: 1, em: ['anchor', '#e0c07a'], stache: '#3a2a1a', chain: '#9aa0a8', pr: { sh: 1.06 } },
     mirage: { aura: 'motes', ac: '#ffd1e8', earring: '#ffd1e8', scarf: '#ff8ac0', pr: { leg: 1.06 } },
     rook: { em: ['gear', '#cfd3dc'], pouches: '#5a3a1a', gears: '#cfd3dc', pr: { head: 1.05 } },
-    thorne: { scar: 1, fur: '#6a4a2a' },
+    thorne: { scar: 1, fur: '#e8e0d4', paintFace: '#c41e2a', aura: 'drops', ac: '#c41e2a', tatters: 1, pr: { sh: 1.08 } },
     seraph: { em: ['cross', '#ffcf5a'], tabard: '#fffaf0', aura: 'motes', ac: '#fff3a0', pr: { sh: 1.06, leg: 1.04 } },
     nyx: { scarf: '#35c6d6', runes: '#35c6d6', tatters: 1, pr: { leg: 1.06, hunch: 0.04 } },
     bramble: { aura: 'leaves', ac: '#9fe07a' },
@@ -312,19 +313,20 @@
     hippolyta: { paintFace: '#c43a3a', em: ['star', '#e8c070'], necklace: '#e8c070', pr: { leg: 1.06, sh: 1.04 } },
     deadshot: { scarf: '#4a5a3a', bandolier: '#2a2a20', pr: { leg: 1.04 } },
     vesper: { aura: 'drops', ac: '#c0284a', em: ['moon', '#c0284a'], tatters: 1, pr: { leg: 1.08, head: 0.95 } },
-    kage: { scarf: '#c43a3a', runes: '#c43a3a' },
+    kage: { scarf: '#c43a3a', em: ['star', '#cfd6de'], pouches: '#3a2a22', aura: 'petals', ac: '#ffb0cc', pr: { leg: 1.05 } },
     rex: { aura: 'dust', ac: '#c8a070' },
     vey: { aura: 'orbit', ac: '#c9a2ff', robeStars: '#ffcf5a', em: ['eye', '#ffcf5a'] },
     pip: { aura: 'confetti', ruff: '#ffe066', pr: { head: 1.12, leg: 0.92 } },
     barley: { apron: '#e8dcc0', stache: '#b8792a', aura: 'bubbles', ac: '#fff6e0', pr: { head: 1.04, leg: 0.9 } },
     azgul: { aura: 'embers', ac: '#ff6a1a', chain: '#2a1a10', runes: '#ffb347' },
+    brakk: { paintFace: '#c41e2a', rivets: '#e8c070', em: ['star', '#c9a26a'], tatters: 1, aura: 'dust', ac: '#a89a86', pr: { sh: 1.12, head: 0.95 } },
     grok: { fur: '#7a5a3a', necklace: '#e8e0c8', scar: 1, pr: { head: 0.92, leg: 0.92, hunch: 0.06 } },
     imhotep: { aura: 'wisps', ac: '#6effc4', em: ['ankh', '#e8b84a'], necklace: '#e8b84a' },
     leonidas: { em: ['lambda', '#d9c36a'], scar: 1, pr: { sh: 1.1 } },
     harlequin: { aura: 'motes', ac: '#ff7ac8', ruff: '#1a1a1a', pr: { leg: 1.06 } },
     sprocket: { em: ['gear', '#e8c070'], aura: 'bubbles', ac: '#7ee08e', pouches: '#2a3a2a', gears: '#e8c070' },
     zephyr: { aura: 'wind', ac: '#d8fff8', headband: '#3aa8a8', scarf: '#3aa8a8', pr: { leg: 1.05 } },
-    buzzwell: { aura: 'bees', ac: '#ffc21a' },
+    buzzwell: { aura: 'bees', ac: '#ffc21a', bandolier: '#6a4a2a', pouches: '#6a4a2a' },
     coralie: { aura: 'bubbles', ac: '#bff4ff', em: ['shell', '#fff3c4'], robeStars: '#9ff0ff' },
     stellan: { aura: 'orbit', ac: '#fff6a0', robeStars: '#ffe066', em: ['star', '#ffe066'] },
     smolder: { aura: 'embers', ac: '#ff7a3d', rivets: '#ff7a3d', em: ['flame', '#ff7a3d'] },
@@ -333,6 +335,25 @@
     duelist: { feather: '#ffffff', stache: '#3a2a1a', scarf: '#a4262f', em: ['star', '#ffd23f'], pr: { leg: 1.06 } },
     medic: { em: ['cross', '#e0405a'], pouches: '#6a4a3a', aura: 'motes', ac: '#9dff7a' },
     gardener: { aura: 'leaves', ac: '#7ee08e', flower: '#ff7fb8', apron: '#7a5a3a' },
+    // v113 (review #200, David: "improve detail of the battle arena and enemies"): the monsters and bosses get their own details too
+    grunt: { necklace: '#e8e0c8', pouches: '#5a3a1a', scar: 1, pr: { head: 1.1, hunch: 0.06 } },
+    archer: { feather: '#e05555', scarf: '#6a5a32', pr: { leg: 1.04 } },
+    brute: { scar: 1, chain: '#6a6a70', paintFace: '#c43a3a', pr: { head: 0.85, hunch: 0.09 } },
+    skulker: { scarf: '#e05555', pouches: '#2a2a32', pr: { hunch: 0.07 } },
+    shaman: { necklace: '#e8e2d0', aura: 'wisps', ac: '#7dff7a', robeStars: '#e0c07a', pr: { hunch: 0.06 } },
+    shieldbearer: { rivets: '#c9a26a', em: ['star', '#c9a26a'], pr: { sh: 1.08 } },
+    hexer: { aura: 'orbit', ac: '#c77dff', runes: '#c77dff', robeStars: '#c77dff' },
+    summoner: { aura: 'embers', ac: '#ffcf5a', robeStars: '#ffcf5a', em: ['eye', '#ffcf5a'] },
+    knight: { tabard: '#5a1520', em: ['cross', '#c43a3a'], rivets: '#8a1f2a', tatters: 1 },
+    imp: { aura: 'embers', ac: '#ff7a3d' },
+    footman: { tabard: '#4a5a7a', em: ['star', '#c9a26a'] },
+    bowman: { feather: '#c9a26a', pouches: '#5a3a1a' },
+    skeleton: { aura: 'wisps', ac: '#6effc4' },
+    gorewarden: { fur: '#3a2a1a', chain: '#8a8a90', aura: 'embers', ac: '#ff5a3a', scar: 1, tatters: 1, em: ['flame', '#c9a26a'] },
+    mirewitch: { aura: 'bubbles', ac: '#9ad94a', necklace: '#e8e2d0', robeStars: '#9ad94a', pr: { hunch: 0.08 } },
+    lichqueen: { aura: 'snow', ac: '#cfe9f7', robeStars: '#8fe3ff', em: ['gem', '#8fe3ff'], tatters: 1 },
+    hollowking: { aura: 'wisps', ac: '#a44dff' }, colossus: { aura: 'dust', ac: '#b0a088' }, golem: { aura: 'dust', ac: '#a89a86' },
+    packlord: { aura: 'embers', ac: '#ff6a3a' }, wolf: { aura: 'dust', ac: '#b8b0a0' }, spitter: { aura: 'bubbles', ac: '#c9e070' }, bomber: { aura: 'sparks', ac: '#ffcf5a' },
     prism: { aura: 'motes', ac: '#d8fbff' },
     citadel: { aura: 'dust', ac: '#c8b8a0' },
     ashwing: { aura: 'embers', ac: '#ffd23f' },
@@ -377,6 +398,7 @@
       else if (kind === 'motes') { const x = xs, y = -S * (0.3 + ph * 1.1); c.fillStyle = col; c.beginPath(); for (let k = 0; k < 8; k++) { const rr = k % 2 ? S * 0.01 : S * 0.035, a = k * Math.PI / 4 + t * 2; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fill(); }
       else if (kind === 'notes') { if (i > 2) continue; const x = S * (0.15 + ph * 0.35) + Math.sin(t * 4 + i) * S * 0.05, y = -S * (0.9 + ph * 0.6); emblem(c, 'note', x, y, S * 0.06, col); }
       else if (kind === 'wisps') { const a = t * 1.6 + i * TAU / n, x = Math.cos(a) * S * 0.45, y = -S * 0.7 + Math.sin(a) * S * 0.18 - ph * S * 0.1; c.globalAlpha = 0.5 + 0.3 * Math.sin(t * 3 + i); c.fillStyle = col; c.beginPath(); c.arc(x, y, S * 0.035, 0, TAU); c.fill(); c.globalAlpha *= 0.5; c.beginPath(); c.arc(x - Math.sin(a) * S * 0.05, y, S * 0.025, 0, TAU); c.fill(); }
+      else if (kind === 'petals') { const x = xs + Math.sin(t * 1.7 + i * 2) * S * 0.12, y = -S * (1.4 - ph * 1.35); c.save(); c.translate(x, y); c.rotate(t * 1.5 + i); c.fillStyle = col; c.beginPath(); c.ellipse(0, 0, S * 0.03, S * 0.016, 0, 0, TAU); c.fill(); c.restore(); }
       else if (kind === 'leaves') { const x = xs + Math.sin(t * 2 + i * 2) * S * 0.1, y = -S * (1.4 - ph * 1.35); c.save(); c.translate(x, y); c.rotate(t * 2 + i); c.fillStyle = col; c.beginPath(); c.ellipse(0, 0, S * 0.04, S * 0.018, 0, 0, TAU); c.fill(); c.restore(); }
       else if (kind === 'bubbles') { const x = xs + Math.sin(t * 2.5 + i) * S * 0.04, y = -S * (0.2 + ph * 1.3); c.strokeStyle = col; c.lineWidth = 1; c.beginPath(); c.arc(x, y, S * (0.02 + ph * 0.025), 0, TAU); c.stroke(); }
       else if (kind === 'confetti') { const x = xs + Math.sin(t * 2 + i) * S * 0.1, y = -S * (1.5 - ph * 1.4); c.save(); c.translate(x, y); c.rotate(t * 4 + i); c.fillStyle = ['#ff5a8a', '#ffe066', '#5ad8ff', '#7ee08e', '#c9a2ff'][i % 5]; c.fillRect(-S * 0.02, -S * 0.01, S * 0.04, S * 0.02); c.restore(); }
@@ -392,6 +414,9 @@
   // WHAT: a hero's fidget kind from its weapon (what it does with its hands every few seconds when idle).
   const fidgetOf = w => /^(sword|rapier|daggers|axe|club|hook|wrench|scythe|spear)$/.test(w) ? 'twirl' : /^(staff|orb)$/.test(w) ? 'flare' : /^(bow|rifle|gun)$/.test(w) ? 'aim' : w === 'lute' ? 'strum' : /^(mug|flask)$/.test(w) ? 'drink' : /^(tower|shieldmace)$/.test(w) ? 'brace' : 'stretch';
   // WHAT: draws the hero's details on its body; at = where (back, robe, chest, shoulders, head); A = the body anchors from humanoid().
+  // v113: cheap shapes for the small decorations (no gradient per piece: they are a few pixels wide)
+  function dot(c, x, y, r, col) { c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); if (r >= 2.5) { c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); } }
+  function flat(c, pts, col) { c.beginPath(); pts.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }
   function details(c, m, at, A, p) {
     const sg = m.sig; if (!sg) return;
     const { s, shX, shY, hipY, wy, tw, bw, hx, hy, r } = A;
@@ -413,19 +438,19 @@
     if (at === 'chest') {
       const cx = shX + tw * 0.08, cy = (shY + wy) / 2 + s * 0.02;
       if (sg.tabard || sg.apron) { const col = sg.tabard || sg.apron, sw = Math.sin(p.t * 2.2) * s * 0.02 + (p.walk != null ? Math.sin(p.walk * TAU) * s * 0.03 : 0), top = sg.apron ? shY + s * 0.08 : shY + s * 0.02;
-        poly(c, [[cx - tw * 0.42, top], [cx + tw * 0.42, top], [bw * 0.75, hipY + s * 0.04], [bw * 0.7 + sw, hipY + s * 0.26], [cx + sw * 0.5, hipY + s * 0.3], [-bw * 0.7 + sw, hipY + s * 0.26], [-bw * 0.75, hipY + s * 0.04]], col);
+        flat(c, [[cx - tw * 0.42, top], [cx + tw * 0.42, top], [bw * 0.75, hipY + s * 0.04], [bw * 0.7 + sw, hipY + s * 0.26], [cx + sw * 0.5, hipY + s * 0.3], [-bw * 0.7 + sw, hipY + s * 0.26], [-bw * 0.75, hipY + s * 0.04]], col);
         if (sg.tabard) limb(c, cx - tw * 0.42, top + s * 0.02, cx + tw * 0.42, top + s * 0.02, 1.4, m.trim); }
-      if (sg.bandolier) { limb(c, shX - tw * 0.85, shY + s * 0.03, bw * 0.85, hipY - s * 0.02, s * 0.05, sg.bandolier); for (let i = 1; i < 4; i++) { const k = i / 4; ball(c, shX - tw * 0.85 + (bw * 0.85 - shX + tw * 0.85) * k, shY + s * 0.03 + (hipY - shY - s * 0.05) * k, s * 0.022, '#e8c070'); } }
+      if (sg.bandolier) { limb(c, shX - tw * 0.85, shY + s * 0.03, bw * 0.85, hipY - s * 0.02, s * 0.05, sg.bandolier); for (let i = 1; i < 4; i++) { const k = i / 4; dot(c, shX - tw * 0.85 + (bw * 0.85 - shX + tw * 0.85) * k, shY + s * 0.03 + (hipY - shY - s * 0.05) * k, s * 0.022, '#e8c070'); } }
       if (sg.chain) { c.strokeStyle = sg.chain; c.lineWidth = 1.2; for (let i = 0; i < 6; i++) { const x = shX - tw * 0.7 + i * tw * 0.27, y = shY + s * 0.06 + Math.sin(i / 5 * Math.PI) * s * 0.1; c.beginPath(); c.ellipse(x, y, s * 0.022, s * 0.014, 0.4, 0, TAU); c.stroke(); } }
-      if (sg.em) { const er = s * 0.065; c.save(); c.globalAlpha *= 0.9; ball(c, cx, cy, er * 1.35, shade(sg.tabard || m.body, -0.25)); c.restore(); emblem(c, sg.em[0], cx, cy, er, sg.em[1]); }
-      if (sg.rivets) for (const [x, y] of [[-0.6, 0.1], [0.6, 0.1], [-0.5, 0.3], [0.5, 0.3]]) ball(c, shX + tw * x, shY + s * y, s * 0.014, sg.rivets);
-      if (sg.pouches) for (const x of [-0.75, 0.55]) { poly(c, [[bw * x - s * 0.05, hipY - s * 0.01], [bw * x + s * 0.05, hipY - s * 0.01], [bw * x + s * 0.045, hipY + s * 0.09], [bw * x - s * 0.045, hipY + s * 0.09]], sg.pouches); limb(c, bw * x - s * 0.045, hipY + s * 0.015, bw * x + s * 0.045, hipY + s * 0.015, 1, shade(sg.pouches, 0.3)); }
+      if (sg.em) { const er = s * 0.065; c.save(); c.globalAlpha *= 0.9; dot(c, cx, cy, er * 1.35, shade(sg.tabard || m.body, -0.25)); c.restore(); emblem(c, sg.em[0], cx, cy, er, sg.em[1]); }
+      if (sg.rivets) for (const [x, y] of [[-0.6, 0.1], [0.6, 0.1], [-0.5, 0.3], [0.5, 0.3]]) dot(c, shX + tw * x, shY + s * y, s * 0.014, sg.rivets);
+      if (sg.pouches) for (const x of [-0.75, 0.55]) { flat(c, [[bw * x - s * 0.05, hipY - s * 0.01], [bw * x + s * 0.05, hipY - s * 0.01], [bw * x + s * 0.045, hipY + s * 0.09], [bw * x - s * 0.045, hipY + s * 0.09]], sg.pouches); limb(c, bw * x - s * 0.045, hipY + s * 0.015, bw * x + s * 0.045, hipY + s * 0.015, 1, shade(sg.pouches, 0.3)); }
       return;
     }
     if (at === 'shoulders') {
-      if (sg.fur) for (let i = 0; i < 7; i++) { const x = shX - tw * 1.05 + i * tw * 0.35; ball(c, x, shY + s * 0.0 + Math.sin(i * 1.9) * s * 0.015, s * (0.06 + (i % 2) * 0.015), sg.fur); }
-      if (sg.ruff) for (let i = 0; i < 6; i++) { const x = shX - tw * 0.7 + i * tw * 0.28; poly(c, [[x - s * 0.05, shY - s * 0.02], [x, shY + s * 0.07], [x + s * 0.05, shY - s * 0.02], [x, shY - s * 0.07]], i % 2 ? sg.ruff : '#ffffff'); }
-      if (sg.necklace) { c.strokeStyle = sg.necklace; c.lineWidth = 1; c.beginPath(); c.arc(shX + s * 0.02, shY - s * 0.04, s * 0.11, 0.3, Math.PI - 0.3); c.stroke(); for (const a of [0.7, 1.57, 2.44]) poly(c, [[shX + s * 0.02 + Math.cos(a) * s * 0.11 - s * 0.012, shY - s * 0.04 + Math.sin(a) * s * 0.11], [shX + s * 0.02 + Math.cos(a) * s * 0.11, shY - s * 0.04 + Math.sin(a) * s * 0.11 + s * 0.05], [shX + s * 0.02 + Math.cos(a) * s * 0.11 + s * 0.012, shY - s * 0.04 + Math.sin(a) * s * 0.11]], sg.necklace); }
+      if (sg.fur) for (let i = 0; i < 7; i++) { const x = shX - tw * 1.05 + i * tw * 0.35; dot(c, x, shY + s * 0.0 + Math.sin(i * 1.9) * s * 0.015, s * (0.06 + (i % 2) * 0.015), sg.fur); }
+      if (sg.ruff) for (let i = 0; i < 6; i++) { const x = shX - tw * 0.7 + i * tw * 0.28; flat(c, [[x - s * 0.05, shY - s * 0.02], [x, shY + s * 0.07], [x + s * 0.05, shY - s * 0.02], [x, shY - s * 0.07]], i % 2 ? sg.ruff : '#ffffff'); }
+      if (sg.necklace) { c.strokeStyle = sg.necklace; c.lineWidth = 1; c.beginPath(); c.arc(shX + s * 0.02, shY - s * 0.04, s * 0.11, 0.3, Math.PI - 0.3); c.stroke(); for (const a of [0.7, 1.57, 2.44]) flat(c, [[shX + s * 0.02 + Math.cos(a) * s * 0.11 - s * 0.012, shY - s * 0.04 + Math.sin(a) * s * 0.11], [shX + s * 0.02 + Math.cos(a) * s * 0.11, shY - s * 0.04 + Math.sin(a) * s * 0.11 + s * 0.05], [shX + s * 0.02 + Math.cos(a) * s * 0.11 + s * 0.012, shY - s * 0.04 + Math.sin(a) * s * 0.11]], sg.necklace); }
       return;
     }
     if (at === 'head') {
@@ -438,7 +463,7 @@
       if (sg.headband) { limb(c, hx - r * 0.95, hy - r * 0.5, hx + r * 0.95, hy - r * 0.55, r * 0.22, sg.headband); const wv = Math.sin(p.t * 6) * r * 0.2; limb(c, hx - r * 0.9, hy - r * 0.48, hx - r * 1.6, hy - r * 0.2 + wv, r * 0.14, sg.headband); limb(c, hx - r * 0.9, hy - r * 0.45, hx - r * 1.5, hy + r * 0.05 - wv, r * 0.12, sg.headband); }
       if (sg.feather) { const k = m.head, fx = k === 'hood' ? hx - r * 0.6 : hx - r * 0.5, fy = k === 'hat' || k === 'tricorn' ? hy - r * 0.9 : k === 'hood' ? hy - r * 0.9 : hy - r * 0.8, wv = Math.sin(p.t * 3) * 0.12;
         c.save(); c.translate(fx, fy); c.rotate(-0.9 + wv); c.fillStyle = sg.feather; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(r * 0.35, -r * 0.6, 0, -r * 1.4); c.quadraticCurveTo(-r * 0.3, -r * 0.6, 0, 0); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); c.strokeStyle = shade(sg.feather, -0.3); seg(c, 0, 0, 0, -r * 1.3); c.restore(); }
-      if (sg.flower) { const fx = hx - r * 0.45, fy = hy - r * 0.95; for (let i = 0; i < 5; i++) { const a = i * TAU / 5 + p.t * 0.5; ball(c, fx + Math.cos(a) * r * 0.16, fy + Math.sin(a) * r * 0.16, r * 0.13, sg.flower); } ball(c, fx, fy, r * 0.1, '#ffe066'); }
+      if (sg.flower) { const fx = hx - r * 0.45, fy = hy - r * 0.95; for (let i = 0; i < 5; i++) { const a = i * TAU / 5 + p.t * 0.5; dot(c, fx + Math.cos(a) * r * 0.16, fy + Math.sin(a) * r * 0.16, r * 0.13, sg.flower); } dot(c, fx, fy, r * 0.1, '#ffe066'); }
     }
   }
   // v62k (review #107): a head with a forehead, brow, nose, lips, chin, jaw and an ear, in light and shade, instead of a plain sphere
@@ -465,7 +490,7 @@
     const k = m.head;
     const eyes = (col) => {
       if (p.blink && r >= 4) { c.strokeStyle = INK; c.lineWidth = Math.max(1, r * 0.1); c.lineCap = 'round'; seg(c, hx + r * 0.18, hy - r * 0.02, hx + r * 0.5, hy); seg(c, hx + r * 0.62, hy, hx + r * 0.9, hy - r * 0.02); return; }   // v111: a blink
-      if (r < 5 || col) { ball(c, hx + r * 0.35, hy - r * 0.05, r * 0.14, col || '#222'); ball(c, hx + r * 0.75, hy - r * 0.05, r * 0.12, col || '#222'); return; }
+      if (r < 5 || col) { dot(c, hx + r * 0.35, hy - r * 0.05, r * 0.14, col || '#222'); dot(c, hx + r * 0.75, hy - r * 0.05, r * 0.12, col || '#222'); return; }
       for (const [ex, er] of [[0.33, 0.2], [0.76, 0.17]]) {
         c.fillStyle = '#f7f3ea'; c.beginPath(); c.ellipse(hx + r * ex, hy - r * 0.04, r * er, r * er * 0.8, 0, 0, TAU); c.fill(); c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke();
         c.fillStyle = m.iris || '#3a2a1a'; c.beginPath(); c.arc(hx + r * (ex + 0.05), hy - r * 0.02, r * er * 0.62, 0, TAU); c.fill();
@@ -475,15 +500,15 @@
       seg(c, hx + r * 0.16, hy - r * 0.33, hx + r * 0.48, hy - r * 0.38); seg(c, hx + r * 0.64, hy - r * 0.37, hx + r * 0.92, hy - r * 0.3);
       c.strokeStyle = shade(m.skin, -0.35); c.lineWidth = Math.max(1, r * 0.08); seg(c, hx + r * 0.62, hy + r * 0.1, hx + r * 0.66, hy + r * 0.3);
     };
-    if (k === 'skull') { ball(c, hx, hy, r, m.skin === '#e0b48a' ? '#e8e2d0' : '#e8e2d0', OUT); ball(c, hx + r * 0.35, hy - r * 0.05, r * 0.2, '#111'); ball(c, hx + r * 0.75, hy - r * 0.05, r * 0.17, '#111'); if (m.eyes) { ball(c, hx + r * 0.35, hy - r * 0.05, r * 0.08, m.eyes); ball(c, hx + r * 0.75, hy - r * 0.05, r * 0.07, m.eyes); } limb(c, hx + r * 0.3, hy + r * 0.55, hx + r * 0.8, hy + r * 0.5, 1, '#555'); return; }
-    if (k === 'boar') { face(c, m, hx - r * 0.1, hy, r * 1.1); poly(c, [[hx + r * 0.6, hy - r * 0.2], [hx + r * 1.45, hy + r * 0.05], [hx + r * 1.45, hy + r * 0.45], [hx + r * 0.6, hy + r * 0.5]], shade(m.skin, -0.15), OUT); ball(c, hx + r * 1.4, hy + r * 0.25, r * 0.12, '#3a2018'); limb(c, hx + r * 1.0, hy + r * 0.45, hx + r * 1.25, hy - r * 0.05, r * 0.16, '#f2ead0'); poly(c, [[hx - r * 0.2, hy - r * 0.8], [hx - r * 0.55, hy - r * 1.35], [hx - r * 0.05, hy - r * 0.9]], shade(m.skin, -0.2)); eyes('#ffcf5a'); return; }
+    if (k === 'skull') { dot(c, hx, hy, r, m.skin === '#e0b48a' ? '#e8e2d0' : '#e8e2d0', OUT); dot(c, hx + r * 0.35, hy - r * 0.05, r * 0.2, '#111'); dot(c, hx + r * 0.75, hy - r * 0.05, r * 0.17, '#111'); if (m.eyes) { dot(c, hx + r * 0.35, hy - r * 0.05, r * 0.08, m.eyes); dot(c, hx + r * 0.75, hy - r * 0.05, r * 0.07, m.eyes); } limb(c, hx + r * 0.3, hy + r * 0.55, hx + r * 0.8, hy + r * 0.5, 1, '#555'); return; }
+    if (k === 'boar') { face(c, m, hx - r * 0.1, hy, r * 1.1); flat(c, [[hx + r * 0.6, hy - r * 0.2], [hx + r * 1.45, hy + r * 0.05], [hx + r * 1.45, hy + r * 0.45], [hx + r * 0.6, hy + r * 0.5]], shade(m.skin, -0.15), OUT); dot(c, hx + r * 1.4, hy + r * 0.25, r * 0.12, '#3a2018'); limb(c, hx + r * 1.0, hy + r * 0.45, hx + r * 1.25, hy - r * 0.05, r * 0.16, '#f2ead0'); flat(c, [[hx - r * 0.2, hy - r * 0.8], [hx - r * 0.55, hy - r * 1.35], [hx - r * 0.05, hy - r * 0.9]], shade(m.skin, -0.2)); eyes('#ffcf5a'); return; }
     if (k === 'mummy') {
-      ball(c, hx, hy, r, m.skin, OUT);
+      dot(c, hx, hy, r, m.skin, OUT);
       c.strokeStyle = shade(m.skin, -0.3); c.lineWidth = 1.2; for (let i = -2; i <= 2; i++) seg(c, hx - r * 0.95, hy + i * r * 0.35 - r * 0.1, hx + r * 0.95, hy + i * r * 0.35 + r * 0.15);
-      ball(c, hx + r * 0.35, hy - r * 0.1, r * 0.12, m.eyes || '#6effc4'); ball(c, hx + r * 0.72, hy - r * 0.1, r * 0.1, m.eyes || '#6effc4'); return;
+      dot(c, hx + r * 0.35, hy - r * 0.1, r * 0.12, m.eyes || '#6effc4'); dot(c, hx + r * 0.72, hy - r * 0.1, r * 0.1, m.eyes || '#6effc4'); return;
     }
     face(c, m, hx, hy, r);
-    if (m.hair && k !== 'hood' && k !== 'helm') { c.fillStyle = m.hair; c.beginPath(); c.arc(hx - r * 0.1, hy - r * 0.15, r * 1.02, Math.PI * 0.95, Math.PI * 2.05); c.fill(); }
+    if (m.hair && k !== 'hood' && k !== 'helm' && !m.bald) { c.fillStyle = m.hair; c.beginPath(); c.arc(hx - r * 0.1, hy - r * 0.15, r * 1.02, Math.PI * 0.95, Math.PI * 2.05); c.fill(); }
     eyes(m.eyes && k === 'hood' ? m.eyes : null);
     if (k !== 'hood' && k !== 'helm' && k !== 'mask' && r >= 5) { c.strokeStyle = shade(m.skin, -0.45); c.lineWidth = Math.max(1, r * 0.08); seg(c, hx + r * 0.42, hy + r * 0.5, hx + r * 0.78, hy + r * 0.46); }
     if (k === 'helm') {
@@ -497,29 +522,39 @@
         c.quadraticCurveTo(hx - r * 1.2, hy - r * 0.2, hx - r * 1.25, hy + r * 0.6); c.quadraticCurveTo(hx - r * 0.6, hy + r * 1.2, hx + r * 0.1, hy + r * 1.1); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();
         c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 1.1; c.beginPath(); c.moveTo(hx + r * 0.2, hy - r * 1.0); c.quadraticCurveTo(hx - r * 0.6, hy - r * 1.28, hx - r * 1.3, hy - r * 0.85); c.stroke(); }
       c.fillStyle = 'rgba(0,0,0,0.6)'; c.beginPath(); c.ellipse(hx + r * 0.42, hy + r * 0.05, r * 0.62, r * 0.78, 0.1, 0, TAU); c.fill();
-      ball(c, hx + r * 0.3, hy - r * 0.05, r * 0.12, m.eyes || '#ddd'); ball(c, hx + r * 0.7, hy - r * 0.05, r * 0.11, m.eyes || '#ddd');
+      dot(c, hx + r * 0.3, hy - r * 0.05, r * 0.12, m.eyes || '#ddd'); dot(c, hx + r * 0.7, hy - r * 0.05, r * 0.11, m.eyes || '#ddd');
     } else if (k === 'chef') {   // v62: a tall white chef's hat
-      poly(c, [[hx - r * 0.95, hy - r * 0.6], [hx + r * 1.0, hy - r * 0.6], [hx + r * 0.85, hy - r * 1.05], [hx - r * 0.8, hy - r * 1.05]], m.hat || '#fff', OUT);
-      for (const [x, y, rr] of [[-0.55, -1.45, 0.55], [0.05, -1.7, 0.65], [0.65, -1.45, 0.55]]) ball(c, hx + r * x, hy + r * y, r * rr, m.hat || '#fff', OUT);
+      flat(c, [[hx - r * 0.95, hy - r * 0.6], [hx + r * 1.0, hy - r * 0.6], [hx + r * 0.85, hy - r * 1.05], [hx - r * 0.8, hy - r * 1.05]], m.hat || '#fff', OUT);
+      for (const [x, y, rr] of [[-0.55, -1.45, 0.55], [0.05, -1.7, 0.65], [0.65, -1.45, 0.55]]) dot(c, hx + r * x, hy + r * y, r * rr, m.hat || '#fff', OUT);
     } else if (k === 'hat') {
-      poly(c, [[hx - r * 1.4, hy - r * 0.55], [hx + r * 1.5, hy - r * 0.55], [hx + r * 0.9, hy - r * 0.8], [hx - r * 0.2, hy - r * 2.3 + Math.sin(p.t * 2) * r * 0.1], [hx - r * 0.9, hy - r * 0.8]], m.hat, OUT);
+      flat(c, [[hx - r * 1.4, hy - r * 0.55], [hx + r * 1.5, hy - r * 0.55], [hx + r * 0.9, hy - r * 0.8], [hx - r * 0.2, hy - r * 2.3 + Math.sin(p.t * 2) * r * 0.1], [hx - r * 0.9, hy - r * 0.8]], m.hat, OUT);
       limb(c, hx - r * 0.95, hy - r * 0.72, hx + r * 0.95, hy - r * 0.72, r * 0.18, m.trim);
     } else if (k === 'horns') {
       c.strokeStyle = m.horn; c.lineWidth = r * 0.3; c.lineCap = 'round';
       c.beginPath(); c.moveTo(hx + r * 0.3, hy - r * 0.7); c.quadraticCurveTo(hx + r * 1.2, hy - r * 1.3, hx + r * 0.8, hy - r * 1.9); c.stroke();
       c.beginPath(); c.moveTo(hx - r * 0.4, hy - r * 0.7); c.quadraticCurveTo(hx - r * 1.3, hy - r * 1.3, hx - r * 0.9, hy - r * 1.9); c.stroke();
-    } else if (k === 'tiara') { for (let i = -2; i <= 2; i++) poly(c, [[hx + i * r * 0.35 - r * 0.15, hy - r * 0.75], [hx + i * r * 0.35, hy - r * (1.35 + (i === 0 ? 0.35 : 0))], [hx + i * r * 0.35 + r * 0.15, hy - r * 0.75]], '#dff8ff', '#7ac8e0'); }
+    } else if (k === 'tiara') { for (let i = -2; i <= 2; i++) flat(c, [[hx + i * r * 0.35 - r * 0.15, hy - r * 0.75], [hx + i * r * 0.35, hy - r * (1.35 + (i === 0 ? 0.35 : 0))], [hx + i * r * 0.35 + r * 0.15, hy - r * 0.75]], '#dff8ff', '#7ac8e0'); }
     else if (k === 'halo') { c.strokeStyle = '#ffe066'; c.lineWidth = r * 0.22; c.globalAlpha *= 0.9; c.beginPath(); c.ellipse(hx, hy - r * 1.45, r * 0.85, r * 0.28, 0, 0, TAU); c.stroke(); c.globalAlpha /= 0.9; }
-    else if (k === 'tricorn') { poly(c, [[hx - r * 1.3, hy - r * 0.5], [hx + r * 1.4, hy - r * 0.5], [hx + r * 0.8, hy - r * 1.4], [hx, hy - r * 1.1], [hx - r * 0.8, hy - r * 1.4]], m.hat, OUT); limb(c, hx - r * 1.1, hy - r * 0.55, hx + r * 1.2, hy - r * 0.55, r * 0.15, m.trim); }
-    else if (k === 'mask') { c.fillStyle = '#f5f0ea'; c.beginPath(); c.ellipse(hx + r * 0.45, hy, r * 0.62, r * 0.8, 0, 0, TAU); c.fill(); ball(c, hx + r * 0.3, hy - r * 0.15, r * 0.13, '#222'); ball(c, hx + r * 0.75, hy - r * 0.15, r * 0.12, '#222'); c.strokeStyle = '#c2447f'; c.lineWidth = 1.2; c.beginPath(); c.arc(hx + r * 0.5, hy + r * 0.25, r * 0.25, 0.2, Math.PI - 0.2); c.stroke(); }
-    else if (k === 'goggles') { limb(c, hx - r * 0.9, hy - r * 0.35, hx + r * 0.9, hy - r * 0.35, r * 0.25, '#3a2a1a'); ball(c, hx + r * 0.35, hy - r * 0.35, r * 0.3, '#9fd8ef', '#5a4a2a'); ball(c, hx + r * 0.85, hy - r * 0.35, r * 0.26, '#9fd8ef', '#5a4a2a'); }
+    else if (k === 'tricorn') { flat(c, [[hx - r * 1.3, hy - r * 0.5], [hx + r * 1.4, hy - r * 0.5], [hx + r * 0.8, hy - r * 1.4], [hx, hy - r * 1.1], [hx - r * 0.8, hy - r * 1.4]], m.hat, OUT); limb(c, hx - r * 1.1, hy - r * 0.55, hx + r * 1.2, hy - r * 0.55, r * 0.15, m.trim); }
+    else if (k === 'mask') { c.fillStyle = '#f5f0ea'; c.beginPath(); c.ellipse(hx + r * 0.45, hy, r * 0.62, r * 0.8, 0, 0, TAU); c.fill(); dot(c, hx + r * 0.3, hy - r * 0.15, r * 0.13, '#222'); dot(c, hx + r * 0.75, hy - r * 0.15, r * 0.12, '#222'); c.strokeStyle = '#c2447f'; c.lineWidth = 1.2; c.beginPath(); c.arc(hx + r * 0.5, hy + r * 0.25, r * 0.25, 0.2, Math.PI - 0.2); c.stroke(); }
+    else if (k === 'goggles') { limb(c, hx - r * 0.9, hy - r * 0.35, hx + r * 0.9, hy - r * 0.35, r * 0.25, '#3a2a1a'); dot(c, hx + r * 0.35, hy - r * 0.35, r * 0.3, '#9fd8ef', '#5a4a2a'); dot(c, hx + r * 0.85, hy - r * 0.35, r * 0.26, '#9fd8ef', '#5a4a2a'); }
     else if (k === 'jester') {
-      for (const d of [-1, 1]) { c.fillStyle = d < 0 ? m.hat : m.trim; c.beginPath(); c.moveTo(hx - r * 0.2, hy - r * 0.7); c.quadraticCurveTo(hx + d * r * 1.2, hy - r * 2.0, hx + d * r * 1.5, hy - r * 0.9); c.lineTo(hx + d * r * 0.2, hy - r * 0.6); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); ball(c, hx + d * r * 1.5, hy - r * 0.85, r * 0.2, '#ffcf5a'); }
+      for (const d of [-1, 1]) { c.fillStyle = d < 0 ? m.hat : m.trim; c.beginPath(); c.moveTo(hx - r * 0.2, hy - r * 0.7); c.quadraticCurveTo(hx + d * r * 1.2, hy - r * 2.0, hx + d * r * 1.5, hy - r * 0.9); c.lineTo(hx + d * r * 0.2, hy - r * 0.6); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); dot(c, hx + d * r * 1.5, hy - r * 0.85, r * 0.2, '#ffcf5a'); }
       c.fillStyle = '#111'; c.beginPath(); c.ellipse(hx + r * 0.52, hy - r * 0.05, r * 0.5, r * 0.18, 0, 0, TAU); c.fill();
     }
-    else if (k === 'clown') { ball(c, hx + r * 0.95, hy + r * 0.12, r * 0.28, '#e03030'); for (const d of [-1, 1]) ball(c, hx + d * r * 0.95 - r * 0.2, hy - r * 0.35, r * 0.42, m.hair); c.strokeStyle = '#e03030'; c.lineWidth = 1.6; c.beginPath(); c.arc(hx + r * 0.5, hy + r * 0.35, r * 0.3, 0.1, Math.PI - 0.1); c.stroke(); }
-    else if (k === 'beard') { poly(c, [[hx - r * 0.3, hy + r * 0.1], [hx + r * 1.0, hy + r * 0.1], [hx + r * 0.7, hy + r * 1.25], [hx + r * 0.1, hy + r * 1.1]], m.hair); }
-    else if (k === 'ears') { poly(c, [[hx - r * 0.6, hy - r * 0.2], [hx - r * 1.6, hy - r * 0.7], [hx - r * 0.7, hy + r * 0.25]], m.skin, OUT); poly(c, [[hx + r * 0.5, hy - r * 0.5], [hx + r * 1.3, hy - r * 1.1], [hx + r * 0.8, hy - r * 0.2]], m.skin, OUT); }
+    else if (k === 'clown') { dot(c, hx + r * 0.95, hy + r * 0.12, r * 0.28, '#e03030'); for (const d of [-1, 1]) dot(c, hx + d * r * 0.95 - r * 0.2, hy - r * 0.35, r * 0.42, m.hair); c.strokeStyle = '#e03030'; c.lineWidth = 1.6; c.beginPath(); c.arc(hx + r * 0.5, hy + r * 0.35, r * 0.3, 0.1, Math.PI - 0.1); c.stroke(); }
+    else if (k === 'spiky') { c.fillStyle = m.hair; c.beginPath(); c.moveTo(hx + r * 0.85, hy - r * 0.45); for (let i = 0; i <= 8; i++) { const a = Math.PI * (1.9 - i * 0.11), rr = r * (i % 2 ? 1.0 : 1.38 + (i === 4 ? 0.12 : 0)), sw = Math.sin(p.t * 3 + i) * r * 0.04; c.lineTo(hx - r * 0.1 + Math.cos(a) * rr - (i % 2 ? 0 : r * 0.12), hy - r * 0.15 + Math.sin(a) * rr + sw); } c.lineTo(hx - r * 0.95, hy + r * 0.1); c.quadraticCurveTo(hx - r * 0.2, hy - r * 0.55, hx + r * 0.85, hy - r * 0.45); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }   // v113: wild spiky hair
+    else if (k === 'beehat') {   // v113: a wide-brimmed beekeeper's hat with a veil
+      c.save(); c.globalAlpha *= 0.2; c.fillStyle = '#2a2a3a'; c.beginPath(); c.moveTo(hx - r * 1.35, hy - r * 0.55); c.lineTo(hx + r * 1.45, hy - r * 0.55); c.lineTo(hx + r * 1.2, hy + r * 1.0); c.lineTo(hx - r * 1.1, hy + r * 1.0); c.closePath(); c.fill(); c.restore();
+      c.save(); c.translate(hx, hy - r * 0.6); c.scale(1, 0.32); dot(c, 0, 0, r * 1.5, m.hat); c.restore(); dot(c, hx - r * 0.05, hy - r * 0.95, r * 0.75, m.hat); limb(c, hx - r * 0.75, hy - r * 0.68, hx + r * 0.7, hy - r * 0.68, r * 0.15, m.trim);
+    }
+    else if (k === 'ninja') {   // v113: a black hood, a mask over the mouth, only the eyes show
+      flat(c, [[hx - r * 0.2, hy + r * 0.2], [hx + r * 1.08, hy + r * 0.1], [hx + r * 0.95, hy + r * 0.85], [hx - r * 0.2, hy + r * 1.0]], m.hood);
+      c.fillStyle = m.hood; c.beginPath(); c.arc(hx - r * 0.05, hy - r * 0.1, r * 1.08, Math.PI * 0.85, Math.PI * 1.95); c.lineTo(hx + r * 1.0, hy - r * 0.25); c.lineTo(hx + r * 0.1, hy - r * 0.3); c.lineTo(hx - r * 0.6, hy + r * 0.5); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
+      const wv = Math.sin(p.t * 6) * r * 0.25; limb(c, hx - r * 0.85, hy - r * 0.55, hx - r * 1.9, hy - r * 0.2 + wv, r * 0.22, m.trim); limb(c, hx - r * 0.85, hy - r * 0.5, hx - r * 1.7, hy + r * 0.2 - wv, r * 0.18, m.trim);
+    }
+    else if (k === 'beard') { flat(c, [[hx - r * 0.3, hy + r * 0.1], [hx + r * 1.0, hy + r * 0.1], [hx + r * 0.7, hy + r * 1.25], [hx + r * 0.1, hy + r * 1.1]], m.hair); }
+    else if (k === 'ears') { flat(c, [[hx - r * 0.6, hy - r * 0.2], [hx - r * 1.6, hy - r * 0.7], [hx - r * 0.7, hy + r * 0.25]], m.skin, OUT); flat(c, [[hx + r * 0.5, hy - r * 0.5], [hx + r * 1.3, hy - r * 1.1], [hx + r * 0.8, hy - r * 0.2]], m.skin, OUT); }
   }
   // ---- review #12 (David: "generic stickman"): limbs with volume and joints, shaped torso, neck, faces with eyes.
   // tapered segment: a filled, outlined, shaded quad with round caps (upper arm, forearm, thigh, shin)
@@ -568,7 +603,7 @@
   function leg(c, x, y, a, L, w, col, boot, bend) {
     const fx = x + Math.sin(a) * L, fy = y + Math.cos(a) * L, [kx, ky] = joint(x, y, fx, fy, bend);
     bent(c, [[x, y], [kx, ky], [fx, fy - w * 0.2]], [w, w * 0.8, w * 0.62], col);
-    poly(c, [[fx - w * 0.45, fy - w * 0.55], [fx + w * 0.35, fy - w * 0.55], [fx + w * 0.95, fy - w * 0.05], [fx + w * 0.9, fy + w * 0.12], [fx - w * 0.45, fy + w * 0.12]], boot);
+    flat(c, [[fx - w * 0.45, fy - w * 0.55], [fx + w * 0.35, fy - w * 0.55], [fx + w * 0.95, fy - w * 0.05], [fx + w * 0.9, fy + w * 0.12], [fx - w * 0.45, fy + w * 0.12]], boot);
   }
   // WHAT: draws a person: legs, body, cape, arms, head, weapon, in the pose p (idle, walk, attack, cast).
   function humanoid(c, m, S, p) {
@@ -602,27 +637,27 @@
       const sw = Math.sin(p.t * 2 + (p.walk || 0) * 6) * s * 0.06 - (p.walk != null ? s * 0.07 : 0) - tilt * s * 0.3, sw2 = Math.sin(p.t * 3.3 + 1) * s * 0.03;
       const hem = sg.tatters ? [[-s * 0.06 + sw, hipY + s * 0.4], [-s * 0.13 + sw + sw2, hipY + s * 0.31], [-s * 0.2 + sw + sw2, hipY + s * 0.48], [-s * 0.29 * bulk + sw + sw2, hipY + s * 0.36], [-s * 0.36 * bulk + sw, hipY + s * 0.45], [-s * 0.44 * bulk + sw, hipY + s * 0.34]]
         : [[-s * 0.06 + sw, hipY + s * 0.4], [-s * 0.26 * bulk + sw + sw2, hipY + s * 0.46], [-s * 0.44 * bulk + sw, hipY + s * 0.34]];
-      poly(c, [[shX - s * 0.17 * bulk, shY - s * 0.02], [shX + s * 0.06, shY - s * 0.02]].concat(hem), m.cape);
+      flat(c, [[shX - s * 0.17 * bulk, shY - s * 0.02], [shX + s * 0.06, shY - s * 0.02]].concat(hem), m.cape);
       c.strokeStyle = shade(m.cape, -0.35); c.lineWidth = 1; seg(c, shX - s * 0.08, shY + s * 0.05, -s * 0.18 * bulk + sw, hipY + s * 0.38); seg(c, shX - s * 0.02, shY + s * 0.05, -s * 0.1 + sw, hipY + s * 0.36);
     }
-    if (m.quiver) { poly(c, [[shX - s * 0.25, shY - s * 0.1], [shX - s * 0.12, shY - s * 0.15], [shX - s * 0.05, hipY], [shX - s * 0.18, hipY + s * 0.02]], '#6a4a2a'); for (let i = 0; i < 3; i++) limb(c, shX - s * (0.22 - i * 0.04), shY - s * 0.12, shX - s * (0.27 - i * 0.04), shY - s * 0.3, 1.5, '#e8e2d0'); }
-    if (m.pack) { poly(c, [[shX - s * 0.42, shY + s * 0.02], [shX - s * 0.12, shY], [shX - s * 0.12, hipY], [shX - s * 0.42, hipY]], '#6e6e6e'); ball(c, shX - s * 0.27, shY + s * 0.18, s * 0.06, '#ffcf5a'); }
+    if (m.quiver) { flat(c, [[shX - s * 0.25, shY - s * 0.1], [shX - s * 0.12, shY - s * 0.15], [shX - s * 0.05, hipY], [shX - s * 0.18, hipY + s * 0.02]], '#6a4a2a'); for (let i = 0; i < 3; i++) limb(c, shX - s * (0.22 - i * 0.04), shY - s * 0.12, shX - s * (0.27 - i * 0.04), shY - s * 0.3, 1.5, '#e8e2d0'); }
+    if (m.pack) { flat(c, [[shX - s * 0.42, shY + s * 0.02], [shX - s * 0.12, shY], [shX - s * 0.12, hipY], [shX - s * 0.42, hipY]], '#6e6e6e'); dot(c, shX - s * 0.27, shY + s * 0.18, s * 0.06, '#ffcf5a'); }
     details(c, m, 'back', A, p);
     // back arm
     const bsx = shX - s * 0.13 * bulk, bsy = shY + s * 0.05;
     const [bhx, bhy] = arm(c, bsx, bsy, ba, armL, armW * 0.95, shade(bareArms ? m.skin : sleeve, -0.25), m.skin, -0.12);
-    ball(c, bhx, bhy, armW * 0.5, shade(m.skin, -0.15));
+    dot(c, bhx, bhy, armW * 0.5, shade(m.gloves || m.skin, -0.15));
     if (m.weapon === 'daggers' || m.weapon === 'shieldmace') weapon(c, m, bhx, bhy, ba, s * (m.weapon === 'shieldmace' ? 0.9 : 1), p);
-    if (m.hoplon) { ball(c, bhx - s * 0.05, bhy - s * 0.12, s * 0.26, '#b8903a'); ball(c, bhx - s * 0.05, bhy - s * 0.12, s * 0.1, '#e8c070'); }
-    if (m.weapon === 'shieldmace') { c.save(); c.translate(bhx, bhy); limb(c, 0, 0, Math.sin(ba + 0.5) * s * 0.3, Math.cos(ba + 0.5) * s * 0.3, s * 0.06, '#6a4a2a'); ball(c, Math.sin(ba + 0.5) * s * 0.34, Math.cos(ba + 0.5) * s * 0.34, s * 0.1, '#9aa0a8'); c.restore(); }
+    if (m.hoplon) { dot(c, bhx - s * 0.05, bhy - s * 0.12, s * 0.26, '#b8903a'); dot(c, bhx - s * 0.05, bhy - s * 0.12, s * 0.1, '#e8c070'); }
+    if (m.weapon === 'shieldmace') { c.save(); c.translate(bhx, bhy); limb(c, 0, 0, Math.sin(ba + 0.5) * s * 0.3, Math.cos(ba + 0.5) * s * 0.3, s * 0.06, '#6a4a2a'); dot(c, Math.sin(ba + 0.5) * s * 0.34, Math.cos(ba + 0.5) * s * 0.34, s * 0.1, '#9aa0a8'); c.restore(); }
     // legs or robe
     if (m.robe) {
       const sw = p.walk != null ? Math.sin(p.walk * TAU) * s * 0.06 : 0;
-      poly(c, [[-s * 0.17 * bulk, hipY - s * 0.08], [s * 0.19 * bulk, hipY - s * 0.08], [s * 0.24 + sw, -s * 0.2], [s * 0.32 + sw, 0], [-s * 0.32 + sw, 0], [-s * 0.24 + sw, -s * 0.2]], m.robe);
+      flat(c, [[-s * 0.17 * bulk, hipY - s * 0.08], [s * 0.19 * bulk, hipY - s * 0.08], [s * 0.24 + sw, -s * 0.2], [s * 0.32 + sw, 0], [-s * 0.32 + sw, 0], [-s * 0.24 + sw, -s * 0.2]], m.robe);
       if (det) { c.strokeStyle = shade(m.robe, -0.35); c.lineWidth = 1; for (const x of [-0.12, 0.02, 0.15]) seg(c, s * x * bulk, hipY, s * x * 1.4 + sw, -s * 0.04); }
       limb(c, -s * 0.3 + sw, -s * 0.03, s * 0.3 + sw, -s * 0.03, s * 0.05, m.trim);
       A.robeSw = sw; details(c, m, 'robe', A, p);
-      poly(c, [[-s * 0.2 + sw, -s * 0.04], [-s * 0.02 + sw, -s * 0.04], [s * 0.02 + sw, 0], [-s * 0.2 + sw, 0]], boot);
+      flat(c, [[-s * 0.2 + sw, -s * 0.04], [-s * 0.02 + sw, -s * 0.04], [s * 0.02 + sw, 0], [-s * 0.2 + sw, 0]], boot);
     } else {
       const la = p.walk != null ? Math.sin(p.walk * TAU) * 0.55 : 0.06, legL = -hipY, legW = s * 0.18 * Math.sqrt(bulk);
       leg(c, -s * 0.06, hipY, -la, legL, legW, shade(m.legs, -0.22), shade(boot, -0.2), la > 0 ? 0.06 : 0.12);
@@ -643,7 +678,7 @@
     c.strokeStyle = shade(m.body, 0.5); c.lineWidth = 1; c.beginPath(); c.moveTo(shX - tw + 2, shY + s * 0.07); c.quadraticCurveTo(shX - tw * 0.85, shY + s * 0.22, -ww + 2, wy); c.stroke();
     // chest line and folds (more of them in splash detail)
     c.strokeStyle = shade(m.body, -0.45); c.globalAlpha *= 0.7; seg(c, shX + tw * 0.05, shY + s * 0.04, shX + tw * 0.02, wy); c.globalAlpha /= 0.7;
-    if (det) { c.strokeStyle = shade(m.body, -0.3); c.lineWidth = 1; for (const k of [0.12, 0.22]) seg(c, shX - tw * 0.6, shY + s * k, shX + tw * 0.5, shY + s * (k + 0.03)); ball(c, shX - tw * 0.55, shY + s * 0.12, s * 0.018, m.trim); ball(c, shX + tw * 0.55, shY + s * 0.12, s * 0.018, m.trim); }
+    if (det) { c.strokeStyle = shade(m.body, -0.3); c.lineWidth = 1; for (const k of [0.12, 0.22]) seg(c, shX - tw * 0.6, shY + s * k, shX + tw * 0.5, shY + s * (k + 0.03)); dot(c, shX - tw * 0.55, shY + s * 0.12, s * 0.018, m.trim); dot(c, shX + tw * 0.55, shY + s * 0.12, s * 0.018, m.trim); }
     if (m.paint) { limb(c, shX - tw * 0.6, shY + s * 0.12, shX + tw * 0.2, shY + s * 0.3, 2, '#d4483b'); limb(c, shX - tw * 0.4, shY + s * 0.28, shX + tw * 0.4, shY + s * 0.42, 2, '#d4483b'); }
     if (m.wraps) { c.strokeStyle = shade(m.body, -0.3); c.lineWidth = 1.2; for (let i = 0; i < 4; i++) seg(c, shX - tw, shY + s * (0.08 + i * 0.1), shX + tw, shY + s * (0.14 + i * 0.1)); }
     if (m.diamonds) { c.fillStyle = m.diamonds; for (const [dx, dy] of [[-0.08, 0.14], [0.08, 0.28], [-0.06, 0.34], [0.07, 0.1]]) { c.beginPath(); c.moveTo(shX + s * dx, shY + s * (dy - 0.06)); c.lineTo(shX + s * (dx + 0.045), shY + s * dy); c.lineTo(shX + s * dx, shY + s * (dy + 0.06)); c.lineTo(shX + s * (dx - 0.045), shY + s * dy); c.fill(); } }
@@ -651,19 +686,19 @@
     if (m.bones) for (let i = 0; i < 3; i++) limb(c, shX - tw * 0.7, shY + s * (0.1 + i * 0.1), shX + tw * 0.7, shY + s * (0.1 + i * 0.1), 1.5, '#8a8474');
     // belt with buckle
     limb(c, -bw, hipY + s * 0.02, bw, hipY + s * 0.02, s * 0.055, m.trim);
-    poly(c, [[-s * 0.035, hipY - s * 0.01], [s * 0.035, hipY - s * 0.01], [s * 0.035, hipY + s * 0.05], [-s * 0.035, hipY + s * 0.05]], shade(m.trim, 0.3));
+    flat(c, [[-s * 0.035, hipY - s * 0.01], [s * 0.035, hipY - s * 0.01], [s * 0.035, hipY + s * 0.05], [-s * 0.035, hipY + s * 0.05]], shade(m.trim, 0.3));
     details(c, m, 'chest', A, p);
-    if (m.pauldrons) { ball(c, shX - tw * 0.92, shY + s * 0.04, s * 0.11 * bulk, m.pauldrons); ball(c, shX + tw * 0.92, shY + s * 0.04, s * 0.11 * bulk, m.pauldrons); }
+    if (m.pauldrons) { dot(c, shX - tw * 0.92, shY + s * 0.04, s * 0.11 * bulk, m.pauldrons); dot(c, shX + tw * 0.92, shY + s * 0.04, s * 0.11 * bulk, m.pauldrons); }
     details(c, m, 'shoulders', A, p);
     // neck + head
     tlimb(c, shX + s * 0.01, shY + s * 0.01, shX + s * 0.02, headY + headR * 0.7, s * 0.09, s * 0.08, shade(m.skin, -0.15));
-    if (m.collar) poly(c, [[shX - s * 0.2, shY + s * 0.02], [shX - s * 0.26, headY - headR * 0.9], [shX - s * 0.04, headY - headR * 0.3], [shX + s * 0.12, shY]], m.collar);
+    if (m.collar) flat(c, [[shX - s * 0.2, shY + s * 0.02], [shX - s * 0.26, headY - headR * 0.9], [shX - s * 0.04, headY - headR * 0.3], [shX + s * 0.12, shY]], m.collar);
     headgear(c, m, shX + s * 0.02, headY, headR * (m.head === 'boar' ? 1.1 : 1), p);
     details(c, m, 'head', A, p);
     // front arm + weapon
     const fsx = shX + s * 0.13 * bulk, fsy = shY + s * 0.05;
-    if (m.weapon === 'tower') { poly(c, [[shX + s * 0.12, shY - s * 0.15], [shX + s * 0.42, shY - s * 0.15], [shX + s * 0.42, hipY + s * 0.3], [shX + s * 0.27, hipY + s * 0.42], [shX + s * 0.12, hipY + s * 0.3]], '#7a808a'); limb(c, shX + s * 0.27, shY - s * 0.1, shX + s * 0.27, hipY + s * 0.35, s * 0.04, m.trim); }
-    if (m.weapon === 'shieldmace') { poly(c, [[shX + s * 0.18, shY - s * 0.08], [shX + s * 0.46, shY - s * 0.08], [shX + s * 0.46, hipY + s * 0.15], [shX + s * 0.32, hipY + s * 0.32], [shX + s * 0.18, hipY + s * 0.15]], '#3d5aa0'); ball(c, shX + s * 0.32, shY + s * 0.2, s * 0.06, '#d9c36a'); }
+    if (m.weapon === 'tower') { flat(c, [[shX + s * 0.12, shY - s * 0.15], [shX + s * 0.42, shY - s * 0.15], [shX + s * 0.42, hipY + s * 0.3], [shX + s * 0.27, hipY + s * 0.42], [shX + s * 0.12, hipY + s * 0.3]], '#7a808a'); limb(c, shX + s * 0.27, shY - s * 0.1, shX + s * 0.27, hipY + s * 0.35, s * 0.04, m.trim); }
+    if (m.weapon === 'shieldmace') { flat(c, [[shX + s * 0.18, shY - s * 0.08], [shX + s * 0.46, shY - s * 0.08], [shX + s * 0.46, hipY + s * 0.15], [shX + s * 0.32, hipY + s * 0.32], [shX + s * 0.18, hipY + s * 0.15]], '#3d5aa0'); dot(c, shX + s * 0.32, shY + s * 0.2, s * 0.06, '#d9c36a'); }
     const fh = hand(fsx, fsy, fa, armL);
     // v111: a smear arc behind a melee strike (where the weapon was a moment ago to where it is)
     if (p.atk != null && p.atk > 0.72 && /^(sword|rapier|daggers|axe|club|hook|wrench|scythe|spear)$/.test(m.weapon)) {
@@ -675,7 +710,7 @@
       if (R > 1) { const g = c.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, m.orb); g.addColorStop(1, 'rgba(0,0,0,0)'); c.save(); c.globalAlpha *= 0.8; c.fillStyle = g; c.beginPath(); c.arc(x, y, R, 0, TAU); c.fill(); c.restore(); } }
     if (m.weapon !== 'none' && m.weapon !== 'tower' && m.weapon !== 'shieldmace') weapon(c, m, fh[0], fh[1], fa, s, p);
     arm(c, fsx, fsy, fa, armL, armW, bareArms ? m.skin : shade(sleeve, 0.05), m.skin, 0.12);
-    ball(c, fh[0], fh[1], armW * 0.55, m.skin);
+    dot(c, fh[0], fh[1], armW * 0.55, m.gloves || m.skin);
     if (m.sparks && Math.sin(p.t * 9) > 0.6) limb(c, fh[0] + s * 0.1, fh[1] - s * 0.4, fh[0] + s * 0.18, fh[1] - s * 0.52, 1.5, '#fff6a0');
     if (p.cast != null) { const k = Math.sin(p.cast * Math.PI), col = m.orb || m.trim; for (const [x, y] of [fh, [bhx, bhy]]) { const R = s * 0.16 * k * (1 + 0.2 * Math.sin(p.t * 20)); if (R < 1) continue; const g = c.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, '#fff'); g.addColorStop(0.35, col); g.addColorStop(1, 'rgba(0,0,0,0)'); c.save(); c.fillStyle = g; c.beginPath(); c.arc(x, y, R, 0, TAU); c.fill(); c.restore(); } }   // v111: glowing hands while casting
     c.restore();
@@ -690,14 +725,20 @@
       const a = p.walk != null ? Math.sin(run + ph) * 0.5 : 0;
       limb(c, x + lunge, by + s * 0.1, x + lunge + Math.sin(a) * s * 0.35, by + s * 0.1 + Math.cos(a) * s * 0.35, s * 0.09, back ? shade(m.body, -0.35) : shade(m.body, -0.1));
     }
-    limb(c, -s * 0.45 + lunge, by, -s * 0.75 + lunge, by - s * 0.25 + Math.sin(p.t * 6) * s * 0.05, s * 0.08, m.body);
+    { const tw = Math.sin(p.t * (p.walk != null ? 9 : 3)) * s * 0.08;   // v113 (review #200): a bushy tail that swings
+      c.beginPath(); c.moveTo(-s * 0.42 + lunge, by - s * 0.08); c.quadraticCurveTo(-s * 0.62 + lunge, by - s * 0.32 + tw, -s * 0.9 + lunge, by - s * 0.36 + tw); c.quadraticCurveTo(-s * 0.66 + lunge, by + s * 0.14 + tw * 0.5, -s * 0.4 + lunge, by + s * 0.1); c.closePath();
+      c.fillStyle = shade(m.body, -0.1); c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); dot(c, -s * 0.84 + lunge, by - s * 0.3 + tw, s * 0.05, m.trim); }
     const g = c.createLinearGradient(0, by - s * 0.2, 0, by + s * 0.2); g.addColorStop(0, shade(m.body, 0.25)); g.addColorStop(1, shade(m.body, -0.3));
     c.fillStyle = g; c.beginPath(); c.ellipse(lunge, by, s * 0.5, s * 0.22, 0, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.2; c.stroke();
+    for (let i = 0; i < 5; i++) { const x = -s * 0.3 + i * s * 0.14 + lunge, y = by - s * 0.2 + Math.abs(i - 2) * s * 0.012; flat(c, [[x - s * 0.06, y + s * 0.03], [x - s * 0.02, y - s * 0.09 - Math.sin(p.t * 4 + i) * s * 0.01], [x + s * 0.05, y + s * 0.03]], shade(m.body, -0.25)); }   // v113: a ridge of fur
     const hx = s * 0.5 + lunge, hy = by - s * 0.2;
-    ball(c, hx, hy, s * 0.18, m.body, OUT);
-    poly(c, [[hx + s * 0.1, hy - s * 0.05], [hx + s * 0.4, hy + s * (p.atk != null ? 0.02 : 0.06)], [hx + s * 0.1, hy + s * 0.14]], m.trim, OUT);
-    poly(c, [[hx - s * 0.1, hy - s * 0.12], [hx - s * 0.05, hy - s * 0.38], [hx + s * 0.05, hy - s * 0.12]], shade(m.body, -0.2));
-    ball(c, hx + s * 0.08, hy - s * 0.04, s * 0.035, '#ffcf5a');
+    flat(c, [[hx - s * 0.16, hy - s * 0.1], [hx - s * 0.16, hy - s * 0.34], [hx - s * 0.04, hy - s * 0.14]], shade(m.body, -0.4));   // the far ear
+    dot(c, hx, hy, s * 0.18, m.body, OUT);
+    if (p.atk != null && p.atk > 0.5) for (const fx of [0.22, 0.32]) flat(c, [[hx + s * fx, hy + s * 0.06], [hx + s * (fx + 0.03), hy + s * 0.14], [hx + s * (fx + 0.06), hy + s * 0.06]], '#fff8e8');   // fangs
+    flat(c, [[hx + s * 0.1, hy - s * 0.05], [hx + s * 0.4, hy + s * (p.atk != null ? 0.02 : 0.06)], [hx + s * 0.1, hy + s * 0.14]], m.trim, OUT);
+    flat(c, [[hx - s * 0.1, hy - s * 0.12], [hx - s * 0.05, hy - s * 0.38], [hx + s * 0.05, hy - s * 0.12]], shade(m.body, -0.2));
+    dot(c, hx + s * 0.08, hy - s * 0.04, s * 0.035, '#ffcf5a'); c.save(); c.globalAlpha *= 0.35; dot(c, hx + s * 0.08, hy - s * 0.04, s * 0.07, '#ffcf5a'); c.restore();
+    dot(c, hx + s * 0.38, hy + s * 0.03, s * 0.03, '#2a1a14');   // nose
   }
   function bomb(c, m, S, p) {
     const s = S * 0.9, bob = p.walk != null ? Math.abs(Math.sin(p.walk * TAU)) * s * 0.08 : Math.sin(p.t * 3) * s * 0.02, cy = -s * 0.42 - bob;
@@ -706,21 +747,21 @@
     const g = c.createRadialGradient(-s * 0.12, cy - s * 0.12, s * 0.05, 0, cy, s * 0.36); g.addColorStop(0, '#6a6a78'); g.addColorStop(1, m.body);
     c.fillStyle = g; c.beginPath(); c.arc(0, cy, s * 0.34, 0, TAU); c.fill(); c.strokeStyle = OUT; c.stroke();
     limb(c, s * 0.05, cy - s * 0.34, s * 0.15, cy - s * 0.5, s * 0.04, '#8a6a4a');
-    const fl = 0.5 + 0.5 * Math.sin(p.t * 20); ball(c, s * 0.16, cy - s * 0.53, s * (0.05 + fl * 0.04), fl > 0.5 ? '#ffcf5a' : '#ff7a3d');
+    const fl = 0.5 + 0.5 * Math.sin(p.t * 20); dot(c, s * 0.16, cy - s * 0.53, s * (0.05 + fl * 0.04), fl > 0.5 ? '#ffcf5a' : '#ff7a3d');
     limb(c, s * 0.05, cy - s * 0.08, s * 0.2, cy - s * 0.02, 2, m.trim); limb(c, s * 0.22, cy - s * 0.1, s * 0.3, cy - s * 0.04, 2, m.trim);
   }
   function golem(c, m, S, p) {
     const s = S * 1.1, bob = p.walk != null ? Math.abs(Math.sin(p.walk * TAU)) * s * 0.03 : 0;
     const slam = p.atk != null ? (p.atk < 0.7 ? -p.atk / 0.7 * s * 0.4 : -s * 0.4 + (p.atk - 0.7) / 0.3 * s * 0.55) : (p.cast != null ? -Math.sin(p.cast * Math.PI) * s * 0.5 : 0);
     const la = p.walk != null ? Math.sin(p.walk * TAU) * 0.3 : 0;
-    const rock = (x, y, w, h, col) => { poly(c, [[x - w, y - h * 0.7], [x - w * 0.6, y - h], [x + w * 0.7, y - h], [x + w, y - h * 0.5], [x + w * 0.8, y + h * 0.4], [x - w * 0.7, y + h * 0.5]], col, OUT); };
+    const rock = (x, y, w, h, col) => { flat(c, [[x - w, y - h * 0.7], [x - w * 0.6, y - h], [x + w * 0.7, y - h], [x + w, y - h * 0.5], [x + w * 0.8, y + h * 0.4], [x - w * 0.7, y + h * 0.5]], col, OUT); };
     rock(-s * 0.15 + Math.sin(-la) * s * 0.1, -s * 0.12, s * 0.12, s * 0.14, shade(m.body, -0.3)); rock(s * 0.15 + Math.sin(la) * s * 0.1, -s * 0.12, s * 0.12, s * 0.14, shade(m.body, -0.15));
     rock(0, -s * 0.62 - bob, s * 0.36, s * 0.34, m.body);
     for (let i = 0; i < 3; i++) limb(c, -s * 0.15 + i * s * 0.12, -s * 0.72 - bob, -s * 0.1 + i * s * 0.12, -s * 0.55 - bob, 1.5, m.trim);
     rock(s * 0.05, -s * 1.05 - bob, s * 0.16, s * 0.14, shade(m.body, 0.15));
-    ball(c, s * 0.1, -s * 1.08 - bob, s * 0.035, m.trim); ball(c, s * 0.18, -s * 1.08 - bob, s * 0.03, m.trim);
+    dot(c, s * 0.1, -s * 1.08 - bob, s * 0.035, m.trim); dot(c, s * 0.18, -s * 1.08 - bob, s * 0.03, m.trim);
     rock(-s * 0.45, -s * 0.55 - bob + slam * 0.6, s * 0.14, s * 0.2, shade(m.body, -0.2)); rock(s * 0.48, -s * 0.5 - bob + slam, s * 0.15, s * 0.2, shade(m.body, 0.05));
-    if (m.leaves) for (const [x, y, r] of [[-0.3, -0.95, 0.16], [0.25, -0.98, 0.14], [0, -1.28, 0.18], [-0.45, -0.7, 0.1], [0.5, -0.66, 0.1]]) ball(c, s * x, s * y - bob, s * r, m.leaves, OUT);
+    if (m.leaves) for (const [x, y, r] of [[-0.3, -0.95, 0.16], [0.25, -0.98, 0.14], [0, -1.28, 0.18], [-0.45, -0.7, 0.1], [0.5, -0.66, 0.1]]) dot(c, s * x, s * y - bob, s * r, m.leaves, OUT);
   }
   function serpent(c, m, S, p) {
     const s = S * 0.9, strike = p.atk != null ? Math.sin(p.atk * Math.PI) : 0, sway = Math.sin(p.t * 3 + (p.walk || 0) * 8) * s * 0.06;
@@ -729,40 +770,40 @@
     c.strokeStyle = m.body; c.lineWidth = s * 0.17; c.beginPath(); c.moveTo(s * 0.1, -s * 0.15); c.quadraticCurveTo(-s * 0.25 + sway, -s * 0.45, s * 0.05 + sway, -s * 0.75); c.quadraticCurveTo(s * 0.2 + strike * s * 0.3, -s * 0.9, s * 0.25 + strike * s * 0.35, -s * 0.85); c.stroke();
     const hx = s * 0.3 + strike * s * 0.35, hy = -s * 0.86;
     c.fillStyle = m.body; c.beginPath(); c.ellipse(hx, hy, s * 0.17, s * 0.11, 0.2, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1; c.stroke();
-    ball(c, hx + s * 0.04, hy - s * 0.04, s * 0.03, '#ffcf5a'); limb(c, hx + s * 0.12, hy + s * 0.06, hx + s * 0.12, hy + s * 0.13, 1.5, '#fff');
+    dot(c, hx + s * 0.04, hy - s * 0.04, s * 0.03, '#ffcf5a'); limb(c, hx + s * 0.12, hy + s * 0.06, hx + s * 0.12, hy + s * 0.13, 1.5, '#fff');
     limb(c, -s * 0.2, -s * 0.5, -s * 0.05, -s * 0.52, 2, m.trim);
   }
   function wraith(c, m, S, p) {
     const s = S * 1.05, fl = Math.sin(p.t * 2) * s * 0.06, top = -s * 1.5 + fl, casting = p.cast != null ? Math.sin(p.cast * Math.PI) : 0;
-    c.globalAlpha *= 0.35; ball(c, 0, -s * 0.8 + fl, s * (0.75 + casting * 0.3), m.trim); c.globalAlpha /= 0.35;
+    c.globalAlpha *= 0.35; dot(c, 0, -s * 0.8 + fl, s * (0.75 + casting * 0.3), m.trim); c.globalAlpha /= 0.35;
     const hem = []; for (let i = 0; i <= 6; i++) hem.push([s * 0.45 - i * s * 0.15, -s * 0.12 + fl + (i % 2 ? -s * 0.1 : 0) + Math.sin(p.t * 4 + i) * s * 0.03]);
     const g = c.createLinearGradient(-s * 0.4, 0, s * 0.4, 0); g.addColorStop(0, shade(m.body, 0.25)); g.addColorStop(1, shade(m.body, -0.4));
-    poly(c, [[-s * 0.25, top + s * 0.35], [s * 0.28, top + s * 0.35]].concat(hem), g, OUT);
-    ball(c, 0, top + s * 0.2, s * 0.22, '#15101f', OUT);
-    ball(c, s * 0.06, top + s * 0.2, s * 0.045, m.trim); ball(c, s * 0.16, top + s * 0.2, s * 0.04, m.trim);
-    poly(c, [[-s * 0.2, top + s * 0.02], [-s * 0.22, top - s * 0.18], [-s * 0.1, top - s * 0.06], [0, top - s * 0.22], [s * 0.1, top - s * 0.06], [s * 0.22, top - s * 0.18], [s * 0.2, top + s * 0.02]], m.crown, OUT);
+    flat(c, [[-s * 0.25, top + s * 0.35], [s * 0.28, top + s * 0.35]].concat(hem), g, OUT);
+    dot(c, 0, top + s * 0.2, s * 0.22, '#15101f', OUT);
+    dot(c, s * 0.06, top + s * 0.2, s * 0.045, m.trim); dot(c, s * 0.16, top + s * 0.2, s * 0.04, m.trim);
+    flat(c, [[-s * 0.2, top + s * 0.02], [-s * 0.22, top - s * 0.18], [-s * 0.1, top - s * 0.06], [0, top - s * 0.22], [s * 0.1, top - s * 0.06], [s * 0.22, top - s * 0.18], [s * 0.2, top + s * 0.02]], m.crown, OUT);
     const a = p.atk != null ? Math.min(1, p.atk * 1.4) : casting;
     const hx = s * 0.35 + a * s * 0.15, hy = top + s * 0.55 - a * s * 0.35;
     limb(c, s * 0.15, top + s * 0.45, hx, hy, s * 0.09, shade(m.body, -0.1));
-    c.globalAlpha *= 0.5; ball(c, hx + s * 0.05, hy - s * 0.05, s * (0.12 + 0.04 * Math.sin(p.t * 5)), m.trim); c.globalAlpha /= 0.5; ball(c, hx + s * 0.05, hy - s * 0.05, s * 0.06, '#f0d0ff');
+    c.globalAlpha *= 0.5; dot(c, hx + s * 0.05, hy - s * 0.05, s * (0.12 + 0.04 * Math.sin(p.t * 5)), m.trim); c.globalAlpha /= 0.5; dot(c, hx + s * 0.05, hy - s * 0.05, s * 0.06, '#f0d0ff');
   }
   function turret(c, m, S, p) {
     const s = S * 0.9, rec = p.atk != null && p.atk > 0.85 ? s * 0.08 : 0;
     for (const x of [-0.3, 0, 0.3]) limb(c, 0, -s * 0.35, x * s * 1.1, 0, s * 0.06, '#5a4a2a');
-    poly(c, [[-s * 0.25, -s * 0.35], [s * 0.25, -s * 0.35], [s * 0.2, -s * 0.7], [-s * 0.2, -s * 0.7]], m.body, OUT);
+    flat(c, [[-s * 0.25, -s * 0.35], [s * 0.25, -s * 0.35], [s * 0.2, -s * 0.7], [-s * 0.2, -s * 0.7]], m.body, OUT);
     limb(c, s * 0.1 - rec, -s * 0.58, s * 0.5 - rec, -s * 0.62, s * 0.1, '#6e6e6e');
-    ball(c, -s * 0.05, -s * 0.52, s * 0.06, Math.sin(p.t * 4) > 0 ? '#ff5d5d' : '#7a2a2a');
+    dot(c, -s * 0.05, -s * 0.52, s * 0.06, Math.sin(p.t * 4) > 0 ? '#ff5d5d' : '#7a2a2a');
   }
   // v60: a stone tower with battlements, a window that glows and a flag in the side's colour
   function tower(c, m, S, p) {
     const s = S * 1.05, sway = Math.sin(p.t * 3) * s * 0.03, hit = p.cast != null ? Math.sin(p.cast * Math.PI) : 0;
-    poly(c, [[-s * 0.32, 0], [s * 0.32, 0], [s * 0.27, -s * 0.95], [-s * 0.27, -s * 0.95]], m.body, OUT);
+    flat(c, [[-s * 0.32, 0], [s * 0.32, 0], [s * 0.27, -s * 0.95], [-s * 0.27, -s * 0.95]], m.body, OUT);
     for (const [y, w] of [[-0.25, 0.3], [-0.55, 0.28], [-0.8, 0.27]]) { c.strokeStyle = shade(m.body, -0.3); c.lineWidth = 1; c.beginPath(); c.moveTo(-s * w, s * y); c.lineTo(s * w, s * y); c.stroke(); }
-    for (const x of [-0.27, -0.07, 0.13]) poly(c, [[s * x, -s * 0.95], [s * (x + 0.14), -s * 0.95], [s * (x + 0.14), -s * 1.1], [s * x, -s * 1.1]], shade(m.body, 0.1), OUT);
-    poly(c, [[-s * 0.08, -s * 0.55], [s * 0.08, -s * 0.55], [s * 0.08, -s * 0.4], [-s * 0.08, -s * 0.4]], hit > 0.2 ? '#fff6a0' : '#ffcf5a');
-    poly(c, [[-s * 0.12, 0], [s * 0.12, 0], [s * 0.12, -s * 0.2], [-s * 0.12, -s * 0.2]], shade(m.trim, -0.4), OUT);
+    for (const x of [-0.27, -0.07, 0.13]) flat(c, [[s * x, -s * 0.95], [s * (x + 0.14), -s * 0.95], [s * (x + 0.14), -s * 1.1], [s * x, -s * 1.1]], shade(m.body, 0.1), OUT);
+    flat(c, [[-s * 0.08, -s * 0.55], [s * 0.08, -s * 0.55], [s * 0.08, -s * 0.4], [-s * 0.08, -s * 0.4]], hit > 0.2 ? '#fff6a0' : '#ffcf5a');
+    flat(c, [[-s * 0.12, 0], [s * 0.12, 0], [s * 0.12, -s * 0.2], [-s * 0.12, -s * 0.2]], shade(m.trim, -0.4), OUT);
     limb(c, s * 0.2, -s * 1.1, s * 0.2, -s * 1.45, s * 0.03, '#5a4a2a');
-    poly(c, [[s * 0.2, -s * 1.45], [s * 0.5 + sway, -s * 1.38], [s * 0.2, -s * 1.3]], p.tint || m.flag);
+    flat(c, [[s * 0.2, -s * 1.45], [s * 0.5 + sway, -s * 1.38], [s * 0.2, -s * 1.3]], p.tint || m.flag);
   }
   // v62: a fire bird in the colours of an ember: a body, flapping wing, beak, crest and long tail feathers
   function phoenix(c, m, S, p) {
@@ -770,10 +811,10 @@
     for (const [dx, dy, col] of [[-0.85, 0.3, m.tail], [-1.0, 0.04, m.body], [-0.85, -0.24, m.trim], [-0.7, 0.12, m.trim]]) limb(c, -s * 0.18, by, -s * 0.18 + s * dx, by + s * dy + Math.sin(p.t * 4 + dx * 6) * s * 0.07, s * 0.11, col);
     limb(c, -s * 0.04, by + s * 0.22, -s * 0.07, by + s * 0.55, s * 0.05, '#a46a2a'); limb(c, s * 0.12, by + s * 0.22, s * 0.14, by + s * 0.55, s * 0.05, '#a46a2a');
     c.fillStyle = m.body; c.beginPath(); c.ellipse(0, by, s * 0.34, s * 0.27, 0, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.2; c.stroke();
-    poly(c, [[-s * 0.08, by - s * 0.05], [-s * 0.5, by - s * (0.4 + flap)], [-s * 0.58, by - s * 0.02], [-s * 0.3, by + s * 0.12]], m.trim, OUT);
-    ball(c, s * 0.32, by - s * 0.25, s * 0.16, m.body, OUT);
-    poly(c, [[s * 0.44, by - s * 0.3], [s * 0.66, by - s * 0.22], [s * 0.44, by - s * 0.16]], m.trim, OUT);
-    ball(c, s * 0.37, by - s * 0.29, s * 0.035, '#222');
+    flat(c, [[-s * 0.08, by - s * 0.05], [-s * 0.5, by - s * (0.4 + flap)], [-s * 0.58, by - s * 0.02], [-s * 0.3, by + s * 0.12]], m.trim, OUT);
+    dot(c, s * 0.32, by - s * 0.25, s * 0.16, m.body, OUT);
+    flat(c, [[s * 0.44, by - s * 0.3], [s * 0.66, by - s * 0.22], [s * 0.44, by - s * 0.16]], m.trim, OUT);
+    dot(c, s * 0.37, by - s * 0.29, s * 0.035, '#222');
     for (const [dx, dy] of [[0.18, -0.52], [0.3, -0.58], [0.4, -0.5]]) limb(c, s * 0.3, by - s * 0.38, s * dx, by + s * dy, s * 0.05, m.tail);
   }
   // v62: Ashwing's egg: a warm shell with a flame pattern that rocks as it is about to hatch
@@ -781,7 +822,7 @@
     const s = S * 1.0; c.save(); c.rotate(Math.sin(p.t * 6) * 0.06);
     const g = c.createRadialGradient(-s * 0.1, -s * 0.5, s * 0.05, 0, -s * 0.38, s * 0.4); g.addColorStop(0, '#fff3d6'); g.addColorStop(0.6, m.body); g.addColorStop(1, '#c98a4a');
     c.fillStyle = g; c.beginPath(); c.ellipse(0, -s * 0.38, s * 0.26, s * 0.36, 0, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.3; c.stroke();
-    poly(c, [[-s * 0.2, -s * 0.2], [-s * 0.1, -s * 0.4], [0, -s * 0.22], [s * 0.1, -s * 0.44], [s * 0.2, -s * 0.2]], m.trim, OUT);
+    flat(c, [[-s * 0.2, -s * 0.2], [-s * 0.1, -s * 0.4], [0, -s * 0.22], [s * 0.1, -s * 0.44], [s * 0.2, -s * 0.2]], m.trim, OUT);
     c.restore();
   }
   // v62h (review #99, David: "Prism is not human but a hovering elongated crystal"): a tall faceted shard that floats and bobs above its shadow,
@@ -790,17 +831,17 @@
   function crystal(c, m, S, p) {
     const s = S * 1.05, bob = Math.sin(p.t * 2.2) * s * 0.05, lift = s * 0.22 + bob, fl = Math.max(p.atk != null ? Math.sin(p.atk * Math.PI) : 0, p.cast != null ? Math.sin(p.cast * Math.PI) : 0);
     const cy = -lift - s * 0.62, hw = s * 0.17, hh = s * 0.6;   // centre of the shard, half width, half height
-    c.globalAlpha *= 0.14 + 0.12 * fl; ball(c, 0, cy, s * (0.42 + 0.18 * fl), m.core); c.globalAlpha /= 0.14 + 0.12 * fl;
+    c.globalAlpha *= 0.14 + 0.12 * fl; dot(c, 0, cy, s * (0.42 + 0.18 * fl), m.core); c.globalAlpha /= 0.14 + 0.12 * fl;
     const top = [0, cy - hh], bot = [0, cy + hh * 0.95], L = [-hw, cy - hh * 0.35], R = [hw, cy - hh * 0.35], L2 = [-hw * 0.8, cy + hh * 0.4], R2 = [hw * 0.8, cy + hh * 0.4];
     const g = c.createLinearGradient(-hw, 0, hw, 0); g.addColorStop(0, shade(m.body, 0.35)); g.addColorStop(0.5, m.body); g.addColorStop(1, shade(m.body, -0.35));
-    poly(c, [top, R, R2, bot, L2, L], g, OUT);
-    poly(c, [top, [0, cy - hh * 0.35], R], shade(m.body, 0.45)); poly(c, [top, [0, cy - hh * 0.35], L], shade(m.body, 0.1));   // the two upper facets
-    poly(c, [[0, cy - hh * 0.35], R, R2, [0, cy + hh * 0.4]], shade(m.body, -0.05)); poly(c, [[0, cy - hh * 0.35], L, L2, [0, cy + hh * 0.4]], shade(m.body, 0.2));
+    flat(c, [top, R, R2, bot, L2, L], g, OUT);
+    flat(c, [top, [0, cy - hh * 0.35], R], shade(m.body, 0.45)); flat(c, [top, [0, cy - hh * 0.35], L], shade(m.body, 0.1));   // the two upper facets
+    flat(c, [[0, cy - hh * 0.35], R, R2, [0, cy + hh * 0.4]], shade(m.body, -0.05)); flat(c, [[0, cy - hh * 0.35], L, L2, [0, cy + hh * 0.4]], shade(m.body, 0.2));
     c.strokeStyle = m.trim; c.lineWidth = 1.2; c.beginPath(); c.moveTo(top[0], top[1]); c.lineTo(0, cy - hh * 0.35); c.lineTo(0, cy + hh * 0.4); c.lineTo(bot[0], bot[1]); c.moveTo(L[0], L[1]); c.lineTo(0, cy - hh * 0.35); c.lineTo(R[0], R[1]); c.stroke();
-    c.globalAlpha *= 0.55 + 0.3 * fl; ball(c, 0, cy + hh * 0.05, s * (0.1 + 0.05 * fl), m.core); c.globalAlpha /= 0.55 + 0.3 * fl; ball(c, 0, cy + hh * 0.05, s * 0.045, '#ffffff');
+    c.globalAlpha *= 0.55 + 0.3 * fl; dot(c, 0, cy + hh * 0.05, s * (0.1 + 0.05 * fl), m.core); c.globalAlpha /= 0.55 + 0.3 * fl; dot(c, 0, cy + hh * 0.05, s * 0.045, '#ffffff');
     for (let i = 0; i < 3; i++) {   // three little shards circling it
       const a = p.t * 1.6 + i * TAU / 3, x = Math.cos(a) * s * 0.42, d = Math.sin(a), y = cy + d * s * 0.12 + (i - 1) * s * 0.22, k = s * (0.07 + 0.015 * d);
-      poly(c, [[x, y - k * 1.5], [x + k, y], [x, y + k * 1.5], [x - k, y]], d > 0 ? m.trim : shade(m.body, 0.2), OUT);
+      flat(c, [[x, y - k * 1.5], [x + k, y], [x, y + k * 1.5], [x - k, y]], d > 0 ? m.trim : shade(m.body, 0.2), OUT);
     }
   }
   // v62h (review #98): the Plasma Cannon: a stout tripod with a big barrel and a glowing plasma core; it kicks back when it fires and flares when it casts
@@ -808,16 +849,16 @@
   function cannon(c, m, S, p) {
     const s = S * 1.05, fire = p.atk != null ? Math.sin(Math.min(1, p.atk) * Math.PI) : 0, cast = p.cast != null ? Math.sin(p.cast * Math.PI) : 0, rec = fire * s * 0.12, pulse = 0.5 + 0.5 * Math.sin(p.t * 4);
     for (const x of [-0.42, -0.08, 0.3]) limb(c, x * 0.3 * s, -s * 0.3, x * s, 0, s * 0.07, '#3a4150');
-    poly(c, [[-s * 0.34, -s * 0.26], [s * 0.34, -s * 0.26], [s * 0.26, -s * 0.52], [-s * 0.26, -s * 0.52]], m.body, OUT);
-    poly(c, [[-s * 0.3, -s * 0.3], [s * 0.3, -s * 0.3], [s * 0.27, -s * 0.36], [-s * 0.27, -s * 0.36]], shade(m.body, -0.25));
-    c.globalAlpha *= 0.4 + 0.3 * pulse + 0.3 * cast; ball(c, -s * 0.02, -s * 0.4, s * 0.12, m.trim); c.globalAlpha /= 0.4 + 0.3 * pulse + 0.3 * cast;
-    ball(c, 0, -s * 0.62, s * 0.24, shade(m.body, 0.15), OUT);
+    flat(c, [[-s * 0.34, -s * 0.26], [s * 0.34, -s * 0.26], [s * 0.26, -s * 0.52], [-s * 0.26, -s * 0.52]], m.body, OUT);
+    flat(c, [[-s * 0.3, -s * 0.3], [s * 0.3, -s * 0.3], [s * 0.27, -s * 0.36], [-s * 0.27, -s * 0.36]], shade(m.body, -0.25));
+    c.globalAlpha *= 0.4 + 0.3 * pulse + 0.3 * cast; dot(c, -s * 0.02, -s * 0.4, s * 0.12, m.trim); c.globalAlpha /= 0.4 + 0.3 * pulse + 0.3 * cast;
+    dot(c, 0, -s * 0.62, s * 0.24, shade(m.body, 0.15), OUT);
     const bx = -rec, g = c.createLinearGradient(0, -s * 0.78, 0, -s * 0.46); g.addColorStop(0, '#c4cfdf'); g.addColorStop(1, '#6f7a8c');
-    poly(c, [[s * 0.06 + bx, -s * 0.76], [s * 0.82 + bx, -s * 0.72], [s * 0.82 + bx, -s * 0.5], [s * 0.06 + bx, -s * 0.46]], g, OUT);
-    for (const x of [0.28, 0.5]) poly(c, [[s * x + bx, -s * 0.78], [s * (x + 0.07) + bx, -s * 0.78], [s * (x + 0.07) + bx, -s * 0.44], [s * x + bx, -s * 0.44]], shade(m.body, -0.1), OUT);
-    poly(c, [[s * 0.78 + bx, -s * 0.8], [s * 0.9 + bx, -s * 0.8], [s * 0.9 + bx, -s * 0.44], [s * 0.78 + bx, -s * 0.44]], '#2a303c', OUT);
-    c.globalAlpha *= 0.35 + 0.5 * Math.max(fire, cast); ball(c, s * 0.92 + bx, -s * 0.61, s * (0.1 + 0.16 * Math.max(fire, cast)), m.trim); c.globalAlpha /= 0.35 + 0.5 * Math.max(fire, cast);
-    ball(c, s * 0.92 + bx, -s * 0.61, s * 0.05, '#ffffff');
+    flat(c, [[s * 0.06 + bx, -s * 0.76], [s * 0.82 + bx, -s * 0.72], [s * 0.82 + bx, -s * 0.5], [s * 0.06 + bx, -s * 0.46]], g, OUT);
+    for (const x of [0.28, 0.5]) flat(c, [[s * x + bx, -s * 0.78], [s * (x + 0.07) + bx, -s * 0.78], [s * (x + 0.07) + bx, -s * 0.44], [s * x + bx, -s * 0.44]], shade(m.body, -0.1), OUT);
+    flat(c, [[s * 0.78 + bx, -s * 0.8], [s * 0.9 + bx, -s * 0.8], [s * 0.9 + bx, -s * 0.44], [s * 0.78 + bx, -s * 0.44]], '#2a303c', OUT);
+    c.globalAlpha *= 0.35 + 0.5 * Math.max(fire, cast); dot(c, s * 0.92 + bx, -s * 0.61, s * (0.1 + 0.16 * Math.max(fire, cast)), m.trim); c.globalAlpha /= 0.35 + 0.5 * Math.max(fire, cast);
+    dot(c, s * 0.92 + bx, -s * 0.61, s * 0.05, '#ffffff');
   }
   // v62h (review #102): the Gardener's plants, one look per kind (m.kind): a thorny bush, a pink bloom, a blue lily and a spore mushroom; they sway
   // WHAT: the "plant" rig (Thornbush, Healing Bloom, Shield Lily, Spore Pod). m.body = the leaves, m.trim = the flower or glow.
@@ -827,18 +868,18 @@
     if (k === 'spore') {
       limb(c, 0, 0, sw, -s * 0.38, s * 0.1, '#d9cdb0');
       c.fillStyle = m.body; c.beginPath(); c.ellipse(sw, -s * 0.46, s * 0.3, s * 0.2, 0, Math.PI, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.2; c.stroke();
-      for (const [dx, dy, r] of [[-0.14, -0.52, 0.045], [0.08, -0.56, 0.05], [0.18, -0.48, 0.035]]) ball(c, sw + s * dx, s * dy, s * r, m.trim);
-      c.globalAlpha *= 0.35; for (let i = 0; i < 3; i++) ball(c, sw + Math.sin(p.t * 1.7 + i * 2) * s * 0.2, -s * (0.65 + ((p.t * 0.4 + i / 3) % 1) * 0.35), s * 0.04, m.trim); c.globalAlpha /= 0.35;
+      for (const [dx, dy, r] of [[-0.14, -0.52, 0.045], [0.08, -0.56, 0.05], [0.18, -0.48, 0.035]]) dot(c, sw + s * dx, s * dy, s * r, m.trim);
+      c.globalAlpha *= 0.35; for (let i = 0; i < 3; i++) dot(c, sw + Math.sin(p.t * 1.7 + i * 2) * s * 0.2, -s * (0.65 + ((p.t * 0.4 + i / 3) % 1) * 0.35), s * 0.04, m.trim); c.globalAlpha /= 0.35;
     } else {
       for (const [dx, dy] of [[-0.3, -0.18], [0.3, -0.22]]) { c.fillStyle = shade(m.body, 0.1); c.beginPath(); c.ellipse(s * dx, s * dy, s * 0.2, s * 0.08, dx < 0 ? -0.5 : 0.5, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1; c.stroke(); }
       limb(c, 0, 0, sw, -s * 0.5, s * 0.07, shade(m.body, -0.15));
       if (k === 'thorn') {
-        for (const [dx, dy, r] of [[-0.18, -0.42, 0.2], [0.2, -0.4, 0.19], [0, -0.62, 0.22]]) ball(c, sw + s * dx, s * dy, s * r, m.body, OUT);
-        for (let i = 0; i < 8; i++) { const a = -Math.PI * (i / 7), x = sw + Math.cos(a) * s * 0.26, y = -s * 0.5 + Math.sin(a) * s * 0.28; poly(c, [[x, y], [x + Math.cos(a) * s * 0.13 - s * 0.03, y + Math.sin(a) * s * 0.13], [x + s * 0.04, y + s * 0.02]], m.trim, OUT); }
+        for (const [dx, dy, r] of [[-0.18, -0.42, 0.2], [0.2, -0.4, 0.19], [0, -0.62, 0.22]]) dot(c, sw + s * dx, s * dy, s * r, m.body, OUT);
+        for (let i = 0; i < 8; i++) { const a = -Math.PI * (i / 7), x = sw + Math.cos(a) * s * 0.26, y = -s * 0.5 + Math.sin(a) * s * 0.28; flat(c, [[x, y], [x + Math.cos(a) * s * 0.13 - s * 0.03, y + Math.sin(a) * s * 0.13], [x + s * 0.04, y + s * 0.02]], m.trim, OUT); }
       } else {   // bloom and lily: petals around a heart
         const cx = sw, cy = -s * 0.56, n = k === 'bloom' ? 6 : 8;
-        for (let i = 0; i < n; i++) { const a = i / n * TAU + p.t * 0.2; ball(c, cx + Math.cos(a) * s * 0.17, cy + Math.sin(a) * s * 0.11, s * (k === 'bloom' ? 0.11 : 0.09), m.trim, OUT); }
-        ball(c, cx, cy, s * 0.1, k === 'bloom' ? '#ffe066' : '#7fd0ff', OUT);
+        for (let i = 0; i < n; i++) { const a = i / n * TAU + p.t * 0.2; dot(c, cx + Math.cos(a) * s * 0.17, cy + Math.sin(a) * s * 0.11, s * (k === 'bloom' ? 0.11 : 0.09), m.trim, OUT); }
+        dot(c, cx, cy, s * 0.1, k === 'bloom' ? '#ffe066' : '#7fd0ff', OUT);
       }
     }
     c.restore();
@@ -850,33 +891,33 @@
     const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.18 : 0, sy = -s * 0.3 - bob + (p.shell ? s * 0.1 : 0);
     if (!p.shell) {
       for (const [x, ph] of [[-s * 0.32, 0], [s * 0.3, Math.PI], [-s * 0.15, Math.PI], [s * 0.15, 0]]) { const a = p.walk != null ? Math.sin(step + ph) * 0.4 : 0; limb(c, x, sy + s * 0.02, x + Math.sin(a) * s * 0.1, -s * 0.03, s * 0.15, shade(m.body, -0.2)); }
-      const hx = s * 0.52 + lunge, hy = sy - s * 0.02; limb(c, s * 0.3, sy, hx, hy, s * 0.12, m.body); ball(c, hx, hy, s * 0.16, m.body, OUT); ball(c, hx + s * 0.07, hy - s * 0.05, s * 0.035, '#111');
-      if (p.atk != null && p.atk > 0.6) poly(c, [[hx + s * 0.1, hy + s * 0.02], [hx + s * 0.22, hy + s * 0.07], [hx + s * 0.1, hy + s * 0.1]], '#fff');
+      const hx = s * 0.52 + lunge, hy = sy - s * 0.02; limb(c, s * 0.3, sy, hx, hy, s * 0.12, m.body); dot(c, hx, hy, s * 0.16, m.body, OUT); dot(c, hx + s * 0.07, hy - s * 0.05, s * 0.035, '#111');
+      if (p.atk != null && p.atk > 0.6) flat(c, [[hx + s * 0.1, hy + s * 0.02], [hx + s * 0.22, hy + s * 0.07], [hx + s * 0.1, hy + s * 0.1]], '#fff');
     }
     const g = c.createLinearGradient(0, sy - s * 0.4, 0, sy + s * 0.2); g.addColorStop(0, shade(m.shell, 0.3)); g.addColorStop(1, shade(m.shell, -0.35));
     c.fillStyle = g; c.beginPath(); c.ellipse(0, sy, s * 0.48, s * 0.36, 0, Math.PI, TAU); c.lineTo(s * 0.48, sy + s * 0.08); c.lineTo(-s * 0.48, sy + s * 0.08); c.closePath(); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.3; c.stroke();
-    for (let i = -2; i <= 2; i++) { const x = i * s * 0.17, y = sy - Math.sqrt(Math.max(0, 1 - (x / (s * 0.48)) ** 2)) * s * 0.34; poly(c, [[x - s * 0.06, y + s * 0.03], [x, y - s * 0.14], [x + s * 0.06, y + s * 0.03]], m.spikes, OUT); }
-    for (const x of [-0.24, 0, 0.24]) poly(c, [[s * (x - 0.09), sy - s * 0.12], [s * x, sy - s * 0.2], [s * (x + 0.09), sy - s * 0.12], [s * x, sy - s * 0.04]], shade(m.trim, 0.1));
+    for (let i = -2; i <= 2; i++) { const x = i * s * 0.17, y = sy - Math.sqrt(Math.max(0, 1 - (x / (s * 0.48)) ** 2)) * s * 0.34; flat(c, [[x - s * 0.06, y + s * 0.03], [x, y - s * 0.14], [x + s * 0.06, y + s * 0.03]], m.spikes, OUT); }
+    for (const x of [-0.24, 0, 0.24]) flat(c, [[s * (x - 0.09), sy - s * 0.12], [s * x, sy - s * 0.2], [s * (x + 0.09), sy - s * 0.12], [s * x, sy - s * 0.04]], shade(m.trim, 0.1));
     limb(c, -s * 0.47, sy + s * 0.06, s * 0.47, sy + s * 0.06, s * 0.05, m.trim);
   }
   // v104 (review #184): the EMBER WYRM, a squat dragon; wings spread and the body lifts while it flies
   function dragon(c, m, S, p) {
     const s = S * 1.05, step = p.walk != null ? p.walk * TAU : p.t * 1.2, lift = p.fly ? s * 0.55 : 0, bob = p.walk != null ? Math.abs(Math.sin(step)) * s * 0.04 : Math.sin(p.t * 2) * s * 0.015;
     const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.18 : 0, by = -s * 0.5 - bob - lift, flap = p.fly ? Math.sin(p.t * 22) * 0.5 : Math.sin(p.t * 2) * 0.12;
-    poly(c, [[-s * 0.1, by - s * 0.1], [-s * 0.55, by - s * (0.55 + flap * 0.4)], [-s * 0.7, by - s * (0.15 + flap * 0.2)], [-s * 0.35, by + s * 0.02]], shade(m.wing, -0.15), OUT);
+    flat(c, [[-s * 0.1, by - s * 0.1], [-s * 0.55, by - s * (0.55 + flap * 0.4)], [-s * 0.7, by - s * (0.15 + flap * 0.2)], [-s * 0.35, by + s * 0.02]], shade(m.wing, -0.15), OUT);
     if (!p.fly) for (const [x, ph] of [[-s * 0.25, 0], [s * 0.2, Math.PI]]) { const a = p.walk != null ? Math.sin(step + ph) * 0.45 : 0; limb(c, x, by + s * 0.15, x + Math.sin(a) * s * 0.2, -s * 0.02, s * 0.11, shade(m.body, -0.25)); }
-    limb(c, -s * 0.4, by + s * 0.05, -s * 0.8, by + s * 0.22 + Math.sin(p.t * 3) * s * 0.05, s * 0.09, m.body); poly(c, [[-s * 0.8, by + s * 0.12], [-s * 0.98, by + s * 0.24], [-s * 0.78, by + s * 0.32]], m.trim, OUT);
+    limb(c, -s * 0.4, by + s * 0.05, -s * 0.8, by + s * 0.22 + Math.sin(p.t * 3) * s * 0.05, s * 0.09, m.body); flat(c, [[-s * 0.8, by + s * 0.12], [-s * 0.98, by + s * 0.24], [-s * 0.78, by + s * 0.32]], m.trim, OUT);
     const g = c.createLinearGradient(0, by - s * 0.25, 0, by + s * 0.25); g.addColorStop(0, shade(m.body, 0.25)); g.addColorStop(1, shade(m.body, -0.3));
     c.fillStyle = g; c.beginPath(); c.ellipse(lunge * 0.4, by, s * 0.45, s * 0.27, 0, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.3; c.stroke();
     c.fillStyle = m.belly; c.beginPath(); c.ellipse(lunge * 0.4 + s * 0.05, by + s * 0.1, s * 0.3, s * 0.13, 0, 0, TAU); c.fill();
     const nx = s * 0.35 + lunge, ny = by - s * 0.2, hx = s * 0.55 + lunge, hy = by - s * 0.42; limb(c, nx, ny, hx, hy, s * 0.13, m.body);
     c.fillStyle = m.body; c.beginPath(); c.ellipse(hx + s * 0.06, hy, s * 0.2, s * 0.13, -0.15, 0, TAU); c.fill(); c.strokeStyle = OUT; c.stroke();
-    poly(c, [[hx - s * 0.08, hy - s * 0.08], [hx - s * 0.2, hy - s * 0.3], [hx + s * 0.0, hy - s * 0.11]], m.trim, OUT); poly(c, [[hx + s * 0.02, hy - s * 0.1], [hx - s * 0.02, hy - s * 0.32], [hx + s * 0.12, hy - s * 0.12]], m.trim, OUT);
-    ball(c, hx + s * 0.1, hy - s * 0.03, s * 0.035, '#ffcf5a');
-    if ((p.atk != null && p.atk > 0.5) || p.fly || p.cast != null) for (let i = 0; i < 4; i++) ball(c, hx + s * (0.3 + i * 0.12), hy + s * 0.04 + Math.sin(p.t * 30 + i) * s * 0.03, s * (0.08 - i * 0.012), i % 2 ? '#ffcf5a' : '#ff7a3d');
-    const wy = flap * 0.5; poly(c, [[s * 0.1, by - s * 0.14], [-s * 0.12, by - s * (0.78 + wy)], [-s * 0.42, by - s * (0.62 + wy * 0.8)], [-s * 0.5, by - s * (0.3 + wy * 0.3)], [-s * 0.2, by - s * 0.12]], m.wing, OUT);
+    flat(c, [[hx - s * 0.08, hy - s * 0.08], [hx - s * 0.2, hy - s * 0.3], [hx + s * 0.0, hy - s * 0.11]], m.trim, OUT); flat(c, [[hx + s * 0.02, hy - s * 0.1], [hx - s * 0.02, hy - s * 0.32], [hx + s * 0.12, hy - s * 0.12]], m.trim, OUT);
+    dot(c, hx + s * 0.1, hy - s * 0.03, s * 0.035, '#ffcf5a');
+    if ((p.atk != null && p.atk > 0.5) || p.fly || p.cast != null) for (let i = 0; i < 4; i++) dot(c, hx + s * (0.3 + i * 0.12), hy + s * 0.04 + Math.sin(p.t * 30 + i) * s * 0.03, s * (0.08 - i * 0.012), i % 2 ? '#ffcf5a' : '#ff7a3d');
+    const wy = flap * 0.5; flat(c, [[s * 0.1, by - s * 0.14], [-s * 0.12, by - s * (0.78 + wy)], [-s * 0.42, by - s * (0.62 + wy * 0.8)], [-s * 0.5, by - s * (0.3 + wy * 0.3)], [-s * 0.2, by - s * 0.12]], m.wing, OUT);
     limb(c, s * 0.1, by - s * 0.14, -s * 0.12, by - s * (0.78 + wy), s * 0.035, shade(m.wing, -0.3)); limb(c, -s * 0.12, by - s * (0.78 + wy), -s * 0.42, by - s * (0.62 + wy * 0.8), s * 0.03, shade(m.wing, -0.3));
-    for (let i = 0; i < 3; i++) poly(c, [[-s * (0.15 + i * 0.15), by - s * 0.24], [-s * (0.1 + i * 0.15), by - s * 0.38], [-s * (0.04 + i * 0.15), by - s * 0.24]], m.trim);
+    for (let i = 0; i < 3; i++) flat(c, [[-s * (0.15 + i * 0.15), by - s * 0.24], [-s * (0.1 + i * 0.15), by - s * 0.38], [-s * (0.04 + i * 0.15), by - s * 0.24]], m.trim);
   }
   const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg, crystal, cannon, plant, turtle, dragon };
 

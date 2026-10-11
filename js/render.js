@@ -143,7 +143,44 @@
       ctx.lineWidth = 1.5;
       ctx.strokeStyle = royal() ? 'rgba(255,207,90,0.38)' : 'rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.moveTo(top[3].x, top[3].y); ctx.lineTo(top[4].x, top[4].y); ctx.lineTo(top[5].x, top[5].y); ctx.lineTo(top[0].x, top[0].y); ctx.stroke();
       ctx.strokeStyle = royal() ? 'rgba(0,0,0,0.45)' : 'rgba(40,70,20,0.35)'; ctx.beginPath(); ctx.moveTo(top[0].x, top[0].y); ctx.lineTo(top[1].x, top[1].y); ctx.lineTo(top[2].x, top[2].y); ctx.lineTo(top[3].x, top[3].y); ctx.stroke();
+      if (!tk[Hx.key(c, r)] && !drop) tileDecor(ctx, v, c, r, o);
     }
+    sideDecor(v);
+  }
+  // v113 (review #200, David: "improve detail of the battle arena and enemies and background"): every tile gets a few grass tufts, now and then a flower or
+  // pebbles (seeded per hex, so the board looks the same every fight), and the slab's front shows layers of soil, stones and roots under a grassy lip
+  // WHAT: the small things on one tile top (tufts, flowers, pebbles). Painted into the cached board picture.
+  function tileDecor(ctx, v, c, r, o) {
+    const { size } = v, p = hexScreen(v, c, r); let sd = (c * 73856093 ^ r * 19349663) >>> 0; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
+    const R = royal(), dep = o.deploy, grass = R ? 'rgba(255,207,90,0.28)' : dep ? 'rgba(255,255,255,0.35)' : 'rgba(40,100,30,0.55)', lit = R ? 'rgba(255,230,160,0.25)' : dep ? 'rgba(255,255,255,0.45)' : 'rgba(170,230,120,0.7)';
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1, size * 0.035);
+    for (let i = 0; i < 3; i++) { const x = p.x + (rnd() - 0.5) * size * 1.1, y = p.y + (rnd() - 0.5) * size * 0.75 * K, h = size * (0.08 + rnd() * 0.06);
+      ctx.strokeStyle = grass; ctx.beginPath(); ctx.moveTo(x - h * 0.5, y); ctx.lineTo(x - h * 0.7, y - h); ctx.moveTo(x, y); ctx.lineTo(x, y - h * 1.25); ctx.moveTo(x + h * 0.5, y); ctx.lineTo(x + h * 0.8, y - h); ctx.stroke();
+      ctx.strokeStyle = lit; ctx.lineWidth = Math.max(0.8, size * 0.02); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - h * 1.2); ctx.stroke(); ctx.lineWidth = Math.max(1, size * 0.035); }
+    const f = rnd();
+    if (!dep && !R && f < 0.22) { const x = p.x + (rnd() - 0.5) * size * 0.9, y = p.y + (rnd() - 0.5) * size * 0.6 * K, col = ['#fff6f0', '#ffe066', '#ff9fd2', '#b8d8ff'][(rnd() * 4) | 0], rr = size * 0.045;
+      for (let k = 0; k < 5; k++) { const a = k * Math.PI * 0.4; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.8, rr * 0.7, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#ffb030'; ctx.beginPath(); ctx.arc(x, y, rr * 0.55, 0, Math.PI * 2); ctx.fill(); }
+    else if (f > 0.84) for (let k = 0; k < 3; k++) { const x = p.x + (rnd() - 0.5) * size * 0.8, y = p.y + (rnd() - 0.5) * size * 0.55 * K, rr = size * (0.03 + rnd() * 0.035);
+      ctx.fillStyle = R ? 'rgba(20,12,30,0.6)' : 'rgba(110,110,100,0.75)'; ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.7, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = R ? 'rgba(255,207,90,0.25)' : 'rgba(235,235,225,0.8)'; ctx.beginPath(); ctx.ellipse(x - rr * 0.3, y - rr * 0.25, rr * 0.4, rr * 0.25, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+  // WHAT: the front of the slab under the last row: a grassy lip, a darker soil band, stones and a few roots. Painted into the cached board picture.
+  function sideDecor(v) {
+    const { ctx, size } = v, th = v.slab, R = royal(); let sd = 97; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
+    ctx.save();
+    for (let c = 0; c < Hx.COLS; c++) {
+      const pts = corners(v, c, Hx.ROWS - 1, size * 0.985);
+      for (const [i, j] of [[0, 1], [1, 2], [2, 3]]) {
+        const a = pts[i], b = pts[j];
+        ctx.save(); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(b.x, b.y + th); ctx.lineTo(a.x, a.y + th); ctx.closePath(); ctx.clip();
+        ctx.fillStyle = R ? 'rgba(0,0,0,0.25)' : 'rgba(60,30,10,0.3)'; ctx.beginPath(); ctx.moveTo(a.x, a.y + th * 0.55); ctx.lineTo(b.x, b.y + th * 0.55); ctx.lineTo(b.x, b.y + th); ctx.lineTo(a.x, a.y + th); ctx.closePath(); ctx.fill();
+        for (let k = 0; k < 3; k++) { const t = rnd(), x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t + th * (0.35 + rnd() * 0.5), rr = size * (0.035 + rnd() * 0.04); ctx.fillStyle = R ? '#2a1d0a' : ['#a08870', '#8a7a68', '#b8a088'][k]; ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.7, rnd(), 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(40,20,8,0.5)'; ctx.lineWidth = 1; ctx.stroke(); }
+        if (!R && rnd() < 0.5) { const t = rnd(), x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t; ctx.strokeStyle = 'rgba(70,40,15,0.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, y + th * 0.15); ctx.quadraticCurveTo(x + size * 0.06, y + th * 0.4, x - size * 0.03, y + th * 0.7); ctx.stroke(); }
+        ctx.restore();
+        if (!R) { ctx.fillStyle = '#4f9e3a'; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); for (let k = 6; k >= 0; k--) { const t = k / 6, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t; ctx.lineTo(x, y + th * (k % 2 ? 0.16 : 0.26)); } ctx.closePath(); ctx.fill(); }
+      }
+    }
+    ctx.restore();
   }
 
   // ------------------------------------------------------------------ terrain (review #39): cartoon trees, boulders,
@@ -465,10 +502,16 @@
     sun.addColorStop(0, R ? 'rgba(255,207,90,0.28)' : 'rgba(255,248,214,0.85)'); sun.addColorStop(1, 'rgba(255,248,214,0)');
     g.fillStyle = sun; g.fillRect(0, 0, W, H);
     if (R) { for (let i = 0; i < 70; i++) { g.globalAlpha = 0.3 + rnd() * 0.6; g.fillStyle = '#fff'; g.beginPath(); g.arc(rnd() * W, rnd() * top * 1.3, rnd() * 1.3 + 0.3, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1; }
-    else for (let i = 0; i < 6; i++) {   // soft clouds: clusters of white puffs
-      const cx = (i + 0.3 + rnd() * 0.5) / 6 * W, cy = top * (0.2 + rnd() * 0.45), s = v.size * (0.35 + rnd() * 0.3);
-      g.fillStyle = 'rgba(255,255,255,0.75)';
-      for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(cx + (k - 2) * s * 0.75, cy - Math.sin(k / 4 * Math.PI) * s * 0.45, s * (0.7 + rnd() * 0.3), s * 0.5, 0, 0, Math.PI * 2); g.fill(); }
+    else {
+      // v113 (review #200): sun rays, clouds with a shaded underside, a few birds
+      g.save(); g.translate(W * 0.78, top * 0.25); g.fillStyle = 'rgba(255,250,220,0.18)'; for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6 + 0.1; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(a - 0.06) * W, Math.sin(a - 0.06) * W); g.lineTo(Math.cos(a + 0.06) * W, Math.sin(a + 0.06) * W); g.closePath(); g.fill(); } g.restore();
+      g.fillStyle = 'rgba(255,253,235,0.95)'; g.beginPath(); g.arc(W * 0.78, top * 0.25, v.size * 0.32, 0, Math.PI * 2); g.fill();
+      for (let i = 0; i < 6; i++) {   // soft clouds: clusters of white puffs
+        const cx = (i + 0.3 + rnd() * 0.5) / 6 * W, cy = top * (0.2 + rnd() * 0.45), s = v.size * (0.35 + rnd() * 0.3), rs = [0.7 + rnd() * 0.3, 0.7 + rnd() * 0.3, 0.7 + rnd() * 0.3, 0.7 + rnd() * 0.3, 0.7 + rnd() * 0.3];
+        g.fillStyle = 'rgba(190,215,240,0.75)'; for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(cx + (k - 2) * s * 0.75, cy - Math.sin(k / 4 * Math.PI) * s * 0.45 + s * 0.12, s * rs[k], s * 0.5, 0, 0, Math.PI * 2); g.fill(); }
+        g.fillStyle = 'rgba(255,255,255,0.9)'; for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(cx + (k - 2) * s * 0.75, cy - Math.sin(k / 4 * Math.PI) * s * 0.45, s * rs[k] * 0.92, s * 0.44, 0, 0, Math.PI * 2); g.fill(); }
+      }
+      g.strokeStyle = 'rgba(40,60,90,0.6)'; g.lineWidth = 1.3; g.lineCap = 'round'; for (let i = 0; i < 4; i++) { const x = W * (0.15 + rnd() * 0.5), y = top * (0.25 + rnd() * 0.35), s = v.size * (0.08 + rnd() * 0.06); g.beginPath(); g.moveTo(x - s, y - s * 0.4); g.quadraticCurveTo(x - s * 0.5, y - s * 0.7, x, y); g.quadraticCurveTo(x + s * 0.5, y - s * 0.7, x + s, y - s * 0.4); g.stroke(); }
     }
     const hills = (base, amp, col, n) => {
       g.fillStyle = col; g.beginPath(); g.moveTo(0, H);
@@ -476,7 +519,23 @@
       g.lineTo(W, H); g.closePath(); g.fill();
     };
     if (R) { hills(top + v.size * 0.4, v.size * 1.2, '#1d1430', 3); hills(top + v.size * 0.9, v.size * 0.8, '#150f24', 5); }
-    else { hills(top + v.size * 0.3, v.size * 1.3, '#9ccbe8', 3); hills(top + v.size * 0.7, v.size * 0.9, '#7fc48a', 5); hills(top + v.size * 1.2, v.size * 0.6, '#5fb06c', 7); }
+    else {
+      // v113 (review #200): far snowy peaks, a castle on a far hill, rows of trees along the nearer hills
+      for (let i = 0; i < 7; i++) { const x = (i + rnd() * 0.6) / 6.5 * W, base = top + v.size * 0.35, h = v.size * (1.1 + rnd() * 0.9), w = v.size * (1.1 + rnd() * 0.6);
+        g.fillStyle = '#b4cfe6'; g.beginPath(); g.moveTo(x - w, base); g.lineTo(x, base - h); g.lineTo(x + w, base); g.closePath(); g.fill();
+        g.fillStyle = '#9dbdd8'; g.beginPath(); g.moveTo(x, base - h); g.lineTo(x + w, base); g.lineTo(x + w * 0.2, base); g.closePath(); g.fill();
+        g.fillStyle = '#f4f9ff'; g.beginPath(); g.moveTo(x - w * 0.28, base - h * 0.72); g.lineTo(x, base - h); g.lineTo(x + w * 0.28, base - h * 0.72); g.lineTo(x + w * 0.12, base - h * 0.78); g.lineTo(x, base - h * 0.7); g.lineTo(x - w * 0.12, base - h * 0.78); g.closePath(); g.fill(); }
+      hills(top + v.size * 0.3, v.size * 1.3, '#9ccbe8', 3);
+      { const cx = W * 0.2, cy = top - v.size * 0.55, s = v.size * 0.5; g.fillStyle = '#86aecb';   // a far castle
+        g.fillRect(cx - s, cy - s * 0.6, s * 2, s * 0.9); for (const tx of [-1.05, -0.2, 0.75]) { g.fillRect(cx + tx * s, cy - s * 1.2, s * 0.32, s * 1.5); g.beginPath(); g.moveTo(cx + tx * s - s * 0.05, cy - s * 1.2); g.lineTo(cx + tx * s + s * 0.16, cy - s * 1.6); g.lineTo(cx + tx * s + s * 0.37, cy - s * 1.2); g.fill(); }
+        for (let k = 0; k < 7; k++) g.fillRect(cx - s + k * s * 0.3, cy - s * 0.72, s * 0.16, s * 0.14); g.fillStyle = '#e8506a'; g.fillRect(cx - 0.04 * s, cy - s * 1.95, s * 0.22, s * 0.14); g.fillStyle = '#86aecb'; g.fillRect(cx - 0.06 * s, cy - s * 1.95, s * 0.04, s * 0.38); }
+      hills(top + v.size * 0.7, v.size * 0.9, '#7fc48a', 5);
+      const trees = (base, amp, n, col, dark, count) => { for (let i = 0; i < count; i++) { const x = rnd() * W, y = base - amp * (0.55 + 0.45 * Math.sin(x / W * Math.PI * n + n)) - amp * 0.25 * Math.sin(x / 37) + 2, s = v.size * (0.16 + rnd() * 0.1);
+        g.fillStyle = dark; g.fillRect(x - s * 0.12, y - s * 0.6, s * 0.24, s * 0.6); g.fillStyle = col; g.beginPath(); g.arc(x, y - s * 0.9, s * 0.6, 0, Math.PI * 2); g.fill(); g.fillStyle = 'rgba(255,255,255,0.18)'; g.beginPath(); g.arc(x - s * 0.2, y - s * 1.1, s * 0.25, 0, Math.PI * 2); g.fill(); } };
+      trees(top + v.size * 0.7, v.size * 0.9, 5, '#5aa868', '#4a6a3a', 14);
+      hills(top + v.size * 1.2, v.size * 0.6, '#5fb06c', 7);
+      trees(top + v.size * 1.2, v.size * 0.6, 7, '#3f9152', '#5a3a1e', 10);
+    }
     if (boss) bossBackdrop(g, boss, W, H, top, v.size, rnd);
     v.bd = { R, boss: boss || null, c }; return c;
   }

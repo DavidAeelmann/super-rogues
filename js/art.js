@@ -23,26 +23,18 @@
   const OFFICIAL = {
     // review #45 (David): Ulfrik (the "Red-Hand" art). His sheet had 5 rows: idle 5, walk 8, attack 7, a charge 6 and a
     // spin 7 frames; his ability (Crimson Spin) plays the charge and then the spin, so every frame is used
-    thorne: { splash: 'art/ravager/splash.jpg', crop: { x: 0.517, y: 0.287, z: 1 }, flip: false, scale: 1,
-      anims: { idle: seq('ravager', 'idle', 5), move: seq('ravager', 'move', 8), attack: seq('ravager', 'attack', 7), cast: seq('ravager', 'cast', 13) },
-      axs: { idle: [0.552, 0.506, 0.534, 0.54, 0.499], move: [0.547, 0.565, 0.57, 0.584, 0.561, 0.552, 0.565, 0.52], attack: [0.457, 0.455, 0.487, 0.479, 0.493, 0.504, 0.469], cast: [0.568, 0.495, 0.543, 0.52, 0.519, 0.468, 0.488, 0.477, 0.494, 0.485, 0.551, 0.544, 0.48] } },
+    thorne: { splash: 'art/ravager/splash.jpg', crop: { x: 0.517, y: 0.287, z: 1 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
     // review #46 (David): Brutus. Idle 7, walk 8, attack 7 and ability (Ramming Charge) 6 frames; the lab had glued 3
     // attack frames (and 2 ability frames) together through the swoosh arcs, split here and fixed in cutSheet
-    brakk: { splash: 'art/ironhorn/splash.jpg', crop: { x: 0.654, y: 0.329, z: 1.26 }, flip: false, scale: 1,
-      anims: { idle: seq('ironhorn', 'idle', 7), move: seq('ironhorn', 'move', 8), attack: seq('ironhorn', 'attack', 7), cast: seq('ironhorn', 'cast', 6) },
-      axs: { idle: [0.523, 0.507, 0.508, 0.51, 0.507, 0.514, 0.509], move: [0.561, 0.561, 0.555, 0.525, 0.525, 0.559, 0.508, 0.52], attack: [0.427, 0.436, 0.46, 0.457, 0.479, 0.46, 0.479], cast: [0.492, 0.471, 0.524, 0.5, 0.494, 0.458] } },
+    brakk: { splash: 'art/ironhorn/splash.jpg', crop: { x: 0.654, y: 0.329, z: 1.26 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
     // review #47 (David): Melissa, sent as "Astrid" (the lab opened on the first hero of the list). Her sheet had no space
     // between the frames; cut by the frame pitch here and in cutSheet. Idle 16, walk 15; the attack is her 5 quick
     // throws (drawn smaller, scaled up); the ability (Honey Hive) is the 7 hive-throw frames then the 12 swarm frames;
     // death 11 frames
-    buzzwell: { splash: 'art/stinger/splash.jpg', crop: { x: 0.538, y: 0.314, z: 1 }, flip: false, scale: 1,
-      anims: { idle: seq('stinger', 'idle', 16), move: seq('stinger', 'move', 15), attack: seq('stinger', 'attack', 5), cast: seq('stinger', 'cast', 19), death: seq('stinger', 'death', 11) },
-      axs: { idle: [0.55, 0.662, 0.663, 0.67, 0.657, 0.64, 0.592, 0.61, 0.642, 0.64, 0.642, 0.641, 0.642, 0.632, 0.607, 0.602], move: [0.476, 0.529, 0.462, 0.526, 0.463, 0.533, 0.513, 0.447, 0.443, 0.507, 0.548, 0.572, 0.537, 0.525, 0.549], attack: [0.467, 0.46, 0.431, 0.528, 0.496], cast: [0.449, 0.442, 0.464, 0.501, 0.538, 0.5, 0.581, 0.472, 0.459, 0.586, 0.571, 0.591, 0.53, 0.589, 0.618, 0.614, 0.663, 0.64, 0.655], death: [0.496, 0.504, 0.541, 0.585, 0.582, 0.508, 0.52, 0.467, 0.491, 0.48, 0.515] } },
+    buzzwell: { splash: 'art/stinger/splash.jpg', crop: { x: 0.538, y: 0.314, z: 1 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
     // review #48 (David): Kagero. A sheet of cards (every frame on a pink tile, with a title and row labels): cut per
     // card by cutCards, 8 frames in each of idle, walk, attack, ability (the smoke bomb flies, then the flash) and death
-    kage: { splash: 'art/eclipse/splash.jpg', crop: { x: 0.509, y: 0.235, z: 1.2 }, flip: false, scale: 1,
-      anims: { idle: seq('eclipse', 'idle', 8), move: seq('eclipse', 'move', 8), attack: seq('eclipse', 'attack', 8), cast: seq('eclipse', 'cast', 8), death: seq('eclipse', 'death', 8) },
-      axs: { idle: [0.569, 0.569, 0.578, 0.578, 0.578, 0.569, 0.569, 0.559], move: [0.528, 0.528, 0.528, 0.538, 0.528, 0.528, 0.528, 0.528], attack: [0.492, 0.492, 0.492, 0.5, 0.492, 0.492, 0.492, 0.492], cast: [0.492, 0.492, 0.492, 0.5, 0.492, 0.492, 0.492, 0.492], death: [0.492, 0.492, 0.492, 0.5, 0.492, 0.492, 0.492, 0.492] } },
+    kage: { splash: 'art/eclipse/splash.jpg', crop: { x: 0.509, y: 0.235, z: 1.2 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
     // review #59 (PC boy): splash art for 10 heroes (cards, banners and portraits only: their battle figures stay drawn).
     // The crop centres each face for the portrait
     rex: { splash: 'art/fang/splash.jpg', crop: { x: 0.32, y: 0.424, z: 1.1 }, flip: false, scale: 1 },   // Fang
