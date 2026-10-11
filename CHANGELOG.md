@@ -2,6 +2,7 @@
 
 **Only add one entry per version, at the TOP. DO NOT read this whole file every session** (it only serves to find out why something is the way it is: search with Grep for the request number, "#73", or for the version, "v61").
 Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
+- v111 (#198): code-drawn heroes get their own details, proportions and particles; more animation frames (blink, breath, fidgets, eased wind-up, strike smear, follow-through, cast sigil, three-beat death).
 - v110 (#197): style guide: two fonts (Fredoka + Inter), WCAG AA contrast on every screen (now enforced by the interface test), shared hover/pressed/disabled/focus states.
 - v109 (#196): current Gauntlet champion card at the gate and champion banner + glowing epic crown on the ladder; revised Gauntlet texts; all 64 ghosts re-rated (40,320 fights).
 - v108 (#195): long suggestion replies scroll inside their own box; replies are stored up to 4000 characters (was 600).
