@@ -2,6 +2,7 @@
 
 **Only add one entry per version, at the TOP. DO NOT read this whole file every session** (it only serves to find out why something is the way it is: search with Grep for the request number, "#73", or for the version, "v61").
 Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
+- v109 (#196): current Gauntlet champion card at the gate and champion banner + glowing epic crown on the ladder; revised Gauntlet texts; all 64 ghosts re-rated (40,320 fights).
 - v108 (#195): long suggestion replies scroll inside their own box; replies are stored up to 4000 characters (was 600).
 - **v107 (2026-10-10), batch 138 from David (#194).** `B.lpFail(league)` = 5 x league: a lost run (`failed: true` in the fail op and on the league screen, line "Run lost") costs 0 / 5 / 10 / 15 / 20 / 25 LP from Bronze to Celestial.
 - **v106b (2026-10-10), batch 137 from David (#193).** The tower height is variable again: `GE.floors` = champion wins + 1 (at least 2); `towerOpp` uses it for the percentile ranges and the top; `B.TOWER_FLOORS` removed.
