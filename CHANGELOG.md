@@ -2,6 +2,7 @@
 
 **Only add one entry per version, at the TOP. DO NOT read this whole file every session** (it only serves to find out why something is the way it is: search with Grep for the request number, "#73", or for the version, "v61").
 Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
+- v115 (#202): crisp texts: long hero abilities shortened, event intros say what they offer, event choices tightened and split right.
 - v114 (#201): the two start choices fill the screen with dealt-in hero posters and power altars, a glowing pick with confetti, strength bars and a pulsing button.
 - v113 (#200): the four sprite-sheet heroes drawn in code like the rest; richer arena, backdrop and enemies.
 - v112 (#199): your own ghosts can come up in the Gauntlet; every new ghost is seeded starting from exactly 1000.
