@@ -5,6 +5,23 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.pt = {
     x: {
+      "Very tough": "Muito resistente",
+      "Area damage": "Dano em área",
+      "Big single hits": "Golpes fortes",
+      "Steady damage": "Dano constante",
+      "Burns & poisons": "Queima e envenena",
+      "Heals allies": "Cura aliados",
+      "Shields allies": "Protege aliados",
+      "Boosts allies": "Fortalece aliados",
+      "Stuns & roots": "Atordoa e prende",
+      "Slows": "Deixa lento",
+      "Summons help": "Invoca ajudantes",
+      "Hits from far": "Ataca de longe",
+      "Jumps to the back": "Salta na retaguarda",
+      "Heals itself": "Cura a si mesmo",
+      "Comes back once": "Volta uma vez",
+      "Peaks late": "Cresce no fim",
+      "Strong early": "Forte desde o início",
       "Toughness": "Resistência",
       "by Lv 5": "até o Nv 5",
       "Lv 1": "Nv 1",

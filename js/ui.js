@@ -571,14 +571,12 @@
   // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
   // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
   // WHAT: four bars of a hero's strengths, each against the best hero of the game.
-  // v116 (review #203, David: "The hero stats in selection dont make sense. Frost mage higher health than onyx? Use actual useful stats that take the role of the
-  // champ and scaling and abilities into account"): the four bars are MEASURED in the simulation (tools/hero-ratings.js writes B.HERO_RATE): Damage,
-  // Toughness (how long it stands alone: armor, shields, heals, rebirth...), Support (heals, shields and buffs on allies), Control (stuns, roots, taunts...).
-  // The solid part is Lv 1, the lighter part how far it grows by Lv 5.
+  // v117 (review #204): what the hero is good at (B.HERO_TRAITS, from its kit) and its power curve (from its growth); v116's measured bars are gone
+  // WHAT: the strength chips of a hero card.
   function statBars(h) {
-    const R = B.HERO_RATE && B.HERO_RATE[h.key]; if (!R) return '';
-    const bar = (label, i, cls) => `<span class="stb ${cls}"><i>${label}</i><u><s style="--v:${Math.max(0.04, R[i + 4]).toFixed(2)}"></s><b style="--v:${Math.max(0.04, Math.min(R[i], R[i + 4])).toFixed(2)}"></b></u></span>`;
-    return `<div class="sbars">${bar('Damage', 0, 'atk')}${bar('Toughness', 1, 'hp')}${bar('Support', 2, 'sp')}${bar('Control', 3, 'cc')}</div><p class="sbkey"><b></b>Lv 1 <s></s>by Lv 5</p>`;
+    const tr = (B.HERO_TRAITS && B.HERO_TRAITS[h.key]) || [], g = h.grow || 1;
+    const curve = g >= 1.5 ? ['Peaks late', 'late'] : g <= 0.6 ? ['Strong early', 'early'] : null;
+    return tr.length || curve ? `<div class="htraits">${tr.filter(k => B.TRAIT[k]).map(k => `<span class="htr c-${B.TRAIT[k][1]}">${B.TRAIT[k][0]}</span>`).join('')}${curve ? `<span class="htr curve ${curve[1]}">${curve[1] === 'late' ? '📈' : '⚡'} ${curve[0]}</span>` : ''}</div>` : '';
   }
   // WHAT: 'deal' the first time a start step shows (its cards fly in), '' on the redraws after a tap.
   function dealIn(step) { const k = (run && run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
