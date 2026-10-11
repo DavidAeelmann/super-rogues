@@ -5,6 +5,12 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.pt = {
     x: {
+      "Climb floor by floor: each one is stronger. Each floor won gives LP; falling costs nothing.": "Suba andar por andar: cada um é mais forte. Cada andar vencido dá LP; cair não custa nada.",
+      "Other players' saved teams, stronger on every floor. The champion waits at the top.": "Times salvos de outros jogadores, mais fortes a cada andar. O campeão espera no topo.",
+      "Falling costs nothing: your team stays in the tower as a ghost": "Cair não custa nada: seu time fica na torre como fantasma",
+      "👑 Beat the top floor and you are the champion": "👑 Vença o último andar e você é o campeão",
+      "Current champion": "Campeão atual",
+      "Gauntlet champion": "Campeão da Gauntlet",
       "A lost run costs no LP in Bronze": "Uma run perdida não custa LP no Bronze",
       "Run lost": "Run perdida",
       "Tutorial: On": "Tutorial: ligado",
@@ -67,7 +73,6 @@
       "An event: pick one choice. A fight here counts like any other.": "Um evento: escolha uma opção. Uma luta aqui conta como qualquer outra.",
       "Level up! Pick one of two upgrades for this hero.": "Subiu de nível! Escolha uma de duas melhorias para este herói.",
       "You beat the bosses! Next comes the Gauntlet.": "Você venceu os chefes! Agora vem o Gauntlet.",
-      "Climb floor by floor. Each floor won gives LP; falling costs nothing.": "Suba andar por andar. Cada andar vencido dá LP; cair não custa nada.",
       "League points: fill the bar to climb to the next league.": "Pontos de liga: encha a barra para subir para a próxima liga.",
       "Account XP: every level opens new heroes, items and rewards.": "XP da conta: cada nível libera novos heróis, itens e recompensas.",
       "Tutorial": "Tutorial",

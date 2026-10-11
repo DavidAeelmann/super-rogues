@@ -139,6 +139,13 @@ async function heroGames(st, pid, team, win) {
   try { if (team && team.length) await st.addHeroGames(pid, [...new Set(team.map(h => h.key))], win ? 1 : 0); } catch (e) { console.error('phero', e); }
 }
 
+// v109 (review #196, David: "Show current champion in the gauntlet screen, and in the hiscores he has an epic crown"): the current Gauntlet champion as
+// anyone may see it (name, public code, floors held, the team's heroes). null = no champion yet.
+async function champView(st) {
+  const c = await st.getChampion(0); if (!c) return null;
+  const o = c.pid ? await st.getPlayer(c.pid) : null, team = listOf(c.team).filter(h => h && D.HEROES[h.key]).map(h => ({ key: h.key, lvl: h.lvl | 0 }));
+  return { name: (o && o.name) || c.name, code: c.pid ? (o && o.code) || codeOf(c.pid) : null, wins: c.wins | 0, floors: Math.max(2, (c.wins | 0) + 1), stopped: c.def_w | 0, team, avatar: (o && o.avatar) || null };
+}
 // v66 (review #136): the words of the taunt a player picked (null = none)
 const tauntText = p => { const t = p && p.taunt && D.TAUNT_ALL.find(x => x.id === p.taunt); return t ? t.text : null; };
 // what anyone can see on a profile
@@ -178,4 +185,4 @@ async function grantAchs(st, p, sent) {
   p.achs = JSON.stringify(had.concat(fresh)); await st.setProgress(p.pid, { achs: p.achs });
   return fresh;
 }
-module.exports = { grantAchs, tauntText, grant, perksOf, isKing, row, rollSeason, payLeagues, sync, linkRef, heroGames, profileView, kingExtras, ownView, codeOf, xpClear, xpFloor, xpBoss, xpSpend, xpGame, xpDuel, levelView };
+module.exports = { champView, grantAchs, tauntText, grant, perksOf, isKing, row, rollSeason, payLeagues, sync, linkRef, heroGames, profileView, kingExtras, ownView, codeOf, xpClear, xpFloor, xpBoss, xpSpend, xpGame, xpDuel, levelView };

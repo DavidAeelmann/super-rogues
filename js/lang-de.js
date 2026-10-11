@@ -5,6 +5,12 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.de = {
     x: {
+      "Climb floor by floor: each one is stronger. Each floor won gives LP; falling costs nothing.": "Steige Stockwerk für Stockwerk: jedes ist stärker. Jedes gewonnene gibt LP; Fallen kostet nichts.",
+      "Other players' saved teams, stronger on every floor. The champion waits at the top.": "Gespeicherte Teams anderer Spieler, stärker auf jedem Stockwerk. Oben wartet der Champion.",
+      "Falling costs nothing: your team stays in the tower as a ghost": "Fallen kostet nichts: dein Team bleibt als Geist im Turm",
+      "👑 Beat the top floor and you are the champion": "👑 Besiege das oberste Stockwerk und du bist Champion",
+      "Current champion": "Aktueller Champion",
+      "Gauntlet champion": "Gauntlet-Champion",
       "A lost run costs no LP in Bronze": "Ein verlorener Lauf kostet in Bronze keine LP",
       "Run lost": "Lauf verloren",
       "Tutorial: On": "Tutorial: an",
@@ -67,7 +73,6 @@
       "An event: pick one choice. A fight here counts like any other.": "Ein Ereignis: wähle eine Option. Ein Kampf hier zählt wie jeder andere.",
       "Level up! Pick one of two upgrades for this hero.": "Stufenaufstieg! Wähle eine von zwei Verbesserungen für diesen Helden.",
       "You beat the bosses! Next comes the Gauntlet.": "Du hast die Bosse besiegt! Jetzt kommt das Gauntlet.",
-      "Climb floor by floor. Each floor won gives LP; falling costs nothing.": "Steige Stockwerk für Stockwerk. Jedes gewonnene gibt LP; Fallen kostet nichts.",
       "League points: fill the bar to climb to the next league.": "Ligapunkte: fülle den Balken, um in die nächste Liga aufzusteigen.",
       "Account XP: every level opens new heroes, items and rewards.": "Konto-EP: jede Stufe schaltet neue Helden, Gegenstände und Belohnungen frei.",
       "Tutorial": "Tutorial",

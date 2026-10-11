@@ -856,7 +856,7 @@
     { id: 'event', when: () => run.phase === 'event', at: '.evchoices', text: 'An event: pick one choice. A fight here counts like any other.' },
     { id: 'level', when: () => run.pending.length && run.phase !== 'deploy', at: '.spec2', text: 'Level up! Pick one of two upgrades for this hero.' },
     { id: 't_win', when: () => run.phase === 'over' && run.result === 'clear' && !run.tower, at: '.vicart', text: 'You beat the bosses! Next comes the Gauntlet.' },
-    { id: 't_tower', when: () => run.phase === 'tower' && (!run.tower || run.tower.status === 'gate'), at: '.trules', text: 'Climb floor by floor. Each floor won gives LP; falling costs nothing.' },
+    { id: 't_tower', when: () => run.phase === 'tower' && (!run.tower || run.tower.status === 'gate'), at: '.trules', text: 'Climb floor by floor: each one is stronger. Each floor won gives LP; falling costs nothing.' },
     { id: 'league', when: () => run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !!document.querySelector('#lpmeter'), at: '#lpmeter', text: 'League points: fill the bar to climb to the next league.' },
     { id: 'chest', when: () => run.phase === 'over' && run.overStep === 2, at: '#chest', text: 'Account XP: every level opens new heroes, items and rewards.' },
   ];
@@ -1129,6 +1129,16 @@
     let fl = ''; for (let k = from + shown - 1; k >= from; k--) fl += `<span class="tfl ${k < (T.floor || 1) || (T.status === 'over' && T.champion && k <= T.wins) ? 'done' : k === (T.floor || 1) && T.status !== 'over' ? 'cur' : k === (T.floor || 1) && !T.champion ? 'fell' : ''}" style="--k:${k - from}"><b>${k}</b></span>`;
     return `<div class="towerart ${T.champion ? 'crowned' : ''}" aria-hidden="true"><span class="tcrown">👑</span><div class="tfloors">${fl}</div><span class="tdoor"></span><span class="tglow"></span></div>`;
   }
+  // v109 (review #196, David: "Show current champion in the gauntlet screen, and in the hiscores he has an epic crown"): the champion's card (name, team,
+  // floors climbed, climbers stopped), loaded once per gate from GET /api/elo?champ=1. Until it arrives (or offline) the plain rule shows.
+  // WHAT: the epic crown of the current Gauntlet champion (ladder rows, the gate card).
+  const champMark = () => '<span class="champmark" title="Current Gauntlet champion">👑</span>';
+  function champCard() {
+    const c = ui.champ;
+    if (ui.champ === undefined && !ui.champBusy) { ui.champBusy = true; Net.get('elo?champ=1').then(r => { ui.champ = r.champ || null; }, () => { ui.champ = null; }).then(() => { ui.champBusy = false; if (run && run.phase === 'tower') render(); }); }
+    if (!c) return '<li>👑 Beat the top floor and you are the champion</li>';
+    return `<li class="champcard">${champMark()}<span class="cc"><small>Current champion</small><b>${esc(c.name)}</b><small>${c.wins} floor${c.wins === 1 ? '' : 's'} climbed · ${c.stopped} stopped</small></span><span class="ccteam">${c.team.slice(0, 6).map(h => img(h.key, 40, 'por')).join('')}</span></li>`;
+  }
   // WHAT: THE GAUNTLET screen (after a completed run): the gate (enter or skip) and the end of the climb (floor reached, LP won, the crown).
   function towerHTML() {
     const T = run.tower || { status: 'gate', floor: 1 };
@@ -1140,8 +1150,8 @@
         <div class="overbar"><button class="primary big cta" data-act="tower-done">Next ${I('arrow')}</button></div></section>`;
     }
     return `<section class="title towerscr gate"><h2 class="sc gtitle">The Gauntlet</h2>
-      <p class="gsub">A tower of other players' teams. Beat them floor by floor until you fall or take the crown.</p>${towerArt(T)}
-      <ul class="trules"><li>🏰 Each floor won: <b>+LP equal to the floor</b> (floor 3 = +3)</li><li>🛡 Losing costs nothing</li><li>👑 Beat the top and you are the champion</li></ul>
+      <p class="gsub">Other players' saved teams, stronger on every floor. The champion waits at the top.</p>${towerArt(T)}
+      <ul class="trules"><li>🏰 Each floor won: <b>+LP equal to the floor</b> (floor 3 = +3)</li><li>🛡 Falling costs nothing: your team stays in the tower as a ghost</li>${champCard()}</ul>
       ${acct.account && !isDefaultName(acct.name) ? '' : `<input id="tname" class="tname" maxlength="16" placeholder="Your name on the ladder" value="${esc(myName())}" aria-label="Your name on the ladder">`}
       <div class="overbar two"><button data-act="tower-skip">Skip</button><button class="primary big cta" data-act="tower-enter" ${ui.towerBusy ? 'disabled' : ''}>${I('trophy')} Enter the Gauntlet</button></div></section>`;
   }
@@ -2043,10 +2053,11 @@
       // v65 (reviews #132 #134): Global or Friends (the players you follow, and you); every row has the win streak now and the best one
       // v85 (review #163): Global = the top 10, then '…' and your own row with your place when you are not in it; Friends = all of them and you
       const e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.post('player', { op: 'ladder', pid: pid() });
-      const rowOf = (p, rank) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${rank}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}${p.title ? `<small class="ltitle">${esc(p.title)}</small>` : ''}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td><td class="stk" title="Best Gauntlet floor reached">${p.best ? `<small>${p.best}</small>` : '<small class="dim">·</small>'}</td></tr>`;
+      const rowOf = (p, rank) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${rank}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${e.champ && e.champ.code && p.code === e.champ.code ? champMark() : ''}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}${p.title ? `<small class="ltitle">${esc(p.title)}</small>` : ''}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td><td class="stk" title="Best Gauntlet floor reached">${p.best ? `<small>${p.best}</small>` : '<small class="dim">·</small>'}</td></tr>`;
       const eRows = e.top.map((p, i) => rowOf(p, i + 1)).join('') + (tab !== 'friends' && e.me && e.me.code ? `<tr class="gap"><td colspan="6">…</td></tr>` + rowOf(e.me, e.me.rank || e.rank) : '');
       const none = tab === 'friends' ? `<p class="dim">${acct.account ? 'Follow players from their profile (tap a name) and they show up here.' : 'Your account starts when your first run ends; then follow players from their profile.'}</p>` : '<p class="dim">No ranked players yet.</p>';
-      if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="dim small ladnote">${tab === 'friends' ? 'You and the players you follow. ' : ''}By league, then league points (LP), which come from completed runs and the Gauntlet. 🔥 = runs won in a row now, Best = the longest streak, 🏰 = the best Gauntlet floor reached, 👑 = King Tier. Tap a name to open the profile.</p>
+      if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="dim small ladnote">${tab === 'friends' ? 'You and the players you follow. ' : ''}By league, then league points (LP), which come from completed runs and the Gauntlet. 🔥 = runs won in a row now, Best = the longest streak, 🏰 = the best Gauntlet floor reached, 👑 = King Tier, the glowing crown = the current Gauntlet champion. Tap a name to open the profile.</p>
+        ${e.champ ? `<div class="ladchamp">${champMark()}<span><small>Gauntlet champion</small> ${e.champ.code ? plink(e.champ.name, e.champ.code) : esc(e.champ.name)} <small class="dim">· ${e.champ.wins} floor${e.champ.wins === 1 ? '' : 's'} climbed · ${e.champ.stopped} stopped</small></span></div>` : ''}
         ${eRows ? `<table class="tbl"><tr><th>#</th><th>Name</th><th>LP</th><th title="Win streak">🔥</th><th>Best</th><th title="Best Gauntlet floor reached">🏰</th></tr>${eRows}</table>` : ''}${!eRows || (tab === 'friends' && e.top.length <= 1) ? none : ''}`);
     } catch (err) { if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="err">${esc(err.message)}</p>`); }
   }
@@ -2181,9 +2192,9 @@
       <li>Heroes earn XP for every second they stay alive. Level ups raise stats and let you pick a specialization. From Lv 3, each level adds an item slot. Lv 5 is rare.</li>
       <li>Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
       <li>Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes; with a full team a hero from the Hero Shop takes the place of one of yours (its level and items, powers picked at random). You have 3 lives: a lost fight costs one and the third ends the game. Heroes always heal after a fight.</li>
-      <li>🏰 The Gauntlet: after the second boss and a last shop the run is complete. Then you may climb the Gauntlet, a tower of other players' teams: beat them floor by floor until you fall or take the crown. This is the only PvP.</li>
+      <li>🏰 The Gauntlet: after the second boss and a last shop the run is complete. Then you may climb the Gauntlet, a tower of other players' teams, floor by floor until you fall or take the crown. This is the only PvP.</li>
       <li>Leagues: League points (LP): a completed run +${B.LP.final}, plus +${B.LP_PVE[0]} in Bronze and +${B.LP_PVE[1]} in Silver, plus its 🔥 win streak (+${B.LP.streak} LP per run in the streak); then each Gauntlet floor won pays its number (floor 3 = +3). A lost run costs 5 LP per league above Bronze (Silver 5, Gold 10...); a fall in the Gauntlet costs nothing. Higher leagues are harder to climb: a win pays less (×${B.LP_LEAGUE.gain[0]} in Bronze to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Celestial) and a loss costs more (×${B.LP_LEAGUE.loss[0]} to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}). A completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
-      <li>🏰 The Gauntlet: after a completed run you may climb a tower of other players' teams, floor by floor, until you fall or take the crown at the top. Each floor won gives as many LP as its number (floor 3 = +3); losing there costs nothing. Your best floor shows on the ladder.</li>
+      <li>🏰 The Gauntlet: after a completed run you may climb a tower of other players' saved teams (ghosts). The tower is one floor taller than the champion's own climb (a champion who climbed 4 floors sits on floor 5). Floor 1 holds one of the weakest ghosts and each floor up a stronger one; the strength is a hidden rating that every Gauntlet fight moves. Each floor won gives as many LP as its number (floor 3 = +3); falling costs nothing, and your team stays in the tower as a ghost for others to fight. Beat the champion on the top floor and you are the new champion: the tower grows to your climb plus one. Your best floor shows on the ladder, and the current champion wears the glowing crown there.</li>
       <li>🔥 Win streak: the runs you completed in a row (everyone starts at 1). Losing a run, or giving it up, puts it back to 0.</li>
       <li>🏆 Trophies: every duel you win is a trophy with the name of the player you beat, and 1 crown. A profile shows its trophies and your duels against that player.</li>
       <li>👑 Crowns: earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: 4× battle speed, Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles).</li>
@@ -2294,7 +2305,7 @@
     skip: () => { if (battle && battle.gau) { toast('Duels and the final fight cannot be skipped.'); return; } if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; } skipBattle(); },
     // Continue on the result screen: next day, the Gauntlet or the game-over screen.
     'result-ok': () => { if (run && run.phase === 'tower' && run.tower && run.tower.status === 'climb' && run.tower.next) { const o = run.tower.next; run.tower.next = null; Run.startDuel(run, o, 'tower', 9); save(); }
-      if (run && run.phase === 'over' && run.result === 'clear' && !run.tower) { run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); }   // v91 (review #172): the Gauntlet comes before the league screen
+      if (run && run.phase === 'over' && run.result === 'clear' && !run.tower) { ui.champ = undefined; run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); }   // v91 (review #172): the Gauntlet comes before the league screen
       ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
     'tower-skip': () => { run.tower = Object.assign(run.tower || {}, { status: 'skipped' }); run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
     'tower-done': () => { run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },

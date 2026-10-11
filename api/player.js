@@ -55,9 +55,9 @@ module.exports = async (req, res) => {
     if (b.op === 'ladder') {
       const top = await st.topPlayers(10), rank = p ? await st.rankOf(pid) : null;
       const me = p && rank && rank > 10 ? Object.assign((await st.friendsTop(pid, 1)).find(x => x.code === p.code) || {}, { rank }) : null;
-      return send(res, 200, { top, me, rank });
+      return send(res, 200, { top, me, rank, champ: await P.champView(st) });   // v109 (review #196): the champion wears the epic crown
     }
-    if (b.op === 'friends') return send(res, 200, { top: p ? await st.friendsTop(pid, 1000) : [] });   // v85: every friend, always   // v65 (review #132): the players you follow, and you
+    if (b.op === 'friends') return send(res, 200, { top: p ? await st.friendsTop(pid, 1000) : [], champ: await P.champView(st) });   // v85: every friend, always   // v65 (review #132): the players you follow, and you
     if (!p) return send(res, 404, { error: 'Your account starts when your first run ends. Play one first!' });
 
     if (b.op === 'follow') {   // v65 (review #132): follow / unfollow a player by the public code

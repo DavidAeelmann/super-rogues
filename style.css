@@ -2851,3 +2851,17 @@ button.achc.got { cursor: pointer; }
 #top .lives.ward.broken .hrt, .lives.ward.broken .hrt { color: #8a8fb0; filter: none; }
 .lives.ward.broken .hrt::after { content: ''; position: absolute; left: 45%; top: 8%; width: 2px; height: 84%; background: #ff5a6e; transform: rotate(18deg); border-radius: 2px; }
 .mpair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .mpair .mrow { min-width: 0; }   /* v104: Balance stats and Tutorial share a row */
+/* v109 (review #196): the current Gauntlet champion: an epic glowing crown (ladder rows, the ladder banner, the gate card) */
+.champmark { position: relative; display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 4px; border-radius: 50%; font-size: 14px; line-height: 1;
+  background: radial-gradient(circle, #ffe9a8 0%, #ffb52e 45%, #b0451f 100%); box-shadow: 0 0 0 2px #fff3c4, 0 0 10px 2px #ffcf5acc, 0 0 22px 4px #ff7a1f66; animation: champGlow 2.2s ease-in-out infinite; vertical-align: middle; }
+.champmark::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 70%, #fff8 80%, transparent 90%); animation: champSpin 3s linear infinite; pointer-events: none; }
+@keyframes champGlow { 50% { box-shadow: 0 0 0 2px #fff3c4, 0 0 16px 4px #ffdf7aee, 0 0 30px 8px #ff7a1f88; transform: scale(1.08); } }
+@keyframes champSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .champmark, .champmark::after { animation: none; } }
+.ladchamp { display: flex; align-items: center; gap: 8px; margin: 6px 0 8px; padding: 8px 10px; border-radius: 12px; background: linear-gradient(90deg, #5a3a0e, #2a1b3e); border: 1px solid #ffcf5a88; }
+.ladchamp small { color: #ffe3a0; }
+.trules li.champcard { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: linear-gradient(90deg, #5a3a0ecc, #2a1b3ecc); border: 1px solid #ffcf5a88; }
+.champcard .cc { display: grid; flex: 1; min-width: 0; line-height: 1.2; } .champcard .cc small { font-size: 11px; color: #ffe3a0; font-weight: 600; } .champcard .cc b { font-size: 15px; overflow-wrap: anywhere; }
+.champcard .ccteam { display: flex; flex-wrap: wrap; justify-content: flex-end; max-width: 92px; gap: 2px; } .champcard .ccteam img { width: 28px; height: 28px; border-radius: 8px; }
+@media (max-height: 680px) { .towerscr.gate .gsub { font-size: 13px; margin: 2px auto 2px; } .towerscr.gate .trules { gap: 4px; margin-top: 4px; } .towerscr.gate .trules li { padding: 5px 10px; font-size: 13px; }
+  .towerscr.gate .trules li.champcard { padding: 4px 8px; } .champcard .ccteam img { width: 24px; height: 24px; } .towerscr.gate .towerart { transform: scale(.82); margin: -14px auto -16px; } }

@@ -214,6 +214,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       const qs = new URL(req.url || '/', 'http://x').searchParams;
       if (qs.get('ratings')) return send(res, 403, { error: 'Unlock Content Elo in the Crown Shop' });  // v27: POST /api/player {op:'ratings'}
+      if (qs.get('champ')) return send(res, 200, { champ: await P.champView(st) });   // v109 (review #196): the champion shown at the Gauntlet gate
       if (qs.get('peak')) return send(res, 200, { peak: await peakOf(st, 0) });  // review #16: height of the gauntlet tower
       return send(res, 200, { top: await st.topPlayers(25) });
     }

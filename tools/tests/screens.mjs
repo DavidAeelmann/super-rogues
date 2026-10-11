@@ -360,6 +360,13 @@ if (!REMOTE) {
   ok(await ev(`__bal.run.phase === 'tower' && /The Gauntlet/.test(document.querySelector('.towerscr h2').textContent) && document.querySelectorAll('.towerart .tfl').length >= 3 && document.querySelectorAll('.trules li').length === 3 && !!document.querySelector('[data-act=tower-enter]') && !!document.querySelector('[data-act=tower-skip]')`), 'v90: a completed run reaches the Gauntlet gate before the league screen (tower, rules, Enter / Skip)');
   await sleep(900); await shot('19a-gauntlet-gate'); await noHScroll('gauntlet gate'); await noVScroll('gauntlet gate');
   ok(await ev(`!!document.querySelector('#tname')`), 'v96: a player with no name picks it at the Gauntlet gate (it used to be the final fight)');
+  // v109 (review #196): the current champion's card at the gate (name, team, glowing crown); the gate still fits a small phone
+  await ev(`(() => { const u = __bal.ui; u.champ = { name: 'Champ Long Name', code: 'abcdefabcdef', wins: 4, floors: 5, stopped: 12, team: ['bastion', 'vex', 'pyra', 'lumen', 'kestrel', 'morrow'].map(key => ({ key, lvl: 3 })) }; __bal.render(); })()`); await sleep(300);
+  ok(await ev(`!!document.querySelector('.trules .champcard .champmark') && /Champ Long Name/.test(document.querySelector('.champcard').textContent) && document.querySelectorAll('.champcard .ccteam img').length === 6`), 'v109 (review #196): the Gauntlet gate shows the current champion with the epic crown and its team');
+  await shot('19b-gauntlet-champ'); await noVScroll('gauntlet gate with the champion');
+  await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 640, deviceScaleFactor: 2, mobile: true }); await sleep(400);
+  await shot('19c-gauntlet-champ-small'); await noVScroll('gauntlet gate with the champion at 360x640');
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 740, deviceScaleFactor: 2, mobile: true }); await sleep(300);
   await ev(`document.querySelector('#tname').value = 'TestBot'`);
   await click('[data-act=tower-enter]'); await sleep(300);
   // v101 (review #183): entering the Gauntlet opens the last shop first; leaving it starts the climb
