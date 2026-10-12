@@ -2,6 +2,7 @@
 
 **Only add one entry per version, at the TOP. DO NOT read this whole file every session** (it only serves to find out why something is the way it is: search with Grep for the request number, "#73", or for the version, "v61").
 Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
+- v123 (#214 #215): healing done in fight results; Gauntlet brag card with Share / WhatsApp / Copy link and a card.html page.
 - v122 (#213): combat text hierarchy, emoji status badges, boss encounter splash, glowing boss-stage hex edges.
 - v121 (#209-#212): three new heroes open from the start: Chronos (Rewind), Belladonna (Epidemic), Kitsune (Foxfire), tuned to the roster average.
 - v120 (#208): hero details sheet fits a phone screen without scrolling (powers as tappable buttons); tools/tests/sheets-fit.mjs.
