@@ -3010,3 +3010,19 @@ body.desk .start.v3 .stage { max-height: 520px; }
 .coach .cok { flex: none; min-height: 34px; padding: 4px 12px; border-radius: 999px; font: 700 13px var(--fun); background: var(--cc); color: #1b1300; border: 0; box-shadow: 0 3px 0 #0006; }
 .shopcoach { position: fixed; left: 12px; right: 12px; bottom: 92px; z-index: 30; max-width: 520px; margin: 0 auto; }
 @keyframes coachIn { from { opacity: 0; transform: translateY(-10px) scale(.96); } }
+/* v120 (review #208): the hero details sheet fits a phone screen: smaller picture, compact scaling, powers as tappable buttons explained one at a time */
+#modal .peek { gap: 10px; } #modal .peek .peekart { width: 86px; height: auto; } #modal .peek .htag.big { font-size: 15px; margin: 2px 0 4px; } #modal .peek .htraits { margin: 2px 0 0; } #modal .peek .htr { font-size: 11px; padding: 2px 7px; }
+#modal .peekab { margin: 6px 0 4px; font-size: 13.5px; line-height: 1.35; }
+#modal .scal.compact { margin: 4px 0 6px; padding: 6px 10px; } #modal .scal.compact ul { gap: 2px; } #modal .scal.compact li { font-size: 12.5px; line-height: 1.3; }
+#modal .peekh { margin: 6px 0 4px; font-size: 13px; } #modal .peekh .dim { font: 600 11px var(--read); text-transform: none; letter-spacing: 0; }
+.peekpow.v2 { display: grid; gap: 4px; }
+.peekpow.v2 .pp { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 5px; align-items: stretch; margin: 0; padding: 0; border: 0; }
+.peekpow.v2 .sp-lv { align-self: center; font: 700 11.5px var(--fun); color: #eef1ff; }
+.peekpow.v2 .ppb { min-height: 32px; padding: 4px 6px; border-radius: 10px; font: 700 12px/1.15 var(--fun); background: #ffffff1c; color: #fff; border: 1.5px solid #ffffff33; box-shadow: none; }
+.peekpow.v2 .ppb.on { background: #ffd23f; color: #3a2400; border-color: #fff; }
+.ppdesc { min-height: 40px; margin: 6px 0 0; padding: 7px 10px; border-radius: 10px; background: #0b0f3f66; font: 600 13px/1.35 var(--read); }
+.ppdesc.dim { color: #dfe4ff; }
+@media (max-height: 680px) { #modal .peek .peekart { width: 66px; } #modal .peek .htag.big { font-size: 13.5px; } #modal .peekab { font-size: 12.5px; line-height: 1.3; margin: 4px 0 2px; }
+  #modal .scal.compact { padding: 4px 8px; margin: 2px 0 4px; } #modal .scal.compact li { font-size: 11.5px; } #modal .peekh { margin: 4px 0 3px; }
+  .peekpow.v2 { gap: 3px; } .peekpow.v2 .ppb { min-height: 28px; font-size: 11.5px; padding: 3px 5px; } .ppdesc { min-height: 34px; font-size: 12px; padding: 5px 8px; margin-top: 4px; } }
+body:has(#modal:not([hidden])) .shopcoach { display: none; }   /* v120: the shop tip waits while a sheet is open */
