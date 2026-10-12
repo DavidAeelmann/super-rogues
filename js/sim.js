@@ -362,7 +362,10 @@
     const total = dmg + abs;
     if (src) src.dmgDone = (src.dmgDone || 0) + total;
     tgt.dmgTaken = (tgt.dmgTaken || 0) + total;
-    if (!o.dot) fxNum(W, tgt, total, crit ? '#ffd23f' : type === 'magic' ? '#c9a2ff' : type === 'true' ? '#fff' : '#ff8a8a', crit);
+    // v122 (review #213, David: "Floating Combat Text hierarchy: normal damage small, muted white/gray; magic / burns purple / orange ticking; critical strikes 2x larger,
+    // bold yellow with a slight upward bounce"): each number carries its kind (n: 'hit' | 'magic' | 'crit' | 'dot'); damage over time now shows as small ticks
+    if (!o.dot) fx(W, { k: 'num', c: tgt.c, r: tgt.r, id: tgt.id, text: String(total), n: crit ? 'crit' : type === 'magic' ? 'magic' : type === 'true' ? 'true' : 'hit', color: crit ? '#ffd23f' : type === 'magic' ? '#c9a2ff' : type === 'true' ? '#ffffff' : '#e4e6ee', big: crit, t1: W.t + (crit ? 20 : 16) });
+    else if (total >= 1 && tgt.side !== (src ? src.side : -1)) fx(W, { k: 'num', c: tgt.c, r: tgt.r, id: tgt.id, text: String(total), n: 'dot', color: type === 'magic' ? '#ff9a3d' : '#9be36a', t1: W.t + 12 });
     if (src && alive(src)) {
       if (o.atk && lsOf(W, src) > 0) heal(W, src, total * lsOf(W, src));
       if (o.ability && src.m.omni) heal(W, src, total * src.m.omni);

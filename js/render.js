@@ -183,6 +183,23 @@
     ctx.restore();
   }
 
+  // v122 (review #213, David: "Give boss stages subtle animated hex tile borders (e.g., glowing magma cracks or storm lightning on hex borders)"): during a boss
+  // fight some hex edges glow in the boss's theme and pulse (magma, storm, swamp, frost, gold); a few flash like lightning
+  const BOSS_EDGE = { gorewarden: ['#ff4a1a', 'magma'], packlord: ['#ff6a3a', 'magma'], hollowking: ['#b98cff', 'storm'], mirewitch: ['#9ad94a', 'swamp'], lichqueen: ['#8fe3ff', 'storm'], colossus: ['#ffcf5a', 'magma'] };
+  // WHAT: the glowing hex edges of a boss stage, drawn over the board every frame.
+  function bossTiles(v, key, now) {
+    const th = BOSS_EDGE[key] || ['#ff5c6e', 'magma'], { ctx, size } = v;
+    if (!v.bossEdges || v.bossEdges.key !== key) { const e = []; let sd = 7; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
+      for (let r = 0; r < Hx.ROWS; r++) for (let c = 0; c < Hx.COLS; c++) for (let i = 0; i < 3; i++) if (rnd() < 0.2) e.push({ c, r, i, ph: rnd() * 6.28, sp: 0.6 + rnd() * 1.2 }); v.bossEdges = { key, e }; }
+    ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = th[0];
+    for (const x of v.bossEdges.e) {
+      const pts = corners(v, x.c, x.r, size * 0.96), a = pts[x.i], b = pts[x.i + 1]; let al = 0.35 + 0.35 * Math.sin(now * x.sp * 2 + x.ph);
+      if (th[1] === 'storm') al = Math.sin(now * 9 + x.ph * 7) > 0.97 ? 1 : al * 0.5;
+      ctx.globalAlpha = Math.max(0, al); ctx.strokeStyle = th[0]; ctx.shadowBlur = size * 0.35; ctx.lineWidth = Math.max(1.5, size * 0.06);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); if (th[1] === 'magma') { const mx = (a.x + b.x) / 2 + Math.sin(x.ph) * size * 0.05, my = (a.y + b.y) / 2 + Math.cos(x.ph) * size * 0.03; ctx.lineTo(mx, my); } ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    ctx.restore();
+  }
   // v118 (review #205): the coach on the deploy board: the hexes a tip talks about pulse in its colour with its icon, and (front-row tip) arrows show where enemies come from
   // WHAT: draws a coach tip's glowing hexes, icons and arrows over the board.
   function drawCoach(v, co, now) {
@@ -330,19 +347,23 @@
     if (u.lvl > 1 && hero && u.kind === 'hero') { ctx.font = "700 10px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.fillStyle = '#ffcf5a'; ctx.textAlign = 'left'; ctx.fillText(u.lvl, bx + bw + 2, by + 5); }
     // review #44: status effects as coloured badges (glyph on a disc) above the bars, one colour per effect
     const marks = [];
-    if (u.st.frozenU > s) marks.push(['❄', '#3fb8e8']);
-    else if (u.st.stun > s) marks.push(['✦', '#f5b700']);
-    if (u.st.silence > s) marks.push(['⊘', '#9b5de5']);
-    if (u.st.tauntU > s) marks.push(['!', '#ff5c6e']);
-    if (u.st.confuseU > s) marks.push(['?', '#e05ab8']);
+    // v122 (review #213, "Crowd Control badges: crisp micro-icons over the unit head"): the hard crowd control first (it decides fights), at most three
+    if (u.st.frozenU > s) marks.push(['❄️', '#3fb8e8']);
+    else if (u.st.stun > s) marks.push(['💫', '#f5b700']);
+    if (u.st.root > s) marks.push(['⛓️', '#a0703a']);
+    if (u.st.silence > s) marks.push(['🔇', '#9b5de5']);
+    if (u.st.tauntU > s) marks.push(['🛡️', '#ff5c6e']);
+    if (u.st.confuseU > s) marks.push(['😵', '#e05ab8']);
+    if (u.st.blindU > s) marks.push(['🙈', '#8a8fa8']);
     if (u.dots.some(d => d.k === 'burn' && d.until > s)) marks.push(['🔥', '#ff8a3d']);
-    if (u.dots.some(d => d.k === 'poison' && d.until > s)) marks.push(['☠', '#3ddc84']);
-    if (u.st.slowU > s) marks.push(['↓', '#4aa3ff']);
-    if (u.st.root > s) marks.push(['⚓', '#a0703a']);
+    if (u.dots.some(d => d.k === 'poison' && d.until > s) || (u.tox && u.tox.until > s)) marks.push(['☠️', '#3ddc84']);
+    if (u.st.slowU > s) marks.push(['🐌', '#4aa3ff']);
+    if (marks.length > 3) marks.length = 3;
     if (marks.length) {
       const R = Math.max(5.5, size * 0.2), gap = R * 2 + 2, x0 = p.x - (marks.length - 1) * gap / 2, y0 = by - R - 3;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(R * 1.35)}px 'Fredoka', system-ui, sans-serif`;
-      marks.forEach(([g, c], i) => { const x = x0 + i * gap; ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y0, R, 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillText(g, x, y0 + 0.5); });
+      ctx.font = `${Math.round(R * 1.25)}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif`;
+      marks.forEach(([g, c], i) => { const x = x0 + i * gap; ctx.fillStyle = '#0b0f3fdd'; ctx.beginPath(); ctx.arc(x, y0, R, 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = c; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillText(g, x, y0 + 1); });
       ctx.textBaseline = 'alphabetic';
     }
     if (u.st.stun > s && !(u.st.frozenU > s)) { ctx.fillStyle = '#ffe066'; for (let i = 0; i < 3; i++) { const a = T / 3 + i * 2.1; ctx.beginPath(); ctx.arc(p.x + Math.cos(a) * S * 0.3, headTop + 4 + Math.sin(a) * S * 0.08, 2.2, 0, Math.PI * 2); ctx.fill(); } }
@@ -361,6 +382,7 @@
     if (S.shake > 0.2 && !o.deploy) { S.shake = Math.min(S.shake, 4); ctx.translate(Math.sin(now * 61) * S.shake * 0.45, Math.cos(now * 47) * S.shake * 0.45); S.shake *= Math.pow(0.004, dt); } else S.shake = 0;   // v62p (review #112): no more flicker
     const boss = W && W.units.find(u => u.boss && u.side === 1), bd = backdrop(v, boss ? boss.key : null); if (bd) ctx.drawImage(bd, -12, -12, v.w + 24, v.h + 24); else { ctx.fillStyle = royal() ? '#1a1228' : '#9fd4ff'; ctx.fillRect(0, 0, v.w, v.h); }
     drawBoard(v, o, W);
+    if (boss && !o.deploy) bossTiles(v, boss.key, now);
     if (o.coach) drawCoach(v, o.coach, now);
     if (!W) return;
     for (const z of W.zones) if (z.until > W.t) {
@@ -406,10 +428,14 @@
       if (f.k === 'num' || f.k === 'text') {
         const u = W.byId[f.id]; const p = u ? unitPos(v, W, u, T) : hexScreen(v, f.c, f.r);
         ctx.globalAlpha = 1 - k * k;
-        ctx.font = (f.k === 'text' ? '700 ' + Math.max(12, Math.round(size * 0.55)) : (f.big ? '700 ' : '600 ') + Math.max(f.big ? 16 : 13, Math.round(size * (f.big ? 0.78 : 0.58)))) + "px 'Fredoka', 'Inter', system-ui, sans-serif";   // v58: numbers big enough to read
+        // v122 (review #213): crit = twice the size, bold, with a hop; a normal hit small and muted; magic purple; damage over time small ticks (burn orange, poison green)
+        const nk = f.n || (f.big ? 'crit' : 'hit'), fs = f.k === 'text' ? Math.max(12, Math.round(size * 0.55)) : nk === 'crit' ? Math.max(22, Math.round(size * 1.0)) : nk === 'dot' ? Math.max(10, Math.round(size * 0.38)) : Math.max(12, Math.round(size * (nk === 'magic' ? 0.5 : 0.46)));
+        ctx.font = (f.k === 'text' || nk === 'crit' ? '800 ' : nk === 'dot' ? '600 ' : '700 ') + fs + "px 'Fredoka', 'Inter', system-ui, sans-serif";   // v58: numbers big enough to read
         ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
-        const y = p.y - size * 2.2 - k * size * (f.k === 'text' ? 0.6 : 1.0), x = p.x + (f.k === 'num' ? ((f.t0 * 7) % 11 - 5) * size * 0.05 : 0);
-        const pop = k < 0.15 ? 1 + (1 - k / 0.15) * (f.big ? 0.8 : 0.35) : 1;
+        const hop = f.k === 'num' && nk === 'crit' ? Math.sin(Math.min(1, k / 0.35) * Math.PI) * size * 0.45 : 0;
+        const y = p.y - size * (nk === 'dot' ? 1.7 : 2.2) - k * size * (f.k === 'text' ? 0.6 : nk === 'dot' ? 0.55 : 1.0) - hop, x = p.x + (f.k === 'num' ? ((f.t0 * 7) % 11 - 5) * size * (nk === 'dot' ? 0.07 : 0.05) : 0);
+        const pop = k < 0.15 ? 1 + (1 - k / 0.15) * (nk === 'crit' ? 0.6 : nk === 'dot' ? 0 : 0.25) : 1;
+        if (nk === 'hit' || nk === 'dot') ctx.globalAlpha *= 0.88;
         ctx.save(); ctx.translate(x, y); ctx.scale(pop, pop); ctx.lineWidth = f.big ? 4 : 3;
         const ft = TT(f.text); ctx.strokeText(ft, 0, 0); ctx.fillStyle = f.color; ctx.fillText(ft, 0, 0); ctx.restore(); ctx.globalAlpha = 1;
       } else if (f.k === 'proj') {
@@ -622,6 +648,7 @@
       S.seen.add(f);
       if (mine) AF.run(abilKit, v, W, T, S, f, 'spawn');
       const u = f.id ? W.byId[f.id] : null, p = u ? unitPos(v, W, u, T) : f.c != null ? hexScreen(v, f.c, f.r) : null;
+      if (f.k === 'num' && p && f.n === 'dot') continue;   // v122: damage-over-time ticks make no sound and no sparks
       if (f.k === 'num' && p) {
         const heal = String(f.text)[0] === '+';
         sfx(heal ? 'heal' : f.big ? 'crit' : 'hit');

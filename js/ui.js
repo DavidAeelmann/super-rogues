@@ -1757,6 +1757,15 @@
       name = bk ? esc(B.BOSSES[bk].name) : f.challenge ? 'Challenge' : esc((B.DIFF[f.diff] || { name: 'Monster' }).name + ' fight');
       tag = bk ? `${I('skull')} Boss` : `Day ${Math.max(0, run.step) + 1}`;
     }
+    // v122 (review #213, David: "When entering fight 4 or 8, darken the screen for 1 second, play a low rumble, and display the boss card"): a boss day opens with
+    // its own splash: the screen goes dark, a low rumble, then the boss card (picture, name, which boss of the run, what it does)
+    { const bk = !duel && (f.enemies || []).map(e => e.key).find(k => B.BOSSES[k]);
+      if (bk) { const bo = B.BOSSES[bk], nm = String(bo.name), seq = Run.pveSeq(run), n = seq.slice(0, Math.max(0, run.step) + 1).filter(x => x === 'B').length || 1;
+        const el = document.createElement('div'); el.id = 'vs'; el.className = 'vs bossvs' + (B.Juice && B.Juice.reduced() ? ' calm' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${nm}. Tap to skip`);
+        el.innerHTML = `<div class="bcard"><span class="bglow"></span>${img(bk, 160, 'por')}<small>${I('skull')} Boss ${n} of 2 · Day ${Math.max(0, run.step) + 1}</small><b>${esc((/\bthe\b/i.test(nm) ? '' : 'The ') + nm).toUpperCase()}</b>${bo.desc ? `<p>${fmt(String(bo.desc).split(/(?<=\.)\s/)[0])}</p>` : ''}</div><small class="vsskip">Tap to skip</small>`;
+        el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); closeVs(); });
+        document.body.appendChild(el); sfx('boss'); if (B.Juice) setTimeout(() => { if (el.isConnected) { B.Juice.bump(el.querySelector('.bcard'), 'shake'); sfx('slam'); } }, 1000);
+        ui.vsT = setTimeout(closeVs, B.Juice && B.Juice.reduced() ? 1600 : 3400); return; } }
     const more = theirs.length > 5 ? theirs.length - 4 : 0, shown = more ? theirs.slice(0, 4) : theirs;
     const myTaunt = acct.taunt || null, myFx = acct.vsfx || null, me = esc(acct.account && acct.name ? acct.name : myName() || 'You');
     const parts = (fxId, n) => { const v = fxId && B.VSFX.find(x => x.id === fxId); return v ? `<span class="vsfx ${v.id}">${Array.from({ length: n }, (_, i) => `<i style="--i:${i}">${v.icon}</i>`).join('')}</span>` : ''; };
