@@ -91,6 +91,10 @@
     // v62h (reviews #98, #100, #101, #102)
     plasma: { type: 'cannon', body: '#4a5a78', trim: '#5fe0ff' },
     onyx: { type: 'turtle', body: '#3fae8a', trim: '#1f4a3c', shell: '#2d6a52', spikes: '#e8e0c8' },   // v104 (review #184)
+    // v121 (reviews #209-#212): Chronos the chronomancer, Belladonna the toxicologist, Kitsune the spirit fox
+    chronos: H({ skin: '#e0c4a8', body: '#1f6f7a', trim: '#ffd23f', robe: '#174f58', head: 'hat', hat: '#123c44', hair: '#e8f6f8', weapon: 'staff', orb: '#4dd0e1', cape: '#0e3a42' }),
+    bella: H({ skin: '#e8d0c0', body: '#3a5a22', trim: '#c6ff6a', robe: '#2a4418', head: 'hood', hood: '#24361a', eyes: '#c6ff6a', weapon: 'flask', orb: '#9ccc65', hair: '#2a1a2a' }),
+    kitsune: H({ skin: '#f2d6c0', body: '#ff7043', trim: '#fff3e0', legs: '#5a2a1a', bulk: 0.85, head: 'ears', hair: '#ff8a50', weapon: 'daggers', sash: '#fff3e0', earCol: '#ff8a50' }),
     dragon: { type: 'dragon', body: '#c7432c', trim: '#ffcf5a', belly: '#f2b46a', wing: '#8a2a1f' },
     duelist: H({ skin: '#e0b48a', body: '#2a3f7a', trim: '#ffd23f', legs: '#1c2748', head: 'tricorn', hat: '#2a3f7a', hair: '#3a2a1a', weapon: 'rapier', cape: '#a4262f' }),
     medic: H({ skin: '#e8b890', body: '#f4f6f8', trim: '#e0405a', legs: '#4a5a6a', head: 'goggles', hair: '#5a3a1a', weapon: 'flask', orb: '#9dff7a', pack: true }),
@@ -106,7 +110,7 @@
   M.clone = M.mirage;
   // v62k (review #107, David: "heads are obvious balls, movements too repetitive and mechanical, weapons all the same"): a weapon style per hero
   // (see STYLES in weapon()); and every model knows its key so that it gets its own idle tempo, phase and posture
-  const WS = { seraph: 'holy', nyx: 'scimitar', knight: 'broad', footman: 'broad', skeleton: 'rusty', mirage: 'foil', vesper: 'crimson', duelist: 'duel', vex: 'curved', kage: 'kunai', harlequin: 'jest',
+  const WS = { chronos: 'ring', bella: 'eyeorb', kitsune: 'curved', seraph: 'holy', nyx: 'scimitar', knight: 'broad', footman: 'broad', skeleton: 'rusty', mirage: 'foil', vesper: 'crimson', duelist: 'duel', vex: 'curved', kage: 'kunai', harlequin: 'jest',
     pyra: 'flame', glacia: 'crystal', lumen: 'sun', tempest: 'bolt', buzzwell: 'hive', coralie: 'shell', shaman: 'skullstaff', summoner: 'candle', mirewitch: 'crook', smolder: 'nozzle', gardener: 'sprout',
     thorne: 'war', azgul: 'cleaver', gorewarden: 'cleaver', brakk: 'hammer', grok: 'spiked', brute: 'log', tom: 'ladle', rohammer: 'hammer', vey: 'ring', stellan: 'star', hexer: 'eyeorb' };
   for (const k in WS) if (M[k]) M[k].ws = WS[k];
@@ -360,6 +364,9 @@
     plasma: { aura: 'sparks', ac: '#5fe0ff' },
     onyx: { aura: 'bubbles', ac: '#bff4e0' },
     dragon: { aura: 'embers', ac: '#ffcf5a' },
+    chronos: { em: ['gear', '#ffd23f'], robeStars: '#4dd0e1', aura: 'orbit', ac: '#4dd0e1', pr: { head: 1.02 } },
+    bella: { aura: 'bubbles', ac: '#c6ff6a', necklace: '#9ccc65', pouches: '#3a2a1a', em: ['gem', '#c6ff6a'] },
+    kitsune: { aura: 'motes', ac: '#ffab91', tail: '#ff8a50', scarf: '#fff3e0', pr: { leg: 1.06, head: 1.05 } },
   };
   for (const k in SIG) if (M[k]) M[k].sig = SIG[k];
   const ease = { outC: x => 1 - Math.pow(1 - x, 3), inC: x => x * x * x, inQ: x => x * x, outBack: x => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); } };
@@ -424,6 +431,9 @@
       if (sg.scarf) { const wv = Math.sin(p.t * 5) * s * 0.05, lag = (p.walk != null ? s * 0.12 : 0) + Math.abs(A.tilt) * s * 0.3; c.strokeStyle = INK; c.lineCap = 'round'; c.lineWidth = s * 0.075 + 2;
         const path = () => { c.beginPath(); c.moveTo(shX - s * 0.05, shY - s * 0.03); c.bezierCurveTo(shX - s * 0.3 - lag, shY - s * 0.02 + wv, shX - s * 0.45 - lag, shY + s * 0.1 - wv, shX - s * 0.62 - lag * 1.4, shY + s * 0.05 + wv * 1.5); };
         path(); c.stroke(); c.strokeStyle = sg.scarf; c.lineWidth = s * 0.075; path(); c.stroke(); }
+      if (sg.tail) { const sw = Math.sin(p.t * 3) * s * 0.06 + (p.walk != null ? -s * 0.05 : 0);   // v121: Kitsune's bushy tail
+        c.beginPath(); c.moveTo(-s * 0.08, hipY + s * 0.02); c.bezierCurveTo(-s * 0.55 + sw, hipY + s * 0.05, -s * 0.75 + sw, hipY - s * 0.45, -s * 0.42 + sw, hipY - s * 0.62); c.bezierCurveTo(-s * 0.48 + sw, hipY - s * 0.3, -s * 0.3, hipY - s * 0.12, -s * 0.05, hipY - s * 0.1); c.closePath(); c.fillStyle = sg.tail; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke();
+        c.fillStyle = '#fff3e0'; c.beginPath(); c.ellipse(-s * 0.44 + sw, hipY - s * 0.56, s * 0.08, s * 0.06, -0.5, 0, TAU); c.fill(); }
       if (sg.gears && m.pack) { for (const [x, y, rr, sp] of [[-0.3, 0.12, 0.07, 1], [-0.2, 0.32, 0.05, -1.5]]) { c.save(); c.translate(shX + s * x, shY + s * y); c.rotate(p.t * sp); emblem(c, 'gear', 0, 0, s * rr, sg.gears); c.restore(); } }
       return;
     }
@@ -554,6 +564,7 @@
       const wv = Math.sin(p.t * 6) * r * 0.25; limb(c, hx - r * 0.85, hy - r * 0.55, hx - r * 1.9, hy - r * 0.2 + wv, r * 0.22, m.trim); limb(c, hx - r * 0.85, hy - r * 0.5, hx - r * 1.7, hy + r * 0.2 - wv, r * 0.18, m.trim);
     }
     else if (k === 'beard') { flat(c, [[hx - r * 0.3, hy + r * 0.1], [hx + r * 1.0, hy + r * 0.1], [hx + r * 0.7, hy + r * 1.25], [hx + r * 0.1, hy + r * 1.1]], m.hair); }
+    else if (k === 'ears' && m.earCol) { for (const [x0, x1] of [[-0.75, -0.25], [0.15, 0.65]]) { poly(c, [[hx + r * x0, hy - r * 0.6], [hx + r * (x0 + x1) / 2, hy - r * 1.75], [hx + r * x1, hy - r * 0.7]], m.earCol, OUT); poly(c, [[hx + r * (x0 + 0.12), hy - r * 0.7], [hx + r * (x0 + x1) / 2, hy - r * 1.45], [hx + r * (x1 - 0.12), hy - r * 0.75]], '#fff3e0'); } }   // v121: Kitsune's fox ears
     else if (k === 'ears') { flat(c, [[hx - r * 0.6, hy - r * 0.2], [hx - r * 1.6, hy - r * 0.7], [hx - r * 0.7, hy + r * 0.25]], m.skin, OUT); flat(c, [[hx + r * 0.5, hy - r * 0.5], [hx + r * 1.3, hy - r * 1.1], [hx + r * 0.8, hy - r * 0.2]], m.skin, OUT); }
   }
   // ---- review #12 (David: "generic stickman"): limbs with volume and joints, shaped torso, neck, faces with eyes.

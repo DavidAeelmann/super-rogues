@@ -696,6 +696,52 @@
         [{ id: 'due5a', name: "Victor's Rest", desc: 'Winning a duel heals 40% of max Health and gives half of the Energy bar.', ab: { winHeal: 0.4, winMana: 0.5 } },
          { id: 'due5b', name: 'Rematch', desc: 'Winning a duel challenges the next enemy at once.', ab: { rematch: 1 } }],
       ] }),
+    // v121 (reviews #209 #210 #211 #212, David: three new heroes, "balance the stats and abilities, these are just suggestions for new champs, do them")
+    // Chronos: "A battlefield manipulator who controls the flow of combat and turns back time on damage"
+    chronos: H({ name: 'Chronos', glyph: '⏳', role: 'Controller', color: '#4dd0e1',
+      hp: 695, atk: 44, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.5,
+      abil: 'rewind', abName: 'Rewind', abDesc: 'Passive (Decelerate): his attacks slow 5% per hit (up to 5x, 3s). Active: the most hurt ally goes back 2.5s in time: its Health returns to what it was (at least 150% Magic healed) and it ignores crowd control for 2s.',
+      ab: { heal: 1.5, back: 2.5, immune: 2, decel: 0.05, decelCap: 5, paradox: 0, stasis: 0, warp: 0, anchor: 0, shock: 0, accel: 0, targets: 1, timestop: 0 },
+      specs: [
+        [{ id: 'chr2a', name: 'Paradox', desc: 'Attacking a slowed enemy gives Chronos +20% attack speed.', ab: { paradox: 0.2 } },
+         { id: 'chr2b', name: 'Stasis Field', desc: 'Enemies within 2 hexes of Chronos are slowed by 15%.', ab: { stasis: 0.15 } }],
+        [{ id: 'chr3a', name: 'Time Warp', desc: 'Rewind also gives the ally 40 Energy.', ab: { warp: 40 } },
+         { id: 'chr3b', name: 'Temporal Anchor', desc: 'Rewind throws the enemy nearest that ally 2 hexes back and stuns it for 1.5s.', ab: { anchor: 1.5 } }],
+        [{ id: 'chr4a', name: 'Chronoshock', desc: 'Rewind ends with a blast: 100% Magic to enemies next to the ally.', ab: { shock: 1 } },
+         { id: 'chr4b', name: 'Accelerando', desc: 'Allies within 2 hexes of Chronos get +20% attack speed.', ab: { accel: 0.2 } }],
+        [{ id: 'chr5a', name: 'Grand Clocktower', desc: 'Rewind takes the two most hurt allies back.', ab: { targets: 1 } },
+         { id: 'chr5b', name: 'Time Stop', desc: 'When the fight starts, every enemy is frozen for 1.5s.', ab: { timestop: 1.5 } }],
+      ] }),
+    // Belladonna: "A lingering attrition mage that stacks toxic blights, degrading enemy attack speed and healing"
+    bella: H({ name: 'Belladonna', glyph: '🧪', role: 'Mage', color: '#7cb342',
+      hp: 660, atk: 43, armor: 22, as: 0.85, range: 3, ms: 2, mana: 80, m0: 20, grow: 0.77,
+      abil: 'epidemic', abName: 'Epidemic', abDesc: 'Passive (Virulence): her attacks add Toxin (up to 5 stacks, 4s): 15% Magic per second per stack and 6% less healing per stack. Active: every Toxin bursts for 35% Magic per stack and spreads to the enemies next to it.',
+      ab: { tox: 0.15, toxCap: 5, toxDur: 4, antiHeal: 0.06, burst: 0.35, numb: 0, spore: 0, leech: 0, paralyze: 0, corrode: 0, pandemic: 0, miasma: 0 },
+      specs: [
+        [{ id: 'bel2a', name: 'Numbing Neurotoxin', desc: 'Each Toxin stack slows the enemy attack speed by 4%.', ab: { numb: 0.04 } },
+         { id: 'bel2b', name: 'Concentrated Dose', desc: 'Toxin stacks up to 8 instead of 5.', ab: { toxCap: 3 } }],
+        [{ id: 'bel3a', name: 'Spore Burst', desc: 'An enemy that falls with Toxin leaves a poison cloud for 4s.', ab: { spore: 0.3 } },
+         { id: 'bel3b', name: 'Leeching Venom', desc: 'Belladonna heals 30% of all Toxin damage.', ab: { leech: 0.3 } }],
+        [{ id: 'bel4a', name: 'Paralytic Shock', desc: 'Bursting a full Toxin stuns that enemy for 1.2s.', ab: { paralyze: 1.2 } },
+         { id: 'bel4b', name: 'Corrosive Acid', desc: 'Each Toxin stack also takes 4 Defense.', ab: { corrode: 4 } }],
+        [{ id: 'bel5a', name: 'Pandemic', desc: 'When the fight starts, 2 random enemies get 3 Toxin stacks.', ab: { pandemic: 3 } },
+         { id: 'bel5b', name: 'Noxious Miasma', desc: 'Enemies that hit Belladonna get 1 Toxin stack.', ab: { miasma: 1 } }],
+      ] }),
+    // Kitsune: "An evasive trickster that dashes across the hex board, bamboozling target priority and backlining"
+    kitsune: H({ name: 'Kitsune', glyph: '🦊', role: 'Assassin', color: '#ff7043',
+      hp: 530, atk: 53, armor: 20, as: 0.95, range: 1, ms: 3, mana: 74, m0: 35, crit: 0.1, grow: 0.82,
+      abil: 'foxfire', abName: 'Foxfire', abDesc: 'Passive (Spirit Jaunt): every 3rd hit on her misses and she dashes behind the attacker, gaining +30% attack speed for 2s. Active: 4 spirit flames hit the 2 farthest enemies for 80% Magic + 40% Attack each and charm them for 1.2s (they come at Kitsune).',
+      ab: { flames: 4, dmg: 0.8, dmgAtk: 0.4, charm: 1.2, jauntEvery: 3, jauntAs: 0.3, swipe: 0, ninetails: 0, bewitch: 0, eclipse: 0, ward: 0 },
+      specs: [
+        [{ id: 'kit2a', name: 'Ghost Walk', desc: '+18% dodge.', mods: { dodge: 0.18 } },
+         { id: 'kit2b', name: 'Phantom Fangs', desc: 'Her attacks deal 20% extra magic damage.', mods: { onHitMagic: 0.2 } }],
+        [{ id: 'kit3a', name: 'Will-o\'-Wisp', desc: 'Foxfire throws 2 more flames.', ab: { flames: 2 } },
+         { id: 'kit3b', name: 'Tail Swipe', desc: 'Spirit Jaunt stuns the attacker for 1s.', ab: { swipe: 1 } }],
+        [{ id: 'kit4a', name: 'Nine Tails', desc: 'Each Spirit Jaunt gives 10 Energy and +5% crit (up to 5x).', ab: { ninetails: 0.05 } },
+         { id: 'kit4b', name: 'Bewitching Glow', desc: 'Charmed enemies take 30% more damage.', ab: { bewitch: 0.3 } }],
+        [{ id: 'kit5a', name: 'Eclipse Dash', desc: 'Foxfire blinks her behind the farthest enemy, and her next hit taken triggers Spirit Jaunt.', ab: { eclipse: 1 } },
+         { id: 'kit5b', name: 'Spirit Ward', desc: 'Allies next to Kitsune get +20% dodge.', ab: { ward: 0.2 } }],
+      ] }),
     // v104 (review #184, David: "onyx: tank. shelled creature which when dies the first time retreats into its shell, which is impassable terrain. After 4
     // seconds bursts back out, stunning all adjacent enemies and inflicting damage. Second, also passive ability, is that enemies who attack him with
     // autoattack get damaged x% of his defense"): two passives, no cast (shellguard never fires)
@@ -993,6 +1039,7 @@
   TAGS.prism = 'Beams that heal friends and burn foes'; TAGS.citadel = 'A tower that sends soldiers to fight';   // v60
   TAGS.smolder = 'Eats an item each fight, burns foes'; TAGS.tom = 'Serves dishes that buff or heal allies'; TAGS.ashwing = 'A fire bird that returns from an egg';   // v62
   TAGS.plasma = 'Never moves, shoves foes back'; TAGS.duelist = 'Locks itself and one foe in a duel'; TAGS.medic = 'Heals with its attacks and grenades'; TAGS.gardener = 'Plants that attack, heal and shield'; TAGS.rohammer = 'Slow hammer, rages when hit';    // v62h
+  TAGS.chronos = 'Turns back time on a hurt ally'; TAGS.bella = 'Stacks poison, then makes it spread'; TAGS.kitsune = 'Dodges, dashes and charms the back row';   // v121
   TAGS.onyx = 'A spiky turtle that hides in its shell'; TAGS.dragon = 'Dives through foes, leaving fire';   // v104 (review #184)
   for (const k in TAGS) if (B.HEROES[k]) B.HEROES[k].tag = TAGS[k];
   // v59 (review #71, PC boy: "pep up the names"): every hero got a new name; the old one stays as h.was (the Art Lab still
@@ -1431,7 +1478,7 @@
   B.CLASSES = ['tank', 'support', 'damage'];
   B.CLASS_OF = {};
   for (const k of 'bastion brakk bramble seraph barley grok imhotep leonidas citadel smolder rohammer onyx dragon'.split(' ')) B.CLASS_OF[k] = 'tank';
-  for (const k of 'lumen echo vey buzzwell coralie tom prism glacia grimhook sprocket medic gardener'.split(' ')) B.CLASS_OF[k] = 'support';
+  for (const k of 'lumen echo vey buzzwell coralie tom prism glacia grimhook sprocket medic gardener chronos'.split(' ')) B.CLASS_OF[k] = 'support';
   B.heroClass = key => B.CLASS_OF[key] || 'damage';
   // v62o (review #111, David: simulate thousands of PvE runs and balance by the results): the PvE balance tuner (tools/pve/tune.js) rewrites this block.
   // power = a multiplier on a hero's Health, Attack and Magic (1 = as designed); the tuner nudges it until every hero clears the PvE about as often as the others.
@@ -1648,7 +1695,7 @@
   // level from level 2 to 5
   B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta',
     'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist',
-    'onyx', 'dragon'];   // v104 (review #184): the two new heroes are open from the start
+    'onyx', 'dragon', 'chronos', 'bella', 'kitsune'];   // v121: the three new heroes are open from the start too   // v104 (review #184): the two new heroes are open from the start
   // v74 (review #152): one a level from level 2 to 27; v99 (review #181): two a level from 2 to 5
   B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage'];
   // v65 (review #131, David: "add hero portraits for profile in xp rewards"): your picture (profile, ladder, the top bar) is a hero portrait. Four are free;
@@ -1734,6 +1781,6 @@
     pip: ['aoe', 'cc', 'heal'], barley: ['tank', 'cc', 'sustain'], azgul: ['aoe', 'dot'], grok: ['cc', 'reach'], imhotep: ['tank', 'cc', 'revive'], leonidas: ['tank', 'buff'],
     harlequin: ['dps', 'dive'], sprocket: ['heal', 'dot', 'cc'], zephyr: ['cc', 'burst'], buzzwell: ['aoe', 'heal'], coralie: ['aoe', 'slow'], stellan: ['aoe', 'cc'],
     prism: ['heal', 'dps'], citadel: ['summon', 'buff'], smolder: ['aoe', 'dot'], tom: ['heal', 'buff', 'shield'], ashwing: ['aoe', 'dot', 'revive'], rohammer: ['tank', 'cc', 'aoe'],
-    plasma: ['reach', 'burst'], duelist: ['dps', 'sustain'], onyx: ['tank', 'revive'], dragon: ['aoe', 'dot', 'dive'], medic: ['heal'], gardener: ['summon', 'heal', 'shield'],
+    plasma: ['reach', 'burst'], duelist: ['dps', 'sustain'], onyx: ['tank', 'revive'], chronos: ['heal', 'slow', 'cc'], bella: ['dot', 'aoe'], kitsune: ['dive', 'burst'], dragon: ['aoe', 'dot', 'dive'], medic: ['heal'], gardener: ['summon', 'heal', 'shield'],
   };
 })(typeof window !== 'undefined' ? window : globalThis);

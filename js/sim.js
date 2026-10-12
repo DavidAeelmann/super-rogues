@@ -80,6 +80,7 @@
 
   // WHAT: the moment a fight begins: static auras, start-of-fight effects (dive, factory...) and the powers that act at the start (relicStart). Not run for the deploy preview.
   function start(W) {
+    { const c = W.units.filter(u => u.abil === 'rewind'); W.chrono = c.length ? c : null; }   // v121: Chronos on the board (his fields and Rewind memory)
     // auras (static, from starting positions) and start-of-fight effects
     for (const u of W.units) {
       for (const a of (u.m.aura || [])) for (const v of allies(W, u)) {
@@ -228,8 +229,9 @@
   const atkOf = (W, u) => Math.max(1, u.atk * (1 + bsum(W, u, 'atkPct') + u.bAtkPct) + u.titan * 3 + u.bAtk);
   // v104: Onyx's Living Fortress gives the allies next to him 30% of his Defense
   const shellAura = (W, u) => { let s = 0; if (W.shellAura === undefined) W.shellAura = W.units.some(a => a.fl.has('shellaura')); if (W.shellAura) for (const a of W.units) if (a !== u && !a.dead && a.side === u.side && a.fl.has('shellaura') && Hx.dist(a, u) === 1) s += a.armor * 0.3; return s; };
-  const armorOf = (W, u) => u.armor + bsum(W, u, 'armor') + u.titan * 3 + u.bArm + shellAura(W, u) + (u.ab && u.ab.walls ? u.ab.walls * garrisonSize(W, u) : 0);   // v105: the Citadel's Stone Walls
+  const armorOf = (W, u) => u.armor - toxArm(W, u) + bsum(W, u, 'armor') + u.titan * 3 + u.bArm + shellAura(W, u) + (u.ab && u.ab.walls ? u.ab.walls * garrisonSize(W, u) : 0);   // v105: the Citadel's Stone Walls
   const lsOf = (W, u) => u.ls + bsum(W, u, 'ls');
+  const toxArm = (W, u) => u.tox && u.tox.until > W.t && u.tox.corrode ? u.tox.n * u.tox.corrode : 0;   // v121: Belladonna's Corrosive Acid
   // review #26 (David): abilities scale with AD (attack), AP (ability power) or both, ADDED: "95% AP", "60% AD + 30% AP".
   // AP is never a multiplier of attack any more.
   const apOf = u => u.ap || 0;
@@ -238,6 +240,10 @@
     let a = u.as * (1 + bsum(W, u, 'asPct') + u.bAsPct + u.focus * (u.ab.focus || 0));
     if (u.st.slowU > W.t) a *= 1 - u.st.slowP * 0.5;
     if (u.kind === 'hero' && flOf(W, u.side).berserk) a *= 2 - Math.max(0, u.hp) / u.maxHp;   // v50: up to twice as fast
+    // v121 (reviews #209-#212): Chronos' Paradox and Accelerando, Kitsune's Spirit Jaunt (faster), Stasis Field and Belladonna's numbing Toxin (slower)
+    if (u.paradoxU > W.t) a *= 1 + u.ab.paradox; if (u.jauntU > W.t) a *= 1 + (u.ab.jauntAs || 0);
+    if (u.tox && u.tox.until > W.t && u.tox.numb) a *= 1 - Math.min(0.6, u.tox.n * u.tox.numb);
+    if (W.chrono) for (const c of W.chrono) if (!c.dead && Hx.dist(c, u) <= 2) { if (c.side === u.side && c.ab.accel) a *= 1 + c.ab.accel; else if (c.side !== u.side && c.ab.stasis) a *= 1 - c.ab.stasis; }
     return Math.min(3.5, Math.max(0.2, a));
   }
   // WHAT: moves per second right now (slows applied, never below 0.5).
@@ -281,6 +287,7 @@
   function heal(W, u, amt, show) {
     if (!alive(u) || amt <= 0) return 0;
     let m = 1 + (u.m.healPower || 0); if (u.st.antiHealU > W.t) m *= 0.5;
+    if (u.tox && u.tox.until > W.t) m *= 1 - Math.min(0.8, u.tox.n * u.tox.anti);   // v121: Belladonna's Toxin
     const before = u.hp; u.hp = Math.min(u.maxHp, u.hp + amt * m);
     if (u.kind === 'hero' && W.fl && flOf(W, u.side).berserk) u.hp = Math.min(u.hp, Math.max(before, u.maxHp * 0.5));   // v50
     const got = Math.round(u.hp - before);
@@ -300,7 +307,10 @@
       return deal(W, tgt, src, raw, type, { ability: true, mirrored: true }) && 0;
     }
     const lucky = v => v && v.kind === 'hero' && flOf(W, v.side).loaded;   // v50: the Two-Faced Coin rolls twice
-    if (o.atk && tgt.dodge > 0 && (W.rng() < tgt.dodge || (lucky(tgt) && W.rng() < tgt.dodge))) { fxText(W, tgt, 'miss', '#ccc'); if (tgt.ab && tgt.ab.dodgeMana && tgt.maxMana) tgt.mana = Math.min(tgt.maxMana, tgt.mana + tgt.ab.dodgeMana); return 0; }   // v105: Brawler's Luck
+    if (o.atk && src && tgt.ab && tgt.ab.jauntEvery && !(tgt.st.stun > W.t)) { tgt.jauntN = (tgt.jauntN || 0) + 1; if (tgt.jauntN >= tgt.ab.jauntEvery) { tgt.jauntN = 0; jaunt(W, tgt, src); return 0; } }   // v121: Kitsune
+    if (o.atk && src && tgt.ab && tgt.ab.miasma && src.side !== tgt.side) addTox(W, tgt, src, tgt.ab.miasma);   // v121: Belladonna's Noxious Miasma
+    const dodge = tgt.dodge + foxWard(W, tgt);
+    if (o.atk && dodge > 0 && (W.rng() < dodge || (lucky(tgt) && W.rng() < dodge))) { fxText(W, tgt, 'miss', '#ccc'); if (tgt.ab && tgt.ab.dodgeMana && tgt.maxMana) tgt.mana = Math.min(tgt.maxMana, tgt.mana + tgt.ab.dodgeMana); return 0; }   // v105: Brawler's Luck
     if (o.atk && src && src.st.blindU > W.t) { fxText(W, tgt, 'blind', '#ccc'); return 0; }
     let dmg = raw, crit = false;
     if (src && (o.atk || o.canCrit) && (o.forceCrit || W.rng() < src.crit || (lucky(src) && W.rng() < src.crit))) {
@@ -391,6 +401,7 @@
     }
     if (u.fl.has('undying') && !u.once.undying) { u.once.undying = 1; u.hp = 1; u.st.invuln = W.t + sec(2); fxText(W, u, 'UNDYING', '#f44'); return; }
     if (u.m.revive && !u.once.revive) { u.once.revive = 1; u.hp = Math.round(u.maxHp * u.m.revive); u.dots = []; fxText(W, u, 'REVIVE', '#ffe066'); return; }
+    if (u.tox && u.tox.until > W.t) { const s = W.byId[u.tox.src]; if (s && s.ab && s.ab.spore) { W.zones.push({ c: u.c, r: u.r, rad: 0, until: W.t + sec(4), dps: s.ab.spore * apOf(s), side: s.side, src: s.id, color: '#7cb342' }); fxRing(W, u.c, u.r, 0, '#7cb342', 10); } }   // v121: Spore Burst
     const fk = u.side ? 'feather1' : 'feather';
     if (u.kind === 'hero' && flOf(W, u.side).feather && !W.once[fk]) { W.once[fk] = 1; u.hp = Math.round(u.maxHp * 0.3); u.dots = []; fxText(W, u, 'ASHEN PLUME', '#ff7a3d'); return; }
     u.dead = true; u.hp = 0; u.deathT = W.t; u.anim = null;
@@ -579,6 +590,9 @@
     if (u.fl.has('sniper')) mult *= 1 + 0.08 * Hx.dist(u, tgt);
     if (u.fl.has('plasma')) mult *= plasmaMul(u, Hx.dist(u, tgt));   // v62h (review #98)
     if (u.blindHits > 0) { u.blindHits--; cc(W, tgt, 'blindU', 1); }   // v105: Kage's Smoke Trail
+    if (u.ab && u.ab.paradox && tgt.st.slowU > W.t) u.paradoxU = W.t + sec(1.5);   // v121: Chronos' Paradox
+    if (u.ab && u.ab.decel) { const n = Math.min(u.ab.decelCap || 5, (tgt.st.decelU > W.t ? tgt.decelN || 0 : 0) + 1); tgt.decelN = n; tgt.st.decelU = W.t + sec(3); slow(W, tgt, n * u.ab.decel, 3); }   // v121: Decelerate
+    if (u.ab && u.ab.tox) addTox(W, u, tgt, 1);   // v121: Belladonna's Virulence
     if (u.ab && u.ab.kindle) u.kindleN = Math.min(15, (u.kindleN || 0) + 1);   // v105: Feuer's Kindling
     if (u.ab && u.ab.lance && (tgt.st.frozenU > W.t || tgt.st.slowU > W.t)) mult *= 1 + u.ab.lance;   // v105: Frostbane's Ice Lance
     if (u.ab && u.ab.splitFull && u.focus >= (u.ab.focusCap || 15)) { const o = enemies(W, u).filter(e => e !== tgt && Hx.dist(e, u) <= u.range + 1).sort((a, b) => Hx.dist(a, tgt) - Hx.dist(b, tgt))[0]; if (o) deal(W, u, o, atkOf(W, u) * u.ab.splitFull, 'phys', { canCrit: true }); }   // v105: Talon's Split Nock
@@ -1520,6 +1534,61 @@
     });
     return true;
   };
+  // ---- v121 (reviews #209 #210 #211 #212, David): Chronos, Belladonna, Kitsune
+  // WHAT: Kitsune's Spirit Jaunt: the blow misses, she dashes to the free hex behind the attacker and attacks faster for a moment.
+  function jaunt(W, u, src) {
+    const h = freeNeighbors(W, src.c, src.r).sort((a, b) => Hx.dist(b, u) - Hx.dist(a, u))[0];
+    fxText(W, u, 'JAUNT', '#ff7043'); if (h) blink(W, u, h.c, h.r);
+    u.jauntU = W.t + sec(2);
+    if (u.ab.swipe && alive(src)) cc(W, src, 'stun', u.ab.swipe);
+    if (u.ab.ninetails) { if (u.maxMana) u.mana = Math.min(u.maxMana, u.mana + 10); if ((u.sc.nt || 0) < 5) { u.sc.nt = (u.sc.nt || 0) + 1; u.crit += u.ab.ninetails; } }
+  }
+  // WHAT: Kitsune's Spirit Ward: extra dodge for an ally standing next to her.
+  function foxWard(W, t) { if (W.foxes === undefined) W.foxes = W.units.filter(v => v.ab && v.ab.ward); if (!W.foxes.length) return 0; let d = 0; for (const f of W.foxes) if (!f.dead && f !== t && f.side === t.side && Hx.dist(f, t) <= 1) d += f.ab.ward; return d; }
+  // WHAT: Belladonna's Toxin: adds n stacks (up to her cap) to an enemy and refreshes it.
+  function addTox(W, s, e, n) {
+    if (!alive(e) || e.plant || e.side === s.side) return;
+    const x = e.tox && e.tox.until > W.t ? e.tox : (e.tox = { n: 0 });
+    x.n = Math.min((s.ab.toxCap || 5), x.n + n); x.until = W.t + sec(s.ab.toxDur || 4); x.src = s.id; x.rate = s.ab.tox * apOf(s); x.anti = s.ab.antiHeal || 0; x.numb = s.ab.numb || 0; x.corrode = s.ab.corrode || 0;
+  }
+  // WHAT: Belladonna's Epidemic: every Toxin bursts (35% Magic per stack) and spreads to the enemies next to it. Nothing poisoned = no cast.
+  A.epidemic = (W, u) => {
+    const ab = u.ab, sick = enemies(W, u).filter(e => e.tox && e.tox.until > W.t && e.tox.n > 0); if (!sick.length) return false;
+    const snap = sick.map(e => [e, e.tox.n]);
+    for (const [e, n] of snap) {
+      fxRing(W, e.c, e.r, 1, '#7cb342', 10);
+      deal(W, u, e, n * ab.burst * apOf(u), 'magic', { ability: true });
+      if (ab.paralyze && n >= (ab.toxCap || 5) && alive(e)) cc(W, e, 'stun', ab.paralyze);
+      for (const o of enemies(W, u)) if (o !== e && Hx.dist(o, e) <= 1) { const had = o.tox && o.tox.until > W.t ? o.tox.n : 0; if (had < n) addTox(W, u, o, n - had); else addTox(W, u, o, 0); }
+      if (alive(e)) addTox(W, u, e, 0);
+    }
+    fxText(W, u, 'EPIDEMIC', '#9ccc65'); return true;
+  };
+  // WHAT: Chronos' Rewind: the most hurt ally (two with Grand Clocktower) gets back the Health it had a moment ago (at least ab.heal x Magic) and ignores crowd control.
+  A.rewind = (W, u) => {
+    const ab = u.ab, back = Math.round(sec(ab.back) / 5);
+    const hurt = allies(W, u).filter(a => !a.plant && !a.egg && a.hp < a.maxHp * 0.9).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, ab.targets || 1);
+    if (!hurt.length) return false;
+    for (const a of hurt) {
+      const H = a.hpHist || [], then = H.length ? H[Math.max(0, H.length - 1 - back)] : a.hp;
+      heal(W, a, Math.max(then - a.hp, ab.heal * apOf(u)), true);
+      a.st.ccImmU = Math.max(a.st.ccImmU || 0, W.t + sec(ab.immune)); a.st.stun = 0; a.st.root = 0; a.st.frozenU = 0; a.st.slowU = 0;
+      if (ab.warp && a.maxMana) a.mana = Math.min(a.maxMana, a.mana + ab.warp);
+      fxRing(W, a.c, a.r, 0, '#4dd0e1', 14); fxText(W, a, 'REWIND', '#4dd0e1');
+      if (ab.anchor) { const e = enemies(W, u).filter(x => targetable(W, x)).sort((x, y) => Hx.dist(x, a) - Hx.dist(y, a))[0]; if (e) { push(W, u, e, 2); cc(W, e, 'stun', ab.anchor); } }
+      if (ab.shock) { fxRing(W, a.c, a.r, 1, '#4dd0e1', 10); for (const e of enemies(W, u)) if (Hx.dist(e, a) <= 1) deal(W, u, e, ab.shock * apOf(u), 'magic', { ability: true }); }
+    }
+    return true;
+  };
+  // WHAT: Kitsune's Foxfire: spirit flames at the two farthest enemies; each is charmed (it comes at Kitsune).
+  A.foxfire = (W, u) => {
+    const ab = u.ab, far = enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => Hx.dist(b, u) - Hx.dist(a, u)).slice(0, 2); if (!far.length) return false;
+    if (ab.eclipse) { const h = freeNeighbors(W, far[0].c, far[0].r).sort((a, b) => Hx.dist(b, u) - Hx.dist(a, u))[0]; if (h) blink(W, u, h.c, h.r); u.jauntN = (ab.jauntEvery || 3) - 1; }
+    const hit = ab.dmg * apOf(u) + ab.dmgAtk * atkOf(W, u);
+    for (let i = 0; i < ab.flames; i++) { const t = far[i % far.length]; fx(W, { k: 'proj', from: u.id, fc: u.c, fr: u.r, to: t.id, tc: t.c, tr: t.r, color: '#ff7043', t1: W.t + 4 + i * 2 }); at(W, W.t + 4 + i * 2, () => { if (alive(t)) deal(W, u, t, hit, 'magic', { ability: true }); }); }
+    for (const t of far) { t.st.tauntU = W.t + sec(ab.charm); t.st.tauntBy = u.id; t.tgt = u.id; if (ab.bewitch) { t.st.vulnU = W.t + sec(ab.charm); t.st.vulnP = ab.bewitch; } fxText(W, t, 'CHARMED', '#ff9ec4'); }
+    return true;
+  };
   // the egg Ashwing leaves when it falls: it hatches after a few seconds and the hero rises, unless the egg is destroyed first
   // WHAT: ASHWING. When it falls (once per fight) it leaves an egg on its hex; eggAct hatches it after a few seconds (the hero returns) unless the egg is destroyed first.
   function layEgg(W, u) {
@@ -1750,6 +1819,13 @@
     if (u.ab && u.ab.repulse && W.t % sec(u.ab.repulse) === 0) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) push(W, u, e, 2);   // v105: Plasma's Repulsor
     if (u.ab && u.ab.aura && W.t % 10 === 0 && !(u.flyU > W.t)) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) deal(W, u, e, u.ab.aura * apOf(u) * 0.5, 'magic', { dot: true });   // v104: the Wyrm's Smoldering Scales
     if (m.regen) heal(W, u, u.maxHp * m.regen / TPS);
+    if (W.chrono && W.t % 5 === 0) { (u.hpHist = u.hpHist || []).push(u.hp); if (u.hpHist.length > 16) u.hpHist.shift(); }   // v121: Rewind remembers the last seconds
+    if (u.ab && !u.once.start && (u.ab.timestop || u.ab.pandemic)) {   // v121: Time Stop and Pandemic, when the fight starts
+      u.once.start = 1; const es = enemies(W, u);
+      if (u.ab.timestop) { for (const e of es) cc(W, e, 'stun', u.ab.timestop); fxText(W, u, 'TIME STOP', '#4dd0e1'); }
+      if (u.ab.pandemic) for (const e of es.slice().sort(() => W.rng() - 0.5).slice(0, 2)) addTox(W, u, e, u.ab.pandemic);
+    }
+    if (u.tox && W.t % 10 === 0) { const x = u.tox; if (x.until < W.t) u.tox = null; else { const s = W.byId[x.src], d = deal(W, s && !s.dead ? s : null, u, x.n * x.rate * 0.5, 'magic', { dot: true }); if (s && !s.dead && s.ab.leech && d > 0) heal(W, s, d * s.ab.leech); if (u.dead) return; } }   // v121: Toxin
     if (m.manaRegen && u.maxMana) u.mana = Math.min(u.maxMana, u.mana + m.manaRegen / TPS);
     if (W.t % 10 === 0) {
       for (const d of u.dots) if (d.until >= W.t) {
