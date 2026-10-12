@@ -2,6 +2,7 @@
 
 **Only add one entry per version, at the TOP. DO NOT read this whole file every session** (it only serves to find out why something is the way it is: search with Grep for the request number, "#73", or for the version, "v61").
 Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
+- v121 (#209-#212): three new heroes open from the start: Chronos (Rewind), Belladonna (Epidemic), Kitsune (Foxfire), tuned to the roster average.
 - v120 (#208): hero details sheet fits a phone screen without scrolling (powers as tappable buttons); tools/tests/sheets-fit.mjs.
 - v119 (#206 #207): the top league is now Master; a completed run pays 0 LP there (only the Gauntlet does).
 - v118 (#205): positioning coach on the deploy board (first runs, each tip once), easier drag with swap preview, hero shop swap tip.
