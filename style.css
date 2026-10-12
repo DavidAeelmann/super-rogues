@@ -3042,3 +3042,33 @@ body:has(#modal:not([hidden])) .shopcoach { display: none; }   /* v120: the shop
 .vs.bossvs { display: flex !important; align-items: center; justify-content: center; flex-direction: column; }
 .vs.bossvs::before, .vs.bossvs::after { display: none !important; }
 .bossvs .vsskip { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; }
+/* v123 (review #215): the brag card (game sheet and card.html) */
+.scard { --lc: #6b7cff; --lh: #dfe4ff; position: relative; overflow: hidden; display: grid; gap: 10px; padding: 16px 12px 14px; border-radius: 22px; text-align: center; color: #fff;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--lc) 70%, #fff) 0%, var(--lc) 35%, #12164a 100%); border: 2px solid #ffffff55; box-shadow: 0 16px 40px #0009, inset 0 0 0 2px #ffffff22; animation: cardIn .6s cubic-bezier(.2, 1.5, .4, 1) both; }
+.scard.champ { --lc: #e0a51a; --lh: #fff3c4; border-color: #ffe066; box-shadow: 0 16px 40px #0009, 0 0 40px #ffd23f88, inset 0 0 0 2px #fff6; }
+@keyframes cardIn { from { opacity: 0; transform: scale(.85) rotate(-2deg); } }
+.scard .sc-shine { position: absolute; top: -30%; bottom: -30%; width: 35%; left: -50%; background: linear-gradient(100deg, transparent, #ffffff55, transparent); transform: skewX(-18deg); animation: shineSweep 3s ease-in-out 0.6s infinite; pointer-events: none; }
+.sc-top { display: grid; gap: 2px; justify-items: center; }
+.sc-badge { padding: 4px 14px; border-radius: 999px; font: 800 13px/1.3 var(--fun); letter-spacing: 1px; color: #3a2400; background: linear-gradient(180deg, #fff3a8, #ffd23f); box-shadow: 0 3px 0 #a86f00, 0 0 18px #ffd23f88; animation: badgePop .5s cubic-bezier(.3, 1.8, .5, 1) .25s both; }
+@keyframes badgePop { from { transform: scale(0); } }
+.sc-name { font: 800 clamp(22px, 7vw, 30px)/1.1 var(--fun); text-shadow: 0 3px 0 #0007; }
+.sc-top small { font: 600 12.5px var(--read); color: var(--lh); }
+.sc-team { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; }
+.sc-h { display: grid; justify-items: center; gap: 2px; padding: 8px 4px; border-radius: 16px; background: #0b0f3f66; box-shadow: inset 0 0 0 1.5px #ffffff2a; animation: dealCard .55s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: calc(var(--i) * 110ms + 300ms); }
+.sc-pic { position: relative; } .sc-pic img { width: 76px; height: 76px; border-radius: 16px; box-shadow: 0 0 0 2.5px #fff, 0 6px 14px #0008; }
+.sc-pic i { position: absolute; right: -6px; bottom: -6px; padding: 1px 6px; border-radius: 999px; font: 800 11px var(--fun); font-style: normal; color: #3a2400; background: #ffd23f; box-shadow: 0 2px 0 #a86f00; }
+.sc-h b { margin-top: 4px; font: 800 13.5px/1.1 var(--fun); } .sc-h small { font: 600 10.5px var(--read); color: var(--lh); text-transform: uppercase; letter-spacing: .5px; }
+.sc-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; min-height: 24px; margin-top: 2px; } .sc-items img { width: 22px; height: 22px; border-radius: 6px; }
+.sc-pows { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.sc-pw { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px 3px 3px; border-radius: 999px; background: #0b0f3f66; } .sc-pw img { width: 26px; height: 26px; border-radius: 8px; } .sc-pw small { font: 700 11px var(--fun); }
+.sc-cta { margin-top: 2px; font: 600 13px var(--read); color: var(--lh); } .sc-cta b { color: #fff; font-family: var(--fun); }
+.bragwrap { margin: 4px 0 10px; }
+.bragbar { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; } .bragbar button { min-height: 46px; } .bragbar .wa { background: linear-gradient(180deg, #3ddc84, #1fa85a) !important; color: #fff !important; }
+.overbar.two .brag { background: linear-gradient(180deg, #ff7ad9, #c43ab0) !important; color: #fff !important; border-color: #fff8 !important; }
+body.cardpage { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
+.cardwrap { width: min(440px, 100%); display: grid; gap: 14px; }
+.cardwrap .playnow { display: block; text-align: center; text-decoration: none; padding: 14px; }
+.cardwrap .playnow { border-radius: 16px; font: 800 19px var(--fun); color: #5a3000; background: linear-gradient(180deg, #ffe46b, #ffc21a); box-shadow: 0 5px 0 #c47f00, 0 12px 24px #0006; animation: readyPulse 1.6s ease-in-out infinite; }
+/* v123: an item shop with 5 or 6 offers (the Faded Chart) packs its rows tighter so it still fits a small phone */
+@media (max-height: 760px) { section.shop .grid.rows.many { gap: 5px; } .grid.rows.many .card.stock.v2.k-item, .grid.rows.many .card.stock.v2.k-relic { grid-template-columns: 44px minmax(0, 1fr) auto; padding: 5px 8px; gap: 8px; }
+  .grid.rows.many .card.stock.v2 .medal { width: 44px; height: 44px; } .grid.rows.many .card.stock.v2 .medal .ico { width: 32px; height: 32px; } .grid.rows.many .card.stock.v2 .ctitle { font-size: 14px; } .grid.rows.many .card.stock.v2 .htag { font-size: 11px; padding: 0 7px; } .grid.rows.many .card.stock.v2 .meta .small { font-size: 11.5px; line-height: 1.25; } .grid.rows.many .card.stock.v2 .price { min-height: 40px; } }

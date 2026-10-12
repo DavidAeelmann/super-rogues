@@ -5,6 +5,14 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.de = {
     x: {
+      "Healing done": "Geheilt",
+      "📣 Share my team": "📣 Mein Team teilen",
+      "📣 Your Gauntlet card": "📣 Deine Gauntlet-Karte",
+      "📤 Share": "📤 Teilen",
+      "💬 WhatsApp": "💬 WhatsApp",
+      "🔗 Copy link": "🔗 Link kopieren",
+      "Link copied! Paste it anywhere 🎉": "Link kopiert! Füge ihn überall ein 🎉",
+      "Can you beat this team?": "Schlägst du dieses Team?",
       "Rewind": "Zurückspulen",
       "Epidemic": "Epidemie",
       "Foxfire": "Fuchsfeuer",

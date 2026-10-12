@@ -291,6 +291,8 @@
     const before = u.hp; u.hp = Math.min(u.maxHp, u.hp + amt * m);
     if (u.kind === 'hero' && W.fl && flOf(W, u.side).berserk) u.hp = Math.min(u.hp, Math.max(before, u.maxHp * 0.5));   // v50
     const got = Math.round(u.hp - before);
+    // v123 (review #214, David: "Add healing done to fight result details"): who healed: the caster of the ability running now (W.ctx.by), or the one named by the caller
+    if (got > 0) { const by = W.healBy || (W.ctx && W.ctx.by); const h = by ? W.byId[by] : null; if (h) h.healDone = (h.healDone || 0) + got; }
     if (show && got >= 5) fxNum(W, u, '+' + got, '#6f6');
     return got;
   }
@@ -367,8 +369,8 @@
     if (!o.dot) fx(W, { k: 'num', c: tgt.c, r: tgt.r, id: tgt.id, text: String(total), n: crit ? 'crit' : type === 'magic' ? 'magic' : type === 'true' ? 'true' : 'hit', color: crit ? '#ffd23f' : type === 'magic' ? '#c9a2ff' : type === 'true' ? '#ffffff' : '#e4e6ee', big: crit, t1: W.t + (crit ? 20 : 16) });
     else if (total >= 1 && tgt.side !== (src ? src.side : -1)) fx(W, { k: 'num', c: tgt.c, r: tgt.r, id: tgt.id, text: String(total), n: 'dot', color: type === 'magic' ? '#ff9a3d' : '#9be36a', t1: W.t + 12 });
     if (src && alive(src)) {
-      if (o.atk && lsOf(W, src) > 0) heal(W, src, total * lsOf(W, src));
-      if (o.ability && src.m.omni) heal(W, src, total * src.m.omni);
+      if (o.atk && lsOf(W, src) > 0) { W.healBy = src.id; heal(W, src, total * lsOf(W, src)); W.healBy = 0; }
+      if (o.ability && src.m.omni) { W.healBy = src.id; heal(W, src, total * src.m.omni); W.healBy = 0; }
       if (o.ability && src.m.abilityBurn && !o.dot) dot(W, tgt, 'burn', src.m.abilityBurn * tgt.maxHp, 3, src);
       if (o.atk && !o.noThorns && tgt.m.thorns && Hx.dist(src, tgt) <= 1) deal(W, tgt, src, total * tgt.m.thorns, 'magic', { noThorns: true });
       if (o.atk && !o.noThorns && tgt.fl.has('spikes') && tgt.ab.spike && alive(tgt)) deal(W, tgt, src, armorOf(W, tgt) * tgt.ab.spike, 'phys', { noThorns: true });   // v104: Onyx's Spiked Shell
@@ -1821,7 +1823,7 @@
     const m = u.m;
     if (u.ab && u.ab.repulse && W.t % sec(u.ab.repulse) === 0) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) push(W, u, e, 2);   // v105: Plasma's Repulsor
     if (u.ab && u.ab.aura && W.t % 10 === 0 && !(u.flyU > W.t)) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) deal(W, u, e, u.ab.aura * apOf(u) * 0.5, 'magic', { dot: true });   // v104: the Wyrm's Smoldering Scales
-    if (m.regen) heal(W, u, u.maxHp * m.regen / TPS);
+    if (m.regen) { W.healBy = u.id; heal(W, u, u.maxHp * m.regen / TPS); W.healBy = 0; }
     if (W.chrono && W.t % 5 === 0) { (u.hpHist = u.hpHist || []).push(u.hp); if (u.hpHist.length > 16) u.hpHist.shift(); }   // v121: Rewind remembers the last seconds
     if (u.ab && !u.once.start && (u.ab.timestop || u.ab.pandemic)) {   // v121: Time Stop and Pandemic, when the fight starts
       u.once.start = 1; const es = enemies(W, u);
@@ -1832,7 +1834,7 @@
     if (m.manaRegen && u.maxMana) u.mana = Math.min(u.maxMana, u.mana + m.manaRegen / TPS);
     if (W.t % 10 === 0) {
       for (const d of u.dots) if (d.until >= W.t) {
-        if (d.k === 'regen') heal(W, u, d.v * 0.5);
+        if (d.k === 'regen') { W.healBy = d.src || u.id; heal(W, u, d.v * 0.5); W.healBy = 0; }
         else deal(W, W.byId[d.src] || null, u, d.v * 0.5, d.k === 'burn' ? 'magic' : 'true', { dot: true });
         if (u.dead) return;
       }
@@ -1882,7 +1884,7 @@
     if (W.zones.length && W.t % 10 === 0) {
       W.zones = W.zones.filter(z => z.until > W.t);
       for (const z of W.zones) if (z.follow) { const f = W.byId[z.follow]; if (f && !f.dead) { z.c = f.c; z.r = f.r; } }   // v105: Radiant's Pilgrimage
-      for (const z of W.zones) for (const e of W.units) if (!e.dead && Hx.dist(e, z) <= z.rad) { if (e.side !== z.side) deal(W, W.byId[z.src] || null, e, z.dps * 0.5, 'magic', { dot: true }); else if (z.heal) heal(W, e, e.maxHp * z.heal * 0.5); }
+      for (const z of W.zones) for (const e of W.units) if (!e.dead && Hx.dist(e, z) <= z.rad) { if (e.side !== z.side) deal(W, W.byId[z.src] || null, e, z.dps * 0.5, 'magic', { dot: true }); else if (z.heal) { W.healBy = z.src; heal(W, e, e.maxHp * z.heal * 0.5); W.healBy = 0; } }
     }
     const list = W.units.filter(u => !u.dead);
     for (const u of list) if (!u.dead) periodic(W, u);

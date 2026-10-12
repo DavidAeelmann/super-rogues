@@ -1103,7 +1103,7 @@
       return `<div class="rh ${mvp ? 'mvp' : ''} ${st.alive ? '' : 'ko'}"><span class="rhp">${img(h.key, 46, 'por')}${st.alive ? '' : '<i class="kox">✝</i>'}</span><div class="rhb">
         <div class="rhn"><b>${esc(x.name)}</b>${mvp ? `<span class="mvpb ${fx.done ? 'stamp' : 'wait'}">★ MVP</span>` : ''}<span class="grow"></span>${x.to > x.from ? `<b class="up ${fx.done ? 'on' : 'wait'}">Level up! Lv ${x.to}</b>` : `<span class="lv">Lv ${x.to}</span>`}</div>
         <div class="dmgbar"><s style="width:${100 * st.dmg / top}%"></s><em>⚔ ${kfmt(st.dmg)} · ${Math.round(100 * st.dmg / total)}%</em></div>
-        <div class="rst"><span title="Damage taken">🛡 ${kfmt(st.taken)}</span><span title="Kills">💥 ${st.kills}</span>${`<span class="rxp"><span class="xpbar"><i style="width:${fx.xp ? w1 : w0}%" data-w="${w1}"></i></span><span class="kw-xp">+${x.gained} XP</span></span>`}</div></div></div>`;
+        <div class="rst">${st.heal ? `<span class="rheal" title="Healing done">💚 ${kfmt(st.heal)}</span>` : ''}<span title="Damage taken">🛡 ${kfmt(st.taken)}</span><span title="Kills">💥 ${st.kills}</span>${`<span class="rxp"><span class="xpbar"><i style="width:${fx.xp ? w1 : w0}%" data-w="${w1}"></i></span><span class="kw-xp">+${x.gained} XP</span></span>`}</div></div></div>`;
     }).join('');
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
     const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';   // v101 (reviews #186 #189)
@@ -1184,6 +1184,16 @@
     if (!c) return '<li>👑 Beat the top floor and you are the champion</li>';
     return `<li class="champcard">${champMark()}<span class="cc"><small>Current champion</small><b>${esc(c.name)}</b><small>${c.wins} floor${c.wins === 1 ? '' : 's'} climbed · ${c.stopped} stopped</small></span><span class="ccteam">${c.team.slice(0, 6).map(h => img(h.key, 40, 'por')).join('')}</span></li>`;
   }
+  // v123 (review #215, David: "Whenever you finish a gauntlet run, win or lose, have a menu with a card with the champions, items, etc... 1 click share or copy with
+  // a link to the game... make this feature dope and hype"): the end of every climb has "Share my team": the brag card (js/card.js) in a sheet with confetti, and
+  // Share (the phone's own share menu), WhatsApp and Copy link. The link opens card.html with the same card and a Play button.
+  // WHAT: the card data of the climb that just ended.
+  function bragData() { const lg = store.get('balance.league', null); return B.Card.fromRun(run, { name: acct.account && acct.name ? acct.name : myName() || 'A hero', league: acct.account ? (lg && lg.league != null ? lg.league : acct.league | 0) : null }); }
+  function bragHTML() {
+    const d = bragData(), pic = (k, px) => por(k, px), icon = (kind, id, px) => kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px);
+    return `<div class="shead"><b>📣 Your Gauntlet card</b><button data-act="close" aria-label="Close">✕</button></div><div class="bragwrap">${B.Card.html(d, pic, icon)}</div>
+      <div class="bragbar"><button class="primary big" data-act="brag-share">📤 Share</button><button class="wa" data-act="brag-wa">💬 WhatsApp</button><button data-act="brag-copy">🔗 Copy link</button></div>`;
+  }
   // WHAT: THE GAUNTLET screen (after a completed run): the gate (enter or skip) and the end of the climb (floor reached, LP won, the crown).
   function towerHTML() {
     const T = run.tower || { status: 'gate', floor: 1 };
@@ -1192,7 +1202,7 @@
       const sub = T.champion ? 'You stand at the top. The next climbers have to beat you.' : `${T.wins} floor${T.wins === 1 ? '' : 's'} cleared. Your team stays on floor ${T.floor} as a ghost.`;
       return `<section class="title towerscr over ${T.champion ? 'champ' : ''}"><h2 class="sc ovh">${head}</h2><p class="ovsub">${sub}</p>${towerArt(T)}
         <p class="tlp"><b>+${T.lp | 0}</b> LP</p>${T.err ? `<p class="small dim center">${esc(T.err)}</p>` : ''}
-        <div class="overbar"><button class="primary big cta" data-act="tower-done">Next ${I('arrow')}</button></div></section>`;
+        <div class="overbar two"><button class="brag" data-act="brag">📣 Share my team</button><button class="primary big cta" data-act="tower-done">Next ${I('arrow')}</button></div></section>`;
     }
     return `<section class="title towerscr gate"><h2 class="sc gtitle">The Gauntlet</h2>
       <p class="gsub">Other players' saved teams, stronger on every floor. The champion waits at the top.</p>${towerArt(T)}
@@ -1257,7 +1267,7 @@
     // v118 (review #205, David: "In first hero shop visited put bubble saying when team is full, buying hero replaces an existing one of the same level"): once
     const swapTip = c.kind === 'heroShop' && !store.get('balance.hint.hswap', 0) ? `<div class="coach shopcoach" style="--cc:#ffd23f"><span class="ci">🔄</span><span class="ct">When your team is full, a hero you buy replaces one of yours and takes its level, place and items.</span><button class="cok" data-act="hswap-ok">Got it</button></div>` : '';
     return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${note}</div>${swapTip}
-      <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div>
+      <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div>
       <div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
   }
   // v44: what an event gave, as pictures (items, relics, a hero joining, gold, XP, boosts)
@@ -1669,8 +1679,8 @@
     const stats = {}, dmg = {};
     for (const u of W.units) {
       const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side !== 0 || !o.uid) continue;
-      const st = stats[o.uid] = stats[o.uid] || { dmg: 0, taken: 0, kills: 0, alive: false };
-      st.dmg += u.dmgDone || 0; st.kills += u.kb || 0;
+      const st = stats[o.uid] = stats[o.uid] || { dmg: 0, taken: 0, kills: 0, heal: 0, alive: false };
+      st.dmg += u.dmgDone || 0; st.kills += u.kb || 0; st.heal += u.healDone || 0;   // v123 (review #214): healing done (its summons and plants count for it)
       if (o === u) { st.taken += u.dmgTaken || 0; st.alive = !u.dead; }
     }
     for (const k in stats) dmg[k] = stats[k].dmg;
@@ -2378,6 +2388,10 @@
       if (run && run.phase === 'over' && run.result === 'clear' && !run.tower) { ui.champ = undefined; run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); }   // v91 (review #172): the Gauntlet comes before the league screen
       ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
     'tower-skip': () => { run.tower = Object.assign(run.tower || {}, { status: 'skipped' }); run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
+    brag: () => { openModal(bragHTML()); ui.modal = 'brag'; sfx('unlock'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('#modal .scard', bragData().c ? 120 : 60), 120); },
+    'brag-share': async () => { const d = bragData(), link = B.Card.url(d); try { if (navigator.share) { await navigator.share({ title: 'Super Rogues', text: B.Card.text(d), url: link }); return; } } catch (_) { return; } ACT['brag-copy'](); },
+    'brag-wa': () => { const d = bragData(); window.open('https://wa.me/?text=' + encodeURIComponent(B.Card.text(d) + ' ' + B.Card.url(d)), '_blank', 'noopener'); },
+    'brag-copy': async () => { const d = bragData(), t = B.Card.text(d) + ' ' + B.Card.url(d); try { await navigator.clipboard.writeText(t); toast('Link copied! Paste it anywhere 🎉'); } catch (_) { toast(B.Card.url(d), true); } },
     'tower-done': () => { run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
     'tower-enter': async () => {
       if (ui.towerBusy) return;
