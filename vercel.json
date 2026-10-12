@@ -32,8 +32,8 @@
       "destination": "/art/:dir/:file"
     },
     {
-      "source": "/c/:id",
-      "destination": "/api/card?page=:id"
+      "source": "/c/:code",
+      "destination": "/api/card?page=:code"
     }
   ],
   "functions": {
