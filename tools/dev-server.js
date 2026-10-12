@@ -18,6 +18,7 @@ http.createServer(async (req, res) => {
   // dev-only: give a test player crowns (v27 Crown Shop tests)
   if (u.pathname === '/__dev/grant') { const P = global.__BAL_MEMDATA && global.__BAL_MEMDATA.players, p = P && P[u.searchParams.get('pid')]; if (p) p.gems += +u.searchParams.get('n') || 0; res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify({ ok: !!p })); }
   if (u.pathname === '/__dev/ship') { if (global.__BAL_MEMDATA) global.__BAL_MEMDATA.kv.lastRun = String(Date.now()); return res.end('{"ok":true}'); }
+  if (/^\/c\/[a-z0-9]+$/.test(u.pathname)) { req.url = '/api/card?page=' + u.pathname.slice(3); try { await require(path.join(ROOT, 'api', 'card.js'))(req, res); } catch (e) { res.statusCode = 500; res.end(String(e)); } return; }   // v124: like vercel.json's rewrite
   if (u.pathname.startsWith('/api/')) {
     const name = u.pathname.slice(5).replace(/[^a-z]/g, '');
     const f = path.join(ROOT, 'api', name + '.js');
@@ -26,6 +27,7 @@ http.createServer(async (req, res) => {
     return;
   }
   let p = decodeURIComponent(u.pathname); if (p === '/') p = '/index.html';
+  if (p.startsWith('/c/art/')) p = p.slice(2);   // v124: a short card page asks for art/... relative to /c/ (vercel.json rewrites it the same way)
   if (!/^\/(index\.html|stats\.html|card\.html|style\.css|js\/[a-z0-9-]+\.js|fonts\/[a-z]+\.woff2|art\/[a-z_]+\/[a-z0-9-]+\.(webp|jpg|png))$/.test(p)) { res.statusCode = 404; return res.end('not found'); }
   const f = path.join(ROOT, p);
   if (!fs.existsSync(f)) { res.statusCode = 404; return res.end('not found'); }

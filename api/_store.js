@@ -87,6 +87,8 @@ const SCHEMA = [
   // Art Lab (owner, 2026-09-29): pictures sent with a review (splash + battle poses as data: URLs). Never served back.
   `create table if not exists art (id bigserial primary key, batch bigint not null, hero text not null, splash text, poses text not null,
      meta text not null, iph text not null, created bigint not null)`,
+  // v124 (review #216): shared Gauntlet cards: a short id, the card data and its picture (JPEG data URL) for link previews
+  `create table if not exists cards (id text primary key, pid text not null, data text not null, img text not null, iph text, created bigint not null)`,
 ];
 // public id of a player: never the pid itself (the pid is the player's secret key)
 const codeOf = pid => require('crypto').createHash('sha256').update('pub|' + pid).digest('hex').slice(0, 12);
@@ -154,6 +156,9 @@ function memStore() {
     async insertTeam(t) { const T = M.teams = M.teams || []; const r = Object.assign({ id: ++M.id, wins: 0, status: 'running', opp: null, def_w: 0, def_l: 0, gelo: 1000, created: Date.now() }, t); T.push(r); return r.id; },
     // v102 (review #188): the hidden ghost Elo. listPool = the ghosts of a floor range (like pickPool, every one, up to limit); poolSample = n random ended ghosts of any floor
     async setGelo(id, v) { const t = (M.teams || []).find(x => x.id === id); if (t) t.gelo = v; },
+    async insertCard(c) { (M.cards = M.cards || []).push(Object.assign({}, c)); },
+    async getCard(id) { return (M.cards || []).find(c => c.id === id) || null; },
+    async countCards(pid, since) { return (M.cards || []).filter(c => c.pid === pid && c.created >= since).length; },
     async listPool(lo, hi, exclude, staleBefore, limit) { return poolOf(M, lo, hi, exclude, staleBefore).slice(-(limit || 200)).map(t => Object.assign({}, t)); },
     // v106 (review #192): listGhosts = every Gauntlet ghost (fallen climbers and completed runs, or climbs abandoned before staleBefore), any floor
     async listGhosts(exclude, staleBefore, limit) { const ex = new Set(exclude || []); return (M.teams || []).filter(t => !ex.has(t.id) && (t.status === 'lost' || t.status === 'final' || (t.status === 'running' && (t.updated || t.created) < (staleBefore || 0)))).slice(-(limit || 3000)).map(t => Object.assign({}, t)); },
@@ -274,6 +279,9 @@ function pgStore() {
     async ghostRecord(pid) { const r = (await q('select coalesce(sum(def_w),0)::int w, coalesce(sum(def_l),0)::int l, count(*)::int n from teams where pid=$1', [pid]))[0]; return { w: Number(r.w), l: Number(r.l), n: Number(r.n) }; },
     async insertTeam(t) { return Number((await q('insert into teams (pid, name, elo_at, team, relics, created) values ($1,$2,$3,$4,$5,$6) returning id', [t.pid, t.name, t.elo_at, t.team, t.relics, Date.now()]))[0].id); },
     async setGelo(id, v) { await q('update teams set gelo=$2 where id=$1', [id, v]); },
+    async insertCard(c) { await q('insert into cards (id, pid, data, img, iph, created) values ($1,$2,$3,$4,$5,$6)', [c.id, c.pid, c.data, c.img, c.iph, c.created]); },
+    async getCard(id) { const r = await q('select id, data, img, created from cards where id=$1', [id]); return r[0] || null; },
+    async countCards(pid, since) { return Number((await q('select count(*)::int n from cards where pid=$1 and created>=$2', [pid, since]))[0].n); },
     async listPool(lo, hi, exclude, staleBefore, limit) {
       const r = await q(`select * from teams where not (id = any($1::bigint[])) and (status = 'lost' or (status = 'running' and coalesce(updated, created) < $4))
         and wins >= $2 and ($3::int is null or wins <= $3) order by id desc limit $5`, [(exclude || []).map(Number).filter(Number.isFinite), lo, hi == null ? null : hi, staleBefore || 0, limit || 200]);

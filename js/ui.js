@@ -1189,6 +1189,18 @@
   // Share (the phone's own share menu), WhatsApp and Copy link. The link opens card.html with the same card and a Play button.
   // WHAT: the card data of the climb that just ended.
   function bragData() { const lg = store.get('balance.league', null); return B.Card.fromRun(run, { name: acct.account && acct.name ? acct.name : myName() || 'A hero', league: acct.account ? (lg && lg.league != null ? lg.league : acct.league | 0) : null }); }
+  // v124 (review #216, David: "The link is huge when pasted. Shorten it... add the image of the card to the preview"): the card is drawn as a picture and saved
+  // on the server once (api/card.js), which gives a short link /c/<id> whose page carries the picture as its preview; Share sends the picture itself too.
+  // WHAT: makes the card picture and the short link once per climb (falls back to the long link when offline).
+  function bragPrep() {
+    const d = bragData(), key = JSON.stringify(d.h) + d.f + d.w + d.c;
+    if (ui.brag && ui.brag.key === key) return ui.brag.p;
+    const p = (async () => { let img = null, blob = null, url = B.Card.url(d);
+      try { img = await B.Card.image(d, (k, px) => por(k, px), (kind, id, px) => kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px)); const bin = atob(img.split(',')[1]), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); blob = new Blob([u8], { type: 'image/jpeg' }); } catch (_) {}   // (no fetch of data: URLs: the CSP allows only our own address)
+      try { if (img) { const r = await Net.post('card', { pid: pid(), data: d, img }); if (r && r.path) url = location.origin + r.path; } } catch (_) {}
+      return { url, blob }; })();
+    ui.brag = { key, p }; return p;
+  }
   function bragHTML() {
     const d = bragData(), pic = (k, px) => por(k, px), icon = (kind, id, px) => kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px);
     return `<div class="shead"><b>📣 Your Gauntlet card</b><button data-act="close" aria-label="Close">✕</button></div><div class="bragwrap">${B.Card.html(d, pic, icon)}</div>
@@ -2388,10 +2400,13 @@
       if (run && run.phase === 'over' && run.result === 'clear' && !run.tower) { ui.champ = undefined; run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); }   // v91 (review #172): the Gauntlet comes before the league screen
       ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
     'tower-skip': () => { run.tower = Object.assign(run.tower || {}, { status: 'skipped' }); run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
-    brag: () => { openModal(bragHTML()); ui.modal = 'brag'; sfx('unlock'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('#modal .scard', bragData().c ? 120 : 60), 120); },
-    'brag-share': async () => { const d = bragData(), link = B.Card.url(d); try { if (navigator.share) { await navigator.share({ title: 'Super Rogues', text: B.Card.text(d), url: link }); return; } } catch (_) { return; } ACT['brag-copy'](); },
-    'brag-wa': () => { const d = bragData(); window.open('https://wa.me/?text=' + encodeURIComponent(B.Card.text(d) + ' ' + B.Card.url(d)), '_blank', 'noopener'); },
-    'brag-copy': async () => { const d = bragData(), t = B.Card.text(d) + ' ' + B.Card.url(d); try { await navigator.clipboard.writeText(t); toast('Link copied! Paste it anywhere 🎉'); } catch (_) { toast(B.Card.url(d), true); } },
+    brag: () => { openModal(bragHTML()); ui.modal = 'brag'; sfx('unlock'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('#modal .scard', bragData().c ? 120 : 60), 120); bragPrep(); },
+    'brag-share': async () => { const s = await bragPrep(), d = bragData();
+      try { if (navigator.share) { const file = s.blob ? new File([s.blob], 'super-rogues-card.jpg', { type: 'image/jpeg' }) : null, o = { title: 'Super Rogues', text: B.Card.text(d) + ' ▶ Super Rogues', url: s.url };
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) o.files = [file]; await navigator.share(o); return; } } catch (_) { return; } ACT['brag-copy'](); },
+    'brag-wa': async () => { const s = await bragPrep(), d = bragData(); window.open('https://wa.me/?text=' + encodeURIComponent(B.Card.text(d) + ' ▶ ' + s.url), '_blank', 'noopener'); },
+    'brag-copy': async () => { const s = await bragPrep(), d = bragData(), plain = B.Card.text(d) + ' ▶ ' + s.url, rich = `${esc(B.Card.text(d))} ▶ <a href="${s.url}">Super Rogues</a>`;
+      try { if (window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([plain], { type: 'text/plain' }), 'text/html': new Blob([rich], { type: 'text/html' }) })]); else await navigator.clipboard.writeText(plain); toast('Link copied! Paste it anywhere 🎉'); } catch (_) { toast(s.url, true); } },
     'tower-done': () => { run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
     'tower-enter': async () => {
       if (ui.towerBusy) return;
