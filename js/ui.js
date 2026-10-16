@@ -984,6 +984,8 @@
     const left = Run.benched(run).length;
     render(); toast(left ? (left > 1 ? `${left} more heroes to place` : 'One more hero to place') : 'Everyone is on the board. Fight when ready!');
   }
+  // v126b (review #226, David: "Instead of deploy your units say something suggestive like position or reposition or you can move your units"): the ribbon over
+  // the board says "Drag heroes to reposition" (with a hand); with heroes on the bench it says "Place <name>!".
   // WHAT: THE DEPLOY SCREEN: the board where you drag your heroes, the formation line, the enemy roster, the Items button and the big Fight button.
   function deployHTML() {
     const gau = run.cur && run.cur.type === 'gauntlet';
@@ -996,7 +998,7 @@
         : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
       ${benchHTML(need)}
       ${run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
-      <div class="boardwrap"><canvas id="board"></canvas><div class="depban${need.length ? ' need' : ''}" aria-hidden="true">${I('shield')} ${need.length ? (need.length > 1 ? `Deploy ${need.length} new heroes!` : `Deploy ${esc(HEROES[need[0].key].name)}!`) : 'Deploy your units'}</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}</div>
+      <div class="boardwrap"><canvas id="board"></canvas><div class="depban${need.length ? ' need' : ''}" aria-hidden="true">${need.length ? I('shield') : '<span class="dbh">✋</span>'} ${need.length ? (need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`) : 'Drag heroes to reposition'}</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}</div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
       <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big${need.length ? ' locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}>${need.length ? `<span aria-hidden="true">🔒</span> ${need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`}` : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>

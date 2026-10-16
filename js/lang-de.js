@@ -15,7 +15,7 @@
       "One more hero to place": "Noch ein Held aufzustellen",
       "Everyone is on the board. Fight when ready!": "Alle stehen auf dem Feld. Kämpfe, wenn du bereit bist!",
       "Not placed": "Nicht aufgestellt",
-      "Deploy your units": "Stell deine Einheiten auf",
+      "Drag heroes to reposition": "Zieh Helden zum Umstellen",
       "A new hero waits here. Drag it onto your half of the board: the fight starts once it is placed.": "Hier wartet ein neuer Held. Zieh ihn auf deine Hälfte des Feldes: Der Kampf beginnt erst, wenn er steht.",
       "Your heroes keep their spots for the rest of the run. Drag one to move it.": "Deine Helden behalten ihren Platz bis zum Ende des Laufs. Zieh einen, um ihn umzustellen.",
       "Healing done": "Geheilt",
@@ -2495,8 +2495,8 @@
       "Slow hammer, rages when hit": "Langsamer Hammer, rastet aus"
     },
     p: [
-      ["Deploy {0} new heroes!", "Stell {0} neue Helden auf!"],
-      ["Deploy {0}!", "Stell {0} auf!"],
+      ["Place {0} new heroes!", "Stell {0} neue Helden auf!"],
+      ["Place {0}!", "Stell {0} auf!"],
       ["Place {0} heroes first", "Erst {0} Helden aufstellen"],
       ["Place {0} first", "Erst {0} aufstellen"],
       ["Place your {0} new heroes on the board first", "Stell erst deine {0} neuen Helden aufs Feld"],
