@@ -2,6 +2,7 @@
 
 **Only add one entry per version, at the TOP. DO NOT read this whole file every session** (it only serves to find out why something is the way it is: search with Grep for the request number, "#73", or for the version, "v61").
 Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
+- v126 (#218-#225): new heroes wait on a bench beside the board (Fight locked until placed, then they keep their hex) + tutorial tips; Gauntlet tower grows only when a champion is crowned; Bronze PvE help dropped, second half slightly harder; battle stutter fixed (hit flash, cached shading); 12 new splashes; every old hero name removed.
 - v125 (#217): item icons redrawn so each reads as what it is (hands, robes, hoods, hats, boot types, trinkets) with an outline around every glyph.
 - v124 (#216): short card links (/c/<id>) with the card picture as the link preview; Share sends the picture too.
 - v123 (#214 #215): healing done in fight results; Gauntlet brag card with Share / WhatsApp / Copy link and a card.html page.
