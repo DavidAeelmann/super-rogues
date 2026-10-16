@@ -21,18 +21,18 @@
   const seq = (dir, k, n) => Array.from({ length: n }, (_, i) => `art/${dir}/${k}-${i + 1}.webp`);
   // WHAT: the pictures that ship with the game: for each hero key, where its splash and animation frames are (art/<key>/...). Add a hero's art by adding its entry here and the files in art/.
   const OFFICIAL = {
-    // review #45 (David): Ulfrik (the "Red-Hand" art). His sheet had 5 rows: idle 5, walk 8, attack 7, a charge 6 and a
+    // review #45 (David): Ravager. His sheet had 5 rows: idle 5, walk 8, attack 7, a charge 6 and a
     // spin 7 frames; his ability (Crimson Spin) plays the charge and then the spin, so every frame is used
     thorne: { splash: 'art/ravager/splash.jpg', crop: { x: 0.517, y: 0.287, z: 1 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
-    // review #46 (David): Brutus. Idle 7, walk 8, attack 7 and ability (Ramming Charge) 6 frames; the lab had glued 3
+    // review #46 (David): Ironhorn. Idle 7, walk 8, attack 7 and ability (Ramming Charge) 6 frames; the lab had glued 3
     // attack frames (and 2 ability frames) together through the swoosh arcs, split here and fixed in cutSheet
     brakk: { splash: 'art/ironhorn/splash.jpg', crop: { x: 0.654, y: 0.329, z: 1.26 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
-    // review #47 (David): Melissa, sent as "Astrid" (the lab opened on the first hero of the list). Her sheet had no space
+    // review #47 (David): Stinger, sent as "Astral" (the lab opened on the first hero of the list). Her sheet had no space
     // between the frames; cut by the frame pitch here and in cutSheet. Idle 16, walk 15; the attack is her 5 quick
     // throws (drawn smaller, scaled up); the ability (Honey Hive) is the 7 hive-throw frames then the 12 swarm frames;
     // death 11 frames
     buzzwell: { splash: 'art/stinger/splash.jpg', crop: { x: 0.538, y: 0.314, z: 1 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
-    // review #48 (David): Kagero. A sheet of cards (every frame on a pink tile, with a title and row labels): cut per
+    // review #48 (David): Eclipse. A sheet of cards (every frame on a pink tile, with a title and row labels): cut per
     // card by cutCards, 8 frames in each of idle, walk, attack, ability (the smoke bomb flies, then the flash) and death
     kage: { splash: 'art/eclipse/splash.jpg', crop: { x: 0.509, y: 0.235, z: 1.2 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
     // review #59 (PC boy): splash art for 10 heroes (cards, banners and portraits only: their battle figures stay drawn).
@@ -60,6 +60,19 @@
     nyx: { splash: 'art/nyx/splash.jpg', crop: { x: 0.51, y: 0.21, z: 1.2 }, flip: false, scale: 1 },   // Nyx
     harlequin: { splash: 'art/rapture/splash.jpg', crop: { x: 0.514, y: 0.234, z: 1.2 }, flip: false, scale: 1 },   // Rapture
     deadshot: { splash: 'art/deadeye/splash.jpg', crop: { x: 0.432, y: 0.266, z: 1.2 }, flip: false, scale: 1 },   // Deadeye
+    // v126 (review #218, David: Art Lab batch 159): splash art for 12 more heroes; the crop centres each face for the portrait
+    ashwing: { splash: 'art/ashwing/splash.jpg', crop: { x: 0.395, y: 0.295, z: 1.1 }, flip: false, scale: 1 },   // Ashwing
+    bella: { splash: 'art/belladonna/splash.jpg', crop: { x: 0.43, y: 0.195, z: 1.2 }, flip: false, scale: 1 },   // Belladonna
+    chronos: { splash: 'art/chronos/splash.jpg', crop: { x: 0.52, y: 0.345, z: 1.2 }, flip: false, scale: 1 },   // Chronos
+    dragon: { splash: 'art/ember-wyrm/splash.jpg', crop: { x: 0.27, y: 0.42, z: 1.1 }, flip: false, scale: 1 },   // Ember Wyrm
+    duelist: { splash: 'art/duelist/splash.jpg', crop: { x: 0.55, y: 0.268, z: 1.2 }, flip: false, scale: 1 },   // Duelist
+    imhotep: { splash: 'art/ankh/splash.jpg', crop: { x: 0.51, y: 0.26, z: 1.2 }, flip: false, scale: 1 },   // Ankh
+    plasma: { splash: 'art/plasma-cannon/splash.jpg', crop: { x: 0.55, y: 0.3, z: 0.9 }, flip: false, scale: 1 },   // Plasma Cannon
+    prism: { splash: 'art/prism/splash.jpg', crop: { x: 0.5, y: 0.41, z: 1 }, flip: false, scale: 1 },   // Prism
+    rook: { splash: 'art/rivet/splash.jpg', crop: { x: 0.49, y: 0.26, z: 1.2 }, flip: false, scale: 1 },   // Rivet
+    smolder: { splash: 'art/smolder/splash.jpg', crop: { x: 0.5, y: 0.19, z: 1.2 }, flip: false, scale: 1 },   // Smolder
+    tom: { splash: 'art/tom/splash.jpg', crop: { x: 0.42, y: 0.265, z: 1.2 }, flip: false, scale: 1 },   // Tom
+    vey: { splash: 'art/mesmer/splash.jpg', crop: { x: 0.5, y: 0.27, z: 1.2 }, flip: false, scale: 1 },   // Mesmer
   };
   // WHAT: the pictures a player is testing on this device (browser memory). live = pictures currently mounted, subs = who listens for changes.
   const LOCAL = 'balance.artlab';

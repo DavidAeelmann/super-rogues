@@ -18,7 +18,7 @@
     glacia: H({ body: '#9fd8ef', trim: '#ffffff', robe: '#5aa9cc', head: 'tiara', hair: '#e6f7ff', weapon: 'staff', orb: '#bff4ff', skin: '#f0dcd0' }),
     // v113 (review #200, David: "Remove the custom spritesheet heroes and create for them the art, effects, svgs etc in line with the others"): Ironhorn, Ravager,
     // Stinger and Eclipse lost their picture sheets in battle and are drawn here after their official art
-    brakk: H({ skin: '#c8906a', body: '#6a5a48', trim: '#c9a26a', legs: '#3a3028', bulk: 1.5, head: 'beard', bald: true, hair: '#2a1a12', weapon: 'club', pauldrons: '#9a8258', cape: '#8a1f1a', gloves: '#6a5a48' }),   // Brutus: bald, bearded, bronze plate, red cloak, a stone hammer
+    brakk: H({ skin: '#c8906a', body: '#6a5a48', trim: '#c9a26a', legs: '#3a3028', bulk: 1.5, head: 'beard', bald: true, hair: '#2a1a12', weapon: 'club', pauldrons: '#9a8258', cape: '#8a1f1a', gloves: '#6a5a48' }),   // Ironhorn: bald, bearded, bronze plate, red cloak, a stone hammer
     lumen: H({ body: '#f2ead0', trim: '#ffcf5a', robe: '#e6dcb8', head: 'halo', hair: '#c9a26a', weapon: 'staff', orb: '#fff3a0' }),
     kestrel: H({ body: '#3f7a3a', trim: '#b5d68b', legs: '#2d3b22', bulk: 0.9, head: 'hood', hood: '#2f5a2b', weapon: 'bow', quiver: true, eyes: '#e8ffd0' }),
     morrow: H({ body: '#4a4f5c', trim: '#9aa3b5', robe: '#2c3038', head: 'skull', weapon: 'scythe', cape: '#1c1f26', eyes: '#6effc4' }),
@@ -26,7 +26,7 @@
     grimhook: H({ body: '#2f7f73', trim: '#e0c07a', legs: '#1f3b37', bulk: 1.2, head: 'tricorn', hat: '#1b2a28', skin: '#c89a7a', weapon: 'hook', cape: '#173c37' }),
     mirage: H({ body: '#c2447f', trim: '#ffd1e8', legs: '#4a1d33', bulk: 0.85, head: 'mask', hair: '#2a1020', weapon: 'rapier', cape: '#7a2450' }),
     rook: H({ body: '#b8792a', trim: '#6e6e6e', legs: '#4a3520', bulk: 1.05, head: 'goggles', hair: '#5a3a1a', weapon: 'wrench', pack: true }),
-    thorne: H({ skin: '#d9a07a', body: '#c88a66', trim: '#5a3a2a', legs: '#3a2a22', bulk: 1.3, head: 'spiky', hair: '#2a1a14', weapon: 'none', bare: true, gloves: '#c41e2a', paint: true, cape: '#7a1a18' }),   // Ulfrik: shirtless, wild hair, red hands
+    thorne: H({ skin: '#d9a07a', body: '#c88a66', trim: '#5a3a2a', legs: '#3a2a22', bulk: 1.3, head: 'spiky', hair: '#2a1a14', weapon: 'none', bare: true, gloves: '#c41e2a', paint: true, cape: '#7a1a18' }),   // Ravager: shirtless, wild hair, red hands
     seraph: H({ body: '#f2e4b8', trim: '#ffcf5a', legs: '#b8a878', bulk: 1.2, head: 'helm', plume: '#ffcf5a', pauldrons: '#fff3c8', weapon: 'sword', wings: '#fffaf0' }),
     nyx: H({ skin: '#9ab', body: '#1a2a36', trim: '#35c6d6', legs: '#101820', bulk: 0.9, head: 'hood', hood: '#0f1c26', eyes: '#35c6d6', weapon: 'sword', cape: '#123a44' }),
     bramble: { type: 'golem', body: '#6a5236', trim: '#9fe07a', leaves: '#4f8a2f' },
@@ -36,7 +36,7 @@
     hippolyta: H({ skin: '#c89a70', body: '#8a5a2a', trim: '#e8c070', legs: '#6a4a2a', head: 'bald', hair: '#3a2210', weapon: 'spear', cape: '#c98a3a', pauldrons: '#c9a26a' }),
     deadshot: H({ body: '#4a5a3a', trim: '#8a9a6a', legs: '#2a3a22', head: 'hood', hood: '#3a4a2a', eyes: '#ff5050', weapon: 'rifle', cape: '#34402a' }),
     vesper: H({ skin: '#ece4ee', body: '#1f1426', trim: '#c0284a', legs: '#140a18', head: 'bald', hair: '#101014', collar: '#7a1030', cape: '#5a0f1f', weapon: 'rapier' }),
-    kage: H({ skin: '#d9b08a', body: '#2a2228', trim: '#c43a3a', legs: '#1e1a20', bulk: 0.85, head: 'ninja', hood: '#1e1a20', hair: '#141014', weapon: 'daggers', sash: '#c43a3a' }),   // Kagero: black ninja, red sash and scarf
+    kage: H({ skin: '#d9b08a', body: '#2a2228', trim: '#c43a3a', legs: '#1e1a20', bulk: 0.85, head: 'ninja', hood: '#1e1a20', hair: '#141014', weapon: 'daggers', sash: '#c43a3a' }),   // Eclipse: black ninja, red sash and scarf
     rex: { type: 'beast', body: '#a0703a', trim: '#f0dcb0' },
     vey: H({ body: '#6a4ac8', trim: '#ffcf5a', robe: '#3e2470', head: 'hat', hat: '#2a1a55', hair: '#d0c0ff', weapon: 'orb', orb: '#c9a2ff' }),
     pip: H({ skin: '#f5f0ea', body: '#e0406a', trim: '#ffe066', legs: '#3a5ac4', head: 'clown', hair: '#ff8a3a', weapon: 'orb', orb: '#fff6e0', diamonds: '#ffe066' }),
@@ -49,7 +49,7 @@
     sprocket: H({ skin: '#d9a07a', body: '#3a7a5a', trim: '#e8c070', legs: '#2a3a2a', head: 'goggles', hair: '#e8e0c0', weapon: 'flask', orb: '#7ee08e', pack: true }),
     zephyr: H({ skin: '#d9a07a', body: '#e8e0c8', trim: '#3aa8a8', legs: '#c8c0a8', head: 'bald', weapon: 'none', sash: '#3aa8a8' }),
     // v30 (review #28): the heroes unlocked by the account level
-    buzzwell: H({ skin: '#f0c8a8', body: '#efe6d6', trim: '#e8c040', legs: '#e2d8c4', head: 'beehat', hat: '#f2ead8', hair: '#7a4a22', weapon: 'staff', orb: '#ffe066', gloves: '#e8c040', boot: '#6a4a2a' }),   // Melissa: a beekeeper's suit, veiled hat, yellow gloves
+    buzzwell: H({ skin: '#f0c8a8', body: '#efe6d6', trim: '#e8c040', legs: '#e2d8c4', head: 'beehat', hat: '#f2ead8', hair: '#7a4a22', weapon: 'staff', orb: '#ffe066', gloves: '#e8c040', boot: '#6a4a2a' }),   // Stinger: a beekeeper's suit, veiled hat, yellow gloves
     coralie: H({ skin: '#f0d0c0', body: '#2fb8d8', trim: '#fff3c4', robe: '#1a86a8', head: 'tiara', hair: '#1a5a8a', weapon: 'staff', orb: '#9ff0ff' }),
     stellan: H({ skin: '#e0b48a', body: '#3a3a8a', trim: '#ffe066', legs: '#24245a', head: 'hat', hat: '#2a2a6a', hair: '#e8e8ff', weapon: 'orb', orb: '#fff6a0', cape: '#5a4ab8', sparks: true }),
     bat: H({ skin: '#3a2a3a', body: '#2a1a2a', trim: '#8a1f3a', legs: '#1a101a', h: 0.5, bulk: 0.7, head: 'ears', weapon: 'none', wings: '#2a1a2a' }),
@@ -128,10 +128,13 @@
     const m = col.match(/[\d.]+/g); return m ? [+m[0], +m[1], +m[2]] : [128, 128, 128];
   }
   // WHAT: lightens (f > 0) or darkens (f < 0) a colour.
+  const SHADES = new Map();   // v126 (review #222): shade() is called thousands of times a frame with the same colours; the answers are remembered
   function shade(col, f) {
+    const key = col + '|' + f, hit = SHADES.get(key); if (hit) return hit;
+    if (SHADES.size > 4000) SHADES.clear();
     let [r, g, b] = rgbOf(col);
     if (f < 0) { r *= 1 + f; g *= 1 + f; b *= 1 + f; } else { r += (255 - r) * f; g += (255 - g) * f; b += (255 - b) * f; }
-    return 'rgb(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ')';
+    const out = 'rgb(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ')'; SHADES.set(key, out); return out;
   }
   const isColor = col => typeof col === 'string' && (col[0] === '#' || col.startsWith('rgb'));
   function seg(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
@@ -728,7 +731,7 @@
   }
 
   // ------------------------------------------------------------------ other rigs
-  // WHAT: OTHER RIGS. beast = four legs and a snout (wolves, bears), bomb = round bomber, golem = big stone body, serpent = snake, wraith = floating ghost, turret = Sprocket's turret, tower = the Citadel, phoenix = Ashwing, egg = Ashwing's egg.
+  // WHAT: OTHER RIGS. beast = four legs and a snout (wolves, bears), bomb = round bomber, golem = big stone body, serpent = snake, wraith = floating ghost, turret = Vial's turret, tower = the Citadel, phoenix = Ashwing, egg = Ashwing's egg.
   function beast(c, m, S, p) {
     const s = S * 0.9, run = p.walk != null ? p.walk * TAU : p.t * 1.5, bob = p.walk != null ? Math.abs(Math.sin(run)) * s * 0.05 : 0;
     const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.2 : 0, by = -s * 0.45 - bob;

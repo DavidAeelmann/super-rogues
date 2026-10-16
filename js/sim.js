@@ -594,7 +594,7 @@
     u.moved = false;
     if (u.fl.has('sniper')) mult *= 1 + 0.08 * Hx.dist(u, tgt);
     if (u.fl.has('plasma')) mult *= plasmaMul(u, Hx.dist(u, tgt));   // v62h (review #98)
-    if (u.blindHits > 0) { u.blindHits--; cc(W, tgt, 'blindU', 1); }   // v105: Kage's Smoke Trail
+    if (u.blindHits > 0) { u.blindHits--; cc(W, tgt, 'blindU', 1); }   // v105: Eclipse's Smoke Trail
     if (u.ab && u.ab.paradox && tgt.st.slowU > W.t) u.paradoxU = W.t + sec(1.5);   // v121: Chronos' Paradox
     if (u.ab && u.ab.decel) { const n = Math.min(u.ab.decelCap || 5, (tgt.st.decelU > W.t ? tgt.decelN || 0 : 0) + 1); tgt.decelN = n; tgt.st.decelU = W.t + sec(3); slow(W, tgt, n * u.ab.decel, 3); }   // v121: Decelerate
     if (u.ab && u.ab.tox) addTox(W, u, tgt, 1);   // v121: Belladonna's Virulence
@@ -964,7 +964,7 @@
     u.busy = W.t + 2 * ab.shots + 2; return true;
   };
   // --- v12 heroes (review #11)
-  // WHAT: shoves enemy t up to n hexes away from src (Nerina's wave and other knock-backs).
+  // WHAT: shoves enemy t up to n hexes away from src (Maelstrom's wave and other knock-backs).
   function push(W, src, t, n) {
     if (t.dead || n <= 0 || t.anchor || t.plant) return;
     let c = t.c, r = t.r, steps = 0;
@@ -1211,7 +1211,7 @@
   // v30 (review #28): the three heroes unlocked by the account level
   // WHAT: the ability "Honey Hive" of Stinger (Beekeeper). Drops a honey hive on the densest enemy group: for 4s the bees sting everyone within 1 hex for 30% AP magic damage per second, and the weakest ally eats honey, healing 120% AP.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
-  A.hive = (W, u) => {   // Melissa: a hive of stinging bees (AP damage over time) and honey for the weakest ally
+  A.hive = (W, u) => {   // Stinger: a hive of stinging bees (AP damage over time) and honey for the weakest ally
     const ab = u.ab, t = bestCluster(W, u, ab.radius); if (!t) return false;
     const drop = h => {
       W.zones.push({ c: h.c, r: h.r, rad: ab.radius, until: W.t + sec(ab.dur), dps: ab.dps * apOf(u), side: u.side, src: u.id, color: '#ffc21a' });
@@ -1228,7 +1228,7 @@
   };
   // WHAT: the ability "Tidal Wave" of Maelstrom (Tidecaller). A wave crashes over the densest enemy group: 75% AP magic damage within 1 hex, pushes them 1 hex back and slows them 30% for 2s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
-  A.wave = (W, u) => {   // Nerina: a wave that hits, pushes back and slows a group
+  A.wave = (W, u) => {   // Maelstrom: a wave that hits, pushes back and slows a group
     const ab = u.ab, t = bestCluster(W, u, ab.radius); if (!t) return false;
     const hit = mult => {
       fxRing(W, t.c, t.r, ab.radius, '#2fb8d8', 14);
@@ -1246,7 +1246,7 @@
   };
   // WHAT: the ability "Falling Star" of Astral (Stargazer). Calls a star onto the densest enemy group; 0.8s later it crashes: 120% AD + 60% AP magic damage in 1 hex and a 1.2s stun.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
-  A.starfall = (W, u) => {   // Astrid: a star that lands after a short delay (AD + AP) and stuns
+  A.starfall = (W, u) => {   // Astral: a star that lands after a short delay (AD + AP) and stuns
     const ab = u.ab, t = ab.strongest ? (enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => b.maxHp - a.maxHp)[0] || bestCluster(W, u, ab.radius)) : bestCluster(W, u, ab.radius); if (!t) return false;   // v105: Lucky Star
     const c = t.c, r = t.r, delay = Math.max(0.3, ab.delay), cm = ab.constel ? 1 + Math.min(4, u.starN || 0) * ab.constel : 1; u.starN = (u.starN || 0) + 1;   // v105: Constellation
     fxRing(W, c, r, ab.radius, '#b8a8ff', sec(delay));

@@ -748,7 +748,7 @@
   function partyHTML() {
     const heroes = run.heroes.map(h => {
       const next = h.lvl < CFG.maxLevel ? CFG.xpLevels[h.lvl + 1] : null, prev = CFG.xpLevels[h.lvl] || 0;
-      return `<button class="pm" data-act="team">${img(h.key, 38, 'por')}<span class="pmb"><span class="pmn"><b>${esc(HEROES[h.key].name)}</b><span class="lv">Lv ${h.lvl}</span></span>
+      return `<button class="pm${h.bench ? ' benched' : ''}" data-act="team">${img(h.key, 38, 'por')}<span class="pmb"><span class="pmn"><b>${esc(HEROES[h.key].name)}</b><span class="lv">Lv ${h.lvl}</span>${h.bench ? '<span class="pmbench">Not placed</span>' : ''}</span>
         <span class="xpbar"><i style="width:${next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100}%"></i></span>
         <span class="pmi">${h.items.map(id => `<img class="ico xs" src="${B.Icons.item(id, 20)}" alt="">`).join('') || '<i class="noitem" title="No items yet"></i>'}</span></span></button>`;
     }).join('');
@@ -852,7 +852,7 @@
   const coachSeen = () => { const s = store.get('balance.coach', []); return Array.isArray(s) ? s : []; };
   // WHAT: the coach tip to show on this deploy screen (null = none): the first runs only, never during the intro or the first fight of the first run (the tutorial bubbles talk there).
   function coachTip() {
-    if (!run || run.phase !== 'deploy' || introStage() || (+store.get('balance.starts', 0) || 0) > 6) return null;
+    if (!run || run.phase !== 'deploy' || introStage() || (+store.get('balance.starts', 0) || 0) > 6 || Run.benched(run).length) return null;
     if ((+store.get('balance.starts', 0) || 0) <= 1 && run.step < 1) return null;
     if (guideOn() && ['t_dep1', 't_dep2', 't_foes', 't_fight'].some(id => !guideSeen().includes(id))) return null;   // one bubble at a time: the tutorial's deploy tips first
     if (ui.coachId && !coachSeen().includes(ui.coachId)) return COACH.find(t => t.id === ui.coachId) || null;
@@ -881,7 +881,8 @@
   // first run and ends with that run's end screens; TUT_V is its version: raise it when the tips change and everyone sees the new tutorial once.
   // Menu -> Tutorial turns it on again (from the start) or off.
   // WHAT: the tutorial tips, in the order they come: id, scr ('title' or the run), when it shows, what it points at (a selector), the text.
-  const TUT_V = 3;
+  // v126 (review #225, David: "Change the tutorial accordingly"): two tips for the bench of review #224 (t_bench, t_keep); TUT_V 4 shows players only these new ones.
+  const TUT_V = 4;
   const GUIDE = [
     { id: 't_play', scr: 'title', when: () => true, at: '.title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start a journey.' },
     { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'The menu: how to play, sound, language and this tutorial.' },
@@ -891,10 +892,12 @@
     { id: 't_path', when: () => run.phase === 'map' && run.result !== 'clear', at: '[data-act=choose]', text: 'Pick today\'s stop. Harder fights pay more gold.' },
     { id: 't_ward', when: () => run.phase === 'map' && run.step >= 1, at: '#top .lives', text: 'Your Ward. Lose a fight and it breaks: that day starts over. Lose again and the run ends.' },
     { id: 't_gaunt', when: () => run.phase === 'map' && run.step >= 2 && run.result !== 'clear', at: '.rn.final', text: 'After the last boss: the Gauntlet, a tower of other players\' teams.' },
+    { id: 't_bench', when: () => run.phase === 'deploy' && !introStage() && Run.benched(run).length > 0, at: '#bench', text: 'A new hero waits here. Drag it onto your half of the board: the fight starts once it is placed.' },
     { id: 't_dep1', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Before each fight, place your heroes on your half of the board.' },
     { id: 't_dep2', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Tanks in front take the hits. Ranged heroes and healers stay behind them.' },
     { id: 't_foes', when: () => run.phase === 'deploy' && !introStage(), at: '.foes', text: 'The enemies. Tap any unit on the board to see what it does.' },
-    { id: 't_fight', when: () => run.phase === 'deploy' && !introStage(), at: '[data-act=fight]', text: 'Ready? Fight! Your heroes act on their own.' },
+    { id: 't_fight', when: () => run.phase === 'deploy' && !introStage() && !Run.benched(run).length, at: '[data-act=fight]', text: 'Ready? Fight! Your heroes act on their own.' },
+    { id: 't_keep', when: () => run.phase === 'deploy' && !introStage() && run.heroes.length > 1 && !Run.benched(run).length, at: '#board', text: 'Your heroes keep their spots for the rest of the run. Drag one to move it.' },
     { id: 'gear', when: () => (run.phase === 'map' || run.phase === 'shop') && run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in your bag! Open Team to put it on a hero.' },
     { id: 'shop', when: () => run.phase === 'shop', at: '[data-act=reroll]', text: 'Buy with your gold. "New" swaps the shelf for a few coins.' },
     { id: 't_rshop', when: () => run.phase === 'shop' && run.cur && run.cur.kind === 'relicShop', at: '.shop, .stock', text: 'Powers work for every hero, for the rest of the run.' },
@@ -954,21 +957,49 @@
     }, 650);
   }
   function guideDisarm() { if (guideDisarm.h) { document.removeEventListener('pointerdown', guideDisarm.h, true); guideDisarm.h = null; } }
+  // v126 (review #224, David: "Make it so when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time. Fight doesnt
+  // start until you do, include plenty of indicators for that. But after first deployment the hex persists until changed until end of run"): a hero that joined in the
+  // middle of the run waits on the BENCH (Run.benched) until the player puts it on the board. The bench sits beside the board (above it on phones) with a NEW badge
+  // and a bouncing arrow; the banner over the board names who is missing; the free hexes of your half glow; the Fight button is locked (a tap says why and shakes the
+  // bench). Drag a hero from the bench onto a hex, or tap it and then tap a hex. Once placed it keeps its hex for the rest of the run.
+  // WHAT: the bench of heroes still to place ('' when there is none).
+  function benchHTML(need) {
+    if (!need.length) return '';
+    const sel = need.some(h => h.uid === ui.selUid);
+    return `<div class="bench" id="bench"><div class="bnh"><span class="bnew">NEW</span><b>${need.length > 1 ? 'Deploy your new heroes' : 'Deploy your new hero'}</b><span class="bnarrow" aria-hidden="true"></span></div>
+      <div class="bnl">${need.map(h => `<button class="bnc${h.uid === ui.selUid ? ' on' : ''}" data-act="bench-pick" data-arg="${h.uid}" data-bench="${h.uid}" aria-label="${esc(HEROES[h.key].name)}">${img(h.key, 44)}<span class="bnb"><b>${esc(HEROES[h.key].name)}</b><span class="dim small">${esc(HEROES[h.key].role)} · ${HEROES[h.key].range <= 1 ? 'Front row' : 'Back row'}</span></span></button>`).join('')}</div>
+      <p class="bnt small">${sel ? 'Now tap a glowing hex on your half.' : 'Drag onto your half of the board, or tap it and then a hex.'}</p></div>`;
+  }
+  // WHAT: Fight was pressed with heroes still on the bench: say who, shake the bench.
+  function benchNudge(need) {
+    sfx('deny'); toast(need.length > 1 ? `Place your ${need.length} new heroes on the board first` : `Drag ${HEROES[need[0].key].name} onto your half of the board first`);
+    const b = $('#bench'); if (b) { b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge'); if (b.scrollIntoView) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  }
+  // WHAT: a benched hero was put on hex h: dust, thud, and the screen again (the bench, the banner and the Fight button change).
+  function benchPlaced(uid, h) {
+    Run.setPos(run, uid, h.c, h.r); ui.selUid = 0;
+    const x = run.heroes.find(y => y.uid === uid); if (!x || x.bench) { sfx('deny'); render(); return; }
+    save(); tutMoved(); sfx('place');
+    if (B.Juice && view) { const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); }
+    const left = Run.benched(run).length;
+    render(); toast(left ? (left > 1 ? `${left} more heroes to place` : 'One more hero to place') : 'Everyone is on the board. Fight when ready!');
+  }
   // WHAT: THE DEPLOY SCREEN: the board where you drag your heroes, the formation line, the enemy roster, the Items button and the big Fight button.
   function deployHTML() {
     const gau = run.cur && run.cur.type === 'gauntlet';
     const f = run.cur;
-    const map = Run.mapOf(run);
+    const map = Run.mapOf(run), need = Run.benched(run);
     if (introStage()) return `<section class="deploy intro"><div class="boardwrap"><canvas id="board"></canvas>${introStage() === 'move' ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Drag your hero to move it ⇉</div>' : ''}</div></section>`;   // v97 (review #179): only the battlefield
     return `<section class="deploy">
       ${speedPills(false, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f.diff === 'boss' ? I('skull') + ' Boss fight' : I('swords') + ' ' + B.DIFF[f.diff].name + ' fight'}</div>
       ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
         : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
+      ${benchHTML(need)}
       ${run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
-      <div class="boardwrap"><canvas id="board"></canvas><div class="depban" aria-hidden="true">${I('shield')} Deploy your units</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}</div>
+      <div class="boardwrap"><canvas id="board"></canvas><div class="depban${need.length ? ' need' : ''}" aria-hidden="true">${I('shield')} ${need.length ? (need.length > 1 ? `Deploy ${need.length} new heroes!` : `Deploy ${esc(HEROES[need[0].key].name)}!`) : 'Deploy your units'}</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}</div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
-      <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big" data-act="fight">${gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>
+      <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big${need.length ? ' locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}>${need.length ? `<span aria-hidden="true">🔒</span> ${need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`}` : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>
       <div class="dparty">${partyHTML()}</div>
     </section>`;
   }
@@ -1170,7 +1201,10 @@
   const duelName = g => !g ? 'Duel' : g.kind === 'final' ? 'Final fight' : g.kind === 'tower' ? 'Gauntlet · Floor ' + ((run && run.tower && run.tower.floor) || 1) : 'Duel';
   // WHAT: the tower drawing: floors stacked up to the crown; cleared floors lit, the current one glowing.
   function towerArt(T) {
-    const top = Math.max(3, (T.peak || 1), (T.floor || 1) + 1), shown = Math.min(top, 7), from = Math.max(1, Math.min((T.floor || 1) - 2, top - shown + 1));
+    // v126 (review #221, David: "The gauntlet is bugged. Its increasing a level everytime the champion defends. But it should only increase whenever a new champion
+    // is crowned"): the tower had one floor more than the floor you stand on, so losing to the champion drew a floor above the champion. Now it has exactly the
+    // server's floors (the top one = the champion); a crowned climb ends at its own floor, under the crown. Before the height is known (the gate) it draws 3.
+    const top = T.champion ? Math.max(1, T.wins | 0) : Math.max(T.peak ? 2 : 3, T.peak || 0, T.floor || 1), shown = Math.min(top, 7), from = Math.max(1, Math.min((T.floor || 1) - 2, top - shown + 1));
     let fl = ''; for (let k = from + shown - 1; k >= from; k--) fl += `<span class="tfl ${k < (T.floor || 1) || (T.status === 'over' && T.champion && k <= T.wins) ? 'done' : k === (T.floor || 1) && T.status !== 'over' ? 'cur' : k === (T.floor || 1) && !T.champion ? 'fell' : ''}" style="--k:${k - from}"><b>${k}</b></span>`;
     return `<div class="towerart ${T.champion ? 'crowned' : ''}" aria-hidden="true"><span class="tcrown">👑</span><div class="tfloors">${fl}</div><span class="tdoor"></span><span class="tglow"></span></div>`;
   }
@@ -1226,7 +1260,8 @@
   function towerAnswer(r, res) {
     const T = run.tower; if (!T) return;
     if (r.lg) { T.lp = (T.lp | 0) + (r.lg.delta | 0); T.lgLast = r.lg; T.crowns = (T.crowns | 0) + (r.lg.crowns | 0); }
-    if (r.over) { T.status = 'over'; T.champion = !!r.champion; T.next = null; if (res) res.champion = !!r.champion; }
+    if (r.peak != null) T.peak = r.peak;   // v126 (review #221): the tower's real height (it grows only when someone is crowned)
+    if (r.over) { T.status = 'over'; T.champion = !!r.champion; if (r.wins != null) T.wins = r.wins | 0; T.next = null; if (res) res.champion = !!r.champion; }
     else if (r.opponent) { T.floor = r.floor || (T.floor + 1); T.next = r.opponent; }
   }
   // v63 (review #118): a won duel lets you steal one of three things from the team you beat (a hero, an item, a power)
@@ -1493,7 +1528,7 @@
   // WHAT: builds the simulation of the current fight (normal or Gauntlet) for the preview or the real battle.
   function worldFor(preview) {
     const t = run.cur && run.cur.type;
-    return t === 'gauntlet' ? Run.gauntletWorld(run, preview, { takeMul: B.PVP_TAKE[Math.max(0, Math.min(B.PVP_TAKE.length - 1, acct.league | 0))] }) : Run.fightWorld(run, preview, { takeMul: (acct.league | 0) === 0 ? 0.8 : 1 });   // review #53 (David)
+    return t === 'gauntlet' ? Run.gauntletWorld(run, preview, { takeMul: B.PVP_TAKE[Math.max(0, Math.min(B.PVP_TAKE.length - 1, acct.league | 0))] }) : Run.fightWorld(run, preview);   // v126 (review #223, David: "Drop the 20% PVE protection for bronze"): every league takes full PvE damage (review #53 had Bronze take 20% less)
   }
   // review #13 (David: "randomly adjusted to 75% of my screen ... adapt to the screen size and device"):
   // the board takes the width AND the height left on screen, on phones (portrait/landscape), tablets and desktops.
@@ -1527,7 +1562,43 @@
     cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', () => { ui.drag = null; drawPreview(); });
   }
   // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
-  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid }, introDraw(), coachDraw(), extra || {})); }
+  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid }, introDraw(), coachDraw(), benchDraw(), extra || {})); }
+  // v126 (review #224): while a hero waits on the bench, the free hexes of your half glow (where it can go)
+  function benchDraw() {
+    if (!run || run.phase !== 'deploy' || introStage() || !Run.benched(run).length) return {};
+    const taken = new Set(run.heroes.filter(h => h.pos && !h.bench).map(h => h.pos.c + ',' + h.pos.r));
+    return { slots: B.Hex.all().filter(h => h.r >= 4 && !Run.blockedAt(run, h.c, h.r) && !taken.has(h.c + ',' + h.r)) };
+  }
+  const benchSel = () => !!(run && ui.selUid && run.heroes.some(h => h.uid === ui.selUid && h.bench));
+  // v126 (review #224): dragging a hero from the bench (pointer events on the page: a touch stays with the button it started on). Over the board the hex under
+  // the finger lights up; let go there and the hero is placed. A short tap is a pick (ACT 'bench-pick').
+  // WHAT: pointer down / move / up of a drag from the bench.
+  function benchDown(e) {
+    const el = e.target.closest && e.target.closest('[data-bench]'); if (!el || battle || !run || run.phase !== 'deploy' || !view) return;
+    const h = run.heroes.find(x => x.uid === +el.dataset.bench); if (!h || !h.bench) return;
+    ui.bdrag = { uid: h.uid, key: h.key, x0: e.clientX, y0: e.clientY, moved: false };
+  }
+  function benchMove(e) {
+    const d = ui.bdrag; if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 8) return;
+    if (!d.moved) { d.moved = true; ui.selUid = 0; d.g = document.createElement('div'); d.g.className = 'benchghost'; d.g.innerHTML = img(d.key, 64); document.body.appendChild(d.g); }
+    if (e.cancelable) e.preventDefault();
+    d.g.style.left = e.clientX + 'px'; d.g.style.top = e.clientY + 'px';
+    const { h } = evHex(e), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r);
+    d.g.classList.toggle('ok', !!ok); drawPreview({ drop: ok ? h : null });
+  }
+  function benchUp(e) {
+    const d = ui.bdrag; if (!d) return; ui.bdrag = null;
+    if (d.g) d.g.remove();
+    if (!d.moved) return;
+    ui.bdragAt = performance.now();
+    const { h } = e.type === 'pointerup' && view ? evHex(e) : {};
+    if (h && h.r >= 4 && !onTerrain(h)) benchPlaced(d.uid, h); else drawPreview();
+  }
+  document.addEventListener('pointerdown', benchDown);
+  document.addEventListener('pointermove', benchMove, { passive: false });
+  document.addEventListener('pointerup', benchUp);
+  document.addEventListener('pointercancel', benchUp);
   // ---- v97 (review #179, David: "The very first time you press play, and choose a hero, cut to the battlefield and that hero drops in. Then after he is
   // moved, per indicated, an enemy weak unit comes in from the other side, the hero gets an exclamation mark in a speech bubble, and fight starts
   // seamlessly. Thats the first fight"). run.onb.stage: 'drop' (the hero falls onto the board) -> 'move' (the hint; the enemy is hidden) -> 'enter'
@@ -1574,7 +1645,7 @@
   }
   // v62b: the deploy board only breathes (idle poses, pond ripples), so it repaints about 30 times a second instead of every screen frame
   let idleAt = 0;
-  (function idle(now) { if (now - idleAt >= 30 && screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag && !document.hidden) { idleAt = now; drawPreview(); } requestAnimationFrame(idle); })(0);
+  (function idle(now) { if (now - idleAt >= 30 && screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag && !ui.bdrag && !document.hidden) { idleAt = now; drawPreview(); } requestAnimationFrame(idle); })(0);
   // WHAT: converts a pointer event into a board hex (c, r).
   function evHex(e) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y) }; }
   function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
@@ -1591,7 +1662,7 @@
     if (u || tk) { ui.info = u ? u.id : tk; const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } }
     if (battle || !h) return;
     if (introStage() && introStage() !== 'move') return;   // v97: the intro lets the hero move once
-    if (u && u.side === 0 && u.uid) { ui.drag = { uid: u.uid, from: h, key: u.key }; view.canvas.setPointerCapture(e.pointerId); }
+    if (u && u.side === 0 && u.uid && !benchSel()) { ui.drag = { uid: u.uid, from: h, key: u.key }; view.canvas.setPointerCapture(e.pointerId); }   // v126: with a bench hero picked, a tap places it
   }
   function onMove(e) { if (!ui.drag || battle) return; const { x, y, h } = evHex(e), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r), o = ok ? unitAt(preview, h) : null;
     drawPreview({ drop: ok ? h : null, dragGhost: { x, y, key: ui.drag.key }, swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null }); }
@@ -1605,6 +1676,7 @@
     const landed = () => { sfx('place'); if (!B.Juice) return; const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); };
     if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(run, d.uid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); } }
     else if (d) { ui.selUid = ui.selUid === d.uid ? 0 : d.uid; if (ui.selUid) sfx('tap'); }
+    else if (ui.selUid && h && h.r >= 4 && benchSel()) { if (!onTerrain(h)) benchPlaced(ui.selUid, h); return; }   // v126 (review #224): a picked bench hero goes here
     else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); }
     preview = worldFor(true);
     const fl = $('#formline'); if (fl) fl.innerHTML = formHTML(preview);
@@ -1616,6 +1688,7 @@
   // ------------------------------------------------------------------ battle
   // WHAT: the Fight! button: builds the real simulation, shows what Smolder ate, switches to the battle screen and starts the loop.
   function startBattle() {
+    if (!introStage() && Run.benched(run).length) { benchNudge(Run.benched(run)); return; }   // v126 (review #224): never with heroes on the bench
     const gau = run.cur && run.cur.type === 'gauntlet';
     if (gau && run.g && run.g.kind === 'final') run.guideFinal = true;   // v87 (review #166): the guide ends after this run
     const W = worldFor(false);
@@ -2265,7 +2338,7 @@
     <ol class="howbasics">
       <li>${I('user')}<span><b>Pick a hero and a power.</b> Two more heroes join you for free after your first days.</span></li>
       <li>${I('map')}<span><b>Every day, pick a path:</b> a fight, a shop or an event.</span></li>
-      <li>${I('shield')}<span><b>Before a fight, drag your heroes onto the board.</b> Tanks in front, ranged behind.</span></li>
+      <li>${I('shield')}<span><b>Before a fight, drag your heroes onto the board.</b> Tanks in front, ranged behind. A new hero waits beside the board until you place it, then keeps its spot.</span></li>
       <li>${I('swords')}<span><b>The fight plays by itself.</b> Win for gold and XP. Heroes level up and use their power when the blue bar is full.</span></li>
       <li>${I('skull')}<span><b>You carry a Ward.</b> Beat 2 bosses to complete the run, then shop and climb the Gauntlet against other players' teams. Lose a fight and the Ward breaks: that day starts over. Lose again with it broken and the run ends.</span></li>
     </ol>
@@ -2391,7 +2464,9 @@
     // A power was picked at a level-up.
     spec: i => { Run.chooseSpec(run, +i); save(); render(); },
     // The big Fight! button on the deploy screen.
-    fight: () => { coachDone(); startBattle(); },
+    fight: () => { const need = run ? Run.benched(run) : []; if (need.length && !introStage()) { benchNudge(need); return; } sfx('go'); coachDone(); startBattle(); },   // v126 (review #224): locked until the bench is empty
+    // v126 (review #224): a tap on a hero of the bench picks it (then a tap on a hex places it); a drag is handled by the bench listeners (benchDown)
+    'bench-pick': uid => { if (performance.now() - (ui.bdragAt || 0) < 400) return; uid = +uid; ui.selUid = ui.selUid === uid ? 0 : uid; render(); },
     // Battle speed 1x / 2x / 4x (4x is a Crown Shop perk). skip plays the fight at once (also a perk).
     speed: s => { if (+s === 4 && !hasPerk('speed4')) { toast(`4× speed is a Crown Shop unlock (👑 ${B.SHOP_ITEM.speed4.price}). 2× is free.`); return; } ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
     skip: () => { if (battle && battle.gau) { toast('Duels and the final fight cannot be skipped.'); return; } if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; } skipBattle(); },
@@ -2545,7 +2620,7 @@
 
   // v42: every tap has a sound; these actions have their own (null = the action plays it, it depends on the outcome)
   // WHAT: which sound each button makes (null = silent).
-  const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: 'go', 'start-go': 'go', choose: 'pick', 'start-pick': 'pick', 'recruit-pick': 'pick', 'over-next': 'pick', 'start-relic': 'pick', 'start-next': 'pick', 'start-back': 'back',
+  const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: null, 'start-go': 'go', choose: 'pick', 'start-pick': 'pick', 'recruit-pick': 'pick', 'over-next': 'pick', 'start-relic': 'pick', 'start-next': 'pick', 'start-back': 'back',
     spec: 'unlock', event: 'pick', 'event-target': 'pick', equip: 'pick', bag: 'pick', unequip: 'back', close: 'back', 'event-back': 'back', sell: 'coin', 'result-ok': 'pick' };
   document.addEventListener('click', e => {
     if (e.target.closest('#notice')) return;
@@ -2615,5 +2690,5 @@
   render();
   bootNotice();
   // test hook (headless Chrome tests drive the game through this)
-  window.__bal = { showVs, closeVs, get ui() { return ui; }, get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
+  window.__bal = { deployBench: () => { if (!run) return 0; const n = Run.benched(run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(run, h); } if (n.length) { save(); render(); } return n.length; }, showVs, closeVs, get ui() { return ui; }, get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
 })();

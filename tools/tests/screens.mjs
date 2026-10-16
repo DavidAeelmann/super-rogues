@@ -220,6 +220,28 @@ while (steps++ < 160) {
   }
   if (st.phase === 'deploy' && !st.battle) {
     fightsSeen++;
+    // v126 (review #224): a hero that joined mid-run waits on the bench; the fight is locked until it is placed (by dragging it onto the board)
+    if (await ev(`B.Run.benched(__bal.run).length > 0`)) {
+      if (!globalThis.__sawBench) {
+        globalThis.__sawBench = 1;
+        ok(await ev(`!!document.querySelector('#bench .bnc') && document.querySelector('[data-act=fight]').classList.contains('locked') && document.querySelector('.depban').classList.contains('need') && !!document.querySelector('.pm.benched, #bench')`), 'v126 (review #224): a new hero waits on the bench beside the board; the banner names it and the Fight button is locked');
+        await ev(`__bal.closeVs()`); await sleep(350); await shot('04c-bench'); await noHScroll('deploy with the bench');
+        await click('[data-act=fight]'); await sleep(300);
+        ok(await ev(`!__bal.battle && __bal.run.phase === 'deploy' && !!document.querySelector('#bench')`), 'v126: Fight does not start while a hero is on the bench');
+        const placed = await ev(`(async () => {
+          const card = document.querySelector('#bench .bnc'), uid = +card.dataset.bench, cr = card.getBoundingClientRect(), run = __bal.run;
+          const taken = new Set(run.heroes.filter(h => h.pos).map(h => h.pos.c + ',' + h.pos.r)), tgt = B.Hex.all().find(h => h.r === 7 && !taken.has(h.c + ',' + h.r) && !B.Run.blockedAt(run, h.c, h.r));
+          const a = { x: cr.left + 20, y: cr.top + 20 }, b = __bal.hexScreen(tgt.c, tgt.r);
+          const fire = (type, p) => card.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, clientX: p.x, clientY: p.y, pointerId: 9, pointerType: 'touch' }));
+          fire('pointerdown', a); fire('pointermove', { x: a.x + 25, y: a.y + 25 }); fire('pointermove', b); fire('pointerup', b);
+          await new Promise(r => setTimeout(r, 300));
+          const h = run.heroes.find(x => x.uid === uid);
+          return !!(h && !h.bench && h.pos.c === tgt.c && h.pos.r === tgt.r); })()`);
+        ok(placed, 'v126: dragging the hero from the bench onto a hex places it');
+      }
+      await ev(`__bal.deployBench()`); await sleep(150);
+      ok(await ev(`!document.querySelector('#bench') && !document.querySelector('[data-act=fight]').classList.contains('locked')`), 'v126: with the bench empty the Fight button is unlocked');
+    }
     if (fightsSeen === 2) {   // v118 (review #205): the positioning coach: a tip over the board with its hexes glowing; Got it puts it away for good
       const keep = await ev(`localStorage.getItem('balance.starts')`);
       await ev(`__bal.closeVs && __bal.closeVs(); localStorage.setItem('balance.guide3', JSON.stringify(JSON.parse(localStorage.getItem('balance.guide3') || '[]').concat(['t_dep1', 't_dep2', 't_foes', 't_fight']))); localStorage.setItem('balance.starts', '2'); localStorage.removeItem('balance.coach'); __bal.ui.coachId = null; __bal.render()`); await sleep(900);
@@ -471,7 +493,7 @@ if (REMOTE) {
 } else {
   await ev(`__bal.ACT.suggest()`); await sleep(600);
   const addNote = t => ev(`(() => { const f = document.querySelector('form[data-form=draft]'); f.text.value = ${JSON.stringify(t)}; f.querySelector('button').click(); })()`);
-  await addNote('Please add a hero that <b>reflects</b> spells'); await addNote('Make the ghosts smarter'); await addNote('Pyra burn lasts 1s longer');
+  await addNote('Please add a hero that <b>reflects</b> spells'); await addNote('Make the ghosts smarter'); await addNote('Feuer burn lasts 1s longer');
   await sleep(150);
   ok(await ev(`document.querySelectorAll('#drafts li').length === 3 && document.querySelector('[data-act=send-review]').textContent.includes('Send 3 changes')`), 'three notes wait in the list before sending');
   await ev(`document.querySelectorAll('[data-act=draft-del]')[2].click()`);
@@ -568,13 +590,13 @@ if (!REMOTE) {
   await shot('16-art-lab');
   await click('[data-act=al-keep]'); await sleep(200);
   ok(await ev(`JSON.parse(localStorage.getItem('balance.artlab')).rook.anims.idle.length === 5`), '"Use in my game" keeps it on this device');
-  await ev(`document.querySelector('#alName').value = 'David'; document.querySelector('#alNote').value = 'Rook with my art'`);
+  await ev(`document.querySelector('#alName').value = 'David'; document.querySelector('#alNote').value = 'Rivet with my art'`);
   await click('[data-act=al-send]'); await sleep(900);
   ok(await ev(`/Sent! Review #[0-9]+/.test(document.querySelector('#toast').textContent)`), 'the pictures are sent for review with a note');
   // review #50: splash art for several heroes at once, matched by file name (or picked in the list)
   const sp = await ev(`(() => { const c = document.createElement('canvas'); c.width = 600; c.height = 400; const x = c.getContext('2d'); x.fillStyle = '#48c'; x.fillRect(0, 0, 600, 400); x.fillStyle = '#fc8'; x.beginPath(); x.arc(300, 120, 60, 0, 7); x.fill(); return c.toDataURL('image/png'); })()`);
-  for (const f of ['feuer.png', 'Snezhana_splash.png', 'mystery.png']) fs.writeFileSync(OUT + f, Buffer.from(sp.split(',')[1], 'base64'));
-  { const d = await send('DOM.getDocument', { depth: 0 }); const n = await send('DOM.querySelector', { nodeId: d.result.root.nodeId, selector: '#alBulk' }); await send('DOM.setFileInputFiles', { nodeId: n.result.nodeId, files: ['feuer.png', 'Snezhana_splash.png', 'mystery.png'].map(f => OUT + f) }); }
+  for (const f of ['feuer.png', 'Frostbane_splash.png', 'mystery.png']) fs.writeFileSync(OUT + f, Buffer.from(sp.split(',')[1], 'base64'));
+  { const d = await send('DOM.getDocument', { depth: 0 }); const n = await send('DOM.querySelector', { nodeId: d.result.root.nodeId, selector: '#alBulk' }); await send('DOM.setFileInputFiles', { nodeId: n.result.nodeId, files: ['feuer.png', 'Frostbane_splash.png', 'mystery.png'].map(f => OUT + f) }); }
   await sleep(1200);
   ok(await ev(`(() => { const s = [...document.querySelectorAll('.albsel')]; return s.length === 3 && s.filter(x => x.value).length === 2 && s.some(x => x.value === 'pyra') && s.some(x => x.value === 'glacia'); })()`), 'Art Lab: several splashes at once, matched to heroes by file name');
   await ev(`(() => { const s = [...document.querySelectorAll('.albsel')].find(x => !x.value); s.value = 'lumen'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`); await sleep(200);
@@ -584,9 +606,9 @@ if (!REMOTE) {
   ok(await ev(`/Sent! Review #[0-9]+: splash art for 3 heroes/.test(document.querySelector('#toast').textContent) && !document.querySelector('.albrow')`), 'the splashes go for review in one send');
   await ev(`(() => { const L = JSON.parse(localStorage.getItem('balance.artlab')); for (const k of ['pyra', 'glacia', 'lumen']) delete L[k]; localStorage.setItem('balance.artlab', JSON.stringify(L)); ['pyra', 'glacia', 'lumen'].forEach(k => B.Art.reset(k)); })()`);
   await click('[data-act=close]'); await sleep(300);
-  ok(await ev(`!!B.Art.sprite('rook') && B.Splash.image('rook', 44, 44, 'bust').startsWith('data:image/jpeg')`), 'after closing the lab the kept art is used across the game');
+  ok(await ev(`!!B.Art.sprite('rook') && (window.__keptSplash = B.Splash.image('rook', 44, 44, 'bust')).startsWith('data:image/jpeg')`), 'after closing the lab the kept art is used across the game');
   await ev(`__bal.ACT['art-lab']('rook')`); await sleep(300); await click('[data-act=al-drop]'); await sleep(200); await click('[data-act=close]'); await sleep(200);
-  ok(await ev(`!B.Art.sprite('rook') && !JSON.parse(localStorage.getItem('balance.artlab') || '{}').rook && !B.Splash.image('rook', 44, 44, 'bust').startsWith('data:image/jpeg')`), '"Remove from my game" brings the drawn art back');
+  ok(await ev(`!B.Art.sprite('rook') && !JSON.parse(localStorage.getItem('balance.artlab') || '{}').rook && B.Splash.image('rook', 44, 44, 'bust') !== window.__keptSplash`), '"Remove from my game" brings back the art of the game (v126: Rivet has an official splash now)');
 }
 
 // v50 (review #62): new relics on screen: three paths (Pathfinder's Quill), a free offer (Merchant's Ledger)
@@ -672,14 +694,14 @@ if (!REMOTE) {
   await ev(`(() => { if (__bal.ACT['close']) __bal.ACT['close'](); })()`); await ev(`__bal.ACT['home-menu']()`); await sleep(200);
   ok(await ev(`!!document.querySelector('#modal .mrow[data-act=tutorial]') && /On/.test(document.querySelector('#modal .mrow[data-act=tutorial]').textContent)`), 'v103 (review #190): the menu has a Tutorial row (on)');
   await click('#modal .mrow[data-act=tutorial]'); await sleep(150);
-  ok(await ev(`localStorage.getItem('balance.guide.v') === '3' && /Off/.test(document.querySelector('#modal .mrow[data-act=tutorial]').textContent)`), 'v103: Tutorial off');
+  ok(await ev(`localStorage.getItem('balance.guide.v') === '4' && /Off/.test(document.querySelector('#modal .mrow[data-act=tutorial]').textContent)`), 'v103: Tutorial off');
   await click('#modal .mrow[data-act=tutorial]'); await sleep(150);
   ok(await ev(`localStorage.getItem('balance.guide.v') === '0' && localStorage.getItem('balance.guide3') === '[]'`), 'v103: Tutorial on again, from the start');
   await click('#modal [data-act=close]'); await sleep(100); await ev(`(() => { if (__bal.battle) return; __bal.ACT.menu(); })()`); await sleep(1200);
   const tip = await ev(`(() => { const t = document.querySelector('.gtip'); return t ? t.textContent : ''; })()`);
   ok(/Tap Play|menu/.test(tip) && tip.length < 90, 'v103 (review #191): a short tip shows (' + tip + ')');
   await shot('42-tutorial-tip');
-  await ev(`localStorage.setItem('balance.guide.v', '3')`);
+  await ev(`localStorage.setItem('balance.guide.v', '4')`);
 }
 if (process.env.TRLOG) { const all = await ev("localStorage.getItem('balance.trall')"); fs.writeFileSync(OUT + 'trlog.json', all || '[]'); console.log('trlog:', JSON.parse(all || '[]').length, 'texts'); }
 ok(errors.length === 0, 'no JS errors / CSP violations' + (errors.length ? ': ' + errors.slice(0, 5).join(' || ') : ''));

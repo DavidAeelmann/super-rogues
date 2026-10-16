@@ -181,7 +181,7 @@ ${sheetFoot(d, note)}`);
 
   function open(ui, key) {
     U = ui; S.open = true; S.fight = null;
-    // review #47: no hero is picked for you (art for Melissa went out as "Astrid", the first of the list)
+    // review #47: no hero is picked for you (art for Stinger went out as "Astral", the first of the list)
     load(key && B.HEROES[key] ? key : S.key && B.HEROES[S.key] ? S.key : null);
     U.openModal(html()); U.ui.modal = 'artlab'; U.$('#modal .sheet').classList.add('wide');
     splashView(); sheetView(); mountBoard();
@@ -265,7 +265,7 @@ ${sheetFoot(d, note)}`);
   // WHAT: BULK UPLOAD. Guesses which hero a picture file belongs to from its file name (accents ignored).
   function guessHero(file) {
     const f = norm(file.replace(/\.[a-z0-9]+$/i, '')), H = B.HEROES;
-    const names = Object.keys(H).flatMap(k => [[norm(H[k].name), k], [norm(k), k], [norm(H[k].was || ''), k]]).filter(([n]) => n.length >= 3).sort((a, b) => b[0].length - a[0].length);
+    const names = Object.keys(H).flatMap(k => [[norm(H[k].name), k], [norm(k), k]]).filter(([n]) => n.length >= 3).sort((a, b) => b[0].length - a[0].length);
     const hit = names.find(([n]) => f === n) || names.find(([n]) => f.includes(n));
     return hit ? hit[1] : null;
   }

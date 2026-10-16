@@ -202,11 +202,13 @@
   }
   // v118 (review #205): the coach on the deploy board: the hexes a tip talks about pulse in its colour with its icon, and (front-row tip) arrows show where enemies come from
   // WHAT: draws a coach tip's glowing hexes, icons and arrows over the board.
+  // v126 (review #224): co.plain = only the glow (the free hexes a hero on the bench can go to), no icons
   function drawCoach(v, co, now) {
     const { ctx, size } = v, k = 0.5 + 0.5 * Math.sin(now * 4);
     ctx.save();
-    for (const h of co.hexes || []) { path(ctx, corners(v, h.c, h.r, size * 0.9)); ctx.globalAlpha = 0.5 + 0.3 * k; ctx.fillStyle = co.color; ctx.fill(); ctx.globalAlpha = 1; ctx.lineWidth = 3.5; ctx.strokeStyle = '#fff'; ctx.stroke(); }
-    ctx.globalAlpha = 1; ctx.font = `${Math.round(size * 0.5)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const h of co.hexes || []) { path(ctx, corners(v, h.c, h.r, size * 0.9)); ctx.globalAlpha = co.plain ? 0.3 + 0.25 * k : 0.5 + 0.3 * k; ctx.fillStyle = co.color; ctx.fill(); ctx.globalAlpha = co.plain ? 0.6 + 0.4 * k : 1; ctx.lineWidth = co.plain ? 3 : 3.5; ctx.strokeStyle = co.plain ? '#fff3b0' : '#fff'; ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    if (co.plain) { ctx.restore(); return; } ctx.font = `${Math.round(size * 0.5)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const h of co.hexes || []) { const p = hexScreen(v, h.c, h.r), y = p.y - size * 0.05 - k * size * 0.08; ctx.fillStyle = '#0b0f3fcc'; ctx.beginPath(); ctx.arc(p.x, y, size * 0.34, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(co.icon || '', p.x, y + size * 0.02); }
     if (co.arrows) { ctx.strokeStyle = '#ff5c6e'; ctx.fillStyle = '#ff5c6e'; ctx.lineWidth = Math.max(2.5, size * 0.09); ctx.lineCap = 'round';
       for (const c of [1, Math.floor(Hx.COLS / 2), Hx.COLS - 2]) { const a = hexScreen(v, c, 0), b = hexScreen(v, c, 3), y = a.y + (b.y - a.y) * ((now * 0.6) % 1);
@@ -264,7 +266,10 @@
   // ------------------------------------------------------------------ units
   // review #47: a hero with a death animation stays on the board while it plays
   // WHAT: UNITS. drawUnit draws one unit (model or picture, shadow, HP and mana bars, status icons, shield, hit flash). deadTicks = how long its death animation lasts.
-  const FILTER = typeof CanvasRenderingContext2D !== 'undefined' && 'filter' in CanvasRenderingContext2D.prototype;   // v55: the white hit flash
+  // v126 (review #222, David: "Users still describe a significant laggy experience, especially on pc web... Regarding battles"): the white hit flash used a
+  // canvas filter (brightness), which makes the browser redraw that figure the slow way; in a big fight someone is always being hit, and it was the main cause
+  // of the stutter (tools/perf-battle.mjs: frames over 33 ms fell from ~15 to ~3 in 12 s). The flash is now a quick additive white glow over the body.
+  const FILTER = false;
   const deadTicks = u => B.Art && B.Art.deathTicks ? B.Art.deathTicks(u.key) : 12;
   // WHAT: which animation a unit is in right now (idle, walk, attack windup, cast, hurt, death) with how far along it is.
   function poseOf(W, u, T, d, dt) {
@@ -329,7 +334,7 @@
     else B.Models.draw(ctx, mk, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
     ctx.restore();
     if (flash) ctx.filter = 'none';
-    else if (since < 0.09 && !u.dead) { ctx.globalAlpha = 0.25; const g = ctx.createRadialGradient(bx0, p.y - S * 0.6, 0, bx0, p.y - S * 0.6, S * 0.6); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx0, p.y - S * 0.6, S * 0.6, 0, Math.PI * 2); ctx.fill(); }
+    else if (since < 0.09 && !u.dead) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * (1 - since / 0.09); const g = ctx.createRadialGradient(bx0, p.y - S * 0.6, 0, bx0, p.y - S * 0.6, S * 0.6); g.addColorStop(0, '#fff'); g.addColorStop(0.5, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx0, p.y - S * 0.6, S * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
     if (u.st.frozenU > s) { ctx.globalAlpha = 0.45; ctx.fillStyle = '#9fe8ff'; ctx.beginPath(); ctx.moveTo(p.x, p.y - S * 1.45); ctx.lineTo(p.x + S * 0.42, p.y - S * 0.7); ctx.lineTo(p.x, p.y + S * 0.05); ctx.lineTo(p.x - S * 0.42, p.y - S * 0.7); ctx.closePath(); ctx.fill(); }
     if (u.shield > 0 && u.shieldU > s && !u.dead) { ctx.globalAlpha = 0.25; ctx.strokeStyle = '#e8ecff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(p.x, p.y - S * 0.62, S * 0.5, S * 0.8, 0, 0, Math.PI * 2); ctx.stroke(); }
     ctx.globalAlpha = 1;
@@ -384,6 +389,7 @@
     drawBoard(v, o, W);
     if (boss && !o.deploy) bossTiles(v, boss.key, now);
     if (o.coach) drawCoach(v, o.coach, now);
+    if (o.slots) drawCoach(v, { hexes: o.slots, color: '#ffd23f', plain: true }, now);   // v126 (review #224): where a benched hero can go
     if (!W) return;
     for (const z of W.zones) if (z.until > W.t) {
       const owner = z.src && W.byId[z.src], zs = owner && AF && AF.SPEC[owner.abil] && AF.SPEC[owner.abil].zone;

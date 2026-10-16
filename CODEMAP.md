@@ -72,6 +72,8 @@ every file starts with a "FILE GUIDE" comment and every function has a "WHAT:" n
 
 **Change a text on screen.** Search the text in `js/ui.js` (screens, buttons, the How to play text `HOWTO`) or in `js/data.js` (names and descriptions of heroes, items, powers, events). The word "relic" is called "Power" on screen but stays `relic` in the code.
 
+**Change hero placement and the bench (v126).** Where heroes stand: `autoPlace`, `setPos`, `placeAll`, `benched` (js/run.js); a hero that joins mid-run has `h.bench` (no hex) until the player places it. The deploy screen: `deployHTML`, `benchHTML`, `benchNudge`, `benchPlaced`, the drag `benchDown/Move/Up` and the board drag `onDown/onMove/onUp` (js/ui.js); the glowing free hexes `o.slots` in `drawCoach` (js/render.js); the `.bench` CSS at the end of style.css. Hero keys (bastion, thorne...) are ids, never names: the name is `B.HEROES[key].name`.
+
 **Change what a button does.** Find its `data-act="name"` in the HTML inside `js/ui.js`, then the same name in the `ACT = {...}` table near the end of the file.
 
 **Change how a fight looks.** Units: `js/models.js` (or pictures in `js/art.js`). The board, effects, banners: `js/render.js`. A boss background: `bossBackdrop` in `js/render.js`.

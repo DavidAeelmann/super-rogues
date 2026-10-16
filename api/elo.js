@@ -362,7 +362,7 @@ module.exports = async (req, res) => {
       if (!win) {   // no penalty: the team stays on this floor as a ghost for the next climbers
         await st.updateTeam(t.id, { wins: t.wins, status: 'lost', opp: null }); p.best = Math.max(p.best | 0, floor); await save();
         try { await GE.rateNew(st, Object.assign({}, t, { status: 'lost' })); } catch (_) {}   // v102, v106: the new ghost is seeded against other ghosts
-        return send(res, 200, me({ teamId: t.id, win, wins: t.wins, floor, over: true }));
+        return send(res, 200, me({ teamId: t.id, win, wins: t.wins, floor, over: true, peak: await GE.floors(st, t.id) }));   // v126 (review #221): the real height of the tower
       }
       const wins = floor, lg = leaguePoints(p, D.towerLp(floor));
       if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
@@ -378,7 +378,7 @@ module.exports = async (req, res) => {
       }
       await st.updateTeam(t.id, { wins, status: 'running', opp: next.id, faced: faced.concat(next.id) });
       p.best = Math.max(p.best | 0, wins + 1); await save();
-      return send(res, 200, me({ teamId: t.id, win, wins, floor: wins + 1, lg, opponent: await styled(next) }));
+      return send(res, 200, me({ teamId: t.id, win, wins, floor: wins + 1, lg, opponent: await styled(next), peak: await GE.floors(st, t.id) }));
     }
     if (b.op === 'enter') {
       const team = cleanTeam(b.team);

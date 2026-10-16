@@ -57,6 +57,7 @@
     let S, fy;
     if (m.type === 'humanoid') { const tall = m.h || 1; S = (mode === 'bust' ? h * 0.9 : h * 0.54) / tall; fy = mode === 'bust' ? h * 1.5 : h * 0.97; }
     else if (m.type === 'wraith') { S = mode === 'bust' ? h * 0.72 : h * 0.52; fy = mode === 'bust' ? h * 1.2 : h * 0.95; }
+    else if (m.type === 'turtle') { S = mode === 'bust' ? h * 0.8 : h * 0.6; fy = mode === 'bust' ? h * 0.8 : h * 0.62; }   // v126 (review #220): the low, wide turtle sits up in the frame, above the name
     else if (m.type === 'turret' || m.type === 'bomb' || m.type === 'serpent') { S = mode === 'bust' ? h * 0.95 : h * 0.8; fy = h * 0.95; }
     else { S = mode === 'bust' ? h * 0.8 : h * 0.62; fy = mode === 'bust' ? h * 1.05 : h * 0.95; }
     B.Models.draw(lc, key === 'clone' ? 'mirage' : key, w * 0.5, fy, S, poseOf(key), light);

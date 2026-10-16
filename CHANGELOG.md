@@ -60,7 +60,7 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
 - **v63 (2026-10-06), batches 85 to 89 (#115 to #120).** #117/#118 (David) reshaped the run: it starts with **3 heroes** (6 offered, 2 of each class) + 1 power + 2 common items; **3 lives** (hearts at the top; a lost fight costs one and the day passes; the third ends it); in fights 3 and 6 (`CFG.pvpFights`) one map option is a **PvP duel** against the team of another player who was at roughly the same day (op `snap`; the poster shows their power and yours: `Run.powerOf`/`powerLabel`); winning opens the **loot** (a hero, an item or a power from the winning team; a hero with a full team swaps one of yours and its items go to the bag); the last day is the **final fight** against a team that completed its own run (ops `final`, `duel`, `complete`; losing with a life left = another finalist). The Gauntlet (tower) is over; `enter`/`result` remain only for old tabs; runs saved inside the tower go to the final fight with 3 lives. The 2 PvE bosses remain. #119: with no players yet, `Run.randomGhost` invents the opponent (one hero of each class, items and powers growing with the day; strength `CFG.ghostPower` 0.78). #120: a new account has 20 heroes (`B.START_HEROES`), the other 26 unlock 2 per level from 2 to 14 (`B.HERO_UNLOCKS`); the end screen compacts many unlocks into a row of icons. Lone Crown left the offers (needs a team of 1). Rebalanced by simulation (bot with 3 heroes, 3 lives, final fight against an invented ghost): 32.8% of runs completed, averages 100/94/93 | boss 71 | 84/83/81 | boss 59, heroes 28% to 38% (sd 2.1). #115 (PC boy, Gauntlet end log on the profile) and #116 (David, rating in PvE / remove the boss preview) declined: in #117 David asked to ignore both earlier requests (and the Gauntlet ceased to exist). New texts in English only (PT/DE fall back to English).
 - **v62r (2026-10-06), direct request from the owner.** Fight stuttering on his PC (fine on mobile). I measured an 8 vs 8 fight in Chrome (new `node tools/perf.mjs [seconds] [width]`, DPR=2 simulates a big screen): ~5.5 ms of drawing per frame, so JS is not the bottleneck; the cost must be the PC's graphics card/acceleration. Safe fix: the fight loop measures speed and, if it stays ~1.5 s below 30 fps, lowers the canvas pixel density by itself (2 → 1.5 → 1, `Render.maxDpr`); the image keeps its size, just gets slightly softer.
 
-- **v62q (2026-10-05), batches 83 and 84 from David (#113, #114).** #113 difficulty: the v62o balancer had left the fight curve irregular (scale 1, 0.86, 0.83, 1.03... and hard/easy relative to it: hard early fights too easy, then an explosion). Now the enemy curve is smooth and rising BY CONSTRUCTION: `fightScale[n] = s0 * r^(n-1)` (r ~1.18 per fight, each boss with its own step; values in data.js: [1, 0.992, 1.175, 1.391, 1.576, 1.95, 2.309, 2.734, 2.745]) and `DIFF.easy.mul`/`hard.mul` became constants (1.074 / 1.055). The heroes' side gained two global levers in `B.TUNE`: `base` (strength of all, 1.279) and `growth` (what each level gives: Health, Attack and Magic, and with them the ability numbers; 0.615, before 1), besides the per-hero `power`. The tuner (`tools/pve/tune.js`) was rewritten: it also measures bots that always pick the easy and hard fight, fits the line (s0, r, boss steps), and dumps into `base`/`growth` what the line cannot express. Result in 46 thousand new runs: 27.8% complete the PvE; median fights 98/94/93, boss1 73, 92/86/77, boss2 60; hard ones 62/57/66, 65, 55/45; easy ones 98 to 100; 46 heroes between 24% and 33% (deviation 1.8 points). Graveborn (Morrow) started too weak alone (lost fight 1 in 64% of runs): Health 470, Attack 30, Energy 75, starts with 60, growth 1.5. `motor.js` also zeroes base and growth. #114 first 30 seconds: hero choice is a dark stage with spotlights (each hero is a frame with its splash under a cone of light, the others darkened, the chosen one lights up, grows and gets a ring) and the 3 powers float over stone pedestals (the chosen one gets a light beam and golden glow); a little hand 👆 sways over the hero and then over the power, only in the first 2 runs the player starts (`balance.starts` in localStorage, counted in `start-go`).
+- **v62q (2026-10-05), batches 83 and 84 from David (#113, #114).** #113 difficulty: the v62o balancer had left the fight curve irregular (scale 1, 0.86, 0.83, 1.03... and hard/easy relative to it: hard early fights too easy, then an explosion). Now the enemy curve is smooth and rising BY CONSTRUCTION: `fightScale[n] = s0 * r^(n-1)` (r ~1.18 per fight, each boss with its own step; values in data.js: [1, 0.992, 1.175, 1.391, 1.576, 1.95, 2.309, 2.734, 2.745]) and `DIFF.easy.mul`/`hard.mul` became constants (1.074 / 1.055). The heroes' side gained two global levers in `B.TUNE`: `base` (strength of all, 1.279) and `growth` (what each level gives: Health, Attack and Magic, and with them the ability numbers; 0.615, before 1), besides the per-hero `power`. The tuner (`tools/pve/tune.js`) was rewritten: it also measures bots that always pick the easy and hard fight, fits the line (s0, r, boss steps), and dumps into `base`/`growth` what the line cannot express. Result in 46 thousand new runs: 27.8% complete the PvE; median fights 98/94/93, boss1 73, 92/86/77, boss2 60; hard ones 62/57/66, 65, 55/45; easy ones 98 to 100; 46 heroes between 24% and 33% (deviation 1.8 points). Graveborn (Graveborn) started too weak alone (lost fight 1 in 64% of runs): Health 470, Attack 30, Energy 75, starts with 60, growth 1.5. `motor.js` also zeroes base and growth. #114 first 30 seconds: hero choice is a dark stage with spotlights (each hero is a frame with its splash under a cone of light, the others darkened, the chosen one lights up, grows and gets a ring) and the 3 powers float over stone pedestals (the chosen one gets a light beam and golden glow); a little hand 👆 sways over the hero and then over the power, only in the first 2 runs the player starts (`balance.starts` in localStorage, counted in `start-go`).
 - **v62p (2026-10-05), batch 82 from David (#112).** Effects redone: "I overdid it". No flashing: the colored full-screen flash, the generic light pillar on every cast, the random shaking (now a small smooth ripple) and the bolt flicker are gone. Now EACH of the 57 abilities (46 heroes, 7 monsters, 4 bosses) has its own animation in `js/abilfx.js` (new, `B.AbilFx`, loaded after render.js): the simulator tags each effect with the ability that created it (`W.ctx`, fields `f.ab`/`f.by`, visual only; `at()` keeps the context of delayed hits; new `spawn` effect for summons) and the render hands it to the ability. Areas are drawn on the real HEXAGONS of the radius (`Hx.within` + outline of the union), so the visual radius = the effect radius; ground zones (fire, holy, honey, swamp, fire wall) also per ability. Examples: Falling Star = violet mark on the ground and a golden star that FALLS from the sky (emitted before the impact, `t0` in the future) and explodes; Tom throws little dishes (pie, skewer, soup, pudding, frying pan) at the ally; Rootsnare = thorny roots sprouting in each hex; Cinder Comet = comet with a tail; Volley = arrows in a high arc that stay stuck; Hook = chain with a hook; Stoneward = stone pillars at the edge; Arc Cascade = bolt that forks; etc. New tool: `node tools/fxlab.mjs <abilities|all> [ticks]` (lab that stages each ability and saves contact sheets in tools/tests/.output/; `CELL=380` to enlarge). For a new ability: add the key in `SPEC` of abilfx.js.
 - **v62o (2026-10-05), batch 81 from David (#111).** PvE balance by mass simulation. New `tools/pve/`: headless engine (`engine.js`) with a bot that builds tank+healer+damage (or the closest, with re-roll), buys the highest-`itemScore` item for any hero of the team, powers at random, events by the best `act`, random level; `batch.js` in worker_threads (~20 thousand runs in 30 s, 8 ms per run), `analyze.js`/`report.js`, `tune.js` (autonomous), `gear-test.js`. Results kept in `tools/results/` (LATEST.md versioned). Two new balance knobs: `B.TUNE.power[hero]` (multiplies Health/Attack/Magic in `heroDef`; `<TUNE-BEGIN>` block in data.js rewritten by the tuner) and the per-fight scale `CFG.fightScale` (new: [1, 0.862, 0.827, 1.031, 1.247, 1.552, 1.775, 2.016, 2.208], before [1, 1.03, 1.25, 1.27, 1.39, 1.76, 2.1, 2.16, 2.49]). Result in 69 thousand new runs: 30% complete the PvE, median fights 96/96/93/92/90/89% and bosses 66/63%, the 46 heroes between 27% and 35% (before: 4% to 18% with 7% of runs completed; deviation between heroes 1.7 points, near noise). Powers and items: each forced from the start in 1000 runs; nerfs: Veteran's Medal 25->14 XP per kill (it was +40 points), Lone Crown +150%->+100%, Last Stand Banner +100%/+50% -> +60%/+30%, Phoenix Egg 50%->30% health, Lodestone -10%->-5%, Warm Teapot 1%->0.7%, Mending Spring heals +30%->+20%, Snow Globe 10/100->8/70, Spotlight Lamp +40%->+30%; buffs: Glass Crown -35%->-20% health, Pack Horn +35%->+75%; items: Emberborn Heart (revives 50%, +160 health), Rampart of Dusk (+380/+30), Wyrmscale Gloves (+30 Defense, 1%), Heart of the Peak (+18%, 1%), Wyrmhide Mail (+240/+22, -8%), Codex Without End (+3 Magic/s), Herald's Horn +55%. PT/DE texts of these powers/items go back to English until retranslated. `motor.js` zeroes `B.TUNE.power` and tests of the 3 powers adjusted.
 - **v62n (2026-10-04), batch 80 from David (#110).** Ability effects in battle much stronger (render.js only, the simulation did not change): the hero's cast now has a double wave on the ground, light column, spark fountain and stars, color tone over the board (`flash`) and shake; areas (`ring`) gain a white core, outer wave, sparks outward and column; ability projectiles get bigger, with a long trail, glow and sparks, and burst on reaching the target (basic arrow/spear stay as they were); bolts (`bolt`) with wide glow + color + white core and flicker (no shadowBlur); heals drop green stars; crits gain wave, stars and flash; deaths (and boss) with waves and sparks; bigger ability name with glow. New particle types: `spark`, `star`, `ring`, `pillar`; dark outline to read against the light sky; MAXP 420. Helpers `shock`, `pillar`, `flash` in render.js.
@@ -110,16 +110,15 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   - **Heroes:** win rate of teams with each hero went from 45% (Phalanx) to 69% (Vesper); now 54-59%. Each hero got `grow` (0.5 to 1.8; 1 = +15% health and attack and +30 AP per level; in `heroDef`): the ones strong at the start that vanished at the end (Flint, Deadeye, Rapture, Phalanx) grow more; the ones that only showed up at the end (Solace, Radiant, Prism) grow less. The "start → end" deviation fell to 3.8 points; the rest comes from the kit (long boss fight favors healing) and stays as identity. The help now says that AP grows "at each hero's pace".
   - **Items** (margin gain x100 as an extra item): the epic (8 gold) yielded almost the same as the rare (5). Now the averages rise by rarity: common 4.2, uncommon 5.3, rare 8.4, epic 10.3, legendary 15.8, mythic 22.8; complete sets 18-35. Trollheart 400→200 HP and 0.8% regen (was worth 3x a rare), Asp Claws and Adder Vial with less poison, Heartstring and Sanguine Saber smaller; the weak ones got buffed (Spellward Cloak, Quickstep Boots, Shepherd's Sling without the -5, Unbound Sash, Farseer Lens, Spirit Tether, Cutpurse Grips, Warband Pennant at 2 hexes, Headsman's Axe, Soulmend Mask, Ironbark Totem, 10 epics, Shield of First Light, AP wands); Mountain Grips up to 15 stacks; 2-piece Wildwarden +15% attack speed.
   - **Relics:** Minimalist's Vow now requires a free item slot (before, "1 item or none" held for free for everyone up to Lv 3, who only have 1 slot) and gives +30% (was +50%); Auto-equip leaves a slot free when you have it. King +40% (was +60%), Giant +50% (was +60%), Soul Jar every 5. The ones that got in the way now help: Jester's Bell (3 out of 4 times an enemy), Earthshaker Drum (enemies only), Undertaker's Shovel (tombstone protects 20%), Two-Faced Coin (no -10% attack, +5% crit), Swapper's Coin (heals 15%), Gravecaller (-5% health), Watchtower Flag (+25% / -5%), Stonefoot (+15% attack), Tail Gust, Scales (+10%), Mirror Shard (no penalty), Brotherhood Chain (-10% damage), Unbending Oath, Lucky Sprig, Whetted Mind, Star Compass, Crimson Contract, Pack Horn 35%, Bodyguard Oath (+20 armor and MR on melee). Mending Spring was identical to Warm Teapot: now it is regen 0.5% + healing received +30%. Only the economy/run ones stay near 0 (Backpack, Crest, Solo, Cursed Coin, Snowball, Pack Rat: they do not show up in a single fight) and Blink Pebble (depends on position).
-  - **Tests:** Earthshaker (enemy stunned, hero not), King 1.4, ghost with Trollheart 200, Vow with a free slot, sudden death with per-second rounding, Blaze starts with high crit (no longer depends on the fight result).
+  - **Tests:** Earthshaker (enemy stunned, hero not), King 1.4, ghost with Trollheart 200, Vow with a free slot, sudden death with per-second rounding, Flint starts with high crit (no longer depends on the fight result).
 - **v60 (2026-10-01), batch 58 from PC boy (#72): two new heroes (38 in total).**
   - **Prism** (`prism`, Channeler, `fl: ['beam']`, `beamAct` in sim.js): does not attack. Every 0.25 s each beam locks onto the nearest unit in range (wounded ally: heals 20% AP/s; enemy: 32% AP/s magic, no damage number) and the work fills mana (`/12`). **Overcharge** ability: x2 for 4 s and +1 beam. Powers: one more beam, lens, healing +50%, slow, +1 range, faster mana, +2 beams on Overcharge or a 15% shield. The render draws the beams (`u.beams`, green = heal, cyan = damage).
   - **Citadel** (`citadel`, Fortress, ms 0, `fl: ['tower']`, `towerAct`/`soldier`): does not move or attack. A soldier comes out at the start and another every 7 s, alternating spearman (165% AP health, 18% AP attack) and archer (100% / 16%, range 3), up to 3 at once. The soldiers' hits fill his mana (+5). **Call to Arms** ability: 5 s frenzy (+50% speed, +25% attack), heals 30% and one more comes out. Powers: barracks, wall, veterans, bigger garrison, shield, burst, champion every 3, last stand. New models: `tower` rig (tower with battlements and flag), `footman`, `bowman`.
   - **Balance:** `tools/tune-heroes.js` (now with `ONLY=a,b`). They came out at 81% and 100% win rate on the boss; after weakening, Prism 48% and Citadel 53% (average 47%).
 - **v59 (2026-10-01), batch 57 from PC boy (#71: "give more life to the names"; he sent 22 new names and asked for the same style for the others: bold, evocative, cool for 12 to 18 year olds, neither obscure nor silly).**
-  - **Names:** Bjornar → Aegir, Sica → Vex, Feuer → Feuer, Snezhana → Frostbane, Brutus → Ironhorn, Brigid → Solace, Strela → Talon, Koschei → Graveborn, Tordis → Tempest, Krok → Hookjaw, Sarab → Mirage, Gizmund → Rivet, Ulfrik → Ravager, Licht → Radiant, Umbra → Nyx, Leshy → Bramble, Orfeo → Lyric, Pólvora → Flint, Hyppolita → Skara, Sokol → Deadeye, Carmina → Vesper, Kagero → Eclipse, Garm → Fang, Luna → Mesmer, Pimples → Jinx, Pivo → Rumble, Azgoth → Inferno, Kivi → Boulder, Khepri → Ankh, Leonteus → Phalanx, Serra → Rapture, Mercurio → Vial, Feng → Kaze, Melissa → Stinger, Nerina → Maelstrom, Astrid → Astral.
+  - **Names:** every hero got the name it has today (see `B.HEROES` in js/data.js).
   - **The 14 I created** were checked so as not to repeat an item, relic, power, monster or set: Rampage, Quiver, Echo, Trance, Pharaoh, Swarm, Riptide, Hive and Undertow were replaced for that reason. Names of his that are also words for items or abilities (Boulder = Boulder Toss, Phalanx = the ability itself, Inferno, Vial) stayed as he asked.
-  - **Where it changed:** only the text inside the strings of data.js (comments and history keep the old names); the keys did not change, so ghosts, Elo and art remain valid.
-  - **Old name:** stays in `h.was`, and the Art Lab still recognizes files with it (`guessHero`).
+  - **Where it changed:** only the names inside data.js; the keys did not change, so ghosts, Elo and art remain valid.
 - **v58 (2026-10-01), batch 56 from David (#70, 12 polish items).**
   - **Review notice:** became a small pill that floats under the bar, without pushing the screen ("⏳ #N queued", "✅ … live: tap to reload").
   - **Relics:** all got a short line (`r.short` in data.js) used in the shop and at the start; the full rule stays under "More" (`relic-info`).
@@ -137,7 +136,7 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   - **Score per item** (`itemScore`): each stat normalized (10 attack, 20 AP, 10% attack speed... = 1 point) times the profile weight. AP is worth ~0 for an AD hero and attack ~0 for a mage; the tank gives 1.8x to defense. Special effects count as "on hit" (AD), "on ability" (AP) or "defense" (tank); plus a little for rarity and for pieces of the same set.
   - **Global distribution:** gathers backpack and worn items and hands out in greedy order, the best hero-item pairing first, one per type, without exceeding the slots. An item with a score below 0.2 stays in the backpack (AP on an AD-only team). Fixes an item worn on the wrong hero, and pressing again changes nothing.
   - Purple button (`.gauto`).
-- **v56 (2026-10-01), batch 54 from PC boy (#68): splash art for 12 more heroes through the Art Lab.** Mercurio, Feng, Feuer, Pólvora, Kivi, Leonteus, Koschei, Sica, Krok, Umbra, Serra and Sokol. Reviewed on a contact sheet: original, no blood or improper content, each one matching the hero (Serra is a generic purple harlequin and Sokol uses a modern rifle, both accepted). Splash only; the battle is still drawn. The face crop was adjusted in two passes (PIL, same as `art.js`). Now 26 of 36 have paintings; Strela, Tordis, Gizmund, Orfeo, Carmina, Luna, Pivo, Khepri, Nerina and Astrid are missing.
+- **v56 (2026-10-01), batch 54 from PC boy (#68): splash art for 12 more heroes through the Art Lab.** Vial, Kaze, Feuer, Flint, Boulder, Phalanx, Graveborn, Vex, Hookjaw, Nyx, Rapture and Deadeye. Reviewed on a contact sheet: original, no blood or improper content, each one matching the hero (Rapture is a generic purple harlequin and Deadeye uses a modern rifle, both accepted). Splash only; the battle is still drawn. The face crop was adjusted in two passes (PIL, same as `art.js`). Now 26 of 36 have paintings; Talon, Tempest, Rivet, Lyric, Vesper, Mesmer, Rumble, Ankh, Maelstrom and Astral are missing.
 - **v55 (2026-10-01), batch 53 from David (#67: "smoother combat animations, they are jittery and jumpy; prettier dolls; I want to see a game, not a raw demo").** All in the render (the simulation did not change, it only keeps `u.lastAtk` for the strike's return):
   - **Movement:** each unit has a screen state (`look`/`glide` in render.js, `v.looks` per world). Position glides with damping (teleport above 2.2 hex snaps instantly). The turn happens by scale, without mirroring at once, and only switches sides if the target is clearly on the other side. The step follows a continuous rhythm between hexes (before, it restarted on every hex). The melee strike pulls back, hits on the hit tick and returns smoothly in 6 ticks (before, it returned at once).
   - **Impact:** whoever takes a hit recoils and flashes white (`ctx.filter`, with a radial glow where it does not exist). There is stretch and squash from the feet: fight entrance, strike and hit.
@@ -200,9 +199,9 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
 
   Tests: all 100 in a full fight on both sides (no NaN), plus one behavior test per non-obvious relic.
 - **v49 (2026-09-30), batch 47 from David.** #60 ("new Super Rogues identity; logo for 14-year-olds with fat, fun letters; super simple home screen, the rest in the bar or in icons; only Play, and below it the board with random teams fighting, like a trailer; with a game in progress, no new game: Continue and a little white flag give up; the game only counts after hero and relic"): name Super Rogues (index.html, mask-star favicon); logo in CSS (`logoHTML`: SVG mark, pink SUPER ribbon, colorful ROGUES letters with a thick outline and a bouncing entrance); home screen = logo + Play (or Continue + "Give up", which asks first and only discards the game, without counting a defeat) + trailer (`trailerWorld`/`trailerLoop`: 3 random heroes against a random fight, 1.5×, muted via `Render.draw(..., { mute: true })`, restarts 2.6 s after the end; stops when leaving the screen or when the tab goes away). Top of the home screen: level (chip with bar, opens the track), crowns, ladder, suggestions and ☰ (`homeMenuHTML`: How to play, level rewards, profile, Crown Shop, ladder, Art Lab, sound, suggestion). A game in the `start` phase does not show up as Continue. #61 ("commercial roguelike polish: fewer identical cards, clean font in the descriptions, own icons in place of emoji, level-up with style tags and a branching path"): `js/uiicons.js` and swap of the interface emoji (top bar, track, fight/shop cards, preparation, battle, result, shops, events, game end, menu headers, How to play; the drawings of the events and tips remain emoji); `--read` (Nunito) in the descriptions; the map team and the result heroes became rows in a single panel; level-up with up to 2 tags per power (`STYLE`: Damage, Tank, Control, Heal, Speed, Area, Summon; otherwise Upgrade) and the track as a tree (`sp-fork` of the chosen branch; chosen ones in gold, today's glowing, future ones faded).
-- **v48 (2026-09-30), batch 46 from PC boy (#59): splash for 10 heroes via the Art Lab.** Garm (rex), Leshy (bramble), Sarab
-  (mirage), Hyppolita (hippolyta), Snezhana (glacia), Licht (seraph), Azgoth (azgul), Pimples (pip), Brigid (lumen) and
-  Bjornar (bastion). Reviewed one by one: original, no blood or inappropriate content, each one matching its hero. Splash
+- **v48 (2026-09-30), batch 46 from PC boy (#59): splash for 10 heroes via the Art Lab.** Fang (rex), Bramble (bramble), Mirage
+  (mirage), Skara (hippolyta), Frostbane (glacia), Radiant (seraph), Inferno (azgul), Jinx (pip), Solace (lumen) and
+  Aegir (bastion). Reviewed one by one: original, no blood or inappropriate content, each one matching its hero. Splash
   only (cards, banners, portraits): in `OFFICIAL` without `anims`, the battle figure is still drawn. They came with the default
   crop; the focus was set on each one's face (checked with a PIL crop identical to the one in `art.js`). Now there
   are 14 painted heroes (4 with full animation) and 22 only drawn. The engine test now accepts art with only
@@ -297,25 +296,25 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
 
 - **v41 (2026-09-30), batch 38 from David.** (#49) Review of the 36 abilities and 288 specializations against the code
   (`tools/audit-abilities.js`: every `ab` value is read by the ability or by a helper and appears in the text; every spec/mod/flag
-  key is read somewhere; nothing was left without effect). Fixed in the code: Mercurio's healing flask now goes
+  key is read somewhere; nothing was left without effect). Fixed in the code: Vial's healing flask now goes
   to the weakest hero (before it could heal a turret/skeleton) and Catalyst returns mana to him too. Texts
-  fixed (a number was missing or they said something else): Snezhana (40% slow for 2 s), Brutus (30% lifesteal for
-  4 s), Strela and Ulfrik (passives with names: Focus, Fury), Garm (bleed 2%/s for 3 s), Koschei Bone Archers (30%
-  less health), Krok Barbed Chain (the attacks are what poison) and Chain Whirl (30% for 2 s), Ulfrik Momentum (up to
-  +40%), Nerina Cold Current (50% instead of 30%), Feuer Scorched Earth (16% AP/s). (#50) Art Lab: "Splash art for several
+  fixed (a number was missing or they said something else): Frostbane (40% slow for 2 s), Ironhorn (30% lifesteal for
+  4 s), Talon and Ravager (passives with names: Focus, Fury), Fang (bleed 2%/s for 3 s), Graveborn Bone Archers (30%
+  less health), Hookjaw Barbed Chain (the attacks are what poison) and Chain Whirl (30% for 2 s), Ravager Momentum (up to
+  +40%), Maelstrom Cold Current (50% instead of 30%), Feuer Scorched Earth (16% AP/s). (#50) Art Lab: "Splash art for several
   heroes" (up to 12 photos; hero by file name, without accents, or chosen from the list; "Use all in my game" and "Send all
   for review" in a single batch: `arts: [...]` in the POST, 40 photos per person/day, 150 total/day).
 
-- **v40 (2026-09-30), batch 37 from David (#48): Kagero art (kage) + card sheets + animated previews.** His
+- **v40 (2026-09-30), batch 37 from David (#48): Eclipse art (kage) + card sheets + animated previews.** His
   sheet was made of "cards" (each frame on a pink card with a border, on a dark background, with a title, labels and a large pose
   below). `cutCards` (art.js): card color = the most common after the background (counting neighboring buckets, since the color has
   noise); card = block of that color with the whole outline filled in; gaps in the row's grid (card covered by a
   flash) are filled in; each card is cropped in its own color, without the border; all frames of a row end up
-  the same size and place (the bomb flies, the fall falls); an effect that fills the card gets soft edges. Kagero: 8 frames in
+  the same size and place (the bomb flies, the fall falls); an effect that fills the card gets soft edges. Eclipse: 8 frames in
   each animation (`art/kage/`). In the lab, one animated preview per animation (same timing and blending as the battle).
 
-- **v39 (2026-09-29), batch 36 from David (#47): Melissa art (buzzwell).** It came tagged as "Astrid" because the lab opened
-  on the 1st hero in the list; the art is clearly the beekeeper → applied to Melissa and the lab now opens with NO hero chosen.
+- **v39 (2026-09-29), batch 36 from David (#47): Stinger art (buzzwell).** It came tagged as "Astral" because the lab opened
+  on the 1st hero in the list; the art is clearly the beekeeper → applied to Stinger and the lab now opens with NO hero chosen.
   The sheet had the figures stuck together (no space), the lab found 1 frame per row: assembled by hand (`art/buzzwell/`, 66
   frames: idle 16, walking 15, attack 5 = the small throws enlarged, ability 19 = 7 of the hive + 12 of the
   swarm, death 11). `cutSheet` now finds the frame pitch of each row (strongest repetition of the outline of the bottom
@@ -323,7 +322,7 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   boxes of the same row. On the reconstruction of his sheet the lab finds 16/15/12/11 frames (the attack row, mixed with
   projectiles and smaller figures, needed a hand cut). Death animation stays on the board 2 ticks per frame (max 30).
 
-- **v38 (2026-09-29), batch 35 from David (#46): Brutus art (brakk).** The "bug in the attack" came from the crop: the pink
+- **v38 (2026-09-29), batch 35 from David (#46): Ironhorn art (brakk).** The "bug in the attack" came from the crop: the pink
   arcs of the strikes linked neighboring figures and the lab merged 3 frames of the attack (and 2 of the ability) into one image.
   Separated by hand (`art/brakk/`: idle 7, walking 8, attack 7, ability 6 + splash) and fixed in `cutSheet`: a box wider than
   1.7× the row's typical width is cut into N frames (N from the width + typical gap between frames) at the emptiest
@@ -331,13 +330,13 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   Walking 2-4 came with a different head (image generator error, flagged to David). The splash resembles Kratos (bald, beard, red
   stripe on the face): flagged to the owner.
 
-- **v37 (2026-09-29), batch 34 from David (#45): 1st official art, Ulfrik (thorne).** The resent sheet had 5 rows: idle
+- **v37 (2026-09-29), batch 34 from David (#45): 1st official art, Ravager (thorne).** The resent sheet had 5 rows: idle
   5, walking 8, attack 7, charge 6 and spin 7 frames (the 5th row was NOT death: it was the spin). His ability (Crimson
   Spin) plays charge + spin = 13 frames; death uses the default effect. Files in `art/thorne/` (splash.jpg, idle-1..5,
   move-1..8, attack-1..7, cast-1..13 .webp, 452 KB) and an entry in `OFFICIAL` of `js/art.js` with one anchor point per
   frame (the figure's center of mass, more stable than the foot). A long ability animation lasts 2 ticks per frame
   (`B.Art.castTicks`). The Art Lab gained "Use as" per row (idle/walking/attack/ability/death/don't use; identical rows
-  merge) and the anchor point became the center of mass. Only Ulfrik has painted art: the rest is still
+  merge) and the anchor point became the center of mass. Only Ravager has painted art: the rest is still
   drawn (mixed styles until the others arrive).
 
 - **v36 (2026-09-29), batch 33 from David (#44): design pass** (same colors and theme, nothing new): v36 layer at the end
@@ -350,8 +349,8 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   (stunned, frozen, silence, taunt, confused, burning, poison, slow, root). Showcase now also photographs
   the Ladder and the profile.
 
-- **v35 (2026-09-29), batch 32 from David (#43): Art Lab with whole animations.** David sent the Redhand art
-  (thorne, today Ulfrik) with an animation sheet (several labeled rows, several frames per row), but the v31 lab
+- **v35 (2026-09-29), batch 32 from David (#43): Art Lab with whole animations.** David sent the Ravager art
+  (thorne, today Ravager) with an animation sheet (several labeled rows, several frames per row), but the v31 lab
   only picked up the first 4 figures (4 frames of "idle" came out + the IDLE label stuck on). He asked me NOT to apply it without
   using all the frames → declined with an explanation and the lab redone: each row of the sheet = one animation (idle, walking,
   attack, ability, death), up to 16 frames per row; labels and small, low specks are discarded; the frames
@@ -360,16 +359,13 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   4-pose format. Art stored as `anims: {idle: [frames]}` + `axs` (foot of each frame); `suggestions.js
   art` exports `idle-1.webp`, `idle-2.webp`... Waiting for David to resend.
 
-- **v34 (2026-09-29), batch 31 from David.** (#41) Heroes with names from several cultures (display name only; same ids):
-  Bjornar, Sica, Feuer, Snezhana, Brutus, Brigid, Strela, Koschei, Tordis, Krok, Sarab, Gizmund, Ulfrik, Licht, Umbra,
-  Leshy, Orfeo, Pólvora, Hyppolita, Sokol, Carmina, Kagero, Garm, Luna, Pimples, Pivo, Azgoth, Kivi, Khepri, Leonteus,
-  Serra, Mercurio, Feng, Melissa, Nerina, Astrid (I avoided "Stark": Marvel/Game of Thrones). (#42) PvE rebalancing
+- **v34 (2026-09-29), batch 31 from David.** (#41) Heroes got new display names (same ids). (#42) PvE rebalancing
   with `tools/tune-heroes.js` (each hero in the 1st slot + 2 random partners and items, against the 2 bosses; the
   hard fights ~95% everyone wins, they don't discriminate): one strength knob per hero (HP and attack × p, mana ÷ p), iterated
   to pull up whoever is below average-8 and trim whoever is above average+14. Win against boss per hero: 12–76%
-  → ~20–48%. Strongest trimmed (Sarab/mirage, Koschei/morrow, Hyppolita, Brutus/brakk 0.82–0.83; Strela, Brigid,
-  Kagero, Pivo ~0.9); weakest helped (Snezhana 1.5, Feuer 1.41, Khepri 1.3, Tordis 1.29, Umbra 1.27, Luna 1.26,
-  Serra/Feng 1.24, Nerina 1.23, Leshy 1.21...). Matrix: boss 1 44% → 55% (teams that win at least 1×: 67% → 88%),
+  → ~20–48%. Strongest trimmed (Mirage/mirage, Graveborn/morrow, Skara, Ironhorn/brakk 0.82–0.83; Talon, Solace,
+  Eclipse, Rumble ~0.9); weakest helped (Frostbane 1.5, Feuer 1.41, Ankh 1.3, Tempest 1.29, Nyx 1.27, Mesmer 1.26,
+  Rapture/Kaze 1.24, Maelstrom 1.23, Bramble 1.21...). Matrix: boss 1 44% → 55% (teams that win at least 1×: 67% → 88%),
   boss 2 31% → 31%; robot unchanged.
 
 - **v33 (2026-09-29), batch 30 from David (#40): formation relics** (`form: true`, `Sim.formation`, applied in
@@ -408,8 +404,8 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   (floor f = ghost that finished f-1). (#38) **Account level**: XP only for first times (1 per hero that passes
   PvE for the first time, 5 per new Gauntlet floor, 3 per boss beaten for the first time) and 1 XP per 5 crowns
   spent; 10 XP per level (`B.ACCOUNT`); existing players receive the XP of their saved teams (`xpInit`, once). Levels 2 to
-  19 unlock **3 new heroes** (Buzzwell the beekeeper: AP hive + honey; Coralie of the tides: AP wave that pushes;
-  Stellan the astronomer: AD + AP star with stun), **5 items**, and **10 relics** (`B.UNLOCKS`); whatever is
+  19 unlock **3 new heroes** (Stinger the beekeeper: AP hive + honey; Maelstrom of the tides: AP wave that pushes;
+  Astral the astronomer: AD + AP star with stun), **5 items**, and **10 relics** (`B.UNLOCKS`); whatever is
   locked never shows up in the player's runs (`run.locked`, set in `newRun`; bots and old saves see everything). Reward
   road in the Player tab (smaller leagues), level in the profile and the menu, XP notices. **Shop**: Double XP 50 and Skip
   fights 100 (the ⏭ became a paid perk). New columns: `axp`, `cleared`, `pfloor`, `bosses`, `xpv`.
@@ -428,16 +424,15 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   (1366x768, 1440x900, 1920x1080) and copies them to `C:\Users\davi_\Downloads\balance-prints\` (the owner does not see
   file cards in the chat). Phone keeps the same framing as before (fit-on-screen tests pass).
 
-- **v28 (2026-09-29), batch 26 from David** (#36): (1) **original names**, without copying other games: the 33 heroes (Bastion
-  became Brannoc, Pyra became Emberlyn etc.), the abilities named after another game (Fireball → Cinder Comet, Consecrate →
+- **v28 (2026-09-29), batch 26 from David** (#36): (1) **original names**, without copying other games: the 33 heroes, the abilities named after another game (Fireball → Cinder Comet, Consecrate →
   Hallowed Ground, Keg Smash → Barrel Breaker, Fan the Hammer → Six-Shot Flurry...), the famous specializations from
   other games (Rallying Cry, Divine Shield, Corpse Explosion, Death Lotus...), the 120 items (the LoL/TFT ones are gone),
   the 34 relics, the 5 sets (Obsidian → Nightglass), the Hollow King (→ The Ashen Sovereign), and the Dark Knight
   (→ Blackguard). **Only the displayed name changed: every id stays the same** (saves, ghosts, and content Elo remain valid).
   (2) **AD/AP scaling**: an ability scales with AD (attack), AP, or both ADDED ("70% AD + 40% AP"); AP never again
   multiplies attack. AP = 100 at Lv 1, +30 per level, + items. Spells, spell burns, and heals use % of AP
-  (values converted from ab.dmg × base attack); hybrids (Morvaine, Vorthrax, Jumbles' confetti) use `dmg` (AD) +
-  `apdmg` (AP); Brannoc's shield became only % of health (33%). Every text states the attribute (descriptions, "How it
+  (values converted from ab.dmg × base attack); hybrids (Vesper, Inferno, Jinx' confetti) use `dmg` (AD) +
+  `apdmg` (AP); Aegir's shield became only % of health (33%). Every text states the attribute (descriptions, "How it
   scales" panel with the codes P/M/MX/A/B/BA/H, How to play, attribute tips). Per-hero adjustment measured with a
   per-hero win script against the bosses (average 34.1% before, 33.5% after, all within ±5 points); bot 300 runs: 22% / 49%,
   25 in the Gauntlet; matrix 45% / 29%.
@@ -585,9 +580,9 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   in the menus became a splash (square bust or full figure on the banners/title). Honest limit: it is art made in
   code; there is no image generator available (Higgsfield connector without authorization; local AI rejected before). If the
   owner authorizes a generator, it can be swapped for a truly painted splash keeping the same places.
-- **v12 (2026-09-28), batch 11 from David** ("many more unique heroes, go wild"): +15 heroes = 33 (Hippolyta amazon
-  spear+poison, Deadshot sniper, Vesper vampire, Kage ninja, Rex dog, Vey hypnotist, Pip clown, Barley drunkard, Azgul
-  demon, Grok caveman, Imhotep mummy, Leonidas hoplite, Harlequin, Sprocket alchemist, Zephyr wind
+- **v12 (2026-09-28), batch 11 from David** ("many more unique heroes, go wild"): +15 heroes = 33 (Skara amazon
+  spear+poison, Deadeye sniper, Vesper vampire, Eclipse ninja, Fang dog, Mesmer hypnotist, Jinx clown, Rumble drunkard, Inferno
+  demon, Boulder caveman, Ankh mummy, Phalanx hoplite, Rapture, Vial alchemist, Kaze wind
   monk), 120 new specs, own models. New mechanics in the sim: confusion (`st.confuseU`: attacks its own
   allies), blindness (`st.blindU`: attacks miss), push (`push`, with collision), damage reduction (`buff 'dr'`),
   rage per health lost (`m.rageDmg`), crowd-control resistance (`m.ccResist`), random tricks/flasks, bats.
@@ -624,9 +619,9 @@ Permanent instructions live in `CLAUDE.md`; the code map in `CODEMAP.md`.
   team whose Gauntlet ended with k victories (or the nearest above); defeat ends it; if nobody got that far,
   crowns champion. Batch 3 asked for Elo from the Onslaught score, batch 4 ordered it removed: it does not exist. Heart events
   became gold/XP. Saves v1 (with hearts) are discarded. Bot without hearts: ~8/60 runs reach the Onslaught.
-- **v5 (2026-09-28), batch 2 from David**: max team 3 (Crest gives 4); +6 heroes with passive scaling (Thorne attack per
-  hit, Seraph armor per second, Nyx attack per nearby kill, Bramble health per second, Echo team speed,
-  Blaze crit per crit) and 3 old specs that began to scale (Iron Hide, Thick Hide, Quick Cast); +20 items
+- **v5 (2026-09-28), batch 2 from David**: max team 3 (Crest gives 4); +6 heroes with passive scaling (Ravager attack per
+  hit, Radiant armor per second, Nyx attack per nearby kill, Bramble health per second, Lyric team speed,
+  Flint crit per crit) and 3 old specs that began to scale (Iron Hide, Thick Hide, Quick Cast); +20 items
   and +11 relics (several scaling); level ~20% slower (30/85/180/330); weaker bosses to compensate; equip
   menu with items on the left and heroes on the right. New mods in the sim: `stackAtk/stackAs/rampAtk/rampAtkPct/
   rampArmor/rampHpPct/killAtk/critStack/apPerAtk/reap/stasis/manaMaxPct` (each with `...Cap`).

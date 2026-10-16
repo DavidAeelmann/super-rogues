@@ -24,7 +24,7 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
-    fightScale: [1, 1.511, 1.644, 1.787, 1.709, 2.114, 2.299, 2.5, 2.704],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%
+    fightScale: [1, 1.511, 1.644, 1.787, 1.709, 2.199, 2.391, 2.6, 2.758],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%; v126 (review #223, David: "make the 2nd half of pve (after the first boss) slight, keyword SLIGHTLY, harder"): fights 5-7 x1.04, the second boss x1.02
     firstFight: 0.3,  // review #22: the first fight is fought by a single hero: a small enemy budget (v64, review #126: one hero again; 0.3 measured, a gentle first win)
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // review #24: sudden death burns every unit for 1%, 2%, 3%... of max HP per second
@@ -1042,11 +1042,8 @@
   TAGS.chronos = 'Turns back time on a hurt ally'; TAGS.bella = 'Stacks poison, then makes it spread'; TAGS.kitsune = 'Dodges, dashes and charms the back row';   // v121
   TAGS.onyx = 'A spiky turtle that hides in its shell'; TAGS.dragon = 'Dives through foes, leaving fire';   // v104 (review #184)
   for (const k in TAGS) if (B.HEROES[k]) B.HEROES[k].tag = TAGS[k];
-  // v59 (review #71, PC boy: "pep up the names"): every hero got a new name; the old one stays as h.was (the Art Lab still
-  // recognises picture files named after it)
-  // WHAT: the old names of heroes (the Art Lab still recognises picture files named after them).
-  const WAS = {bastion: 'Bjornar', vex: 'Sica', glacia: 'Snezhana', brakk: 'Brutus', lumen: 'Brigid', kestrel: 'Strela', morrow: 'Koschei', tempest: 'Tordis', grimhook: 'Krok', mirage: 'Sarab', rook: 'Gizmund', thorne: 'Ulfrik', seraph: 'Licht', nyx: 'Umbra', bramble: 'Leshy', echo: 'Orfeo', blaze: 'Pólvora', hippolyta: 'Hyppolita', deadshot: 'Sokol', vesper: 'Carmina', kage: 'Kagero', rex: 'Garm', vey: 'Luna', pip: 'Pimples', barley: 'Pivo', azgul: 'Azgoth', grok: 'Kivi', imhotep: 'Khepri', leonidas: 'Leonteus', harlequin: 'Serra', sprocket: 'Mercurio', zephyr: 'Feng', buzzwell: 'Melissa', coralie: 'Nerina', stellan: 'Astrid'};
-  for (const k in WAS) if (B.HEROES[k]) B.HEROES[k].was = WAS[k];
+  // v126 (review #219, David: "Remove all references to previous names of the characters, only the current names count"): a hero has one name, h.name.
+  // The key (bastion, thorne...) is only a fixed id used by saves, ghosts and ratings; it is not a name and is never shown (art folders use the current name).
 
   // ---------------------------------------------------------------- relics (100) — team-wide
   // WHAT: the power (relic) maker: R(id, name, description, { mods | fl: 'flagname', ... }). "mods" = plain stat bonus for every hero; "fl" = a flag that sim.js / run.js reads where the effect happens (search for the flag name there).
@@ -1552,7 +1549,7 @@
   //   against a higher league costs 25% less per league (a lower one 25% more); between x0.25 and x2. A made-up opponent counts as your league.
   B.LP_PVE = [20, 10, 0, 0, 0, 0];
   // v95 (reviews #176 #177, David, not announced in the game): in PvP your own heroes (never your ghost) take less damage while you are low on the ladder:
-  // Bronze x0.5, Silver x0.75 (the PvE help of review #53 is apart)
+  // Bronze x0.5, Silver x0.75 (the Bronze PvE help of review #53 was dropped in v126, review #223)
   B.PVP_TAKE = [1, 1, 1, 1, 1, 1];   // v101 (review #187, David: "Turn off all gauntlet pvp protection for bronze and silver"): off
   B.LP_GAP = 0.25;
   // WHAT: the factor of one PvP fight's LP: win or loss, opponent's league minus yours (null = same league).

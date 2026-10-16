@@ -5,6 +5,19 @@
   var B = window.B = window.B || {}; B.LANG = B.LANG || {};
   B.LANG.de = {
     x: {
+      "NEW": "NEU",
+      "Deploy your new hero": "Stell deinen neuen Helden auf",
+      "Deploy your new heroes": "Stell deine neuen Helden auf",
+      "Front row": "Vordere Reihe",
+      "Back row": "Hintere Reihe",
+      "Now tap a glowing hex on your half.": "Tippe jetzt auf ein leuchtendes Feld deiner Hälfte.",
+      "Drag onto your half of the board, or tap it and then a hex.": "Zieh ihn auf deine Hälfte des Feldes, oder tippe ihn an und dann ein Feld.",
+      "One more hero to place": "Noch ein Held aufzustellen",
+      "Everyone is on the board. Fight when ready!": "Alle stehen auf dem Feld. Kämpfe, wenn du bereit bist!",
+      "Not placed": "Nicht aufgestellt",
+      "Deploy your units": "Stell deine Einheiten auf",
+      "A new hero waits here. Drag it onto your half of the board: the fight starts once it is placed.": "Hier wartet ein neuer Held. Zieh ihn auf deine Hälfte des Feldes: Der Kampf beginnt erst, wenn er steht.",
+      "Your heroes keep their spots for the rest of the run. Drag one to move it.": "Deine Helden behalten ihren Platz bis zum Ende des Laufs. Zieh einen, um ihn umzustellen.",
       "Healing done": "Geheilt",
       "📣 Share my team": "📣 Mein Team teilen",
       "📣 Your Gauntlet card": "📣 Deine Gauntlet-Karte",
@@ -2136,7 +2149,7 @@
       "✓ Use all in my game": "✓ Alle in meinem Spiel verwenden",
       "Send all for review": "Alle zur Prüfung senden",
       "Hero for mystery.png": "Held für mystery.png",
-      "Hero for Snezhana_splash.png": "Held für Snezhana_splash.png",
+      "Hero for Frostbane_splash.png": "Held für Frostbane_splash.png",
       "Wind Monk ·": "Windmönch ·",
       "fights up close": "kämpft aus der Nähe",
       "Heroes are huge: tougher, but slower.": "Helden sind riesig: zäher, aber langsamer.",
@@ -2482,6 +2495,13 @@
       "Slow hammer, rages when hit": "Langsamer Hammer, rastet aus"
     },
     p: [
+      ["Deploy {0} new heroes!", "Stell {0} neue Helden auf!"],
+      ["Deploy {0}!", "Stell {0} auf!"],
+      ["Place {0} heroes first", "Erst {0} Helden aufstellen"],
+      ["Place {0} first", "Erst {0} aufstellen"],
+      ["Place your {0} new heroes on the board first", "Stell erst deine {0} neuen Helden aufs Feld"],
+      ["Drag {0} onto your half of the board first", "Zieh erst {0} auf deine Hälfte des Feldes"],
+      ["{0} more heroes to place", "Noch {0} Helden aufzustellen"],
       ["More about {0}", "Mehr über {0}"],
       ["PvE complete · {0} fights won", "PvE geschafft · {0} Kämpfe gewonnen"],
       ["PvE complete · {0} fight won", "PvE geschafft · {0} Kampf gewonnen"],
@@ -2835,7 +2855,7 @@
     h: {
       "<b>Pick a hero and a power.</b> Buy up to 2 more heroes in the Hero Shop.": "<b>Wähle einen Helden und eine Kraft.</b> Kaufe bis zu 2 weitere Helden im Heldenladen.",
       "<b>Every day, pick a path:</b> a fight, a shop or an event.": "<b>Wähle jeden Tag einen Pfad:</b> einen Kampf, einen Laden oder ein Ereignis.",
-      "<b>Before a fight, drag your heroes onto the board.</b> Tanks in front, ranged behind.": "<b>Zieh vor einem Kampf deine Helden aufs Brett.</b> Tanks nach vorn, Fernkämpfer nach hinten.",
+      "<b>Before a fight, drag your heroes onto the board.</b> Tanks in front, ranged behind. A new hero waits beside the board until you place it, then keeps its spot.": "<b>Zieh vor einem Kampf deine Helden aufs Brett.</b> Tanks nach vorn, Fernkämpfer nach hinten. Ein neuer Held wartet neben dem Brett, bis du ihn aufstellst, und behält dann seinen Platz.",
       "<b>The fight plays by itself.</b> Win for gold and XP. Heroes level up and use their power when the blue bar is full.": "<b>Der Kampf läuft von selbst.</b> Gewinne Gold und EP. Helden steigen auf und setzen ihre Kraft ein, wenn die blaue Leiste voll ist.",
       "<b>Beat 2 bosses, then climb the Gauntlet</b> against other players' teams. Lose one fight and the game is over.": "<b>Besiege 2 Bosse und erklimme dann den Gauntlet</b> gegen die Teams anderer Spieler. Verliere einen Kampf und das Spiel ist vorbei.",
       "❓ Events: trades, bets, powers and items to pick, and <b>challenges</b> (optional fights that start right away: win for a reward; lose and only that reward is gone, the game goes on). Some choices only open with the right hero in your team.": "❓ Ereignisse: Tausch, Wetten, Kräfte und Gegenstände zur Wahl und <b>Herausforderungen</b> (optionale Kämpfe, die sofort beginnen: Gewinne für eine Belohnung; verlierst du, ist nur diese Belohnung weg, das Spiel geht weiter). Manche Entscheidungen öffnen sich nur mit dem richtigen Helden in deinem Team.",

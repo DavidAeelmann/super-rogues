@@ -65,7 +65,7 @@ for (const d of DEVICES) {
   if (d.name === 'desktop' || d.name === 'tablet') ok(r.w >= 520 && (await ev(`document.querySelector('#app').getBoundingClientRect().width`)) >= 800, `${d.name}: uses the big screen (board ${Math.round(r.w)}px)`);
   if (d.name === 'phone-landscape') ok(await ev(`(() => { const b = document.querySelector('#board').getBoundingClientRect(), bar = document.querySelector('.deploy .bar').getBoundingClientRect(); return bar.left >= b.right - 1 && bar.bottom <= innerHeight + 1; })()`), 'phone-landscape: the panel sits beside the board');
   await shot('dev-' + d.name + '-deploy');
-  await ev(`document.querySelector('[data-act=fight]').click()`); await sleep(1500);
+  await ev(`__bal.deployBench(); document.querySelector('[data-act=fight]').click()`); await sleep(1500);   // v126: the bench (review #224) first
   await noHScroll(d.name + ' battle'); await boardFits(d.name + ' battle'); await shot('dev-' + d.name + '-battle');
   await ev(`__bal.skipBattle()`); for (let k = 0; k < 40 && (await ev('!!__bal.battle')); k++) await sleep(100);
   await noHScroll(d.name + ' result'); await sleep(1500); if (PHONE(d)) { await noVScroll(d.name + ' result'); await shot('dev-' + d.name + '-result'); }

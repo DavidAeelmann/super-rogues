@@ -118,7 +118,7 @@ for (dev of DEVICES.map(d => d)) {
     if (epos) { await tap(epos.x, epos.y); await audit('deploy-enemy-tapped'); }
     await ev(`document.querySelector('#top [data-act=team]') && document.querySelector('#top [data-act=team]').click()`); await sleep(250); await audit('deploy-items'); await act('close'); await sleep(100);
     // battle
-    await ev(`document.querySelector('[data-act=fight]') && document.querySelector('[data-act=fight]').click()`); await sleep(900); await audit('battle');
+    await ev(`__bal.deployBench(); document.querySelector('[data-act=fight]') && document.querySelector('[data-act=fight]').click()`); await sleep(900); await audit('battle');   // v126: the bench (review #224) first
     const bp = await ev(`(() => { const b = __bal.battle; if (!b) return null; const u = b.W.units.find(x => x.side === 0 && !x.dead); return u ? __bal.hexScreen(u.c, u.r) : null; })()`);
     if (bp) { await tap(bp.x, bp.y - 20); await audit('battle-hero-tapped'); }
     const bq = await ev(`(() => { const b = __bal.battle; if (!b) return null; const u = b.W.units.find(x => x.side === 1 && !x.dead); return u ? __bal.hexScreen(u.c, u.r) : null; })()`);

@@ -58,7 +58,7 @@ for (const d of SIZES) {
     await shot('04-deploy');
     await ev(`(() => { __bal.run.cur.map = 'pond'; __bal.render(); })()`); await sleep(300); await shot('04b-deploy-pond');
     await ev(`(() => { __bal.run.cur.map = 'ridge'; __bal.render(); })()`); await sleep(300);
-    await ev(`document.querySelector('[data-act=fight]').click()`); await sleep(2600); await shot('05-battle');
+    await ev(`__bal.deployBench(); document.querySelector('[data-act=fight]').click()`); await sleep(2600); await shot('05-battle');   // v126: the bench (review #224) first
     // review #51: the end of the fight in slow motion under VICTORY (the sim runs to the end without skipping the ending)
     await ev(`(() => { const W = __bal.battle.W; let n = 0; while (!W.over && n++ < 20 * 150) B.Sim.step(W); })()`); await sleep(650); await shot('05b-victory');
     for (let k = 0; k < 30 && !(await ev(`!!document.querySelector('[data-act=result-ok]')`)); k++) await sleep(100);

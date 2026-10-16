@@ -80,9 +80,10 @@
   }
   // WHAT: puts a new level 1 hero on the team and places him on the board. A hero is { uid, key, lvl, xp, specs, items, bonus, pos }.
   //   key = the id in B.HEROES; specs = the powers picked at level-ups; bonus = permanent extras from events, potions and Smolder's Devour.
-  function addHero(run, key) {
+  // v126 (review #224): bench = the hero joins in the middle of the run and waits beside the board until the player places it (see benched)
+  function addHero(run, key, bench) {
     const h = { uid: ++run.nuid, key, lvl: 1, xp: 0, specs: [], items: [], bonus: {}, pos: null };
-    run.heroes.push(h); autoPlace(run, h); return h;
+    run.heroes.push(h); if (bench) h.bench = true; else autoPlace(run, h); return h;
   }
   // WHAT: finishes the start screen: adds the chosen heroes and the chosen starting power, then moves to the first day.
   // v81 (review #159): the balance evidence (tools/balance). run.tele counts what the run was OFFERED and what it TOOK, by 'kind:id' (hero, item, relic,
@@ -250,13 +251,25 @@
     const cols = [3, 4, 2, 5, 1, 6, 0, 7];
     for (const r of rows) for (const c of cols) if (!taken.has(Hx.key(c, r))) { h.pos = { c, r }; return; }
   }
+  // v126 (review #224, David: "Make it so when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time. Fight doesnt
+  // start until you do, include plenty of indicators for that. But after first deployment the hex persists until changed until end of run"): a hero that joins in the
+  // middle of a run (free recruit, Hero Shop, event, stolen) waits on the BENCH (h.bench, no hex) until the player puts it on the board; the deploy screen keeps the
+  // fight locked until then (js/ui.js benchHTML). Once placed it keeps its hex for the rest of the run (unless the player moves it or terrain covers it).
+  // WHAT: the heroes of the coming fight still on the bench (a duel only needs its one hero).
+  function benched(run) { const f = run.cur || {}; return run.heroes.filter(h => h.bench && (!f.solo || h.uid === f.solo)); }
+  // WHAT: gives the heroes their hexes before a fight: a hero on terrain moves; a benched hero stays off the board in the preview, and is placed for it only when a
+  // real fight starts without the deploy screen (tests, tools).
+  function placeAll(run, preview) {
+    for (const h of run.heroes) if (h.pos && blockedAt(run, h.pos.c, h.pos.r)) h.pos = null;
+    for (const h of run.heroes) { if (h.bench && !preview) { delete h.bench; h.pos = null; } if (!h.pos && !h.bench) autoPlace(run, h); }
+  }
   // WHAT: the player moved a hero to hex (c, r). If another hero is there they swap. Only rows 4-7 and not on terrain.
   function setPos(run, uid, c, r) {
     if (r < 4 || r > 7 || !Hx.inside(c, r) || blockedAt(run, c, r)) return;
     const h = run.heroes.find(x => x.uid === uid); if (!h) return;
     const other = run.heroes.find(x => x !== h && x.pos && x.pos.c === c && x.pos.r === r);
     if (other) other.pos = h.pos ? { c: h.pos.c, r: h.pos.r } : null;
-    h.pos = { c, r };
+    h.pos = { c, r }; delete h.bench;   // v126 (review #224): placed once, it keeps this hex
     if (other && !other.pos) autoPlace(run, other);
   }
 
@@ -337,9 +350,8 @@
   // WHAT: builds the simulation (B.Sim.create) of the current fight: our heroes, the enemies, the terrain, our powers. preview = true is the static board shown while deploying.
   function fightWorld(run, preview, o) {
     if (!preview) devour(run);
-    const f = run.cur, team = f.solo ? run.heroes.filter(h => h.uid === f.solo) : run.heroes;   // v44: a duel = one hero
-    for (const h of run.heroes) if (h.pos && blockedAt(run, h.pos.c, h.pos.r)) h.pos = null;
-    for (const h of run.heroes) if (!h.pos) autoPlace(run, h);
+    placeAll(run, preview);
+    const f = run.cur, team = (f.solo ? run.heroes.filter(h => h.uid === f.solo) : run.heroes).filter(h => !h.bench);   // v44: a duel = one hero; v126: the bench is off the board
     return B.Sim.create({
       terrain: terrainOf(run),
       mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: f.fightNo, relics: run.relics, takeMul: o && o.takeMul,
@@ -462,20 +474,22 @@
   function recruit(run, key) {
     if (run.phase !== 'recruit' || !(run.recruitOffer || []).includes(key)) return 'Pick one of the offered heroes';
     seen(run, 'hero', run.recruitOffer); took(run, 'hero', key);
-    addHero(run, key); run.recruits = (run.recruits || 0) + 1; run.recruitOffer = null;
+    addHero(run, key, true); run.recruits = (run.recruits || 0) + 1; run.recruitOffer = null;   // v126 (review #224): onto the bench
     advance(run); return null;
   }
   // v64 (review #127, David: "hero shops may still exist swapping in with an existing team hero, upgrades are random, items kept"): with a full team a bought hero takes
   // the place of one of yours: it starts at that hero's level and XP, picks its powers at random for those levels and wears the same items
   // WHAT: swaps hero oldUid for a new hero key (same level, XP, place and items; random powers). Returns the new hero.
-  function swapIn(run, oldUid, key) {
+  // v126 (review #224): bench = the newcomer waits on the bench (see benched) instead of taking the old hero's hex
+  function swapIn(run, oldUid, key, bench) {
     const old = run.heroes.find(h => h.uid === oldUid); if (!old) return null;
     const specs = B.HEROES[key].specs.slice(0, old.lvl - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id);
-    const h = { uid: ++run.nuid, key, lvl: old.lvl, xp: old.xp, specs, items: [], bonus: {}, pos: old.pos ? { c: old.pos.c, r: old.pos.r } : null };
+    const h = { uid: ++run.nuid, key, lvl: old.lvl, xp: old.xp, specs, items: [], bonus: {}, pos: old.pos && !bench && !old.bench ? { c: old.pos.c, r: old.pos.r } : null };
+    if (bench || old.bench) h.bench = true;
     run.pending = run.pending.filter(p => p.uid !== old.uid);
     run.heroes[run.heroes.indexOf(old)] = h;
     for (const id of old.items) { if (h.items.length < slots(run, h) && !h.items.some(x => B.ITEM[x].type === B.ITEM[id].type)) h.items.push(id); else run.bag.push(id); }
-    if (!h.pos) autoPlace(run, h);
+    if (!h.pos && !h.bench) autoPlace(run, h);
     return h;
   }
   // WHAT: a number for how strong a team is (health and defense against damage per second, as one number per hero, added up). Only used to tell the player how a ghost compares with their own team.
@@ -578,10 +592,9 @@
     if (o.kind === 'hero') {
       const full = run.heroes.length >= teamMax(run), old = full ? run.heroes.find(h => h.uid === replaceUid) : null;
       if (full && !old) return 'Pick the hero it replaces';
-      let pos = null;
-      if (old) { run.bag.push(...old.items); pos = old.pos; run.heroes = run.heroes.filter(h => h !== old); run.pending = run.pending.filter(p => p.uid !== old.uid); }
-      const x = o.hero, h = { uid: ++run.nuid, key: x.key, lvl: x.lvl, xp: C.xpLevels[x.lvl] || 0, specs: x.specs.slice(), items: [], bonus: Object.assign({}, x.bonus), pos: pos ? { c: pos.c, r: pos.r } : null };
-      run.heroes.push(h); if (!h.pos) autoPlace(run, h); run.bag.push(...x.items); ach(run, 'pickpocket');
+      if (old) { run.bag.push(...old.items); run.heroes = run.heroes.filter(h => h !== old); run.pending = run.pending.filter(p => p.uid !== old.uid); }
+      const x = o.hero, h = { uid: ++run.nuid, key: x.key, lvl: x.lvl, xp: C.xpLevels[x.lvl] || 0, specs: x.specs.slice(), items: [], bonus: Object.assign({}, x.bonus), pos: null, bench: true };   // v126 (review #224): onto the bench
+      run.heroes.push(h); run.bag.push(...x.items); ach(run, 'pickpocket');
     } else if (o.kind === 'item') run.bag.push(o.id);
     else gainRelic(run, o.id);
     run.steal = null; run.g = null; advance(run); return null;
@@ -615,7 +628,12 @@
   // are written into the heroes' bonus; the ghost then fights with what its player really had
   // WHAT: a copy of the team as plain data, used (1) to send the team to the server as a Gauntlet ghost and (2) to rate heroes. Run-based power bonuses are baked in so the ghost keeps them.
   function teamSnapshot(run) {
-    for (const h of run.heroes) if (!h.pos) autoPlace(run, h);
+    const temp = run.heroes.filter(h => h.bench);   // v126 (review #224): a hero still on the bench gets a hex for the ghost only
+    for (const h of run.heroes) if (!h.pos && !h.bench) autoPlace(run, h);
+    for (const h of temp) { delete h.bench; autoPlace(run, h); }
+    try { return snapTeam(run); } finally { for (const h of temp) { h.bench = true; h.pos = null; } }
+  }
+  function snapTeam(run) {
     const x = (has(run, 'snowball') ? 0.04 * (run.snow || 0) : 0) + (has(run, 'packrat') ? 0.03 * Math.min(10, (run.bag || []).length) : 0);
     return run.heroes.map(h => {
       const bonus = Object.assign({}, h.bonus);
@@ -628,14 +646,13 @@
     if (!preview) devour(run);
     const o = run.g.opp, ghost = { relics: o.relics || [], heroes: o.team || [], bag: [] };
     if (!run.g.map) run.g.map = gauntletMap(run, o, run.g.round);
-    for (const h of run.heroes) if (h.pos && blockedAt(run, h.pos.c, h.pos.r)) h.pos = null;
-    for (const h of run.heroes) if (!h.pos) autoPlace(run, h);
+    placeAll(run, preview);
     return B.Sim.create({
       terrain: terrainOf(run),
       // review #15: the ghost fights with its own relics too (stat relics via heroDef, team effects via enemyRelics)
       mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: 7, relics: run.relics, enemyRelics: o.relics || [], takeMul: o2 && o2.takeMul,   // v95 (reviews #176 #177): see B.PVP_TAKE
      
-      heroes: run.heroes.map(h => ({ def: pvpDef(heroDef(run, h), h.key), c: h.pos.c, r: h.pos.r })),   // v88: pvpDef = the PvP-only balance (B.TUNE.pvp)
+      heroes: run.heroes.filter(h => !h.bench).map(h => ({ def: pvpDef(heroDef(run, h), h.key), c: h.pos.c, r: h.pos.r })),   // v126: the bench is off the board   // v88: pvpDef = the PvP-only balance (B.TUNE.pvp)
       // their formation, mirrored so it faces ours: rows 4..7 -> 3..0
       enemies: o.team.map(h => { const d = pvpDef(heroDef(ghost, h), h.key); d.uid = 0; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
     });
@@ -791,9 +808,9 @@
   function buy(run, i, replaceUid) {
     const s = run.cur.stock[i]; if (!s || s.sold || run.gold < s.price) return 'Not enough gold';
     if (s.kind === 'hero') {
-      if (run.heroes.length < teamMax(run)) { const lv = shopHeroLevel(run), h = addHero(run, s.id); if (lv > 1) { h.lvl = lv; h.xp = C.xpLevels[lv]; h.specs = B.HEROES[s.id].specs.slice(0, lv - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id); } }   // v92 (review #173)
+      if (run.heroes.length < teamMax(run)) { const lv = shopHeroLevel(run), h = addHero(run, s.id, true); if (lv > 1) { h.lvl = lv; h.xp = C.xpLevels[lv]; h.specs = B.HEROES[s.id].specs.slice(0, lv - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id); } }   // v92 (review #173)
       else if (!run.heroes.some(h => h.uid === replaceUid)) return 'Pick the hero it replaces';   // v64 (review #127): a full team swaps
-      else swapIn(run, replaceUid, s.id);
+      else swapIn(run, replaceUid, s.id, true);   // v126 (review #224): a bought hero waits on the bench
     }
     else if (s.kind === 'item') run.bag.push(s.id);
     else gainRelic(run, s.id);
@@ -1002,7 +1019,7 @@
       const k = hero.specs.length - 1, pair = B.HEROES[hero.key].specs[k], was = hero.specs[k], now = pair[0].id === was ? pair[1] : pair[0];
       hero.specs[k] = now.id; msg = name(hero) + ' now follows ' + now.name + '.'; got('boost', '★ ' + now.name, hero.key);
     }
-    else if (a === 'hire' || a === 'join') { const h = hero ? swapIn(run, hero.uid, x) : addHero(run, x); msg = name(h) + (hero ? ' takes ' + B.HEROES[hero.key].name + "'s place!" : ' joins your team!'); got('hero', x); }
+    else if (a === 'hire' || a === 'join') { const h = hero ? swapIn(run, hero.uid, x, true) : addHero(run, x, true); msg = name(h) + (hero ? ' takes ' + B.HEROES[hero.key].name + "'s place!" : ' joins your team!'); got('hero', x); }
     else if (a === 'take') { run.bag.push(x); msg = 'You took ' + iname(x) + '.'; got('item', x); }
     else if (a === 'invest') { (run.bank = run.bank || []).push(+x); msg = 'The banker writes it down: ' + x + ' gold comes back after your next won fight.'; got('bank', +x); }
     else if (a === 'loan') { run.gold += +x; (run.bank = run.bank || []).push(-y); msg = '+' + x + ' gold now. ' + y + ' gold is paid back after your next won fight.'; got('gold', +x); }
@@ -1159,7 +1176,7 @@
   }
 
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
-  B.Run = { pveSeq, startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
+  B.Run = { benched, pveSeq, startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
     eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };

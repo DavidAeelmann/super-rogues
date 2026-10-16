@@ -332,15 +332,15 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     for (let i = 0; i < secs * 20 && !W.over; i++) Sim.step(W);
     return fn(W, u) > before;
   };
-  ok(grew('thorne', (W, u) => Sim.atkOf(W, u)), 'Thorne: attack grows per hit');
-  ok(grew('seraph', (W, u) => Sim.armorOf(W, u)), 'Seraph: armor grows every second');
+  ok(grew('thorne', (W, u) => Sim.atkOf(W, u)), 'Ravager: attack grows per hit');
+  ok(grew('seraph', (W, u) => Sim.armorOf(W, u)), 'Radiant: armor grows every second');
   ok(grew('bramble', (W, u) => u.maxHp), 'Bramble: max HP grows every second');
   ok(grew('nyx', (W, u) => Sim.atkOf(W, u), 25, 'easy', 1), 'Nyx: attack grows when enemies die nearby');
-  { // v61: Blaze starts at a high crit chance so a crit surely happens (the fight result moves with every balance pass)
+  { // v61: Flint starts at a high crit chance so a crit surely happens (the fight result moves with every balance pass)
     const run = Run.newRun(88); Run.pickStart(run, ['blaze', 'bastion']); run.cur = Run.makeFight(run, 'medium', 3);
     const W = Run.fightWorld(run), u = W.units.find(x => x.key === 'blaze'); u.crit = 0.6;
     for (let i = 0; i < 10 * 20 && !W.over; i++) Sim.step(W);
-    ok(u.crit > 0.6, 'Blaze: crit chance grows on crits');
+    ok(u.crit > 0.6, 'Flint: crit chance grows on crits');
   }
   // v83 (review #161): the two new bosses fight with their kit (howl wolves, pounce / blizzard, freeze) and the fight ends cleanly
   for (const [key, slot, n] of [['packlord', 1, 4], ['lichqueen', 2, 8]]) {
@@ -353,7 +353,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   // v52 (review #64): each boss slot has two bosses; every game draws one of each
   { const seen = [new Set(), new Set()]; for (let i = 0; i < 40; i++) { const r = Run.newRun(4000 + i); seen[0].add(Run.bossOf(r, 1)); seen[1].add(Run.bossOf(r, 2)); }
     ok(seen[0].size === B.BOSS_SLOTS[0].length && seen[1].size === B.BOSS_SLOTS[1].length && B.BOSS_SLOTS.every(s => s.length === 3) && [...seen[0]].every(k => B.BOSS_SLOTS[0].includes(k)) && [...seen[1]].every(k => B.BOSS_SLOTS[1].includes(k)) && Run.bossOf({}, 1) === 'gorewarden' && Run.bossOf({}, 2) === 'hollowking', 'v52, v83 (review #161): each game draws one of three bosses per slot (games from before keep the old two)'); }
-  ok(grew('echo', (W, u) => W.units.filter(a => a.side === 0).reduce((t, a) => t + Sim.asOf(W, a), 0)), 'Echo: allies attack faster over time');
+  ok(grew('echo', (W, u) => W.units.filter(a => a.side === 0).reduce((t, a) => t + Sim.asOf(W, a), 0)), 'Lyric: allies attack faster over time');
   ok(CFG.maxTeam === 3, 'team size is 3');
 }
 // v6: gauntlet duel = our team vs a stored team, mirrored into the top rows
@@ -382,25 +382,25 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   let W = W0('vey', [['grunt', 3, 2], ['grunt', 4, 2], ['grunt', 3, 1]]); let u = W.units[0];
   Sim.abilities.hypnosis(W, u);
   const g = W.units.find(x => x.side === 1 && x.st.confuseU > W.t);
-  ok(g && (() => { Sim.step(W); const t = W.byId[g.tgt]; return t && t.side === 1; })(), 'Vey: hypnotized enemies attack their own allies');
+  ok(g && (() => { Sim.step(W); const t = W.byId[g.tgt]; return t && t.side === 1; })(), 'Mesmer: hypnotized enemies attack their own allies');
   // smoke: blinded enemies miss
   W = W0('kage', [['grunt', 3, 3]]); u = W.units[0]; const e = W.units.find(x => x.side === 1);
   Sim.abilities.smoke(W, u);
   for (let i = 0; i < 30; i++) Sim.step(W);
-  ok(e.st.blindU > 0, 'Kage: smoke blinds adjacent enemies');
+  ok(e.st.blindU > 0, 'Eclipse: smoke blinds adjacent enemies');
   // gale kick pushes the target away
   W = W0('zephyr', [['grunt', 3, 3]]); u = W.units[0]; const t = W.units.find(x => x.side === 1); const d0 = B.Hex.dist(u, t);
   Sim.abilities.galekick(W, u);
-  ok(B.Hex.dist(u, t) > d0, `Zephyr: the kick knocks the target back (${d0} -> ${B.Hex.dist(u, t)})`);
+  ok(B.Hex.dist(u, t) > d0, `Kaze: the kick knocks the target back (${d0} -> ${B.Hex.dist(u, t)})`);
   // phalanx damage reduction
   W = W0('leonidas', [['brute', 3, 3]]); u = W.units[0];
   Sim.abilities.phalanx(W, u);
-  ok(u.buffs.some(b => b.s === 'dr' && b.v > 0), 'Leonidas: phalanx gives damage reduction');
+  ok(u.buffs.some(b => b.s === 'dr' && b.v > 0), 'Phalanx: phalanx gives damage reduction');
   // demon rage: more damage when hurt
   W = W0('azgul', [['golem', 3, 3]]); u = W.units[0];
-  ok(u.m.rageDmg >= 1, 'Azgul: missing HP increases damage');
+  ok(u.m.rageDmg >= 1, 'Inferno: missing HP increases damage');
   // grok thick skull halves stuns
-  ok(Run.heroDef({ relics: [] }, { key: 'grok', lvl: 1, specs: [], items: [], bonus: {} }).m.ccResist === 0.5, 'Grok: crowd control resistance');
+  ok(Run.heroDef({ relics: [] }, { key: 'grok', lvl: 1, specs: [], items: [], bonus: {} }).m.ccResist === 0.5, 'Boulder: crowd control resistance');
   ok(Object.keys(HEROES).length >= 33, 'at least 33 heroes');
 }
 // v30 (review #28, PC boy): content locked by the account level never shows up in the player's runs
@@ -665,7 +665,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
 {
   const team = (keys, lvl, bag) => { const r = Run.newRun(321); Run.pickStart(r, [keys[0]], null); for (const k of keys.slice(1)) Run.addHero(r, k); r.heroes.forEach(h => { h.lvl = lvl; }); r.bag = bag.slice(); return r; };
   const on = (r, key) => r.heroes.find(h => h.key === key).items;
-  ok(Run.heroProfile('pyra').apShare > 0.7 && Run.heroProfile('vex').apShare < 0.3 && Run.heroProfile('bastion').tank && !Run.heroProfile('kestrel').tank, 'v57: hero profiles (Feuer AP, Sica AD, Bjornar a tank)');
+  ok(Run.heroProfile('pyra').apShare > 0.7 && Run.heroProfile('vex').apShare < 0.3 && Run.heroProfile('bastion').tank && !Run.heroProfile('kestrel').tank, 'v57: hero profiles (Feuer AP, Vex AD, Aegir a tank)');
   ok(Run.itemScore('vex', 'rod') < 0.2 && Run.itemScore('pyra', 'rod') > 1 && Run.itemScore('vex', 'longsword') > 1.5 && Run.itemScore('pyra', 'longsword') < 0.3, 'v57: an AP item is worth almost nothing to an AD hero, and the other way round');
   let r = team(['pyra', 'vex', 'bastion'], 3, ['rod', 'longsword', 'warmog', 'chainmail', 'boots', 'h_iron']);
   Run.autoEquip(r);
@@ -677,11 +677,14 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(on(r, 'vex').includes('longsword') && on(r, 'pyra').includes('rod'), 'v57: it also fixes gear worn by the wrong hero');
   const s0 = JSON.stringify(r.heroes.map(h => h.items)); ok(Run.autoEquip(r) === 0 && JSON.stringify(r.heroes.map(h => h.items)) === s0, 'v57: pressing it again changes nothing');
 }
-// ---- v59 (review #71, PC boy): new hero names, one per hero, and no old name left in any hero text
+// ---- v59 (review #71, PC boy): one name per hero; v126 (review #219): only the current names exist
 {
   const H = Object.values(HEROES), names = H.map(h => h.name);
   ok(new Set(names).size === names.length && names.includes('Aegir') && names.includes('Jinx') && names.includes('Feuer') && names.includes('Maelstrom'), 'v59: every hero has its own new name (Feuer keeps his)');
-  ok(!H.some(h => /(Bjornar|Pimples|Brigid|Koschei|Gizmund|Melissa|Ulfrik)/.test(h.abDesc + ' ' + h.specs.flat().map(s => s.desc).join(' '))), 'v59: no old name left in abilities and powers');
+  // v126 (review #219): a hero has only its current name; no hero text calls a hero by its id (the ids are the first names, e.g. thorne)
+  ok(!H.some(h => 'was' in h), 'v126: no hero keeps an old name');
+  const ids = Object.keys(HEROES).map(k => k[0].toUpperCase() + k.slice(1)).filter(n => !names.includes(n));
+  ok(!H.some(h => ids.some(n => new RegExp('\\b' + n + '\\b').test(h.abDesc + ' ' + h.specs.flat().map(s => s.desc).join(' ')))), 'v126: no hero text names a hero by its id');
 }
 // ---- v60 (review #72, PC boy): Prism (beams, no attacks) and Citadel (a tower that sends soldiers)
 {
@@ -984,7 +987,20 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(Run.buy(s, 0) === 'Pick the hero it replaces' && s.gold === 99, 'a full team: buying a hero asks which one it replaces');
   ok(Run.buy(s, 0, old.uid) === null && s.gold === 92 && s.heroes.length === 3 && !s.heroes.includes(old), 'the hero is bought and swapped in');
   const nw = s.heroes.find(h => h.key === key);
-  ok(nw && nw.lvl === 4 && nw.xp === old.xp && nw.specs.length === 3 && nw.specs.every((id, i) => B.HEROES[key].specs[i].some(p => p.id === id)) && nw.items.join() === 'longsword,chainmail' && nw.pos && nw.pos.c === old.pos.c, 'it takes the level, XP, place and items of the one it replaces, with powers picked for its levels');
+  ok(nw && nw.lvl === 4 && nw.xp === old.xp && nw.specs.length === 3 && nw.specs.every((id, i) => B.HEROES[key].specs[i].some(p => p.id === id)) && nw.items.join() === 'longsword,chainmail' && nw.bench && !nw.pos, 'it takes the level, XP and items of the one it replaces, with powers picked for its levels (v126, review #224: and waits on the bench)');
+  // v126 (review #224): a hero that joins in the middle of a run waits on the bench, off the board, until the player places it; then it keeps that hex
+  { const r = Run.newRun(2424); Run.pickStart(r, ['bastion'], null); const nb = Run.addHero(r, 'lumen', true); r.cur = Run.makeFight(r, 'easy', 1, 0, { keys: ['grunt'] }); r.fightNo = 1; r.phase = 'deploy';
+    ok(nb.bench && !nb.pos && Run.benched(r).length === 1 && Run.fightWorld(r, true).units.filter(u => u.side === 0).length === 1, 'v126 (review #224): a new hero waits on the bench, off the board');
+    Run.setPos(r, nb.uid, 2, 7);
+    ok(!nb.bench && nb.pos.c === 2 && nb.pos.r === 7 && !Run.benched(r).length && Run.fightWorld(r, true).units.filter(u => u.side === 0).length === 2, 'v126: placed once, it leaves the bench');
+    Run.fightWorld(r, true); Run.fightWorld(r, true);
+    ok(nb.pos.c === 2 && nb.pos.r === 7, 'v126: it keeps its hex fight after fight');
+    const n2 = Run.addHero(r, 'kestrel', true), snap = Run.teamSnapshot(r);
+    ok(snap.length === 3 && snap.every(h => h.pos && h.pos.r >= 4) && n2.bench && !n2.pos, 'v126: the Gauntlet ghost has every hero on a hex; the benched one stays on the bench');
+    Run.fightWorld(r, false);
+    ok(!n2.bench && n2.pos && !Run.benched(r).length, 'v126: a real fight started without the deploy screen (tests, tools) places it');
+    const r2 = Run.newRun(2425); Run.pickStart(r2, ['bastion'], null); r2.phase = 'recruit'; r2.recruitOffer = ['lumen']; Run.recruit(r2, 'lumen');
+    ok(r2.heroes[1].bench && !r2.heroes[1].pos, 'v126: a free recruit waits on the bench too'); }
   // victory kinds and league points
   ok(B.victoryOf(1).id === 'perfect' && B.victoryOf(0).id === 'gold' && B.VICTORY.length === 2, 'v101: victory kinds: Perfect (the Ward whole), Gold (broken)');
   ok(B.runLp({ done: true, duels: 2, lost: 0, streak: 3 }, 2) === 43 && B.runLp({ done: true, duels: 1, lost: 1, streak: 1 }, 2) === 23, 'v65 (review #129): a completed run: +10 a duel, +20 the final, -8 a PvP fight lost, +1 per run of the streak');

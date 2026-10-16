@@ -71,7 +71,7 @@
 
   // ---------------------------------------------------------------- the abilities
   const SPEC = {};
-  // Stoneward (Bastion): slabs of stone rise on the border of the taunt radius and a shield dome wraps the caster
+  // Stoneward (Aegir): slabs of stone rise on the border of the taunt radius and a shield dome wraps the caster
   SPEC.bulwark = {
     ring: {
       life: 24, top: true,
@@ -108,7 +108,7 @@
       },
     },
   };
-  // Cinder Comet (Pyra): a real comet with a long burning tail, then a crater of fire on exactly the hexes it hits
+  // Cinder Comet (Feuer): a real comet with a long burning tail, then a crater of fire on exactly the hexes it hits
   SPEC.fireball = {
     proj: {
       life: 0, top: true,
@@ -137,7 +137,7 @@
       },
     },
   };
-  // Rime Squall (Glacia): the hexes frost over, ice crystals grow out of them and snow whirls round the group
+  // Rime Squall (Frostbane): the hexes frost over, ice crystals grow out of them and snow whirls round the group
   SPEC.blizzard = {
     ring: {
       life: 34, top: true,
@@ -163,7 +163,7 @@
 
   const NONE = { life: 1, draw() {} };   // "this ability draws nothing for that kind" (its picture is made by another kind)
   const cuts = (g, p, n, spread) => { for (let i = 0; i < n; i++) g.burst(p.x + (i - n / 2) * spread, p.y, 1, '#8a6a4a', { speed: 30, life: 0.6, r: 2.4, g: -8 }); };
-  // Ramming Charge (Brakk): dust and speed streaks behind the charge, then a crack-and-dust impact on the hexes it lands on
+  // Ramming Charge (Ironhorn): dust and speed streaks behind the charge, then a crack-and-dust impact on the hexes it lands on
   SPEC.charge = {
     cast: {
       life: 14, top: true,
@@ -187,7 +187,7 @@
       },
     },
   };
-  // Dawnmend (Lumen): a beam of golden light comes down on the ally, the hexes it heals glow and little crosses float up. A smite is a thin bolt from the sky.
+  // Dawnmend (Solace): a beam of golden light comes down on the ally, the hexes it heals glow and little crosses float up. A smite is a thin bolt from the sky.
   SPEC.radiance = {
     ring: {
       life: 26, top: true,
@@ -208,7 +208,7 @@
       },
     },
   };
-  // Volley (Kestrel): real arrows (shaft, head, green fletching) that climb in a high arc, drop on their target and stay stuck in the ground for a moment
+  // Volley (Talon): real arrows (shaft, head, green fletching) that climb in a high arc, drop on their target and stay stuck in the ground for a moment
   SPEC.volley = {
     proj: {
       life: 22, top: true,
@@ -225,7 +225,7 @@
       land(g, f) { const tu = f.to && g.W.byId[f.to], p = tu ? g.unitPos(tu) : g.pos(f.tc, f.tr); g.burst(p.x, p.y, 4, '#c9b497', { speed: 40, life: 0.4, r: 2, g: 50 }); },
     },
   };
-  // Bone Call (Morrow): a skeletal hand bursts out of the ground, soul wisps drift up out of the crack
+  // Bone Call (Graveborn): a skeletal hand bursts out of the ground, soul wisps drift up out of the crack
   SPEC.raise = {
     spawn: {
       life: 22, top: true,
@@ -261,7 +261,7 @@
       },
     },
   };
-  // Hook (Grimhook): a heavy chain with a grappling hook flies out, bites, and drags back
+  // Hook (Hookjaw): a heavy chain with a grappling hook flies out, bites, and drags back
   SPEC.hook = {
     bolt: {
       life: 14, top: true,
@@ -321,7 +321,7 @@
     },
     ring: NONE,
   };
-  // Crimson Spin (Thorne): three blades whirl round the edge of the area it hits, red crescents with a white edge, blood flying off
+  // Crimson Spin (Ravager): three blades whirl round the edge of the area it hits, red crescents with a white edge, blood flying off
   SPEC.whirl = {
     ring: {
       life: 22, top: true,
@@ -341,7 +341,7 @@
       },
     },
   };
-  // Hallowed Ground (Seraph): a golden sigil is drawn on the ground, rays of light rise from every hex, and the ground stays holy
+  // Hallowed Ground (Radiant): a golden sigil is drawn on the ground, rays of light rise from every hex, and the ground stays holy
   const holyMotes = (g, cs, T, col, n) => { const ctx = g.ctx; for (const h of cs) for (let i = 0; i < n; i++) { const R = rng(h.c * 17 + h.r * 5 + i), t = ((T * 0.02 + R()) % 1); ctx.globalAlpha = 0.8 * Math.sin(t * Math.PI); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(h.p.x + (R() - 0.5) * g.size, h.p.y - t * g.size * 1.5, 1.8, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; };
   SPEC.consecrate = {
     ring: {
@@ -396,7 +396,7 @@
     },
   };
 
-  // Rallying Refrain (Echo): sound waves roll out from her and music notes float up from every hex of the area
+  // Rallying Refrain (Lyric): sound waves roll out from her and music notes float up from every hex of the area
   SPEC.anthem = {
     ring: {
       life: 34, top: true,
@@ -425,7 +425,7 @@
       land(g, f) { const tu = f.to && g.W.byId[f.to], p = tu ? g.unitPos(tu) : g.pos(f.tc, f.tr); g.burst(p.x, p.y - g.size * 0.7, 5, '#ffd28a', { speed: 100, life: 0.3, r: 1.8, g: 100, shape: 'spark' }); },
     },
   };
-  // Skyspear Barrage (Hippolyta): heavy golden-tipped spears climb high and fall almost straight down, and stay planted in the ground dripping poison
+  // Skyspear Barrage (Skara): heavy golden-tipped spears climb high and fall almost straight down, and stay planted in the ground dripping poison
   SPEC.javelin = {
     proj: {
       life: 40, top: true,
@@ -442,7 +442,7 @@
       land(g, f) { const tu = f.to && g.W.byId[f.to], p = tu ? g.unitPos(tu) : g.pos(f.tc, f.tr); g.burst(p.x, p.y, 6, '#c9b497', { speed: 50, life: 0.45, r: 2.2, g: 60 }); },
     },
   };
-  // Longwatch Round (Deadshot): a red laser line and a crosshair close in on the weakest enemy, then one huge bullet with a long white tracer
+  // Longwatch Round (Deadeye): a red laser line and a crosshair close in on the weakest enemy, then one huge bullet with a long white tracer
   SPEC.headshot = {
     bolt: {
       life: 14, top: true,
@@ -488,7 +488,7 @@
       draw(g, f, a) { const p = g.pos(f.c, f.r), t = a / 26; glyph(g, '🦇', p.x + Math.sin(t * 9) * g.size * 0.4, p.y - g.size * (0.4 + t * 1.6), g.size * (0.6 + 0.4 * t), Math.sin(t * 14) * 0.4, 1 - t * t); },
     },
   };
-  // Ashveil (Kage): a smoke bomb bursts and grey clouds billow up over the hexes; then ninja stars spin out of the smoke and stick where they land
+  // Ashveil (Eclipse): a smoke bomb bursts and grey clouds billow up over the hexes; then ninja stars spin out of the smoke and stick where they land
   SPEC.smoke = {
     ring: {
       life: 34, top: true,
@@ -512,7 +512,7 @@
 
   // a little rock with an irregular outline
   const rock = (ctx, x, y, R, seed, rot, fill, line) => { const Rn = rng(seed); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, r = R * (0.72 + Rn() * 0.32); i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = line; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.beginPath(); ctx.arc(-R * 0.25, -R * 0.25, R * 0.3, 0, TAU); ctx.fill(); ctx.restore(); };
-  // Howl & Pounce (Rex): sound waves roll out of the howl; paw prints mark the pounce
+  // Howl & Pounce (Fang): sound waves roll out of the howl; paw prints mark the pounce
   SPEC.howl = {
     ring: {
       life: 26, top: true,
@@ -529,7 +529,7 @@
       },
     },
   };
-  // Dreamspiral (Vey): a hypnotic spiral turns over the group and dizzy stars circle in it
+  // Dreamspiral (Mesmer): a hypnotic spiral turns over the group and dizzy stars circle in it
   SPEC.hypnosis = {
     ring: {
       life: 40, top: true,
@@ -541,7 +541,7 @@
       },
     },
   };
-  // Grab Bag (Pip): every trick has its own look: a spinning pie, juggling knives, balloons floating up, falling confetti and a squirt of water
+  // Grab Bag (Jinx): every trick has its own look: a spinning pie, juggling knives, balloons floating up, falling confetti and a squirt of water
   SPEC.trick = {
     proj: {
       life: 30, top: true,
@@ -573,7 +573,7 @@
       },
     },
   };
-  // Barrel Breaker (Barley): a barrel drops on the area and bursts into planks, foam and flying beer
+  // Barrel Breaker (Rumble): a barrel drops on the area and bursts into planks, foam and flying beer
   SPEC.keg = {
     ring: {
       life: 28, top: true,
@@ -588,7 +588,7 @@
       },
     },
   };
-  // Brimstone Nova (Azgul): a wall of hellfire rolls out to the very edge of the area, a pentagram burns into the ground
+  // Brimstone Nova (Inferno): a wall of hellfire rolls out to the very edge of the area, a pentagram burns into the ground
   SPEC.hellfire = {
     ring: {
       life: 30, top: true,
@@ -602,7 +602,7 @@
     },
     spawn: { life: 16, top: true, spawn(g, f) { const p = g.pos(f.c, f.r); g.burst(p.x, p.y - g.size * 0.4, 10, '#ff7a3d', { speed: 70, life: 0.5, r: 2.4, g: -40, glow: true }); }, draw(g, f, a) { const p = g.pos(f.c, f.r), t = a / 16; glow(g, p.x, p.y - g.size * 0.5, g.size * (0.4 + 0.5 * t), '#ff7a3d', 0.7 * (1 - t)); } },
   };
-  // Boulder Toss (Grok): a real boulder tumbles through the air (and its shadow crawls over the ground), then it smashes down, throws rocks and cracks the ground
+  // Boulder Toss (Boulder): a real boulder tumbles through the air (and its shadow crawls over the ground), then it smashes down, throws rocks and cracks the ground
   SPEC.boulder = {
     proj: {
       life: 0, top: true,
@@ -625,7 +625,7 @@
       },
     },
   };
-  // Linen of Ages (Imhotep): bandages fly out and wind round the two nearest enemies
+  // Linen of Ages (Ankh): bandages fly out and wind round the two nearest enemies
   SPEC.wrap = {
     bolt: {
       life: 26, top: true,
@@ -637,7 +637,7 @@
       },
     },
   };
-  // Phalanx (Leonidas): a great round shield with its lambda rises in front of the line and a spear thrusts through
+  // Phalanx (Phalanx): a great round shield with its lambda rises in front of the line and a spear thrusts through
   SPEC.phalanx = {
     ring: {
       life: 28, top: true,
@@ -652,7 +652,7 @@
     },
   };
 
-  // Steel Minuet (Harlequin): she dances from foe to foe in curving ribbons of red and white, card suits scattering where she steps
+  // Steel Minuet (Rapture): she dances from foe to foe in curving ribbons of red and white, card suits scattering where she steps
   SPEC.waltz = {
     blink: {
       life: 20, top: true,
@@ -666,7 +666,7 @@
       },
     },
   };
-  // Unstable Flasks (Sprocket): glass flasks tumble through the air; each liquid does its own thing where it breaks: acid bubbles and eats, frost shatters into ice, poison billows green
+  // Unstable Flasks (Vial): glass flasks tumble through the air; each liquid does its own thing where it breaks: acid bubbles and eats, frost shatters into ice, poison billows green
   const flaskKind = col => col === '#b8e040' ? 'acid' : col === '#9fe8ff' ? 'frost' : col === '#7ac83a' ? 'poison' : 'heal';
   SPEC.flask = {
     proj: {
@@ -691,7 +691,7 @@
       },
     },
   };
-  // Squall Kick (Zephyr): a white crescent of wind, a ring of whirling air and gust lines away from the kicker
+  // Squall Kick (Kaze): a white crescent of wind, a ring of whirling air and gust lines away from the kicker
   SPEC.galekick = {
     ring: {
       life: 18, top: true,
@@ -706,7 +706,7 @@
       },
     },
   };
-  // Honey Hive (Buzzwell): a hive splats onto the group, a honeycomb lights up on the ground and bees circle in it; the weakest ally gets a drip of honey
+  // Honey Hive (Stinger): a hive splats onto the group, a honeycomb lights up on the ground and bees circle in it; the weakest ally gets a drip of honey
   const bee = (ctx, x, y, s, t) => { ctx.save(); ctx.translate(x, y); ctx.fillStyle = 'rgba(235,245,255,0.8)'; ctx.beginPath(); ctx.ellipse(-s * 0.3, -s * 0.5 - Math.abs(Math.sin(t * 2.2)) * s * 0.4, s * 0.45, s * 0.28, -0.5, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(s * 0.3, -s * 0.5 - Math.abs(Math.sin(t * 2.2 + 1)) * s * 0.4, s * 0.45, s * 0.28, 0.5, 0, TAU); ctx.fill(); ctx.fillStyle = '#ffc21a'; ctx.beginPath(); ctx.ellipse(0, 0, s * 0.7, s * 0.45, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#2a2008'; ctx.fillRect(-s * 0.2, -s * 0.42, s * 0.18, s * 0.84); ctx.fillRect(s * 0.15, -s * 0.38, s * 0.16, s * 0.76); ctx.restore(); };
   const honeycomb = (g, cs, col, alpha) => { const ctx = g.ctx; ctx.save(); ctx.fillStyle = col; ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.6; for (const h of cs) { g.path(g.corners(h.c, h.r, g.size * 0.88)); ctx.globalAlpha = alpha; ctx.fill(); ctx.globalAlpha = alpha * 2.2; ctx.stroke(); g.path(g.corners(h.c, h.r, g.size * 0.5)); ctx.stroke(); } ctx.restore(); };
   SPEC.hive = {
@@ -723,7 +723,7 @@
     },
     zone(g, z, T) { const ctx = g.ctx, cs = cellsOf(g, z.c, z.r, z.rad); honeycomb(g, cs, '#ffc21a', 0.14); const c0 = g.pos(z.c, z.r); for (let i = 0; i < 6; i++) { const ang = T * 0.12 * (i % 2 ? 1 : -1) + i, rr = g.size * (z.rad * 1.2 + 0.5) * (0.45 + (i * 0.17) % 0.5); bee(ctx, c0.x + Math.cos(ang) * rr, c0.y - g.size * 0.5 + Math.sin(ang) * rr * 0.55, g.size * 0.2, T + i); } },
   };
-  // Tidal Wave (Coralie): a wall of water with a foaming crest sweeps across the group from the back to the front
+  // Tidal Wave (Maelstrom): a wall of water with a foaming crest sweeps across the group from the back to the front
   SPEC.wave = {
     ring: {
       life: 30, top: true,
@@ -739,7 +739,7 @@
       },
     },
   };
-  // Falling Star (Stellan): a violet target of stars marks the ground, then a golden star with a burning tail really falls out of the sky onto it
+  // Falling Star (Astral): a violet target of stars marks the ground, then a golden star with a burning tail really falls out of the sky onto it
   SPEC.starfall = {
     ring: {
       life: 40, top: true,

@@ -3072,3 +3072,35 @@ body.cardpage { min-height: 100dvh; display: grid; place-items: center; padding:
 /* v123: an item shop with 5 or 6 offers (the Faded Chart) packs its rows tighter so it still fits a small phone */
 @media (max-height: 760px) { section.shop .grid.rows.many { gap: 5px; } .grid.rows.many .card.stock.v2.k-item, .grid.rows.many .card.stock.v2.k-relic { grid-template-columns: 44px minmax(0, 1fr) auto; padding: 5px 8px; gap: 8px; }
   .grid.rows.many .card.stock.v2 .medal { width: 44px; height: 44px; } .grid.rows.many .card.stock.v2 .medal .ico { width: 32px; height: 32px; } .grid.rows.many .card.stock.v2 .ctitle { font-size: 14px; } .grid.rows.many .card.stock.v2 .htag { font-size: 11px; padding: 0 7px; } .grid.rows.many .card.stock.v2 .meta .small { font-size: 11.5px; line-height: 1.25; } .grid.rows.many .card.stock.v2 .price { min-height: 40px; } }
+/* v70: the end screens one step smaller when they would not fit */
+.tight .vmbig { font-size: 60px !important; } .tight .vmban .lgem { width: 60px; height: 60px; } .tight .vmban .lvb { width: 56px; height: 56px; font-size: 26px; } .tight.xpscr .vmwrap.xp .xplines { grid-template-columns: 1fr 1fr; } .tight.xpscr .vmwrap.xp .xplines li { font-size: 12px; padding: 4px 7px; } .tight .vmtube { min-height: 90px; }
+.tight.xpscr .chest { width: 104px; height: 80px; } .tight.xpscr .chest .box { height: 52px; } .tight.xpscr .chest .lid { height: 30px; } .tight.xpscr .chestzone { padding-top: 26px; } .tight .vmcall { font-size: 15px; padding: 8px 10px; } .tight .lpw { font-size: 12px !important; padding: 3px 8px !important; }
+.tighter .vmbig { font-size: 46px !important; } .tighter.xpscr .vmwrap.xp .xplines li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .tighter.xpscr .chest { width: 80px; height: 62px; } .tighter.xpscr .chest .box { height: 40px; } .tighter.xpscr .chest .lid { height: 23px; } .tighter .lootit { width: 58px !important; } .tighter .lootit b, .tighter .lootit small { display: none; } .tighter .lootit .ico, .tighter .lootit .por { width: 36px !important; height: 36px !important; } .tighter .vmeter { padding: 8px 6px; } .tighter .vmcall { display: none; }
+/* v126 (review #224, David: "when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time... include plenty of indicators"):
+   the BENCH of heroes still to place (beside the board on computers and tablets, above it on phones), the gold banner over the board, the glowing hexes (render.js) and the
+   locked Fight button */
+.bench { position: relative; margin: 6px 0; padding: 8px 10px 6px; border-radius: 14px; background: linear-gradient(180deg, #2a2160, #171a4a); box-shadow: 0 0 0 2px #ffd23f, 0 0 18px #ffd23f66; }
+.bench .bnh { display: flex; align-items: center; gap: 8px; font: 800 14px var(--fun); color: #fff; }
+.bench .bnew { padding: 1px 7px; border-radius: 6px; background: #ffd23f; color: #2a1d00; font: 900 11px var(--fun); letter-spacing: .5px; }
+.bench .bnarrow { margin-left: auto; color: #ffd23f; font-size: 20px; line-height: 1; } .bench .bnarrow::before { content: '⬇'; }
+body.side .bench .bnarrow::before, body.landscape .bench .bnarrow::before { content: '⬅'; }
+.bench .bnl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.bench .bnc { flex: 1 1 140px; display: flex; align-items: center; gap: 8px; min-height: 0; padding: 5px 8px; border-radius: 10px; text-align: left; background: #ffffff14; box-shadow: inset 0 0 0 2px #ffd23f88; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.bench .bnc .por { width: 44px; height: 44px; border-radius: 8px; flex: none; pointer-events: none; }
+.bench .bnc .bnb { display: grid; gap: 1px; min-width: 0; } .bench .bnc .bnb b { font-size: 14px; } .bench .bnc .bnb .small { font-size: 11.5px; }
+.bench .bnc.on { background: #ffd23f33; box-shadow: inset 0 0 0 3px #ffd23f, 0 0 12px #ffd23faa; }
+.bench .bnt { margin: 5px 0 0; color: #ffe9a0; text-align: center; }
+.bench.nudge { animation: benchnudge .5s ease-in-out; }
+@keyframes benchnudge { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+@media (prefers-reduced-motion: no-preference) {
+  .bench { animation: benchglow 1.2s ease-in-out infinite alternate; } .bench.nudge { animation: benchnudge .5s ease-in-out, benchglow 1.2s ease-in-out infinite alternate; }
+  .bench .bnarrow { animation: bencharrow .9s ease-in-out infinite; } body.side .bench .bnarrow, body.landscape .bench .bnarrow { animation-name: bencharrowx; }
+}
+@keyframes benchglow { to { box-shadow: 0 0 0 3px #ffe680, 0 0 28px #ffd23fbb; } }
+@keyframes bencharrow { 50% { transform: translateY(4px); } } @keyframes bencharrowx { 50% { transform: translateX(-5px); } }
+.benchghost { position: fixed; z-index: 60; pointer-events: none; transform: translate(-50%, -60%) scale(1.05); opacity: .9; filter: drop-shadow(0 6px 10px #000a); }
+.benchghost .por { width: 64px; height: 64px; border-radius: 12px; box-shadow: 0 0 0 3px #ffffffaa; } .benchghost.ok .por { box-shadow: 0 0 0 3px #ffd23f, 0 0 16px #ffd23f; }
+.depban.need { background: #4a3500e6; color: #ffe680; box-shadow: 0 0 0 2px #ffd23f, 0 0 18px #ffd23f99; } .depban.need svg.ui { color: #ffd23f; }
+@media (prefers-reduced-motion: no-preference) { .depban.need { animation: benchglow 1s ease-in-out infinite alternate; } }
+.bar > button.primary.locked { filter: grayscale(.75) brightness(.8); box-shadow: inset 0 0 0 2px #ffd23f99; cursor: not-allowed; font-size: 15px; }
+.pm.benched { box-shadow: inset 0 0 0 2px #ffd23f; } .pm .pmbench { margin-left: auto; padding: 0 6px; border-radius: 6px; background: #ffd23f; color: #2a1d00; font: 800 10.5px var(--fun); text-transform: uppercase; }
