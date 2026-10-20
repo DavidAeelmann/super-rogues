@@ -53,10 +53,11 @@
   }
   function path(ctx, pts) { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); }
   // WHAT: which hex is under a screen point (for taps and drags). Returns { c, r } or null.
-  function hexAt(v, x, y) {
+  function hexAt(v, x, y, pad = 1.0) {
     let best = null, bd = 1e9;
+    const thresh = v.size * v.size * (1.1 * pad * pad);
     for (const h of Hx.all()) { const p = hexScreen(v, h.c, h.r); const d = (p.x - x) ** 2 + ((p.y - y) / K) ** 2; if (d < bd) { bd = d; best = h; } }
-    return bd <= v.size * v.size * 1.1 ? best : null;
+    return bd <= thresh ? best : null;
   }
   // flat position (with attack lunge) of a unit at fractional tick T
   // v55 (review #67, David: "Smooth the animations of combat. They are very rickety and jumpy"): the lunge winds up a
@@ -317,9 +318,14 @@
       const rx = S * 0.55, g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rx); g.addColorStop(0, `rgba(${sideC},0.55)`); g.addColorStop(0.65, `rgba(${sideC},0.28)`); g.addColorStop(1, `rgba(${sideC},0)`);
       ctx.save(); ctx.translate(p.x, p.y); ctx.scale(1, K * 0.55); ctx.translate(-p.x, -p.y); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
-    const rim = o.sel && o.sel === u.uid && hero ? '#ffffff' : u.elite ? '#ffcf5a' : `rgba(${sideC},0.75)`;
-    ctx.strokeStyle = rim; ctx.lineWidth = o.sel && o.sel === u.uid ? 3 : u.elite ? 2.2 : 1.4;
+    const isSel = !!(o.sel && o.sel === u.uid && hero), isInfo = !!(o.infoId && o.infoId === u.id && !u.dead);
+    const rim = isSel ? '#ffd23f' : isInfo ? (hero ? '#ffd23f' : '#ff5c6e') : u.elite ? '#ffcf5a' : `rgba(${sideC},0.75)`;
+    ctx.strokeStyle = rim; ctx.lineWidth = (isSel || isInfo) ? 3.5 : u.elite ? 2.2 : 1.4;
     ctx.beginPath(); ctx.ellipse(p.x, p.y, S * 0.46, S * 0.46 * K * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+    if (isSel || isInfo) {
+      ctx.strokeStyle = '#ffffffbb'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, S * 0.53, S * 0.53 * K * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+    }
     const pose = poseOf(W, u, T, d, dt);
     const mk = u.key === 'clone' ? 'mirage' : u.key, art = B.Art && B.Art.sprite(mk);
     const bx0 = p.x - (pose.face > 0 ? 1 : -1) * flinch, flash = since < 0.09 && !u.dead && FILTER;
@@ -327,9 +333,11 @@
     const intro = Math.min(1, T / 8), hitK = since < 0.16 ? Math.sin(since / 0.16 * Math.PI) : 0, strike = pose.atk != null && pose.atk > 0.75 ? Math.sin((pose.atk - 0.75) / 0.25 * Math.PI) : 0;
     // v70 (review #145, David: "between deployment then 3 2 1 the whole board and figures are getting squished"): the countdown holds the fight at its first frame,
     // where the start pop is squashed; while it runs (o.still) the units stand tall and the pop plays when FIGHT! lets the fight go
-    const sy = (o.deploy || o.still ? 1 : 0.6 + 0.4 * (1 - Math.pow(1 - intro, 3))) * (1 - 0.07 * hitK - 0.05 * strike), sx = 1 + 0.06 * hitK + 0.06 * strike;
+    const selScale = isSel ? 1.08 : isInfo ? 1.06 : 1, selY = isSel ? -S * 0.1 : isInfo ? -S * 0.07 : 0;
+    const sy = (o.deploy || o.still ? 1 : 0.6 + 0.4 * (1 - Math.pow(1 - intro, 3))) * (1 - 0.07 * hitK - 0.05 * strike) * selScale;
+    const sx = (1 + 0.06 * hitK + 0.06 * strike) * selScale;
     if (flash) ctx.filter = 'brightness(1.9) saturate(0.6)';
-    ctx.save(); ctx.translate(bx0, p.y); ctx.scale(sx, sy); ctx.translate(-bx0, -p.y);
+    ctx.save(); ctx.translate(bx0, p.y + selY); ctx.scale(sx, sy); ctx.translate(-bx0, -p.y);
     if (art) B.Art.draw(ctx, art, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
     else B.Models.draw(ctx, mk, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
     ctx.restore();
@@ -340,15 +348,69 @@
     ctx.globalAlpha = 1;
     if (u.dead || u.plant) return;   // v62h: a plant has no health bar (nothing can hurt it)
     // bars above the head
-    const headTop = p.y - S * (u.boss ? 1.75 : 1.5), bw = Math.max(S * 0.95, size * 1.1), bx = p.x - bw / 2, by = headTop - 10;
+    const headTop = p.y - S * (u.boss ? 1.75 : 1.5), bw = Math.max(S * 0.95, size * 1.1), bx = p.x - bw / 2, by = headTop - 11;
+    const bh = 5.5;
     const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, Math.max(0, w), h, r); else ctx.rect(x, y, Math.max(0, w), h); };
-    ctx.fillStyle = hero ? '#123a86' : '#6a1426'; rr(bx - 1.5, by - 1.5, bw + 3, 7.5, 3); ctx.fill();   // the bar's frame in the side's colour
-    ctx.fillStyle = '#000a'; rr(bx, by, bw, 4.5, 2); ctx.fill();
-    if (d && d.trail > u.hp) { ctx.fillStyle = '#fff2b0'; rr(bx, by, bw * Math.min(1, d.trail / u.maxHp), 4.5, 2); ctx.fill(); }   // v55: the health just lost fades out
-    const hg = ctx.createLinearGradient(0, by, 0, by + 4.5); hg.addColorStop(0, hero ? '#8ff0a6' : '#ff8f9b'); hg.addColorStop(1, hero ? '#3fb85e' : '#e2404f');
-    ctx.fillStyle = hg; rr(bx, by, bw * Math.max(0, u.hp / u.maxHp), 4.5, 2); ctx.fill();
-    if (u.shield > 0 && u.shieldU > s) { ctx.fillStyle = '#e8ecff'; ctx.fillRect(bx, by, Math.min(bw, bw * u.shield / u.maxHp), 2); }
-    if (u.maxMana > 0) { ctx.fillStyle = '#000b'; ctx.fillRect(bx - 1, by + 5, bw + 2, 3); ctx.fillStyle = '#5fa8ff'; ctx.fillRect(bx, by + 5, bw * Math.min(1, u.mana / u.maxMana), 2); }
+    // Outer frame & drop shadow
+    ctx.fillStyle = '#050711cc'; rr(bx - 2, by - 2, bw + 4, bh + 4, 3.5); ctx.fill();
+    ctx.fillStyle = hero ? '#194294' : '#7a1428'; rr(bx - 1.2, by - 1.2, bw + 2.4, bh + 2.4, 3); ctx.fill();   // the bar's frame in the side's colour
+    ctx.fillStyle = '#0a0d18'; rr(bx, by, bw, bh, 2.5); ctx.fill();
+    // Ghost bar trail (white damage chip indicator catching down)
+    if (d && d.trail > u.hp) {
+      ctx.fillStyle = '#ffffff';
+      rr(bx, by, bw * Math.min(1, d.trail / u.maxHp), bh, 2.5);
+      ctx.fill();
+    }
+    // High-contrast HP gradient
+    const hg = ctx.createLinearGradient(0, by, 0, by + bh);
+    hg.addColorStop(0, hero ? '#a3ffba' : '#ffa4b0');
+    hg.addColorStop(0.4, hero ? '#5de37e' : '#f04a5c');
+    hg.addColorStop(1, hero ? '#2da84a' : '#bd2435');
+    const curW = bw * Math.max(0, u.hp / u.maxHp);
+    ctx.fillStyle = hg; rr(bx, by, curW, bh, 2.5); ctx.fill();
+    // 1px glossy highlight along top of HP bar
+    if (curW > 3) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      rr(bx + 1, by + 0.6, curW - 2, 1.3, 0.8);
+      ctx.fill();
+    }
+    // Shield overlay
+    if (u.shield > 0 && u.shieldU > s) {
+      ctx.fillStyle = 'rgba(235, 243, 255, 0.9)';
+      rr(bx, by, Math.min(bw, bw * u.shield / u.maxHp), 2.5, 1);
+      ctx.fill();
+    }
+    // Mana bar with 100% full-mana cyan pulse bloom
+    if (u.maxMana > 0) {
+      const manaFull = u.mana >= u.maxMana;
+      const my = by + bh + 2.5;
+      ctx.fillStyle = '#050711dd'; rr(bx - 1, my - 1, bw + 2, 4.5, 2); ctx.fill();
+      ctx.fillStyle = '#0e172a'; rr(bx, my, bw, 2.8, 1.5); ctx.fill();
+      const mg = ctx.createLinearGradient(0, my, 0, my + 2.8);
+      if (manaFull) {
+        const pulse = 0.75 + 0.25 * Math.sin((typeof performance !== 'undefined' ? performance.now() : 0) * 0.012);
+        mg.addColorStop(0, `rgba(220, 250, 255, ${pulse})`);
+        mg.addColorStop(1, `rgba(60, 220, 255, ${pulse})`);
+      } else {
+        mg.addColorStop(0, '#85c2ff');
+        mg.addColorStop(1, '#3b86f7');
+      }
+      ctx.fillStyle = mg;
+      const curM = bw * Math.min(1, u.mana / u.maxMana);
+      rr(bx, my, curM, 2.8, 1.5);
+      ctx.fill();
+      if (curM > 3) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        rr(bx + 0.5, my + 0.4, curM - 1, 0.8, 0.4);
+        ctx.fill();
+      }
+      if (manaFull) {
+        ctx.strokeStyle = '#c6f5ff';
+        ctx.lineWidth = 1;
+        rr(bx - 0.5, my - 0.5, bw + 1, 3.8, 2);
+        ctx.stroke();
+      }
+    }
     if (u.lvl > 1 && hero && u.kind === 'hero') { ctx.font = "700 10px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.fillStyle = '#ffcf5a'; ctx.textAlign = 'left'; ctx.fillText(u.lvl, bx + bw + 2, by + 5); }
     // review #44: status effects as coloured badges (glyph on a disc) above the bars, one colour per effect
     const marks = [];
@@ -365,9 +427,9 @@
     if (u.st.slowU > s) marks.push(['🐌', '#4aa3ff']);
     if (marks.length > 3) marks.length = 3;
     if (marks.length) {
-      const R = Math.max(5.5, size * 0.2), gap = R * 2 + 2, x0 = p.x - (marks.length - 1) * gap / 2, y0 = by - R - 3;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(R * 1.35)}px 'Fredoka', system-ui, sans-serif`;
-      ctx.font = `${Math.round(R * 1.25)}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif`;
+      const R = Math.max(7.5, size * 0.28), gap = R * 2 + 2, x0 = p.x - (marks.length - 1) * gap / 2, y0 = by - R - 3;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `${Math.round(R * 1.35)}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif`;
       marks.forEach(([g, c], i) => { const x = x0 + i * gap; ctx.fillStyle = '#0b0f3fdd'; ctx.beginPath(); ctx.arc(x, y0, R, 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = c; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillText(g, x, y0 + 1); });
       ctx.textBaseline = 'alphabetic';
     }
@@ -384,7 +446,14 @@
     ctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
     ctx.clearRect(0, 0, v.w, v.h);
     const AF = B.AbilFx;
-    if (S.shake > 0.2 && !o.deploy) { S.shake = Math.min(S.shake, 4); ctx.translate(Math.sin(now * 61) * S.shake * 0.45, Math.cos(now * 47) * S.shake * 0.45); S.shake *= Math.pow(0.004, dt); } else S.shake = 0;   // v62p (review #112): no more flicker
+    if (S.shake > 0.05 && !o.deploy) {
+      S.shake = Math.min(S.shake, 6);
+      const ang = S.shakeAng != null ? S.shakeAng : now * 61;
+      const decay = Math.pow(0.002, dt);
+      ctx.translate(Math.cos(ang) * S.shake * 0.75 + Math.sin(now * 53) * S.shake * 0.25, Math.sin(ang) * S.shake * 0.75 + Math.cos(now * 43) * S.shake * 0.25);
+      S.shake *= decay;
+      if (S.shake <= 0.05) { S.shake = 0; S.shakeAng = null; }
+    } else S.shake = 0;   // v62p (review #112): no more flicker
     const boss = W && W.units.find(u => u.boss && u.side === 1), bd = backdrop(v, boss ? boss.key : null); if (bd) ctx.drawImage(bd, -12, -12, v.w + 24, v.h + 24); else { ctx.fillStyle = royal() ? '#1a1228' : '#9fd4ff'; ctx.fillRect(0, 0, v.w, v.h); }
     drawBoard(v, o, W);
     if (boss && !o.deploy) bossTiles(v, boss.key, now);
@@ -406,6 +475,65 @@
       ctx.fillStyle = f.color; ctx.globalAlpha = (1 - k) * 0.3; for (const h of Hx.within(f.c, f.r, f.rad)) { path(ctx, corners(v, h.c, h.r, size * 0.9)); ctx.fill(); } ctx.globalAlpha = 1;
     }
     if (!o.deploy) spawnFromFx(v, W, T, S);
+    // Deploy-phase targeting arcs & range indicator when selecting or inspecting a unit
+    if (o.deploy && W && W.units) {
+      const activeU = W.units.find(u => !u.dead && ((o.sel && u.side === 0 && u.uid === o.sel) || (o.infoId && u.id === o.infoId)));
+      if (activeU) {
+        const p1 = hexScreen(v, activeU.c, activeU.r);
+        const hero = activeU.side === 0;
+        // Range indicator halo if ranged (range > 1)
+        if (activeU.range > 1) {
+          const rngR = size * (activeU.range * 1.52);
+          ctx.save();
+          ctx.translate(p1.x, p1.y);
+          ctx.scale(1, K * 0.7);
+          ctx.translate(-p1.x, -p1.y);
+          ctx.strokeStyle = hero ? 'rgba(74, 163, 255, 0.45)' : 'rgba(255, 92, 110, 0.45)';
+          ctx.fillStyle = hero ? 'rgba(74, 163, 255, 0.08)' : 'rgba(255, 92, 110, 0.08)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 5]);
+          ctx.beginPath();
+          ctx.arc(p1.x, p1.y, rngR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+        // Determine primary threat/target: closest enemy
+        const foes = W.units.filter(e => !e.dead && e.side !== activeU.side && e.kind !== 'plant');
+        let target = null, minDist = 999;
+        for (const f of foes) {
+          const d = Hx.dist(activeU, f);
+          if (d < minDist) { minDist = d; target = f; }
+        }
+        if (target) {
+          const p2 = hexScreen(v, target.c, target.r);
+          ctx.save();
+          const col = hero ? '#4aa3ff' : '#ff5c6e';
+          ctx.strokeStyle = col;
+          ctx.fillStyle = col;
+          ctx.lineWidth = Math.max(2, size * 0.065);
+          ctx.setLineDash([8, 6]);
+          ctx.lineDashOffset = -now * 30;
+          ctx.beginPath();
+          // Subtle curve towards target
+          const midX = (p1.x + p2.x) / 2 + (p1.x < p2.x ? -10 : 10);
+          const midY = (p1.y + p2.y) / 2 - 15;
+          ctx.moveTo(p1.x, p1.y - size * 0.4);
+          ctx.quadraticCurveTo(midX, midY, p2.x, p2.y - size * 0.4);
+          ctx.stroke();
+          // Arrowhead
+          const ang = Math.atan2((p2.y - size * 0.4) - midY, p2.x - midX);
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(p2.x, p2.y - size * 0.4);
+          ctx.lineTo(p2.x - Math.cos(ang - 0.45) * size * 0.3, p2.y - size * 0.4 - Math.sin(ang - 0.45) * size * 0.3);
+          ctx.lineTo(p2.x - Math.cos(ang + 0.45) * size * 0.3, p2.y - size * 0.4 - Math.sin(ang + 0.45) * size * 0.3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
     // ambient embers drifting up
     if (!o.deploy && Math.random() < dt * 6 && S.parts.length < MAXP) S.parts.push({ x: Math.random() * v.w, y: v.h + 4, vx: (Math.random() - 0.5) * 10, vy: -20 - Math.random() * 25, g: 0, life: 4 + Math.random() * 3, t: 0, r: 1 + Math.random() * 1.2, col: Math.random() < 0.5 ? '#ffb347' : '#e8b84a', glow: true });
     // v97 (review #179): the first-time intro can hide units (o.hide) and draw them lifted above their hex by some pixels (o.lift: dropping in, walking in)
@@ -424,11 +552,33 @@
         ctx.fillStyle = col; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(q.x, qy, w * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.restore();
       }
     }
+    // Prepare batched floating damage numbers so rapid hits on the same target collapse cleanly
+    const numBatches = new Map();
+    for (const f of W.fx) {
+      if (f.k !== 'num' || T < f.t0 || T - f.t0 > (f.t1 - f.t0 + 0.99)) continue;
+      const heal = String(f.text)[0] === '+';
+      const nk = f.n || (f.big ? 'crit' : 'hit');
+      if (heal || nk === 'dot' || !f.id) continue;
+      const numVal = parseInt(f.text, 10);
+      if (isNaN(numVal)) continue;
+      const bKey = `${f.id}_${nk}`;
+      const existing = numBatches.get(bKey);
+      if (!existing) {
+        numBatches.set(bKey, { fx: f, total: numVal, count: 1, minT0: f.t0, maxT1: f.t1 });
+      } else if (Math.abs(f.t0 - existing.minT0) <= 6) { // hits within 6 ticks (300ms) cluster together
+        existing.total += numVal;
+        existing.count++;
+        existing.maxT1 = Math.max(existing.maxT1, f.t1);
+        f._batchedInto = existing;
+      }
+    }
+
     for (const f of W.fx) {
       const own = f.ab && AF && AF.has(f);
       if (T < f.t0 || T - f.t0 > (own ? AF.life(f) : f.t1 - f.t0 + 0.99)) continue;
       if (own) { if (f.k !== 'ring' || AF.top(f)) AF.run(abilKit, v, W, T, S, f, 'draw'); if (!AF.keep(f)) continue; }
       if (f.k === 'ring') continue;
+      if (f._batchedInto) continue; // collapsed into batch root
       const k = Math.min(1, (T - f.t0) / Math.max(1, f.t1 - f.t0));
       const chest = (u) => { const p = unitPos(v, W, u, T); return { x: p.x, y: p.y - size * 0.7 * u.size }; };
       if (f.k === 'num' || f.k === 'text') {
@@ -439,11 +589,16 @@
         ctx.font = (f.k === 'text' || nk === 'crit' ? '800 ' : nk === 'dot' ? '600 ' : '700 ') + fs + "px 'Fredoka', 'Inter', system-ui, sans-serif";   // v58: numbers big enough to read
         ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
         const hop = f.k === 'num' && nk === 'crit' ? Math.sin(Math.min(1, k / 0.35) * Math.PI) * size * 0.45 : 0;
-        const y = p.y - size * (nk === 'dot' ? 1.7 : 2.2) - k * size * (f.k === 'text' ? 0.6 : nk === 'dot' ? 0.55 : 1.0) - hop, x = p.x + (f.k === 'num' ? ((f.t0 * 7) % 11 - 5) * size * (nk === 'dot' ? 0.07 : 0.05) : 0);
+        const arcSpread = f.k === 'num' ? Math.sin((((f.t0 || 0) * 11) % 7) / 7 * Math.PI * 2) * size * 0.22 * Math.sqrt(k) : 0;
+        const y = p.y - size * (nk === 'dot' ? 2.0 : 2.45) - k * size * (f.k === 'text' ? 0.6 : nk === 'dot' ? 0.55 : 0.95) - hop;
+        const x = p.x + (f.k === 'num' ? ((f.t0 * 7) % 11 - 5) * size * (nk === 'dot' ? 0.07 : 0.05) + arcSpread : 0);
         const pop = k < 0.15 ? 1 + (1 - k / 0.15) * (nk === 'crit' ? 0.6 : nk === 'dot' ? 0 : 0.25) : 1;
         if (nk === 'hit' || nk === 'dot') ctx.globalAlpha *= 0.88;
         ctx.save(); ctx.translate(x, y); ctx.scale(pop, pop); ctx.lineWidth = f.big ? 4 : 3;
-        const ft = TT(f.text); ctx.strokeText(ft, 0, 0); ctx.fillStyle = f.color; ctx.fillText(ft, 0, 0); ctx.restore(); ctx.globalAlpha = 1;
+        const bKey = f.id ? `${f.id}_${nk}` : null;
+        const bInfo = bKey ? numBatches.get(bKey) : null;
+        const dispText = (bInfo && bInfo.fx === f && bInfo.count > 1) ? `${bInfo.total} ×${bInfo.count}` : f.text;
+        const ft = TT(dispText); ctx.strokeText(ft, 0, 0); ctx.fillStyle = f.color; ctx.fillText(ft, 0, 0); ctx.restore(); ctx.globalAlpha = 1;
       } else if (f.k === 'proj') {
         const src = W.byId[f.from], a = src ? { x: hexScreen(v, f.fc, f.fr).x, y: hexScreen(v, f.fc, f.fr).y - size * 0.8 * src.size } : hexScreen(v, f.fc, f.fr);
         const tu = f.to && W.byId[f.to] && !W.byId[f.to].dead ? W.byId[f.to] : null, t = tu ? chest(tu) : hexScreen(v, f.tc, f.tr);
@@ -661,7 +816,17 @@
         if (heal) { burst(S, p.x, p.y - size * 0.9, 5, '#8dff9a', { speed: 40, g: -60, life: 0.8, r: 2, spread: 1.2, glow: true }); burst(S, p.x, p.y - size * 0.7, 3, '#d8ffe0', { speed: 34, g: -70, life: 0.9, r: 2.2, spread: 1.0, shape: 'star' }); }
         else {
           burst(S, p.x, p.y - size * 0.8, f.big ? 12 : 6, f.big ? '#ffe066' : '#ffd0a0', { speed: f.big ? 170 : 110, life: 0.38, r: f.big ? 2.6 : 1.9, shape: 'spark' });
-          if (f.big) { burst(S, p.x, p.y - size * 0.8, 4, '#fff', { speed: 100, life: 0.5, r: 2.2, g: 40, shape: 'star' }); S.shake = Math.max(S.shake, 2.5); }
+          if (f.big) {
+            burst(S, p.x, p.y - size * 0.8, 4, '#fff', { speed: 100, life: 0.5, r: 2.2, g: 40, shape: 'star' });
+            S.shake = Math.max(S.shake, 3.8);
+            if (u && u.tgt) {
+              const opp = W.byId[u.tgt];
+              if (opp) {
+                const opPos = unitPos(v, W, opp, T);
+                S.shakeAng = Math.atan2(p.y - opPos.y, p.x - opPos.x);
+              }
+            }
+          }
         }
       } else if (f.k === 'ring') {
         if (!mine) { const c = hexScreen(v, f.c, f.r); shock(S, c.x, c.y, f.color, (f.rad * 1.5 + 0.7) * size, { life: 0.45, w: 3 }); }

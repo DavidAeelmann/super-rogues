@@ -328,6 +328,29 @@
   const TIER_COLOR = {}; for (const r of B.RARITIES) TIER_COLOR[r.id] = r.color;
   // itemization v16: "Legendary weapon" under the name, and the set an item belongs to
   const itemTag = it => `<span class="itag" style="color:${TIER_COLOR[it.tier]}">${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}</span>`;
+  function shopSynergyTag(id) {
+    if (!run || !run.heroes || !run.heroes.length || !ITEM[id]) return '';
+    const it = ITEM[id], rk = RANK(id);
+    if (it.set && B.SETS[it.set]) {
+      let bestH = null, bestN = 0;
+      for (const h of run.heroes) {
+        if (h.items.includes(id)) continue;
+        const sc = Run.setCounts(h.items), n = (sc[it.set] || 0) + 1;
+        if (n >= 2 && n > bestN) { bestN = Math.min(3, n); bestH = h; }
+      }
+      if (bestH) return `<span class="synpill set" title="Completes ${bestN}/3 ${esc(B.SETS[it.set].name)} set on ${esc(HEROES[bestH.key].name)}">◆ ${bestN}/3 ${esc(HEROES[bestH.key].name)}</span>`;
+    }
+    for (const h of run.heroes) {
+      const same = h.items.find(x => ITEM[x] && ITEM[x].type === it.type);
+      if (same && rk > RANK(same)) return `<span class="synpill upg" title="Upgrades ${esc(ITEM[same].name)} on ${esc(HEROES[h.key].name)}">▲ ${esc(HEROES[h.key].name)}</span>`;
+    }
+    for (const h of run.heroes) {
+      if (h.items.length < Run.slots(run, h) && Run.canEquip(run, h, id)) {
+        return `<span class="synpill fit" title="Open slot on ${esc(HEROES[h.key].name)}">✓ ${esc(HEROES[h.key].name)}</span>`;
+      }
+    }
+    return '';
+  }
   const setInfo = it => { const S = it.set && B.SETS[it.set]; return S ? `<div class="setline">◆ <b>${esc(S.name)}</b> set · 2 pieces: ${fmt(S.bonus[2].desc)} · 3 pieces: ${fmt(S.bonus[3].desc)}</div>` : ''; };
   const RANK = id => B.RARITIES.findIndex(r => r.id === ITEM[id].tier);
   const DOLL = ['helmet', 'trinket', 'weapon', 'offhand', 'gloves', 'armor', 'boots'];
@@ -342,8 +365,7 @@
   // WHAT: the top bar (gold, day, Team button, review notice, menu). Called by render() and after gold changes.
   // v63 (review #117): three lives, shown as hearts in the top bar
   // WHAT: the hearts (lives left) shown in the top bar.
-  // v101 (review #186): the Ward (one), whole or broken
-  const heartsHTML = () => run && run.lives != null ? `<span class="lives ward ${run.lives > 0 ? 'on' : 'broken'}" title="${run.lives > 0 ? 'Ward: whole. A lost fight breaks it and the day starts over.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${run.lives > 0 ? 'on' : ''}">${I('shield')}</i></span>` : '';
+  const heartsHTML = () => run && run.lives != null ? `<button class="lives ward ${run.lives > 0 ? 'on' : 'broken'}" data-act="ward-info" title="${run.lives > 0 ? 'Ward: whole. A lost fight breaks it and the day starts over.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${run.lives > 0 ? 'on' : ''}">${I('shield')}</i></button>` : '';
   function header() {
     const h = $('#top');
     if (!run || screen === 'title') {
@@ -385,6 +407,7 @@
     const key = screenKey();
     const wm0 = $('#wmap'), keepMap = wm0 ? { key: wm0.dataset.key, top: wm0.scrollTop } : null;   // v65: a redraw of the map keeps where the road was scrolled to
     if (key !== ui.lastKey) { ui.info = null; ui.gsel = null; ui.heroInfo = 0; ui.selUid = 0; ui.confirmBuy = null; ui.rmore = false; }   // v62 (reviews #77 #89): what was open on the screen before (unit / boss / item descriptions, selections) does not follow you to the next one
+    if (screen !== 'battle') document.body.classList.remove('in-danger');
     if (screen === 'title' || !run) m.innerHTML = titleHTML();
     else if (screen === 'battle') { m.innerHTML = battleHTML(); mountBoard(); }
     else if (screen === 'result') m.innerHTML = resultHTML();
@@ -441,7 +464,7 @@
   // count as started unless hero and relic are chosen"): a game still picking its hero and relic shows Play, not Continue
   // WHAT: the SUPER ROGUES logo.
   const logoHTML = () => `<h1 class="logo-big" aria-label="Super Rogues">${B.UI ? B.UI.mark('lg') : ''}<span class="wm"><span class="w1">Super</span><span class="w2">${[...'ROGUES'].map((c, k) => `<i style="--k:${k}">${c}</i>`).join('')}</span></span></h1>`;
-  // WHAT: the start page: the logo, the Play / Continue button, the trailer board, the menu button.
+  // WHAT: the start page: the logo, the Play / Continue button, the trailer board, the bottom hub dock.
   function titleHTML() {
     const has = run && run.phase !== 'over' && run.phase !== 'start';
     return `<section class="title home">
@@ -453,20 +476,52 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
+      <nav class="homedock" aria-label="Quick navigation">
+        <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
+        <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b></a>
+        <a href="#" class="dockitem" data-act="shop">${I('crown')}<b>Shop</b></a>
+        <a href="#" class="dockitem" data-act="scores">${I('trophy')}<b>Ranks</b></a>
+      </nav>
     </section>`;
   }
+  const CODEX_TABS = [
+    ['tank', '🛡 Tank', ['Tank']],
+    ['melee', '⚔ Melee', ['Fighter', 'Assassin']],
+    ['magic', '✨ Magic', ['Mage', 'Summoner']],
+    ['ranged', '🏹 Ranged', ['Ranger', 'Controller']],
+    ['aid', '💚 Aid', ['Support', 'Healer']]
+  ];
+  function codexHTML() {
+    const tab = ui.codexTab || 'tank', entry = CODEX_TABS.find(t => t[0] === tab) || CODEX_TABS[0];
+    const lvl = lvlNow(), lockedSet = new Set(B.lockedFor(lvl));
+    const unlockLv = {}; for (const u of B.UNLOCKS) if (u.kind === 'hero') unlockLv[u.id] = u.lvl;
+    const allKeys = Object.keys(HEROES), unlockedCount = allKeys.filter(k => !lockedSet.has(k)).length;
+    const list = allKeys.filter(k => entry[2].includes(HEROES[k].role));
+    return `<div class="shead"><b>${I('user')} Heroes <span class="dim small">${unlockedCount}/${allKeys.length}</span></b><button data-act="close" aria-label="Close">✕</button></div>
+      <div class="tabs codex-tabs">${CODEX_TABS.map(([id, label]) => `<button data-act="codex-tab" data-arg="${id}" class="${id === tab ? 'on' : ''}">${label}</button>`).join('')}</div>
+      <div class="codex-grid">${list.map(k => {
+        const h = HEROES[k], lck = lockedSet.has(k), ulv = unlockLv[k] || 2;
+        return `<button class="cxh ${lck ? 'locked' : ''}" data-act="hero-peek" data-arg="${k}" style="--hc:${h.color}">
+          <span class="cxp">${img(k, 44, 'por')}${lck ? `<i class="cxlk">🔒 Lv ${ulv}</i>` : ''}</span>
+          <b>${esc(h.name)}</b>
+          <small>${esc(h.role)}</small>
+        </button>`;
+      }).join('')}</div>`;
+  }
   // the menu sheet of the landing: every other place of the game, one tap each
-  // WHAT: the menu sheet opened from the start page (how to play, rewards, profile, crown shop, ladder, balance stats, art lab, sound, suggestions). Add a row here + a data-act in ACT for a new item.
+  // WHAT: the menu sheet opened from the start page (how to play, heroes codex, rewards, profile, crown shop, ladder, balance stats, art lab, sound, suggestions). Add a row here + a data-act in ACT for a new item.
   function homeMenuHTML() {
     const L = B.levelProgress(acct.axp || 0), u = nextUnlock(L.lvl), on = B.Sfx && B.Sfx.on;
     const row = (act, icon, t, s) => `<button class="mrow" data-act="${act}">${I(icon)}<span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span>${I('arrow', 'chev')}</button>`;
     return `<div class="shead"><b>Menu</b><button data-act="close" aria-label="Close">✕</button></div><div class="mlist">
-      ${row('howto', 'help', 'How to play', 'The basics in five lines')}
+      <div class="mpair"><button class="mrow sub" data-act="howto">${I('help')}<span><b>How to play</b></span></button><button class="mrow sub" data-act="codex">${I('user')}<span><b>Heroes</b></span></button></div>
+      <div class="msep"></div>
       ${row('player-tab', 'star', 'Level ' + L.lvl + ' rewards', u ? 'Next: ' + esc(unlockName(u)) + ' at level ' + u.lvl : 'Every reward unlocked')}
       ${row('my-profile', 'user', 'Profile', esc(acct.account && acct.name ? acct.name : 'You'))}
       ${row('shop', 'crown', 'Crown Shop', (acct.crowns | 0) + ' crown' + ((acct.crowns | 0) === 1 ? '' : 's'))}
       ${row('scores', 'trophy', 'Ladder', 'Top players and leagues')}
       <div class="mpair"><button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span></button><button class="mrow sub" data-act="tutorial">${I('help')}<span><b>Tutorial: ${guideOn() ? 'On' : 'Off'}</b></span></button></div>
+      <div class="msep"></div>
       ${row('art-lab', 'palette', 'Art Lab', 'Your art on the heroes')}
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
       ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}
@@ -563,7 +618,7 @@
   function heroStage(offer, sel, act, hint) {
     return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => { const d = HEROES[k], on = sel === k;
       return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
-        <span class="cone"></span><span class="shine"></span>${(src => `<img class="splash ${src.startsWith('data:image/png') ? 'drawn' : ''}" src="${src}" alt="">`)(por(k, 150, true))}<span class="plate"></span><b>${esc(d.name)}</b><i>${d.role}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`; }).join('')}</div>`;
+        <span class="cone"></span><span class="shine"></span>${(src => `<img class="splash ${src.startsWith('data:image/png') ? 'drawn' : ''}" src="${src}" alt="">`)(por(k, 150, true))}<span class="plate"></span><b>${esc(d.name)}</b><i>${d.role} · ${d.range <= 1 ? 'Melee' : 'Ranged'}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`; }).join('')}</div>`;
   }
   function heroDetail(f) {
     const h = f && HEROES[f];
@@ -813,8 +868,8 @@
     const big = groups.filter(g => g.what), small = groups.filter(g => !g.what);
     const nm = g => `${esc(g.name)}${g.n > 1 ? ' ×' + g.n : ''}`;
     return `<div class="foes ${gau ? 'gau' : ''}"><div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
-      ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}">${img(g.key, 34, 'por')}<div><b>${nm(g)}${g.ranged ? ' ' + I('bow') : ''}${g.elite ? ` <span class="elt">★ ${esc(g.elite)}</span>` : ''}</b><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div></div>`).join('')}</div>` : ''}
-      ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">★</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
+      ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}" data-foe="${g.key}">${img(g.key, 34, 'por')}<div><b>${nm(g)}${g.ranged ? ' ' + I('bow') : ''}${g.elite ? ` <span class="elt">★ ${esc(g.elite)}</span>` : ''}</b><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div></div>`).join('')}</div>` : ''}
+      ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" data-foe="${g.key}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">★</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
   }
   // v62 (review #83, PC boy): a mini tutorial. 1) the first game: an animated "Try moving your hero" over the board on every deploy
   // screen until a hero is moved (balance.tut.moved); the game it first showed in (balance.tut.run) is the only one it nags in.
@@ -838,13 +893,31 @@
   // Tips that appear in the first few runs but only once each"): the COACH. On the deploy screen of a player's first runs, one tip at a time, each once
   // (balance.coach = the ids seen): a short line over the board, and the hexes it talks about glow on the board (Render: o.coach) with arrows where enemies come.
   // WHAT: the positioning tips: when it may show, which hexes glow, the colour and icon on them, the line.
+  const hasFrontliner = () => run && run.heroes && run.heroes.some(h => { const d = HEROES[h.key]; return d && (d.role === 'Tank' || d.role === 'Fighter'); });
+  const hasBackliner = () => run && run.heroes && run.heroes.some(h => { const d = HEROES[h.key]; return d && (d.range > 1 || d.role === 'Healer'); });
+  const enemiesHaveDive = () => {
+    if (!run || !run.cur || !run.cur.enemies) return false;
+    return run.cur.enemies.some(e => {
+      const m = B.MOBS[e.key] || (B.BOSSES && B.BOSSES[e.key]);
+      return m && (m.fl || []).includes('dive');
+    });
+  };
+  const enemiesHaveAoE = () => {
+    if (!run || !run.cur || !run.cur.enemies) return false;
+    return run.cur.enemies.some(e => {
+      const m = B.MOBS[e.key] || (B.BOSSES && B.BOSSES[e.key]);
+      if (!m) return false;
+      const desc = (m.desc || '') + ' ' + (B.MOB_ABIL && B.MOB_ABIL[m.abil] ? B.MOB_ABIL[m.abil].desc || '' : '');
+      return /radius|all enemies|bounce|chain|splash|nearby|cone|circle/i.test(desc);
+    });
+  };
   const COACH = [
-    { id: 'c_front', hexes: () => coachRow(4), color: '#3ddc84', icon: '🛡', arrows: true, text: 'Enemies come from the top. Tough heroes go in FRONT: they take the hits.' },
-    { id: 'c_back', hexes: () => coachRow(7), color: '#4aa3ff', icon: '🏹', text: 'Ranged heroes and healers are fragile: keep them in the BACK, behind a tank.' },
-    { id: 'c_terrain', when: () => ((Run.mapOf(run) || { cells: [] }).cells).length > 0, hexes: () => ((Run.mapOf(run) || { cells: [] }).cells).map(t => ({ c: t.c, r: t.r })), color: '#ffb347', icon: '⛔', text: 'Trees, rocks and ponds block the way. Enemies must walk around them: use them as walls.' },
-    { id: 'c_choke', when: () => coachChokes().length > 0, hexes: coachChokes, color: '#ff5a8a', icon: '🚪', text: 'A gap between blockers is a CHOKEPOINT: one tank there holds back many enemies.' },
-    { id: 'c_dive', when: () => run.step >= 3, hexes: () => coachRow(7).concat(coachRow(6)), color: '#c77dff', icon: '🗡', text: 'Assassins jump to your back row. Keep a fighter next to your ranged heroes.' },
-    { id: 'c_spread', when: () => run.step >= 5, hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#ffd23f', icon: '💥', text: 'Spread out against area attacks: heroes in a clump all get hit at once.' },
+    { id: 'c_front', when: () => hasFrontliner(), hexes: () => coachRow(4), color: '#3ddc84', icon: '🛡', arrows: true, text: 'Enemies come from the top. Tough heroes go in FRONT: they take the hits.' },
+    { id: 'c_back', when: () => hasBackliner(), hexes: () => coachRow(7), color: '#4aa3ff', icon: '🏹', text: 'Ranged heroes and healers are fragile: keep them in the BACK, behind a tank.' },
+    { id: 'c_terrain', when: () => ((Run.mapOf(run) || { cells: [] }).cells || []).length > 0, hexes: () => ((Run.mapOf(run) || { cells: [] }).cells || []).map(t => ({ c: t.c, r: t.r })), color: '#ffb347', icon: '⛔', text: 'Trees, rocks and ponds block the way. Enemies must walk around them: use them as walls.' },
+    { id: 'c_choke', when: () => coachChokes().length > 0 && ((Run.mapOf(run) || { cells: [] }).cells || []).length > 0, hexes: coachChokes, color: '#ff5a8a', icon: '🚪', text: 'A gap between blockers is a CHOKEPOINT: one tank there holds back many enemies.' },
+    { id: 'c_dive', when: () => enemiesHaveDive(), hexes: () => coachRow(7).concat(coachRow(6)), color: '#c77dff', icon: '🗡', text: 'Assassins jump to your back row. Keep a fighter next to your ranged heroes.' },
+    { id: 'c_spread', when: () => enemiesHaveAoE(), hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#ffd23f', icon: '💥', text: 'Spread out against area attacks: heroes in a clump all get hit at once.' },
   ];
   const coachRow = r => B.Hex.all().filter(h => h.r === r && !Run.blockedAt(run, h.c, h.r));
   // WHAT: the free hexes on your side or in the middle with two or more blocked neighbours (gaps an enemy has to squeeze through).
@@ -1141,11 +1214,12 @@
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
     const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';   // v101 (reviews #186 #189)
     const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
+    const nextCta = !run ? 'Continue' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils! ★' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Continue';
     return `<section class="result v2 ${ui.rmore ? 'more' : ''}"><div class="rhead ${r.win ? 'win' : 'lose'}"><span class="rays"></span><h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Victory' : 'Defeat'}</h2>
         ${starRow}${loseTag}<p class="rwhat">${what}</p><p class="rmeta">${meta}</p></div>
       ${eloLine(r)}${spoils}${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}${promo}${lostRun}
       <div class="rheroes">${heroes}</div>${foes}
-      <div class="bar"><button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button><button class="primary big" data-act="result-ok" ${r.pending ? 'disabled' : ''}>Continue</button></div></section>`;
+      <div class="bar"><button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button><button class="primary big" data-act="result-ok" ${r.pending ? 'disabled' : ''}>${nextCta}</button></div></section>`;
   }
 
   // v42 (review #51, David: "more dopamine hits"): the rewards play in order. Confetti, the stars one by one, the gold
@@ -1295,7 +1369,7 @@
     let body = '';
     // v62m (review #109): heroes are splash cards (the full art, class and range on it), items and powers are rows with a glowing medallion
     if (s.kind === 'hero') { const h = HEROES[s.id]; body = `<div class="art" style="--hc:${h.color}"><img class="splash" src="${por(s.id, 112, true)}" alt=""><span class="rolechip">${esc(h.role)}</span>${run.heroes.length < Run.teamMax(run) && Run.shopHeroLevel(run) > 1 ? `<span class="shoplv" title="Joins at the level of your lowest hero, with random powers">Lv ${Run.shopHeroLevel(run)}</span>` : ''}<button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')}</button><span class="rngchip">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span></div><div class="meta"><div class="ctitle">${esc(h.name)}</div><p class="htag">${esc(h.tag || h.abName)}</p></div>`; }
-    else if (s.kind === 'item') { const it = ITEM[s.id]; body = `<div class="medal">${ico('item', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}<div class="small">${fmt(it.desc)}</div>${setInfo(it)}</div>`; }
+    else if (s.kind === 'item') { const it = ITEM[s.id]; body = `<div class="medal">${ico('item', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}${shopSynergyTag(s.id)}<div class="small">${fmt(it.desc)}</div>${setInfo(it)}</div>`; }
     else { const r = RELIC[s.id]; body = `<div class="medal">${ico('relic', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`; }
     const rc = s.kind === 'item' ? TIER_COLOR[ITEM[s.id].tier] : s.kind === 'hero' ? HEROES[s.id].color : '#ffd23f';
     const shine = s.kind === 'item' && RANK(s.id) >= 3 ? ' shine' : s.kind === 'relic' ? ' shine soft' : '';
@@ -1315,7 +1389,9 @@
     const note = c.kind === 'heroShop' ? `<span class="lockpill">${run.heroes.length >= Run.teamMax(run) ? 'Full team: a new hero swaps in' : `Team ${run.heroes.length}/${Run.teamMax(run)}`}</span>` : '';
     // v118 (review #205, David: "In first hero shop visited put bubble saying when team is full, buying hero replaces an existing one of the same level"): once
     const swapTip = c.kind === 'heroShop' && !store.get('balance.hint.hswap', 0) ? `<div class="coach shopcoach" style="--cc:#ffd23f"><span class="ci">🔄</span><span class="ct">When your team is full, a hero you buy replaces one of yours and takes its level, place and items.</span><button class="cok" data-act="hswap-ok">Got it</button></div>` : '';
-    return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${note}</div>${swapTip}
+    const bagVal = (run.bag || []).reduce((sum, id) => sum + (Run.sellValue ? Run.sellValue(id) : (ITEM[id] ? Math.round(ITEM[id].cost * 0.5) : 0)), 0);
+    const sellBagBtn = (run.bag && run.bag.length > 0) ? `<button class="qsell-btn" data-act="quick-sell-bag" title="Sell all unequipped bag items">💰 Sell Bag (+${bagVal}g)</button>` : '';
+    return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${sellBagBtn}${note}</div>${swapTip}
       <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div>
       <div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
   }
@@ -1564,7 +1640,7 @@
     cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', () => { ui.drag = null; drawPreview(); });
   }
   // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
-  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid }, introDraw(), coachDraw(), benchDraw(), extra || {})); }
+  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid, infoId: ui.info }, introDraw(), coachDraw(), benchDraw(), extra || {})); }
   // v126 (review #224): while a hero waits on the bench, the free hexes of your half glow (where it can go)
   function benchDraw() {
     if (!run || run.phase !== 'deploy' || introStage() || !Run.benched(run).length) return {};
@@ -1586,7 +1662,11 @@
     if (!d.moved) { d.moved = true; ui.selUid = 0; d.g = document.createElement('div'); d.g.className = 'benchghost'; d.g.innerHTML = img(d.key, 64); document.body.appendChild(d.g); }
     if (e.cancelable) e.preventDefault();
     d.g.style.left = e.clientX + 'px'; d.g.style.top = e.clientY + 'px';
-    const { h } = evHex(e), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r);
+    const { h } = evHex(e, 1.35), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r);
+    if (ok && (!d.lastSnapped || d.lastSnapped.c !== h.c || d.lastSnapped.r !== h.r)) {
+      d.lastSnapped = h;
+      try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
+    }
     d.g.classList.toggle('ok', !!ok); drawPreview({ drop: ok ? h : null });
   }
   function benchUp(e) {
@@ -1594,7 +1674,7 @@
     if (d.g) d.g.remove();
     if (!d.moved) return;
     ui.bdragAt = performance.now();
-    const { h } = e.type === 'pointerup' && view ? evHex(e) : {};
+    const { h } = e.type === 'pointerup' && view ? evHex(e, 1.35) : {};
     if (h && h.r >= 4 && !onTerrain(h)) benchPlaced(d.uid, h); else drawPreview();
   }
   document.addEventListener('pointerdown', benchDown);
@@ -1649,35 +1729,43 @@
   let idleAt = 0;
   (function idle(now) { if (now - idleAt >= 30 && screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag && !ui.bdrag && !document.hidden) { idleAt = now; drawPreview(); } requestAnimationFrame(idle); })(0);
   // WHAT: converts a pointer event into a board hex (c, r).
-  function evHex(e) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y) }; }
+  function evHex(e, pad = 1.0) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y, pad) }; }
   function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
   // v118 (review #205, "drag and drop heroes in hex grid, simple, and if dropped on another hero they swap places"): a hero is picked up by its whole figure
   // (it stands taller than its hex), and dragging over another hero shows that one moving to the empty spot (they swap on drop)
   // WHAT: your hero whose drawn figure is under the point (x, y), the nearest one.
   function heroBodyAt(W, x, y) { if (!W || !view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead || u.side !== 0 || !u.uid) continue; const p = Render.hexScreen(view, u.c, u.r), s = view.size;
-    if (Math.abs(x - p.x) < s * 0.55 && y > p.y - s * 1.7 && y < p.y + s * 0.45) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
+    if (Math.abs(x - p.x) < s * 0.65 && y > p.y - s * 1.85 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
+  function unitBodyAt(W, x, y) { if (!W || !view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead) continue; const p = Render.hexScreen(view, u.c, u.r), s = view.size * (u.boss ? 1.35 : u.elite ? 1.15 : 1);
+    if (Math.abs(x - p.x) < s * 0.7 && y > p.y - s * 1.9 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
   // WHAT: pointer down on the board: pick up a hero (start of a drag) or tap a unit to see its info.
   function onDown(e) {
-    const { x, y, h: h0 } = evHex(e); const W = battle ? battle.W : preview; let h = h0, u = unitAt(W, h);
+    if (battle && battle.W && battle.W.over && battle.endAt) { battle.endAt = performance.now(); return; }
+    const { x, y, h: h0 } = evHex(e, 1.25); const W = battle ? battle.W : preview; let h = h0, u = unitAt(W, h);
     if (!battle && (!u || u.side !== 0)) { const b = heroBodyAt(W, x, y); if (b) { u = b; h = { c: b.c, r: b.r }; } }
+    if (!u) { const b = unitBodyAt(W, x, y); if (b) { u = b; h = { c: Math.round(b.c), r: Math.round(b.r) }; } }
     const tk = !u && h && W && W.tk ? W.tk[B.Hex.key(h.c, h.r)] : null;
-    if (u || tk) { ui.info = u ? u.id : tk; const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } }
+    if (u || tk) { ui.info = u ? u.id : tk; if (u && B.UIAudio) B.UIAudio.pop(); const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } if (!battle) drawPreview(); }
     if (battle || !h) return;
     if (introStage() && introStage() !== 'move') return;   // v97: the intro lets the hero move once
-    if (u && u.side === 0 && u.uid && !benchSel()) { ui.drag = { uid: u.uid, from: h, key: u.key }; view.canvas.setPointerCapture(e.pointerId); }   // v126: with a bench hero picked, a tap places it
+    if (u && u.side === 0 && u.uid && !benchSel()) { ui.drag = { uid: u.uid, from: h, key: u.key, lastSnapped: null }; try { view.canvas.setPointerCapture(e.pointerId); } catch (_) {} }   // v126: with a bench hero picked, a tap places it
   }
-  function onMove(e) { if (!ui.drag || battle) return; const { x, y, h } = evHex(e), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r), o = ok ? unitAt(preview, h) : null;
+  function onMove(e) { if (!ui.drag || battle) return; const { x, y, h } = evHex(e, 1.35), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r), o = ok ? unitAt(preview, h) : null;
+    if (ok && (!ui.drag.lastSnapped || ui.drag.lastSnapped.c !== h.c || ui.drag.lastSnapped.r !== h.r)) {
+      ui.drag.lastSnapped = h;
+      try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
+    }
     drawPreview({ drop: ok ? h : null, dragGhost: { x, y, key: ui.drag.key }, swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null }); }
   // review #39: a hero can't be placed on a tree, boulder, ridge or pond
   function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) sfx('deny'); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
   // WHAT: pointer up on the board: drop the hero on the new hex (rows 4-7 only, not on terrain) or select it; the first move ends the tutorial prompt.
   function onUp(e) {
     if (battle) return;
-    const { h } = evHex(e); const d = ui.drag; ui.drag = null;
+    const { h } = evHex(e, 1.35); const d = ui.drag; ui.drag = null;
     // v88 (review #168): a hero set down raises a puff of dust and a soft thud where it lands
-    const landed = () => { sfx('place'); if (!B.Juice) return; const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); };
+    const landed = () => { sfx('place'); try { if (navigator.vibrate) navigator.vibrate(20); } catch (_) {} if (!B.Juice) return; const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); };
     if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(run, d.uid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); } }
-    else if (d) { ui.selUid = ui.selUid === d.uid ? 0 : d.uid; if (ui.selUid) sfx('tap'); }
+    else if (d) { ui.selUid = ui.selUid === d.uid ? 0 : d.uid; if (ui.selUid) { sfx('tap'); if (B.UIAudio) B.UIAudio.pop(); } }
     else if (ui.selUid && h && h.r >= 4 && benchSel()) { if (!onTerrain(h)) benchPlaced(ui.selUid, h); return; }   // v126 (review #224): a picked bench hero goes here
     else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); }
     preview = worldFor(true);
@@ -1738,12 +1826,21 @@
     // v77 (review #156): the steps go on below 1 (a computer without graphics acceleration), and the level found is kept for the next visits
     if (b.slow >= 30 && view && view.dpr > DPR_FLOOR + 0.01 && !document.hidden) { const nx = DPR_STEPS.find(x => x < view.dpr - 0.01 && x >= DPR_FLOOR - 0.01); if (nx) { b.slow = 0; b.dropped = true; Render.maxDpr = nx; store.set('balance.maxDpr2', nx); view = Render.setup(view.canvas, view.w); } }
     const TICK = 1000 / Sim.TPS;
-    if (!b.W.over && !(b.hold && now < b.hold)) { b.acc += dt * ui.speed * PACE; let n = 0; while (b.acc >= TICK && !b.W.over && n++ < 60) { Sim.step(b.W); b.acc -= TICK; } }
+    if (!b.W.over && !(b.hold && now < b.hold)) {
+      b.acc += dt * ui.speed * PACE;
+      // Cap max catch-up steps per frame to 12 ticks (600ms) to prevent thermal spiral-of-death on mobile
+      let n = 0;
+      while (b.acc >= TICK && !b.W.over && n++ < 12) {
+        Sim.step(b.W);
+        b.acc -= TICK;
+      }
+      if (b.acc > TICK * 3) b.acc = TICK * 3; // Discard excessive backlog if frame dropped severely
+    }
     // v42 (review #51): the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)
     if (b.W.over && !b.overAt) { b.overAt = now; b.end = { win: b.W.winner === 0, k: 0 }; if (!b.endAt) b.endAt = now + 1800; sfx(b.end.win ? 'win' : 'lose'); }
     const T = b.W.over ? b.W.t + (now - b.overAt) / TICK * 0.3 : b.W.t + b.acc / TICK;
     if (b.end) b.end.k = (now - b.overAt) / 1600;
-    if (view) Render.draw(view, b.W, T, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {});   // v70 (review #145): standing tall during the countdown
+    if (view) Render.draw(view, b.W, T, Object.assign({ infoId: ui.info }, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {}));   // v70 (review #145): standing tall during the countdown
     const hud = $('#bhud');
     if (hud) {
       const secs = Math.floor(b.W.t / Sim.TPS);
@@ -1752,13 +1849,22 @@
       const str = `<b>${title}</b><span class="clock ${toSd <= 0 ? 'sd' : toSd <= 10 ? 'warn' : ''}">⏱ ${clock}${toSd <= 0 ? ' · SUDDEN DEATH' : toSd <= 10 ? ' · sudden death in ' + toSd + 's' : ''}</span>`;
       if (str !== b.hudStr) { hud.innerHTML = str; b.hudStr = str; }
     }
-    if ((b.frame = (b.frame || 0) + 1) % 6 === 0) { updateStrip(b.W); if (ui.info) { const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } } }
+    if ((b.frame = (b.frame || 0) + 1) % 6 === 0) {
+      updateStrip(b.W);
+      if (ui.info) { const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } }
+      if (b.W && !b.W.over) {
+        const hs = b.W.units.filter(u => u.side === 0 && u.kind === 'hero');
+        const avgHp = hs.length ? (hs.reduce((a, u) => a + Math.max(0, u.hp), 0) / hs.reduce((a, u) => a + u.maxHp, 0)) : 1;
+        document.body.classList.toggle('in-danger', avgHp <= 0.28 || (run && run.lives === 0));
+      }
+    }
     if (b.endAt && now >= b.endAt) { endBattle(); return; }
     requestAnimationFrame(loop);
   }
   // WHAT: a fight ended: collects the damage / kills stats, then (normal fight) Run.finishFight and reports a lost run to the server, or (Gauntlet duel) sends the result and Elo.
   // Also reports boss results for the boss Elo.
   async function endBattle() {
+    document.body.classList.remove('in-danger');
     tutSpeedDisarm();
     { const b = battle; if (b && !b.dropped && (b.frames | 0) >= 120 && b.fast / b.frames >= 0.9 && Render.maxDpr && Render.maxDpr < 2) { const up = [0.5, 0.65, 0.8, 1, 1.5, 2].find(x => x > Render.maxDpr + 0.01); Render.maxDpr = up; store.set('balance.maxDpr2', up); } }   // v86 (review #164): a smooth fight wins a step back
     const b = battle; battle = null; const W = b.W;
@@ -1841,8 +1947,10 @@
   function closeVs() { const v = $('#vs'); if (!v) return; clearTimeout(ui.vsT); v.classList.add('out'); setTimeout(() => v.remove(), 260); }
   function showVs(force) {
     if (!run || !run.cur || run.phase !== 'deploy' || (navigator.webdriver && !force) || introStage()) return;
-    closeVs(); const old = $('#vs'); if (old) old.remove();
     const g = run.g, duel = run.cur.type === 'gauntlet' && g && g.opp, f = run.cur;
+    const bk0 = !duel && (f.enemies || []).map(e => e.key).find(k => B.BOSSES[k]);
+    if (!force && !duel && !bk0 && !f.challenge) return;
+    closeVs(); const old = $('#vs'); if (old) old.remove();
     let theirs, name, taunt = null, fx = null, av = '', tag, code = null;
     if (duel) {
       const o = g.opp; theirs = (o.team || []).map(h => h.key); name = esc(o.name || 'Rival'); code = o.code || null;
@@ -1850,7 +1958,7 @@
       av = avatarHTML(o.avatar, o.code || o.name, 40);
     } else {
       theirs = []; for (const e of f.enemies || []) if (!theirs.includes(e.key)) theirs.push(e.key);
-      const bk = (f.enemies || []).map(e => e.key).find(k => B.BOSSES[k]);
+      const bk = bk0;
       name = bk ? esc(B.BOSSES[bk].name) : f.challenge ? 'Challenge' : esc((B.DIFF[f.diff] || { name: 'Monster' }).name + ' fight');
       tag = bk ? `${I('skull')} Boss` : `Day ${Math.max(0, run.step) + 1}`;
     }
@@ -1903,7 +2011,7 @@
   }
   // WHAT: shows a sheet (popup) with the given HTML. closeModal() hides it; toast(msg) shows a bubble at the bottom (info = true for descriptions that must vanish when the screen changes).
   function openModal(html) { ui.modalT = performance.now(); clearTimeout(guide.t); const gt = document.querySelector(".gtip"); if (gt) gt.remove(); const m = $('#modal'); m.innerHTML = `<div class="sheet">${html}</div>`; m.hidden = false; ui.modal = true; }
-  function closeModal() { if (ui.modal === 'artlab' && B.ArtLab) B.ArtLab.closed(); const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; clearInterval(ui.sugTimer); }
+  function closeModal() { if (ui.modal === 'artlab' && B.ArtLab) B.ArtLab.closed(); const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; clearInterval(ui.sugTimer); if (typeof sheetSwipe !== 'undefined') { sheetSwipe.tracking = false; sheetSwipe.sheet = null; sheetSwipe.dy = 0; } }
   function toast(msg, info) { toast.info = !!info; toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }
 
   // v54 (review #66, David: "Equipping items ... is still difficult and unintuitive. Theres so many tiny slots. Cant you
@@ -1960,7 +2068,7 @@
       <div class="gtabs">${tabs}</div>
       <div class="gstage" data-drop="hero:${h.uid}">
         <button class="gart" data-act="hero-info" data-arg="${h.uid}" aria-label="${esc(d.name)}: see the hero"><img src="${por(h.key, 104, true)}" alt=""><span class="glv">Lv ${h.lvl}</span>${I('info', 'gi')}</button>
-        <div class="gside"><div class="gstats"><span data-st="hp">${I('heart')}<b>${st.hp}</b></span><span data-st="atk">${I('sword')}<b>${st.atk}</b></span><span data-st="ap">${I('bolt')}<b>${st.ap}</b></span></div>
+        <div class="gside"><div class="gstats"><span data-st="hp" data-act="stat-info" data-arg="hp" role="button" tabindex="0" title="Health">${I('heart')}<b>${st.hp}</b></span><span data-st="atk" data-act="stat-info" data-arg="atk" role="button" tabindex="0" title="Attack">${I('sword')}<b>${st.atk}</b></span><span data-st="ap" data-act="stat-info" data-arg="ap" role="button" tabindex="0" title="Magic (AP)">${I('bolt')}<b>${st.ap}</b></span></div>
           <div class="gsockets n${Math.min(maxSlots(h), 6)}">${socks.join('')}</div>${sets ? `<div class="gsets">${sets}</div>` : ''}</div>
       </div>
       ${det}
@@ -2061,7 +2169,8 @@
     // longo/complexo"): the sheet fits a phone screen: a smaller picture with the strength chips, the scaling in one compact list, and the 8 powers as 4 rows of
     // two buttons; the one you tap is explained in a single line under them
     const ps = ui.peekSpec && ui.peekSpec.key === key ? d.specs.flat().find(s => s.id === ui.peekSpec.id) : null;
-    return `<div class="shead"><b>${esc(d.name)}</b><button data-act="close" aria-label="Close">✕</button></div>
+    const backBtn = ui.fromCodex ? `<button class="chip" data-act="codex" aria-label="Back to Heroes">← Heroes</button>` : '';
+    return `<div class="shead">${backBtn}<b>${esc(d.name)}</b><span class="grow"></span><button data-act="close" aria-label="Close">✕</button></div>
       <div class="peek"><img class="peekart" src="${por(key, 110, true)}" alt=""><div class="peekt"><span class="role">${esc(d.role)} · ${d.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span><p class="htag big">${esc(d.tag || '')}</p>${statBars(d)}</div></div>
       <div class="abil peekab">${abilHTML(d)}</div>${scalingHTML(def, true)}
       <h3 class="peekh">Powers it can learn <span class="dim">· tap one</span></h3><div class="peekpow v2">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span>${pr.map(sp => `<button class="ppb ${ps && ps.id === sp.id ? 'on' : ''}" data-act="peek-spec" data-arg="${key}:${sp.id}">${esc(sp.name)}</button>`).join('')}</div>`).join('')}</div>
@@ -2262,9 +2371,9 @@
   function styleTab(buyBtn) {
     const a = acct, lvl = lvlNow(), own = id => hasPerk(id);
     const show = (kind, id, on) => `<button class="cshow ${on ? 'on' : ''}" data-act="style-set" data-arg="${kind}:${on ? '' : id}">${on ? '✓ Showing' : 'Show'}</button>`;
-    const row = (it, on, body) => `<div class="perk cos ${own(it.id) ? 'own' : ''}"><span class="pi">${it.icon}</span><div class="pb">${body}</div>${own(it.id) ? show(it.kind, it.id, on) : buyBtn(it)}</div>`;
+    const row = (it, on, body) => `<div class="perk cos ${own(it.id) ? 'own' : ''}"><span class="pi" data-act="cos-preview" data-arg="${it.id}" title="Tap to preview">${it.icon}</span><div class="pb" data-act="cos-preview" data-arg="${it.id}">${body}</div>${own(it.id) ? show(it.kind, it.id, on) : buyBtn(it)}</div>`;
     const taunts = B.COSMETICS.filter(x => x.kind === 'taunt').map(it => row(it, a.tauntId === it.id, `<span class="tbub">${esc(it.text)}</span>`)).join('')
-      + B.LEVEL_TAUNTS.map(t => `<div class="perk cos ${t.lvl <= lvl ? 'own' : ''}"><span class="pi">🎁</span><div class="pb"><span class="tbub">${esc(t.text)}</span></div>${t.lvl <= lvl ? show('taunt', t.id, a.tauntId === t.id) : `<span class="owned dim">🔒 Lv ${t.lvl}</span>`}</div>`).join('');   // v74 (review #152): the voice lines your level gives
+      + B.LEVEL_TAUNTS.map(t => `<div class="perk cos ${t.lvl <= lvl ? 'own' : ''}"><span class="pi" data-act="cos-preview" data-arg="${t.id}">🎁</span><div class="pb" data-act="cos-preview" data-arg="${t.id}"><span class="tbub">${esc(t.text)}</span></div>${t.lvl <= lvl ? show('taunt', t.id, a.tauntId === t.id) : `<span class="owned dim">🔒 Lv ${t.lvl}</span>`}</div>`).join('');   // v74 (review #152): the voice lines your level gives
     const fx = B.COSMETICS.filter(x => x.kind === 'vsfx').map(it => row(it, a.vsfx === it.id, `<b>${esc(it.name)}</b><p class="small">${esc(it.desc)}</p>`)).join('');
     const pors = B.PORTRAIT_UNLOCKS.filter(k => B.portraitLevel(k) > lvl).map(k => { const it = B.SHOP_ITEM['pt_' + k]; return `<div class="cpor">${avatarHTML(k, '', 54)}<span>${esc(HEROES[k].name)}</span>${own(it.id) ? '<i>✓ Yours</i>' : buyBtn(it)}</div>`; }).join('');
     return `<h3>💬 Taunts</h3><p class="small dim">Your profile says it in a comic bubble, and so does your team on the VS screen before a fight, also when other players face your ghost.</p>${taunts}
@@ -2347,24 +2456,22 @@
     <div class="center"><button class="linkbtn" data-act="guide-again">💡 Show the tips again</button></div>
     <details class="howmore"><summary>All the rules</summary>
     <ol class="small howto">
-      <li>Start with 1 hero (3 offered: a tank, a support, a damage dealer), 1 power (3 offered) and a few common items. After each of the first two days a free hero joins (you pick 1 of 3). Each hero has a unique ability that fires when its blue Energy bar is full.</li>
-      <li>Every step offers 2 options: easy/medium/hard fights, or a shop/event. Fights 4 and 8 are bosses.</li>
-      <li>❓ Events: trades, bets, powers and items to pick, and <b>challenges</b> (optional fights that start right away: win for a reward; lose and only that reward is gone, the game goes on). Some choices only open with the right hero in your team.</li>
-      <li>Before each fight, place heroes in the 4 blue rows. Then the battle plays itself.</li>
-      <li>⚑ Formation powers reward where you place your heroes (next to each other, alone, in the front or back row, in one line, next to terrain). While deploying, the line above the board shows who gets what.</li>
-      <li>🗺 Every fight after the first is on a map with terrain: 🌳 trees, 🪨 boulders, ⛰️ ridges and 💧 ponds block the way (nobody can stand on them or walk through; arrows and spells fly over). Units pushed into a tree, boulder or ridge are slammed and stunned. Bosses fight at the Standing Stones.</li>
-      <li>Stats: <b>Health</b> (❤), <b>Attack</b> (⚔), <b>Magic</b> (✦: 100 at Lv 1, grows every level at each hero's own pace, more from items), <b>Defense</b> (⛨: lowers all damage taken, physical and magic) and <b>Energy</b> (the blue bar that fires the ability). Every ability names its stat: it deals a % of Attack as <span class="kw-atk">physical</span> damage, a % of Magic as <span class="kw-ap">magic</span> damage, or both added together (like "40% Attack + 20% Magic"); heals scale with Magic; shields are a % of max Health. Magic never multiplies Attack. Tap a hero (in battle or in Team) to see its numbers.</li>
-      <li>Heroes earn XP for every second they stay alive. Level ups raise stats and let you pick a specialization. From Lv 3, each level adds an item slot. Lv 5 is rare.</li>
-      <li>Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
-      <li>Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes; with a full team a hero from the Hero Shop takes the place of one of yours (its level and items, powers picked at random). You have 3 lives: a lost fight costs one and the third ends the game. Heroes always heal after a fight.</li>
-      <li>🏰 The Gauntlet: after the second boss and a last shop the run is complete. Then you may climb the Gauntlet, a tower of other players' teams, floor by floor until you fall or take the crown. This is the only PvP.</li>
-      <li>Leagues: League points (LP): a completed run +${B.LP.final}, plus +${B.LP_PVE[0]} in Bronze and +${B.LP_PVE[1]} in Silver, plus its 🔥 win streak (+${B.LP.streak} LP per run in the streak); then each Gauntlet floor won pays its number (floor 3 = +3). In Master a completed run pays no LP: only Gauntlet floors do. A lost run costs 5 LP per league above Bronze (Silver 5, Gold 10...); a fall in the Gauntlet costs nothing. Higher leagues are harder to climb: a win pays less (×${B.LP_LEAGUE.gain[0]} in Bronze to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Master) and a loss costs more (×${B.LP_LEAGUE.loss[0]} to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}). A completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
-      <li>🏰 The Gauntlet: after a completed run you may climb a tower of other players' saved teams (ghosts). The tower is one floor taller than the champion's own climb (a champion who climbed 4 floors sits on floor 5). Floor 1 holds one of the weakest ghosts and each floor up a stronger one; the strength is a hidden rating that every Gauntlet fight moves. Each floor won gives as many LP as its number (floor 3 = +3); falling costs nothing, and your team stays in the tower as a ghost for others to fight. Beat the champion on the top floor and you are the new champion: the tower grows to your climb plus one. Your best floor shows on the ladder, and the current champion wears the glowing crown there.</li>
-      <li>🔥 Win streak: the runs you completed in a row (everyone starts at 1). Losing a run, or giving it up, puts it back to 0.</li>
-      <li>🏆 Trophies: every duel you win is a trophy with the name of the player you beat, and 1 crown. A profile shows its trophies and your duels against that player.</li>
-      <li>👑 Crowns: earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: 4× battle speed, Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles).</li>
-      <li>Tap any player's name to open their profile: league, win streak, trophies, runs completed and your duels against them. Follow players there to see them in the Friends ladder. Your picture is a hero portrait: every account level opens one more.</li>
-      <li>✨ Account level: every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for completing the run, +${B.GAME_XP.duel} per Gauntlet floor won, +${B.GAME_XP.champion} for the Gauntlet crown), plus bonuses the first time you complete a run with each hero (+${B.ACCOUNT.heroClear}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and every level opens rewards: new heroes (two a level up to level 5), items, powers, hero portraits, voice lines and titles (see the road on the title or in Ladder → Player).</li>
+      <li><b>⚔️ Starting Out:</b> Start with 1 hero (3 offered: a tank, a support, a damage dealer), 1 power (3 offered) and a few common items. After each of the first two days a free hero joins (you pick 1 of 3). Each hero has a unique ability that fires when its blue Energy bar is full.</li>
+      <li><b>🗺️ The Daily Path:</b> Every step offers 2 options: easy/medium/hard fights, or a shop/event. Fights 4 and 8 are bosses.</li>
+      <li><b>❓ Events & Challenges:</b> Trades, bets, powers and items to pick, and <b>challenges</b> (optional fights that start right away: win for a reward; lose and only that reward is gone, the game goes on). Some choices only open with the right hero in your team.</li>
+      <li><b>🛡️ Board & Frontline:</b> Before each fight, place heroes in the 4 blue rows. Then the battle plays itself.</li>
+      <li><b>⚑ Formations:</b> Formation powers reward where you place your heroes (next to each other, alone, in the front or back row, in one line, next to terrain). While deploying, the line above the board shows who gets what.</li>
+      <li><b>🌳 Terrain & Slam:</b> Every fight after the first is on a map with terrain: 🌳 trees, 🪨 boulders, ⛰️ ridges and 💧 ponds block the way (nobody can stand on them or walk through; arrows and spells fly over). Units pushed into a tree, boulder or ridge are slammed and stunned. Bosses fight at the Standing Stones.</li>
+      <li><b>📊 Stats & Scaling:</b> <b>Health</b> (❤), <b>Attack</b> (⚔), <b>Magic</b> (✦: 100 at Lv 1, grows every level at each hero's own pace, more from items), <b>Defense</b> (⛨: lowers all damage taken, physical and magic) and <b>Energy</b> (the blue bar that fires the ability). Every ability names its stat: it deals a % of Attack as <span class="kw-atk">physical</span> damage, a % of Magic as <span class="kw-ap">magic</span> damage, or both added together (like "40% Attack + 20% Magic"); heals scale with Magic; shields are a % of max Health. Magic never multiplies Attack. Tap a hero (in battle or in Team) to see its numbers.</li>
+      <li><b>✨ Hero Growth:</b> Heroes earn XP for every second they stay alive. Level ups raise stats and let you pick a specialization. From Lv 3, each level adds an item slot. Lv 5 is rare.</li>
+      <li><b>🎁 Gear & Sets:</b> Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
+      <li><b>🪙 Gold & Teams:</b> Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes; with a full team a hero from the Hero Shop takes the place of one of yours (its level and items, powers picked at random). You have 3 lives: a lost fight costs one and the third ends the game. Heroes always heal after a fight.</li>
+      <li><b>🏰 The Gauntlet:</b> After the second boss and a last shop the run is complete. Then you may climb the Gauntlet, a tower of other players' teams, floor by floor until you fall or take the crown. This is the only PvP.</li>
+      <li><b>🏆 Leagues & LP:</b> League points (LP): a completed run +${B.LP.final}, plus +${B.LP_PVE[0]} in Bronze and +${B.LP_PVE[1]} in Silver, plus its 🔥 win streak (+${B.LP.streak} LP per run in the streak); then each Gauntlet floor won pays its number (floor 3 = +3). In Master a completed run pays no LP: only Gauntlet floors do. A lost run costs 5 LP per league above Bronze (Silver 5, Gold 10...); a fall in the Gauntlet costs nothing. Higher leagues are harder to climb: a win pays less (×${B.LP_LEAGUE.gain[0]} in Bronze to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Master) and a loss costs more (×${B.LP_LEAGUE.loss[0]} to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}). A completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
+      <li><b>🏰 The Gauntlet Champions:</b> After a completed run you may climb a tower of other players' saved teams (ghosts). The tower is one floor taller than the champion's own climb (a champion who climbed 4 floors sits on floor 5). Floor 1 holds one of the weakest ghosts and each floor up a stronger one; the strength is a hidden rating that every Gauntlet fight moves. Each floor won gives as many LP as its number (floor 3 = +3); falling costs nothing, and your team stays in the tower as a ghost for others to fight. Beat the champion on the top floor and you are the new champion: the tower grows to your climb plus one. Your best floor shows on the ladder, and the current champion wears the glowing crown there.</li>
+      <li><b>🔥 Win Streak & Trophies:</b> The runs you completed in a row (everyone starts at 1). Losing a run, or giving it up, puts it back to 0. Every duel you win is a trophy with the name of the player you beat, and 1 crown. A profile shows its trophies and your duels against that player.</li>
+      <li><b>👑 Crowns & Profile:</b> Earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: 4× battle speed, Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles). Tap any player's name to open their profile: league, win streak, trophies, runs completed and your duels against them. Follow players there to see them in the Friends ladder. Your picture is a hero portrait: every account level opens one more.</li>
+      <li><b>✨ Account Level:</b> Every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for completing the run, +${B.GAME_XP.duel} per Gauntlet floor won, +${B.GAME_XP.champion} for the Gauntlet crown), plus bonuses the first time you complete a run with each hero (+${B.ACCOUNT.heroClear}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and every level opens rewards: new heroes (two a level up to level 5), items, powers, hero portraits, voice lines and titles (see the road on the title or in Ladder → Player).</li>
     </ol></details>`;
 
 
@@ -2438,10 +2545,21 @@
   // To make a new button work: put data-act="my-name" in its HTML and add my-name: (arg, el) => {...} here. arg is the data-arg value. Names with a dash must be quoted.
   const ACT = {
     // Play / Play again: starts a fresh run.
-    'new-run': () => { run = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()), deck: store.get('balance.freeDeck', null) }); ui.startPick = []; ui.startRelic = null; ui.focusRelic = null; ui.focus = null; ui.startStep = 1; ui.lastGold = null; ui.goldHold = null; screen = 'run'; save(); render(); },
+    'new-run': () => {
+      run = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()), deck: store.get('balance.freeDeck', null) });
+      ui.startPick = []; ui.startRelic = null; ui.focusRelic = null; ui.focus = null; ui.startStep = 1; ui.lastGold = null; ui.goldHold = null; screen = 'run'; save(); render();
+    },
     // Continue: back into the saved run.
     'continue-run': () => { screen = 'run'; render(); },
     menu: () => { if (battle) return; screen = 'title'; closeModal(); render(); },
+    'ward-info': () => { if (!run) return; sfx('tap'); toast(run.lives > 0 ? '🛡 Ward intact: one defeat allowed before game over' : '💔 Ward broken: next defeat ends the run!'); },
+    'stat-info': k => { const desc = k === 'hp' ? '❤️ Health: Maximum damage before falling' : k === 'atk' ? '⚔️ Attack: Base physical damage dealt per strike' : '⚡ Magic (AP): Powers hero abilities, spells and shields'; toast(desc, true); sfx('pick'); },
+    'cos-preview': id => {
+      const t = B.TAUNT_ALL && B.TAUNT_ALL.find(x => x.id === id);
+      if (t) { sfx('chat'); toast(`💬 "${t.text}"`, true); const m = $('#modal .sheet'); if (m && B.Juice) B.Juice.bump(m, 'pop'); return; }
+      const v = B.VSFX && B.VSFX.find(x => x.id === id);
+      if (v) { sfx('go'); toast(`⚡ VS entrance: ${v.name}`, true); const m = $('#modal .sheet'); if (m && B.Juice) B.Juice.confettiAt(m, 24); return; }
+    },
     howto: () => openModal(HOWTO),
     // v80 (review #158): the guide tips come back (even on an account with many runs)
     'guide-again': () => { store.set('balance.guide3', []); store.set('balance.guide.v', 0); closeModal(); toast('The tutorial will show again as you play'); render(); },
@@ -2528,6 +2646,8 @@
     // v76 (review #154): the redeem code box under the wallet
     'redeem-open': () => { ui.redeemOpen = true; refreshShop(); const i = $('form[data-form=redeem] input'); if (i) i.focus(); },
     'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
+    codex: () => { ui.fromCodex = false; openModal(codexHTML()); ui.modal = 'codex'; },
+    'codex-tab': id => { ui.codexTab = id; openModal(codexHTML()); ui.modal = 'codex'; },
     language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
@@ -2535,7 +2655,7 @@
       if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], tele: run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // v65 (review #133): giving up ends the win streak
     // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.
     'form-info': t => toast(t, true),
-    'hero-peek': k => { if (HEROES[k]) { ui.peekSpec = null; openModal(heroPeekHTML(k)); ui.modal = 'peek'; } },
+    'hero-peek': k => { if (HEROES[k]) { ui.fromCodex = ui.modal === 'codex'; ui.peekSpec = null; openModal(heroPeekHTML(k)); ui.modal = 'peek'; } },
     'peek-spec': a => { const [k, id] = String(a).split(':'); if (!HEROES[k]) return; ui.peekSpec = ui.peekSpec && ui.peekSpec.id === id ? null : { key: k, id }; openModal(heroPeekHTML(k)); ui.modal = 'peek'; },
     path: () => { if (run) { openModal(pathHTML()); ui.modal = 'path'; } },
     'result-more': () => { ui.rmore = !ui.rmore; render(); },
@@ -2557,8 +2677,23 @@
     'gear-auto': () => { run.autoGear = true; const n = gearAuto(); ui.gsel = null; save(); openGear(); refreshBehind(); if (n) { sfx('unlock'); const st = $('#modal .gstage'); if (st && B.Juice) { B.Juice.confettiAt(st, 50); B.Juice.bump(st, 'pop'); } toast(n > 1 ? n + ' heroes got better gear' : 'A hero got better gear'); } else toast('Your team already wears its best gear'); },
     'gear-page': d => { ui.gPage = Math.max(0, (ui.gPage || 0) + +d); openGear(); },
     sell: () => { const g = ui.gsel; if (!g || g.k !== 'b') return; Run.sell(run, g.i); ui.gsel = null; sfx('coin'); save(); openGear(); header(); },
+    'quick-sell-bag': () => {
+      if (!run || !run.bag || !run.bag.length) return;
+      let totalG = 0, count = run.bag.length;
+      while (run.bag.length > 0) {
+        const id = run.bag[run.bag.length - 1];
+        const val = Run.sellValue ? Run.sellValue(id) : (ITEM[id] ? Math.round(ITEM[id].cost * 0.5) : 0);
+        totalG += val;
+        Run.sell(run, run.bag.length - 1);
+      }
+      sfx('coin');
+      save();
+      header();
+      render();
+      toast(`Sold ${count} items for +${totalG} gold!`);
+    },
     // Closes the open sheet.
-    close: () => { closeModal(); ui.gsel = null; ui.heroInfo = 0; if (!battle) render(); },
+    close: () => { closeModal(); ui.fromCodex = false; ui.gsel = null; ui.heroInfo = 0; if (!battle) render(); },
     // Opens the suggestion box.
     suggest: () => openSuggest(),
     'art-lab': arg => { if (ui.modal) closeModal(); B.ArtLab.open(labKit, arg); },
@@ -2623,15 +2758,77 @@
   // v42: every tap has a sound; these actions have their own (null = the action plays it, it depends on the outcome)
   // WHAT: which sound each button makes (null = silent).
   const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: null, 'start-go': 'go', choose: 'pick', 'start-pick': 'pick', 'recruit-pick': 'pick', 'over-next': 'pick', 'start-relic': 'pick', 'start-next': 'pick', 'start-back': 'back',
-    spec: 'unlock', event: 'pick', 'event-target': 'pick', equip: 'pick', bag: 'pick', unequip: 'back', close: 'back', 'event-back': 'back', sell: 'coin', 'result-ok': 'pick' };
+    spec: 'unlock', event: 'pick', 'event-target': 'pick', equip: 'pick', bag: 'pick', unequip: 'back', close: 'back', 'event-back': 'back', sell: 'coin', 'result-ok': 'pick', 'stat-info': null, 'cos-preview': null };
   document.addEventListener('click', e => {
     if (e.target.closest('#notice')) return;
+    const foeEl = !e.target.closest('[data-act]') && e.target.closest('[data-foe]');
+    if (foeEl) {
+      const W = battle ? battle.W : preview, key = foeEl.dataset.foe;
+      const u = W && W.units && W.units.find(x => !x.dead && x.side === 1 && x.key === key);
+      if (u) {
+        ui.info = ui.info === u.id ? null : u.id;
+        if (B.UIAudio) B.UIAudio.pop();
+        sfx('tap');
+        const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.toggle('empty', !ui.info); }
+        if (!battle) drawPreview();
+      }
+      return;
+    }
     const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
     e.preventDefault(); const act = el.dataset.act, f = ACT[act];
+    if (B.UIAudio) {
+      if (el.classList.contains('primary') || el.classList.contains('cta') || el.classList.contains('big') || act === 'fight' || act === 'new-run' || act === 'continue-run') {
+        B.UIAudio.chunky();
+      } else if (el.classList.contains('tab') || el.classList.contains('gtab') || el.classList.contains('chip') || el.classList.contains('ibtn')) {
+        B.UIAudio.tick();
+      } else if (el.classList.contains('spot') || el.classList.contains('ped') || el.classList.contains('bnc') || el.classList.contains('opt') || act === 'pick' || act === 'start-pick' || act === 'start-relic') {
+        B.UIAudio.pop();
+      } else {
+        B.UIAudio.tap();
+      }
+    }
     const snd = act in ACT_SFX ? ACT_SFX[act] : 'tap'; if (snd) sfx(snd);
     if (f) f(el.dataset.arg, el);
   });
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') ACT.close(); });
+  // Mobile swipe down to dismiss modal sheets
+  const sheetSwipe = { y0: 0, dy: 0, tracking: false, sheet: null };
+  document.addEventListener('pointerdown', e => {
+    if (!ui.modal) return;
+    const shead = e.target.closest('#modal .shead'), sheet = e.target.closest('#modal .sheet');
+    if (sheet && (shead || sheet.scrollTop <= 0) && !e.target.closest('button, input, select, textarea, form, [data-drag], .gsock, .gitem')) {
+      sheetSwipe.tracking = true; sheetSwipe.y0 = e.clientY; sheetSwipe.dy = 0; sheetSwipe.sheet = sheet;
+    }
+  }, { passive: true });
+  document.addEventListener('pointermove', e => {
+    if (!sheetSwipe.tracking || !sheetSwipe.sheet) return;
+    const dy = e.clientY - sheetSwipe.y0;
+    if (dy > 0) {
+      sheetSwipe.dy = dy;
+      sheetSwipe.sheet.style.transform = `translateY(${Math.min(dy, 220)}px)`;
+      sheetSwipe.sheet.style.transition = 'none';
+    } else {
+      sheetSwipe.dy = 0;
+      sheetSwipe.sheet.style.transform = '';
+    }
+  }, { passive: true });
+  const endSwipe = () => {
+    if (!sheetSwipe.tracking || !sheetSwipe.sheet) return;
+    const sh = sheetSwipe.sheet, dy = sheetSwipe.dy;
+    sheetSwipe.tracking = false; sheetSwipe.sheet = null; sheetSwipe.dy = 0;
+    if (dy > 70) {
+      sh.style.transition = 'transform 0.18s ease-out, opacity 0.18s ease-out';
+      sh.style.transform = 'translateY(100%)';
+      sh.style.opacity = '0';
+      setTimeout(() => { ACT.close(); }, 180);
+    } else {
+      sh.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1)';
+      sh.style.transform = '';
+      setTimeout(() => { if (sh) sh.style.transition = ''; }, 200);
+    }
+  };
+  document.addEventListener('pointerup', endSwipe, { passive: true });
+  document.addEventListener('pointercancel', endSwipe, { passive: true });
   document.addEventListener('input', e => { if (e.target.id === 'sugName') store.set('balance.name', e.target.value.trim()); });
   document.addEventListener('submit', async e => {
     const f = e.target.closest('form[data-form]'); if (!f) return; e.preventDefault();

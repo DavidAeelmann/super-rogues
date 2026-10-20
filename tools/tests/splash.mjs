@@ -16,13 +16,14 @@ for (let i = 0; i < 60 && !ws; i++) { try { const p = (await (await fetch(`http:
 await new Promise(r => ws.onopen = r);
 ws.onmessage = m => { const d = JSON.parse(m.data); if (d.id && pending[d.id]) { pending[d.id](d); delete pending[d.id]; } };
 const send = (method, params = {}) => new Promise(res => { const i = ++id; pending[i] = res; ws.send(JSON.stringify({ id: i, method, params })); });
-const W = 420, H = 1060;
+const W = 620, H = 1450;
 await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 2, mobile: false });
 await send('Page.navigate', { url: `http://localhost:${PORT}/` }); await sleep(1200);
 await send('Runtime.evaluate', { expression: `(() => {
   document.body.innerHTML = '<div id=g style="display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:#0c0d11"></div>'; const g = document.getElementById('g');
   for (const k of Object.keys(B.HEROES)) { const i = new Image(); i.src = B.Splash.image(k, 96, 125, 'full'); i.width = 96; i.height = 125; g.appendChild(i); }
-  for (const k of ['grunt', 'brute', 'golem', 'gorewarden', 'hollowking', 'wolf', 'bastion', 'pyra', 'rex', 'pip']) { const i = new Image(); i.src = B.Splash.image(k, 64, 64, 'bust'); i.width = i.height = 64; g.appendChild(i); }
+  for (const k of Object.keys(B.BOSSES)) { const i = new Image(); i.src = B.Splash.image(k, 96, 125, 'full'); i.width = 96; i.height = 125; g.appendChild(i); }
+  for (const k of Object.keys(B.MOBS)) { const i = new Image(); i.src = B.Splash.image(k, 64, 64, 'bust'); i.width = i.height = 64; g.appendChild(i); }
 })()` });
 await sleep(300);
 const r = await send('Page.captureScreenshot', { format: 'png' });

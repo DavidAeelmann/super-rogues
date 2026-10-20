@@ -201,11 +201,36 @@
   const guarded = (W, v) => v.kind === 'hero' && (W.fl.bodyguard || W.fl1.bodyguard) && flOf(W, v.side).bodyguard && (B.HEROES[v.key] || v).range > 1
     && W.units.some(a => !a.dead && a.side === v.side && a.kind === 'hero' && (B.HEROES[a.key] || a).range <= 1);
   // WHAT: the closest empty hex to (c, r), searching outward up to maxR. freeNeighbors = the empty hexes around a hex.
+  // WHAT: the closest empty hex to (c, r), searching outward up to maxR. freeNeighbors = the empty hexes around a hex.
+  // Precompute static rings by coordinate key and radius so freeNear performs zero array allocations in combat
+  const RINGS_BY_KEY_RAD = (function() {
+    const table = [];
+    for (let r = 0; r < Hx.ROWS; r++) {
+      for (let c = 0; c < Hx.COLS; c++) {
+        const k = Hx.key(c, r);
+        const byRad = [];
+        for (let rad = 0; rad <= 8; rad++) {
+          byRad.push(Hx.all().filter(h => Hx.dist(h, { c, r }) === rad));
+        }
+        table[k] = byRad;
+      }
+    }
+    return table;
+  })();
+  const FREE_SCRATCH = [];
   function freeNear(W, c, r, maxR = 8) {
-    // nearest free hex (BFS ring order), ties broken deterministically by the rng
+    const k = Hx.key(c, r);
+    const byRad = RINGS_BY_KEY_RAD[k];
+    if (!byRad) return null;
     for (let rad = 0; rad <= maxR; rad++) {
-      const ring = Hx.all().filter(h => Hx.dist(h, { c, r }) === rad && !W.occ[Hx.key(h.c, h.r)]);
-      if (ring.length) return ring[Math.floor(W.rng() * ring.length)];
+      const ring = byRad[rad];
+      if (!ring || !ring.length) continue;
+      FREE_SCRATCH.length = 0;
+      for (let i = 0; i < ring.length; i++) {
+        const h = ring[i];
+        if (!W.occ[Hx.key(h.c, h.r)]) FREE_SCRATCH.push(h);
+      }
+      if (FREE_SCRATCH.length) return FREE_SCRATCH[Math.floor(W.rng() * FREE_SCRATCH.length)];
     }
     return null;
   }
@@ -254,7 +279,12 @@
   // v62p (review #112): W.ctx = { ab, by } is the ability being cast right now; every effect made meanwhile (and by the delayed hits it schedules) carries it as f.ab / f.by,
   // so the renderer can draw each ability its own way (js/abilfx.js). The fight never reads it.
   function at(W, t, fn) { W.q.push({ t, fn, ctx: W.ctx }); }
-  function fx(W, o) { o.t0 = o.t0 ?? W.t; if (W.ctx && o.ab === undefined) { o.ab = W.ctx.ab; o.by = W.ctx.by; } W.fx.push(o); }
+  function fx(W, o) {
+    if (W.headless) return;
+    o.t0 = o.t0 ?? W.t;
+    if (W.ctx && o.ab === undefined) { o.ab = W.ctx.ab; o.by = W.ctx.by; }
+    W.fx.push(o);
+  }
   // WHAT: runs fn with W.ctx set to an ability (passives such as plants, the medic's attack and the Citadel's soldiers tag their effects too).
   function inCtx(W, ab, by, fn) { const was = W.ctx; W.ctx = { ab, by }; try { return fn(); } finally { W.ctx = was; } }
   const castAb = (W, u) => inCtx(W, u.abil, u.id, () => A[u.abil](W, u));
@@ -493,16 +523,31 @@
     if (dur === 0) { u.fc = c; u.fr = r; }
   }
   // WHAT: the next hex one step along a shortest path toward a goal, avoiding units and terrain.
+  const PATH_N = Hx.COLS * Hx.ROWS;
+  const PATH_PREV = new Int16Array(PATH_N);
+  const PATH_SEEN = new Uint8Array(PATH_N);
+  const PATH_Q = new Uint8Array(PATH_N);
   function pathStep(W, u, goalFn) {
-    const N = Hx.COLS * Hx.ROWS, prev = new Int16Array(N).fill(-1), seen = new Uint8Array(N);
-    const sk = Hx.key(u.c, u.r); const q = [sk]; seen[sk] = 1; let goal = -1;
-    for (let i = 0; i < q.length; i++) {
-      const k = q[i], c = k % Hx.COLS, r = (k / Hx.COLS) | 0;
+    PATH_PREV.fill(-1);
+    PATH_SEEN.fill(0);
+    const sk = Hx.key(u.c, u.r);
+    PATH_Q[0] = sk;
+    let qHead = 0, qTail = 1;
+    PATH_SEEN[sk] = 1;
+    let goal = -1;
+    while (qHead < qTail) {
+      const k = PATH_Q[qHead++], c = k % Hx.COLS, r = (k / Hx.COLS) | 0;
       if (k !== sk && goalFn(c, r)) { goal = k; break; }
-      for (const n of Hx.neighbors(c, r)) { const nk = Hx.key(n.c, n.r); if (seen[nk] || W.occ[nk]) continue; seen[nk] = 1; prev[nk] = k; q.push(nk); }
+      for (const n of Hx.neighbors(c, r)) {
+        const nk = Hx.key(n.c, n.r);
+        if (PATH_SEEN[nk] || W.occ[nk]) continue;
+        PATH_SEEN[nk] = 1;
+        PATH_PREV[nk] = k;
+        PATH_Q[qTail++] = nk;
+      }
     }
     if (goal < 0) return null;
-    let k = goal; while (prev[k] !== sk) k = prev[k];
+    let k = goal; while (PATH_PREV[k] !== sk) k = PATH_PREV[k];
     return { c: k % Hx.COLS, r: (k / Hx.COLS) | 0 };
   }
   // WHAT: walk one step toward a target; returns false if blocked.
@@ -1848,6 +1893,7 @@
       grow('rp', m.rampAtkPct, m.rampAtkPctCap || 0, g => { u.bAtkPct += g; });
       grow('rr', m.rampArmor, m.rampArmorCap || 0, g => { u.bArm += g; });
       grow('rh', m.rampHpPct, m.rampHpPctCap || 0, g => { const add = Math.round((u.hp0 || u.maxHp) * g); u.hp0 = u.hp0 || u.maxHp; u.maxHp += add; u.hp += add; });
+      if (u.buffs && u.buffs.length > 4) u.buffs = u.buffs.filter(b => b.until > W.t);
       if (u.fl.has('crescendo') && W.t % sec(4) === 0 && (u.sc.cr || 0) < (u.fl.has('tempo') ? 15 : 10)) {
         u.sc.cr = (u.sc.cr || 0) + 1;
         for (const a of allies(W, u)) { buff(a, 'asPct', 0.03, 1e9); if (u.fl.has('symphony')) a.armor += 2; }
@@ -1865,8 +1911,26 @@
     if (W.over) return;
     W.t++;
     if (W.q.length) {
-      const due = W.q.filter(e => e.t <= W.t); W.q = W.q.filter(e => e.t > W.t);
-      for (const e of due) { W.ctx = e.ctx || null; e.fn(); W.ctx = null; if (W.over) break; }
+      const q = W.q, len = q.length, keep = [];
+      for (let i = 0; i < len; i++) {
+        const e = q[i];
+        if (e.t <= W.t) {
+          W.ctx = e.ctx || null;
+          e.fn();
+          W.ctx = null;
+          if (W.over) {
+            for (let j = i + 1; j < len; j++) if (q[j].t > W.t) keep.push(q[j]);
+            break;
+          }
+        } else {
+          keep.push(e);
+        }
+      }
+      // If e.fn() scheduled new items onto W.q during execution, preserve them
+      if (q.length > len) {
+        for (let i = len; i < q.length; i++) keep.push(q[i]);
+      }
+      W.q = keep;
     }
     // review #24 (David): sudden death is damage over time that grows slowly and hits EVERY unit, allies and enemies:
     // each second after it starts, true damage of (1% x seconds into sudden death) of the unit's max HP
@@ -1913,7 +1977,7 @@
   }
 
   // WHAT: plays a whole fight at once (no drawing). Used by the bots, the test suite and the balance tools in tools/.
-  function run(W, maxTicks = 20 * 60 * 30) { while (!W.over && W.t < maxTicks) step(W); return W; }
+  function run(W, maxTicks = 20 * 60 * 30) { W.headless = true; while (!W.over && W.t < maxTicks) step(W); return W; }
   // v50 (review #62): the new relics that act on a clock
   // WHAT: team powers that act on a clock rather than on an event: Quake Drum, Bramble Crown, Trick Coin, Time Crystal, Jester's Bell.
   function relicTick(W) {

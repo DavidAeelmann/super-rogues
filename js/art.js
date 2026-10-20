@@ -58,21 +58,35 @@
     vex: { splash: 'art/vex/splash.jpg', crop: { x: 0.687, y: 0.236, z: 1.2 }, flip: false, scale: 1 },   // Vex
     grimhook: { splash: 'art/hookjaw/splash.jpg', crop: { x: 0.406, y: 0.353, z: 1.2 }, flip: false, scale: 1 },   // Hookjaw
     nyx: { splash: 'art/nyx/splash.jpg', crop: { x: 0.51, y: 0.21, z: 1.2 }, flip: false, scale: 1 },   // Nyx
-    harlequin: { splash: 'art/rapture/splash.jpg', crop: { x: 0.514, y: 0.234, z: 1.2 }, flip: false, scale: 1 },   // Rapture
-    deadshot: { splash: 'art/deadeye/splash.jpg', crop: { x: 0.432, y: 0.266, z: 1.2 }, flip: false, scale: 1 },   // Deadeye
+    harlequin: { splash: 'art/rapture/splash.jpg', crop: { x: 0.505, y: 0.235, z: 1.2 }, flip: false, scale: 1 },   // Rapture
+    deadshot: { splash: 'art/deadeye/splash.jpg', crop: { x: 0.44, y: 0.25, z: 1.2 }, flip: false, scale: 1 },   // Deadeye
     // v126 (review #218, David: Art Lab batch 159): splash art for 12 more heroes; the crop centres each face for the portrait
-    ashwing: { splash: 'art/ashwing/splash.jpg', crop: { x: 0.395, y: 0.295, z: 1.1 }, flip: false, scale: 1 },   // Ashwing
-    bella: { splash: 'art/belladonna/splash.jpg', crop: { x: 0.43, y: 0.195, z: 1.2 }, flip: false, scale: 1 },   // Belladonna
-    chronos: { splash: 'art/chronos/splash.jpg', crop: { x: 0.52, y: 0.345, z: 1.2 }, flip: false, scale: 1 },   // Chronos
-    dragon: { splash: 'art/ember-wyrm/splash.jpg', crop: { x: 0.27, y: 0.42, z: 1.1 }, flip: false, scale: 1 },   // Ember Wyrm
-    duelist: { splash: 'art/duelist/splash.jpg', crop: { x: 0.55, y: 0.268, z: 1.2 }, flip: false, scale: 1 },   // Duelist
-    imhotep: { splash: 'art/ankh/splash.jpg', crop: { x: 0.51, y: 0.26, z: 1.2 }, flip: false, scale: 1 },   // Ankh
-    plasma: { splash: 'art/plasma-cannon/splash.jpg', crop: { x: 0.55, y: 0.3, z: 0.9 }, flip: false, scale: 1 },   // Plasma Cannon
-    prism: { splash: 'art/prism/splash.jpg', crop: { x: 0.5, y: 0.41, z: 1 }, flip: false, scale: 1 },   // Prism
+    ashwing: { splash: 'art/ashwing/splash.jpg', crop: { x: 0.38, y: 0.28, z: 1.2 }, flip: false, scale: 1 },   // Ashwing
+    bella: { splash: 'art/belladonna/splash.jpg', crop: { x: 0.54, y: 0.23, z: 1.2 }, flip: false, scale: 1 },   // Belladonna
+    chronos: { splash: 'art/chronos/splash.jpg', crop: { x: 0.51, y: 0.23, z: 1.2 }, flip: false, scale: 1 },   // Chronos
+    dragon: { splash: 'art/ember-wyrm/splash.jpg', crop: { x: 0.67, y: 0.23, z: 1.2 }, flip: false, scale: 1 },   // Ember Wyrm
+    duelist: { splash: 'art/duelist/splash.jpg', crop: { x: 0.63, y: 0.22, z: 1.2 }, flip: false, scale: 1 },   // Duelist
+    imhotep: { splash: 'art/ankh/splash.jpg', crop: { x: 0.505, y: 0.22, z: 1.2 }, flip: false, scale: 1 },   // Ankh
+    plasma: { splash: 'art/plasma-cannon/splash.jpg', crop: { x: 0.72, y: 0.45, z: 1.0 }, flip: false, scale: 1 },   // Plasma Cannon
+    prism: { splash: 'art/prism/splash.jpg', crop: { x: 0.505, y: 0.46, z: 1.1 }, flip: false, scale: 1 },   // Prism
     rook: { splash: 'art/rivet/splash.jpg', crop: { x: 0.49, y: 0.26, z: 1.2 }, flip: false, scale: 1 },   // Rivet
     smolder: { splash: 'art/smolder/splash.jpg', crop: { x: 0.5, y: 0.19, z: 1.2 }, flip: false, scale: 1 },   // Smolder
     tom: { splash: 'art/tom/splash.jpg', crop: { x: 0.42, y: 0.265, z: 1.2 }, flip: false, scale: 1 },   // Tom
-    vey: { splash: 'art/mesmer/splash.jpg', crop: { x: 0.5, y: 0.27, z: 1.2 }, flip: false, scale: 1 },   // Mesmer
+    vey: { splash: 'art/mesmer/splash.jpg', crop: { x: 0.59, y: 0.24, z: 1.2 }, flip: false, scale: 1 },   // Mesmer
+    // v127: splash art for all remaining heroes
+    kestrel: { splash: 'art/talon/splash.jpg', crop: { x: 0.5, y: 0.28, z: 1.15 }, flip: false, scale: 1 },   // Talon
+    tempest: { splash: 'art/tempest/splash.jpg', crop: { x: 0.5, y: 0.27, z: 1.2 }, flip: false, scale: 1 },   // Tempest
+    echo: { splash: 'art/lyric/splash.jpg', crop: { x: 0.5, y: 0.26, z: 1.2 }, flip: false, scale: 1 },   // Lyric
+    vesper: { splash: 'art/vesper/splash.jpg', crop: { x: 0.5, y: 0.25, z: 1.2 }, flip: false, scale: 1 },   // Vesper
+    barley: { splash: 'art/rumble/splash.jpg', crop: { x: 0.5, y: 0.28, z: 1.2 }, flip: false, scale: 1 },   // Rumble
+    coralie: { splash: 'art/maelstrom/splash.jpg', crop: { x: 0.5, y: 0.26, z: 1.2 }, flip: false, scale: 1 },   // Maelstrom
+    stellan: { splash: 'art/astral/splash.jpg', crop: { x: 0.5, y: 0.27, z: 1.2 }, flip: false, scale: 1 },   // Astral
+    citadel: { splash: 'art/citadel/splash.jpg', crop: { x: 0.5, y: 0.35, z: 1.0 }, flip: false, scale: 1 },   // Citadel
+    rohammer: { splash: 'art/rohammer/splash.jpg', crop: { x: 0.5, y: 0.27, z: 1.15 }, flip: false, scale: 1 },   // Rohammer
+    kitsune: { splash: 'art/kitsune/splash.jpg', crop: { x: 0.5, y: 0.28, z: 1.2 }, flip: false, scale: 1 },   // Kitsune
+    onyx: { splash: 'art/onyx/splash.jpg', crop: { x: 0.5, y: 0.38, z: 1.05 }, flip: false, scale: 1 },   // Onyx
+    medic: { splash: 'art/combat-medic/splash.jpg', crop: { x: 0.5, y: 0.28, z: 1.2 }, flip: false, scale: 1 },   // Combat Medic
+    gardener: { splash: 'art/gardener/splash.jpg', crop: { x: 0.5, y: 0.27, z: 1.2 }, flip: false, scale: 1 },   // Gardener
   };
   // WHAT: the pictures a player is testing on this device (browser memory). live = pictures currently mounted, subs = who listens for changes.
   const LOCAL = 'balance.artlab';
