@@ -1,0 +1,13 @@
+# Only the served game goes to Vercel (same list as tools/deploy.sh); the rest of the repo stays on GitHub.
+/*
+!index.html
+!stats.html
+!card.html
+!style.css
+!js
+!fonts
+!api
+!art
+!package.json
+!package-lock.json
+!vercel.json
