@@ -3021,7 +3021,30 @@ button:disabled, button[disabled], .evch[disabled] { opacity: .5; filter: graysc
 
 /* small phones: tighter */
 @media (max-height: 680px) { .start.v3 .stage { min-height: 170px; gap: 8px; padding: 8px 6px 8px !important; } .start.v3 .card.detail { padding: 8px 10px; } .sbars { gap: 3px 10px; margin-bottom: 6px; } .start.v3 .ssub { font-size: 13px; } }
-body.desk .start.v3 .stage { max-height: 520px; }
+/* Desktop optimizations for hero select & popups */
+body.desk .start.v3 { max-width: 960px; margin: 0 auto; width: 100%; }
+body.desk .start.v3 .stage { max-height: 540px; max-width: 900px; margin: 0 auto; width: 100%; gap: 24px; padding: 12px 16px !important; }
+body.desk .start.v3 .stage .hbanner.spot { min-width: 220px; border-radius: 20px; }
+body.desk .start.v3 .stage .hbanner.spot .splash { border-radius: 20px; }
+body.desk .start.v3 .stage .hbanner.spot b { font-size: 21px; margin-bottom: 2px !important; }
+body.desk .start.v3 .stage .hbanner.spot i { font-size: 13px; padding: 3px 12px; margin-bottom: 12px !important; }
+body.desk .start.v3 .card.detail { max-width: 740px; margin: 8px auto 0; padding: 14px 18px; border-radius: 18px; }
+body.desk .start.v3 .card.detail .hrow b { font-size: 19px; }
+body.desk .start.v3 .card.detail .role { font-size: 14px; }
+body.desk .start.v3 .card.detail .htag { font-size: 14.5px; }
+body.desk .start.v3 .bar.sbar { max-width: 500px; margin: 12px auto 0; }
+body.desk .start.v3 .bar.sbar button { min-height: 52px; font-size: 18px; }
+
+/* Desktop scaling for coach tips, tutorial bubbles, and Smolder devours / toasts */
+body.desk #toast { font-size: 17px; padding: 13px 28px; border-radius: 999px; bottom: 28px; border-width: 3.5px; box-shadow: 0 6px 0 #c47f00, 0 14px 32px #0d114688; }
+body.desk .gtip { font-size: 16px; padding: 12px 18px; border-radius: 18px; box-shadow: 0 8px 24px #0008, 0 0 0 2.5px #fff inset; }
+body.desk .gtip b { font-size: 21px; }
+body.desk .boardwrap .coach { left: 16px; right: 16px; top: 12px; }
+body.desk .coach { font-size: 16px; padding: 12px 18px; border-radius: 18px; gap: 14px; }
+body.desk .coach .ci { font-size: 28px; }
+body.desk .coach .ct { font-size: 16px; line-height: 1.4; }
+body.desk .coach .cok { min-height: 40px; font-size: 15px; padding: 6px 18px; }
+body.desk .shopcoach { max-width: 680px; bottom: 100px; }
 .start.v3 .stage.pedestals .srelic.ped.on { background: linear-gradient(180deg, #ffd23f33, #0b0f3f77) !important; border-color: #ffd23f !important; box-shadow: inset 0 0 0 2.5px #ffd23f, 0 0 26px #ffd23f66 !important; }
 .start.v3 .stage.pedestals .srelic.ped.on .srt b, .start.v3 .stage.pedestals .srelic.ped.on .srd, .start.v3 .stage.pedestals .srelic.ped.on .srd * { color: #fff !important; }
 .start.v3 .bar.sbar { align-self: stretch; width: 100%; display: flex; gap: 10px; } .start.v3 .bar.sbar .primary { flex: 1; }

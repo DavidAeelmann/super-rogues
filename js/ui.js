@@ -1018,7 +1018,7 @@
       const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, tip = document.createElement('div');
       tip.className = 'gtip'; tip.setAttribute('role', 'status'); tip.innerHTML = `<b>💡</b><span>${esc(g.text)}</span>`;
       document.body.appendChild(tip);
-      const w = Math.min(300, vw - 24); tip.style.width = w + 'px';
+      const isDesk = document.body.classList.contains('desk'); const w = isDesk ? Math.min(480, vw - 48) : Math.min(300, vw - 24); tip.style.width = w + 'px';
       const th = tip.offsetHeight, below = r.bottom + th + 14 <= vh, top = below ? r.bottom + 10 : Math.max(8, r.top - th - 10);
       const cx = Math.max(12 + w / 2, Math.min(vw - 12 - w / 2, r.left + r.width / 2));
       tip.style.left = (cx - w / 2) + 'px'; tip.style.top = top + 'px'; tip.classList.add(below ? 'down' : 'up');
