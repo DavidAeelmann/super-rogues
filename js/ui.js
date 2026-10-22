@@ -372,10 +372,10 @@
       // v49 (review #60): the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
       // the ladder, suggestions, and the menu sheet with the rest)
       const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button><button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
+      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
-    if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span><button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
+    if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
     const stepN = Math.max(0, run.step);
     const g = run.g;
     const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + Run.pveSeq(run).length;
@@ -389,6 +389,7 @@
   // down with a bump and a "+6" whenever the gold changes. After a won fight it waits for the coins to fly in.
   // WHAT: sound button, sfx() plays a named sound (js/sfx.js), shownGold / animGold animate the gold counter.
   const soundBtn = () => `<button class="sndbtn ibtn" data-act="sound" aria-label="Sound ${B.Sfx && B.Sfx.on ? 'on' : 'off'}" title="Sound">${I(B.Sfx && B.Sfx.on ? 'sound' : 'mute')}</button>`;
+  const fsBtn = () => document.body.classList.contains('desk') ? `<button class="fsbtn ibtn" data-act="fullscreen" aria-label="Fullscreen" title="Toggle Fullscreen (F11)">${I('expand')}</button>` : '';
   const sfx = (n, a) => { if (B.Sfx) B.Sfx.play(n, a); };
   const shownGold = () => ui.goldHold != null ? ui.goldHold : run.gold;
   function animGold() {
@@ -2599,6 +2600,15 @@
     'brag-share': async () => { const s = await bragPrep(), d = bragData();
       try { if (navigator.share) { const file = s.blob ? new File([s.blob], 'super-rogues-card.jpg', { type: 'image/jpeg' }) : null, o = { title: 'Super Rogues', text: B.Card.text(d) + ' ▶ Super Rogues', url: s.url };
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) o.files = [file]; await navigator.share(o); return; } } catch (_) { return; } ACT['brag-copy'](); },
+    fullscreen: () => {
+      try {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      } catch (_) {}
+    },
     'brag-wa': async () => { const s = await bragPrep(), d = bragData(); window.open('https://wa.me/?text=' + encodeURIComponent(B.Card.text(d) + ' ▶ ' + s.url), '_blank', 'noopener'); },
     'brag-copy': async () => { const s = await bragPrep(), d = bragData(), plain = B.Card.text(d) + ' ▶ ' + s.url, rich = `${esc(B.Card.text(d))} ▶ <a href="${s.url}">Super Rogues</a>`;
       try { if (window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([plain], { type: 'text/plain' }), 'text/html': new Blob([rich], { type: 'text/html' }) })]); else await navigator.clipboard.writeText(plain); toast('Link copied! Paste it anywhere 🎉'); } catch (_) { toast(s.url, true); } },
@@ -2868,6 +2878,68 @@
       const wm = $('#wmap'); if (wm) layoutMap({ key: wm.dataset.key, top: wm.scrollTop });   // v65: the road fits the new screen
     }, 120);
   }
+  
+  // Desktop keyboard shortcuts: 1-4 for hero picks / speed / bench, Space for fight / continue, Esc for close
+  document.addEventListener('keydown', e => {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    const k = e.key;
+
+    // Esc closes modals
+    if (k === 'Escape') {
+      if (ui.modal) { closeModal(); e.preventDefault(); return; }
+      if (ui.info) { ui.info = null; render(); e.preventDefault(); return; }
+    }
+
+    // Space or Enter: Trigger primary actions or fight
+    if (k === ' ' || k === 'Enter') {
+      if (ui.modal) {
+        const prim = $('#modal button.primary:not(:disabled)');
+        if (prim) { prim.click(); e.preventDefault(); return; }
+      }
+      if (screen === 'run' && run) {
+        if (run.phase === 'deploy' && !battle) {
+          const fb = $('button[data-act=fight]:not(:disabled)');
+          if (fb) { fb.click(); e.preventDefault(); return; }
+        }
+        const prim = $('main section button.primary:not(:disabled)');
+        if (prim) { prim.click(); e.preventDefault(); return; }
+      }
+    }
+
+    // Number keys: 1, 2, 3, 4
+    if (['1', '2', '3', '4'].includes(k)) {
+      const idx = parseInt(k, 10) - 1;
+
+      // Battle speed toggle (1x, 2x, 4x)
+      if (battle) {
+        const sp = parseInt(k, 10);
+        if ([1, 2, 4].includes(sp)) {
+          ACT.speed(sp);
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // Start screen / recruit hero pick (1, 2, 3)
+      if (screen === 'run' && run && (run.phase === 'start' || run.phase === 'recruit')) {
+        const spots = document.querySelectorAll('.stage .hbanner.spot, .stage.pedestals .srelic.ped');
+        if (spots && spots[idx]) { spots[idx].click(); e.preventDefault(); return; }
+      }
+
+      // Shop offers (1, 2, 3, 4)
+      if (screen === 'run' && run && run.phase === 'shop') {
+        const cards = document.querySelectorAll('.shop .stock.v2:not(.sold) .buyb:not(:disabled)');
+        if (cards && cards[idx]) { cards[idx].click(); e.preventDefault(); return; }
+      }
+
+      // Bench hero selection during deploy (1-4)
+      if (screen === 'run' && run && run.phase === 'deploy' && !battle) {
+        const benchCards = document.querySelectorAll('.bench .bnc');
+        if (benchCards && benchCards[idx]) { benchCards[idx].click(); e.preventDefault(); return; }
+      }
+    }
+  });
+
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', onResize);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);

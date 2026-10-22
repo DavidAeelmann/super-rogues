@@ -3481,3 +3481,105 @@ body.desk .title.home .homedock {
   transform: translateY(1.5px);
   box-shadow: 0 0.5px 0 #874e00 !important;
 }
+
+
+/* ====================================================================
+   DESKTOP / WEB ENHANCEMENTS: Widescreen Layouts, Two-Column Gear, Hover States, Cursor
+   ==================================================================== */
+
+/* Custom Game Pointer Cursor on Desktop */
+@media (pointer: fine) {
+  body.desk, body.desk button, body.desk [data-act], body.desk .card, body.desk .node {
+    cursor: default;
+  }
+  body.desk button:not(:disabled), body.desk [data-act]:not(:disabled), body.desk .card.opt, body.desk .stock:not(.sold), body.desk .hbanner, body.desk .srelic {
+    cursor: pointer;
+  }
+}
+
+/* Widescreen Two-Column Gear Screen */
+body.desk .sheet.gearsheet {
+  max-width: 940px !important;
+  width: 90vw;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas: 
+    "tabs tabs"
+    "doll bag"
+    "detail bag"
+    "bar bag";
+  gap: 16px 20px;
+  align-items: start;
+}
+
+body.desk .sheet.gearsheet .shead {
+  grid-column: 1 / -1;
+}
+
+body.desk .sheet.gearsheet .gtabs {
+  grid-area: tabs;
+}
+
+body.desk .sheet.gearsheet .gstage {
+  grid-area: doll;
+  min-height: 220px;
+}
+
+body.desk .sheet.gearsheet .gdet {
+  grid-area: detail;
+}
+
+body.desk .sheet.gearsheet .gbar {
+  grid-area: bar;
+  margin-top: 4px;
+}
+
+body.desk .sheet.gearsheet .gbag {
+  grid-area: bag;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+
+body.desk .sheet.gearsheet .gbgrid {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  flex: 1;
+}
+
+/* Desktop Shop Screen: Horizontal Shelf Flow */
+body.desk .shop .grid.rows {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 14px;
+}
+
+body.desk .shop .grid.heroes {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+  gap: 16px;
+}
+
+/* Desktop Hover Micro-Interactions (Cards lift & illuminate) */
+@media (hover: hover) {
+  body.desk .hbanner.spot:hover:not(.on):not(.off) {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.6), 0 0 20px rgba(255, 210, 63, 0.25) !important;
+    transition: transform 0.18s cubic-bezier(0.2, 1.4, 0.4, 1), box-shadow 0.18s ease;
+  }
+  
+  body.desk .stock.v2:hover:not(.sold) {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.5), 0 0 18px color-mix(in srgb, var(--rc) 45%, transparent) !important;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+  }
+
+  body.desk .banner.v2:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.6), 0 0 22px rgba(255, 210, 63, 0.35) !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  body.desk .gitem:hover:not(.nofit) {
+    transform: translateY(-2px) scale(1.06);
+    z-index: 2;
+  }
+}
