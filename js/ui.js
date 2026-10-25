@@ -527,10 +527,8 @@
       ${row('scores', 'trophy', 'Ladder', 'Top players and leagues')}
       <div class="mpair"><button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span></button><button class="mrow sub" data-act="tutorial">${I('help')}<span><b>Tutorial: ${guideOn() ? 'On' : 'Off'}</b></span></button></div>
       <div class="msep"></div>
-      ${row('art-lab', 'palette', 'Art Lab', 'Your art on the heroes')}
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
-      ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}
-      ${row('suggest', 'bulb', 'Suggest a change', 'Help build the game')}</div>`;
+      ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}</div>`;
   }
   // v62h (review #97, David: "In the menu add an option to change language to Portuguese and German"): the sheet opened by the Language row
   // WHAT: the language chooser: English, Portuguese, German. Picking one stores it and reloads the page (js/i18n.js).
