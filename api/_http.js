@@ -11,6 +11,7 @@ const ALLOWED_ORIGIN_PATTERNS = [
   /(^|\.)crazygames\.net$/,
   /(^|\.)poki\.com$/,
   /(^|\.)poki-gdn\.com$/,
+  /(^|\.)vercel\.app$/,
   /localhost/,
   /127\.0\.0\.1/
 ];

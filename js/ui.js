@@ -2465,6 +2465,21 @@
       <div class="avgrid">${list.map(k => { const need = B.portraitLevel(k), ok = need <= lvl || hasPerk('pt_' + k); return `<button class="avpick ${k === cur ? 'on' : ''} ${ok ? '' : 'locked'}" data-act="avatar-set" data-arg="${k}" ${ok ? '' : 'disabled'}>${avatarHTML(k, '', 54)}<span>${ok ? esc(HEROES[k].name) : `🔒 Lv ${need} · 👑 ${B.PORTRAIT_PRICE}`}</span></button>`; }).join('')}</div>`;
   }
   async function openProfile(code) {
+    if (code && String(code).startsWith('bot_')) {
+      const idx = parseInt(String(code).slice(4), 10) || 0;
+      const bots = ['Valkyrie', 'ShadowMage', 'Ironclad', 'Frostbite', 'Stormcaller', 'Aegis', 'Wildfire', 'Nightshade', 'PaladinX', 'Blaze'];
+      const name = bots[idx % bots.length];
+      const botP = {
+        name, code, league: Math.max(1, 5 - Math.floor(idx / 2)), lp: Math.max(120, 2800 - idx * 190),
+        elo: 1000 + idx * 50, streak: Math.max(1, 7 - idx), bstreak: Math.max(3, 9 - idx), best: Math.max(2, 8 - Math.floor(idx / 2)),
+        avatar: ['solara', 'groth', 'tiberius', 'barian', 'mira', 'dmitri'][idx % 6],
+        level: Math.max(2, 10 - idx), season: 1, titles: Math.max(1, 4 - Math.floor(idx / 3)), trophies: { n: 0, list: [] },
+        followers: 12 + idx, following: 4 + idx, achs: []
+      };
+      ui.modal = 'profile'; ui.profile = code; ui.lastProfile = botP;
+      openModal(profileHTML(botP, false));
+      return;
+    }
     const shell = b => `<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>${b}`;
     openModal(shell('<p class="dim">Loading…</p>')); ui.modal = 'profile'; ui.profile = code;
     try {
