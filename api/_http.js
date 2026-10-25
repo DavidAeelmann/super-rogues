@@ -60,6 +60,26 @@ async function body(req, max = 20000, res = null) {
 }
 
 // CSRF: a browser POST from another site carries its Origin; allowed if same host or permitted web portal
+
+function handleCors(req, res) {
+  if (req && req.headers) {
+    res._reqOrigin = req.headers.origin;
+    res._reqHost = req.headers.host;
+    if (req.headers.origin && isAllowedOrigin(req.headers.origin, req.headers.host)) {
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+  }
+  if (req && req.method === 'OPTIONS') {
+    res.statusCode = 204;
+    res.end();
+    return true;
+  }
+  return false;
+}
+
 function sameOrigin(req, res = null) {
   if (res && req && req.headers) {
     res._reqOrigin = req.headers.origin;

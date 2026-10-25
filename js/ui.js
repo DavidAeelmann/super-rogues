@@ -2337,8 +2337,15 @@
     openModal(head + '<p class="dim">Loading…</p>');
     try {
       if (tab === 'player') {
-        const me = await Net.post('elo', { op: 'hello', pid: pid() }); setElo(me);
+        let me = null;
+        try {
+          me = await Net.post('elo', { op: 'hello', pid: pid() }); setElo(me);
+        } catch (_) {}
         if (ui.modal && ui.ladderTab === tab) {
+          if (!me || !me.runs) {
+            openModal(head + `<div class="klock"><span class="hi">🏆</span><b>Rankings start with your first clear</b><p class="small">When you first clear a run, you get to choose your name and compete in the rankings and leagues.</p><button class="primary" data-act="new-run">▶ Play</button></div>`);
+            return;
+          }
           openModal(head + playerTabHTML(me)); header();
           const sc = $('#lgscroll'), c = sc && sc.querySelector('.lgb.cur');
           if (c) sc.scrollLeft = c.offsetLeft - (sc.clientWidth - c.clientWidth) / 2;
@@ -2493,7 +2500,7 @@
     if (!acct.account) await loadAcct();
     if (acct.account && acct.code) return openProfile(acct.code);
     openModal(`<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>
-      <div class="klock"><span class="hi">👤</span><b>Your profile starts with your first game</b><p class="small">When a game ends, your league, trophies and completed runs show up here, and anyone can open your profile by tapping your name.</p>
+      <div class="klock"><span class="hi">🏆</span><b>Rankings start with your first clear</b><p class="small">When you first clear a run, you get to choose your name and compete in the rankings and leagues.</p>
       <button class="primary" data-act="new-run">▶ Play</button></div>`);
   }
   // v45 (review #56): the basics first, in five short lines for someone who never played this kind of game; the full
