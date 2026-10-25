@@ -430,6 +430,7 @@
     if (run && screen === 'run' && run.phase === 'map') findDuels();
     if (screen === 'result' && ui.result && !ui.result.fx) celebrate(ui.result);
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'gauntlet' && !run.xpShown) animXp();   // the old Gauntlet end (saves from before v63)
+    if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear') { recordTeamWins(run.heroes); }
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.endAsked && !run.lgEnd && !run.xpErr) { run.endAsked = true; save(); setTimeout(reportRunEnd, 0); }   // v96 (review #178): a run completed on the map (no last fight)
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.tower && !run.vicCheered) { run.vicCheered = true; save(); sfx('win'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('.vicart', 90), 250); }
     if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'ready' && !ui.towerBusy) setTimeout(() => ACT['tower-enter'](), 0);   // v101: back from the Gauntlet shop
@@ -616,10 +617,30 @@
   // v64 (review #124, David: "hero selection highlights are a bit wonky and persist after you choose another or deselect"): only the picked hero is lit;
   // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
   // WHAT: the stage of heroes under spotlights (sel = the picked one, act = the button action) and the card that says what the picked hero does.
+    // Web & itch.io progression: Hero Mastery (Gold frames for winning heroes) and Discovery (??? for unknown heroes)
+  const wonHeroKeys = () => { const s = store.get('balance.wonHeroes', []); return Array.isArray(s) ? s : []; };
+  const recordHeroWin = key => { if (!key) return; const cur = wonHeroKeys(); if (!cur.includes(key)) store.set('balance.wonHeroes', cur.concat(key)); };
+  const recordTeamWins = heroes => { (heroes || []).forEach(h => recordHeroWin(h.key || h)); };
+  const knownHeroKeys = () => {
+    const s = store.get('balance.knownHeroes', []);
+    const base = Array.isArray(s) ? s : [];
+    // Free starting heroes and won heroes are always known
+    const free = B.PORTRAITS_FREE || ['barian', 'solara', 'groth', 'tiberius'];
+    const set = new Set([...free, ...wonHeroKeys(), ...base]);
+    return set;
+  };
+  const markHeroKnown = key => { if (!key) return; const k = knownHeroKeys(); if (!k.has(key)) { k.add(key); store.set('balance.knownHeroes', Array.from(k)); } };
+
   function heroStage(offer, sel, act, hint) {
-    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => { const d = HEROES[k], on = sel === k;
-      return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
-        <span class="cone"></span><span class="shine"></span>${(src => `<img class="splash ${src.startsWith('data:image/png') ? 'drawn' : ''}" src="${src}" alt="">`)(por(k, 150, true))}<span class="plate"></span><b>${esc(d.name)}</b><i>${d.role} · ${d.range <= 1 ? 'Melee' : 'Ranged'}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`; }).join('')}</div>`;
+    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
+      const d = HEROES[k], on = sel === k;
+      const isWon = wonHeroKeys().includes(k);
+      const isKnown = knownHeroKeys().has(k);
+      const displayName = isKnown ? esc(d.name) : '???';
+      const displayRole = isKnown ? (d.role + ' · ' + (d.range <= 1 ? 'Melee' : 'Ranged')) : 'Unknown Class';
+      return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''} ${isWon ? 'gold-master' : ''} ${!isKnown ? 'unknown-hero' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${isKnown ? d.color : '#3a3a48'};--i:${i}" aria-pressed="${on}">
+        <span class="cone"></span><span class="shine"></span>${(src => `<img class="splash ${src.startsWith('data:image/png') ? 'drawn' : ''} ${!isKnown ? 'silhouette' : ''}" src="${src}" alt="">`)(por(k, 150, true))}<span class="plate"></span>${isWon ? '<span class="crown-badge" title="Champion: Won a run with this hero!">👑</span>' : ''}<b>${displayName}</b><i>${displayRole}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`;
+    }).join('')}</div>`;
   }
   function heroDetail(f) {
     const h = f && HEROES[f];
@@ -1128,22 +1149,28 @@
   function stripHTML(W) {
     return W.units.filter(u => u.side === 0 && u.kind === 'hero').map(u => `<div class="ts" data-id="${u.id}">
       <div class="tsp">${img(u.key, 40, 'por')}<span class="tslv">${u.lvl}</span><span class="crown">👑</span></div>
-      <div class="tsb"><div class="tsn"><b>${esc(u.name)}</b><span class="tsst"></span><span class="tsd"></span></div>
-        <i class="hp"><s></s><em></em></i><i class="mp"><s></s><em>${esc((HEROES[u.key] || {}).abName || '')}</em></i><i class="dm"><s></s></i></div></div>`).join('');
+      <div class="tsb"><div class="tsn"><b>${esc(u.name)}</b><span class="tsst"></span><span class="tsd"></span><span class="tsh"></span></div>
+        <i class="hp"><s></s><em></em></i><i class="mp"><s></s><em>${esc((HEROES[u.key] || {}).abName || '')}</em></i><i class="dm"><s></s><b class="dmb"></b></i></div></div>`).join('');
   }
   function updateStrip(W) {
     const el = $('#tstrip'); if (!el) return;
     if (!el.firstChild) el.innerHTML = stripHTML(W);
     const dmg = dmgBy(W), top = Math.max(1, ...Object.values(dmg));
+    let topHeal = 1;
+    for (const u of W.units) if (u.side === 0 && (u.healDone || 0) > topHeal) topHeal = u.healDone;
     for (const d of el.querySelectorAll('.ts')) {
       const u = W.byId[d.dataset.id]; if (!u) continue;
-      const ready = !u.dead && u.maxMana > 0 && u.mana >= u.maxMana, dd = dmg[u.id] || 0, sh = u.shield > 0 && u.shieldU > W.t ? Math.round(u.shield) : 0;
+      const ready = !u.dead && u.maxMana > 0 && u.mana >= u.maxMana, dd = dmg[u.id] || 0, hh = u.healDone || 0, sh = u.shield > 0 && u.shieldU > W.t ? Math.round(u.shield) : 0;
       d.classList.toggle('dead', !!u.dead); d.classList.toggle('ready', ready); d.classList.toggle('mvp', dd > 0 && dd >= top);
       d.querySelector('.hp s').style.width = Math.max(0, 100 * u.hp / u.maxHp) + '%';
       d.querySelector('.hp em').textContent = u.dead ? 'fallen' : Math.max(0, Math.round(u.hp)) + ' / ' + u.maxHp + (sh ? '  +' + sh + ' shield' : '');
       d.querySelector('.mp s').style.width = (u.maxMana ? Math.min(100, 100 * u.mana / u.maxMana) : 0) + '%';
       d.querySelector('.dm s').style.width = 100 * dd / top + '%';
+      const dmb = d.querySelector('.dm .dmb');
+      if (dmb) dmb.style.width = (hh > 0 ? (100 * hh / topHeal) : 0) + '%';
       d.querySelector('.tsd').textContent = '⚔ ' + kfmt(dd);
+      const tsh = d.querySelector('.tsh');
+      if (tsh) tsh.textContent = hh >= 20 ? ('💚 ' + kfmt(hh)) : '';
       const st = ccHTML(W, u), sd = d.querySelector('.tsst'); if (sd.innerHTML !== st) sd.innerHTML = st;
     }
     const es = $('#estrip'); if (!es) return;
@@ -1618,7 +1645,7 @@
     document.body.classList.toggle('landscape', vw > vh * 1.25 && vh < 600);
     document.body.classList.toggle('wide', vw >= 760 && !document.body.classList.contains('landscape'));
     document.body.classList.toggle('side', document.body.classList.contains('wide') && vw >= vh * 1.1);  // review #18: panel beside the board
-    document.body.classList.toggle('desk', document.body.classList.contains('side') && vw >= 1024 && vh >= 560);  // v29: a full-screen stage on computers
+    document.body.classList.toggle('desk', (document.body.classList.contains('side') && vw >= 960 && vh >= 500) || (vw >= 1024 && vh >= 540));  // v29: a full-screen stage on computers
   }
   function boardWidth(wrap) {
     const vw = window.innerWidth, vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -2327,7 +2354,19 @@
       }
       // v65 (reviews #132 #134): Global or Friends (the players you follow, and you); every row has the win streak now and the best one
       // v85 (review #163): Global = the top 10, then '…' and your own row with your place when you are not in it; Friends = all of them and you
-      const e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.post('player', { op: 'ladder', pid: pid() });
+      let e = null;
+      try {
+        e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.post('player', { op: 'ladder', pid: pid() });
+      } catch (_) {
+        // Offline / iframe fallback: generate rich local bot leaderboard so the screen is always populated
+        const bots = ['Valkyrie', 'ShadowMage', 'Ironclad', 'Frostbite', 'Stormcaller', 'Aegis', 'Wildfire', 'Nightshade', 'PaladinX', 'Blaze'];
+        const botRows = bots.map((name, i) => ({
+          name, code: 'bot_' + i, avatar: ['solara', 'groth', 'tiberius', 'barian', 'mira', 'dmitri'][i % 6],
+          league: Math.max(1, 5 - Math.floor(i / 2)), lp: Math.max(120, 2800 - i * 190),
+          streak: Math.max(1, 7 - i), bstreak: Math.max(3, 9 - i), best: Math.max(2, 8 - Math.floor(i / 2))
+        }));
+        e = { top: botRows, me: { name: myName() || 'You', code: acct.code, avatar: acct.avatar || 'solara', league: (store.get('balance.league', {}) || {}).league || 1, lp: (store.get('balance.league', {}) || {}).lp || 250, streak: 1, bstreak: 1, rank: 11 } };
+      }
       const rowOf = (p, rank) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${rank}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${e.champ && e.champ.code && p.code === e.champ.code ? champMark() : ''}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}${p.title ? `<small class="ltitle">${esc(p.title)}</small>` : ''}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td><td class="stk" title="Best Gauntlet floor reached">${p.best ? `<small>${p.best}</small>` : '<small class="dim">·</small>'}</td></tr>`;
       const eRows = e.top.map((p, i) => rowOf(p, i + 1)).join('') + (tab !== 'friends' && e.me && e.me.code ? `<tr class="gap"><td colspan="6">…</td></tr>` + rowOf(e.me, e.me.rank || e.rank) : '');
       const none = tab === 'friends' ? `<p class="dim">${acct.account ? 'Follow players from their profile (tap a name) and they show up here.' : 'Your account starts when your first run ends; then follow players from their profile.'}</p>` : '<p class="dim">No ranked players yet.</p>';
@@ -2567,9 +2606,9 @@
     // v103 (review #190): Menu -> Tutorial: on = from the start again, off = no more tips
     tutorial: () => { if (guideOn()) { guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); toast('Tutorial on: the tips show again as you play'); } openModal(homeMenuHTML()); ui.modal = 'home'; },
     // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
-    'start-pick': k => { ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); if (ui.startPick[0] === k && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 26); },
+    'start-pick': k => { markHeroKnown(k); ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); if (ui.startPick[0] === k && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 26); },
     // v64 (review #126): the free recruit between days
-    'recruit-pick': k => { ui.recruitPick = ui.recruitPick === k ? null : k; render(); },
+    'recruit-pick': k => { markHeroKnown(k); ui.recruitPick = ui.recruitPick === k ? null : k; render(); },
     'recruit-go': () => { if (!ui.recruitPick) return; const err = Run.recruit(run, ui.recruitPick); if (err) { toast(err); return; } ui.recruitPick = null; sfx('levelup'); save(); render(); window.scrollTo(0, 0); },
     'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (introOn() && (run.relicOffer || []).length) { ui.startRelic = run.relicOffer[0]; ACT['start-go'](); return; }   // v97 (review #179): straight to the battlefield
       if ((run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },

@@ -827,6 +827,16 @@
               }
             }
           }
+          // Overkill / Massive Big Hit Callout (only when really big: >= 40% of target max HP)
+          const numVal = parseInt(f.text, 10);
+          if (u && !isNaN(numVal) && numVal >= 70 && u.maxHp && (numVal / u.maxHp >= 0.40)) {
+            const isOverkill = u.dead || u.hp <= 0;
+            const callText = isOverkill ? 'OVERKILL!' : 'MASSIVE HIT!';
+            S.calls.push({ id: u.id, text: callText, t: 0, col: isOverkill ? '#ff4055' : '#ffd23f', big: true });
+            S.shake = Math.max(S.shake, 5.5);
+            burst(S, p.x, p.y - size * 1.1, 16, isOverkill ? '#ff3b30' : '#ffe066', { speed: 190, life: 0.55, r: 3.2, shape: 'star' });
+            sfx('slam');
+          }
         }
       } else if (f.k === 'ring') {
         if (!mine) { const c = hexScreen(v, f.c, f.r); shock(S, c.x, c.y, f.color, (f.rad * 1.5 + 0.7) * size, { life: 0.45, w: 3 }); }
