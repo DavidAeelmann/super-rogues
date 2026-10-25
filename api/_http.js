@@ -79,4 +79,4 @@ function ipHash(req) {
 // strip control characters (keep newlines and tabs), trim, cap length
 function clean(s, max) { return String(s == null ? '' : s).replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '').trim().slice(0, max); }
 
-module.exports = { send, body, sameOrigin, ipHash, clean, isAllowedOrigin };
+module.exports = { send, body, sameOrigin, ipHash, clean, isAllowedOrigin, handleCors };

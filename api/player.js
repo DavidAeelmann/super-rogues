@@ -15,7 +15,7 @@
 //   {op:'redeem', pid, code}       v76: a redeem code (CODES below, server only), once per player
 // 
 // FILE GUIDE. THE ACCOUNT ENDPOINT, POST /api/player { op, pid, ... }: me (wallet and progress), profile (anyone's public profile), buy (Crown Shop), rename, ratings (content Elo, needs the unlock). It never creates a player: accounts start when a first game ends (api/elo.js). The index of the whole project is CODEMAP.md.
-const { send, body, sameOrigin, clean } = require('./_http');
+const { send, body, sameOrigin, clean, handleCors } = require('./_http');
 const getStore = require('./_store');
 const P = require('./_player');
 const D = globalThis.B;
@@ -25,6 +25,7 @@ const CODES = { thanks: 1000 };
 
 // WHAT: the request handler for the ops listed above.
 module.exports = async (req, res) => {
+  if (handleCors(req, res)) return;
   const st = getStore();
   try {
     if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' });

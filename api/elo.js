@@ -26,7 +26,7 @@
 // FILE GUIDE. THE MAIN GAME SERVER FILE: the Gauntlet (PvP against ghosts), Elo, leagues, and the balance data (ratings of heroes, items, powers, bosses; fights played per day). One endpoint, POST /api/elo { op, pid, ... }; ops: hello, boss, fail, flog, enter, result. GET returns the public ranking.
 //   Order: constants -> usedIn (which pieces acted in a fight) -> cleanFlog / logFights (count each run once) -> rateContent (Elo of pieces) -> cleanTeam (never trust a team sent by a browser) -> leaguePoints -> nextOpponent (who you meet on each floor) -> the handler (module.exports = async (req, res)).
 //   The ghosts: after the last shop your team is stored as a "ghost" (table teams); each duel you win takes you up a floor, a loss leaves your ghost on that floor for later players. The index of the whole project is CODEMAP.md.
-const { send, body, sameOrigin, ipHash, clean } = require('./_http');
+const { send, body, sameOrigin, ipHash, clean, handleCors } = require('./_http');
 const getStore = require('./_store');
 const P = require('./_player');
 const GE = require('./_ghostelo');   // v102 (review #188): the ghosts' hidden Elo
@@ -209,6 +209,7 @@ const peakOf = async (st, teamId) => { const c = await st.getChampion(teamId); r
 
 // WHAT: the request handler. GET = the public ranking (or ?peak=1 the tower height). POST = one of the ops below; every op first checks the origin, the player id and rate limits.
 module.exports = async (req, res) => {
+  if (handleCors(req, res)) return;
   const st = getStore();
   try {
     if (req.method === 'GET') {
