@@ -937,7 +937,11 @@
 
   // ------------------------------------------------------------------ public
   // WHAT: PUBLIC. get(key) = the line of M for a unit (grunt if unknown); draw(...) paints it; portrait(key, px, bust) makes a cached picture for cards.
-  function get(key) { return M[key] || M.grunt; }
+  function get(key) {
+    if (M[key]) return M[key];
+    const k = B.heroKey ? B.heroKey(key) : key;
+    return M[k] || M[key] || M.grunt;
+  }
   // pose: { t (sec), face (1|-1), walk (cycle phase) | null, atk (0..1) | null, cast (0..1) | null, dead (0..1), flash, frozen }
   function draw(c, key, x, y, S, pose, tint) {
     const m = get(key);

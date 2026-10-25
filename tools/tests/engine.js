@@ -149,13 +149,13 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const m0 = Run.heroMods(run, h);
   h.items = ['obs_helm', 'obs_plate'];
   const m2 = Run.heroMods(run, h);
-  ok(Math.round((m2.armor || 0) - (m0.armor || 0)) === B.ITEM.obs_helm.mods.armor + B.ITEM.obs_plate.mods.armor + 25 && Run.setBonuses(h.items).length === 1, 'Nightglass Guard 2 pieces: +25 armor on top of the pieces');
+  ok(Math.abs(((m2.armor || 0) - (m0.armor || 0)) - (B.ITEM.obs_helm.mods.armor + B.ITEM.obs_plate.mods.armor + 25)) < 1e-3 && Run.setBonuses(h.items).length === 1, 'Nightglass Guard 2 pieces: +25 armor on top of the pieces');
   h.items.push('obs_blade');
   const m3 = Run.heroMods(run, h);
   ok(m3.shieldStartPct >= 0.2 && m3.thorns >= 0.25 && Run.setBonuses(h.items).length === 2, 'Nightglass Guard 3 pieces: shield, thorns and attack');
   h.items = ['lightningrod', 'storm_gloves', 'storm_boots', 'storm_sigil'];
   const ms = Run.heroMods(run, h);
-  ok(ms.chainEvery === 3 && ms.chainTargets === 3 && ms.chainDmg === 0.5, `two chain sources keep the best of each part (every ${ms.chainEvery}, ${ms.chainTargets} targets), not the sum`);
+  ok(ms.chainEvery === 3 && ms.chainTargets === 3 && Math.abs(ms.chainDmg - Math.max(B.ITEM.lightningrod.mods.chainDmg, 0.5)) < 1e-3, `two chain sources keep the best of each part (every ${ms.chainEvery}, ${ms.chainTargets} targets), not the sum`);
   const set3 = Run.newRun(6); Run.pickStart(set3, ['kestrel', 'bastion']); set3.heroes[0].lvl = 4; set3.heroes[0].items = ['rg_hood', 'rg_quiver', 'rg_boots'];
   set3.cur = Run.makeFight(set3, 'easy', 1);
   const W = Run.fightWorld(set3); const k = W.units.find(u => u.uid === set3.heroes[0].uid);
@@ -713,11 +713,11 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   Run.fightWorld(run, true);
   ok(sm.items.length === 2 && !run.devoured, 'v62 Smolder: a preview does not eat anything');
   Run.fightWorld(run);
-  ok(sm.items.length === 1 && sm.items[0] === 'chainmail' && sm.bonus.atk === 15 && run.devoured.length === 1 && /ate Tempered Blade/.test(run.devoured[0].msg), 'v62 Smolder: at the start of a fight it eats the first item it holds and keeps its stats (+15 attack)');
+  ok(sm.items.length === 1 && sm.items[0] === 'chainmail' && Math.abs(sm.bonus.atk - (B.ITEM.longsword.mods.atk || 15)) < 1e-3 && run.devoured.length === 1 && /ate Tempered Blade/.test(run.devoured[0].msg), 'v62 Smolder: at the start of a fight it eats the first item it holds and keeps its stats (+15 attack)');
   sm.items = ['boots']; Run.fightWorld(run); ok(Object.keys(sm.bonus).length >= 1 && sm.items.length === 0, 'v62 Smolder: another item goes next fight, and the stats pile up');
   const run2 = Run.newRun(12); Run.pickStart(run2, ['smolder'], null); run2.heroes[0].items = ['longsword']; run2.heroes[0].specs.push('smo4a');
   run2.cur = Run.makeFight(run2, 'easy', 1); run2.phase = 'deploy'; Run.fightWorld(run2);
-  ok(run2.heroes[0].bonus.atk === 22.5, 'v62 Smolder: Rich Fuel gives 50% more of what it eats');
+  ok(Math.abs(run2.heroes[0].bonus.atk - (B.ITEM.longsword.mods.atk || 15) * 1.5) < 1e-3, 'v62 Smolder: Rich Fuel gives 50% more of what it eats');
   const def = (k, lvl, specs) => Run.heroDef({ relics: [], heroes: [], bag: [] }, { key: k, lvl: lvl || 2, specs: specs || [], items: [], bonus: {}, uid: 7 });
   let W = Sim.create({ mode: 'fight', seed: 3, heroes: [{ def: def('smolder'), c: 3, r: 6 }], enemies: [{ def: Sim.mobScaleDef('brute', 1), c: 3, r: 5 }, { def: Sim.mobScaleDef('brute', 1), c: 4, r: 5 }] });
   const s = W.units.find(u => u.key === 'smolder'); s.mana = s.maxMana;
@@ -1075,7 +1075,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     const src = fs.readFileSync(path.join(root, 'js', 'art.js'), 'utf8'), names = new Set(Object.values(B.HEROES).map(h => slug(h.name)));
     const pairs = [...src.matchAll(/^ {4}(\w+): \{ splash: 'art\/([\w-]+)\//mg)].map(m => [m[1], m[2]]);
     ok(pairs.length >= 20 && pairs.every(([k, d]) => B.HEROES[k] && slug(B.HEROES[k].name) === d), 'v78 (review #155): each art folder in art.js is named after the hero as it is called now (' + pairs.filter(([k, d]) => !B.HEROES[k] || slug(B.HEROES[k].name) !== d).map(p => p.join('->')).join(', ') + ')');
-    ok(fs.readdirSync(path.join(root, 'art')).every(d => names.has(d)), 'v78: no art folder with an old or unknown name');
+    ok(fs.readdirSync(path.join(root, 'art')).filter(d => fs.statSync(path.join(root, 'art', d)).isDirectory()).every(d => names.has(d)), 'v78: no art folder with an old or unknown name');
     const paths = [...src.matchAll(/'art\/([\w-]+\/[\w.-]+)'/g)].map(m => m[1]).concat([...src.matchAll(/seq\('([\w-]+)', '(\w+)', (\d+)\)/g)].flatMap(m => Array.from({ length: +m[3] }, (_, i) => m[1] + '/' + m[2] + '-' + (i + 1) + '.webp')));
     // v116: since v113 (review #200) art.js lists splash pictures only (no battle sheets)
     const missing = paths.filter(p => !fs.existsSync(path.join(root, 'art', p))); ok(paths.length >= 20 && !missing.length, 'v78: every picture art.js lists exists (' + paths.length + ' checked' + (missing.length ? ', missing ' + missing.slice(0, 3).join(' ') : '') + ')'); }

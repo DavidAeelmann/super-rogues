@@ -136,7 +136,11 @@
   function boot() { const L = lsGet(); for (const k of new Set(Object.keys(OFFICIAL).concat(Object.keys(L)))) if (B.HEROES && B.HEROES[k]) reset(k); }
 
   // WHAT: the picture set of a hero if it is loaded, else null (then the code-drawn model is used). sprite() = the same but only when it has an idle animation.
-  const get = key => { const a = live[key]; return a && a.ready ? a : null; };
+  const get = key => {
+    const k = (B.heroKey && B.heroKey(key)) || key;
+    const a = live[k] || live[key];
+    return a && a.ready ? a : null;
+  };
   function sprite(key) { const a = get(key); return a && a.anims.idle && a.anims.idle.length ? a : null; }
 
   // the splash picture cropped for a card: 'bust' = a square around the face (focus x/y, zoom z), 'full' = the whole figure

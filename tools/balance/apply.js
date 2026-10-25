@@ -14,13 +14,14 @@ const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // how a stat value shows in a text: fractions as percent (0.15 -> "15"), the rest as is
 const isFrac = v => Math.abs(v) < 1 && v !== 0;
 const show = v => isFrac(v) ? String(+(v * 100).toFixed(2)) : String(v);
-const round = (v, nv) => isFrac(v) ? (Math.abs(v) < 0.01 ? +nv.toFixed(4) : Math.round(nv * 100) / 100) : Math.abs(v) >= 100 ? Math.round(nv / 5) * 5 : Math.round(nv);
+// Fine stat calculation for internal game balance
+const fineVal = (v, nv) => isFrac(v) ? +(nv.toFixed(4)) : +(nv.toFixed(2));
+// Clean player-facing display rounding
+const roundDisplay = (v, nv) => isFrac(v) ? (Math.abs(v) < 0.01 ? +(nv.toFixed(4)) : Math.round(nv * 100) / 100) : Math.abs(v) >= 100 ? Math.round(nv / 5) * 5 : Math.round(nv);
 // a stat is scaled only when MORE of it is STRONGER: a positive bonus. Penalties (negative numbers, e.g. "-5% max Health"), counters and
 // timers ("every 3rd attack", cooldowns, durations) and caps work the other way or are design choices: they stay
 const SCALABLE = (key, v) => v > 0 && !/Every|Cd$|cd$|Cost|Dur$|dur$|Secs?$|Time|Delay|Count$|Max$|Hexes|range|Range|Stacks?$/.test(key);
 // scales the numbers of a flat mods literal "{ atk: 15, hp: 60 }" and the same numbers in the text; returns null when nothing could change.
-// The text's numbers are found ONCE, in order, and each changed stat takes the first unused number equal to its old value, so a new value
-// can never be mistaken for another stat's old one ("+50% ... 40% slower" stays right)
 function scale(modsText, desc, f) {
   let changed = [], mods = modsText;
   const toks = [...desc.matchAll(/\d+(?:\.\d+)?/g)].map(t => ({ s: t[0], i: t.index, used: false, to: null }))
@@ -28,13 +29,18 @@ function scale(modsText, desc, f) {
   const all = [...modsText.matchAll(/(\w+):\s*(-?[\d.]+)/g)];
   for (const m of all) {
     const v = +m[2]; if (!isFinite(v) || !SCALABLE(m[1], v)) continue;
-    const nv = round(v, v * f); if (nv === v || nv <= 0) continue;
-    // stats with the same value can share one number of the text ("+50% max Health and Attack"): they change together, or none does
-    const same = all.filter(x => +x[2] === v), mine = same.indexOf(m), free = toks.filter(t => t.s === show(v) && (!t.used || t.shared === v));
-    if (!free.length || same.some(x => !SCALABLE(x[1], v))) continue;   // a number the text does not show stays as it is
-    const tok = free[Math.min(mine, free.length - 1)]; tok.used = true; tok.shared = v; tok.to = show(nv);
-    mods = mods.replace(new RegExp('\\b' + m[1] + ':\\s*' + esc(m[2]) + '(?![0-9.])'), m[1] + ': ' + nv);
-    changed.push(`${m[1]} ${v} -> ${nv}`);
+    const rawNv = fineVal(v, v * f);
+    const displayNv = roundDisplay(v, v * f);
+    if (rawNv === v || rawNv <= 0) continue;
+    const same = all.filter(x => +x[2] === v), mine = same.indexOf(m), free = toks.filter(t => (t.s === show(v) || Math.abs(+t.s - (isFrac(v) ? v * 100 : v)) < 0.05) && (!t.used || t.shared === v));
+    if (!free.length || same.some(x => !SCALABLE(x[1], v))) {
+      mods = mods.replace(new RegExp('\\b' + m[1] + ':\\s*' + esc(m[2]) + '(?![0-9.])'), m[1] + ': ' + rawNv);
+      changed.push(`${m[1]} ${v} -> ${rawNv}`);
+      continue;
+    }
+    const tok = free[Math.min(mine, free.length - 1)]; tok.used = true; tok.shared = v; tok.to = show(displayNv);
+    mods = mods.replace(new RegExp('\\b' + m[1] + ':\\s*' + esc(m[2]) + '(?![0-9.])'), m[1] + ': ' + rawNv);
+    changed.push(`${m[1]} ${v} -> ${rawNv} (text: ${tok.to})`);
   }
   if (!changed.length) return null;
   let text = '', at = 0; for (const t of toks) if (t.to != null) { text += desc.slice(at, t.i) + t.to; at = t.i + t.s.length; } text += desc.slice(at);

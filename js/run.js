@@ -46,7 +46,8 @@
       run.v = 4;
       run.bag = run.bag || [];
       for (const h of run.heroes || []) {
-        const seen = new Set(), keep = [];
+        for (const h of run.heroes || []) if (h && h.key && B.heroKey) h.key = B.heroKey(h.key);
+    const seen = new Set(), keep = [];
         for (const id of h.items) { const t = (B.ITEM[id] || {}).type; if (!t) continue; if (seen.has(t)) run.bag.push(id); else { seen.add(t); keep.push(id); } }
         h.items = keep;
       }
@@ -82,7 +83,8 @@
   //   key = the id in B.HEROES; specs = the powers picked at level-ups; bonus = permanent extras from events, potions and Smolder's Devour.
   // v126 (review #224): bench = the hero joins in the middle of the run and waits beside the board until the player places it (see benched)
   function addHero(run, key, bench) {
-    const h = { uid: ++run.nuid, key, lvl: 1, xp: 0, specs: [], items: [], bonus: {}, pos: null };
+    const k = (B.heroKey && B.heroKey(key)) || key;
+    const h = { uid: ++run.nuid, key: k, lvl: 1, xp: 0, specs: [], items: [], bonus: {}, pos: null };
     run.heroes.push(h); if (bench) h.bench = true; else autoPlace(run, h); return h;
   }
   // WHAT: finishes the start screen: adds the chosen heroes and the chosen starting power, then moves to the first day.
@@ -139,7 +141,7 @@
   // WHAT (v88, review #167): the balance factor of a level-up power on Health, Attack and Magic (B.TUNE.spec, 1 = none).
   const specTune = id => (B.TUNE && B.TUNE.spec && B.TUNE.spec[id]) || 1;
   // WHAT (v88): the PvP-only factor of a hero (B.TUNE.pvp): scales a fighting unit made by heroDef.
-  function pvpDef(d, key) { const f = (B.TUNE && B.TUNE.pvp && B.TUNE.pvp[key]) || 1; if (f !== 1) { d.hp *= f; d.atk *= f; d.ap *= f; } return d; }
+  function pvpDef(d, key) { const pk = B.heroKey ? B.heroKey(key) : key; const f = (B.TUNE && B.TUNE.pvp && (B.TUNE.pvp[pk] || B.TUNE.pvp[key])) || 1; if (f !== 1) { d.hp *= f; d.atk *= f; d.ap *= f; } return d; }
   // WHAT: ALL the extra stats a hero has right now, summed: his own mods, picked powers, worn items, set bonuses, team powers (relics), permanent bonus, run-based bonuses.
   function heroMods(run, h) {
     const m = {};
@@ -175,7 +177,7 @@
     const b = B.HEROES[h.key], m = heroMods(run, h), L = h.lvl - 1, all = m.allPct || 0;
     // v61 (review #73): each hero grows at its own pace per level (b.grow, 1 = +15% HP and attack and +30 AP per level),
     // so heroes that were strong early and fell off late (or the reverse) stay in line through the whole run
-    let g = (b.grow || 1) * ((B.TUNE && B.TUNE.growth) || 1), tp = ((B.TUNE && B.TUNE.power[h.key]) || 1) * ((B.TUNE && B.TUNE.base) || 1);
+    const pk = B.heroKey ? B.heroKey(h.key) : h.key; let g = (b.grow || 1) * ((B.TUNE && B.TUNE.growth) || 1), tp = ((B.TUNE && (B.TUNE.power[pk] || B.TUNE.power[h.key])) || 1) * ((B.TUNE && B.TUNE.base) || 1);
     for (const id of h.specs) tp *= specTune(id);   // v88 (review #167): the level-up powers' own balance factor   // v62o: tp = the balance tuner's power factor for this hero; v62q (review #113): g also takes the global growth (what a level gives: Health, Attack, Magic and so the ability numbers)
     const ab = Object.assign({}, b.ab), fl = (b.fl || []).slice();
     for (const id of h.specs) {
