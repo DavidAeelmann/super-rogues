@@ -202,10 +202,38 @@ function memStore() {
 
 // WHAT: the production store: each function is one SQL query on Neon Postgres.
 function pgStore() {
-  const { neon } = require('@neondatabase/serverless');
-  const sql = neon(process.env.DATABASE_URL);
-  let ready = null;
-  const q = async (text, params = []) => { if (!ready) ready = (async () => { for (const s of SCHEMA) await sql.query(s); })(); await ready; return sql.query(text, params); };
+  const url = process.env.DATABASE_URL || '';
+  const isNeon = url.includes('.neon.tech');
+  let q;
+
+  if (isNeon) {
+    const { neon } = require('@neondatabase/serverless');
+    const sql = neon(url);
+    let ready = null;
+    q = async (text, params = []) => {
+      if (!ready) ready = (async () => { for (const s of SCHEMA) await sql.query(s); })();
+      await ready;
+      return sql.query(text, params);
+    };
+  } else {
+    const { Pool } = require('pg');
+    const pool = new Pool({
+      connectionString: url,
+      ssl: { rejectUnauthorized: false },
+      max: 10
+    });
+    let ready = null;
+    q = async (text, params = []) => {
+      if (!ready) {
+        ready = (async () => {
+          for (const s of SCHEMA) await pool.query(s);
+        })();
+      }
+      await ready;
+      const res = await pool.query(text, params);
+      return res.rows;
+    };
+  }
   return {
     async addBatch(b) {
       const batch = Number((await q("select nextval('batch_seq') b"))[0].b), ids = [];
