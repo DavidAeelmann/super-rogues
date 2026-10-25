@@ -1,3 +1,16 @@
+function safeWrite(filePath, content) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      fs.writeFileSync(filePath, content);
+      return;
+    } catch (e) {
+      if (attempt === 4) throw e;
+      const t = Date.now();
+      while (Date.now() - t < 150) {}
+    }
+  }
+}
+
 // Writes the decisions of tools/balance/run.js into the game (review #159). Called by run.js --apply; never on its own.
 //   heroes  -> B.TUNE.power[key] in js/data.js (the <TUNE-BEGIN> block)
 //   items   -> the numbers of the item (its mods) AND the same numbers in its text, in js/data.js; the translations of that text in
@@ -57,7 +70,7 @@ function retranslate(oldText, newText, swaps) {
     for (const [a, b] of swaps) { const t = toks.find(x => x.to == null && x.s.replace(',', '.') === a); if (t) t.to = t.s.includes(',') ? b.replace('.', ',') : b; }
     let tr = '', at = 0; for (const t of toks) if (t.to != null) { tr += src.slice(at, t.i) + t.to; at = t.i + t.s.length; } tr += src.slice(at);
     s = s.replace(re, JSON.stringify(newText) + '$2' + JSON.stringify(tr));
-    fs.writeFileSync(f, s);
+    safeWrite(f, s);
   }
 }
 function apply(dec) {
@@ -99,7 +112,7 @@ function apply(dec) {
       s = s.replace(re, '$1' + nv.join(', ') + '$3'); L.push(`fights ${f.name}: enemy strength x${k.toFixed(3)} (fightScale ${f.id === 'b' ? 'boss numbers' : 'the other numbers'})`);
     }
   }
-  fs.writeFileSync(DATA, s);
+  safeWrite(DATA, s);
   return { summary: L.length ? L.map(x => '- ' + x).join('\n') : '- nothing passed the evidence rule' };
 }
 module.exports = { apply, scale };

@@ -362,6 +362,7 @@ module.exports = async (req, res) => {
       await st.addDuel({ pid, opp_pid: opp ? opp.pid : null, opp_name: opp ? opp.name : (clean(b.oppName, 16) || 'Gauntlet Champion'), opp_code: opp ? P.codeOf(opp.pid) : null, final: false, win });
       if (!win) {   // no penalty: the team stays on this floor as a ghost for the next climbers
         await st.updateTeam(t.id, { wins: t.wins, status: 'lost', opp: null }); p.best = Math.max(p.best | 0, floor); await save();
+        try { await st.removeOneBotGhost(); } catch (_) {}
         try { await GE.rateNew(st, Object.assign({}, t, { status: 'lost' })); } catch (_) {}   // v102, v106: the new ghost is seeded against other ghosts
         return send(res, 200, me({ teamId: t.id, win, wins: t.wins, floor, over: true, peak: await GE.floors(st, t.id) }));   // v126 (review #221): the real height of the tower
       }
@@ -373,6 +374,7 @@ module.exports = async (req, res) => {
       await P.xpDuel(st, p, !next, xp); await P.xpFloor(st, p, wins + 1, xp);
       if (!next) {
         await st.updateTeam(t.id, { wins, status: 'champion', opp: null }); await st.demoteChampions(t.id);
+        try { await st.removeOneBotGhost(); } catch (_) {}
         p.crowns++; p.best = Math.max(p.best | 0, wins); await save();
         try { await GE.rateNew(st, Object.assign({}, t, { status: 'champion' })); } catch (_) {}   // v106: the new champion is seeded too (it helps seed others)
         return send(res, 200, me({ teamId: t.id, win, wins, floor, lg, champion: true, over: true }));

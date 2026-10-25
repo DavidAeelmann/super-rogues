@@ -28,6 +28,7 @@ const SCHEMA = [
   `alter table teams add column if not exists def_l int not null default 0`,
   // v102 (review #188): a hidden Elo per Gauntlet ghost, from simulated fights against other ghosts (api/_ghostelo.js)
   `alter table teams add column if not exists gelo real not null default 1000`,
+  `alter table teams add column if not exists is_bot boolean not null default false`,
   // v23 (review #21): player leagues (index into B.LEAGUES) and league points inside the league
   `alter table players add column if not exists league int not null default 0`,
   `alter table players add column if not exists lp int not null default 0`,
@@ -153,9 +154,14 @@ function memStore() {
     async xpvStep(pid, from, to) { const p = M.players && M.players[pid]; if (!p || (p.xpv | 0) !== from) return false; p.xpv = to; return true; },
     async teamsOf(pid) { return (M.teams || []).filter(t => t.pid === pid).map(t => ({ team: t.team, wins: t.wins })); },
     async ghostRecord(pid) { const T = (M.teams || []).filter(t => t.pid === pid); return { w: T.reduce((a, t) => a + (t.def_w || 0), 0), l: T.reduce((a, t) => a + (t.def_l || 0), 0), n: T.length }; },
-    async insertTeam(t) { const T = M.teams = M.teams || []; const r = Object.assign({ id: ++M.id, wins: 0, status: 'running', opp: null, def_w: 0, def_l: 0, gelo: 1000, created: Date.now() }, t); T.push(r); return r.id; },
+    async insertTeam(t) { const T = M.teams = M.teams || []; const r = Object.assign({ id: ++M.id, wins: 0, status: 'running', opp: null, def_w: 0, def_l: 0, gelo: 1000, is_bot: !!t.is_bot, created: Date.now() }, t); T.push(r); return r.id; },
     // v102 (review #188): the hidden ghost Elo. listPool = the ghosts of a floor range (like pickPool, every one, up to limit); poolSample = n random ended ghosts of any floor
     async setGelo(id, v) { const t = (M.teams || []).find(x => x.id === id); if (t) t.gelo = v; },
+    async removeOneBotGhost() {
+      const idx = (M.teams || []).findIndex(t => t.is_bot);
+      if (idx !== -1) { const removed = M.teams.splice(idx, 1)[0]; return removed ? removed.id : null; }
+      return null;
+    },
     async insertCard(c) { (M.cards = M.cards || []).push(Object.assign({}, c)); },
     async getCard(id) { return (M.cards || []).find(c => c.id === id) || null; },
     async countCards(pid, since) { return (M.cards || []).filter(c => c.pid === pid && c.created >= since).length; },
@@ -305,8 +311,16 @@ function pgStore() {
     },
     async teamsOf(pid) { return (await q('select team, wins from teams where pid=$1', [pid])).map(r => ({ team: r.team, wins: Number(r.wins) })); },
     async ghostRecord(pid) { const r = (await q('select coalesce(sum(def_w),0)::int w, coalesce(sum(def_l),0)::int l, count(*)::int n from teams where pid=$1', [pid]))[0]; return { w: Number(r.w), l: Number(r.l), n: Number(r.n) }; },
-    async insertTeam(t) { return Number((await q('insert into teams (pid, name, elo_at, team, relics, created) values ($1,$2,$3,$4,$5,$6) returning id', [t.pid, t.name, t.elo_at, t.team, t.relics, Date.now()]))[0].id); },
+    async insertTeam(t) { return Number((await q('insert into teams (pid, name, elo_at, team, relics, is_bot, created) values ($1,$2,$3,$4,$5,$6,$7) returning id', [t.pid, t.name, t.elo_at, t.team, t.relics, !!t.is_bot, Date.now()]))[0].id); },
     async setGelo(id, v) { await q('update teams set gelo=$2 where id=$1', [id, v]); },
+    async removeOneBotGhost() {
+      const r = await q("select id from teams where is_bot = true and status <> 'champion' order by id asc limit 1");
+      if (r && r.length) {
+        await q('delete from teams where id = $1', [r[0].id]);
+        return Number(r[0].id);
+      }
+      return null;
+    },
     async insertCard(c) { await q('insert into cards (id, pid, data, img, iph, created) values ($1,$2,$3,$4,$5,$6)', [c.id, c.pid, c.data, c.img, c.iph, c.created]); },
     async getCard(id) { const r = await q('select id, data, img, created from cards where id=$1', [id]); return r[0] || null; },
     async countCards(pid, since) { return Number((await q('select count(*)::int n from cards where pid=$1 and created>=$2', [pid, since]))[0].n); },

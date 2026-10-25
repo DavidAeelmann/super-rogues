@@ -2364,18 +2364,7 @@
       try {
         e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.post('player', { op: 'ladder', pid: pid() });
       } catch (err) {
-        // Only show offline bots if actually offline or in external portal without backend
-        if (location.protocol === 'file:' || location.hostname.includes('itch') || location.hostname.includes('crazygames')) {
-          const bots = ['Valkyrie', 'ShadowMage', 'Ironclad', 'Frostbite', 'Stormcaller', 'Aegis', 'Wildfire', 'Nightshade', 'PaladinX', 'Blaze'];
-          const botRows = bots.map((name, i) => ({
-            name, code: 'bot_' + i, avatar: ['solara', 'groth', 'tiberius', 'barian', 'mira', 'dmitri'][i % 6],
-            league: Math.max(1, 5 - Math.floor(i / 2)), lp: Math.max(120, 2800 - i * 190),
-            streak: Math.max(1, 7 - i), bstreak: Math.max(3, 9 - i), best: Math.max(2, 8 - Math.floor(i / 2))
-          }));
-          e = { top: botRows, me: { name: myName() || 'You', code: acct.code, avatar: acct.avatar || 'solara', league: (store.get('balance.league', {}) || {}).league || 1, lp: (store.get('balance.league', {}) || {}).lp || 250, streak: 1, bstreak: 1, rank: 11 } };
-        } else {
-          e = { top: [], me: null, champ: null };
-        }
+        e = { top: [], me: null, champ: null };
       }
       const rowOf = (p, rank) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${rank}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${e.champ && e.champ.code && p.code === e.champ.code ? champMark() : ''}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}${p.title ? `<small class="ltitle">${esc(p.title)}</small>` : ''}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td><td class="stk" title="Best Gauntlet floor reached">${p.best ? `<small>${p.best}</small>` : '<small class="dim">·</small>'}</td></tr>`;
       const eRows = e.top.map((p, i) => rowOf(p, i + 1)).join('') + (tab !== 'friends' && e.me && e.me.code ? `<tr class="gap"><td colspan="6">…</td></tr>` + rowOf(e.me, e.me.rank || e.rank) : '');

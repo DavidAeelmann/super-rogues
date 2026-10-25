@@ -769,6 +769,7 @@ function playRun(seed, opt = {}) {
   rec.wornItems = [].concat(...run.heroes.map(h => h.items));
   rec.items = [].concat(rec.wornItems, run.bag);
   rec.gold = run.gold;
+  if (opt.returnRun) rec.run = run;
   return rec;
 }
 
