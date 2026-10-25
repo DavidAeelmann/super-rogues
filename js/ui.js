@@ -1943,7 +1943,11 @@
     const R0 = ui.result || {};   // v96: a run completed on the map has no result screen
     R0.pending = true; render();
     run.xpWait = true;   // v46: the game's XP (fights won, the boss beaten) comes back with the answer
-    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, tele: run.tele || null, achs: Run.endAchs(run), game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0, pve: !!run.reachedFinal, pvp: run.pvpLog || [] } }, run.lastFight)); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; run.newAchs = Array.isArray(r.achs) ? r.achs.filter(id => B.ACH[id]) : []; Object.assign(R0, { lg: r.lg }); }
+    const teamSnap = (run.lastFight && run.lastFight.team) || (run.heroes && Run.teamSnapshot(run)) || [];
+    const relicsSnap = (run.lastFight && run.lastFight.relics) || (run.relics || []).slice();
+    const snapData = { team: teamSnap, relics: relicsSnap };
+    const pName = myName();
+    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, tele: run.tele || null, achs: Run.endAchs(run), game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0, pve: !!run.reachedFinal, pvp: run.pvpLog || [] } }, snapData, pName ? { name: pName } : {})); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; run.newAchs = Array.isArray(r.achs) ? r.achs.filter(id => B.ACH[id]) : []; Object.assign(R0, { lg: r.lg }); }
     catch (e) { R0.error = e.message; run.xpErr = true; }
     run.xpWait = false;
     R0.pending = false; save(); render();
@@ -2679,7 +2683,10 @@
       // v101 (review #183): the last shop is the Gauntlet's: entering opens it once, leaving it starts the climb (status 'ready')
       if (run.tower && !run.tower.shopped && Run.seqOf(run)[run.step + 1] === 'S') { if (ni0) store.set('balance.name', ni0.value.trim().slice(0, 16)); run.tower.shopped = true; Run.advance(run); save(); render(); window.scrollTo(0, 0); return; }
       // v96 (review #178): with no final fight, the Gauntlet gate is where a new player picks the name shown on the ladder
-      const ni = $('#tname'), name = ni ? ni.value.trim().slice(0, 16) : run.tower && run.tower.status === 'ready' && !(acct.account && !isDefaultName(acct.name)) ? myName() : ''; if (ni && !name) { toast('Pick your name for the ladder first.'); ni.focus(); return; } if (name) store.set('balance.name', name);
+      const ni = $('#tname'), enteredName = ni ? ni.value.trim().slice(0, 16) : '';
+      const name = enteredName || myName() || (acct.account && !isDefaultName(acct.name) ? acct.name : '');
+      if (ni && !name) { toast('Pick your name for the ladder first.'); ni.focus(); return; }
+      if (name) store.set('balance.name', name);
       ui.towerBusy = true; render();
       let r = null; try { r = await Net.post('elo', Object.assign({ op: 'tower', pid: pid(), ref: refCode(), team: Run.teamSnapshot(run), relics: run.relics }, name ? { name } : {})); setElo(r, true); } catch (e) { ui.towerBusy = false; if (run.tower && run.tower.status === 'ready') run.tower.status = 'gate'; toast(e.message || 'No connection'); render(); return; }
       ui.towerBusy = false;
@@ -2899,7 +2906,12 @@
   };
   document.addEventListener('pointerup', endSwipe, { passive: true });
   document.addEventListener('pointercancel', endSwipe, { passive: true });
-  document.addEventListener('input', e => { if (e.target.id === 'sugName') store.set('balance.name', e.target.value.trim()); });
+  document.addEventListener('input', e => {
+    if (e.target.id === 'sugName' || e.target.id === 'tname') {
+      const val = e.target.value.trim();
+      if (val) store.set('balance.name', val.slice(0, 16));
+    }
+  });
   document.addEventListener('submit', async e => {
     const f = e.target.closest('form[data-form]'); if (!f) return; e.preventDefault();
     const kind = f.dataset.form, btn = f.querySelector('button'); if (btn) btn.disabled = true;
