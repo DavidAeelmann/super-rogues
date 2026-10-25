@@ -3589,39 +3589,39 @@ body.desk .shop .grid.heroes {
    WEB PLATFORM ADAPTATIONS (itch.io, CrazyGames, iframe, gold mastery, dps/heal meters)
    ==================================================================== */
 
-/* 1. Hero Mastery: Golden Frame for Heroes with which you beat the game */
-.hbanner.spot.gold-master {
-  box-shadow: inset 0 0 0 2.5px #ffd23f, 0 0 20px rgba(255, 210, 63, 0.45) !important;
+/* 1. Hero Mastery: Golden Frame for Heroes with which you beat the game in the Main Screen Heroes Codex */
+.cxh.gold-master {
+  box-shadow: 0 0 0 2.5px #ffd23f, 0 0 16px rgba(255, 210, 63, 0.5) !important;
+  background: linear-gradient(180deg, rgba(255, 210, 63, 0.18), rgba(20, 24, 60, 0.8)) !important;
 }
-.hbanner.spot.gold-master .splash {
-  box-shadow: 0 0 0 2px #ffd23f, 0 6px 18px rgba(0, 0, 0, 0.7);
+.cxh.gold-master .cxp img.por {
+  box-shadow: 0 0 0 2.5px #ffd23f, 0 4px 10px rgba(0, 0, 0, 0.7) !important;
 }
-.hbanner.spot.gold-master .crown-badge {
+.cxh.gold-master .crown-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 20px;
-  z-index: 5;
+  top: -6px;
+  right: -6px;
+  font-size: 16px;
+  z-index: 4;
   filter: drop-shadow(0 2px 4px #000);
-  animation: crownPulse 2s ease-in-out infinite;
+  animation: crownPulse 2.2s ease-in-out infinite;
 }
 @keyframes crownPulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15) rotate(6deg); }
+  50% { transform: scale(1.18) rotate(8deg); }
 }
 
-/* Unknown Hero Silhouette & Mystery Styling */
-.hbanner.spot.unknown-hero .splash.silhouette {
-  filter: brightness(0) invert(0.18) grayscale(1);
-  opacity: 0.75;
+/* Unknown / Locked Hero Silhouette in Heroes Codex */
+.cxh.locked.silhouette .cxp img.por {
+  filter: brightness(0) invert(0.2) grayscale(1) !important;
+  opacity: 0.7;
 }
-.hbanner.spot.unknown-hero b {
-  color: #c9cdd8 !important;
-  letter-spacing: 2px;
+.cxh.locked.silhouette b {
+  color: #8b92aa !important;
+  letter-spacing: 1.5px;
 }
-.hbanner.spot.unknown-hero i {
-  background: #202436 !important;
-  color: #9299b0 !important;
+.cxh.locked.silhouette small {
+  color: #5c6278 !important;
 }
 
 /* 2. Live Combat Damage & Healing Meters in Battle */

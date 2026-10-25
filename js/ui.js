@@ -497,21 +497,24 @@
     const tab = ui.codexTab || 'tank', entry = CODEX_TABS.find(t => t[0] === tab) || CODEX_TABS[0];
     const lvl = lvlNow(), lockedSet = new Set(B.lockedFor(lvl));
     const unlockLv = {}; for (const u of B.UNLOCKS) if (u.kind === 'hero') unlockLv[u.id] = u.lvl;
-    const allKeys = Object.keys(HEROES), unlockedCount = allKeys.filter(k => !lockedSet.has(k)).length;
+    const allKeys = Object.keys(HEROES);
+    const wonList = wonHeroKeys();
+    const unlockedCount = allKeys.filter(k => !lockedSet.has(k)).length;
     const list = allKeys.filter(k => entry[2].includes(HEROES[k].role));
     return `<div class="shead"><b>${I('user')} Heroes <span class="dim small">${unlockedCount}/${allKeys.length}</span></b><button data-act="close" aria-label="Close">✕</button></div>
       <div class="tabs codex-tabs">${CODEX_TABS.map(([id, label]) => `<button data-act="codex-tab" data-arg="${id}" class="${id === tab ? 'on' : ''}">${label}</button>`).join('')}</div>
       <div class="codex-grid">${list.map(k => {
         const h = HEROES[k], lck = lockedSet.has(k), ulv = unlockLv[k] || 2;
-        return `<button class="cxh ${lck ? 'locked' : ''}" data-act="hero-peek" data-arg="${k}" style="--hc:${h.color}">
-          <span class="cxp">${img(k, 44, 'por')}${lck ? `<i class="cxlk">🔒 Lv ${ulv}</i>` : ''}</span>
-          <b>${esc(h.name)}</b>
-          <small>${esc(h.role)}</small>
+        const isWon = wonList.includes(k);
+        const displayName = lck ? '???' : esc(h.name);
+        const displayRole = lck ? 'Locked' : esc(h.role);
+        return `<button class="cxh ${lck ? 'locked silhouette' : ''} ${isWon ? 'gold-master' : ''}" data-act="${lck ? 'codex-locked-tip' : 'hero-peek'}" data-arg="${lck ? ulv : k}" style="--hc:${lck ? '#444' : h.color}">
+          <span class="cxp">${img(k, 44, 'por')}${isWon ? '<span class="crown-badge" title="Champion: Won a run with this hero!">👑</span>' : ''}${lck ? `<i class="cxlk">🔒 Lv ${ulv}</i>` : ''}</span>
+          <b>${displayName}</b>
+          <small>${displayRole}</small>
         </button>`;
       }).join('')}</div>`;
   }
-  // the menu sheet of the landing: every other place of the game, one tap each
-  // WHAT: the menu sheet opened from the start page (how to play, heroes codex, rewards, profile, crown shop, ladder, balance stats, art lab, sound, suggestions). Add a row here + a data-act in ACT for a new item.
   function homeMenuHTML() {
     const L = B.levelProgress(acct.axp || 0), u = nextUnlock(L.lvl), on = B.Sfx && B.Sfx.on;
     const row = (act, icon, t, s) => `<button class="mrow" data-act="${act}">${I(icon)}<span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span>${I('arrow', 'chev')}</button>`;
@@ -632,15 +635,9 @@
   const markHeroKnown = key => { if (!key) return; const k = knownHeroKeys(); if (!k.has(key)) { k.add(key); store.set('balance.knownHeroes', Array.from(k)); } };
 
   function heroStage(offer, sel, act, hint) {
-    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
-      const d = HEROES[k], on = sel === k;
-      const isWon = wonHeroKeys().includes(k);
-      const isKnown = knownHeroKeys().has(k);
-      const displayName = isKnown ? esc(d.name) : '???';
-      const displayRole = isKnown ? (d.role + ' · ' + (d.range <= 1 ? 'Melee' : 'Ranged')) : 'Unknown Class';
-      return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''} ${isWon ? 'gold-master' : ''} ${!isKnown ? 'unknown-hero' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${isKnown ? d.color : '#3a3a48'};--i:${i}" aria-pressed="${on}">
-        <span class="cone"></span><span class="shine"></span>${(src => `<img class="splash ${src.startsWith('data:image/png') ? 'drawn' : ''} ${!isKnown ? 'silhouette' : ''}" src="${src}" alt="">`)(por(k, 150, true))}<span class="plate"></span>${isWon ? '<span class="crown-badge" title="Champion: Won a run with this hero!">👑</span>' : ''}<b>${displayName}</b><i>${displayRole}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`;
-    }).join('')}</div>`;
+    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => { const d = HEROES[k], on = sel === k;
+      return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
+        <span class="cone"></span><span class="shine"></span>${(src => `<img class="splash ${src.startsWith('data:image/png') ? 'drawn' : ''}" src="${src}" alt="">`)(por(k, 150, true))}<span class="plate"></span><b>${esc(d.name)}</b><i>${d.role} · ${d.range <= 1 ? 'Melee' : 'Ranged'}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`; }).join('')}</div>`;
   }
   function heroDetail(f) {
     const h = f && HEROES[f];
