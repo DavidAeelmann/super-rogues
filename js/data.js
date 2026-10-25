@@ -40,7 +40,7 @@
     // the last day (G) is the final fight against a team that won its own final fight
     // v96 (review #178, David: "Remove pvp from the pve part, both in the middle and end. The gauntlet is all there is for pvp. You win pve, get a victory screen,
     // and then gauntlet"): no duel days (pvpFights empty) and G is no longer a fight: reaching it completes the run (victory screen, then the Gauntlet gate)
-    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 2, lives: 1, pvpFights: [], ghostPower: 0.76,   // v101 (review #186): lives = the Ward (one)
+    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 3, startItems: 0, lives: 1, pvpFights: [], ghostPower: 0.76,   // v101 (review #186): lives = the Ward (one)
   };
 
   // ---------------------------------------------------------------- heroes

@@ -330,33 +330,25 @@
   const itemTag = it => `<span class="itag" style="color:${TIER_COLOR[it.tier]}">${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}</span>`;
   function shopSynergyTag(id) {
     if (!run || !run.heroes || !run.heroes.length || !ITEM[id]) return '';
-    const it = ITEM[id], rk = RANK(id);
-    if (it.set && B.SETS[it.set]) {
-      let bestH = null, bestN = 0;
-      for (const h of run.heroes) {
-        if (h.items.includes(id)) continue;
-        const sc = Run.setCounts(h.items), n = (sc[it.set] || 0) + 1;
-        if (n >= 2 && n > bestN) { bestN = Math.min(3, n); bestH = h; }
-      }
-      if (bestH) return `<span class="synpill set" title="Completes ${bestN}/3 ${esc(B.SETS[it.set].name)} set on ${esc(HEROES[bestH.key].name)}">◆ ${bestN}/3 ${esc(HEROES[bestH.key].name)}</span>`;
+    const ev = Run.evalAutoEquip(run, id);
+    if (!ev || !ev.hero) return '';
+    const h = ev.hero, hName = esc(HEROES[h.key].name), it = ITEM[id];
+    if (ev.isSet && ev.setPieces >= 2) {
+      const setName = esc(B.SETS[it.set].name);
+      return `<span class="synpill set" title="Auto-equips on ${hName} (${ev.setPieces}/3 ${setName} set)">◆ ${ev.setPieces}/3 ${hName}</span>`;
     }
-    for (const h of run.heroes) {
-      const same = h.items.find(x => ITEM[x] && ITEM[x].type === it.type);
-      if (same && rk > RANK(same)) return `<span class="synpill upg" title="Upgrades ${esc(ITEM[same].name)} on ${esc(HEROES[h.key].name)}">▲ ${esc(HEROES[h.key].name)}</span>`;
+    if (ev.replaced) {
+      const oldName = esc(ITEM[ev.replaced].name);
+      return `<span class="synpill upg" title="Auto-equips on ${hName} (replaces ${oldName})">▲ Upgrade ${hName}</span>`;
     }
-    for (const h of run.heroes) {
-      if (h.items.length < Run.slots(run, h) && Run.canEquip(run, h, id)) {
-        return `<span class="synpill fit" title="Open slot on ${esc(HEROES[h.key].name)}">✓ ${esc(HEROES[h.key].name)}</span>`;
-      }
-    }
-    return '';
+    return `<span class="synpill fit" title="Auto-equips into open slot on ${hName}">✓ Fits ${hName}</span>`;
   }
   const setInfo = it => { const S = it.set && B.SETS[it.set]; return S ? `<div class="setline">◆ <b>${esc(S.name)}</b> set · 2 pieces: ${fmt(S.bonus[2].desc)} · 3 pieces: ${fmt(S.bonus[3].desc)}</div>` : ''; };
   const RANK = id => B.RARITIES.findIndex(r => r.id === ITEM[id].tier);
   const DOLL = ['helmet', 'trinket', 'weapon', 'offhand', 'gloves', 'armor', 'boots'];
   const NODE_ICON = { F: I('swords'), X: I('help'), B: I('skull'), S: I('cart'), G: I('trophy') };  // v29: friendlier icons; v49: the icon set
   const SHOP_NAME = { heroShop: 'Hero Shop', itemShop: 'Item Shop', relicShop: 'Power Shop' };
-  const SHOP_DESC = { heroShop: 'Recruit new heroes.', itemShop: 'Buy items to equip.', relicShop: 'Team-wide powers.' };
+  const SHOP_DESC = { heroShop: 'Hire heroes & expand your squad.', itemShop: 'Equip weapons, armor & trinkets.', relicShop: 'Team-wide powers & artifacts.' };
   // v42 (review #51): each event has its own picture (map card and a big medallion on the event screen; icon in data.js)
   const evIcon = id => (EVENT[id] && EVENT[id].icon) || '❓';
   const EV_RAR = { uncommon: 'Uncommon', rare: '★ Rare event' };
@@ -929,12 +921,12 @@
     });
   };
   const COACH = [
-    { id: 'c_front', when: () => hasFrontliner(), hexes: () => coachRow(4), color: '#3ddc84', icon: '🛡', arrows: true, text: 'Enemies come from the top. Tough heroes go in FRONT: they take the hits.' },
-    { id: 'c_back', when: () => hasBackliner(), hexes: () => coachRow(7), color: '#4aa3ff', icon: '🏹', text: 'Ranged heroes and healers are fragile: keep them in the BACK, behind a tank.' },
-    { id: 'c_terrain', when: () => ((Run.mapOf(run) || { cells: [] }).cells || []).length > 0, hexes: () => ((Run.mapOf(run) || { cells: [] }).cells || []).map(t => ({ c: t.c, r: t.r })), color: '#ffb347', icon: '⛔', text: 'Trees, rocks and ponds block the way. Enemies must walk around them: use them as walls.' },
-    { id: 'c_choke', when: () => coachChokes().length > 0 && ((Run.mapOf(run) || { cells: [] }).cells || []).length > 0, hexes: coachChokes, color: '#ff5a8a', icon: '🚪', text: 'A gap between blockers is a CHOKEPOINT: one tank there holds back many enemies.' },
-    { id: 'c_dive', when: () => enemiesHaveDive(), hexes: () => coachRow(7).concat(coachRow(6)), color: '#c77dff', icon: '🗡', text: 'Assassins jump to your back row. Keep a fighter next to your ranged heroes.' },
-    { id: 'c_spread', when: () => enemiesHaveAoE(), hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#ffd23f', icon: '💥', text: 'Spread out against area attacks: heroes in a clump all get hit at once.' },
+    { id: 'c_front', when: () => hasFrontliner(), hexes: () => coachRow(4), color: '#3ddc84', icon: '🛡', arrows: true, text: 'Enemies advance from above. Place resilient Tanks in FRONT to absorb damage.' },
+    { id: 'c_back', when: () => hasBackliner(), hexes: () => coachRow(7), color: '#4aa3ff', icon: '🏹', text: 'Rangers and Healers are vulnerable: position them in the BACK behind your frontline.' },
+    { id: 'c_terrain', when: () => ((Run.mapOf(run) || { cells: [] }).cells || []).length > 0, hexes: () => ((Run.mapOf(run) || { cells: [] }).cells || []).map(t => ({ c: t.c, r: t.r })), color: '#ffb347', icon: '⛔', text: 'Terrain blocks movement. Enemies must path around: use obstacles as natural barricades.' },
+    { id: 'c_choke', when: () => coachChokes().length > 0 && ((Run.mapOf(run) || { cells: [] }).cells || []).length > 0, hexes: coachChokes, color: '#ff5a8a', icon: '🚪', text: 'Gaps create CHOKEPOINTS: one sturdy unit placed here can bottle up multiple attackers.' },
+    { id: 'c_dive', when: () => enemiesHaveDive(), hexes: () => coachRow(7).concat(coachRow(6)), color: '#c77dff', icon: '🗡', text: 'Assassins leap to your backline! Guard fragile heroes with a nearby brawler.' },
+    { id: 'c_spread', when: () => enemiesHaveAoE(), hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#ffd23f', icon: '💥', text: 'Area attacks punish grouping! Spread out formations to minimize splash damage.' },
   ];
   const coachRow = r => B.Hex.all().filter(h => h.r === r && !Run.blockedAt(run, h.c, h.r));
   // WHAT: the free hexes on your side or in the middle with two or more blocked neighbours (gaps an enemy has to squeeze through).
@@ -974,29 +966,29 @@
   // v126 (review #225, David: "Change the tutorial accordingly"): two tips for the bench of review #224 (t_bench, t_keep); TUT_V 4 shows players only these new ones.
   const TUT_V = 4;
   const GUIDE = [
-    { id: 't_play', scr: 'title', when: () => true, at: '.title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start a journey.' },
-    { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'The menu: how to play, sound, language and this tutorial.' },
-    { id: 't_hero', when: () => run.phase === 'start' && (ui.startStep || 1) === 1, at: '[data-act=start-pick]', text: 'Pick your first hero. Two more join you for free soon.' },
-    { id: 't_power', when: () => run.phase === 'start' && ui.startStep === 2, at: '.srelics', text: 'Powers boost your whole team for the whole run.' },
-    { id: 't_goal', when: () => run.phase === 'map' && run.result !== 'clear', at: '.rday', text: 'Your journey: one stop a day. Beat the 2 bosses to win.' },
-    { id: 't_path', when: () => run.phase === 'map' && run.result !== 'clear', at: '[data-act=choose]', text: 'Pick today\'s stop. Harder fights pay more gold.' },
-    { id: 't_ward', when: () => run.phase === 'map' && run.step >= 1, at: '#top .lives', text: 'Your Ward. Lose a fight and it breaks: that day starts over. Lose again and the run ends.' },
-    { id: 't_gaunt', when: () => run.phase === 'map' && run.step >= 2 && run.result !== 'clear', at: '.rn.final', text: 'After the last boss: the Gauntlet, a tower of other players\' teams.' },
-    { id: 't_bench', when: () => run.phase === 'deploy' && !introStage() && Run.benched(run).length > 0, at: '#bench', text: 'A new hero waits here. Drag it onto your half of the board: the fight starts once it is placed.' },
-    { id: 't_dep1', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Before each fight, place your heroes on your half of the board.' },
-    { id: 't_dep2', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Tanks in front take the hits. Ranged heroes and healers stay behind them.' },
-    { id: 't_foes', when: () => run.phase === 'deploy' && !introStage(), at: '.foes', text: 'The enemies. Tap any unit on the board to see what it does.' },
-    { id: 't_fight', when: () => run.phase === 'deploy' && !introStage() && !Run.benched(run).length, at: '[data-act=fight]', text: 'Ready? Fight! Your heroes act on their own.' },
-    { id: 't_keep', when: () => run.phase === 'deploy' && !introStage() && run.heroes.length > 1 && !Run.benched(run).length, at: '#board', text: 'Your heroes keep their spots for the rest of the run. Drag one to move it.' },
-    { id: 'gear', when: () => (run.phase === 'map' || run.phase === 'shop') && run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in your bag! Open Team to put it on a hero.' },
-    { id: 'shop', when: () => run.phase === 'shop', at: '[data-act=reroll]', text: 'Buy with your gold. "New" swaps the shelf for a few coins.' },
-    { id: 't_rshop', when: () => run.phase === 'shop' && run.cur && run.cur.kind === 'relicShop', at: '.shop, .stock', text: 'Powers work for every hero, for the rest of the run.' },
-    { id: 'event', when: () => run.phase === 'event', at: '.evchoices', text: 'An event: pick one choice. A fight here counts like any other.' },
-    { id: 'level', when: () => run.pending.length && run.phase !== 'deploy', at: '.spec2', text: 'Level up! Pick one of two upgrades for this hero.' },
-    { id: 't_win', when: () => run.phase === 'over' && run.result === 'clear' && !run.tower, at: '.vicart', text: 'You beat the bosses! Next comes the Gauntlet.' },
-    { id: 't_tower', when: () => run.phase === 'tower' && (!run.tower || run.tower.status === 'gate'), at: '.trules', text: 'Climb floor by floor: each one is stronger. Each floor won gives LP; falling costs nothing.' },
-    { id: 'league', when: () => run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !!document.querySelector('#lpmeter'), at: '#lpmeter', text: 'League points: fill the bar to climb to the next league.' },
-    { id: 'chest', when: () => run.phase === 'over' && run.overStep === 2, at: '#chest', text: 'Account XP: every level opens new heroes, items and rewards.' },
+    { id: 't_play', scr: 'title', when: () => true, at: '.title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start your journey.' },
+    { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'Game settings, rules, audio and language.' },
+    { id: 't_hero', when: () => run.phase === 'start' && (ui.startStep || 1) === 1, at: '[data-act=start-pick]', text: 'Choose your first hero. Two more join you free as you advance.' },
+    { id: 't_power', when: () => run.phase === 'start' && ui.startStep === 2, at: '.srelics', text: 'Powers grant permanent passive bonuses to your whole squad.' },
+    { id: 't_goal', when: () => run.phase === 'map' && run.result !== 'clear', at: '.rday', text: 'Your map: one stop each day. Defeat both bosses to conquer the run.' },
+    { id: 't_path', when: () => run.phase === 'map' && run.result !== 'clear', at: '[data-act=choose]', text: 'Choose your path. Harder fights grant richer gold and loot.' },
+    { id: 't_ward', when: () => run.phase === 'map' && run.step >= 1, at: '#top .lives', text: 'Your protective Ward. Defeat breaks it and retries the day; a second loss ends the run.' },
+    { id: 't_gaunt', when: () => run.phase === 'map' && run.step >= 2 && run.result !== 'clear', at: '.rn.final', text: 'After the final boss: climb the Gauntlet against saved player teams.' },
+    { id: 't_bench', when: () => run.phase === 'deploy' && !introStage() && Run.benched(run).length > 0, at: '#bench', text: 'Recruited hero waiting. Drag onto the board to unlock the fight.' },
+    { id: 't_dep1', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Position heroes on your half of the board before combat starts.' },
+    { id: 't_dep2', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Place tough tanks in front; position fragile damage & healers behind.' },
+    { id: 't_foes', when: () => run.phase === 'deploy' && !introStage(), at: '.foes', text: 'Enemy roster. Tap any unit or card to inspect stats and abilities.' },
+    { id: 't_fight', when: () => run.phase === 'deploy' && !introStage() && !Run.benched(run).length, at: '[data-act=fight]', text: 'Ready? Start combat! Units fight and cast automatically.' },
+    { id: 't_keep', when: () => run.phase === 'deploy' && !introStage() && run.heroes.length > 1 && !Run.benched(run).length, at: '#board', text: 'Formations persist across days. Drag any hero to adjust.' },
+    { id: 'gear', when: () => (run.phase === 'map' || run.phase === 'shop') && run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in bag! Tap Team to inspect or equip.' },
+    { id: 'shop', when: () => run.phase === 'shop', at: '[data-act=reroll]', text: 'Spend gold on upgrades. Use New to refresh stock.' },
+    { id: 't_rshop', when: () => run.phase === 'shop' && run.cur && run.cur.kind === 'relicShop', at: '.shop, .stock', text: 'Team-wide powers remain active for the rest of your run.' },
+    { id: 'event', when: () => run.phase === 'event', at: '.evchoices', text: 'Event encounter: choose an option. Special options require specific heroes.' },
+    { id: 'level', when: () => run.pending.length && run.phase !== 'deploy', at: '.spec2', text: 'Level up! Pick one of two specialization perks for this hero.' },
+    { id: 't_win', when: () => run.phase === 'over' && run.result === 'clear' && !run.tower, at: '.vicart', text: 'Bosses defeated! Enter the Gauntlet to test your build.' },
+    { id: 't_tower', when: () => run.phase === 'tower' && (!run.tower || run.tower.status === 'gate'), at: '.trules', text: 'Climb floor by floor: each tier is tougher and awards bonus LP.' },
+    { id: 'league', when: () => run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !!document.querySelector('#lpmeter'), at: '#lpmeter', text: 'League points: earn LP to climb tiers from Bronze to Master.' },
+    { id: 'chest', when: () => run.phase === 'over' && run.overStep === 2, at: '#chest', text: 'Account XP: level up to unlock new heroes, items and powers.' },
   ];
   // the tips seen in this version of the tutorial; the version finished (or turned off)
   const guideSeen = () => { const s = store.get('balance.guide3', []); return Array.isArray(s) ? s : []; };
@@ -1350,8 +1342,8 @@
         <div class="overbar two"><button class="brag" data-act="brag">📣 Share my team</button><button class="primary big cta" data-act="tower-done">Next ${I('arrow')}</button></div></section>`;
     }
     return `<section class="title towerscr gate"><h2 class="sc gtitle">The Gauntlet</h2>
-      <p class="gsub">Other players' saved teams, stronger on every floor. The champion waits at the top.</p>${towerArt(T)}
-      <ul class="trules"><li>🏰 Each floor won: <b>+LP equal to the floor</b> (floor 3 = +3)</li><li>🛡 Falling costs nothing: your team stays in the tower as a ghost</li>${champCard()}</ul>
+      <p class="gsub">Duel against real player ghost squads, scaling tougher each floor. Reach the pinnacle to dethrone the Champion.</p>${towerArt(T)}
+      <ul class="trules"><li>🏰 <b>Tiered Glory:</b> Each floor won grants LP matching its level (Floor 3 = +3 LP)</li><li>🛡 <b>Zero Risk:</b> Falling incurs zero penalty; your squad joins the tower as a ghost defender</li>${champCard()}</ul>
       ${acct.account && !isDefaultName(acct.name) ? '' : `<input id="tname" class="tname" maxlength="16" placeholder="Your name on the ladder" value="${esc(myName())}" aria-label="Your name on the ladder">`}
       <div class="overbar two"><button data-act="tower-skip">Skip</button><button class="primary big cta" data-act="tower-enter" ${ui.towerBusy ? 'disabled' : ''}>${I('trophy')} Enter the Gauntlet</button></div></section>`;
   }
@@ -1403,7 +1395,7 @@
   function swapHTML(key) {
     const d = HEROES[key];
     return `<div class="shead"><b>${img(key, 28, 'por')} ${esc(d.name)} joins</b><button data-act="close" aria-label="Close">✕</button></div>
-      <p class="small">Your team is full. Who steps aside? <b>${esc(d.name)}</b> takes that hero's place, level and items; its powers are picked at random.</p>
+      <p class="small">Squad is full. Select who steps aside: <b>${esc(d.name)}</b> inherits their level, board spot & equipped items.</p>
       <div class="tgrid">${run.heroes.map(h => `<button class="tpick" data-act="buy-swap" data-arg="${h.uid}">${img(h.key, 48)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl} · ${h.items.length} item${h.items.length === 1 ? '' : 's'}</span></button>`).join('')}</div>`;
   }
   // WHAT: THE SHOP SCREEN (hero, item or power shop): the products, the reroll button, the Leave button.
@@ -1411,7 +1403,7 @@
     const c = run.cur, rc = Run.rerollCost(run);
     const note = c.kind === 'heroShop' ? `<span class="lockpill">${run.heroes.length >= Run.teamMax(run) ? 'Full team: a new hero swaps in' : `Team ${run.heroes.length}/${Run.teamMax(run)}`}</span>` : '';
     // v118 (review #205, David: "In first hero shop visited put bubble saying when team is full, buying hero replaces an existing one of the same level"): once
-    const swapTip = c.kind === 'heroShop' && !store.get('balance.hint.hswap', 0) ? `<div class="coach shopcoach" style="--cc:#ffd23f"><span class="ci">🔄</span><span class="ct">When your team is full, a hero you buy replaces one of yours and takes its level, place and items.</span><button class="cok" data-act="hswap-ok">Got it</button></div>` : '';
+    const swapTip = c.kind === 'heroShop' && !store.get('balance.hint.hswap', 0) ? `<div class="coach shopcoach" style="--cc:#ffd23f"><span class="ci">🔄</span><span class="ct">Full squad: buying a hero replaces a teammate, keeping their level, position & equipped gear.</span><button class="cok" data-act="hswap-ok">Got it</button></div>` : '';
     const bagVal = (run.bag || []).reduce((sum, id) => sum + (Run.sellValue ? Run.sellValue(id) : (ITEM[id] ? Math.round(ITEM[id].cost * 0.5) : 0)), 0);
     const sellBagBtn = (run.bag && run.bag.length > 0) ? `<button class="qsell-btn" data-act="quick-sell-bag" title="Sell all unequipped bag items">💰 Sell Bag (+${bagVal}g)</button>` : '';
     return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${sellBagBtn}${note}</div>${swapTip}
@@ -2510,7 +2502,7 @@
     <div class="center"><button class="linkbtn" data-act="guide-again">💡 Show the tips again</button></div>
     <details class="howmore"><summary>All the rules</summary>
     <ol class="small howto">
-      <li><b>⚔️ Starting Out:</b> Start with 1 hero (3 offered: a tank, a support, a damage dealer), 1 power (3 offered) and a few common items. After each of the first two days a free hero joins (you pick 1 of 3). Each hero has a unique ability that fires when its blue Energy bar is full.</li>
+      <li><b>⚔️ Starting Out:</b> Start with 1 hero (3 offered: a tank, a support, a damage dealer) and 1 power (3 offered). After each of the first two days a free hero joins (you pick 1 of 3). Each hero has a unique ability that fires when its blue Energy bar is full.</li>
       <li><b>🗺️ The Daily Path:</b> Every step offers 2 options: easy/medium/hard fights, or a shop/event. Fights 4 and 8 are bosses.</li>
       <li><b>❓ Events & Challenges:</b> Trades, bets, powers and items to pick, and <b>challenges</b> (optional fights that start right away: win for a reward; lose and only that reward is gone, the game goes on). Some choices only open with the right hero in your team.</li>
       <li><b>🛡️ Board & Frontline:</b> Before each fight, place heroes in the 4 blue rows. Then the battle plays itself.</li>
@@ -2519,7 +2511,7 @@
       <li><b>📊 Stats & Scaling:</b> <b>Health</b> (❤), <b>Attack</b> (⚔), <b>Magic</b> (✦: 100 at Lv 1, grows every level at each hero's own pace, more from items), <b>Defense</b> (⛨: lowers all damage taken, physical and magic) and <b>Energy</b> (the blue bar that fires the ability). Every ability names its stat: it deals a % of Attack as <span class="kw-atk">physical</span> damage, a % of Magic as <span class="kw-ap">magic</span> damage, or both added together (like "40% Attack + 20% Magic"); heals scale with Magic; shields are a % of max Health. Magic never multiplies Attack. Tap a hero (in battle or in Team) to see its numbers.</li>
       <li><b>✨ Hero Growth:</b> Heroes earn XP for every second they stay alive. Level ups raise stats and let you pick a specialization. From Lv 3, each level adds an item slot. Lv 5 is rare.</li>
       <li><b>🎁 Gear & Sets:</b> Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
-      <li><b>🪙 Gold & Teams:</b> Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes; with a full team a hero from the Hero Shop takes the place of one of yours (its level and items, powers picked at random). You have 3 lives: a lost fight costs one and the third ends the game. Heroes always heal after a fight.</li>
+      <li><b>🪙 Gold & Teams:</b> Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes; with a full team a hero from the Hero Shop takes the place of one of yours (its level and items, powers picked at random). You carry a Ward: lose a fight and it breaks (the day starts over); lose again with it broken and the run ends. Heroes always heal after a fight.</li>
       <li><b>🏰 The Gauntlet:</b> After the second boss and a last shop the run is complete. Then you may climb the Gauntlet, a tower of other players' teams, floor by floor until you fall or take the crown. This is the only PvP.</li>
       <li><b>🏆 Leagues & LP:</b> League points (LP): a completed run +${B.LP.final}, plus +${B.LP_PVE[0]} in Bronze and +${B.LP_PVE[1]} in Silver, plus its 🔥 win streak (+${B.LP.streak} LP per run in the streak); then each Gauntlet floor won pays its number (floor 3 = +3). In Master a completed run pays no LP: only Gauntlet floors do. A lost run costs 5 LP per league above Bronze (Silver 5, Gold 10...); a fall in the Gauntlet costs nothing. Higher leagues are harder to climb: a win pays less (×${B.LP_LEAGUE.gain[0]} in Bronze to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Master) and a loss costs more (×${B.LP_LEAGUE.loss[0]} to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}). A completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
       <li><b>🏰 The Gauntlet Champions:</b> After a completed run you may climb a tower of other players' saved teams (ghosts). The tower is one floor taller than the champion's own climb (a champion who climbed 4 floors sits on floor 5). Floor 1 holds one of the weakest ghosts and each floor up a stronger one; the strength is a hidden rating that every Gauntlet fight moves. Each floor won gives as many LP as its number (floor 3 = +3); falling costs nothing, and your team stays in the tower as a ghost for others to fight. Beat the champion on the top floor and you are the new champion: the tower grows to your climb plus one. Your best floor shows on the ladder, and the current champion wears the glowing crown there.</li>
@@ -2702,6 +2694,7 @@
       const err = Run.buy(run, +i);
       if (err) { toast(err); sfx('deny'); if (B.Juice) B.Juice.bump(card, 'shake'); return; }
       sfx('buy'); if (B.Juice && pic) { B.Juice.flyCopy(pic, '#top [data-act=team]'); B.Juice.confettiAt(card, 16, { speed: 300 }); }
+      if (s0 && s0.kind === 'item') autoGear();
       ui.justSold = +i; save(); render(); ui.justSold = null;
     },
     'buy-swap': uid => { const i = ui.swapBuy, err = Run.buy(run, i, +uid); closeModal(); if (err) { toast(err); sfx('deny'); return; } sfx('buy'); ui.justSold = i; ui.swapBuy = null; save(); render(); ui.justSold = null; },

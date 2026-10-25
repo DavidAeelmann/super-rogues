@@ -1177,10 +1177,51 @@
     return run.heroes.reduce((n, h, k) => n + (h.items.slice().sort().join() !== before[k] ? 1 : 0), 0);
   }
 
+  // WHAT: Simulates adding candidateItemId to the run's item pool and running autoEquip.
+  // Returns information on which hero receives it, what item (if any) it replaces, and set/power info,
+  // or null if the item would not be equipped by any hero.
+  function evalAutoEquip(run, candidateId) {
+    if (!run || !run.heroes || !run.heroes.length || !B.ITEM || !B.ITEM[candidateId]) return null;
+    const initialPower = powerOf(run, run.heroes);
+    const simRun = {
+      relics: (run.relics || []).slice(),
+      bag: (run.bag || []).concat(candidateId),
+      heroes: run.heroes.map(h => ({
+        uid: h.uid,
+        key: h.key,
+        lvl: h.lvl,
+        specs: (h.specs || []).slice(),
+        items: (h.items || []).slice(),
+        bonus: Object.assign({}, h.bonus),
+        pos: h.pos ? { c: h.pos.c, r: h.pos.r } : null,
+        bench: !!h.bench
+      }))
+    };
+    autoEquip(simRun);
+    const equipHero = simRun.heroes.find(h => h.items.includes(candidateId));
+    if (!equipHero) return null;
+    const realHero = run.heroes.find(h => h.uid === equipHero.uid);
+    if (!realHero) return null;
+    const it = B.ITEM[candidateId];
+    const replaced = (realHero.items || []).find(x => B.ITEM[x] && B.ITEM[x].type === it.type);
+    const sc = setCounts(equipHero.items);
+    const isSet = !!(it.set && B.SETS && B.SETS[it.set] && (sc[it.set] || 0) >= 2);
+    const setPieces = isSet ? Math.min(3, sc[it.set]) : 0;
+    const newPower = powerOf(simRun, simRun.heroes);
+    const deltaPower = Math.round(newPower - initialPower);
+    return {
+      hero: realHero,
+      replaced: replaced || null,
+      isSet,
+      setPieces,
+      deltaPower
+    };
+  }
+
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
   B.Run = { benched, pveSeq, startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
     eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
-    eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, itemScore, heroProfile, randomItem };
+    eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, evalAutoEquip, itemScore, heroProfile, randomItem };
   if (typeof module !== 'undefined') module.exports = B.Run;
 })(typeof window !== 'undefined' ? window : globalThis);
