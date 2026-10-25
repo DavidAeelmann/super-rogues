@@ -2485,7 +2485,7 @@
     if (!acct.account) await loadAcct();
     if (acct.account && acct.code) return openProfile(acct.code);
     openModal(`<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>
-      <div class="klock"><span class="hi">🏆</span><b>Rankings start with your first clear</b><p class="small">When you first clear a run, you get to choose your name and compete in the rankings and leagues.</p>
+      <div class="klock"><span class="hi">👤</span><b>Your profile starts with your first game</b><p class="small">When a game ends, your league, trophies and completed runs show up here, and anyone can open your profile by tapping your name.</p>
       <button class="primary" data-act="new-run">▶ Play</button></div>`);
   }
   // v45 (review #56): the basics first, in five short lines for someone who never played this kind of game; the full
