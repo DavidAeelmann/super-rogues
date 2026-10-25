@@ -129,6 +129,6 @@ module.exports = async (req, res) => {
     return send(res, 400, { error: 'Unknown op' });
   } catch (e) {
     console.error('player', e);
-    return send(res, 500, { error: 'Server error' });
+    return send(res, 500, { error: 'Server error: ' + (e.message || String(e)) });
   }
 };
