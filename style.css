@@ -3936,3 +3936,404 @@ body.desk .overbar .cta {
   min-height: 68px !important;
   font-size: 24px !important;
 }
+
+/* ==========================================================================
+   v129: Guild Run-style World-Embedded Arena & Integrated HUD (Desktop/Web)
+   ========================================================================== */
+#top .top-track, .tsitems { display: none; }
+
+body.desk #top .prog {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+body.desk #top .top-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+body.desk #top .top-track .tt-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-style: normal;
+  font-size: 11px;
+  background: rgba(10, 16, 40, 0.55);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  opacity: 0.55;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+body.desk #top .top-track .tt-n.done {
+  opacity: 0.85;
+  background: rgba(61, 220, 132, 0.28);
+  border-color: #6df0a6;
+}
+body.desk #top .top-track .tt-n.now {
+  opacity: 1;
+  transform: scale(1.2);
+  background: linear-gradient(180deg, #ffe46b, #ff9f1a);
+  border-color: #fff;
+  box-shadow: 0 0 10px rgba(255, 210, 63, 0.8);
+}
+
+/* Full-stage Sanctuary Glade framing on Desktop */
+body.desk:has(.deploy) {
+  background: radial-gradient(1100px 680px at 50% 45%, #1d382b 0%, #0f2019 55%, #08120e 100%) !important;
+}
+body.desk:has(.deploy) #top {
+  background: linear-gradient(180deg, rgba(10, 20, 16, 0.92), rgba(10, 20, 16, 0.65)) !important;
+  border-bottom: 1px solid rgba(190, 230, 150, 0.18);
+  padding: 8px 24px 6px !important;
+}
+body.desk:has(.deploy) #screen {
+  padding: 4px 16px 8px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.desk .deploy:not(.intro) {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+body.desk .deploy .boardwrap {
+  position: relative !important;
+  margin: 0 auto !important;
+  z-index: 1;
+}
+
+body.desk .deploy #board {
+  border-radius: 26px !important;
+  border: 2.5px solid rgba(205, 232, 158, 0.32) !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.75), 0 0 0 6px rgba(12, 24, 18, 0.85), inset 0 0 32px rgba(0, 0, 0, 0.45) !important;
+  background: #14281d;
+}
+
+/* Deploy drag ribbon: sleek pill at upper-center of the clearing */
+body.desk .deploy .depban {
+  top: 14px !important;
+  bottom: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: rgba(14, 24, 20, 0.88) !important;
+  border: 1.5px solid rgba(216, 245, 130, 0.55) !important;
+  color: #eef9d8 !important;
+  padding: 5px 16px !important;
+  font-size: 14px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Top-Left Fight Badge & Hint Overlay */
+body.desk .deploy > .bhead {
+  position: absolute !important;
+  top: 14px !important;
+  left: 16px !important;
+  z-index: 5;
+  margin: 0 !important;
+  padding: 7px 16px !important;
+  border-radius: 14px !important;
+  background: #0d1722eb !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55) !important;
+  font-size: 16px !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(8px);
+  max-width: 340px;
+}
+
+body.desk .deploy > .hint.tight {
+  position: absolute !important;
+  top: 56px !important;
+  left: 16px !important;
+  z-index: 5;
+  margin: 0 !important;
+  max-width: 280px !important;
+  text-align: left !important;
+  padding: 6px 12px !important;
+  border-radius: 12px !important;
+  background: #0d1722e6 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #e8f0ff !important;
+  font-size: 12.5px !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45) !important;
+}
+
+body.desk .deploy > .formline {
+  position: absolute !important;
+  top: 108px !important;
+  left: 16px !important;
+  z-index: 5;
+  margin: 0 !important;
+  justify-content: flex-start !important;
+}
+
+/* Top-Right Speed & Battle Clock HUD */
+body.desk .deploy > .dspeed {
+  position: absolute !important;
+  top: 14px !important;
+  right: 16px !important;
+  z-index: 6;
+  margin: 0 !important;
+  background: #0d1722eb !important;
+  padding: 4px 6px !important;
+  border-radius: 999px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55) !important;
+}
+
+body.desk .deploy.battle > .hud {
+  position: absolute !important;
+  top: 14px !important;
+  left: 16px !important;
+  right: 16px !important;
+  z-index: 6;
+  margin: 0 !important;
+  pointer-events: none;
+}
+body.desk .deploy.battle > .hud > * {
+  pointer-events: auto;
+}
+body.desk .deploy.battle .hud-l {
+  background: #0d1722eb !important;
+  padding: 7px 16px !important;
+  border-radius: 14px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55) !important;
+  flex: 0 1 auto !important;
+}
+body.desk .deploy.battle .hud .speed {
+  background: #0d1722eb !important;
+  padding: 4px 6px !important;
+  border-radius: 999px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Bench Overlay (Left Glade Margin when new heroes need placement) */
+body.desk .deploy > .bench {
+  position: absolute !important;
+  left: 16px !important;
+  bottom: 112px !important;
+  width: 260px !important;
+  z-index: 6;
+  margin: 0 !important;
+  background: #141c2ef2 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Right-Side Enemy Roster (Deploy) & Battle Stats Meter (Battle) */
+body.desk .deploy > .foes {
+  position: absolute !important;
+  top: 62px !important;
+  right: 16px !important;
+  width: 256px !important;
+  max-height: calc(100% - 165px) !important;
+  overflow-y: auto !important;
+  z-index: 5;
+  margin: 0 !important;
+  padding: 10px 12px !important;
+  background: #0d1624eb !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(10px);
+}
+body.desk .deploy > .foes .fgrid {
+  grid-template-columns: 1fr !important;
+  gap: 6px !important;
+}
+body.desk .deploy > .foes .fo {
+  background: #172338 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  padding: 6px 8px !important;
+}
+
+/* Unit Inspection Card (#info) on Desktop */
+body.desk .deploy > #info:not(.empty) {
+  position: absolute !important;
+  bottom: 92px !important;
+  left: 16px !important;
+  width: 280px !important;
+  z-index: 7;
+  margin: 0 !important;
+  background: #0e1828f5 !important;
+  border: 1.5px solid #ffd23f99 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Bottom-Center Guild Run Party Dock (Deploy) */
+body.desk .deploy > .dparty {
+  position: absolute !important;
+  bottom: 12px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 5;
+  margin: 0 !important;
+  width: auto !important;
+  max-width: calc(100% - 460px) !important;
+}
+body.desk .deploy > .dparty .party {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 8px 14px !important;
+  background: #0d1624eb !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.72) !important;
+  backdrop-filter: blur(10px);
+}
+body.desk .deploy > .dparty .party > .bph {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
+  margin: 0 !important;
+  padding-right: 10px !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+  white-space: nowrap;
+}
+body.desk .deploy > .dparty .pgrid {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+body.desk .deploy > .dparty .pm {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 5px 10px 5px 6px !important;
+  background: #17243a !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 14px !important;
+  min-width: 125px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+body.desk .deploy > .dparty .pm:hover {
+  transform: translateY(-2px);
+  border-color: #ffd23f !important;
+}
+body.desk .deploy > .dparty .pm .pmi {
+  position: absolute !important;
+  top: -11px !important;
+  left: 8px !important;
+  display: flex !important;
+  gap: 3px !important;
+  z-index: 2;
+}
+body.desk .deploy > .dparty .pm .pmi .ico.xs {
+  width: 19px !important;
+  height: 19px !important;
+  border-radius: 5px !important;
+  background: #0d1526 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), 0 0 0 1.5px #ffd23f !important;
+}
+body.desk .deploy > .dparty .relicline {
+  margin: 0 !important;
+  padding: 0 0 0 10px !important;
+  border-top: 0 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+body.desk .deploy > .dparty .nextboss {
+  display: none !important;
+}
+
+/* Bottom-Right Fight & Items Action Dock */
+body.desk .deploy > .bar.sticky {
+  position: absolute !important;
+  bottom: 12px !important;
+  right: 16px !important;
+  top: auto !important;
+  z-index: 6;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: auto !important;
+}
+body.desk .deploy > .bar.sticky > button[data-act="team"] {
+  flex: 0 0 auto !important;
+  min-height: 52px !important;
+  padding: 0 18px !important;
+  background: #142238eb !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6) !important;
+}
+body.desk .deploy > .bar.sticky > button[data-act="fight"] {
+  flex: 0 0 auto !important;
+  min-width: 164px !important;
+  min-height: 58px !important;
+  font-size: 24px !important;
+  padding: 0 28px !important;
+  border-radius: 18px !important;
+  box-shadow: 0 6px 0 #b87400, 0 12px 28px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Battle Live Stats & Squad Dock on Desktop (.deploy.battle .bpanel) */
+body.desk .deploy.battle > .bpanel {
+  position: absolute !important;
+  top: 62px !important;
+  right: 16px !important;
+  width: 268px !important;
+  max-height: calc(100% - 78px) !important;
+  overflow-y: auto !important;
+  z-index: 5;
+  margin: 0 !important;
+  padding: 10px 12px !important;
+  background: #0d1624eb !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.68) !important;
+  backdrop-filter: blur(10px);
+}
+body.desk .deploy.battle .teamstrip.v2 {
+  grid-template-columns: 1fr !important;
+  gap: 6px !important;
+}
+body.desk .deploy.battle .teamstrip.v2 .ts {
+  background: #162338 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  padding: 6px 8px !important;
+  cursor: pointer;
+}
+body.desk .deploy.battle .teamstrip.v2 .ts:hover {
+  border-color: #ffd23f !important;
+}
+body.desk .deploy.battle .tsitems {
+  display: flex !important;
+  gap: 2px;
+  position: absolute;
+  bottom: -4px;
+  left: -2px;
+  z-index: 2;
+}
+body.desk .deploy.battle .tsitems .ico.xs {
+  width: 15px !important;
+  height: 15px !important;
+  border-radius: 4px;
+  background: #0b1220;
+  box-shadow: 0 0 0 1px #ffd23f;
+}
+body.desk .deploy.battle .estrip .ec {
+  cursor: pointer;
+}
+

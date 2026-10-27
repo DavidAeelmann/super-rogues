@@ -369,11 +369,12 @@
     }
     if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
     const stepN = Math.max(0, run.step);
-    const g = run.g;
-    const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + Run.pveSeq(run).length;
+    const g = run.g, seq = Run.pveSeq(run);
+    const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + seq.length;
+    const track = !(g && g.kind === 'tower') && run.result !== 'clear' ? `<span class="top-track" aria-hidden="true">${seq.map((t, k) => `<i class="tt-n ${k < stepN ? 'done' : k === stepN ? 'now' : ''} tt-${t === 'B' ? 'boss' : t === 'S' ? 'shop' : t === 'R' ? 'rec' : t === 'P' ? 'pvp' : 'f'}">${t === 'B' ? '💀' : t === 'S' ? '🛒' : t === 'R' ? '⛺' : '⚔'}</i>`).join('')}</span>` : '';
     const lgs = store.get('balance.league', null);
     h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
-      <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey">${prog}</button>
+      <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey">${prog}${track}</button>
       <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
     animGold();
   }
@@ -1135,7 +1136,7 @@
   function ccHTML(W, u) { return u.dead ? '' : CC_STATUS.filter(([k]) => u.st[k] > W.t).slice(0, 2).map(([, t, c]) => `<span class="sb sb-${c}">${t}</span>`).join(''); }
   function stripHTML(W) {
     return W.units.filter(u => u.side === 0 && u.kind === 'hero').map(u => `<div class="ts" data-id="${u.id}">
-      <div class="tsp">${img(u.key, 40, 'por')}<span class="tslv">${u.lvl}</span><span class="crown">👑</span></div>
+      <div class="tsp">${img(u.key, 40, 'por')}<span class="tslv">${u.lvl}</span><span class="crown">👑</span>${u.items && u.items.length ? `<span class="tsitems">${u.items.map(id => `<img class="ico xs" src="${B.Icons.item(id, 18)}" alt="">`).join('')}</span>` : ''}</div>
       <div class="tsb"><div class="tsn"><b>${esc(u.name)}</b><span class="tsst"></span><span class="tsd"></span><span class="tsh"></span></div>
         <i class="hp"><s></s><em></em></i><i class="mp"><s></s><em>${esc((HEROES[u.key] || {}).abName || '')}</em></i><i class="dm"><s></s><b class="dmb"></b></i></div></div>`).join('');
   }
@@ -1627,6 +1628,7 @@
   // the board takes the width AND the height left on screen, on phones (portrait/landscape), tablets and desktops.
   // WHAT: BOARD SIZE AND INPUT. The board is a canvas sized to the screen (layoutClasses, boardWidth, mountBoard); onDown / onMove / onUp handle drag and tap of heroes (pointer events work for mouse and touch).
   const BOARD_RATIO = 0.703; // board height / width (render.js setup: 10.35 * size + 4 over 14.72 * size)
+  const DESK_BOARD_RATIO = 0.589; // desktop glade board height / width (12.65 * size over 21.48 * size)
   function layoutClasses() {
     const vw = window.innerWidth, vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     document.body.classList.toggle('landscape', vw > vh * 1.25 && vh < 600);
@@ -1639,7 +1641,7 @@
     const land = document.body.classList.contains('landscape');
     // review #18: on tablets/desktops the deploy and battle screens put their panel in a column beside the board
     // v29 (owner: "on PC the framing is horrible"): the board takes all the height the screen has, the panel sits beside it
-    if (document.body.classList.contains('desk')) return Math.floor(Math.max(300, Math.min(vw - 474, (vh - 124) / BOARD_RATIO, 1360)));
+    if (document.body.classList.contains('desk')) return Math.floor(Math.max(520, Math.min(vw - 44, (vh - 88) / DESK_BOARD_RATIO, 1460)));
     if (document.body.classList.contains('side')) return Math.floor(Math.max(300, Math.min(Math.min(vw, 1180) - 36 - 356, (vh - 64 - 8) / BOARD_RATIO, 1000)));
     const reserved = land ? 64 : screen === 'battle' ? 175 : 215;
     const byHeight = Math.max(200, (vh - reserved - 4) / BOARD_RATIO);
@@ -1652,10 +1654,12 @@
     const wrap = cv.parentElement;
     view = Render.setup(cv, boardWidth(wrap));
     if (screen !== 'battle') { preview = worldFor(true); drawPreview(); }
-    cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', () => { ui.drag = null; drawPreview(); });
+    cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerup', onUp);
+    cv.addEventListener('pointerleave', () => { if (ui.hoverHex) { ui.hoverHex = null; if (!battle) drawPreview(); } cv.style.cursor = ''; });
+    cv.addEventListener('pointercancel', () => { ui.drag = null; ui.hoverHex = null; drawPreview(); });
   }
   // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
-  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid, infoId: ui.info }, introDraw(), coachDraw(), benchDraw(), extra || {})); }
+  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid, infoId: ui.info, hoverHex: ui.hoverHex }, introDraw(), coachDraw(), benchDraw(), extra || {})); }
   // v126 (review #224): while a hero waits on the bench, the free hexes of your half glow (where it can go)
   function benchDraw() {
     if (!run || run.phase !== 'deploy' || introStage() || !Run.benched(run).length) return {};
@@ -1765,12 +1769,28 @@
     if (introStage() && introStage() !== 'move') return;   // v97: the intro lets the hero move once
     if (u && u.side === 0 && u.uid && !benchSel()) { ui.drag = { uid: u.uid, from: h, key: u.key, lastSnapped: null }; try { view.canvas.setPointerCapture(e.pointerId); } catch (_) {} }   // v126: with a bench hero picked, a tap places it
   }
-  function onMove(e) { if (!ui.drag || battle) return; const { x, y, h } = evHex(e, 1.35), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r), o = ok ? unitAt(preview, h) : null;
+  function onMove(e) {
+    if (!view) return;
+    if (!ui.drag || battle) {
+      if (e.pointerType === 'mouse') {
+        const { x, y, h } = evHex(e, 1.05), W = battle ? battle.W : preview;
+        const u = unitAt(W, h) || unitBodyAt(W, x, y);
+        const tk = !u && h && W && W.tk ? W.tk[B.Hex.key(h.c, h.r)] : null;
+        view.canvas.style.cursor = !battle && u && u.side === 0 && u.uid ? 'grab' : (u || tk || (!battle && ui.selUid && h && h.r >= 4)) ? 'pointer' : '';
+        const prev = ui.hoverHex;
+        ui.hoverHex = h || null;
+        if (!battle && ((prev && !h) || (!prev && h) || (prev && h && (prev.c !== h.c || prev.r !== h.r)))) drawPreview();
+      }
+      return;
+    }
+    view.canvas.style.cursor = 'grabbing';
+    const { x, y, h } = evHex(e, 1.35), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r), o = ok ? unitAt(preview, h) : null;
     if (ok && (!ui.drag.lastSnapped || ui.drag.lastSnapped.c !== h.c || ui.drag.lastSnapped.r !== h.r)) {
       ui.drag.lastSnapped = h;
       try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
     }
-    drawPreview({ drop: ok ? h : null, dragGhost: { x, y, key: ui.drag.key }, swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null }); }
+    drawPreview({ drop: ok ? h : null, dragGhost: { x, y, key: ui.drag.key }, swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null });
+  }
   // review #39: a hero can't be placed on a tree, boulder, ridge or pond
   function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) sfx('deny'); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
   // WHAT: pointer up on the board: drop the hero on the new hex (rows 4-7 only, not on terrain) or select it; the first move ends the tutorial prompt.
@@ -1855,7 +1875,7 @@
     if (b.W.over && !b.overAt) { b.overAt = now; b.end = { win: b.W.winner === 0, k: 0 }; if (!b.endAt) b.endAt = now + 1800; sfx(b.end.win ? 'win' : 'lose'); }
     const T = b.W.over ? b.W.t + (now - b.overAt) / TICK * 0.3 : b.W.t + b.acc / TICK;
     if (b.end) b.end.k = (now - b.overAt) / 1600;
-    if (view) Render.draw(view, b.W, T, Object.assign({ infoId: ui.info }, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {}));   // v70 (review #145): standing tall during the countdown
+    if (view) Render.draw(view, b.W, T, Object.assign({ infoId: ui.info, hoverHex: ui.hoverHex }, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {}));   // v70 (review #145): standing tall during the countdown
     const hud = $('#bhud');
     if (hud) {
       const secs = Math.floor(b.W.t / Sim.TPS);
@@ -2824,6 +2844,19 @@
     if (foeEl) {
       const W = battle ? battle.W : preview, key = foeEl.dataset.foe;
       const u = W && W.units && W.units.find(x => !x.dead && x.side === 1 && x.key === key);
+      if (u) {
+        ui.info = ui.info === u.id ? null : u.id;
+        if (B.UIAudio) B.UIAudio.pop();
+        sfx('tap');
+        const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.toggle('empty', !ui.info); }
+        if (!battle) drawPreview();
+      }
+      return;
+    }
+    const unitEl = !e.target.closest('[data-act]') && e.target.closest('.ts[data-id], .ec[data-id]');
+    if (unitEl) {
+      const W = battle ? battle.W : preview, id = +unitEl.dataset.id || unitEl.dataset.id;
+      const u = W && W.byId && W.byId[id];
       if (u) {
         ui.info = ui.info === u.id ? null : u.id;
         if (B.UIAudio) B.UIAudio.pop();

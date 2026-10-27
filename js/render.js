@@ -16,9 +16,10 @@
 
   // WHAT: sizes the canvas for a given width and returns the "view" v every draw call needs (size of a hex, offsets, pixel ratio).
   function setup(canvas, cssW) {
-    const size = cssW / (Math.sqrt(3) * (Hx.COLS + 0.5));
-    const flat = Hx.boardSize(size), top = size * 2.4, slab = size * 0.45;
-    const w = flat.w, h = top + flat.h * K + slab + 4;
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk') && canvas && canvas.id === 'board';
+    const size = cssW / (Math.sqrt(3) * (Hx.COLS + (desk ? 4.4 : 0.5)));
+    const flat = Hx.boardSize(size), top = size * (desk ? 3.25 : 2.4), slab = size * 0.45, padX = desk ? (cssW - flat.w) / 2 : 0;
+    const w = desk ? cssW : flat.w, h = top + flat.h * K + slab + (desk ? size * 1.45 : 4);
     // v77 (review #156, David: "unplayable on a computer, it lags a lot"): a big screen gets a big board, and its pixels are what a computer without a strong
     // graphics card pays for every frame. The board keeps at most PX_CAP pixels (a phone at 2x uses about 0.4 million), and maxDpr can go below 1
     // (the battle loop lowers it when frames stay slow); the browser stretches the picture back to its size on screen
@@ -26,7 +27,7 @@
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    return { canvas, ctx, size, w, h, top, slab, dpr, grit: grit(ctx) };
+    return { canvas, ctx, size, w, h, top, slab, padX, flatW: flat.w, flatH: flat.h, desk, dpr, grit: grit(ctx) };
   }
   // review #8: stone texture for the tiles (made once, deterministic)
   let gritCanvas = null;
@@ -43,7 +44,7 @@
     return gritCanvas ? ctx.createPattern(gritCanvas, 'repeat') : null;
   }
   // WHAT: from flat board pixels to screen pixels (tilt applied). hexScreen(v, c, r) = the screen position of a hex centre.
-  const proj = (v, p) => ({ x: p.x, y: v.top + p.y * K });
+  const proj = (v, p) => ({ x: (v.padX || 0) + p.x, y: v.top + p.y * K });
   const hexScreen = (v, c, r) => proj(v, Hx.px(c, r, v.size));
   // WHAT: the six corner points of a hex on screen (s = scale of it).
   function corners(v, c, r, s) {
@@ -99,11 +100,16 @@
   // v27 (owner + review #25): the King Tier's Royal board skin (B.Render.skin = 'royal'): violet and gold stone
   // WHAT: BOARD. royal() = the King Tier colour skin is on. tileColor() = the colour of a tile (checker pattern, deploy zone blue, enemy zone red); drawBoard draws all tiles and the deploy line.
   const royal = () => B.Render.skin === 'royal';
-  function tileColor(c, r, o) {
+  function tileColor(c, r, o, desk) {
     const n = ((c * 7 + r * 13) % 5) / 5;
     if (royal()) {
-      if (o.deploy) return r >= 4 ? `hsl(266,36%,${21 + n * 4}%)` : `hsl(345,28%,${17 + n * 3}%)`;
-      return (c + r) % 2 ? `hsl(268,30%,${17 + n * 4}%)` : `hsl(38,34%,${18 + n * 4}%)`;
+      if (o.deploy) return r >= 4 ? `hsla(266,38%,${22 + n * 4}%,${desk ? 0.88 : 1})` : `hsla(345,30%,${18 + n * 3}%,${desk ? 0.88 : 1})`;
+      return (c + r) % 2 ? `hsla(268,30%,${17 + n * 4}%,${desk ? 0.88 : 1})` : `hsla(38,34%,${18 + n * 4}%,${desk ? 0.88 : 1})`;
+    }
+    if (desk) {
+      // Desktop sanctuary glade: warm mossy earth and sunlit grass that blends into the surrounding clearing
+      if (o.deploy) return r >= 4 ? `hsla(84,48%,${44 + n * 6}%,0.76)` : `hsla(14,42%,${38 + n * 5}%,0.68)`;
+      return (c + r) % 2 ? `hsla(96,38%,${42 + n * 5}%,0.72)` : `hsla(88,42%,${46 + n * 5}%,0.76)`;
     }
     // v29 (owner: "more child friendly"): a sunny meadow; while deploying, your rows glow sky blue and theirs soft red
     if (o.deploy) return r >= 4 ? `hsl(205,62%,${58 + n * 5}%)` : `hsl(4,58%,${63 + n * 4}%)`;
@@ -114,7 +120,7 @@
   // painted once into an offscreen canvas and copied each frame; it is repainted only when the skin, deploy mode, drop hex or terrain changes
   function drawBoard(v, o, W) {
     const { ctx, size } = v, tk = (W && W.tk) || {};
-    const key = (royal() ? 'r' : 'm') + (o.deploy ? 'd' : 'b') + (o.drop ? o.drop.c + ',' + o.drop.r : '-') + JSON.stringify(tk);
+    const key = (royal() ? 'r' : 'm') + (v.desk ? 'W' : 'M') + (o.deploy ? 'd' : 'b') + (o.drop ? o.drop.c + ',' + o.drop.r : '-') + JSON.stringify(tk);
     if (!v.boardC || v.boardC.key !== key) {
       if (!v.boardC) { const c = document.createElement('canvas'); c.width = v.canvas.width; c.height = v.canvas.height; v.boardC = { c, key: '' }; }
       const bc = v.boardC.c, bctx = bc.getContext('2d'); bctx.setTransform(1, 0, 0, 1, 0, 0); bctx.clearRect(0, 0, bc.width, bc.height); bctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
@@ -122,31 +128,63 @@
     }
     ctx.drawImage(v.boardC.c, 0, 0, v.w, v.h);
     for (const k in tk) if (tk[k] === 'pond') drawPond(v, k % Hx.COLS, (k / Hx.COLS) | 0);
-    if (o.deploy) { const y = hexScreen(v, 0, 4).y - size * 0.75 * K; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(v.w, y); ctx.stroke(); ctx.setLineDash([]); }
+    if (o.deploy) {
+      const y = hexScreen(v, 0, 4).y - size * 0.75 * K;
+      const x0 = v.desk ? (v.padX || 0) - size * 0.4 : 0, x1 = v.desk ? v.w - (v.padX || 0) + size * 0.4 : v.w;
+      ctx.save();
+      ctx.strokeStyle = v.desk ? 'rgba(235, 255, 180, 0.75)' : 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = v.desk ? 2.2 : 2;
+      ctx.setLineDash([7, 6]);
+      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+      ctx.restore();
+    }
+    if (o.hoverHex && !tk[Hx.key(o.hoverHex.c, o.hoverHex.r)]) {
+      const hh = o.hoverHex, pts = corners(v, hh.c, hh.r, size * 0.94);
+      ctx.save();
+      path(ctx, pts);
+      const ok = !o.deploy || hh.r >= 4;
+      ctx.fillStyle = ok ? 'rgba(230, 255, 160, 0.22)' : 'rgba(255, 120, 110, 0.16)';
+      ctx.fill();
+      ctx.strokeStyle = ok ? 'rgba(235, 255, 175, 0.9)' : 'rgba(255, 140, 130, 0.75)';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      ctx.restore();
+    }
   }
   // WHAT: paints every tile of the board (side faces, top, grit, bevel) onto v.ctx. Called by drawBoard only when the cached picture is stale.
   function paintTiles(v, o, tk) {
-    const { ctx, size } = v, th = v.slab;
+    const { ctx, size, desk } = v, th = v.slab;
     for (let r = 0; r < Hx.ROWS; r++) for (let c = 0; c < Hx.COLS; c++) {
-      const pts = corners(v, c, r, size * 0.985);
-      // side faces of the two lower edges (hidden by the next row except at the board's edge)
-      for (const [i, j] of [[0, 1], [1, 2], [2, 3]]) {
-        ctx.fillStyle = royal() ? (i === 1 ? '#1c1206' : i === 0 ? '#3a2a10' : '#2a1d0a') : i === 1 ? '#6b4524' : i === 0 ? '#8a5a2e' : '#7a4f28';
-        ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.lineTo(pts[j].x, pts[j].y + th); ctx.lineTo(pts[i].x, pts[i].y + th); ctx.closePath(); ctx.fill();
+      const pts = corners(v, c, r, size * (desk ? 0.96 : 0.985));
+      // side faces of the two lower edges (hidden by the next row except at the board's edge; on desktop the hexes lie flush on the glade floor)
+      if (!desk) {
+        for (const [i, j] of [[0, 1], [1, 2], [2, 3]]) {
+          ctx.fillStyle = royal() ? (i === 1 ? '#1c1206' : i === 0 ? '#3a2a10' : '#2a1d0a') : i === 1 ? '#6b4524' : i === 0 ? '#8a5a2e' : '#7a4f28';
+          ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.lineTo(pts[j].x, pts[j].y + th); ctx.lineTo(pts[i].x, pts[i].y + th); ctx.closePath(); ctx.fill();
+        }
       }
-      const top = corners(v, c, r, size * 0.94);
+      const top = corners(v, c, r, size * (desk ? 0.93 : 0.94));
       path(ctx, top);
       const drop = o.drop && o.drop.c === c && o.drop.r === r;
+      const isTerr = !!tk[Hx.key(c, r)];
       // review #39: terrain hexes keep the meadow colour while deploying (nobody can be placed there)
-      ctx.fillStyle = drop ? '#ffe066' : tileColor(c, r, tk[Hx.key(c, r)] ? {} : o); ctx.fill();
-      if (v.grit) { ctx.globalAlpha = royal() ? 1 : 0.35; ctx.fillStyle = v.grit; ctx.fill(); ctx.globalAlpha = 1; }
-      // bevel: lit upper-left edges, shaded lower-right edges
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = royal() ? 'rgba(255,207,90,0.38)' : 'rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.moveTo(top[3].x, top[3].y); ctx.lineTo(top[4].x, top[4].y); ctx.lineTo(top[5].x, top[5].y); ctx.lineTo(top[0].x, top[0].y); ctx.stroke();
-      ctx.strokeStyle = royal() ? 'rgba(0,0,0,0.45)' : 'rgba(40,70,20,0.35)'; ctx.beginPath(); ctx.moveTo(top[0].x, top[0].y); ctx.lineTo(top[1].x, top[1].y); ctx.lineTo(top[2].x, top[2].y); ctx.lineTo(top[3].x, top[3].y); ctx.stroke();
-      if (!tk[Hx.key(c, r)] && !drop) tileDecor(ctx, v, c, r, o);
+      ctx.fillStyle = drop ? '#ffe066' : tileColor(c, r, isTerr ? {} : o, desk); ctx.fill();
+      if (v.grit) { ctx.globalAlpha = royal() ? 0.9 : desk ? 0.25 : 0.35; ctx.fillStyle = v.grit; ctx.fill(); ctx.globalAlpha = 1; }
+      if (desk) {
+        // Guild Run-style organic glowing hex outlines on the clearing floor
+        path(ctx, top);
+        ctx.lineWidth = o.deploy && !isTerr ? (r >= 4 ? 1.8 : 1.3) : 1.1;
+        ctx.strokeStyle = drop ? '#ffffff' : royal() ? 'rgba(255,207,90,0.42)' : o.deploy && !isTerr ? (r >= 4 ? 'rgba(218, 245, 130, 0.72)' : 'rgba(255, 145, 125, 0.45)') : 'rgba(210, 238, 150, 0.34)';
+        ctx.stroke();
+      } else {
+        // bevel: lit upper-left edges, shaded lower-right edges
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = royal() ? 'rgba(255,207,90,0.38)' : 'rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.moveTo(top[3].x, top[3].y); ctx.lineTo(top[4].x, top[4].y); ctx.lineTo(top[5].x, top[5].y); ctx.lineTo(top[0].x, top[0].y); ctx.stroke();
+        ctx.strokeStyle = royal() ? 'rgba(0,0,0,0.45)' : 'rgba(40,70,20,0.35)'; ctx.beginPath(); ctx.moveTo(top[0].x, top[0].y); ctx.lineTo(top[1].x, top[1].y); ctx.lineTo(top[2].x, top[2].y); ctx.lineTo(top[3].x, top[3].y); ctx.stroke();
+      }
+      if (!isTerr && !drop) tileDecor(ctx, v, c, r, o);
     }
-    sideDecor(v);
+    if (!desk) sideDecor(v);
   }
   // v113 (review #200, David: "improve detail of the battle arena and enemies and background"): every tile gets a few grass tufts, now and then a flower or
   // pebbles (seeded per hex, so the board looks the same every fight), and the slab's front shows layers of soil, stones and roots under a grassy lip
@@ -412,6 +450,20 @@
       }
     }
     if (u.lvl > 1 && hero && u.kind === 'hero') { ctx.font = "700 10px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.fillStyle = '#ffcf5a'; ctx.textAlign = 'left'; ctx.fillText(u.lvl, bx + bw + 2, by + 5); }
+    // Guild Run-style equipped item badges above hero health bars (desktop clearing)
+    if (v.desk && hero && u.kind === 'hero' && u.items && u.items.length && B.Icons && B.Icons.item) {
+      const isz = Math.max(11, Math.min(15, Math.round(size * 0.34))), igap = isz + 2;
+      const ix0 = p.x - (u.items.length * igap - 2) / 2, iy0 = by - isz - 4;
+      v.itemImgs = v.itemImgs || {};
+      u.items.forEach((iid, idx) => {
+        let im = v.itemImgs[iid];
+        if (!im && typeof Image !== 'undefined') { im = v.itemImgs[iid] = new Image(); im.src = B.Icons.item(iid, 24); }
+        const ix = ix0 + idx * igap;
+        ctx.fillStyle = '#090d1ecc'; rr(ix - 1, iy0 - 1, isz + 2, isz + 2, 3.5); ctx.fill();
+        ctx.strokeStyle = '#ffd23f99'; ctx.lineWidth = 1; rr(ix - 1, iy0 - 1, isz + 2, isz + 2, 3.5); ctx.stroke();
+        if (im && im.complete && im.naturalWidth) ctx.drawImage(im, ix, iy0, isz, isz);
+      });
+    }
     // review #44: status effects as coloured badges (glyph on a disc) above the bars, one colour per effect
     const marks = [];
     // v122 (review #213, "Crowd Control badges: crisp micro-icons over the unit head"): the hard crowd control first (it decides fights), at most three
@@ -427,7 +479,8 @@
     if (u.st.slowU > s) marks.push(['🐌', '#4aa3ff']);
     if (marks.length > 3) marks.length = 3;
     if (marks.length) {
-      const R = Math.max(7.5, size * 0.28), gap = R * 2 + 2, x0 = p.x - (marks.length - 1) * gap / 2, y0 = by - R - 3;
+      const itemOff = (v.desk && hero && u.kind === 'hero' && u.items && u.items.length) ? Math.max(13, Math.min(17, Math.round(size * 0.34) + 2)) : 0;
+      const R = Math.max(7.5, size * 0.28), gap = R * 2 + 2, x0 = p.x - (marks.length - 1) * gap / 2, y0 = by - R - 3 - itemOff;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.font = `${Math.round(R * 1.35)}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif`;
       marks.forEach(([g, c], i) => { const x = x0 + i * gap; ctx.fillStyle = '#0b0f3fdd'; ctx.beginPath(); ctx.arc(x, y0, R, 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = c; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillText(g, x, y0 + 1); });
@@ -636,9 +689,10 @@
     }
     drawParts(ctx, S, o.deploy ? 0 : dt);
     if (!o.deploy) drawCalls(v, W, T, S, dt);
+    if (v.desk) drawWorldBreath(v, now);
     const vg = ctx.createRadialGradient(v.w / 2, v.h * 0.5, v.w * 0.35, v.w / 2, v.h * 0.5, v.w * 0.85);
     const sd = W.sd > 0 ? Math.min(0.55, 0.25 + W.sd * 0.15) * (0.75 + 0.25 * Math.sin(now * 6)) : 0;
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, sd ? `rgba(200,20,40,${sd})` : royal() ? 'rgba(0,0,0,0.45)' : 'rgba(20,40,120,0.18)'); ctx.fillStyle = vg; ctx.fillRect(-10, -10, v.w + 20, v.h + 20);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, sd ? `rgba(200,20,40,${sd})` : royal() ? 'rgba(0,0,0,0.45)' : v.desk ? 'rgba(8,22,12,0.38)' : 'rgba(20,40,120,0.18)'); ctx.fillStyle = vg; ctx.fillRect(-10, -10, v.w + 20, v.h + 20);
     if (!o.deploy) bossBar(v, W);
     if (o.end) drawEnd(v, W, o.end, S, dt);
     if (o.swapGhost) { const g = o.swapGhost, p = hexScreen(v, g.c, g.r); ctx.globalAlpha = 0.55; B.Models.draw(ctx, g.key, p.x, p.y, size * 1.3, { t: T / 20, face: 1 }); ctx.globalAlpha = 1;
@@ -690,14 +744,223 @@
     }
   }
   // WHAT: the sky, sun, clouds and hills behind the board, drawn once and cached (a different one per boss, and a royal one for Kings).
+  function paintWorldGlade(g, v, R, W, H, top, rnd) {
+    const s = v.size, cx = W / 2, cy = top + (v.flatH || s * 12) * K * 0.5 + 8;
+    const rx = (v.flatW || W * 0.68) * 0.53, ry = (v.flatH || s * 12) * K * 0.54;
+    // 1. Deep forest canopy backdrop and dappled golden sunbeams
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    if (R) { bg.addColorStop(0, '#0f0a1c'); bg.addColorStop(0.45, '#1e1533'); bg.addColorStop(1, '#120d20'); }
+    else { bg.addColorStop(0, '#14291e'); bg.addColorStop(0.32, '#22442d'); bg.addColorStop(0.7, '#2b5026'); bg.addColorStop(1, '#152815'); }
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    // Warm sunbeam glow in upper clearing
+    const sunG = g.createRadialGradient(cx, top * 0.35, s * 0.2, cx, top * 0.45, W * 0.55);
+    sunG.addColorStop(0, R ? 'rgba(255,210,110,0.34)' : 'rgba(255,248,195,0.52)');
+    sunG.addColorStop(0.45, R ? 'rgba(180,120,255,0.14)' : 'rgba(210,235,140,0.2)');
+    sunG.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = sunG; g.fillRect(0, 0, W, H);
+    // Diagonal sunbeam shafts filtering through the upper-left canopy
+    g.save();
+    for (let i = 0; i < 4; i++) {
+      const bx0 = cx - rx * (0.95 - i * 0.48), bw0 = s * (0.85 + (i % 2) * 0.35);
+      const beam = g.createLinearGradient(bx0, 0, bx0 + s * 2.2, H * 0.65);
+      beam.addColorStop(0, R ? 'rgba(220,175,255,0.09)' : 'rgba(255,250,200,0.11)');
+      beam.addColorStop(1, 'rgba(255,250,200,0)');
+      g.fillStyle = beam;
+      g.beginPath(); g.moveTo(bx0, 0); g.lineTo(bx0 + bw0, 0); g.lineTo(bx0 + bw0 + s * 2.6, H * 0.68); g.lineTo(bx0 + s * 2.1, H * 0.68); g.closePath(); g.fill();
+    }
+    g.restore();
+    // Distant misty forest silhouettes
+    g.fillStyle = R ? '#171029' : '#1b3524';
+    for (let i = 0; i < 18; i++) {
+      const tx = (i / 17) * W + (rnd() - 0.5) * s * 0.8, ty = top * (0.55 + rnd() * 0.22), tr = s * (0.9 + rnd() * 0.85);
+      g.beginPath(); g.arc(tx, ty, tr, 0, Math.PI * 2); g.fill();
+    }
+    // 2. Ancient sanctuary stone stairs & altar at the top-center of the clearing (clearly visible above row 0)
+    const stW = s * 3.4, stY = cy - ry - s * 1.15;
+    for (let k = 3; k >= 0; k--) {
+      const w0 = stW * (0.72 + k * 0.1), h0 = s * 0.32, y0 = stY + k * s * 0.25;
+      g.fillStyle = R ? (k % 2 ? '#3d3058' : '#302548') : (k % 2 ? '#879082' : '#737c6e');
+      g.beginPath(); g.roundRect ? g.roundRect(cx - w0 / 2, y0, w0, h0, 5) : g.rect(cx - w0 / 2, y0, w0, h0); g.fill();
+      g.strokeStyle = 'rgba(22,32,18,0.65)'; g.lineWidth = 1.6; g.stroke();
+      // Highlight top lip of each stone step
+      g.fillStyle = R ? 'rgba(220,190,255,0.16)' : 'rgba(235,245,220,0.28)';
+      g.fillRect(cx - w0 / 2 + 4, y0 + 2, w0 - 8, 3);
+      // Moss patches on steps
+      if (!R) { g.fillStyle = '#5c8c46'; g.beginPath(); g.ellipse(cx + (k - 1.5) * s * 0.55, y0 + 4, s * 0.32, s * 0.09, 0, 0, Math.PI * 2); g.fill(); }
+    }
+    // Ancient carved rune circle on the sanctuary dais at top of stairs
+    {
+      const dy = stY + s * 0.12;
+      g.strokeStyle = R ? 'rgba(210,150,255,0.45)' : 'rgba(215,245,140,0.45)'; g.lineWidth = 1.8;
+      g.beginPath(); g.ellipse(cx, dy, s * 0.9, s * 0.26, 0, 0, Math.PI * 2); g.stroke();
+    }
+    // Broken stone pillars flanking the top stairs
+    for (const dir of [-1, 1]) {
+      const px = cx + dir * stW * 0.56, py = stY + s * 0.45;
+      g.fillStyle = R ? '#3e3159' : '#828b7c';
+      g.beginPath(); g.moveTo(px - s * 0.34, py + s * 0.55); g.lineTo(px - s * 0.3, py - s * (dir < 0 ? 1.05 : 0.75));
+      g.lineTo(px + s * 0.05, py - s * (dir < 0 ? 1.22 : 0.9)); g.lineTo(px + s * 0.34, py - s * 0.52); g.lineTo(px + s * 0.36, py + s * 0.55); g.closePath(); g.fill();
+      g.strokeStyle = '#263022'; g.lineWidth = 1.6; g.stroke();
+      g.fillStyle = R ? '#57477a' : '#a3ad9b';
+      g.beginPath(); g.ellipse(px, py - s * (dir < 0 ? 0.9 : 0.62), s * 0.3, s * 0.13, dir * 0.15, 0, Math.PI * 2); g.fill();
+    }
+    // 3. Crumbling stone archway in the upper-right clearing (like Guild Run)
+    {
+      const ax = cx + rx * 0.88, ay = cy - ry * 0.62;
+      g.save(); g.translate(ax, ay); g.rotate(0.18);
+      for (const dx of [-s * 0.85, s * 0.85]) {
+        g.fillStyle = R ? '#34294c' : '#747d70';
+        g.fillRect(dx - s * 0.28, -s * 1.45, s * 0.56, s * 1.85);
+        g.strokeStyle = '#252d22'; g.lineWidth = 1.6; g.strokeRect(dx - s * 0.28, -s * 1.45, s * 0.56, s * 1.85);
+        g.fillStyle = R ? '#4a3b69' : '#919a8b'; g.fillRect(dx - s * 0.24, -s * 1.35, s * 0.48, s * 0.38);
+        if (!R) { g.fillStyle = '#53863e'; g.beginPath(); g.ellipse(dx, -s * 1.42, s * 0.32, s * 0.14, 0, 0, Math.PI * 2); g.fill(); }
+      }
+      g.fillStyle = R ? '#3f325c' : '#838c7e';
+      g.beginPath(); g.arc(0, -s * 1.25, s * 1.15, Math.PI, 0, false); g.lineTo(s * 0.62, -s * 1.25); g.arc(0, -s * 1.25, s * 0.62, 0, Math.PI, true); g.closePath(); g.fill(); g.stroke();
+      if (!R) { g.fillStyle = '#5a9142'; g.beginPath(); g.ellipse(-s * 0.35, -s * 2.25, s * 0.45, s * 0.16, -0.2, 0, Math.PI * 2); g.fill(); }
+      g.restore();
+    }
+    // 4. Clearing floor & ancient mossy cobblestone ring encircling the hex grid
+    const flG = g.createRadialGradient(cx, cy, rx * 0.25, cx, cy, rx * 1.2);
+    if (R) { flG.addColorStop(0, '#2c2046'); flG.addColorStop(0.7, '#211736'); flG.addColorStop(1, 'rgba(20,14,34,0)'); }
+    else { flG.addColorStop(0, '#628a42'); flG.addColorStop(0.6, '#4c7534'); flG.addColorStop(0.88, '#345726'); flG.addColorStop(1, 'rgba(30,52,22,0)'); }
+    g.fillStyle = flG; g.beginPath(); g.ellipse(cx, cy, rx * 1.18, ry * 1.18, 0, 0, Math.PI * 2); g.fill();
+    // Outer ring of weathered stone slabs around the hex arena
+    const stoneN = 36;
+    for (let i = 0; i < stoneN; i++) {
+      const a = (i / stoneN) * Math.PI * 2;
+      if (Math.abs(Math.sin(a) + 1) < 0.16) continue; // gap for top stairs
+      const sx = cx + Math.cos(a) * rx * (1.03 + (rnd() - 0.5) * 0.04);
+      const sy = cy + Math.sin(a) * ry * (1.04 + (rnd() - 0.5) * 0.04);
+      const sw = s * (0.44 + rnd() * 0.22), sh = s * (0.28 + rnd() * 0.14);
+      g.save(); g.translate(sx, sy); g.rotate(a + Math.PI / 2 + (rnd() - 0.5) * 0.25);
+      g.fillStyle = R ? (i % 2 ? '#3d3058' : '#302448') : (i % 2 ? '#848c7e' : '#717a6c');
+      g.beginPath(); if (g.roundRect) g.roundRect(-sw / 2, -sh / 2, sw, sh, 5); else g.rect(-sw / 2, -sh / 2, sw, sh); g.fill();
+      g.strokeStyle = 'rgba(20,30,15,0.6)'; g.lineWidth = 1.4; g.stroke();
+      if (!R && rnd() < 0.65) { g.fillStyle = '#588c3f'; g.beginPath(); g.arc((rnd() - 0.5) * sw * 0.4, (rnd() - 0.5) * sh * 0.4, s * 0.11, 0, Math.PI * 2); g.fill(); }
+      g.restore();
+    }
+    // 5. Giant ancient tree trunks & roots framing the left and right of the glade
+    for (const [tx, ty, sc, flip] of [[cx - rx * 1.2, cy - ry * 0.22, 1.3, 1], [cx - rx * 0.94, cy - ry * 0.85, 0.92, 1], [cx + rx * 1.18, cy - ry * 0.08, 1.15, -1]]) {
+      g.save(); g.translate(tx, ty); g.scale(flip * sc, sc);
+      g.strokeStyle = '#3a2414'; g.fillStyle = '#593820'; g.lineWidth = 2;
+      for (const [rx0, ry0, rx1, ry1] of [[0, 0, s * 0.95, s * 0.45], [0, s * 0.15, s * 0.8, s * 0.68], [-s * 0.2, s * 0.1, -s * 0.7, s * 0.55]]) {
+        g.beginPath(); g.moveTo(rx0, ry0 - s * 0.3); g.quadraticCurveTo((rx0 + rx1) * 0.5, ry0 + s * 0.1, rx1, ry1);
+        g.quadraticCurveTo((rx0 + rx1) * 0.45, ry0 + s * 0.32, rx0 - s * 0.15, ry0 + s * 0.2); g.closePath(); g.fill(); g.stroke();
+      }
+      g.fillStyle = '#4d301b'; g.beginPath(); g.moveTo(-s * 0.45, s * 0.35); g.quadraticCurveTo(-s * 0.38, -s * 1.1, -s * 0.55, -s * 2.4);
+      g.lineTo(s * 0.45, -s * 2.4); g.quadraticCurveTo(s * 0.35, -s * 1.0, s * 0.52, s * 0.35); g.closePath(); g.fill(); g.stroke();
+      g.strokeStyle = 'rgba(30,16,8,0.45)'; g.lineWidth = 1.6;
+      for (let b = -1; b <= 1; b++) { g.beginPath(); g.moveTo(b * s * 0.16, s * 0.25); g.quadraticCurveTo(b * s * 0.12, -s * 0.9, b * s * 0.2, -s * 2.1); g.stroke(); }
+      for (const [lx, ly, lr, col] of [[-s * 0.5, -s * 2.2, s * 1.15, '#25522b'], [s * 0.35, -s * 2.1, s * 1.05, '#2d6333'], [0, -s * 2.55, s * 1.25, '#3b7a3e'], [-s * 0.2, -s * 2.4, s * 0.9, '#559c4e'], [s * 0.25, -s * 2.3, s * 0.75, '#74ba5e']]) {
+        g.fillStyle = R ? '#281d42' : col; g.beginPath(); g.arc(lx, ly, lr, 0, Math.PI * 2); g.fill();
+      }
+      g.restore();
+    }
+    // 6. Lush bushes, ferns, wildflowers and glowing mushrooms around the perimeter
+    for (let i = 0; i < 42; i++) {
+      const a = (i / 42) * Math.PI * 2 + rnd() * 0.12;
+      const dist = 1.08 + rnd() * 0.28;
+      const bx = cx + Math.cos(a) * rx * dist, by = cy + Math.sin(a) * ry * dist;
+      const br = s * (0.28 + rnd() * 0.26);
+      g.fillStyle = R ? (i % 2 ? '#251a3d' : '#322452') : (i % 2 ? '#2e5e2e' : '#3b7337');
+      g.beginPath(); g.arc(bx, by, br, 0, Math.PI * 2); g.fill();
+      g.fillStyle = R ? '#45326e' : '#589949';
+      g.beginPath(); g.arc(bx - br * 0.2, by - br * 0.22, br * 0.72, 0, Math.PI * 2); g.fill();
+      if (rnd() < 0.45) {
+        const fc = R ? '#b98cff' : ['#ffe066', '#ff9fd2', '#8fe3ff', '#ffb347'][(i * 3) % 4];
+        g.fillStyle = fc; g.beginPath(); g.arc(bx + (rnd() - 0.5) * br, by - (rnd() * 0.5) * br, s * 0.065, 0, Math.PI * 2); g.fill();
+      }
+    }
+    // 7. Warm glowing amber/gold crystal clusters on the right & lower-left edges (like Guild Run)
+    for (const [kx, ky, sc] of [[cx + rx * 1.1, cy + ry * 0.32, 1.18], [cx - rx * 1.08, cy + ry * 0.48, 0.88], [cx + rx * 0.98, cy - ry * 0.22, 0.78]]) {
+      g.save(); g.translate(kx, ky); g.scale(sc, sc);
+      const cg = g.createRadialGradient(0, -s * 0.3, 0, 0, -s * 0.3, s * 1.25);
+      cg.addColorStop(0, R ? 'rgba(195,130,255,0.55)' : 'rgba(255,205,70,0.55)');
+      cg.addColorStop(1, 'rgba(255,180,40,0)');
+      g.fillStyle = cg; g.beginPath(); g.arc(0, -s * 0.3, s * 1.25, 0, Math.PI * 2); g.fill();
+      for (const [dx, ang, h0, w0] of [[-s * 0.22, -0.28, s * 0.78, s * 0.22], [s * 0.18, 0.24, s * 0.68, s * 0.2], [0, 0.04, s * 1.02, s * 0.26]]) {
+        g.save(); g.translate(dx, 0); g.rotate(ang);
+        const crG = g.createLinearGradient(0, -h0, 0, 0);
+        if (R) { crG.addColorStop(0, '#f0d6ff'); crG.addColorStop(0.4, '#b975ff'); crG.addColorStop(1, '#5e28a8'); }
+        else { crG.addColorStop(0, '#fff7c2'); crG.addColorStop(0.4, '#ffbf3b'); crG.addColorStop(1, '#c46210'); }
+        g.fillStyle = crG;
+        g.beginPath(); g.moveTo(-w0, 0); g.lineTo(-w0 * 0.85, -h0 * 0.78); g.lineTo(0, -h0); g.lineTo(w0 * 0.85, -h0 * 0.78); g.lineTo(w0, 0); g.closePath(); g.fill();
+        g.strokeStyle = R ? '#f5e6ff' : '#ffe88a'; g.lineWidth = 1.2; g.stroke();
+        g.restore();
+      }
+      g.restore();
+    }
+  }
+  // WHAT: continuous ambient life on the desktop glade ("everything breathes"): swaying ferns, pulsing crystal light, drifting golden spores, and foreground framing foliage.
+  function drawWorldBreath(v, now) {
+    const { ctx, size: s, w: W, h: H } = v, R = royal();
+    const cx = W / 2, cy = v.top + (v.flatH || s * 12) * K * 0.5;
+    const rx = (v.flatW || W * 0.72) * 0.56, ry = (v.flatH || s * 12) * K * 0.58;
+    ctx.save();
+    // 1. Pulsing crystal glow & floating rune motes near crystal clusters
+    const pulse = 0.5 + 0.5 * Math.sin(now * 2.4);
+    for (const [kx, ky, sc] of [[cx + rx * 1.08, cy + ry * 0.32, 1.15], [cx - rx * 1.06, cy + ry * 0.48, 0.85], [cx + rx * 0.96, cy - ry * 0.22, 0.75]]) {
+      const r0 = s * 1.15 * sc * (0.9 + 0.2 * pulse);
+      const cg = ctx.createRadialGradient(kx, ky - s * 0.3, 0, kx, ky - s * 0.3, r0);
+      cg.addColorStop(0, R ? `rgba(210,150,255,${0.22 + 0.16 * pulse})` : `rgba(255,220,95,${0.22 + 0.16 * pulse})`);
+      cg.addColorStop(1, 'rgba(255,200,60,0)');
+      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(kx, ky - s * 0.3, r0, 0, Math.PI * 2); ctx.fill();
+    }
+    // 2. Swaying fern fronds around the clearing edge
+    const ferns = [[-1.08, -0.05, 1], [-1.02, 0.32, 1], [1.04, 0.08, -1], [0.98, 0.52, -1], [-0.82, -0.78, 1], [0.82, -0.75, -1]];
+    for (let i = 0; i < ferns.length; i++) {
+      const [fx, fy, dir] = ferns[i], x0 = cx + fx * rx, y0 = cy + fy * ry;
+      const sway = Math.sin(now * 1.8 + i * 1.3) * s * 0.08;
+      ctx.strokeStyle = R ? '#5a3d8a' : '#58a348'; ctx.lineWidth = Math.max(1.8, s * 0.045); ctx.lineCap = 'round';
+      for (let k = -1; k <= 1; k++) {
+        ctx.beginPath(); ctx.moveTo(x0, y0);
+        ctx.quadraticCurveTo(x0 + dir * s * 0.28 + sway * 0.5, y0 - s * (0.28 + Math.abs(k) * 0.08), x0 + dir * s * (0.52 - Math.abs(k) * 0.08) + sway, y0 - s * 0.15 + k * s * 0.16);
+        ctx.stroke();
+      }
+    }
+    // 3. Drifting golden spores / fireflies across the glade (even during deployment)
+    for (let i = 0; i < 18; i++) {
+      const p = (now * (0.07 + (i % 4) * 0.018) + i * 0.17) % 1;
+      const x = ((i * 97 + 31) % 100) / 100 * W + Math.sin(now * 1.2 + i * 2.1) * s * 0.45;
+      const y = H * (0.92 - p * 0.82) + Math.cos(now * 1.5 + i) * s * 0.15;
+      const a = Math.sin(p * Math.PI) * (0.45 + 0.45 * Math.sin(now * 3.5 + i * 1.7));
+      if (a <= 0.05) continue;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = R ? '#d8b4ff' : (i % 3 === 0 ? '#a8ff8a' : '#ffe885');
+      ctx.beginPath(); ctx.arc(x, y, s * (0.035 + (i % 3) * 0.015), 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = a * 0.32;
+      ctx.beginPath(); ctx.arc(x, y, s * 0.14, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // 4. Foreground dark vignette framing branches/leaves at bottom-left and bottom-right corners (like Guild Run)
+    for (const dir of [-1, 1]) {
+      const bx = dir < 0 ? 0 : W, by = H;
+      const sway = Math.sin(now * 1.3 + (dir < 0 ? 0 : 2)) * s * 0.07;
+      ctx.fillStyle = R ? 'rgba(10, 6, 20, 0.82)' : 'rgba(10, 24, 14, 0.82)';
+      for (const [dx, dy, rx0, ry0, ang] of [[0.4, -0.15, 1.35, 0.55, 0.25], [0.15, -0.55, 1.1, 0.48, 0.65], [0.85, -0.05, 0.95, 0.42, 0.12]]) {
+        ctx.save();
+        ctx.translate(bx - dir * dx * s + sway, by + dy * s);
+        ctx.rotate(dir * ang);
+        ctx.beginPath(); ctx.ellipse(0, 0, s * rx0, s * ry0, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
   function backdrop(v, boss) {
     const R = royal();
-    if (v.bd && v.bd.R === R && v.bd.boss === (boss || null)) return v.bd.c;
+    if (v.bd && v.bd.R === R && v.bd.boss === (boss || null) && v.bd.desk === !!v.desk) return v.bd.c;
     if (typeof document === 'undefined') return null;
     const c = document.createElement('canvas'), W = v.w + 24, H = v.h + 24, top = v.top + 12;
     c.width = Math.round(W * v.dpr); c.height = Math.round(H * v.dpr);
     const g = c.getContext('2d'); g.scale(v.dpr, v.dpr);
     let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    if (v.desk) {
+      paintWorldGlade(g, v, R, W, H, top, rnd);
+      if (boss) bossBackdrop(g, boss, W, H, top, v.size, rnd);
+      v.bd = { R, boss: boss || null, desk: true, c }; return c;
+    }
     const sky = g.createLinearGradient(0, 0, 0, H);
     if (R) { sky.addColorStop(0, '#120c1e'); sky.addColorStop(0.5, '#2a1c3f'); sky.addColorStop(1, '#0d0915'); }
     else { sky.addColorStop(0, '#4f9ff0'); sky.addColorStop(Math.min(0.9, top / H * 1.1), '#aee0ff'); sky.addColorStop(1, '#d9f2ff'); }
