@@ -371,10 +371,10 @@
     const stepN = Math.max(0, run.step);
     const g = run.g, seq = Run.pveSeq(run);
     const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + seq.length;
-    const track = !(g && g.kind === 'tower') && run.result !== 'clear' ? `<span class="top-track" aria-hidden="true">${seq.map((t, k) => `<i class="tt-n ${k < stepN ? 'done' : k === stepN ? 'now' : ''} tt-${t === 'B' ? 'boss' : t === 'S' ? 'shop' : t === 'R' ? 'rec' : t === 'P' ? 'pvp' : 'f'}">${t === 'B' ? '💀' : t === 'S' ? '🛒' : t === 'R' ? '⛺' : '⚔'}</i>`).join('')}</span>` : '';
+    const track = !(g && g.kind === 'tower') && run.result !== 'clear' ? `<span class="top-track" aria-hidden="true">${seq.map((t, k) => `<i class="tt-n ${k < stepN ? 'done' : k === stepN ? 'now' : ''} tt-${t === 'B' ? 'boss' : t === 'S' ? 'shop' : t === 'R' ? 'rec' : t === 'P' ? 'pvp' : 'f'}">${k === stepN ? `<svg class="tt-sunburst" viewBox="0 0 24 24" aria-hidden="true"><g stroke="#ffea75" stroke-width="1.5" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="23"/><line x1="1" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="23" y2="12"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></g></svg>` : ''}${t === 'B' ? '💀' : t === 'S' ? '🛒' : t === 'R' ? '⛺' : '⚔'}</i>`).join('')}</span>` : '';
     const lgs = store.get('balance.league', null);
     h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
-      <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey">${prog}${track}</button>
+      <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey"><span class="stone-crack-l" aria-hidden="true"></span><span class="prog-txt">${prog}</span>${track}<span class="stone-crack-r" aria-hidden="true"></span></button>
       <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
     animGold();
   }
@@ -825,15 +825,26 @@
       const tip = esc(r.name + ': ' + (r.desc || r.short || ''));
       return `<button class="relicbtn" data-act="relic-info" data-arg="${id}" data-tip="${tip}" aria-label="${esc(r.name)}"><img class="ico sm" src="${B.Icons.relic(id, 26)}" alt=""></button>`;
     }).join('');
-    const bagItems = (run.bag || []).map((id, i) => {
-      const it = ITEM[id];
-      if (!it) return '';
-      const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-      return `<button class="ditem eqitem" data-drag="b:${i}" data-drop="bag" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico" src="${B.Icons.item(id, 24)}" alt=""></button>`;
-    }).join('');
+    const bagSlots = [];
+    const maxBagSlots = Math.max(3, Math.min(6, (run.bag || []).length));
+    for (let i = 0; i < maxBagSlots; i++) {
+      const id = (run.bag || [])[i];
+      if (id && ITEM[id]) {
+        const it = ITEM[id];
+        const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
+        const rarityClass = it.tier >= 3 ? 'r-epic' : it.tier === 2 ? 'r-rare' : it.tier === 1 ? 'r-magic' : 'r-common';
+        bagSlots.push(`<button class="ditem eqitem ${rarityClass}" data-drag="b:${i}" data-drop="bag" data-tip="${tip}" aria-label="${esc(it.name)}"><span class="rarity-bloom"></span><img class="ico" src="${B.Icons.item(id, 28)}" alt=""></button>`);
+      } else {
+        bagSlots.push(`<div class="ditem empty" data-drop="bag" title="Empty bag slot"><span class="empty-gem">◇</span></div>`);
+      }
+    }
+    const autoPill = `<button class="auto-equip-toggle ${autoOn() ? 'on' : ''}" data-act="gear-auto">Auto-equip <b class="a-pill">${autoOn() ? 'ON' : 'OFF'}</b></button>`;
     return `<div class="dleft-dock">
       ${relics ? `<div class="dpowers-col"><div class="dl-title">POWERS</div><div class="dl-list">${relics}</div></div>` : ''}
-      <div class="dbag-col" data-drop="bag"><div class="dl-title">BAG (${run.bag.length})</div><div class="dl-grid">${bagItems || '<span class="dim small">Empty</span>'}</div></div>
+      <div class="dbag-drawer" data-drop="bag">
+        <div class="dbag-top">${autoPill}<span class="dl-count">BAG (${(run.bag || []).length})</span></div>
+        <div class="dl-slots">${bagSlots.join('')}</div>
+      </div>
     </div>`;
   }
   // WHAT: deploy hero slots: only splash arts and equipped items next to each hero, no container box
@@ -843,21 +854,40 @@
       const d = HEROES[h.key] || {};
       const maxS = Run.slots(run, h);
       const socks = [];
-      for (let j = 0; j < maxS; j++) {
+      for (let j = 0; j < Math.max(2, maxS); j++) {
         const id = h.items[j];
         if (id && ITEM[id]) {
           const it = ITEM[id];
           const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-          socks.push(`<button class="dsock filled" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></button>`);
+          socks.push(`<button class="dsock filled slot-${j+1}" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 22)}" alt=""></button>`);
         } else {
-          socks.push(`<div class="dsock empty" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
+          socks.push(`<div class="dsock empty slot-${j+1}" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
         }
       }
+      // Floating elemental crest per hero archetype
+      const k = h.key.toLowerCase();
+      const crestType = (k.includes('mael') || k.includes('frost') || k.includes('ice') || k.includes('gardener')) ? 'water-ice'
+        : (k.includes('ember') || k.includes('wyrm') || k.includes('bramble') || k.includes('fire')) ? 'ruby-fire'
+        : 'arcane-star';
+      const crestSVG = crestType === 'water-ice'
+        ? `<svg class="hero-crest crest-cyan" viewBox="0 0 24 24"><polygon points="12,2 21,9 12,22 3,9" fill="url(#cyanShard)"/><defs><linearGradient id="cyanShard" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0ffff"/><stop offset="50%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#006699"/></linearGradient></defs></svg>`
+        : crestType === 'ruby-fire'
+        ? `<svg class="hero-crest crest-ruby" viewBox="0 0 24 24"><polygon points="6,3 18,3 22,9 12,22 2,9" fill="url(#rubyFire)"/><defs><linearGradient id="rubyFire" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffb3ba"/><stop offset="40%" stop-color="#ff3344"/><stop offset="100%" stop-color="#800010"/></linearGradient></defs></svg>`
+        : `<svg class="hero-crest crest-diamond" viewBox="0 0 24 24"><polygon points="12,2 22,12 12,22 2,12" fill="url(#steelDia)"/><defs><linearGradient id="steelDia" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#80d8ff"/><stop offset="100%" stop-color="#2a5298"/></linearGradient></defs></svg>`;
+      const starCount = Math.min(5, Math.max(1, h.lvl || 1));
+      const starBar = `<div class="hero-stars" aria-label="${starCount} stars">${[...Array(5)].map((_, i) => `<span class="h-star ${i < starCount ? 'lit' : ''}">★</span>`).join('')}</div>`;
+      const atkBonus = Math.round((h.lvl - 1) * 3 + 12);
+      const statPill = `<div class="hero-stat-pill">+${atkBonus}% ATK Speed</div>`;
       return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
-        <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 46, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
+        <div class="hero-crest-frame">
+          ${crestSVG}
+          <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 74, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
+          ${starBar}
+        </div>
         <div class="pmb">
           <div class="pmn"><b>${esc(d.name || h.key)}</b></div>
           <div class="pmi">${socks.join('')}</div>
+          ${statPill}
         </div>
       </div>`;
     }).join('');
@@ -932,8 +962,22 @@
     // that do something special get a card with what they do; the plain ones are small chips under them
     const big = groups.filter(g => g.what), small = groups.filter(g => !g.what);
     const nm = g => `${esc(g.name)}${g.n > 1 ? ' ×' + g.n : ''}`;
-    return `<div class="foes ${gau ? 'gau' : ''}"><div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
-      ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}" data-foe="${g.key}">${img(g.key, 34, 'por')}<div><b>${nm(g)}${g.ranged ? ' ' + I('bow') : ''}${g.elite ? ` <span class="elt">★ ${esc(g.elite)}</span>` : ''}</b><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div></div>`).join('')}</div>` : ''}
+    const filigreeCorner = (pos) => `<svg class="fili-corner fili-${pos}" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M0,0 L16,0 C12,0 8,4 8,8 C8,12 0,12 0,16 L0,0 Z" fill="none" stroke="#d4af37" stroke-width="1.2"/><circle cx="5" cy="5" r="1.5" fill="#fff3a1"/></svg>`;
+    const traitBadge = (g) => {
+      const k = g.key.toLowerCase(), w = (g.what || '').toLowerCase();
+      if (g.boss || g.elite || w.includes('shield')) return `<span class="foe-trait trait-shield" title="Shielded / Armored">🛡</span>`;
+      if (w.includes('curse') || w.includes('silence') || k.includes('hex')) return `<span class="foe-trait trait-curse" title="Arcane Curse">🔮</span>`;
+      if (w.includes('poison') || w.includes('venom')) return `<span class="foe-trait trait-poison" title="Poison">☠</span>`;
+      if (w.includes('leap') || w.includes('back') || g.ranged) return `<span class="foe-trait trait-daggers" title="Infiltrator / Piercing">⚔</span>`;
+      return `<span class="foe-trait trait-star" title="Elite Enemy">★</span>`;
+    };
+    return `<div class="foes ${gau ? 'gau' : ''}">
+      ${filigreeCorner('tl')}${filigreeCorner('tr')}${filigreeCorner('bl')}${filigreeCorner('br')}
+      <div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
+      ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}" data-foe="${g.key}">
+        <div class="foe-bezel">${img(g.key, 44, 'por')}<span class="foe-subbadge">${g.ranged ? '🏹' : '⚔'}</span></div>
+        <div class="foe-info"><div class="foe-title"><b>${nm(g)}</b>${traitBadge(g)}${g.elite ? ` <span class="elt">★ ${esc(g.elite)}</span>` : ''}</div><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div>
+      </div>`).join('')}</div>` : ''}
       ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" data-foe="${g.key}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">★</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
   }
   // v62 (review #83, PC boy): a mini tutorial. 1) the first game: an animated "Try moving your hero" over the board on every deploy
@@ -1141,17 +1185,37 @@
     const f = run.cur;
     const map = Run.mapOf(run), need = Run.benched(run);
     if (introStage()) return `<section class="deploy intro"><div class="boardwrap"><canvas id="board"></canvas>${introStage() === 'move' ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Drag your hero to move it ⇉</div>' : ''}</div></section>`;   // v97 (review #179): only the battlefield
+    const wreathSVG = `<svg class="bhead-wreath" viewBox="0 0 24 24" aria-hidden="true"><path d="M4,18 C2,12 5,6 12,3 C11,8 7,13 4,18 Z M6,20 C10,19 16,14 18,8 C14,10 9,15 6,20 Z" fill="#ffd700" opacity="0.85"/></svg>`;
+    const ribbonHand = `<svg class="ribbon-hand" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,2 C10.9,2 10,2.9 10,4 L10,11 L9.2,10.2 C8.4,9.4 7.2,9.4 6.4,10.2 C5.6,11 5.6,12.2 6.4,13 L11.4,18 C12.2,18.8 13.3,19.2 14.4,19.2 L17.5,19.2 C19.4,19.2 21,17.6 21,15.7 L21,9 C21,7.9 20.1,7 19,7 C18.7,7 18.5,7.1 18.2,7.2 L18,7 C17.2,7 16.5,7.5 16.2,8.2 L16,8 C15.2,8 14.5,8.5 14.2,9.2 L14,4 C14,2.9 13.1,2 12,2 Z" fill="#fff" stroke="#9a6b13" stroke-width="1.2"/></svg>`;
+    const ribbonTailL = `<svg class="ribbon-tail tail-l" viewBox="0 0 20 36" aria-hidden="true"><polygon points="20,0 20,36 0,28 10,18 0,8" fill="#d48817"/><polygon points="20,0 20,36 12,18" fill="#9a6b13" opacity="0.65"/></svg>`;
+    const ribbonTailR = `<svg class="ribbon-tail tail-r" viewBox="0 0 20 36" aria-hidden="true"><polygon points="0,0 0,36 20,28 10,18 20,8" fill="#d48817"/><polygon points="0,0 0,36 8,18" fill="#734f0a" opacity="0.65"/></svg>`;
+    const depbanContent = need.length
+      ? `${need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`}`
+      : 'DRAG HEROES TO REPOSITION';
+
     return `<section class="deploy">
-      ${speedPills(false, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f.diff === 'boss' ? I('skull') + ' Boss fight' : I('swords') + ' ' + B.DIFF[f.diff].name + ' fight'}</div>
+      ${speedPills(false, 'dspeed')}<div class="bhead">${wreathSVG}<span class="bhead-title">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f.diff === 'boss' ? I('skull') + ' Boss fight' : I('swords') + ' ' + B.DIFF[f.diff].name + ' fight'}</span><span class="wreath-r">${wreathSVG}</span></div>
       ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
         : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
       ${benchHTML(need)}
       ${run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
-      <div class="boardwrap"><canvas id="board"></canvas><div class="depban${need.length ? ' need' : ''}" aria-hidden="true">${need.length ? I('shield') : '<span class="dbh">✋</span>'} ${need.length ? (need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`) : 'Drag heroes to reposition'}</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}</div>
+      <div class="boardwrap">
+        <canvas id="board"></canvas>
+        <svg class="deploy-fx-overlay" id="deployFxOverlay" aria-hidden="true"></svg>
+        <div class="depban-ribbon-wrap" aria-hidden="true">
+          ${ribbonTailL}
+          <div class="depban ${need.length ? 'need' : ''}">
+            ${need.length ? I('shield') : ribbonHand}
+            <span class="depban-text">${depbanContent}</span>
+          </div>
+          ${ribbonTailR}
+        </div>
+        ${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}
+      </div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
       ${deployLeftHTML()}
-      <div class="bar sticky"><button class="primary big${need.length ? ' locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}>${need.length ? `<span aria-hidden="true">🔒</span> ${need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`}` : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>
+      <div class="bar sticky"><button class="fight-gold-btn ${need.length ? 'locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}><span class="fight-sparks"></span><span class="fight-lbl">${need.length ? (need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`) : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</span></button></div>
       <div class="dparty">${deployPartyHTML()}</div>
     </section>`;
   }
@@ -1922,7 +1986,12 @@
       ui.drag.lastSnapped = h;
       try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
     }
-    drawPreview({ drop: ok ? h : null, dragGhost: { x, y, key: ui.drag.key }, swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null });
+    drawPreview({
+      drop: ok ? h : null,
+      dragFrom: ui.drag ? ui.drag.from : null,
+      dragGhost: { x, y, key: ui.drag.key },
+      swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null
+    });
   }
   // review #39: a hero can't be placed on a tree, boulder, ridge or pond
   function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) sfx('deny'); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }

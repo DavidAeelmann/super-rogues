@@ -55,6 +55,29 @@
     return out;
   }
   function path(ctx, pts) { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); }
+
+  // Elder Futhark Rune glyphs for runic deployment tiles
+  function drawRuneGlyph(ctx, cx, cy, sz, rot = 0) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (rot) ctx.rotate(rot);
+    ctx.beginPath();
+    // Algiz / protection rune geometry
+    ctx.moveTo(0, sz * 0.55);
+    ctx.lineTo(0, -sz * 0.55);
+    ctx.moveTo(-sz * 0.45, -sz * 0.45);
+    ctx.lineTo(0, -sz * 0.15);
+    ctx.moveTo(sz * 0.45, -sz * 0.45);
+    ctx.lineTo(0, -sz * 0.15);
+    // Ingwaz / Diamond diamond accent
+    ctx.moveTo(0, sz * 0.1);
+    ctx.lineTo(sz * 0.25, sz * 0.3);
+    ctx.lineTo(0, sz * 0.5);
+    ctx.lineTo(-sz * 0.25, sz * 0.3);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
   // WHAT: which hex is under a screen point (for taps and drags). Returns { c, r } or null.
   function hexAt(v, x, y, pad = 1.0) {
     let best = null, bd = 1e9;
@@ -109,9 +132,16 @@
       return (c + r) % 2 ? `hsla(268,30%,${17 + n * 4}%,${desk ? 0.88 : 1})` : `hsla(38,34%,${18 + n * 4}%,${desk ? 0.88 : 1})`;
     }
     if (desk) {
-      // Desktop sanctuary glade: warm mossy earth and sunlit grass that blends into the surrounding clearing
-      if (o.deploy) return r >= 4 ? `hsla(84,48%,${44 + n * 6}%,0.76)` : `hsla(14,42%,${38 + n * 5}%,0.68)`;
-      return (c + r) % 2 ? `hsla(96,38%,${42 + n * 5}%,0.72)` : `hsla(88,42%,${46 + n * 5}%,0.76)`;
+      // 3D Isometric Fantasy Glade: rich friendly grass vs rugged enemy dirt
+      if (o.deploy) {
+        if (r >= 4) {
+          const l1 = Math.round(52 + n * 6), l2 = Math.round(38 + n * 5);
+          return `hsl(98, 48%, ${l1}%)`;
+        }
+        const dl1 = Math.round(44 + n * 5);
+        return `hsl(28, 28%, ${dl1}%)`;
+      }
+      return (c + r) % 2 ? `hsl(98, 44%, ${46 + n * 5}%)` : `hsl(92, 48%, ${50 + n * 5}%)`;
     }
     // v29 (owner: "more child friendly"): a sunny meadow; while deploying, your rows glow sky blue and theirs soft red
     if (o.deploy) return r >= 4 ? `hsl(205,62%,${58 + n * 5}%)` : `hsl(4,58%,${63 + n * 4}%)`;
@@ -155,52 +185,134 @@
   }
   // WHAT: paints every tile of the board (side faces, top, grit, bevel) onto v.ctx. Called by drawBoard only when the cached picture is stale.
   function paintTiles(v, o, tk) {
-    const { ctx, size, desk } = v, th = v.slab;
+    const { ctx, size, desk } = v, th = desk ? 10 : v.slab;
+    // 1. Board Drop Shadow: Render a blurred dark polygon offset 14px below the entire hex grid perimeter
+    if (desk) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 14;
+      ctx.beginPath();
+      for (let r = 0; r < Hx.ROWS; r++) {
+        for (let c = 0; c < Hx.COLS; c++) {
+          const bp = corners(v, c, r, size * 0.98);
+          bp.forEach((p, idx) => {
+            if (idx === 0 && r === 0 && c === 0) ctx.moveTo(p.x, p.y + 14);
+            else ctx.lineTo(p.x, p.y + 14);
+          });
+        }
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
     for (let r = 0; r < Hx.ROWS; r++) for (let c = 0; c < Hx.COLS; c++) {
       const pts = corners(v, c, r, size * (desk ? 0.96 : 0.985));
-      // side faces of the two lower edges (hidden by the next row except at the board's edge; on desktop the hexes lie flush on the glade floor)
-      if (!desk) {
+      const isTerr = !!tk[Hx.key(c, r)];
+      const friendly = r >= 4;
+
+      // 3D Side-Wall Extrusion (depth = 10px on desktop):
+      // Left-Bottom Face [0, 1], Center-Bottom Face [1, 2], Right-Bottom Face [2, 3]
+      if (desk) {
+        const leftFace = isTerr ? '#3d424b' : friendly ? '#3b6329' : '#59402b';
+        const centerFace = isTerr ? '#31353c' : friendly ? '#2d4d1e' : '#422f1f';
+        const rightFace = isTerr ? '#26292f' : friendly ? '#223b16' : '#302216';
+        const faceColors = [leftFace, centerFace, rightFace];
+        for (let fi = 0; fi < 3; fi++) {
+          const [i, j] = [[0, 1], [1, 2], [2, 3]][fi];
+          ctx.fillStyle = faceColors[fi];
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.lineTo(pts[j].x, pts[j].y + th);
+          ctx.lineTo(pts[i].x, pts[i].y + th);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else {
         for (const [i, j] of [[0, 1], [1, 2], [2, 3]]) {
           ctx.fillStyle = royal() ? (i === 1 ? '#1c1206' : i === 0 ? '#3a2a10' : '#2a1d0a') : i === 1 ? '#6b4524' : i === 0 ? '#8a5a2e' : '#7a4f28';
           ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.lineTo(pts[j].x, pts[j].y + th); ctx.lineTo(pts[i].x, pts[i].y + th); ctx.closePath(); ctx.fill();
         }
       }
+
       const top = corners(v, c, r, size * (desk ? 0.93 : 0.94));
       path(ctx, top);
       const drop = o.drop && o.drop.c === c && o.drop.r === r;
-      const isTerr = !!tk[Hx.key(c, r)];
       // review #39: terrain hexes keep the meadow colour while deploying (nobody can be placed there)
-      ctx.fillStyle = drop ? '#ffe066' : tileColor(c, r, isTerr ? {} : o, desk); ctx.fill();
+      if (desk && !isTerr && !drop && o.deploy) {
+        // Gradient shading on top hex face
+        const pCen = hexScreen(v, c, r);
+        const topGrad = ctx.createLinearGradient(pCen.x, pCen.y - size * 0.5, pCen.x, pCen.y + size * 0.5);
+        if (friendly) {
+          topGrad.addColorStop(0, '#7cb342');
+          topGrad.addColorStop(1, '#558b2f');
+        } else {
+          topGrad.addColorStop(0, '#8d6e63');
+          topGrad.addColorStop(1, '#6d4c41');
+        }
+        ctx.fillStyle = topGrad;
+      } else {
+        ctx.fillStyle = drop ? '#ffe066' : tileColor(c, r, isTerr ? {} : o, desk);
+      }
+      ctx.fill();
       if (v.grit) { ctx.globalAlpha = royal() ? 0.9 : desk ? 0.25 : 0.35; ctx.fillStyle = v.grit; ctx.fill(); ctx.globalAlpha = 1; }
+
       if (desk) {
-        // Subtle 3D bevel / thickness along the bottom edge of hexes
+        // 1.5px inner top highlight
         ctx.save();
-        ctx.lineWidth = 2;
-        // Bottom edge bevel (shadow)
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = friendly ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.16)';
+        ctx.beginPath();
+        ctx.moveTo(top[4].x, top[4].y);
+        ctx.lineTo(top[5].x, top[5].y);
+        ctx.lineTo(top[0].x, top[0].y);
+        ctx.stroke();
+
+        // Bottom edge shadow
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
         ctx.beginPath();
         ctx.moveTo(top[1].x, top[1].y);
         ctx.lineTo(top[2].x, top[2].y);
         ctx.lineTo(top[3].x, top[3].y);
         ctx.stroke();
-        // Top edge highlight (rim light)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
-        ctx.beginPath();
-        ctx.moveTo(top[4].x, top[4].y);
-        ctx.lineTo(top[5].x, top[5].y);
-        ctx.lineTo(top[0].x, top[0].y);
-        ctx.stroke();
         ctx.restore();
 
-        // Guild Run-style organic glowing hex outlines on the clearing floor
-        path(ctx, top);
-        const dragActive = o.dragActive || o.dragging;
-        ctx.lineWidth = o.deploy && !isTerr ? (r >= 4 ? (dragActive ? 2.5 : 1.8) : 1.3) : 1.1;
-        ctx.strokeStyle = drop ? '#ffffff' : royal() ? 'rgba(255,207,90,0.42)' : o.deploy && !isTerr ? (r >= 4 ? (dragActive ? 'rgba(95, 208, 255, 0.85)' : 'rgba(218, 245, 130, 0.72)') : 'rgba(255, 145, 125, 0.45)') : 'rgba(210, 238, 150, 0.34)';
-        ctx.stroke();
-        if (o.deploy && !isTerr && r >= 4 && dragActive) {
-          ctx.fillStyle = 'rgba(95, 208, 255, 0.08)';
+        // Glowing Runic Deployment Hexes on valid friendly player half
+        if (o.deploy && friendly && !isTerr) {
+          ctx.save();
+          // Interior radial glow
+          const pCen = hexScreen(v, c, r);
+          const radGlow = ctx.createRadialGradient(pCen.x, pCen.y, 0, pCen.x, pCen.y, size * 0.7);
+          radGlow.addColorStop(0, 'rgba(46, 204, 113, 0.38)');
+          radGlow.addColorStop(0.7, 'rgba(0, 255, 170, 0.12)');
+          radGlow.addColorStop(1, 'rgba(0, 255, 170, 0)');
+          ctx.fillStyle = radGlow;
+          path(ctx, top);
           ctx.fill();
+
+          // Glowing inner hex border
+          ctx.strokeStyle = '#00ffaa';
+          ctx.lineWidth = 2.4;
+          ctx.shadowColor = '#00ff88';
+          ctx.shadowBlur = 8;
+          path(ctx, top);
+          ctx.stroke();
+
+          // Elder Futhark Rune glyph in center
+          ctx.strokeStyle = '#a8ffdb';
+          ctx.lineWidth = 1.8;
+          ctx.shadowColor = '#00ffaa';
+          ctx.shadowBlur = 6;
+          drawRuneGlyph(ctx, pCen.x, pCen.y, size * 0.28, (c * 0.5) % 3.14);
+          ctx.restore();
+        } else {
+          path(ctx, top);
+          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = drop ? '#ffffff' : 'rgba(255, 255, 255, 0.15)';
+          ctx.stroke();
         }
       } else {
         // bevel: lit upper-left edges, shaded lower-right edges
@@ -375,18 +487,20 @@
     ctx.globalAlpha = Math.max(0, alpha);
     // selection / side ring on the ground
     const hero = u.side === 0;
-    // Ground drop shadow underneath every unit on the hex grid
+    // Contact Shadows: dark elliptical shadow (width: 75% of hex width, height: 24%)
     if (!u.dead) {
       ctx.save();
-      ctx.translate(p.x, p.y + size * 0.12);
-      ctx.scale(1, K * 0.45);
-      const shG = ctx.createRadialGradient(0, 0, 0, 0, 0, S * 0.52);
-      shG.addColorStop(0, 'rgba(0, 0, 0, 0.42)');
-      shG.addColorStop(0.7, 'rgba(0, 0, 0, 0.18)');
+      ctx.translate(p.x, p.y + size * 0.14);
+      const shW = size * 1.5 * 0.75;
+      const shH = shW * 0.24;
+      const shG = ctx.createRadialGradient(0, 0, 0, 0, 0, shW * 0.5);
+      shG.addColorStop(0, 'rgba(0, 0, 0, 0.65)');
+      shG.addColorStop(0.7, 'rgba(0, 0, 0, 0.22)');
       shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = shG;
       ctx.beginPath();
-      ctx.arc(0, 0, S * 0.52, 0, Math.PI * 2);
+      ctx.scale(1, shH / shW);
+      ctx.arc(0, 0, shW * 0.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
@@ -428,11 +542,12 @@
     if (u.dead || u.plant) return;   // v62h: a plant has no health bar (nothing can hurt it)
     // bars above the head
     const headTop = p.y - S * (u.boss ? 1.75 : 1.5), bw = Math.max(S * 0.95, size * 1.1), bx = p.x - bw / 2, by = headTop - 11;
-    const bh = 5.5;
+    const bh = 8;
     const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, Math.max(0, w), h, r); else ctx.rect(x, y, Math.max(0, w), h); };
-    // Outer frame & drop shadow
-    ctx.fillStyle = '#050711cc'; rr(bx - 2, by - 2, bw + 4, bh + 4, 3.5); ctx.fill();
-    ctx.fillStyle = hero ? '#194294' : '#7a1428'; rr(bx - 1.2, by - 1.2, bw + 2.4, bh + 2.4, 3); ctx.fill();   // the bar's frame in the side's colour
+    // Beveled Unit Health Bars: height 8px, border 1px solid #111, outer gold/dark rim with glossy top half-highlight
+    ctx.fillStyle = '#050711ee'; rr(bx - 2, by - 2, bw + 4, bh + 4, 4); ctx.fill();
+    ctx.strokeStyle = '#111111'; ctx.lineWidth = 1; rr(bx - 2, by - 2, bw + 4, bh + 4, 4); ctx.stroke();
+    ctx.fillStyle = hero ? '#d4af37' : '#7a1428'; rr(bx - 1.2, by - 1.2, bw + 2.4, bh + 2.4, 3); ctx.fill();   // outer metallic gold/ruby rim
     ctx.fillStyle = '#0a0d18'; rr(bx, by, bw, bh, 2.5); ctx.fill();
     // Ghost bar trail (white damage chip indicator catching down)
     if (d && d.trail > u.hp) {
@@ -447,10 +562,13 @@
     hg.addColorStop(1, hero ? '#2da84a' : '#bd2435');
     const curW = bw * Math.max(0, u.hp / u.maxHp);
     ctx.fillStyle = hg; rr(bx, by, curW, bh, 2.5); ctx.fill();
-    // 1px glossy highlight along top of HP bar
+    // Glossy top half-highlight
     if (curW > 3) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-      rr(bx + 1, by + 0.6, curW - 2, 1.3, 0.8);
+      const topHg = ctx.createLinearGradient(0, by, 0, by + bh * 0.5);
+      topHg.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
+      topHg.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = topHg;
+      rr(bx + 1, by + 0.6, curW - 2, bh * 0.5, 1);
       ctx.fill();
     }
     // Shield overlay
@@ -640,6 +758,48 @@
     for (const x of (W.terrain || [])) if (x.k !== 'pond') us.push({ x, p: hexScreen(v, x.c, x.r), fade: x.k !== 'rock' && W.units.some(u => !u.dead && u.r === x.r - 1 && Hx.dist(u, x) === 1) });
     us.sort((a, b) => a.p.y - b.p.y);
     for (const e of us) if (e.x) drawTerrain(v, e.x, e.fade); else drawUnit(v, W, e.u, e.p, T, o, dt);
+
+    // Ambient combat auras around key units: animated fire/smoke for Ember Wyrm, arcane purple orbs for Hexer
+    for (const item of us) {
+      if (item.u && !item.u.dead) {
+        const u = item.u, up = item.p, uk = (u.key || '').toLowerCase();
+        if (uk.includes('wyrm') || uk.includes('ember') || uk.includes('dragon')) {
+          ctx.save();
+          const flameCount = 5;
+          for (let fi = 0; fi < flameCount; fi++) {
+            const fPhase = (now * 3 + fi * (6.28 / flameCount)) % 6.28;
+            const fx = up.x + Math.cos(fPhase) * size * 0.45;
+            const fy = up.y - size * 0.4 + Math.sin(fPhase * 2) * size * 0.22 - ((now * 24 + fi * 8) % 18);
+            const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, size * 0.22);
+            fg.addColorStop(0, 'rgba(255, 235, 120, 0.85)');
+            fg.addColorStop(0.4, 'rgba(255, 90, 20, 0.65)');
+            fg.addColorStop(1, 'rgba(180, 20, 0, 0)');
+            ctx.fillStyle = fg;
+            ctx.beginPath();
+            ctx.arc(fx, fy, size * 0.22, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        } else if (uk.includes('hex') || uk.includes('curse') || uk.includes('witch') || uk.includes('cultist')) {
+          ctx.save();
+          const orbCount = 3;
+          for (let oi = 0; oi < orbCount; oi++) {
+            const oPhase = now * 2.2 + oi * (6.28 / orbCount);
+            const ox = up.x + Math.cos(oPhase) * size * 0.52;
+            const oy = up.y - size * 0.5 + Math.sin(oPhase) * size * 0.26;
+            const og = ctx.createRadialGradient(ox, oy, 0, ox, oy, size * 0.16);
+            og.addColorStop(0, 'rgba(230, 180, 255, 0.95)');
+            og.addColorStop(0.5, 'rgba(155, 89, 182, 0.7)');
+            og.addColorStop(1, 'rgba(100, 20, 160, 0)');
+            ctx.fillStyle = og;
+            ctx.beginPath();
+            ctx.arc(ox, oy, size * 0.16, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+    }
     // v60 (review #72): Prism's beams, a glowing line to each unit it heals (green) or burns (cyan), thicker when overcharged
     for (const u of W.units) if (!u.dead && u.beams && u.beams.length) {
       const a0 = unitPos(v, W, u, T), ax = a0.x, ay = a0.y - size * 0.95;
@@ -746,6 +906,63 @@
       const g = o.dragGhost, art = B.Art && B.Art.sprite(g.key); ctx.globalAlpha = 0.65;
       if (art) B.Art.draw(ctx, art, g.x, g.y + size * 0.5, size * 1.3, { t: T / 20, face: 1 }); else B.Models.draw(ctx, g.key, g.x, g.y + size * 0.5, size * 1.3, { t: T / 20, face: 1 });
       ctx.globalAlpha = 1;
+
+      // Parabolic Drag-and-Drop Trajectory Arc: M x1 y1 Q ((x1+x2)/2) (min(y1,y2)-70) x2 y2
+      if (o.drop && o.dragFrom) {
+        const p1 = hexScreen(v, o.dragFrom.c, o.dragFrom.r);
+        const p2 = hexScreen(v, o.drop.c, o.drop.r);
+        const cpX = (p1.x + p2.x) / 2;
+        const cpY = Math.min(p1.y, p2.y) - 70;
+
+        ctx.save();
+        // Layer 1 (Glow): stroke #00ffcc, width 8px, blur 6px, opacity 0.6
+        ctx.strokeStyle = '#00ffcc';
+        ctx.lineWidth = 8;
+        ctx.shadowColor = '#00ffcc';
+        ctx.shadowBlur = 8;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y - size * 0.3);
+        ctx.quadraticCurveTo(cpX, cpY, p2.x, p2.y - size * 0.3);
+        ctx.stroke();
+
+        // Layer 2 (Core Dashed Trail): stroke #ffffff, width 4px, dash 12 10, animated towards target
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.globalAlpha = 0.95;
+        ctx.setLineDash([12, 10]);
+        ctx.lineDashOffset = -now * 44;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y - size * 0.3);
+        ctx.quadraticCurveTo(cpX, cpY, p2.x, p2.y - size * 0.3);
+        ctx.stroke();
+
+        // Translucent cyan landing ring at (x2, y2) with upward floating spark particles
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#00ffcc';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.15)';
+        ctx.beginPath();
+        ctx.ellipse(p2.x, p2.y, size * 0.6, size * 0.6 * K * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Upward floating spark particles at target
+        for (let sp = 0; sp < 4; sp++) {
+          const spPh = (now * 3 + sp * 1.5) % 3;
+          const spX = p2.x + Math.sin(now * 4 + sp) * size * 0.3;
+          const spY = p2.y - spPh * size * 0.25;
+          ctx.fillStyle = '#a8ffdb';
+          ctx.globalAlpha = Math.max(0, 1 - spPh / 3);
+          ctx.beginPath();
+          ctx.arc(spX, spY, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
     }
   }
 
