@@ -16,7 +16,7 @@
 
   // WHAT: sizes the canvas for a given width and returns the "view" v every draw call needs (size of a hex, offsets, pixel ratio).
   function setup(canvas, cssW) {
-    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk') && canvas && canvas.id === 'board';
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk') && canvas && (canvas.id === 'board' || canvas.id === 'bgboard' || canvas.id === 'trailer');
     const size = cssW / (Math.sqrt(3) * (Hx.COLS + (desk ? 4.4 : 0.5)));
     const flat = Hx.boardSize(size), top = size * (desk ? 3.25 : 2.4), slab = size * 0.45, padX = desk ? (cssW - flat.w) / 2 : 0;
     const w = desk ? cssW : flat.w, h = top + flat.h * K + slab + (desk ? size * 1.45 : 4);

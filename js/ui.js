@@ -433,6 +433,7 @@
     if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && run.overStep === 2 && !run.xpShown) animXp2();   // v68 (review #141)
     if (screen === 'title' || !run) startTrailer();
     autoGear();
+    mountBgBoard();
     guide();   // v80 (review #158)
   }
   // WHAT: a short name for "which screen is this" (phase + step + status). render() compares it with the previous one to know the screen really changed.
@@ -1649,6 +1650,55 @@
     return Math.floor(Math.min(wrap.clientWidth || vw - 16, byHeight, maxW));
   }
   // WHAT: creates the board canvas view and its pointer listeners after a screen with a board was drawn.
+  let bgView = null, bgPreview = null;
+  function bgWorldFor() {
+    if (!run) return null;
+    const raw = (run.heroes && run.heroes.length) ? run.heroes : (ui.startPick && ui.startPick.length) ? ui.startPick.map((k, i) => ({ uid: i + 1, key: k, lvl: 1, xp: 0, specs: [], items: [], bonus: {} })) : (run.startOffer || []).slice(0, 3).map((k, i) => ({ uid: i + 1, key: k, lvl: 1, xp: 0, specs: [], items: [], bonus: {} }));
+    // Place heroes on outer flanking hexes (c=0 on odd rows, c=7 on even rows) so they stand visibly on both sides of centered overlays
+    const slots = [[0, 5], [7, 4], [0, 3], [7, 6], [0, 7], [7, 2], [1, 4], [6, 5]], taken = new Set();
+    const heroes = raw.map((h, idx) => {
+      let [c, r] = slots[idx % slots.length];
+      if (taken.has(c + ',' + r)) {
+        for (const [cc, rr] of slots) if (!taken.has(cc + ',' + rr)) { c = cc; r = rr; break; }
+      }
+      taken.add(c + ',' + r);
+      return { def: Run.heroDef(run, h), c, r };
+    });
+    const m = Run.mapOf(run);
+    return Sim.create({
+      terrain: m ? m.cells : [],
+      mode: 'fight', seed: 1, noStart: true, fightNo: Math.max(1, run.fightNo || 1), relics: run.relics || [],
+      heroes, enemies: []
+    });
+  }
+  function drawBgPreview(now) {
+    if (bgView && bgPreview) Render.draw(bgView, bgPreview, (now || performance.now()) / 50, { deploy: false, mute: true });
+  }
+  function mountBgBoard() {
+    const desk = document.body.classList.contains('desk');
+    const needBg = desk && run && screen !== 'title' && screen !== 'battle' && !(screen === 'run' && run.phase === 'deploy');
+    let st = $('#bgstage');
+    if (!needBg) {
+      if (st) st.hidden = true;
+      return;
+    }
+    if (!st) {
+      st = document.createElement('div');
+      st.id = 'bgstage';
+      st.setAttribute('aria-hidden', 'true');
+      st.innerHTML = '<canvas id="bgboard"></canvas>';
+      const app = $('#app'), scr = $('#screen');
+      if (app && scr) app.insertBefore(st, scr);
+    }
+    st.hidden = false;
+    const cv = $('#bgboard');
+    if (cv) {
+      const w = boardWidth(st);
+      if (!bgView || bgView.canvas !== cv || bgView.w !== w) bgView = Render.setup(cv, w);
+      bgPreview = bgWorldFor();
+      drawBgPreview();
+    }
+  }
   function mountBoard() {
     const cv = $('#board'); if (!cv) return;
     const wrap = cv.parentElement;
@@ -1746,7 +1796,13 @@
   }
   // v62b: the deploy board only breathes (idle poses, pond ripples), so it repaints about 30 times a second instead of every screen frame
   let idleAt = 0;
-  (function idle(now) { if (now - idleAt >= 30 && screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag && !ui.bdrag && !document.hidden) { idleAt = now; drawPreview(); } requestAnimationFrame(idle); })(0);
+  (function idle(now) {
+    if (now - idleAt >= 32 && !document.hidden) {
+      if (screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag && !ui.bdrag) { idleAt = now; drawPreview(); }
+      else if (bgView && bgPreview && !battle) { const st = document.getElementById('bgstage'); if (st && !st.hidden) { idleAt = now; drawBgPreview(now); } }
+    }
+    requestAnimationFrame(idle);
+  })(0);
   // WHAT: converts a pointer event into a board hex (c, r).
   function evHex(e, pad = 1.0) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y, pad) }; }
   function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
@@ -2832,7 +2888,7 @@
   B.Art.onChange(() => { if (screen === 'battle' || ui.modal || ui.drag) return; clearTimeout(ui.artH); ui.artH = setTimeout(() => { if (screen !== 'battle' && !ui.modal && !ui.drag) render(); }, 80); });
   B.Art.boot();
   // WHAT: after a change inside a sheet, redraws the top bar and the board behind it.
-  function refreshBehind() { header(); if (run && run.phase === 'deploy' && screen !== 'battle') { preview = worldFor(true); drawPreview(); } }
+  function refreshBehind() { header(); if (run && run.phase === 'deploy' && screen !== 'battle') { preview = worldFor(true); drawPreview(); } else if (run && screen !== 'battle') mountBgBoard(); }
 
   // v42: every tap has a sound; these actions have their own (null = the action plays it, it depends on the outcome)
   // WHAT: which sound each button makes (null = silent).
@@ -2961,6 +3017,7 @@
       const was = document.body.className; layoutClasses();
       if (!battle && was !== document.body.className && !ui.modal) { render(); return; }
       const cv = $('#board'); if (cv) { view = Render.setup(cv, boardWidth(cv.parentElement)); drawPreview(); }
+      mountBgBoard();
       trailer.cv = null;   // v49: the trailer sizes itself again on its next frame
       const wm = $('#wmap'); if (wm) layoutMap({ key: wm.dataset.key, top: wm.scrollTop });   // v65: the road fits the new screen
     }, 120);
