@@ -811,7 +811,54 @@
     return `<section class="map road"><div class="mapmain">${mapRoad()}${mstripHTML()}</div><aside class="mapside">${partyHTML()}</aside></section>`;
   }
   // review #18: the party under the map (levels, XP, worn items, relics) and the next boss, so each choice is informed
-  // WHAT: the party row (hero portraits with levels and items) shown under the deploy board and on the map.
+  // WHAT: deploy powers column and unequipped items bag dock on desktop deploy screen
+  function deployLeftHTML() {
+    if (!run) return '';
+    const relics = (run.relics || []).filter(id => RELIC[id]).map(id => {
+      const r = RELIC[id];
+      const tip = esc(r.name + ': ' + (r.desc || r.short || ''));
+      return `<button class="relicbtn" data-act="relic-info" data-arg="${id}" data-tip="${tip}" aria-label="${esc(r.name)}"><img class="ico sm" src="${B.Icons.relic(id, 26)}" alt=""></button>`;
+    }).join('');
+    const bagItems = (run.bag || []).map((id, i) => {
+      const it = ITEM[id];
+      if (!it) return '';
+      const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
+      return `<button class="ditem eqitem" data-drag="b:${i}" data-drop="bag" data-tip="${tip}" data-act="team" aria-label="${esc(it.name)}"><img class="ico" src="${B.Icons.item(id, 24)}" alt=""></button>`;
+    }).join('');
+    return `<div class="dleft-dock">
+      ${relics ? `<div class="dpowers-col"><div class="dl-title">POWERS</div><div class="dl-list">${relics}</div></div>` : ''}
+      <div class="dbag-col" data-drop="bag"><div class="dl-title">BAG (${run.bag.length})</div><div class="dl-grid">${bagItems || '<span class="dim small">Empty</span>'}</div></div>
+    </div>`;
+  }
+  // WHAT: deploy hero slots: only splash arts and equipped items next to each hero, no container box
+  function deployPartyHTML() {
+    if (!run || !run.heroes) return '';
+    const heroes = run.heroes.map(h => {
+      const d = HEROES[h.key] || {};
+      const maxS = Run.slots(run, h);
+      const socks = [];
+      for (let j = 0; j < maxS; j++) {
+        const id = h.items[j];
+        if (id && ITEM[id]) {
+          const it = ITEM[id];
+          const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
+          socks.push(`<button class="dsock filled" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" data-act="team" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></button>`);
+        } else {
+          socks.push(`<div class="dsock empty" data-drop="hero:${h.uid}" title="Empty equipment slot"></div>`);
+        }
+      }
+      return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
+        <button class="por-btn" data-act="team" aria-label="${esc(d.name)}">${img(h.key, 46, 'por')}<span class="dplv">Lv ${h.lvl}</span></button>
+        <div class="pmb">
+          <div class="pmn"><b>${esc(d.name || h.key)}</b></div>
+          <div class="pmi">${socks.join('')}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="pgrid">${heroes}</div>`;
+  }
+
+  // WHAT: the party row (hero portraits with levels and items) shown on the map screen.
   function partyHTML() {
     const heroes = run.heroes.map(h => {
       const next = h.lvl < CFG.maxLevel ? CFG.xpLevels[h.lvl + 1] : null, prev = CFG.xpLevels[h.lvl] || 0;
@@ -1086,8 +1133,9 @@
       <div class="boardwrap"><canvas id="board"></canvas><div class="depban${need.length ? ' need' : ''}" aria-hidden="true">${need.length ? I('shield') : '<span class="dbh">✋</span>'} ${need.length ? (need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`) : 'Drag heroes to reposition'}</div>${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}</div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
+      ${deployLeftHTML()}
       <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big${need.length ? ' locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}>${need.length ? `<span aria-hidden="true">🔒</span> ${need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`}` : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>
-      <div class="dparty">${partyHTML()}</div>
+      <div class="dparty">${deployPartyHTML()}</div>
     </section>`;
   }
   // v44: what a challenge pays
@@ -2212,11 +2260,11 @@
   function gearAuto() { return Run.autoEquip(run); }
 
   // drag and drop with the pointer (mouse and touch): a ghost follows the finger, drop targets glow
-  // WHAT: drag and drop on the Items screen with a pointer (mouse and touch): gearDown starts, gearMove shows the ghost and glows drop targets, gearUp drops.
+  // WHAT: drag and drop on the Items screen or Deploy screen with a pointer (mouse and touch): gearDown starts, gearMove shows the ghost and glows drop targets, gearUp drops.
   const gdrag = { on: false };
   function gearDown(e) {
     ui.gNoClick = 0;   // a new touch: an old drop no longer eats taps
-    const src = e.target.closest('#modal [data-drag]'); if (!src || e.button > 0) return;
+    const src = e.target.closest('[data-drag]'); if (!src || e.button > 0) return;
     Object.assign(gdrag, { src, x: e.clientX, y: e.clientY, on: false, id: e.pointerId, ghost: null });
   }
   function gearMove(e) {
@@ -2229,30 +2277,32 @@
     e.preventDefault();
     gdrag.ghost.style.left = e.clientX + 'px'; gdrag.ghost.style.top = e.clientY + 'px';
     const t = document.elementFromPoint(e.clientX, e.clientY), drop = t && t.closest('[data-drop]');
-    for (const x of document.querySelectorAll('#modal .dropover')) if (x !== drop) x.classList.remove('dropover');
+    for (const x of document.querySelectorAll('.dropover')) if (x !== drop) x.classList.remove('dropover');
     if (drop) drop.classList.add('dropover');
   }
   function gearUp(e) {
     if (!gdrag.src || e.pointerId !== gdrag.id) return;
     const was = gdrag.on, src = gdrag.src.dataset.drag; gdrag.src.classList.remove('lifted');
     if (gdrag.ghost) gdrag.ghost.remove(); document.body.classList.remove('gdragging'); gdrag.src = null; gdrag.on = false;
-    for (const x of document.querySelectorAll('#modal .dropover')) x.classList.remove('dropover');
+    for (const x of document.querySelectorAll('.dropover')) x.classList.remove('dropover');
     if (!was) return;
     ui.gNoClick = performance.now();
     const t = document.elementFromPoint(e.clientX, e.clientY), drop = t && t.closest('[data-drop]'); if (!drop) return;
     const [dk, da, db] = drop.dataset.drop.split(':'), [sk, sa, sb] = src.split(':');
-    if (dk === 'bag' && sk === 'w') gearDo(() => { Run.unequip(run, +sa, +sb); sfx('back'); }, +sa);
-    else if ((dk === 'hero' || dk === 'sock') && sk === 'b') { const id = run.bag[+sa]; gearDo(() => ({ sock: gearPut(+sa, +da, dk === 'sock' ? +db : null), id }), +da); }
+    const inDeploy = !ui.modal && run && run.phase === 'deploy';
+    const postDo = () => { if (inDeploy) render(); };
+    if (dk === 'bag' && sk === 'w') { gearDo(() => { Run.unequip(run, +sa, +sb); sfx('back'); }, +sa); postDo(); }
+    else if ((dk === 'hero' || dk === 'sock') && sk === 'b') { const id = run.bag[+sa]; gearDo(() => ({ sock: gearPut(+sa, +da, dk === 'sock' ? +db : null), id }), +da); postDo(); }
     else if ((dk === 'hero' || dk === 'sock') && sk === 'w' && +da !== +sa) {
       const from = run.heroes.find(x => x.uid === +sa), id = from && from.items[+sb];
-      if (id) gearDo(() => { Run.unequip(run, +sa, +sb); return { sock: gearPut(run.bag.length - 1, +da, dk === 'sock' ? +db : null), id }; }, +da);
+      if (id) { gearDo(() => { Run.unequip(run, +sa, +sb); return { sock: gearPut(run.bag.length - 1, +da, dk === 'sock' ? +db : null), id }; }, +da); postDo(); }
     }
   }
   document.addEventListener('pointerdown', gearDown);
   document.addEventListener('pointermove', gearMove, { passive: false });
   document.addEventListener('pointerup', gearUp); document.addEventListener('pointercancel', gearUp);
   // a drag ends with a click on what was under the finger: that click is not a tap
-  document.addEventListener('click', e => { if (ui.gNoClick && performance.now() - ui.gNoClick < 250 && e.target.closest('#modal')) { e.stopPropagation(); e.preventDefault(); ui.gNoClick = 0; } }, true);
+  document.addEventListener('click', e => { if (ui.gNoClick && performance.now() - ui.gNoClick < 250 && e.target.closest('#modal, [data-drag]')) { e.stopPropagation(); e.preventDefault(); ui.gNoClick = 0; } }, true);
 
   // review #19 (David: "include ability to read hero ability in item screen"): the hero card on top of the team sheet
   // v51 (review #63): a hero's Details from the shop or the start: the picture, what it does in plain words, the whole

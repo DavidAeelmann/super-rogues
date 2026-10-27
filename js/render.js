@@ -22,8 +22,10 @@
     const w = desk ? cssW : flat.w, h = top + flat.h * K + slab + (desk ? size * 1.45 : 4);
     // v77 (review #156, David: "unplayable on a computer, it lags a lot"): a big screen gets a big board, and its pixels are what a computer without a strong
     // graphics card pays for every frame. The board keeps at most PX_CAP pixels (a phone at 2x uses about 0.4 million), and maxDpr can go below 1
-    // (the battle loop lowers it when frames stay slow); the browser stretches the picture back to its size on screen
-    const dpr = Math.max(0.5, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1, Math.sqrt(PX_CAP / Math.max(1, w * h))));   // v62r: the battle loop lowers maxDpr by itself when a computer draws slowly   // v62b: 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
+    // (the battle loop lowers it when frames stay slow); the browser stretches the picture back to its size on screen.
+    // Desktop devices get full crisp resolution (capped at 2x DPR) for razor-sharp textures and typography.
+    const dpr = desk ? Math.max(1, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1))
+      : Math.max(0.5, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1, Math.sqrt(PX_CAP / Math.max(1, w * h))));   // v62r: the battle loop lowers maxDpr by itself when a computer draws slowly   // v62b: 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
