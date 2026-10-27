@@ -364,7 +364,7 @@
       // v49 (review #60): the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
       // the ladder, suggestions, and the menu sheet with the rest)
       const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
+      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
     if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
@@ -463,7 +463,13 @@
   // WHAT: the start page: the logo, the Play / Continue button, the trailer board, the bottom hub dock.
   function titleHTML() {
     const has = run && run.phase !== 'over' && run.phase !== 'start';
+    const canShop = (acct.crowns | 0) >= 30; // notification pip if crowns are available to spend
+    const hasRewards = (acct.axp | 0) > 0;
     return `<section class="title home">
+      <div class="menu-ambient" aria-hidden="true">
+        <span class="m-glow"></span>
+        <div class="m-particles">${[...Array(12)].map((_, i) => `<i class="m-dot m-dot-${i}"></i>`).join('')}</div>
+      </div>
       ${logoHTML()}
       <div class="stack">
         ${has ? `<button class="primary big cta" data-act="continue-run"><span>${I('play')} Continue</span><small>${run.phase === 'gauntlet' ? 'Final fight' : 'Day ' + (Math.max(0, run.step) + 1) + '/' + Run.pveSeq(run).length} · ${run.heroes.length} hero${run.heroes.length === 1 ? '' : 'es'} · ${run.gold} gold</small></button>
@@ -471,12 +477,12 @@
         : `<button class="primary big cta play" data-act="new-run">${I('play')} Play</button>`}
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
-      <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
+      <div class="trailer"><div class="trailer-corner tl"></div><div class="trailer-corner tr"></div><div class="trailer-corner bl"></div><div class="trailer-corner br"></div><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
       <span class="app-ver" aria-label="Game version">v0.1</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
-        <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b></a>
-        <a href="#" class="dockitem" data-act="shop">${I('crown')}<b>Shop</b></a>
+        <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
+        <a href="#" class="dockitem" data-act="shop">${I('crown')}<b>Shop</b>${canShop ? '<span class="pip red"></span>' : ''}</a>
         <a href="#" class="dockitem" data-act="scores">${I('trophy')}<b>Ranks</b></a>
       </nav>
     </section>`;
@@ -844,7 +850,7 @@
           const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
           socks.push(`<button class="dsock filled" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></button>`);
         } else {
-          socks.push(`<div class="dsock empty" data-drop="hero:${h.uid}" title="Drag item here to equip"></div>`);
+          socks.push(`<div class="dsock empty" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
         }
       }
       return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
@@ -1058,7 +1064,18 @@
     htip.el = b; htip.on = t; htip.at = performance.now();
   }
   function tipHide() { if (htip.el) htip.el.remove(); htip.el = null; htip.on = null; }
-  document.addEventListener('pointerover', e => { if (e.pointerType !== 'mouse') return; const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); else if (!t && htip.on) tipHide(); });
+  document.addEventListener('pointerover', e => {
+    if (e.pointerType !== 'mouse') return;
+    const t = e.target.closest && e.target.closest('[data-tip]');
+    if (t && t !== htip.on) tipShow(t);
+    else if (!t && htip.on) tipHide();
+    const foeEl = e.target.closest && e.target.closest('[data-foe]');
+    const foeKey = foeEl ? foeEl.dataset.foe : null;
+    if (foeKey !== ui.hoverFoe) {
+      ui.hoverFoe = foeKey;
+      if (screen === 'run' && run && run.phase === 'deploy' && !battle) drawPreview();
+    }
+  });
   document.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); else tipHide(); }, true);
   document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); });
   addEventListener('scroll', () => { if (htip.el && performance.now() - htip.at > 300) tipHide(); }, true); addEventListener('resize', tipHide);
@@ -1273,7 +1290,7 @@
       // the XP bar starts where it was before the fight (empty after a level up) and fills when the rewards play
       const w1 = next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100, w0 = x.to > x.from ? 0 : next ? Math.max(0, Math.round(100 * (h.xp - x.gained - prev) / (next - prev))) : 100;
       return `<div class="rh ${mvp ? 'mvp' : ''} ${st.alive ? '' : 'ko'}"><span class="rhp">${img(h.key, 46, 'por')}${st.alive ? '' : '<i class="kox">✝</i>'}</span><div class="rhb">
-        <div class="rhn"><b>${esc(x.name)}</b>${mvp ? `<span class="mvpb ${fx.done ? 'stamp' : 'wait'}">★ MVP</span>` : ''}<span class="grow"></span>${x.to > x.from ? `<b class="up ${fx.done ? 'on' : 'wait'}">Level up! Lv ${x.to}</b>` : `<span class="lv">Lv ${x.to}</span>`}</div>
+        <div class="rhn"><b>${esc(x.name)}</b>${mvp ? `<span class="mvpb ${fx.done ? 'stamp' : 'wait'}">★ MVP</span>` : ''}${x.to > x.from ? `<span class="badge-levelup ${fx.done ? 'on' : 'wait'}">LEVEL UP!</span>` : ''}<span class="grow"></span>${x.to > x.from ? `<span class="lv lv-trans">Lv ${x.from} → <b>Lv ${x.to}</b></span>` : `<span class="lv">Lv ${x.to}</span>`}</div>
         <div class="dmgbar"><s style="width:${100 * st.dmg / top}%"></s><em>⚔ ${kfmt(st.dmg)} · ${Math.round(100 * st.dmg / total)}%</em></div>
         <div class="rst">${st.heal ? `<span class="rheal" title="Healing done">💚 ${kfmt(st.heal)}</span>` : ''}<span title="Damage taken">🛡 ${kfmt(st.taken)}</span><span title="Kills">💥 ${st.kills}</span>${`<span class="rxp"><span class="xpbar"><i style="width:${fx.xp ? w1 : w0}%" data-w="${w1}"></i></span><span class="kw-xp">+${x.gained} XP</span></span>`}</div></div></div>`;
     }).join('');
@@ -1758,7 +1775,18 @@
     cv.addEventListener('pointercancel', () => { ui.drag = null; ui.hoverHex = null; drawPreview(); });
   }
   // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
-  function drawPreview(extra) { if (view && preview && screen !== 'battle') Render.draw(view, preview, performance.now() / 50, Object.assign({ deploy: true, sel: ui.selUid, infoId: ui.info, hoverHex: ui.hoverHex }, introDraw(), coachDraw(), benchDraw(), extra || {})); }
+  function drawPreview(extra) {
+    if (view && preview && screen !== 'battle') {
+      Render.draw(view, preview, performance.now() / 50, Object.assign({
+        deploy: true,
+        sel: (ui.drag && ui.drag.u && ui.drag.u.uid) || ui.selUid,
+        infoId: ui.info,
+        hoverHex: ui.hoverHex,
+        hoverFoe: ui.hoverFoe,
+        dragging: !!ui.drag
+      }, introDraw(), coachDraw(), benchDraw(), extra || {}));
+    }
+  }
   // v126 (review #224): while a hero waits on the bench, the free hexes of your half glow (where it can go)
   function benchDraw() {
     if (!run || run.phase !== 'deploy' || introStage() || !Run.benched(run).length) return {};
@@ -2181,11 +2209,16 @@
     const d = HEROES[h.key], sl = Run.slots(run, h), st = gearStats(h), sel = ui.gsel;
     const tabs = run.heroes.map(x => `<button class="gtab ${x.uid === h.uid ? 'on' : ''}" data-act="gear-hero" data-arg="${x.uid}" data-drop="hero:${x.uid}">${img(x.key, 44, 'por')}<b>${esc(HEROES[x.key].name)}</b><i>${x.items.length}/${Run.slots(run, x)}</i></button>`).join('');
     // sockets: worn items, empty ones, then the ones a level opens
+    const microStat = it => {
+      if (!it || !it.desc) return '';
+      const part = it.desc.split(',')[0].trim();
+      return esc(part.length > 18 ? part.slice(0, 17) + '…' : part);
+    };
     const socks = [];
     for (let i = 0; i < maxSlots(h); i++) {
       const id = h.items[i];
       if (id) { const it = ITEM[id], on = sel && sel.k === 'w' && sel.uid === h.uid && sel.i === i;
-        socks.push(`<button class="gsock full ${on ? 'on' : ''}" style="--tier:${TIER_COLOR[it.tier]}" data-act="gear-pick" data-arg="w:${h.uid}:${i}" data-drag="w:${h.uid}:${i}" data-drop="sock:${h.uid}:${i}">${ico('item', id, 48)}<span>${esc(shortName(it.name))}</span></button>`); }
+        socks.push(`<button class="gsock full ${on ? 'on' : ''}" style="--tier:${TIER_COLOR[it.tier]}" data-act="gear-pick" data-arg="w:${h.uid}:${i}" data-drag="w:${h.uid}:${i}" data-drop="sock:${h.uid}:${i}">${ico('item', id, 44)}<span>${esc(shortName(it.name))}</span><small class="gitem-stat">${microStat(it)}</small></button>`); }
       else if (i < sl) socks.push(`<span class="gsock empty" data-drop="hero:${h.uid}">${I('bag')}<span>Free</span></span>`);
       else socks.push(`<span class="gsock locked">${I('lock')}<span>Lv ${futureSlots(h)[i - sl]}</span></span>`);
     }
@@ -2194,7 +2227,7 @@
     const order = run.bag.map((id, i) => i).sort((a, b) => RANK(run.bag[b]) - RANK(run.bag[a]) || DOLL.indexOf(ITEM[run.bag[a]].type) - DOLL.indexOf(ITEM[run.bag[b]].type));
     const pages = Math.max(1, Math.ceil(order.length / GEAR_PAGE)), pg = Math.min(ui.gPage || 0, pages - 1);
     const tiles = order.slice(pg * GEAR_PAGE, (pg + 1) * GEAR_PAGE).map(i => { const id = run.bag[i], it = ITEM[id], on = sel && sel.k === 'b' && sel.i === i, fits = Run.canEquip(run, h, id);
-      return `<button class="gitem ${on ? 'on' : ''} ${fits ? '' : 'nofit'}" style="--tier:${TIER_COLOR[it.tier]}" data-act="gear-pick" data-arg="b:${i}" data-drag="b:${i}" aria-label="${esc(it.name)}">${ico('item', id, 46)}<span>${esc(shortName(it.name))}</span></button>`; }).join('');
+      return `<button class="gitem ${on ? 'on' : ''} ${fits ? '' : 'nofit'}" style="--tier:${TIER_COLOR[it.tier]}" data-act="gear-pick" data-arg="b:${i}" data-drag="b:${i}" aria-label="${esc(it.name)}">${ico('item', id, 42)}<span>${esc(shortName(it.name))}</span><small class="gitem-stat">${microStat(it)}</small></button>`; }).join('');
     // what the selected item does, and the one big button
     let det = '';
     if (sel && sel.k === 'b' && run.bag[sel.i]) {

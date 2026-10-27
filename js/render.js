@@ -173,11 +173,35 @@
       ctx.fillStyle = drop ? '#ffe066' : tileColor(c, r, isTerr ? {} : o, desk); ctx.fill();
       if (v.grit) { ctx.globalAlpha = royal() ? 0.9 : desk ? 0.25 : 0.35; ctx.fillStyle = v.grit; ctx.fill(); ctx.globalAlpha = 1; }
       if (desk) {
+        // Subtle 3D bevel / thickness along the bottom edge of hexes
+        ctx.save();
+        ctx.lineWidth = 2;
+        // Bottom edge bevel (shadow)
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath();
+        ctx.moveTo(top[1].x, top[1].y);
+        ctx.lineTo(top[2].x, top[2].y);
+        ctx.lineTo(top[3].x, top[3].y);
+        ctx.stroke();
+        // Top edge highlight (rim light)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+        ctx.beginPath();
+        ctx.moveTo(top[4].x, top[4].y);
+        ctx.lineTo(top[5].x, top[5].y);
+        ctx.lineTo(top[0].x, top[0].y);
+        ctx.stroke();
+        ctx.restore();
+
         // Guild Run-style organic glowing hex outlines on the clearing floor
         path(ctx, top);
-        ctx.lineWidth = o.deploy && !isTerr ? (r >= 4 ? 1.8 : 1.3) : 1.1;
-        ctx.strokeStyle = drop ? '#ffffff' : royal() ? 'rgba(255,207,90,0.42)' : o.deploy && !isTerr ? (r >= 4 ? 'rgba(218, 245, 130, 0.72)' : 'rgba(255, 145, 125, 0.45)') : 'rgba(210, 238, 150, 0.34)';
+        const dragActive = o.dragActive || o.dragging;
+        ctx.lineWidth = o.deploy && !isTerr ? (r >= 4 ? (dragActive ? 2.5 : 1.8) : 1.3) : 1.1;
+        ctx.strokeStyle = drop ? '#ffffff' : royal() ? 'rgba(255,207,90,0.42)' : o.deploy && !isTerr ? (r >= 4 ? (dragActive ? 'rgba(95, 208, 255, 0.85)' : 'rgba(218, 245, 130, 0.72)') : 'rgba(255, 145, 125, 0.45)') : 'rgba(210, 238, 150, 0.34)';
         ctx.stroke();
+        if (o.deploy && !isTerr && r >= 4 && dragActive) {
+          ctx.fillStyle = 'rgba(95, 208, 255, 0.08)';
+          ctx.fill();
+        }
       } else {
         // bevel: lit upper-left edges, shaded lower-right edges
         ctx.lineWidth = 1.5;
@@ -351,6 +375,21 @@
     ctx.globalAlpha = Math.max(0, alpha);
     // selection / side ring on the ground
     const hero = u.side === 0;
+    // Ground drop shadow underneath every unit on the hex grid
+    if (!u.dead) {
+      ctx.save();
+      ctx.translate(p.x, p.y + size * 0.12);
+      ctx.scale(1, K * 0.45);
+      const shG = ctx.createRadialGradient(0, 0, 0, 0, 0, S * 0.52);
+      shG.addColorStop(0, 'rgba(0, 0, 0, 0.42)');
+      shG.addColorStop(0.7, 'rgba(0, 0, 0, 0.18)');
+      shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = shG;
+      ctx.beginPath();
+      ctx.arc(0, 0, S * 0.52, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
     // review #44 (David: "clearer player/enemy distinction"): a filled disc in the side's colour under every unit
     const sideC = hero ? '74,163,255' : '255,92,110';
     // v55: a soft glow in the side's colour instead of a hard ring (a thin rim stays for the selected hero and elites)
@@ -530,9 +569,13 @@
       ctx.fillStyle = f.color; ctx.globalAlpha = (1 - k) * 0.3; for (const h of Hx.within(f.c, f.r, f.rad)) { path(ctx, corners(v, h.c, h.r, size * 0.9)); ctx.fill(); } ctx.globalAlpha = 1;
     }
     if (!o.deploy) spawnFromFx(v, W, T, S);
-    // Deploy-phase targeting arcs & range indicator when selecting or inspecting a unit
+    // Deploy-phase targeting arcs & range indicator when selecting or inspecting a unit or dragging / hovering
     if (o.deploy && W && W.units) {
-      const activeU = W.units.find(u => !u.dead && ((o.sel && u.side === 0 && u.uid === o.sel) || (o.infoId && u.id === o.infoId)));
+      let activeU = W.units.find(u => !u.dead && ((o.sel && u.side === 0 && u.uid === o.sel) || (o.infoId && u.id === o.infoId)));
+      // Also highlight when hovering enemy card in the foes panel
+      if (!activeU && o.hoverFoe) {
+        activeU = W.units.find(u => !u.dead && u.side === 1 && (u.key === o.hoverFoe || (u.name && u.name.toLowerCase() === o.hoverFoe.toLowerCase())));
+      }
       if (activeU) {
         const p1 = hexScreen(v, activeU.c, activeU.r);
         const hero = activeU.side === 0;
@@ -553,7 +596,7 @@
           ctx.stroke();
           ctx.restore();
         }
-        // Determine primary threat/target: closest enemy
+        // Determine primary threat/target: closest enemy (or hero if activeU is foe)
         const foes = W.units.filter(e => !e.dead && e.side !== activeU.side && e.kind !== 'plant');
         let target = null, minDist = 999;
         for (const f of foes) {

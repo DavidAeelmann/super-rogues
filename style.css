@@ -3525,16 +3525,23 @@ body.desk .sheet.gearsheet {
   display: grid !important;
   grid-template-columns: 1fr 1fr;
   grid-template-areas: 
+    "head head"
     "tabs tabs"
     "doll bag"
     "detail bag"
     "bar bag";
-  gap: 16px 20px;
+  gap: 14px 20px;
   align-items: start;
 }
 
 body.desk .sheet.gearsheet .shead {
-  grid-column: 1 / -1;
+  grid-area: head;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding-bottom: 4px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 body.desk .sheet.gearsheet .gtabs {
@@ -3563,8 +3570,10 @@ body.desk .sheet.gearsheet .gbag {
 }
 
 body.desk .sheet.gearsheet .gbgrid {
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)) !important;
+  grid-auto-rows: 105px !important;
+  align-items: start !important;
+  gap: 8px !important;
   flex: 1;
 }
 
@@ -5179,4 +5188,225 @@ body.desk .dparty .dsock.filled {
   border-radius: 8px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
+
+/* ==================================================================== */
+/* SCREEN POLISH & MODERNIZATION BATCH: SCREENS 1 - 4                   */
+/* ==================================================================== */
+
+/* Screen 1: Main Menu Ambient Atmosphere, Trailer Frame & Navigation */
+.title.home {
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.m-glow {
+  position: absolute;
+  top: 18%;
+  left: 28%;
+  width: 480px;
+  height: 480px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 207, 90, 0.14) 0%, rgba(95, 208, 255, 0.08) 45%, rgba(17, 19, 26, 0) 75%);
+  filter: blur(40px);
+  animation: pulseGlow 6s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+.m-particles {
+  position: absolute;
+  inset: 0;
+}
+
+.m-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 215, 120, 0.6);
+  box-shadow: 0 0 6px rgba(255, 207, 90, 0.8);
+  animation: driftUp 10s linear infinite;
+}
+
+.m-dot-0 { left: 15%; bottom: -10px; width: 4px; height: 4px; animation-duration: 9s; animation-delay: 0s; }
+.m-dot-1 { left: 25%; bottom: -10px; width: 3px; height: 3px; animation-duration: 12s; animation-delay: 2s; background: rgba(95, 208, 255, 0.6); }
+.m-dot-2 { left: 40%; bottom: -10px; width: 5px; height: 5px; animation-duration: 11s; animation-delay: 1s; }
+.m-dot-3 { left: 55%; bottom: -10px; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 3s; background: rgba(95, 208, 255, 0.6); }
+.m-dot-4 { left: 70%; bottom: -10px; width: 4px; height: 4px; animation-duration: 10s; animation-delay: 4s; }
+.m-dot-5 { left: 85%; bottom: -10px; width: 3px; height: 3px; animation-duration: 13s; animation-delay: 2.5s; }
+.m-dot-6 { left: 20%; bottom: -10px; width: 3px; height: 3px; animation-duration: 15s; animation-delay: 5s; }
+.m-dot-7 { left: 35%; bottom: -10px; width: 4px; height: 4px; animation-duration: 8.5s; animation-delay: 4.5s; }
+.m-dot-8 { left: 60%; bottom: -10px; width: 5px; height: 5px; animation-duration: 11.5s; animation-delay: 6s; }
+.m-dot-9 { left: 78%; bottom: -10px; width: 3px; height: 3px; animation-duration: 9.5s; animation-delay: 1.5s; }
+.m-dot-10 { left: 10%; bottom: -10px; width: 4px; height: 4px; animation-duration: 13.5s; animation-delay: 7s; }
+.m-dot-11 { left: 90%; bottom: -10px; width: 4px; height: 4px; animation-duration: 10.5s; animation-delay: 3.5s; }
+
+@keyframes driftUp {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.6; }
+  100% { transform: translateY(-750px) translateX(30px); opacity: 0; }
+}
+
+/* Framed Gameplay Preview */
+body.desk section.title.home .trailer {
+  position: relative !important;
+  border-radius: 18px !important;
+  border: 1.5px solid rgba(255, 207, 90, 0.45) !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.7), 0 0 28px rgba(255, 207, 90, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+  overflow: hidden;
+}
+
+.trailer-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ffd23f;
+  pointer-events: none;
+  z-index: 3;
+}
+.trailer-corner.tl { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+.trailer-corner.tr { top: 6px; right: 6px; border-left: none; border-bottom: none; }
+.trailer-corner.bl { bottom: 6px; left: 6px; border-right: none; border-top: none; }
+.trailer-corner.br { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+
+/* Secondary Navigation Bar (Heroes, Rewards, Shop, Ranks) */
+body.desk section.title.home .dockitem {
+  min-height: 48px !important;
+  padding: 0 16px !important;
+  border-bottom: 3.5px solid rgba(0, 0, 0, 0.5) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  position: relative;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body.desk section.title.home .dockitem svg.ui {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.dockitem .pip {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+  animation: pipPulse 1.6s ease-in-out infinite;
+}
+.dockitem .pip.gold { background: #ffd23f; color: #ffd23f; }
+.dockitem .pip.red { background: #ff4d6d; color: #ff4d6d; }
+
+@keyframes pipPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+/* Screen 2: Tactical Board & Deploy Polish */
+.depban {
+  animation: depbanBob 2.6s ease-in-out infinite alternate !important;
+}
+
+@keyframes depbanBob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
+body.desk .dparty .dsock.empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.empty-sil {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.28);
+  user-select: none;
+}
+
+/* Screen 3: Victory Overlay */
+section.result.v2 {
+  position: relative;
+  overflow: visible !important;
+}
+
+body.desk #modal:has(.result.v2),
+body:has(section.result.v2) #modal {
+  backdrop-filter: blur(6px) !important;
+  background: rgba(10, 12, 18, 0.75) !important;
+}
+
+.rhead {
+  overflow: visible !important;
+}
+
+.badge-levelup {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-left: 8px;
+  border-radius: 6px;
+  background: #14532d;
+  color: #86efac;
+  border: 1px solid #22c55e;
+  font: 800 11px/1.2 var(--fun);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+  letter-spacing: 0.5px;
+  animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.lv-trans {
+  color: #c5cee0 !important;
+  font-weight: 500 !important;
+}
+.lv-trans b {
+  color: #ffd23f !important;
+  font-weight: 800 !important;
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Screen 4: Gear Up Inventory Modal */
+body.desk .sheet.gearsheet .gtab.on {
+  background: linear-gradient(180deg, #26314d 0%, #171d30 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid #ffd23f !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 210, 63, 0.35) !important;
+}
+
+body.desk .sheet.gearsheet .gtab.on i {
+  color: #ffd23f !important;
+}
+
+.gitem-stat {
+  display: block;
+  font-size: 9.5px;
+  line-height: 1;
+  color: #9eb4d8;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
 
