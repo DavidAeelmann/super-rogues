@@ -1675,8 +1675,9 @@
         <div class="overbar"><button class="primary big cta" data-act="victory-next" ${run.xpWait ? 'disabled' : ''}>Next ${I('arrow')}</button></div></section>`;
     if ((run.overStep || 1) === 1) return `<section class="title over1 lpscr">${head}${lpScreenHTML(lgAll(), won)}
         <div class="overbar lp-footer"><button class="primary big cta molten-gold-cta lp-next-btn" data-act="over-next">Next <span class="cta-arrow">→</span></button></div></section>`;
-    return `<section class="title over2 xpscr"><h2 class="sc ovh">✨ Account XP <button class="ladb sm" data-act="scores" aria-label="Ladder">${I('trophy')}</button></h2>${xpScreenHTML()}
-      <div class="overbar"><button class="primary big cta again" data-act="new-run">${I('play')} Play again</button></div></section>`;
+    return `<section class="title over2 xpscr">
+      ${xpScreenHTML()}
+      <div class="overbar xp-footer"><button class="primary big cta again molten-gold-cta xp-again-btn" data-act="new-run"><span class="play-triangle">▶</span> Play again</button></div></section>`;
   }
   // WHAT: makes the end screen fit the phone: adds .tight, then .tighter, while the page is taller than the screen (many XP lines, many rewards).
   function fitOver() {
@@ -1827,15 +1828,100 @@
     const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
     const ups = B.UNLOCKS.filter(x => x.lvl > A.lvl && x.lvl <= Z.lvl), na = (run.newAchs || []).map(id => B.ACH[id]).filter(Boolean), n = ups.length + na.length;   // v73 (review #150): new titles come out of the chest too
     const note = run.xpWait ? 'Counting your XP…' : run.xpErr ? 'Your XP could not be saved (no connection).' : '';
-    const banner = `<span class="lvb" id="xplv">${S.lvl}</span><b class="vmname">Level</b>`;
-    const chest = `<div class="chestzone ${n ? (done ? 'open' : 'will') : 'shut'}" id="chest">
+    const pct = Math.round(100 * S.into / S.need);
+
+    const levelBadgeSVG = `<svg class="lvl-gold-shield" viewBox="0 0 100 110" aria-hidden="true">
+      <defs>
+        <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fffbeb"/>
+          <stop offset="25%" stop-color="#fde047"/>
+          <stop offset="60%" stop-color="#eab308"/>
+          <stop offset="100%" stop-color="#854d0e"/>
+        </linearGradient>
+      </defs>
+      <polygon points="50,4 94,22 94,76 50,104 6,76 6,22" fill="url(#shieldGrad)" stroke="#451a03" stroke-width="3"/>
+      <polygon points="50,10 88,26 88,72 50,96 12,72 12,26" fill="#78350f" opacity="0.3"/>
+    </svg>`;
+
+    const chestSVG = `<svg class="fantasy-chest-3d" viewBox="0 0 160 140" aria-hidden="true">
+      <defs>
+        <radialGradient id="chestGlowRad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
+          <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#78350f" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <!-- Volumetric Light Rays -->
+      <path class="chest-rays" d="M30 60 L10 10 L150 10 L130 60 Z" fill="url(#chestGlowRad)"/>
+      <!-- Lower Chest Base -->
+      <rect x="25" y="70" width="110" height="58" rx="6" fill="#543315" stroke="#261505" stroke-width="3"/>
+      <!-- Wooden Planks Detail -->
+      <line x1="25" y1="90" x2="135" y2="90" stroke="#3b220b" stroke-width="2"/>
+      <line x1="25" y1="110" x2="135" y2="110" stroke="#3b220b" stroke-width="2"/>
+      <!-- Iron / Gold Trim Vertical Straps -->
+      <rect x="36" y="70" width="16" height="58" fill="#d97706" stroke="#78350f" stroke-width="2"/>
+      <rect x="108" y="70" width="16" height="58" fill="#d97706" stroke="#78350f" stroke-width="2"/>
+      <rect x="72" y="70" width="16" height="58" fill="#f59e0b" stroke="#78350f" stroke-width="2"/>
+      <!-- Keyhole Plaque -->
+      <rect x="73" y="78" width="14" height="18" rx="3" fill="#fde047" stroke="#78350f" stroke-width="1.5"/>
+      <circle cx="80" cy="84" r="2.5" fill="#291605"/>
+      <polygon points="78.5,85 81.5,85 82,91 78,91" fill="#291605"/>
+      <!-- Open Lid Banding -->
+      <path d="M20 70 C20 35, 45 25, 80 25 C115 25, 140 35, 140 70 Z" fill="#6a401c" stroke="#261505" stroke-width="3"/>
+      <path d="M36 70 C36 40, 52 30, 80 30 C108 30, 124 40, 124 70" fill="none" stroke="#d97706" stroke-width="8"/>
+      <path d="M72 70 C72 38, 76 28, 80 28 C84 28, 88 38, 88 70" fill="none" stroke="#f59e0b" stroke-width="8"/>
+    </svg>`;
+
+    const chestLoot = `<div class="chestzone ${n ? (done ? 'open' : 'will') : 'shut'}" id="chest">
         <b class="cheer" id="cheer">LEVEL UP!</b>
-        <div class="chest" aria-hidden="true"><span class="lid"></span><span class="box"><i></i></span><span class="glow"></span></div>
-        ${n ? `<div class="loot ${n > 4 ? 'lots' : ''}">${na.map((a, i) => `<span class="lootit ach" style="--i:${i}" tabindex="0" data-tip="${esc('New title: ' + a.title + '. You earned it: ' + a.desc + ' It can show under your name: pick it in your profile, Achievements.')}"><i class="achi">${a.icon}</i><b>${esc(a.title)}</b><small>New title!</small></span>`).join('')}${ups.map((x, i) => `<span class="lootit" style="--i:${i + na.length}" tabindex="0" data-tip="${esc(unlockTip(x))}">${unlockPic(x, 46)}<b>${esc(unlockName(x))}</b><small>New ${KIND_NAME(x.kind)}</small></span>`).join('')}</div>`
+        <div class="chest-wrap-3d" aria-hidden="true">
+          ${chestSVG}
+          <div class="chest-burst-particles"></div>
+        </div>
+        ${n ? `<div class="loot loot-cards-row ${n > 4 ? 'lots' : ''}">${na.map((a, i) => `<span class="lootit ach loot-card-3d" style="--i:${i}" tabindex="0" data-tip="${esc('New title: ' + a.title + '. You earned it: ' + a.desc)}"><i class="achi">${a.icon}</i><b class="loot-card-name">${esc(a.title)}</b><small class="loot-card-tag">New title!</small></span>`).join('')}${ups.map((x, i) => `<span class="lootit loot-card-3d" style="--i:${i + na.length}" tabindex="0" data-tip="${esc(unlockTip(x))}">${unlockPic(x, 48)}<b class="loot-card-name">${esc(unlockName(x))}</b><small class="loot-card-tag">New ${KIND_NAME(x.kind)}</small></span>`).join('')}</div>`
           : u ? `<p class="chestnote">${I('lock')} Next chest at level ${u.lvl}: <b>${esc(unlockName(u))}</b> · ${B.xpForLevel(u.lvl) - to} XP to go</p>` : '<p class="chestnote">🏅 Every reward unlocked!</p>'}</div>`;
-    return `<div class="vmwrap xp" id="xppanel" data-from="${from}" data-to="${to}">${meterHTML('xpmeter', '--lc:#7c4dff;--lh:#7ee8ff', banner, Math.round(100 * S.into / S.need), `<span id="xpnum">${S.into}/${S.need}</span> XP`)}
-      <div class="vmright"><b class="vmbig xp ${got >= 100 ? 'long' : ''}"><span id="xpbig">+${done ? got : 0}</span> <small>XP</small></b>
-        ${log.length ? `<ul class="xplines">${xpChips(log).map((c, i) => `<li style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i><span>${esc(c.name)}</span><b>+${c.xp}</b></li>`).join('')}</ul>` : note ? `<p class="small">${note}</p>` : ''}</div></div>${chest}`;
+
+    return `<div class="xp-modal-wrap" id="xppanel" data-from="${from}" data-to="${to}">
+      <!-- Top Tier: Account Level & XP Card -->
+      <div class="xp-top-card">
+        <div class="xp-top-main">
+          <div class="xp-left-col">
+            <div class="xp-level-crest">
+              ${levelBadgeSVG}
+              <div class="crest-text-overlay">
+                <span class="crest-num" id="xplv">${S.lvl}</span>
+                <span class="crest-lbl">LEVEL</span>
+              </div>
+            </div>
+            <div class="xp-title-grp">
+              <div class="xp-title-row">
+                <span class="spark-ico">✨</span>
+                <h3 class="xp-heading">Account XP</h3>
+                <button class="ladb sm xp-trophy-btn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="xp-right-col">
+            <div class="xp-gain-val">+<span id="xpbig">${done ? got : 0}</span> XP</div>
+            ${log.length ? `<div class="xp-pills-row">${xpChips(log).map((c, i) => `<span class="xp-chip-pill" style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i> <b>${esc(c.name)}</b> <span class="chip-add">+${c.xp}</span></span>`).join('')}</div>` : note ? `<p class="small dim">${note}</p>` : ''}
+          </div>
+        </div>
+
+        <!-- Full-Width Horizontal XP Progress Bar -->
+        <div class="xp-horiz-bar-wrap" id="xpmeter">
+          <div class="vmtube xp-horiz-track">
+            <i class="xp-horiz-fill" style="width:${pct}%"></i>
+            <span class="xp-horiz-label"><span id="xpnum">${S.into}/${S.need}</span> XP</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Tier: 3D Chest & Loot Drop Cards -->
+      <div class="xp-bottom-loot-tier">
+        ${chestLoot}
+      </div>
+    </div>`;
   }
   // WHAT: the XP screen's animation: the total counts up, the level tube fills; every level up cheers (LEVEL UP!) and empties the tube; at the end a chest with rewards bursts open.
   async function animXp2() {
@@ -1843,25 +1929,31 @@
     run.xpShown = true; save();
     const fast = B.Juice && B.Juice.reduced(), wait = ms => new Promise(r => setTimeout(r, fast ? 0 : ms));
     const fill = $('#xpmeter .vmtube i'), num = $('#xpnum'), lv = $('#xplv'), big = $('#xpbig'), cheer = $('#cheer'), chest = $('#chest');
-    let cur = +el.dataset.from, left = +el.dataset.to - cur; const total = left, live = () => fill.isConnected;
+    let cur = +el.dataset.from, left = +el.dataset.to - cur; const total = left, live = () => fill && fill.isConnected;
     await wait(400); if (!live()) return;
     if (B.Juice) B.Juice.countUp(big, 0, total, 1100, v => '+' + v); sfx('coin');
     while (left > 0) {
       const L = B.levelProgress(cur), room = L.need - L.into, step = Math.min(left, room), ms = 300 + Math.round(700 * step / L.need);
-      fill.style.transition = `height ${ms}ms ease-out`; fill.style.height = (step === room ? 100 : Math.round(100 * (L.into + step) / L.need)) + '%';
+      if (fill) {
+        fill.style.transition = `width ${ms}ms ease-out`;
+        fill.style.width = (step === room ? 100 : Math.round(100 * (L.into + step) / L.need)) + '%';
+      }
       if (B.Juice) B.Juice.countUp(num, L.into, L.into + step, ms, v => v + '/' + L.need);
       await wait(ms + 60); if (!live()) return; cur += step; left -= step;
       if (step === room) {
-        const N = B.levelProgress(cur); lv.textContent = N.lvl; sfx('levelup');
-        cheer.textContent = `LEVEL ${N.lvl}!`; cheer.classList.remove('pop'); void cheer.offsetWidth; cheer.classList.add('pop');
-        if (B.Juice) { B.Juice.bump(lv); B.Juice.confettiAt(lv, 60); }
-        fill.style.transition = 'none'; fill.style.height = '0%'; num.textContent = '0/' + N.need; await wait(500);
+        const N = B.levelProgress(cur); if (lv) lv.textContent = N.lvl; sfx('levelup');
+        if (cheer) {
+          cheer.textContent = `LEVEL ${N.lvl}!`; cheer.classList.remove('pop'); void cheer.offsetWidth; cheer.classList.add('pop');
+        }
+        if (B.Juice && lv) { B.Juice.bump(lv); B.Juice.confettiAt(lv, 60); }
+        if (fill) { fill.style.transition = 'none'; fill.style.width = '0%'; }
+        if (num) num.textContent = '0/' + N.need; await wait(500);
       }
     }
     if (chest && chest.classList.contains('will') && (run.newAchs || []).length && cheer && !cheer.classList.contains('pop')) { cheer.textContent = 'NEW TITLE!'; cheer.classList.add('pop'); }
     if (chest && chest.classList.contains('will')) {
       chest.classList.add('shake'); await wait(700); if (!chest.isConnected) return;
-      chest.classList.remove('will', 'shake'); chest.classList.add('open'); sfx('unlock'); if (B.Juice) B.Juice.confettiAt(chest.querySelector('.chest'), 90);
+      chest.classList.remove('will', 'shake'); chest.classList.add('open'); sfx('unlock'); if (B.Juice) B.Juice.confettiAt(chest.querySelector('.chest-wrap-3d') || chest, 90);
     }
   }
 
