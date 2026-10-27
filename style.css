@@ -5002,33 +5002,426 @@ body.desk section.map.road .mapside .pm:hover {
   border-color: rgba(255, 207, 90, 0.6) !important;
 }
 
-/* 4. Shop Screen */
-body.desk section.shop {
-  max-width: 780px !important;
+/* 4. Shop Screen & Gold & Timber Smithy UI */
+body.desk section.shop.smithy-frame,
+section.shop.smithy-frame {
+  max-width: 860px !important;
   width: 100% !important;
-  padding: 16px 20px 14px !important;
-  border-radius: 18px !important;
-  background: rgba(20, 24, 32, 0.95) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+  position: relative;
+  box-sizing: border-box;
+  padding: 0 !important;
+  border-radius: 16px !important;
+  background: #171b26 !important;
+  border: 3.5px solid #3a3f4d !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
+  overflow: hidden;
 }
-body.desk section.shop .shophead {
-  margin-bottom: 8px !important;
-  padding-bottom: 6px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+/* Outer Iron Corner Rivets */
+.smithy-frame .rivet {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #94a3b8, #475569 60%, #1e293b);
+  border: 1px solid #1e222d;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  z-index: 10;
+  pointer-events: none;
 }
-body.desk section.shop .card.stock.v2 {
-  background: rgba(26, 32, 42, 0.75) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+.smithy-frame .rivet.tl { top: 6px; left: 6px; }
+.smithy-frame .rivet.tr { top: 6px; right: 6px; }
+.smithy-frame .rivet.bl { bottom: 6px; left: 6px; }
+.smithy-frame .rivet.br { bottom: 6px; right: 6px; }
+
+/* Carved Wood Header Plank */
+.smithy-frame .wood-header {
+  position: relative;
+  background: linear-gradient(180deg, #6e4726 0%, #4a2e16 50%, #38220f 100%) !important;
+  border-bottom: 3.5px solid #241407 !important;
+  box-shadow: inset 0 2px 3px rgba(255, 200, 140, 0.25), 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+  padding: 12px 20px 10px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  z-index: 4;
+}
+
+/* Wood Grain Vertical Side Pillars */
+.smithy-frame .wood-pillar {
+  position: absolute;
+  top: 54px;
+  bottom: 56px;
+  width: 12px;
+  background: linear-gradient(90deg, #38220f 0%, #5a351a 45%, #422611 100%);
+  border-right: 1.5px solid #241407;
+  border-left: 1.5px solid #241407;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.6);
+  z-index: 3;
+  pointer-events: none;
+}
+.smithy-frame .wood-pillar.l { left: 0; }
+.smithy-frame .wood-pillar.r { right: 0; }
+
+/* Inline Gold Scrollwork Brackets */
+.timber-bracket {
+  position: absolute;
+  bottom: -18px;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
+  z-index: 5;
+}
+.timber-bracket.l { left: 8px; }
+.timber-bracket.r { right: 8px; }
+
+/* Header Title (Embossed Gold Typography) */
+.smithy-frame .gold-embossed-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  font-family: var(--fun) !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  background: linear-gradient(180deg, #fff6b3 0%, #f5b041 60%, #b87711 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.85)) !important;
+}
+.shop-cart-glow {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
+}
+
+/* Sell Bag Button as Tactile Brass/Gold Plaque */
+.smithy-frame .gold-plaque {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 14px 6px 10px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #ffe066 0%, #d97706 100%) !important;
+  border: 1.5px solid #fef08a !important;
+  border-bottom: 4px solid #78350f !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  color: #381f02 !important;
+  font-family: var(--fun) !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.1s;
+}
+.smithy-frame .gold-plaque:hover {
+  filter: brightness(1.08);
+}
+.smithy-frame .gold-plaque:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px !important;
+}
+.pouch-ico {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Item Grid: 2x2 Layout within Smithy Modal */
+.smithy-frame .grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 14px !important;
+  padding: 16px 22px !important;
+  background: radial-gradient(100% 100% at 50% 20%, #1c202c 0%, #10131b 100%) !important;
+}
+@media (max-width: 600px) {
+  .smithy-frame .grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 10px 14px !important;
+  }
+}
+
+/* Recessed Obsidian Item Cards */
+.smithy-frame .card.stock.v2 {
+  position: relative !important;
+  background: linear-gradient(180deg, #232838 0%, #141722 100%) !important;
+  border: 1.5px solid #373e52 !important;
   border-radius: 12px !important;
-  box-shadow: none !important;
+  padding: 10px 12px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  display: grid !important;
+  grid-template-columns: 82px minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  align-items: center !important;
 }
-body.desk section.shop .bar.sticky {
-  position: static !important;
-  background: none !important;
-  padding: 10px 0 0 !important;
-  margin-top: 6px !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+.smithy-frame .card.stock.v2:hover {
+  border-color: #555e78 !important;
+}
+
+/* Corner Flourishes */
+.card-flourish {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+.card-flourish.tl { top: 3px; left: 3px; }
+.card-flourish.tr { top: 3px; right: 3px; }
+.card-flourish.bl { bottom: 3px; left: 3px; }
+.card-flourish.br { bottom: 3px; right: 3px; }
+
+/* Circular Metallic Shield Weapon Sockets (76x76px) */
+.smithy-frame .item-socket {
+  width: 76px !important;
+  height: 76px !important;
+  border-radius: 50% !important;
+  background: #0c0e14 !important;
+  border: 3px solid #4a5166 !important;
+  box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.9), 0 4px 10px rgba(0, 0, 0, 0.6) !important;
+  display: grid !important;
+  place-items: center !important;
+  position: relative;
+  flex-shrink: 0;
+}
+.smithy-frame .socket-inner {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.smithy-frame .item-socket .ico.big {
+  width: 52px !important;
+  height: 52px !important;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.75));
+}
+
+/* Epic Rarity Sockets & Titles (e.g. Sorrowsteel) */
+.smithy-frame .item-socket.r-epic {
+  border-color: #c084fc !important;
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.75), inset 0 0 14px rgba(192, 132, 252, 0.6) !important;
+}
+.smithy-frame .item-socket.r-epic .socket-inner {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, rgba(12, 14, 20, 0.8) 75%);
+}
+.smithy-frame .ctitle.r-epic {
+  color: #d8b4fe !important;
+  font-family: var(--fun) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+/* Rare Rarity Sockets & Titles (e.g. Unbound Sash, Sanguine Saber) */
+.smithy-frame .item-socket.r-rare {
+  border-color: #7dd3fc !important;
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.75), inset 0 0 14px rgba(125, 211, 252, 0.6) !important;
+}
+.smithy-frame .item-socket.r-rare .socket-inner {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(12, 14, 20, 0.8) 75%);
+}
+.smithy-frame .ctitle.r-rare {
+  color: #bae6fd !important;
+  font-family: var(--fun) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+/* Hero Compatibility Badge (High-Contrast Emerald Pill) */
+.smithy-frame .synpill,
+.synpill.fit {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 2px 8px !important;
+  margin: 3px 0 !important;
+  border-radius: 999px !important;
+  background: rgba(16, 185, 129, 0.18) !important;
+  border: 1px solid #34d399 !important;
+  color: #a7f3d0 !important;
+  font-family: var(--fun) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+}
+.synpill.set {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border-color: #f59e0b !important;
+  color: #fde68a !important;
+}
+.synpill.upg {
+  background: rgba(59, 130, 246, 0.2) !important;
+  border-color: #60a5fa !important;
+  color: #bfdbfe !important;
+}
+
+/* Item Description Typography Highlighting */
+.smithy-frame .item-desc {
+  color: #cbd5e1 !important;
+  font-size: 12.5px !important;
+  line-height: 1.35 !important;
+  margin-top: 2px !important;
+}
+.smithy-frame .item-desc b,
+.smithy-frame .item-desc .num {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+.smithy-frame .item-desc .s-atk,
+.smithy-frame .item-desc .s-hp,
+.smithy-frame .item-desc .s-arm {
+  color: #6ee7b7 !important;
+  font-weight: 800 !important;
+}
+
+/* Tactile 3D Gold Ingot Buy Buttons */
+.smithy-frame .gold-ingot-btn {
+  min-width: 82px !important;
+  height: 44px !important;
+  padding: 0 12px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #fde047 0%, #eab308 55%, #ca8a04 100%) !important;
+  border: 1.5px solid #fef9c3 !important;
+  border-bottom: 4px solid #854d0e !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.1s;
+}
+.smithy-frame .gold-ingot-btn .price {
+  font-family: var(--fun) !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+  color: #1e1b18 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.smithy-frame .gold-ingot-btn .buy-coin {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+.smithy-frame .gold-ingot-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.smithy-frame .gold-ingot-btn:active:not(:disabled) {
+  transform: translateY(2.5px);
+  border-bottom-width: 1.5px !important;
+}
+.smithy-frame .gold-ingot-btn:disabled {
+  filter: grayscale(0.8) brightness(0.7);
+  opacity: 0.6;
+}
+
+/* Chiseled Dark-Stone Footer Sill */
+.smithy-frame .stone-sill {
+  position: relative !important;
+  background: linear-gradient(180deg, #2d313b 0%, #1b1e26 100%) !important;
+  border-top: 2.5px solid #4a5060 !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  padding: 12px 20px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  z-index: 4;
+}
+
+/* 3 Bottom Action Buttons */
+.smithy-frame .sapphire-btn {
+  flex: 1 !important;
+  min-height: 44px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 60%, #1e3a8a 100%) !important;
+  border: 1.5px solid #93c5fd !important;
+  border-bottom: 4px solid #172554 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+  color: #ffffff !important;
+  font-family: var(--fun) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+.smithy-frame .sapphire-btn .btn-coin-sm {
+  width: 16px;
+  height: 16px;
+}
+.smithy-frame .sapphire-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.smithy-frame .sapphire-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 2px !important;
+}
+
+.smithy-frame .steel-btn {
+  flex: 1 !important;
+  min-height: 44px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #475569 0%, #334155 60%, #1e293b 100%) !important;
+  border: 1.5px solid #94a3b8 !important;
+  border-bottom: 4px solid #0f172a !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  color: #f1f5f9 !important;
+  font-family: var(--fun) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+.smithy-frame .steel-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.smithy-frame .steel-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 2px !important;
+}
+
+.smithy-frame .molten-gold-cta {
+  flex: 1.3 !important;
+  min-height: 44px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, #fde047 0%, #f59e0b 55%, #b45309 100%) !important;
+  border: 1.5px solid #fef08a !important;
+  border-bottom: 4px solid #78350f !important;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.45), 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  color: #2e1702 !important;
+  font-family: var(--fun) !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.3px !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+.smithy-frame .molten-gold-cta:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.smithy-frame .molten-gold-cta:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 2px !important;
+}
+.smithy-frame .cta-arrow {
+  font-size: 20px;
+  line-height: 1;
 }
 
 /* 5. Event Screen */

@@ -1511,16 +1511,26 @@
       : `<input name="name" maxlength="16" placeholder="Your name on the ladder" value="${esc(myName())}" required><p class="small dim center">Pick it well: changing it later costs 👑 ${B.SHOP_ITEM.rename.price}.</p>`}<button class="primary big">Find my opponent</button></form>`;
   }
   // WHAT: SHOP. stockCard draws one product (hero, item or power with price); shopHTML draws the whole shop.
+  const CORNER_FLOURISH_SVG = `<svg class="card-flourish tl" viewBox="0 0 18 18" aria-hidden="true"><path d="M1,17 L1,5 C1,2.8 2.8,1 5,1 L17,1 M1,7 C4,7 7,4 7,1" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  <svg class="card-flourish tr" viewBox="0 0 18 18" aria-hidden="true"><path d="M1,1 L13,1 C15.2,1 17,2.8 17,5 L17,17 M11,1 C11,4 14,7 17,7" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  <svg class="card-flourish bl" viewBox="0 0 18 18" aria-hidden="true"><path d="M1,1 L1,13 C1,15.2 2.8,17 5,17 L17,17 M1,11 C4,11 7,14 7,17" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  <svg class="card-flourish br" viewBox="0 0 18 18" aria-hidden="true"><path d="M17,1 L17,13 C17,15.2 15.2,17 13,17 L1,17 M17,11 C14,11 11,14 11,17" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
   function stockCard(s, i) {
     const dis = s.sold || run.gold < s.price;
     let body = '';
     // v62m (review #109): heroes are splash cards (the full art, class and range on it), items and powers are rows with a glowing medallion
     if (s.kind === 'hero') { const h = HEROES[s.id]; body = `<div class="art" style="--hc:${h.color}"><img class="splash" src="${por(s.id, 112, true)}" alt=""><span class="rolechip">${esc(h.role)}</span>${run.heroes.length < Run.teamMax(run) && Run.shopHeroLevel(run) > 1 ? `<span class="shoplv" title="Joins at the level of your lowest hero, with random powers">Lv ${Run.shopHeroLevel(run)}</span>` : ''}<button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')}</button><span class="rngchip">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span></div><div class="meta"><div class="ctitle">${esc(h.name)}</div><p class="htag">${esc(h.tag || h.abName)}</p></div>`; }
-    else if (s.kind === 'item') { const it = ITEM[s.id]; body = `<div class="medal">${ico('item', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}${shopSynergyTag(s.id)}<div class="small">${fmt(it.desc)}</div>${setInfo(it)}</div>`; }
-    else { const r = RELIC[s.id]; body = `<div class="medal">${ico('relic', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`; }
+    else if (s.kind === 'item') {
+      const it = ITEM[s.id];
+      const rar = it.tier || 'common';
+      body = `${CORNER_FLOURISH_SVG}<div class="medal item-socket r-${rar}"><div class="socket-inner">${ico('item', s.id, 56, 'ico big')}</div></div><div class="meta"><div class="ctitle r-${rar}" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}${shopSynergyTag(s.id)}<div class="small item-desc">${fmt(it.desc)}</div>${setInfo(it)}</div>`;
+    }
+    else { const r = RELIC[s.id]; body = `${CORNER_FLOURISH_SVG}<div class="medal"><div class="socket-inner">${ico('relic', s.id, 56, 'ico big')}</div></div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`; }
     const rc = s.kind === 'item' ? TIER_COLOR[ITEM[s.id].tier] : s.kind === 'hero' ? HEROES[s.id].color : '#ffd23f';
     const shine = s.kind === 'item' && RANK(s.id) >= 3 ? ' shine' : s.kind === 'relic' ? ' shine soft' : '';
-    return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button></div>`;
+    const coinSVG = `<svg class="buy-coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f59e0b" stroke="#78350f" stroke-width="1.8"/><circle cx="12" cy="12" r="7.5" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/><circle cx="12" cy="12" r="4.5" fill="#fde68a" opacity="0.8"/></svg>`;
+    return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}<button class="${dis ? '' : 'primary'} buyb gold-ingot-btn" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `${coinSVG}<span class="price">${s.price}</span>` : 'Free!'}</button></div>`;
   }
   // v64 (review #127): with a full team, a hero bought in the Hero Shop takes the place of one of yours (its level, XP and items; powers picked at random)
   // WHAT: the sheet that asks which hero steps aside for the hero being bought.
@@ -1537,10 +1547,35 @@
     // v118 (review #205, David: "In first hero shop visited put bubble saying when team is full, buying hero replaces an existing one of the same level"): once
     const swapTip = c.kind === 'heroShop' && !store.get('balance.hint.hswap', 0) ? `<div class="coach shopcoach" style="--cc:#ffd23f"><span class="ci">🔄</span><span class="ct">Full squad: buying a hero replaces a teammate, keeping their level, position & equipped gear.</span><button class="cok" data-act="hswap-ok">Got it</button></div>` : '';
     const bagVal = (run.bag || []).reduce((sum, id) => sum + (Run.sellValue ? Run.sellValue(id) : (ITEM[id] ? Math.round(ITEM[id].cost * 0.5) : 0)), 0);
-    const sellBagBtn = (run.bag && run.bag.length > 0) ? `<button class="qsell-btn" data-act="quick-sell-bag" title="Sell all unequipped bag items">💰 Sell Bag (+${bagVal}g)</button>` : '';
-    return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${sellBagBtn}${note}</div>${swapTip}
+    const pouchSVG = `<svg class="pouch-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6 C7 4, 10 2, 12 2 C14 2, 17 4, 17 6 C15 7, 9 7, 7 6 Z" fill="#92400e"/><path d="M5 8 C3 12, 3 19, 6 21 C9 22.5, 15 22.5, 18 21 C21 19, 21 12, 19 8 C16 9, 8 9, 5 8 Z" fill="#b45309" stroke="#78350f" stroke-width="1.2"/><ellipse cx="12" cy="15" rx="4" ry="4.5" fill="#d97706" opacity="0.6"/><text x="12" y="17.5" font-size="7" font-weight="900" fill="#fef3c7" text-anchor="middle">$</text></svg>`;
+    const sellBagBtn = (run.bag && run.bag.length > 0) ? `<button class="qsell-btn gold-plaque" data-act="quick-sell-bag" title="Sell all unequipped bag items">${pouchSVG} <span>Sell Bag (+${bagVal}g)</span></button>` : '';
+
+    const bracketL = `<svg class="timber-bracket l" viewBox="0 0 32 32" aria-hidden="true"><path d="M2,2 C16,2 24,10 24,24 L30,30 C30,12 18,2 2,2 Z" fill="url(#goldGrad)"/></svg>`;
+    const bracketR = `<svg class="timber-bracket r" viewBox="0 0 32 32" aria-hidden="true"><path d="M30,2 C16,2 8,10 8,24 L2,30 C2,12 14,2 30,2 Z" fill="url(#goldGrad)"/></svg>`;
+    const cartSVG = `<svg class="shop-cart-glow" viewBox="0 0 24 24" aria-hidden="true"><path d="M2,3 L5,3 L7.5,15 L18,15 L20.5,6 L6.5,6" fill="none" stroke="url(#goldGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="19.5" r="2.2" fill="#ffd700"/><circle cx="17" cy="19.5" r="2.2" fill="#ffd700"/></svg>`;
+    const rerollCoinSVG = `<svg class="btn-coin-sm" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/><circle cx="8" cy="8" r="4.5" fill="#fde047"/></svg>`;
+
+    return `<section class="shop sh-${c.kind} smithy-frame">
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+          <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fff6b3"/>
+            <stop offset="35%" stop-color="#ffd700"/>
+            <stop offset="70%" stop-color="#d4af37"/>
+            <stop offset="100%" stop-color="#8a6010"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="rivet tl"></div><div class="rivet tr"></div><div class="rivet bl"></div><div class="rivet br"></div>
+      <div class="wood-pillar l"></div><div class="wood-pillar r"></div>
+      <div class="shophead wood-header">
+        ${bracketL}
+        <h2 class="gold-embossed-title">${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? cartSVG : I('gem')} ${SHOP_NAME[c.kind]}</h2>
+        ${sellBagBtn}${note}
+        ${bracketR}
+      </div>${swapTip}
       <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div>
-      <div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
+      <div class="bar sticky stone-sill"><button data-act="reroll" class="reroll sapphire-btn" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold"><svg class="ui" viewBox="0 0 24 24"><path d="M4 12 A8 8 0 0 1 18.5 6.5 L21 4 L21 10 L15 10 L17.5 7.5 A6 6 0 0 0 6 12 Z M20 12 A8 8 0 0 1 5.5 17.5 L3 20 L3 14 L9 14 L6.5 16.5 A6 6 0 0 0 18 12 Z" fill="currentColor"/></svg> New ${rerollCoinSVG} <span class="price">${rc}</span></button><button data-act="team" class="steel-btn">${I('bag')} Team</button><button class="primary molten-gold-cta" data-act="leave">Continue <span class="cta-arrow">→</span></button></div></section>`;
   }
   // v44: what an event gave, as pictures (items, relics, a hero joining, gold, XP, boosts)
   // WHAT: the pictures of what an event choice gave (gold, XP, item, power, hero).
