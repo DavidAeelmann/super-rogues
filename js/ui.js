@@ -1643,7 +1643,7 @@
     const land = document.body.classList.contains('landscape');
     // review #18: on tablets/desktops the deploy and battle screens put their panel in a column beside the board
     // v29 (owner: "on PC the framing is horrible"): the board takes all the height the screen has, the panel sits beside it
-    if (document.body.classList.contains('desk')) return Math.floor(Math.max(520, Math.min(vw - 44, (vh - 88) / DESK_BOARD_RATIO, 1460)));
+    if (document.body.classList.contains('desk')) return Math.floor(Math.max(480, Math.min(vw - 64, (vh - 165) / DESK_BOARD_RATIO, 1320)));
     if (document.body.classList.contains('side')) return Math.floor(Math.max(300, Math.min(Math.min(vw, 1180) - 36 - 356, (vh - 64 - 8) / BOARD_RATIO, 1000)));
     const reserved = land ? 64 : screen === 'battle' ? 175 : 215;
     const byHeight = Math.max(200, (vh - reserved - 4) / BOARD_RATIO);
