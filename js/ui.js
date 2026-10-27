@@ -611,10 +611,14 @@
         <div class="bar sbar"><button data-act="start-back">◀ Back</button><button class="primary big ${rsel ? 'ready' : ''}" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a power'}</button></div></section>`;
     }
     const f = ui.startPick[0] || null;
+    const heroName = f && HEROES[f] ? HEROES[f].name : '';
+    const btnLabel = n === CFG.startHeroes
+      ? (heroName ? `Select ${esc(heroName)} ➔` : (relics.length && !introOn() ? 'Next ▶' : 'Start the game!'))
+      : 'Tap a hero';
     return `<section class="start s1 v3 ${dealIn(1)}">${stepsHTML(1)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
       ${heroStage(run.startOffer, f, 'start-pick', startHint())}${heroDetail(f)}
       ${(run.locked || []).length ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : ''}
-      <div class="bar sbar"><button class="primary big ${n === CFG.startHeroes ? 'ready' : ''}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${n === CFG.startHeroes ? (relics.length && !introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero'}</button></div></section>`;
+      <div class="bar sbar"><button class="primary big hero-cta-btn ${n === CFG.startHeroes ? 'ready selected' : 'slot-unselected'}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${btnLabel}</button></div></section>`;
   }
   // v64 (review #124, David: "hero selection highlights are a bit wonky and persist after you choose another or deselect"): only the picked hero is lit;
   // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
@@ -633,15 +637,53 @@
   };
   const markHeroKnown = key => { if (!key) return; const k = knownHeroKeys(); if (!k.has(key)) { k.add(key); store.set('balance.knownHeroes', Array.from(k)); } };
 
+  function heroClassBadge(d) {
+    const r = (d.role || '').toLowerCase();
+    const isRanged = d.range > 1;
+    let icon = '⚔️';
+    if (r.includes('summon')) icon = '🏰';
+    else if (r.includes('heal')) icon = '✚';
+    else if (r.includes('mage')) icon = '🔥';
+    else if (r.includes('tank') || r.includes('control')) icon = '🛡️';
+    else if (r.includes('hunt') || isRanged) icon = '🏹';
+    return `<span class="hbadge-crest">${icon}</span><span class="hbadge-txt">${esc(d.role).toUpperCase()} • ${isRanged ? 'RANGED' : 'MELEE'}</span>`;
+  }
+
   function heroStage(offer, sel, act, hint) {
-    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => { const d = HEROES[k], on = sel === k;
-      return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
-        <span class="cone"></span><span class="shine"></span>${(src => `<img class="splash ${src.startsWith('data:image/png') ? 'drawn' : ''}" src="${src}" alt="">`)(por(k, 150, true))}<span class="plate"></span><b>${esc(d.name)}</b><i>${d.role} · ${d.range <= 1 ? 'Melee' : 'Ranged'}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`; }).join('')}</div>`;
+    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
+      const d = HEROES[k], on = sel === k;
+      const r = (d.role || '').toLowerCase();
+      const themeClass = r.includes('summon') ? 'theme-citadel' : r.includes('heal') ? 'theme-solace' : r.includes('mage') ? 'theme-feuer' : 'theme-default';
+      const range = d.range || 1;
+      const hp = Math.round(d.hp || 500);
+      const atk = Math.round(d.atk || 50);
+      const splashSrc = por(k, 180, true);
+      const topBadgeIcon = r.includes('summon') ? '🏰' : r.includes('heal') ? '🌿' : r.includes('mage') ? '🔥' : '⚔️';
+
+      return `<button class="hbanner spot hero-tarot-card ${themeClass} ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
+        <span class="cone"></span>
+        <span class="shine"></span>
+        <div class="card-crest-top">${on ? '<span class="chk-crest">✓</span>' : `<span class="class-crest-icon">${topBadgeIcon}</span>`}</div>
+        <img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" src="${splashSrc}" alt="${esc(d.name)}">
+        <div class="card-vignette-bottom">
+          <b class="hero-card-title">${esc(d.name)}</b>
+          <div class="hero-role-pill">${heroClassBadge(d)}</div>
+          <div class="hero-stars-row">★★★★★</div>
+          <div class="hero-mini-stats">
+            <span class="mstat"><i class="ico-heart">❤️</i> <b>${hp}</b></span>
+            <span class="mstat"><i class="ico-sword">⚔️</i> <b>${atk}</b></span>
+            <span class="mstat"><i class="ico-range">🏹</i> <b>${range}</b></span>
+          </div>
+        </div>
+        ${on ? '<span class="chk">✓</span>' : ''}
+        ${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}
+      </button>`;
+    }).join('')}</div>`;
   }
   function heroDetail(f) {
     const h = f && HEROES[f];
-    return h ? `<div class="card detail"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
-        <p class="htag">${esc(h.tag || h.abName)}</p>${statBars(h)}<button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
+    return h ? `<div class="card detail hero-drawer-v5"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
+        <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${esc(h.tag || h.abDesc || '')}</p>${statBars(h)}<button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
   }
   // v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
   // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
@@ -2031,7 +2073,7 @@
   }
   function mountBgBoard() {
     const desk = document.body.classList.contains('desk');
-    const needBg = desk && run && screen !== 'title' && screen !== 'battle' && !(screen === 'run' && run.phase === 'deploy');
+    const needBg = desk && run && screen !== 'title' && screen !== 'battle' && !(screen === 'run' && run.phase === 'deploy') && !(screen === 'run' && run.phase === 'start');
     let st = $('#bgstage');
     if (!needBg) {
       if (st) st.hidden = true;

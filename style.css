@@ -4917,45 +4917,380 @@ body.desk section.title.home .app-ver {
   color: rgba(255, 255, 255, 0.35) !important;
 }
 
-/* Start screen pickers (Hero & Power selection) */
+/* ==========================================================================
+   Start Screen: Character Draft ("Pick your first hero") & Step Wizard Overhaul
+   ========================================================================== */
+
+section.start.s1.v3 {
+  position: relative !important;
+  z-index: 5 !important;
+  background: radial-gradient(55% 55% at 50% 42%, rgba(56, 75, 138, 0.45) 0%, rgba(15, 18, 28, 0.96) 72%, #090b10 100%) !important;
+  padding: 18px 24px 24px !important;
+  box-sizing: border-box !important;
+}
+
 body.desk section.start {
   max-width: 1080px !important;
   width: 100% !important;
   min-height: 0 !important;
   margin: 0 auto !important;
-  padding: 16px 20px !important;
-  border-radius: 0 !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-body.desk section.start .stage {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  gap: 16px !important;
-}
-
-body.desk section.start .stage::after {
-  display: none !important;
-}
-
-body.desk section.start .card.pick {
-  background: rgba(26, 32, 42, 0.75) !important;
+  padding: 18px 24px 24px !important;
+  border-radius: 18px !important;
+  background: radial-gradient(55% 55% at 50% 42%, rgba(56, 75, 138, 0.45) 0%, rgba(15, 18, 28, 0.96) 72%, #090b10 100%) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 12px !important;
+}
+
+/* 3-Step Draft Wizard */
+.ssteps {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 16px !important;
+  margin: 0 auto 12px !important;
+  padding: 6px 16px !important;
+  background: rgba(11, 14, 22, 0.85) !important;
+  border: 1.5px solid #2d3748 !important;
+  border-radius: 999px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+.ssteps::before {
+  content: '';
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  top: 50%;
+  height: 2px;
+  background: #334155;
+  z-index: 0;
+}
+.ssteps li {
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 4px 14px 4px 6px !important;
+  border-radius: 999px !important;
+  background: #141824 !important;
+  border: 1.5px solid #334155 !important;
+  color: #64748b !important;
+  font-family: var(--fun) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+.ssteps li i {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  display: grid !important;
+  place-items: center !important;
+  font-style: normal !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+.ssteps li.on {
+  background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%) !important;
+  border-color: #38bdf8 !important;
+  color: #0f172a !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.65), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+.ssteps li.on i {
+  background: #38bdf8 !important;
+  color: #022c22 !important;
+}
+.ssteps li.done {
+  background: #1e293b !important;
+  border-color: #3ddc84 !important;
+  color: #f1f5f9 !important;
+}
+.ssteps li.done i {
+  background: #3ddc84 !important;
+  color: #064e3b !important;
+}
+
+/* Screen Title */
+.start.v3 h2.sc {
+  font-size: 34px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.5px !important;
+  text-align: center !important;
+  margin: 6px 0 2px !important;
+  background: linear-gradient(180deg, #ffffff 10%, #fef08a 60%, #eab308 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.9));
+}
+.start.v3 .ssub {
+  color: #94a3b8 !important;
+  font-size: 14px !important;
+  margin-bottom: 16px !important;
+}
+
+/* Stage & Tarot Hero Cards */
+body.desk section.start .stage {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  max-width: 960px !important;
+  margin: 0 auto 16px !important;
+  background: none !important;
+  border: none !important;
   box-shadow: none !important;
 }
-body.desk section.start .card.pick:hover {
-  border-color: rgba(255, 207, 90, 0.5) !important;
-  background: rgba(34, 42, 56, 0.85) !important;
+
+.hbanner.spot.hero-tarot-card {
+  position: relative !important;
+  height: 380px !important;
+  min-height: 360px !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  background: #0b0d14 !important;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.75) !important;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, opacity 0.25s ease !important;
+  cursor: pointer !important;
 }
-body.desk section.start .card.pick.on {
-  border-color: #ffcf5a !important;
-  background: rgba(40, 48, 64, 0.9) !important;
+
+/* Theme borders for Citadel, Solace, Feuer */
+.hero-tarot-card.theme-citadel {
+  border: 3px solid #785b3b !important;
+  box-shadow: inset 0 0 0 1px #d97706, 0 14px 35px rgba(0, 0, 0, 0.75) !important;
+}
+.hero-tarot-card.theme-solace {
+  border: 3px solid #165b4c !important;
+  box-shadow: inset 0 0 0 1px #10b981, 0 14px 35px rgba(0, 0, 0, 0.75) !important;
+}
+.hero-tarot-card.theme-feuer {
+  border: 3px solid #852b1b !important;
+  box-shadow: inset 0 0 0 1px #ef4444, 0 14px 35px rgba(0, 0, 0, 0.75) !important;
+}
+.hero-tarot-card.theme-default {
+  border: 3px solid #334155 !important;
+}
+
+.hero-tarot-card:hover {
+  transform: translateY(-8px) scale(1.02) !important;
+}
+.hero-tarot-card.theme-citadel:hover {
+  box-shadow: 0 0 25px rgba(217, 119, 6, 0.5), 0 18px 40px rgba(0, 0, 0, 0.8) !important;
+}
+.hero-tarot-card.theme-solace:hover {
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.5), 0 18px 40px rgba(0, 0, 0, 0.8) !important;
+}
+.hero-tarot-card.theme-feuer:hover {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.5), 0 18px 40px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Selected Hero Card State */
+.hero-tarot-card.on {
+  border: 3.5px solid #fde047 !important;
+  box-shadow: 0 0 35px rgba(250, 204, 21, 0.7), inset 0 0 15px rgba(253, 224, 71, 0.3) !important;
+  transform: translateY(-8px) scale(1.03) !important;
+  opacity: 1 !important;
+  z-index: 3 !important;
+}
+.hero-tarot-card.off {
+  opacity: 0.72 !important;
+}
+
+/* Top Crest Apex */
+.card-crest-top {
+  position: absolute !important;
+  top: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 5 !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 2px solid #64748b !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6) !important;
+}
+.hero-tarot-card.on .card-crest-top {
+  border-color: #fde047 !important;
+  background: #15803d !important;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.8) !important;
+}
+.chk-crest {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  color: #fff !important;
+}
+.class-crest-icon {
+  font-size: 18px !important;
+}
+
+/* Splash Image */
+.hero-tarot-card .splash {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  z-index: 0 !important;
+}
+
+/* Bottom Dark Vignette Container */
+.card-vignette-bottom {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  background: linear-gradient(180deg, transparent 0%, rgba(9, 11, 18, 0.85) 30%, #090b12 90%) !important;
+  padding: 30px 12px 14px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.hero-card-title {
+  font-family: var(--fun) !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9) !important;
+  margin: 0 !important;
+}
+
+/* Hero Role Pill */
+.hero-role-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #cbd5e1 !important;
+  font-family: var(--fun) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+}
+.hbadge-crest {
+  font-size: 12px !important;
+}
+
+/* Stars Row */
+.hero-stars-row {
+  color: #fde047 !important;
+  font-size: 13px !important;
+  letter-spacing: 2px !important;
+  text-shadow: 0 0 6px rgba(250, 204, 21, 0.6) !important;
+}
+
+/* Mini Stats Row */
+.hero-mini-stats {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin-top: 2px !important;
+}
+.hero-mini-stats .mstat {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  color: #e2e8f0 !important;
+  font-family: var(--fun) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+.hero-mini-stats .mstat i {
+  font-style: normal !important;
+  font-size: 12px !important;
+}
+
+/* Instant Ability & Stat Drawer */
+.hero-drawer-v5 {
+  max-width: 680px !important;
+  margin: 0 auto 12px !important;
+  background: linear-gradient(180deg, #181d2c 0%, #0d101a 100%) !important;
+  border: 1.5px solid #38bdf8 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), inset 0 0 16px rgba(56, 189, 248, 0.15) !important;
+  padding: 12px 18px !important;
+}
+.hero-drawer-v5 .htag {
+  color: #cbd5e1 !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  margin: 6px 0 !important;
+}
+.hero-drawer-v5 .htag-title {
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
+}
+
+/* Unlock Progression Badge */
+.lockpill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 16px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #181c28 0%, #0f121a 100%) !important;
+  border: 1.5px solid #d97706 !important;
+  color: #fbbf24 !important;
+  font-family: var(--fun) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 12px rgba(217, 119, 6, 0.3) !important;
+}
+
+/* Primary CTA Button (Unselected Slot vs 3D Molten Gold) */
+.hero-cta-btn.slot-unselected {
+  width: 340px !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #1e2230 0%, #141722 100%) !important;
+  border: 2px dashed #475569 !important;
+  color: #94a3b8 !important;
+  font-family: var(--fun) !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+  cursor: pointer !important;
+}
+
+.hero-cta-btn.ready.selected {
+  width: 380px !important;
+  height: 56px !important;
+  min-height: 56px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #fffbeb 0%, #fde047 15%, #f59e0b 55%, #b45309 100%) !important;
+  border: 2px solid #fef08a !important;
+  border-bottom: 5px solid #78350f !important;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.65), 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+  color: #1c1917 !important;
+  font-family: var(--fun) !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.5px !important;
+  transition: transform 0.15s, filter 0.15s !important;
+}
+.hero-cta-btn.ready.selected:hover {
+  filter: brightness(1.1) !important;
+  transform: translateY(-2px) !important;
+}
+.hero-cta-btn.ready.selected:active {
+  transform: translateY(3px) !important;
+  border-bottom-width: 2px !important;
 }
 
 /* 3. Map Screen: Nighttime War-Table Map & Tactical Party Dock */
