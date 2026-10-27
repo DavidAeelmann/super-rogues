@@ -29,6 +29,7 @@ A roguelike auto-battler on an 8x8 hex grid for phones, runs of 3 to 7 minutes: 
 How to apply: before implementing a request, ask the final question (more fun in the next 5 minutes? a decision that matters? more desire to play again?). If the answer is no, implement the minimal version and say why in the reply to the player. It is not a reason to refuse a request from David or PC boy; it is the tie-breaker when a request can be done in several ways.
 
 David's rules that always apply (each one came from a request of his):
+- **Display a discrete version number in the main menu**, incrementing slowly from `0.1` (e.g. `v0.1`, `v0.2`, ...). Keep it small, subtle, and unobtrusive so deployments can easily be verified.
 - **No screen may require scrolling** at 390x740 and 360x640, and **no text may be cut off** (no ellipsis, no line-clamp). The Chrome tests check this (`tools/tests/screens.mjs`, `devices.mjs`). Full audit of off-screen buttons: `node tools/tests/interface.mjs [en|pt|de]` (game screens never scroll; list sheets may scroll internally, but every button stays visible).
 - **Yellow is only for the main action and key rewards.** Everything else uses the other tones.
 - The Bronze "assist" is **not advertised anywhere** (#53).

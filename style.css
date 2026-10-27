@@ -3307,6 +3307,27 @@ body.in-danger::after {
 }
 
 /* 6. Bottom Hub Dock (Title Screen Thumb-Zone Navigation) */
+.app-ver {
+  position: absolute;
+  bottom: 8px;
+  right: 14px;
+  font-size: 11px;
+  font-family: var(--sans);
+  font-weight: 600;
+  color: rgba(205, 232, 158, 0.45);
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  z-index: 5;
+  user-select: none;
+}
+
+body.desk .title.home .app-ver {
+  bottom: 12px;
+  right: 18px;
+  font-size: 11.5px;
+  color: rgba(205, 232, 158, 0.55);
+}
+
 .homedock {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
