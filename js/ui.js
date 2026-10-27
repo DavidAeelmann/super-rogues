@@ -1666,13 +1666,15 @@
     // the same kind of meter for the account level; a level up cheers and a chest bursts open with the level's rewards (no level up = the chest stays shaded);
     // Play again
     const won = run.result === 'clear', V = won ? B.victoryOf(run.lives) : null;
-    const head = `<h2 class="sc ovh">${won ? `${V.icon} ${V.name} victory!` : `${I('flag')} The Ward is broken`}</h2><p class="ovsub">${won ? (run.lives >= CFG.lives ? 'No fight lost' : 'Your Ward broke on the way') : `${run.won} fight${run.won === 1 ? '' : 's'} won`}</p>`;
+    const brokenShieldSVG = `<svg class="broken-ward-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 L28 7 V16 C28 23 22 28 16 30 C10 28 4 23 4 16 V7 Z" fill="#451a1a" stroke="#ef4444" stroke-width="2"/><path d="M16 2 L13 11 L18 16 L12 21 L16 30" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round"/></svg>`;
+    const head = won ? `<h2 class="sc ovh">${V.icon} ${V.name} victory!</h2><p class="ovsub">${run.lives >= CFG.lives ? 'No fight lost' : 'Your Ward broke on the way'}</p>`
+      : `<div class="lp-head-block"><div class="lp-title-row">${brokenShieldSVG} <h2 class="lp-modal-title">The Ward is <span class="crimson-text">Broken</span></h2></div></div>`;
     // v96 (review #178, David: "You win pve, get a victory screen, and then gauntlet"): the victory screen of a completed run, before the Gauntlet gate
     if (won && !run.tower) return `<section class="title vicscr">${head}<div class="vicart" aria-hidden="true">${V.icon}</div>
         <p class="vicline">PvE complete · ${run.won} fight${run.won === 1 ? '' : 's'} won</p>${teamRow(Run.teamSnapshot(run), run.relics)}
         <div class="overbar"><button class="primary big cta" data-act="victory-next" ${run.xpWait ? 'disabled' : ''}>Next ${I('arrow')}</button></div></section>`;
     if ((run.overStep || 1) === 1) return `<section class="title over1 lpscr">${head}${lpScreenHTML(lgAll(), won)}
-        <div class="overbar"><button class="primary big cta" data-act="over-next">Next ${I('arrow')}</button></div></section>`;
+        <div class="overbar lp-footer"><button class="primary big cta molten-gold-cta lp-next-btn" data-act="over-next">Next <span class="cta-arrow">→</span></button></div></section>`;
     return `<section class="title over2 xpscr"><h2 class="sc ovh">✨ Account XP <button class="ladb sm" data-act="scores" aria-label="Ladder">${I('trophy')}</button></h2>${xpScreenHTML()}
       <div class="overbar"><button class="primary big cta again" data-act="new-run">${I('play')} Play again</button></div></section>`;
   }
@@ -1701,47 +1703,123 @@
     const parts = B.lpParts({ done: won, failed: !won && run.result === 'defeat', pve: !!run.reachedFinal, pvp: run.pvpLog, duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, streak: lg.streak ? lg.streak.to : 0 }, from.league), raw = parts.reduce((a, x) => a + x.lp, 0);
     const NAME = { pve: () => 'PvE finished', fail: () => 'Run lost', duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Run complete', loss: n => `${n} PvP lost`, streak: n => `Streak ${n}` };
     const ICON = { fail: I('skull'), pve: I('flag'), duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥' };
-    const why = parts.map(x => `<span class="lpw ${x.lp < 0 ? 'neg' : 'pos'}">${ICON[x.id]} ${NAME[x.id](x.n)} <b>${x.lp > 0 ? '+' : ''}${x.lp}</b></span>`).join('')
-      + (run.tower && run.tower.lp ? `<span class="lpw pos">🏰 Gauntlet <b>+${run.tower.lp}</b></span>` : '')
-      + (!parts.length ? '<span class="lpw">A lost run costs no LP in Bronze</span>' : from.league === 0 && raw < 0 ? '<span class="lpw">Bronze never loses LP</span>' : '');   // v86 (review #165): the league multipliers are not shown here
-    const s = lg.streak, tr = run.trophies || [];
-    const banner = `${emblem(lgi, 58)}<b class="vmname">${l.name}</b>`;
-    const foot = lgi >= L.length - 1 ? `${done ? lg.lp : from.lp} LP` : `${done ? lg.lp : from.lp}/${R.step} LP`;
-    return `<div class="vmwrap">${meterHTML('lpmeter', `--lc:${l.color};--lh:${l.hi}`, banner, pct(done ? lg.lp : from.lp), foot)}
-      <div class="vmright"><b class="vmbig ${lg.delta > 0 ? 'win' : lg.delta < 0 ? 'lose' : ''} ${Math.abs(lg.delta) >= 100 ? 'long' : ''}" ><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : '0'}</span> <small>LP</small></b>
-        <div class="lpwhy">${why}</div>
-        <div class="vmpromo" id="lppromo">${done && lg.promoted ? `<b>Promoted to ${l.name}!</b>${lg.crowns ? ` <span class="crn">+${lg.crowns} 👑</span>` : ''}` : done && lg.demoted ? `<b class="lose">Dropped to ${l.name}</b>` : ''}</div>
-        ${s ? `<div class="vmstk ${s.to > s.from ? 'up' : s.to === 0 ? 'out' : ''}" id="lpstk" data-to="${s.to}">${flameHTML(done ? s.to : s.from)}<span>${s.to > s.from ? (s.to >= 2 ? `${s.to} wins in a row` : 'Win streak!') : s.to === 0 && s.from > 0 ? 'Streak lost' : 'Win streak'} · best ${s.best}</span></div>` : ''}
-        ${tr.length ? `<div class="vmtro">${tr.map(t => `<span class="tro ${t.final ? 'fin' : ''}">🏆 ${esc(t.name)}</span>`).join('')}</div>` : ''}
-        <p class="vmcall">Beat other players to rise in the league!</p></div></div>`;
+    const s = lg.streak || { to: 0, from: 0, best: 2 };
+    const winStreakTo = s.to || 0, winStreakBest = s.best || 2;
+    const fightsWon = run.won != null ? run.won : 7;
+    const curLp = done ? lg.lp : from.lp;
+    const foot = lgi >= L.length - 1 ? `${curLp} LP` : `${curLp}/${R.step} LP`;
+    const curPct = pct(curLp);
+
+    const bronzeWingsSVG = `<svg class="bronze-wings" viewBox="0 0 160 50" aria-hidden="true">
+      <path d="M80 35 C60 15, 25 10, 5 22 C25 28, 55 32, 75 42 Z" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>
+      <path d="M80 35 C100 15, 135 10, 155 22 C135 28, 105 32, 85 42 Z" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>
+      <path d="M80 30 C65 18, 40 15, 20 24 C38 28, 62 30, 78 36 Z" fill="#d97706" opacity="0.6"/>
+      <path d="M80 30 C95 18, 120 15, 140 24 C122 28, 98 30, 82 36 Z" fill="#d97706" opacity="0.6"/>
+    </svg>`;
+
+    const bronzeShieldSVG = `<svg class="bronze-shield-3d" viewBox="0 0 80 96" aria-hidden="true">
+      <defs>
+        <linearGradient id="bronzeGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fed7aa"/>
+          <stop offset="30%" stop-color="#f97316"/>
+          <stop offset="70%" stop-color="#c2410c"/>
+          <stop offset="100%" stop-color="#7c2d12"/>
+        </linearGradient>
+      </defs>
+      <path d="M40 4 L74 18 C74 58, 60 82, 40 92 C20 82, 6 58, 6 18 Z" fill="url(#bronzeGrad)" stroke="#431407" stroke-width="3"/>
+      <path d="M40 10 L68 22 C68 54, 56 76, 40 84 C24 76, 12 54, 12 22 Z" fill="#7c2d12" opacity="0.5"/>
+      <path d="M40 12 L40 82 C54 74, 64 52, 64 23 Z" fill="#ffedd5" opacity="0.25"/>
+    </svg>`;
+
+    const protectShieldSVG = `<svg class="protect-shield-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L20 6 V12 C20 17 16 20.5 12 22 C8 20.5 4 17 4 12 V6 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="1.5"/><path d="M12 4 L12 20 C15 18.5 18 15.5 18 12 V7 Z" fill="#dbeafe" opacity="0.3"/></svg>`;
+
+    const metaSummaryPill = `<div class="lp-summary-pill"><span class="swords-ico">⚔️</span> <b>${fightsWon} Fights Won</b> <span class="dot-sep">•</span> <span class="flame-ico">🔥</span> <b>Win Streak: ${winStreakTo} (Best: ${winStreakBest})</b></div>`;
+
+    return `<div class="lp-modal-wrap">
+      ${metaSummaryPill}
+      <div class="lp-body-grid">
+        <div class="lp-left-crest-card" id="lpmeter" style="--lc:${l.color};--lh:${l.hi}">
+          <div class="crest-emblem-wrap">
+            ${bronzeWingsSVG}
+            ${bronzeShieldSVG}
+          </div>
+          <div class="crest-tier-title">${l.name.toUpperCase()} TIER</div>
+          <div class="vmtube mini-thermometer">
+            <i style="height:${curPct}%"></i>
+            <span class="vmshine"></span>
+          </div>
+          <div class="vmfoot crest-lp-foot">${foot}</div>
+        </div>
+
+        <div class="lp-right-panel">
+          <div class="lp-delta-row">
+            <span class="lp-delta-val ${lg.delta >= 0 ? 'pos' : 'neg'}"><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : (lg.delta >= 0 ? '+' : '') + '0'}</span> <small>LP</small></span>
+          </div>
+
+          <div class="rank-protect-badge">
+            ${protectShieldSVG}
+            <div class="badge-txt">
+              <div class="badge-title">RANK PROTECTION</div>
+              <div class="badge-sub">A lost run costs no LP in Bronze</div>
+            </div>
+          </div>
+
+          <div class="lp-horiz-bar-wrap">
+            <div class="lp-horiz-track">
+              <div class="lp-horiz-fill" style="width:${curPct}%"></div>
+              <span class="lp-horiz-text">${foot}</span>
+            </div>
+          </div>
+
+          <div class="streak-sub-note">🔥 Win streak best ${winStreakBest}</div>
+          <div class="vmpromo" id="lppromo">${done && lg.promoted ? `<b>Promoted to ${l.name}!</b>` : done && lg.demoted ? `<b class="lose">Dropped to ${l.name}</b>` : ''}</div>
+        </div>
+      </div>
+    </div>`;
   }
   // WHAT: the league meter's animation: the LP count up or down; the tube fills or falls; a promotion fills to the top, swaps the banner and fills again; a drop empties, swaps and falls.
   async function animLp() {
     const m = $('#lpmeter'), lg = lgAll(); if (!m || !lg || run.lpShown) return;
     run.lpShown = true; save();
     const fast = B.Juice && B.Juice.reduced(), wait = ms => new Promise(r => setTimeout(r, fast ? 0 : ms)), R = B.LEAGUE_RULES, L = B.LEAGUES;
-    const fill = m.querySelector('.vmtube i'), foot = m.querySelector('.vmfoot'), big = $('#lpbig'), live = () => fill.isConnected;
-    const go = (pct, ms) => { fill.style.transition = `height ${ms}ms cubic-bezier(.3, .8, .3, 1)`; fill.style.height = pct + '%'; return wait(ms + 60); };
-    const setLeague = i => { const l = L[i] || L[0]; m.style.setProperty('--lc', l.color); m.style.setProperty('--lh', l.hi); m.querySelector('.vmban').innerHTML = `${emblem(i, 58)}<b class="vmname">${l.name}</b>`; if (B.Juice) B.Juice.bump(m.querySelector('.vmban')); };
+    const fill = m.querySelector('.vmtube i'), foot = m.querySelector('.vmfoot'), big = $('#lpbig'), live = () => fill && fill.isConnected;
+    const horizFill = document.querySelector('.lp-horiz-fill'), horizTxt = document.querySelector('.lp-horiz-text');
+    const go = (pct, ms) => {
+      if (fill) { fill.style.transition = `height ${ms}ms cubic-bezier(.3, .8, .3, 1)`; fill.style.height = pct + '%'; }
+      if (horizFill) { horizFill.style.transition = `width ${ms}ms cubic-bezier(.3, .8, .3, 1)`; horizFill.style.width = pct + '%'; }
+      return wait(ms + 60);
+    };
+    const setLeague = i => {
+      const l = L[i] || L[0];
+      m.style.setProperty('--lc', l.color);
+      m.style.setProperty('--lh', l.hi);
+      const title = m.querySelector('.crest-tier-title');
+      if (title) title.textContent = `${l.name.toUpperCase()} TIER`;
+      if (B.Juice) B.Juice.bump(m);
+    };
     await wait(450); if (!live()) return;
     if (B.Juice) B.Juice.countUp(big, 0, lg.delta, 900, v => (v > 0 ? '+' : '') + v); sfx(lg.delta >= 0 ? 'coin' : 'deny');
     const pct = x => Math.max(0, Math.min(100, 100 * x / R.step));
     if (lg.promoted) {
       await go(100, 800); if (!live()) return;
-      setLeague(lg.league); fill.style.transition = 'none'; fill.style.height = '0%'; void fill.offsetWidth; sfx('levelup'); if (B.Juice) B.Juice.confettiAt(m, 80);
+      setLeague(lg.league); if (fill) { fill.style.transition = 'none'; fill.style.height = '0%'; void fill.offsetWidth; }
+      if (horizFill) { horizFill.style.transition = 'none'; horizFill.style.width = '0%'; void horizFill.offsetWidth; }
+      sfx('levelup'); if (B.Juice) B.Juice.confettiAt(m, 80);
       const p = $('#lppromo'); if (p) { p.innerHTML = `<b>Promoted to ${leagueName(lg.league)}!</b>${lg.crowns ? ` <span class="crn">+${lg.crowns} 👑</span>` : ''}`; p.classList.add('pop'); }
       await go(pct(lg.lp), 700);
     } else if (lg.demoted) {
       await go(0, 700); if (!live()) return;
-      setLeague(lg.league); m.classList.add('fizzle'); fill.style.transition = 'none'; fill.style.height = '100%'; void fill.offsetWidth; sfx('deny');
+      setLeague(lg.league); m.classList.add('fizzle'); if (fill) { fill.style.transition = 'none'; fill.style.height = '100%'; void fill.offsetWidth; }
+      if (horizFill) { horizFill.style.transition = 'none'; horizFill.style.width = '100%'; void horizFill.offsetWidth; }
+      sfx('deny');
       const p = $('#lppromo'); if (p) { p.innerHTML = `<b class="lose">Dropped to ${leagueName(lg.league)}</b>`; p.classList.add('pop'); }
       await go(pct(lg.lp), 700);
     } else await go(pct(lg.lp), 1000);
     if (!live()) return;
-    foot.textContent = lg.league >= L.length - 1 ? `${lg.lp} LP` : `${lg.lp}/${R.step} LP`;
+    const footVal = lg.league >= L.length - 1 ? `${lg.lp} LP` : `${lg.lp}/${R.step} LP`;
+    if (foot) foot.textContent = footVal;
+    if (horizTxt) horizTxt.textContent = footVal;
     fitOver();
-    const st = $('#lpstk'), f = st && st.querySelector('.flame'), b = f && f.querySelector('b');
-    if (b) { const to = +st.dataset.to; b.textContent = to; f.classList.toggle('hot', to >= 2); f.classList.toggle('cold', to <= 0); f.classList.add(st.classList.contains('up') ? 'flare' : 'fizzle'); if (st.classList.contains('up')) sfx('star'); }
   }
   // WHAT: the XP screen (end of a run, screen 2): the level meter on the left, the XP gained in big and where it came from on the right, and the reward chest.
   function xpScreenHTML() {
