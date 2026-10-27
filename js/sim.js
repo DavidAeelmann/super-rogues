@@ -60,6 +60,7 @@
     const u = {
       id: ++W.nid, side, kind: def.kind || 'mob', key: def.key, name: def.name, glyph: def.glyph, color: def.color || null,
       uid: def.uid || 0, lvl: def.lvl || 1, boss: def.boss || 0, elite: def.elite || null, owner: def.owner || 0,
+      items: (def.items || []).slice(),
       c, r, fc: c, fr: r, m0t: W.t, m1t: W.t,
       maxHp: Math.round(def.hp), hp: Math.round(def.hp), atk: def.atk, ap: def.ap || 100, armor: def.armor || 0,
       as: def.as, range: def.range, ms: def.ms, crit: def.crit || 0, critDmg: def.critDmg || 1.5, ls: def.ls || 0,

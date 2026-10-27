@@ -195,6 +195,7 @@
       crit: (b.crit || 0) + (m.crit || 0), critDmg: 1.5 + (m.critDmg || 0), ls: (b.ls || 0) + (m.ls || 0),
       dodge: has(run, 'giant') ? 0 : (b.dodge || 0) + (m.dodge || 0), mana: Math.max(20, Math.round((b.mana + (m.manaMax || 0)) * (1 + (m.manaMaxPct || 0)))), m0: b.m0,
       abil: b.abil, ab, fl, m, size: has(run, 'giant') ? 1.25 : undefined,
+      items: (h.items || []).slice(),
     };
   }
 

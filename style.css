@@ -5100,3 +5100,83 @@ body.desk #modal .shead {
     padding-top: 3px !important;
   }
 }
+
+/* ==========================================================================
+   v131: Speed-Up Active State & Battle Strip Item Badges
+   ========================================================================== */
+.speed button.on,
+body.desk .speed button.on,
+body.desk .deploy.battle .hud .speed button.on {
+  background: linear-gradient(180deg, #ffcf5a 0%, #e09612 100%) !important;
+  color: #361e02 !important;
+  font-weight: 800 !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 207, 90, 0.5) !important;
+  transform: translateY(2px) scale(0.96) !important;
+  border: 1.5px solid #ffe48a !important;
+  text-shadow: none !important;
+}
+
+.speed button:not(.on),
+body.desk .speed button:not(.on),
+body.desk .deploy.battle .hud .speed button:not(.on) {
+  background: rgba(30, 36, 48, 0.85) !important;
+  color: #c0c6d4 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  transform: none !important;
+}
+
+/* Ensure .tsitems shows cleanly on hero roster cards in battle across all viewports */
+.teamstrip.v2 .ts .tsitems,
+.deploy.battle .teamstrip.v2 .ts .tsitems {
+  display: flex !important;
+  gap: 3px !important;
+  position: absolute !important;
+  bottom: -4px !important;
+  left: 2px !important;
+  z-index: 3 !important;
+}
+
+.teamstrip.v2 .ts .tsitems .ico.xs,
+.deploy.battle .teamstrip.v2 .ts .tsitems .ico.xs {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 4px !important;
+  background: #0d121c !important;
+  border: 1px solid rgba(255, 207, 90, 0.8) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Deploy dock frameless splash art & sockets */
+body.desk .dparty .pm {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.desk .dparty .por-btn {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  cursor: default !important;
+}
+
+body.desk .dparty .por {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.25) !important;
+  border-radius: 50% !important;
+}
+
+body.desk .dparty .dsock.empty {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1.5px dashed rgba(255, 255, 255, 0.28) !important;
+  border-radius: 8px !important;
+}
+
+body.desk .dparty .dsock.filled {
+  background: rgba(18, 22, 30, 0.8) !important;
+  border: 1.5px solid rgba(255, 207, 90, 0.5) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+

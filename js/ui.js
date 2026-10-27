@@ -823,7 +823,7 @@
       const it = ITEM[id];
       if (!it) return '';
       const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-      return `<button class="ditem eqitem" data-drag="b:${i}" data-drop="bag" data-tip="${tip}" data-act="team" aria-label="${esc(it.name)}"><img class="ico" src="${B.Icons.item(id, 24)}" alt=""></button>`;
+      return `<button class="ditem eqitem" data-drag="b:${i}" data-drop="bag" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico" src="${B.Icons.item(id, 24)}" alt=""></button>`;
     }).join('');
     return `<div class="dleft-dock">
       ${relics ? `<div class="dpowers-col"><div class="dl-title">POWERS</div><div class="dl-list">${relics}</div></div>` : ''}
@@ -842,13 +842,13 @@
         if (id && ITEM[id]) {
           const it = ITEM[id];
           const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-          socks.push(`<button class="dsock filled" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" data-act="team" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></button>`);
+          socks.push(`<button class="dsock filled" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></button>`);
         } else {
-          socks.push(`<div class="dsock empty" data-drop="hero:${h.uid}" title="Empty equipment slot"></div>`);
+          socks.push(`<div class="dsock empty" data-drop="hero:${h.uid}" title="Drag item here to equip"></div>`);
         }
       }
       return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
-        <button class="por-btn" data-act="team" aria-label="${esc(d.name)}">${img(h.key, 46, 'por')}<span class="dplv">Lv ${h.lvl}</span></button>
+        <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 46, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
         <div class="pmb">
           <div class="pmn"><b>${esc(d.name || h.key)}</b></div>
           <div class="pmi">${socks.join('')}</div>
@@ -1134,7 +1134,7 @@
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
       ${deployLeftHTML()}
-      <div class="bar sticky"><button data-act="team">${I('bag')} Items</button><button class="primary big${need.length ? ' locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}>${need.length ? `<span aria-hidden="true">🔒</span> ${need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`}` : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>
+      <div class="bar sticky"><button class="primary big${need.length ? ' locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}>${need.length ? `<span aria-hidden="true">🔒</span> ${need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`}` : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</button></div>
       <div class="dparty">${deployPartyHTML()}</div>
     </section>`;
   }
