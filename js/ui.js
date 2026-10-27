@@ -711,10 +711,18 @@
     }).join('');
     const t = seq[step], title = run.result === 'clear' ? '🏰 Gauntlet shop: gear up for the climb' : t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';   // v101 (review #183)
     const leader = run.heroes[0];
+    const ribbonTailL = `<svg class="ribbon-tail tail-l" viewBox="0 0 20 36" aria-hidden="true"><polygon points="20,0 20,36 0,28 10,18 0,8" fill="#d48817"/><polygon points="20,0 20,36 12,18" fill="#9a6b13" opacity="0.65"/></svg>`;
+    const ribbonTailR = `<svg class="ribbon-tail tail-r" viewBox="0 0 20 36" aria-hidden="true"><polygon points="0,0 0,36 20,28 10,18 20,8" fill="#d48817"/><polygon points="0,0 0,36 8,18" fill="#734f0a" opacity="0.65"/></svg>`;
+    const rdayTitle = run.result === 'clear' ? '' : `<b>Day ${step + 1}/${n}</b> `;
     return `<div class="wmap" id="wmap" data-today="${todayTop}" data-key="${run.seed}:${step}"><div class="wtrack" style="height:${H}px"><span class="wsky"></span><span class="wpeaks"></span>${decor.join('')}${road}
       <span class="rn camp done" style="left:50%;top:${start[1]}px"><span class="ri">⛺</span><span class="rl rgt"><b>Start</b></span></span>${nodes}
       ${leader ? `<span class="rtok" style="left:${last[0]}%;top:${last[1]}px" data-to="${last[0]},${last[1]}" data-from="${prev[0]},${prev[1]}">${img(leader.key, 44, 'por')}</span>` : ''}
-      <div class="rtoday" style="top:${todayTop}px;height:${today}px"><div class="rday">${run.result === 'clear' ? '' : `<b>Day ${step + 1}/${n}</b> `}${title}</div>
+      <div class="rtoday" style="top:${todayTop}px;height:${today}px">
+        <div class="path-ribbon-wrap">
+          ${ribbonTailL}
+          <div class="rday-ribbon">${rdayTitle}${title}</div>
+          ${ribbonTailR}
+        </div>
         ${run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(run.nextMod))}</p>` : ''}
         <div class="banners rb${k}">${opts.map(optHTML).join('')}</div></div></div></div>`;
   }
@@ -768,7 +776,9 @@
   // with its own scene: the enemies' faces for a fight (skulls = how hard), a fan of mystery cards for a shop, the boss with red rays, the event's picture
   // WHAT: the poster of one map option: a scene on top, then title, a line of text and the reward.
   function posterHTML(i, kind, scene, title, body, reward, ribbon) {
-    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon">${ribbon}</span>` : ''}</span><span class="bt">${title}</span><span class="bd">${body}</span>${reward ? `<span class="rw">${reward}</span>` : ''}</button>`;
+    const coinPlaqueSVG = `<svg class="rw-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/><circle cx="10" cy="10" r="5.5" fill="#fde047"/></svg>`;
+    const formattedReward = reward ? `<span class="rw gold-treasure-plaque">${coinPlaqueSVG}<span>${reward}</span></span>` : '';
+    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon rib-${kind}">${ribbon}</span>` : ''}</span><span class="bt">${title}</span><span class="bd">${body}</span>${formattedReward}</button>`;
   }
   const mobsOf = f => { const cnt = {}, order = []; for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); if (!cnt[k]) order.push(k); cnt[k] = (cnt[k] || 0) + 1; } return order.map(k => ({ key: k.replace('*', ''), n: cnt[k], elite: k.endsWith('*') })); };
   const pickN = (arr, n, seed) => { const out = []; for (let k = 0; out.length < n && k < arr.length * 4; k++) { const v = arr[(seed * 7 + k * 5 + k * k) % arr.length]; if (!out.includes(v)) out.push(v); } return out; };
@@ -898,19 +908,29 @@
   function partyHTML() {
     const heroes = run.heroes.map(h => {
       const next = h.lvl < CFG.maxLevel ? CFG.xpLevels[h.lvl + 1] : null, prev = CFG.xpLevels[h.lvl] || 0;
-      return `<button class="pm${h.bench ? ' benched' : ''}" data-act="team">${img(h.key, 38, 'por')}<span class="pmb"><span class="pmn"><b>${esc(HEROES[h.key].name)}</b><span class="lv">Lv ${h.lvl}</span>${h.bench ? '<span class="pmbench">Not placed</span>' : ''}</span>
-        <span class="xpbar"><i style="width:${next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100}%"></i></span>
-        <span class="pmi">${h.items.map(id => `<img class="ico xs" src="${B.Icons.item(id, 20)}" alt="">`).join('') || '<i class="noitem" title="No items yet"></i>'}</span></span></button>`;
+      const maxSl = maxSlots(h);
+      const slots = [];
+      for (let s = 0; s < maxSl; s++) {
+        const id = h.items[s];
+        if (id) slots.push(`<span class="mslot filled"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></span>`);
+        else slots.push(`<span class="mslot empty"><svg class="slot-rune" viewBox="0 0 16 16"><path d="M8 3 L13 8 L8 13 L3 8 Z" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"/></svg></span>`);
+      }
+      return `<button class="pm${h.bench ? ' benched' : ''}" data-act="team">${img(h.key, 48, 'por')}<span class="pmb"><span class="pmn"><b>${esc(HEROES[h.key].name)}</b><span class="lv">Lv ${h.lvl}</span>${h.bench ? '<span class="pmbench">Not placed</span>' : ''}</span>
+        <span class="xpbar glossy-tube"><i style="width:${next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100}%"></i></span>
+        <span class="pmi slots3">${slots.join('')}</span></span></button>`;
     }).join('');
     let boss = '';
     const seq = Run.pveSeq(run);
     for (let k = Math.max(0, run.step); k < seq.length; k++) if (seq[k] === 'B') {
       const nth = seq.slice(0, k + 1).filter(x => x === 'B').length, b = B.BOSSES[Run.bossOf(run, nth)], d = k - run.step;
-      boss = `<button class="nextboss" data-act="form-info" data-arg="${esc(b.name + ': ' + b.desc)}">${img(b.key, 40, 'por')}<div><b>${I('skull')} ${esc(b.name)}</b> <span class="dim">${d <= 0 ? 'today' : 'in ' + d + ' day' + (d > 1 ? 's' : '')}</span></div>${I('info', 'chev')}</button>`;
+      const daysText = d <= 0 ? '<span class="boss-days-gold">today</span>' : `<span class="boss-days-gold">in ${d} day${d > 1 ? 's' : ''}</span>`;
+      const skullGlow = `<svg class="boss-skull-glow" viewBox="0 0 24 24"><path d="M12 2 C6.5 2 3 5.5 3 10 C3 13.5 5 15.5 7 16.5 L7 20 C7 21 8 22 9 22 L15 22 C16 22 17 21 17 20 L17 16.5 C19 15.5 21 13.5 21 10 C21 5.5 17.5 2 12 2 Z M8 11 C7 11 6 10 6 9 C6 8 7 7 8 7 C9 7 10 8 10 9 C10 10 9 11 8 11 Z M16 11 C15 11 14 10 14 9 C14 8 15 7 16 7 C17 7 18 8 18 9 C18 10 17 11 16 11 Z" fill="#e9d5ff" stroke="#a855f7" stroke-width="1.2"/></svg>`;
+      boss = `<button class="nextboss boss-arcane-card" data-act="form-info" data-arg="${esc(b.name + ': ' + b.desc)}"><div class="boss-frame">${img(b.key, 46, 'por')}</div><div class="boss-meta"><div class="boss-title">${skullGlow} <b>${esc(b.name)}</b></div><div class="boss-countdown">${daysText}</div></div>${I('info', 'chev')}</button>`;
       break;
     }
-    return `<div class="party"><div class="bph"><b>Your team</b><span class="dim small">${run.bag.length ? `<a href="#" data-act="team" class="bagnote">${I('bag')} ${run.bag.length} to equip</a>` : `${run.heroes.length}/${Run.teamMax(run)}`}</span></div>
-      <div class="pgrid">${heroes}</div>${run.relics.length ? `<div class="relicline"><b>Powers</b>${run.relics.map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 26)}</button>`).join('')}</div>` : ''}${boss}</div>`;
+    const equipBadge = run.bag.length ? `<a href="#" data-act="team" class="bagnote equip-pulse">🎒 ${run.bag.length} to equip</a>` : `<span class="team-cap">${run.heroes.length}/${Run.teamMax(run)}</span>`;
+    return `<div class="party tactical-dock"><div class="bph"><b>YOUR TEAM</b>${equipBadge}</div>
+      <div class="pgrid">${heroes}</div>${run.relics.length ? `<div class="relicline"><b>POWERS</b><div class="relic-row">${run.relics.map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 28)}</button>`).join('')}</div></div>` : ''}${boss}</div>`;
   }
 
   // v49 (review #61, David: "On level-up, make choices feel impactful with concise effects/playstyle tags and transform the
