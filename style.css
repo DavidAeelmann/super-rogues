@@ -4921,28 +4921,24 @@ body.desk section.title.home .app-ver {
    Start Screen: Character Draft ("Pick your first hero") & Step Wizard Overhaul
    ========================================================================== */
 
-section.start.s1.v3 {
+body.desk section.start.s1.v3,
+body.desk section.start {
   position: relative !important;
   z-index: 5 !important;
-  background: radial-gradient(55% 55% at 50% 42%, rgba(56, 75, 138, 0.45) 0%, rgba(15, 18, 28, 0.96) 72%, #090b10 100%) !important;
-  padding: 18px 24px 24px !important;
-  box-sizing: border-box !important;
-}
-
-body.desk section.start {
   max-width: 1080px !important;
   width: 100% !important;
   min-height: 0 !important;
   margin: 0 auto !important;
   padding: 18px 24px 24px !important;
   border-radius: 18px !important;
-  background: radial-gradient(55% 55% at 50% 42%, rgba(56, 75, 138, 0.45) 0%, rgba(15, 18, 28, 0.96) 72%, #090b10 100%) !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(180deg, rgba(10, 14, 24, 0.35) 0%, rgba(9, 12, 20, 0.65) 100%), url('art/arena/draft-bg.jpg') center/cover no-repeat !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(255, 215, 0, 0.25) !important;
+  border: 2px solid #38455e !important;
+  box-sizing: border-box !important;
 }
 
 /* 3-Step Draft Wizard */
-.ssteps {
+body.desk .ssteps {
   position: relative !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -4955,7 +4951,7 @@ body.desk section.start {
   border-radius: 999px !important;
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
 }
-.ssteps::before {
+body.desk .ssteps::before {
   content: '';
   position: absolute;
   left: 28px;
@@ -4965,7 +4961,7 @@ body.desk section.start {
   background: #334155;
   z-index: 0;
 }
-.ssteps li {
+body.desk .ssteps li {
   position: relative !important;
   z-index: 1 !important;
   display: flex !important;
@@ -4975,57 +4971,55 @@ body.desk section.start {
   border-radius: 999px !important;
   background: #141824 !important;
   border: 1.5px solid #334155 !important;
-  color: #64748b !important;
+  color: #cbd5e1 !important;
   font-family: var(--fun) !important;
   font-size: 13px !important;
   font-weight: 700 !important;
 }
-.ssteps li i {
+body.desk .ssteps li i {
   width: 22px !important;
   height: 22px !important;
   border-radius: 50% !important;
   background: #1e293b !important;
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
   display: grid !important;
   place-items: center !important;
   font-style: normal !important;
   font-size: 11px !important;
   font-weight: 800 !important;
 }
-.ssteps li.on {
+body.desk .ssteps li.on {
   background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%) !important;
   border-color: #38bdf8 !important;
   color: #0f172a !important;
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.65), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
 }
-.ssteps li.on i {
+body.desk .ssteps li.on i {
   background: #38bdf8 !important;
   color: #022c22 !important;
 }
-.ssteps li.done {
+body.desk .ssteps li.done {
   background: #1e293b !important;
   border-color: #3ddc84 !important;
   color: #f1f5f9 !important;
 }
-.ssteps li.done i {
+body.desk .ssteps li.done i {
   background: #3ddc84 !important;
   color: #064e3b !important;
 }
 
 /* Screen Title */
-.start.v3 h2.sc {
+body.desk .start.v3 h2.sc {
   font-size: 34px !important;
   font-weight: 900 !important;
   letter-spacing: 0.5px !important;
   text-align: center !important;
   margin: 6px 0 2px !important;
-  background: linear-gradient(180deg, #ffffff 10%, #fef08a 60%, #eab308 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.9));
+  color: #fef08a !important;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(250, 204, 21, 0.35) !important;
 }
-.start.v3 .ssub {
-  color: #94a3b8 !important;
+body.desk .start.v3 .ssub {
+  color: #cbd5e1 !important;
   font-size: 14px !important;
   margin-bottom: 16px !important;
 }
@@ -5042,7 +5036,7 @@ body.desk section.start .stage {
   box-shadow: none !important;
 }
 
-.hbanner.spotbody.desk .hero-tarot-card {
+body.desk .hbanner.spot.hero-tarot-card {
   position: relative !important;
   height: 380px !important;
   min-height: 360px !important;
@@ -5315,6 +5309,19 @@ body.desk section.map.road {
   overflow-y: auto !important;
   overflow-x: hidden !important;
 }
+body.desk .wmap {
+  background: linear-gradient(180deg, rgba(10, 14, 26, 0.22) 0%, rgba(10, 14, 26, 0.32) 100%), url('art/arena/map-bg.jpg') center/cover no-repeat !important;
+  background-attachment: local !important;
+}
+body.desk .wmap .wtrack {
+  background: url('art/arena/map-bg.jpg') center top / 100% 100% no-repeat !important;
+}
+body.desk .wmap .wsky,
+body.desk .wmap .wpeaks,
+body.desk .wmap .wdec,
+body.desk .wmap .rn.final .castle {
+  display: none !important;
+}
 
 /* Layered Pine Silhouettes with subtle rim lighting & fireflies */
 .wsky {
@@ -5398,7 +5405,7 @@ body.desk section.map.road {
   justify-content: center !important;
   width: 100% !important;
 }
-.banner.v2 {
+body.desk .banner.v2 {
   flex: 1 !important;
   max-width: 250px !important;
   min-height: 280px !important;
@@ -5543,6 +5550,9 @@ body.desk section.map.road {
   font-weight: 900 !important;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
 }
+.gold-treasure-plaque .pw.easy { color: #052e16 !important; }
+.gold-treasure-plaque .pw.even { color: #451a03 !important; }
+.gold-treasure-plaque .pw.hard { color: #7f1d1d !important; }
 .rw-coin {
   width: 18px;
   height: 18px;
@@ -5909,8 +5919,8 @@ body.desk .smithy-frame .grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   gap: 14px !important;
-  padding: 16px 22px !important;
-  background: radial-gradient(100% 100% at 50% 20%, #1c202c 0%, #10131b 100%) !important;
+  padding: 18px 24px !important;
+  background: linear-gradient(180deg, rgba(14, 16, 24, 0.42) 0%, rgba(12, 14, 20, 0.62) 100%), url('art/arena/shop-bg.jpg') center/cover no-repeat !important;
 }
 @media (max-width: 600px) {
   .smithy-frame .grid {
@@ -5923,11 +5933,12 @@ body.desk .smithy-frame .grid {
 /* Recessed Obsidian Item Cards */
 body.desk .smithy-frame .card.stock.v2 {
   position: relative !important;
-  background: linear-gradient(180deg, #232838 0%, #141722 100%) !important;
-  border: 1.5px solid #373e52 !important;
+  background: linear-gradient(180deg, rgba(28, 33, 46, 0.88) 0%, rgba(16, 19, 28, 0.92) 100%) !important;
+  backdrop-filter: blur(6px) !important;
+  border: 1.5px solid rgba(212, 175, 55, 0.45) !important;
   border-radius: 12px !important;
   padding: 10px 12px !important;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.75), 0 6px 16px rgba(0, 0, 0, 0.65) !important;
   display: grid !important;
   grid-template-columns: 82px minmax(0, 1fr) auto !important;
   gap: 12px !important;
@@ -6254,11 +6265,11 @@ body.desk section.levelup .sp-path.tree {
 body.desk section.result.v2 {
   max-width: 740px !important;
   width: 100% !important;
-  padding: 16px 22px !important;
+  padding: 18px 24px !important;
   border-radius: 18px !important;
-  background: rgba(20, 24, 32, 0.95) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+  background: linear-gradient(180deg, rgba(14, 18, 28, 0.68) 0%, rgba(10, 12, 20, 0.84) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
+  border: 2px solid #b48a3e !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
 }
 body.desk section.result.v2 .rhead {
   background: rgba(26, 33, 46, 0.85) !important;
@@ -6274,27 +6285,25 @@ body.desk section.result.v2 .rh {
 /* 8. Victory & Gauntlet/XP Overlays */
 body.desk section.vicscr,
 body.desk section.towerscr,
-body.desk section.xpscr,
 body.desk section.gintro2 {
   max-width: 820px !important;
   width: 100% !important;
   min-height: 0 !important;
   padding: 18px 24px 16px !important;
   border-radius: 20px !important;
-  background: rgba(20, 24, 32, 0.95) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+  background: linear-gradient(180deg, rgba(16, 20, 32, 0.65) 0%, rgba(10, 12, 20, 0.82) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
+  border: 2px solid #b48a3e !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75) !important;
 }
 
 /* Master-Craft Post-Run Ranked LP Modal ("The Ward is Broken") */
-section.lpscr,
 body.desk section.lpscr {
   max-width: 640px !important;
   width: 100% !important;
   min-height: 0 !important;
   padding: 28px 32px 24px !important;
   border-radius: 18px !important;
-  background: radial-gradient(120% 100% at 50% 0%, #262938 0%, #12141d 70%, #0b0c12 100%) !important;
+  background: linear-gradient(180deg, rgba(16, 18, 28, 0.65) 0%, rgba(10, 12, 18, 0.82) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
   border: 2.5px solid #b48a3e !important;
   box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
   box-sizing: border-box !important;
@@ -6574,14 +6583,13 @@ section.lpscr::after { top: 8px; right: 8px; }
 }
 
 /* Master-Craft Account XP & Reward Chest Unlocks Screen */
-section.xpscr,
 body.desk section.xpscr {
   max-width: 760px !important;
   width: 100% !important;
   min-height: 0 !important;
   padding: 26px 30px !important;
   border-radius: 18px !important;
-  background: radial-gradient(120% 100% at 50% 0%, #1e243b 0%, #111422 70%, #0a0c14 100%) !important;
+  background: linear-gradient(180deg, rgba(16, 20, 36, 0.62) 0%, rgba(10, 12, 22, 0.82) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
   border: 2.5px solid #4f46e5 !important;
   box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
   box-sizing: border-box !important;
@@ -6642,6 +6650,9 @@ body.desk section.xpscr {
   flex-direction: column;
   align-items: center;
   margin-top: 2px;
+  background: #fde047;
+  padding: 2px 6px;
+  border-radius: 6px;
 }
 .crest-num {
   font-family: var(--fun);
@@ -7735,3 +7746,71 @@ body.desk .deploy > .dparty .pm .dsock.filled {
 
 
 
+
+
+/* Mobile-compact layout for LP & XP modals so phone and phone-small never scroll */
+body:not(.desk) section.lpscr .lp-modal-title { font-size: 22px !important; }
+body:not(.desk) section.lpscr .broken-ward-icon { width: 26px !important; height: 26px !important; }
+body:not(.desk) section.lpscr .lp-summary-pill { margin: 4px auto 8px !important; padding: 3px 12px !important; font-size: 11.5px !important; }
+body:not(.desk) section.lpscr .lp-body-grid { grid-template-columns: 118px minmax(0, 1fr) !important; gap: 10px !important; margin-bottom: 8px !important; }
+body:not(.desk) section.lpscr .lp-left-crest-card { padding: 8px 6px 6px !important; }
+body:not(.desk) section.lpscr .bronze-wings { width: 96px !important; height: 30px !important; }
+body:not(.desk) section.lpscr .bronze-shield-3d { width: 42px !important; height: 50px !important; margin-top: -20px !important; }
+body:not(.desk) section.lpscr .crest-tier-title { font-size: 11px !important; margin: 2px 0 4px !important; }
+body:not(.desk) section.lpscr .mini-thermometer { width: 32px !important; min-height: 44px !important; height: 44px !important; }
+body:not(.desk) section.lpscr .crest-lp-foot { font-size: 11px !important; margin-top: 3px !important; }
+body:not(.desk) section.lpscr .lp-right-panel { gap: 6px !important; }
+body:not(.desk) section.lpscr .lp-delta-val { font-size: 32px !important; }
+body:not(.desk) section.lpscr .lp-delta-val small { font-size: 16px !important; }
+body:not(.desk) section.lpscr .rank-protect-badge { padding: 6px 8px !important; gap: 8px !important; }
+body:not(.desk) section.lpscr .protect-shield-ico { width: 22px !important; height: 22px !important; }
+body:not(.desk) section.lpscr .badge-txt .badge-title { font-size: 11px !important; }
+body:not(.desk) section.lpscr .badge-txt .badge-sub { font-size: 10.5px !important; }
+body:not(.desk) section.lpscr .lp-horiz-track { height: 22px !important; }
+body:not(.desk) section.lpscr .lp-horiz-text { font-size: 11.5px !important; }
+body:not(.desk) section.lpscr .lp-footer { justify-content: center !important; margin-top: 4px !important; }
+body:not(.desk) section.lpscr .lp-next-btn { width: 100% !important; height: 46px !important; min-height: 46px !important; }
+
+body:not(.desk) section.xpscr .xp-modal-wrap { gap: 8px !important; }
+body:not(.desk) section.xpscr .xp-top-card { padding: 10px 12px !important; }
+body:not(.desk) section.xpscr .xp-top-main { margin-bottom: 8px !important; }
+body:not(.desk) section.xpscr .xp-level-crest { width: 54px !important; height: 60px !important; }
+body:not(.desk) section.xpscr .crest-num { font-size: 20px !important; }
+body:not(.desk) section.xpscr .crest-lbl { font-size: 8.5px !important; }
+body:not(.desk) section.xpscr .xp-heading { font-size: 18px !important; }
+body:not(.desk) section.xpscr .xp-gain-val { font-size: 28px !important; }
+body:not(.desk) section.xpscr .xp-chip-pill { padding: 2px 7px !important; font-size: 10.5px !important; }
+body:not(.desk) section.xpscr .chest-wrap-3d { width: 96px !important; height: 84px !important; }
+body:not(.desk) section.xpscr .fantasy-chest-3d { width: 90px !important; height: 78px !important; }
+body:not(.desk) section.xpscr .xp-bottom-loot-tier .chestzone { gap: 12px !important; flex-wrap: wrap !important; }
+body:not(.desk) section.xpscr .loot-card-3d { width: 76px !important; height: 76px !important; min-width: 76px !important; min-height: 76px !important; }
+body:not(.desk) section.xpscr .xp-again-btn { width: 100% !important; height: 48px !important; min-height: 48px !important; }
+
+body.desk .lpscr .vmtube.mini-thermometer {
+  width: 44px !important;
+  min-height: 70px !important;
+  height: 70px !important;
+}
+body.desk .xpscr .vmtube.xp-horiz-track {
+  width: 100% !important;
+  height: 24px !important;
+  min-height: 24px !important;
+}
+body.desk .smithy-frame .gold-embossed-title {
+  color: #fde047 !important;
+  background: none !important;
+  -webkit-text-fill-color: #fde047 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85) !important;
+}
+body.desk .smithy-frame .grid {
+  max-width: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-height: 650px) {
+  body:not(.desk) section.result.v2 { gap: 4px !important; padding-top: 4px !important; }
+  body:not(.desk) section.result.v2 .rhead { padding: 6px 10px !important; margin-bottom: 2px !important; }
+  body:not(.desk) section.result.v2 .rheroes .rh { padding: 4px 2px !important; }
+  body:not(.desk) section.result.v2 .bar { margin-top: 4px !important; }
+}

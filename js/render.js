@@ -1006,9 +1006,17 @@
       g.fillStyle = '#ffcf5a'; for (let i = 0; i < 22; i++) { g.globalAlpha = 0.25 + rnd() * 0.6; g.beginPath(); g.arc(rnd() * W, rnd() * H, 0.8 + rnd() * 1.6, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1;
     }
   }
-  // HD hand-painted battle background image (loaded once and drawn into the cached backdrop)
-  let bgImg = null, bgImgLoaded = false;
-  function getBattleBgImg() {
+  // HD hand-painted battle & boss background images (loaded once and drawn into the cached backdrop)
+  let bgImg = null, bgImgLoaded = false, bossBgImg = null, bossBgLoaded = false;
+  function getBattleBgImg(isBoss) {
+    if (isBoss) {
+      if (!bossBgImg && typeof Image !== 'undefined') {
+        bossBgImg = new Image();
+        bossBgImg.onload = () => { bossBgLoaded = true; if (B.UI && B.UI.render) B.UI.render(); };
+        bossBgImg.src = 'art/arena/boss-bg.jpg';
+      }
+      return bossBgLoaded ? bossBgImg : getBattleBgImg(false);
+    }
     if (!bgImg && typeof Image !== 'undefined') {
       bgImg = new Image();
       bgImg.onload = () => { bgImgLoaded = true; if (B.UI && B.UI.render) B.UI.render(); };
@@ -1017,9 +1025,9 @@
     return bgImgLoaded ? bgImg : null;
   }
 
-  // WHAT: draws the HD painted forest glade background behind the board (or a fallback gradient while loading).
-  function paintWorldGlade(g, v, R, W, H) {
-    const img = getBattleBgImg();
+  // WHAT: draws the HD painted forest glade or volcanic boss arena behind the board (or a fallback gradient while loading).
+  function paintWorldGlade(g, v, R, W, H, boss) {
+    const img = getBattleBgImg(!!boss);
     if (img) {
       // Scale image to cover (W, H) while centering the glade clearing on the hex grid
       const iw = img.naturalWidth || 1600, ih = img.naturalHeight || 900;
@@ -1027,9 +1035,13 @@
       const dw = iw * scale, dh = ih * scale;
       const dx = (W - dw) * 0.5, dy = (H - dh) * 0.45;
       g.drawImage(img, dx, dy, dw, dh);
-      if (R) {
+      if (R && !boss) {
         g.fillStyle = 'rgba(28, 12, 56, 0.42)';
         g.fillRect(0, 0, W, H);
+      } else if (boss) {
+        // Subtle boss color tint so each boss feels distinct on the volcanic obsidian arena
+        const btint = boss === 'mirewitch' ? 'rgba(20, 80, 40, 0.22)' : boss === 'lichqueen' ? 'rgba(30, 80, 140, 0.25)' : boss === 'hollowking' ? 'rgba(60, 40, 95, 0.22)' : 'rgba(0,0,0,0)';
+        if (btint !== 'rgba(0,0,0,0)') { g.fillStyle = btint; g.fillRect(0, 0, W, H); }
       }
       return true;
     }
@@ -1059,7 +1071,7 @@
   }
   function backdrop(v, boss) {
     const R = royal();
-    const hasImg = !!getBattleBgImg();
+    const hasImg = !!getBattleBgImg(!!boss);
     if (v.bd && v.bd.R === R && v.bd.boss === (boss || null) && v.bd.desk === !!v.desk && v.bd.hasImg === hasImg) return v.bd.c;
     if (typeof document === 'undefined') return null;
     const c = document.createElement('canvas'), W = v.w + 24, H = v.h + 24, top = v.top + 12;
@@ -1067,8 +1079,7 @@
     const g = c.getContext('2d'); g.scale(v.dpr, v.dpr);
     let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     if (v.desk) {
-      const ok = paintWorldGlade(g, v, R, W, H);
-      if (boss) bossBackdrop(g, boss, W, H, top, v.size, rnd);
+      const ok = paintWorldGlade(g, v, R, W, H, boss);
       v.bd = { R, boss: boss || null, desk: true, hasImg: ok, c }; return c;
     }
     const sky = g.createLinearGradient(0, 0, 0, H);
