@@ -17,9 +17,9 @@
   // WHAT: sizes the canvas for a given width and returns the "view" v every draw call needs (size of a hex, offsets, pixel ratio).
   function setup(canvas, cssW) {
     const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk') && canvas && (canvas.id === 'board' || canvas.id === 'bgboard' || canvas.id === 'trailer');
-    const size = cssW / (Math.sqrt(3) * (Hx.COLS + (desk ? 4.4 : 0.5)));
-    const flat = Hx.boardSize(size), top = size * (desk ? 3.25 : 2.4), slab = size * 0.45, padX = desk ? (cssW - flat.w) / 2 : 0;
-    const w = desk ? cssW : flat.w, h = top + flat.h * K + slab + (desk ? size * 1.45 : 4);
+    const size = cssW / (Math.sqrt(3) * (Hx.COLS + (desk ? 5.6 : 0.5)));
+    const flat = Hx.boardSize(size), top = size * (desk ? 4.35 : 2.4), slab = size * 0.45, padX = desk ? (cssW - flat.w) / 2 : 0;
+    const w = desk ? cssW : flat.w, h = top + flat.h * K + slab + (desk ? size * 1.65 : 4);
     // v77 (review #156, David: "unplayable on a computer, it lags a lot"): a big screen gets a big board, and its pixels are what a computer without a strong
     // graphics card pays for every frame. The board keeps at most PX_CAP pixels (a phone at 2x uses about 0.4 million), and maxDpr can go below 1
     // (the battle loop lowers it when frames stay slow); the browser stretches the picture back to its size on screen.
@@ -132,16 +132,16 @@
       return (c + r) % 2 ? `hsla(268,30%,${17 + n * 4}%,${desk ? 0.88 : 1})` : `hsla(38,34%,${18 + n * 4}%,${desk ? 0.88 : 1})`;
     }
     if (desk) {
-      // 3D Isometric Fantasy Glade: rich friendly grass vs rugged enemy dirt
+      // Semi-transparent tactical tiles so the hand-painted HD glade clearing shines through underneath
       if (o.deploy) {
         if (r >= 4) {
-          const l1 = Math.round(52 + n * 6), l2 = Math.round(38 + n * 5);
-          return `hsl(98, 48%, ${l1}%)`;
+          const l1 = Math.round(46 + n * 6);
+          return `hsla(98, 48%, ${l1}%, 0.42)`;
         }
-        const dl1 = Math.round(44 + n * 5);
-        return `hsl(28, 28%, ${dl1}%)`;
+        const dl1 = Math.round(38 + n * 5);
+        return `hsla(28, 32%, ${dl1}%, 0.42)`;
       }
-      return (c + r) % 2 ? `hsl(98, 44%, ${46 + n * 5}%)` : `hsl(92, 48%, ${50 + n * 5}%)`;
+      return (c + r) % 2 ? `hsla(98, 42%, ${42 + n * 5}%, 0.32)` : `hsla(92, 46%, ${46 + n * 5}%, 0.36)`;
     }
     // v29 (owner: "more child friendly"): a sunny meadow; while deploying, your rows glow sky blue and theirs soft red
     if (o.deploy) return r >= 4 ? `hsl(205,62%,${58 + n * 5}%)` : `hsl(4,58%,${63 + n * 4}%)`;
@@ -186,20 +186,20 @@
   // WHAT: paints every tile of the board (side faces, top, grit, bevel) onto v.ctx. Called by drawBoard only when the cached picture is stale.
   function paintTiles(v, o, tk) {
     const { ctx, size, desk } = v, th = desk ? 10 : v.slab;
-    // 1. Board Drop Shadow: Render a blurred dark polygon offset 14px below the entire hex grid perimeter
+    // 1. Board Drop Shadow: Render a subtle blurred polygon under the hex grid perimeter
     if (desk) {
       ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
-      ctx.shadowBlur = 14;
-      ctx.shadowOffsetY = 14;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 8;
       ctx.beginPath();
       for (let r = 0; r < Hx.ROWS; r++) {
         for (let c = 0; c < Hx.COLS; c++) {
-          const bp = corners(v, c, r, size * 0.98);
+          const bp = corners(v, c, r, size * 0.96);
           bp.forEach((p, idx) => {
-            if (idx === 0 && r === 0 && c === 0) ctx.moveTo(p.x, p.y + 14);
-            else ctx.lineTo(p.x, p.y + 14);
+            if (idx === 0 && r === 0 && c === 0) ctx.moveTo(p.x, p.y + 8);
+            else ctx.lineTo(p.x, p.y + 8);
           });
         }
       }
@@ -213,12 +213,13 @@
       const isTerr = !!tk[Hx.key(c, r)];
       const friendly = r >= 4;
 
-      // 3D Side-Wall Extrusion (depth = 10px on desktop):
+      // 3D Side-Wall Extrusion (depth = 6px on desktop, semi-transparent so the HD background clearing blends in):
       // Left-Bottom Face [0, 1], Center-Bottom Face [1, 2], Right-Bottom Face [2, 3]
       if (desk) {
-        const leftFace = isTerr ? '#3d424b' : friendly ? '#3b6329' : '#59402b';
-        const centerFace = isTerr ? '#31353c' : friendly ? '#2d4d1e' : '#422f1f';
-        const rightFace = isTerr ? '#26292f' : friendly ? '#223b16' : '#302216';
+        const dth = 6;
+        const leftFace = isTerr ? 'rgba(61,66,75,0.55)' : friendly ? 'rgba(59,99,41,0.5)' : 'rgba(89,64,43,0.5)';
+        const centerFace = isTerr ? 'rgba(49,53,60,0.6)' : friendly ? 'rgba(45,77,30,0.55)' : 'rgba(66,47,31,0.55)';
+        const rightFace = isTerr ? 'rgba(38,41,47,0.65)' : friendly ? 'rgba(34,59,22,0.6)' : 'rgba(48,34,22,0.6)';
         const faceColors = [leftFace, centerFace, rightFace];
         for (let fi = 0; fi < 3; fi++) {
           const [i, j] = [[0, 1], [1, 2], [2, 3]][fi];
@@ -226,8 +227,8 @@
           ctx.beginPath();
           ctx.moveTo(pts[i].x, pts[i].y);
           ctx.lineTo(pts[j].x, pts[j].y);
-          ctx.lineTo(pts[j].x, pts[j].y + th);
-          ctx.lineTo(pts[i].x, pts[i].y + th);
+          ctx.lineTo(pts[j].x, pts[j].y + dth);
+          ctx.lineTo(pts[i].x, pts[i].y + dth);
           ctx.closePath();
           ctx.fill();
         }
@@ -243,22 +244,22 @@
       const drop = o.drop && o.drop.c === c && o.drop.r === r;
       // review #39: terrain hexes keep the meadow colour while deploying (nobody can be placed there)
       if (desk && !isTerr && !drop && o.deploy) {
-        // Gradient shading on top hex face
+        // Semi-transparent gradient shading on top hex face so the clearing floor shows through
         const pCen = hexScreen(v, c, r);
         const topGrad = ctx.createLinearGradient(pCen.x, pCen.y - size * 0.5, pCen.x, pCen.y + size * 0.5);
         if (friendly) {
-          topGrad.addColorStop(0, '#7cb342');
-          topGrad.addColorStop(1, '#558b2f');
+          topGrad.addColorStop(0, 'rgba(124, 179, 66, 0.44)');
+          topGrad.addColorStop(1, 'rgba(85, 139, 47, 0.48)');
         } else {
-          topGrad.addColorStop(0, '#8d6e63');
-          topGrad.addColorStop(1, '#6d4c41');
+          topGrad.addColorStop(0, 'rgba(141, 110, 99, 0.38)');
+          topGrad.addColorStop(1, 'rgba(109, 76, 65, 0.44)');
         }
         ctx.fillStyle = topGrad;
       } else {
         ctx.fillStyle = drop ? '#ffe066' : tileColor(c, r, isTerr ? {} : o, desk);
       }
       ctx.fill();
-      if (v.grit) { ctx.globalAlpha = royal() ? 0.9 : desk ? 0.25 : 0.35; ctx.fillStyle = v.grit; ctx.fill(); ctx.globalAlpha = 1; }
+      if (v.grit && !desk) { ctx.globalAlpha = royal() ? 0.9 : 0.35; ctx.fillStyle = v.grit; ctx.fill(); ctx.globalAlpha = 1; }
 
       if (desk) {
         // 1.5px inner top highlight
@@ -320,7 +321,7 @@
         ctx.strokeStyle = royal() ? 'rgba(255,207,90,0.38)' : 'rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.moveTo(top[3].x, top[3].y); ctx.lineTo(top[4].x, top[4].y); ctx.lineTo(top[5].x, top[5].y); ctx.lineTo(top[0].x, top[0].y); ctx.stroke();
         ctx.strokeStyle = royal() ? 'rgba(0,0,0,0.45)' : 'rgba(40,70,20,0.35)'; ctx.beginPath(); ctx.moveTo(top[0].x, top[0].y); ctx.lineTo(top[1].x, top[1].y); ctx.lineTo(top[2].x, top[2].y); ctx.lineTo(top[3].x, top[3].y); ctx.stroke();
       }
-      if (!isTerr && !drop) tileDecor(ctx, v, c, r, o);
+      if (!isTerr && !drop && !desk) tileDecor(ctx, v, c, r, o);
     }
     if (!desk) sideDecor(v);
   }
@@ -1005,223 +1006,70 @@
       g.fillStyle = '#ffcf5a'; for (let i = 0; i < 22; i++) { g.globalAlpha = 0.25 + rnd() * 0.6; g.beginPath(); g.arc(rnd() * W, rnd() * H, 0.8 + rnd() * 1.6, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1;
     }
   }
-  // WHAT: the sky, sun, clouds and hills behind the board, drawn once and cached (a different one per boss, and a royal one for Kings).
-  function paintWorldGlade(g, v, R, W, H, top, rnd) {
-    const s = v.size, cx = W / 2, cy = top + (v.flatH || s * 12) * K * 0.5 + 8;
-    const rx = (v.flatW || W * 0.68) * 0.53, ry = (v.flatH || s * 12) * K * 0.54;
-    // 1. Deep forest canopy backdrop and dappled golden sunbeams
+  // HD hand-painted battle background image (loaded once and drawn into the cached backdrop)
+  let bgImg = null, bgImgLoaded = false;
+  function getBattleBgImg() {
+    if (!bgImg && typeof Image !== 'undefined') {
+      bgImg = new Image();
+      bgImg.onload = () => { bgImgLoaded = true; if (B.UI && B.UI.render) B.UI.render(); };
+      bgImg.src = 'art/arena/battle-bg.jpg';
+    }
+    return bgImgLoaded ? bgImg : null;
+  }
+
+  // WHAT: draws the HD painted forest glade background behind the board (or a fallback gradient while loading).
+  function paintWorldGlade(g, v, R, W, H) {
+    const img = getBattleBgImg();
+    if (img) {
+      // Scale image to cover (W, H) while centering the glade clearing on the hex grid
+      const iw = img.naturalWidth || 1600, ih = img.naturalHeight || 900;
+      const scale = Math.max(W / iw, H / ih);
+      const dw = iw * scale, dh = ih * scale;
+      const dx = (W - dw) * 0.5, dy = (H - dh) * 0.45;
+      g.drawImage(img, dx, dy, dw, dh);
+      if (R) {
+        g.fillStyle = 'rgba(28, 12, 56, 0.42)';
+        g.fillRect(0, 0, W, H);
+      }
+      return true;
+    }
     const bg = g.createLinearGradient(0, 0, 0, H);
     if (R) { bg.addColorStop(0, '#0f0a1c'); bg.addColorStop(0.45, '#1e1533'); bg.addColorStop(1, '#120d20'); }
     else { bg.addColorStop(0, '#14291e'); bg.addColorStop(0.32, '#22442d'); bg.addColorStop(0.7, '#2b5026'); bg.addColorStop(1, '#152815'); }
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    // Warm sunbeam glow in upper clearing
-    const sunG = g.createRadialGradient(cx, top * 0.35, s * 0.2, cx, top * 0.45, W * 0.55);
-    sunG.addColorStop(0, R ? 'rgba(255,210,110,0.34)' : 'rgba(255,248,195,0.52)');
-    sunG.addColorStop(0.45, R ? 'rgba(180,120,255,0.14)' : 'rgba(210,235,140,0.2)');
-    sunG.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = sunG; g.fillRect(0, 0, W, H);
-    // Diagonal sunbeam shafts filtering through the upper-left canopy
-    g.save();
-    for (let i = 0; i < 4; i++) {
-      const bx0 = cx - rx * (0.95 - i * 0.48), bw0 = s * (0.85 + (i % 2) * 0.35);
-      const beam = g.createLinearGradient(bx0, 0, bx0 + s * 2.2, H * 0.65);
-      beam.addColorStop(0, R ? 'rgba(220,175,255,0.09)' : 'rgba(255,250,200,0.11)');
-      beam.addColorStop(1, 'rgba(255,250,200,0)');
-      g.fillStyle = beam;
-      g.beginPath(); g.moveTo(bx0, 0); g.lineTo(bx0 + bw0, 0); g.lineTo(bx0 + bw0 + s * 2.6, H * 0.68); g.lineTo(bx0 + s * 2.1, H * 0.68); g.closePath(); g.fill();
-    }
-    g.restore();
-    // Distant misty forest silhouettes
-    g.fillStyle = R ? '#171029' : '#1b3524';
-    for (let i = 0; i < 18; i++) {
-      const tx = (i / 17) * W + (rnd() - 0.5) * s * 0.8, ty = top * (0.55 + rnd() * 0.22), tr = s * (0.9 + rnd() * 0.85);
-      g.beginPath(); g.arc(tx, ty, tr, 0, Math.PI * 2); g.fill();
-    }
-    // 2. Ancient sanctuary stone stairs & altar at the top-center of the clearing (clearly visible above row 0)
-    const stW = s * 3.4, stY = cy - ry - s * 1.15;
-    for (let k = 3; k >= 0; k--) {
-      const w0 = stW * (0.72 + k * 0.1), h0 = s * 0.32, y0 = stY + k * s * 0.25;
-      g.fillStyle = R ? (k % 2 ? '#3d3058' : '#302548') : (k % 2 ? '#879082' : '#737c6e');
-      g.beginPath(); g.roundRect ? g.roundRect(cx - w0 / 2, y0, w0, h0, 5) : g.rect(cx - w0 / 2, y0, w0, h0); g.fill();
-      g.strokeStyle = 'rgba(22,32,18,0.65)'; g.lineWidth = 1.6; g.stroke();
-      // Highlight top lip of each stone step
-      g.fillStyle = R ? 'rgba(220,190,255,0.16)' : 'rgba(235,245,220,0.28)';
-      g.fillRect(cx - w0 / 2 + 4, y0 + 2, w0 - 8, 3);
-      // Moss patches on steps
-      if (!R) { g.fillStyle = '#5c8c46'; g.beginPath(); g.ellipse(cx + (k - 1.5) * s * 0.55, y0 + 4, s * 0.32, s * 0.09, 0, 0, Math.PI * 2); g.fill(); }
-    }
-    // Ancient carved rune circle on the sanctuary dais at top of stairs
-    {
-      const dy = stY + s * 0.12;
-      g.strokeStyle = R ? 'rgba(210,150,255,0.45)' : 'rgba(215,245,140,0.45)'; g.lineWidth = 1.8;
-      g.beginPath(); g.ellipse(cx, dy, s * 0.9, s * 0.26, 0, 0, Math.PI * 2); g.stroke();
-    }
-    // Broken stone pillars flanking the top stairs
-    for (const dir of [-1, 1]) {
-      const px = cx + dir * stW * 0.56, py = stY + s * 0.45;
-      g.fillStyle = R ? '#3e3159' : '#828b7c';
-      g.beginPath(); g.moveTo(px - s * 0.34, py + s * 0.55); g.lineTo(px - s * 0.3, py - s * (dir < 0 ? 1.05 : 0.75));
-      g.lineTo(px + s * 0.05, py - s * (dir < 0 ? 1.22 : 0.9)); g.lineTo(px + s * 0.34, py - s * 0.52); g.lineTo(px + s * 0.36, py + s * 0.55); g.closePath(); g.fill();
-      g.strokeStyle = '#263022'; g.lineWidth = 1.6; g.stroke();
-      g.fillStyle = R ? '#57477a' : '#a3ad9b';
-      g.beginPath(); g.ellipse(px, py - s * (dir < 0 ? 0.9 : 0.62), s * 0.3, s * 0.13, dir * 0.15, 0, Math.PI * 2); g.fill();
-    }
-    // 3. Crumbling stone archway in the upper-right clearing (like Guild Run)
-    {
-      const ax = cx + rx * 0.88, ay = cy - ry * 0.62;
-      g.save(); g.translate(ax, ay); g.rotate(0.18);
-      for (const dx of [-s * 0.85, s * 0.85]) {
-        g.fillStyle = R ? '#34294c' : '#747d70';
-        g.fillRect(dx - s * 0.28, -s * 1.45, s * 0.56, s * 1.85);
-        g.strokeStyle = '#252d22'; g.lineWidth = 1.6; g.strokeRect(dx - s * 0.28, -s * 1.45, s * 0.56, s * 1.85);
-        g.fillStyle = R ? '#4a3b69' : '#919a8b'; g.fillRect(dx - s * 0.24, -s * 1.35, s * 0.48, s * 0.38);
-        if (!R) { g.fillStyle = '#53863e'; g.beginPath(); g.ellipse(dx, -s * 1.42, s * 0.32, s * 0.14, 0, 0, Math.PI * 2); g.fill(); }
-      }
-      g.fillStyle = R ? '#3f325c' : '#838c7e';
-      g.beginPath(); g.arc(0, -s * 1.25, s * 1.15, Math.PI, 0, false); g.lineTo(s * 0.62, -s * 1.25); g.arc(0, -s * 1.25, s * 0.62, 0, Math.PI, true); g.closePath(); g.fill(); g.stroke();
-      if (!R) { g.fillStyle = '#5a9142'; g.beginPath(); g.ellipse(-s * 0.35, -s * 2.25, s * 0.45, s * 0.16, -0.2, 0, Math.PI * 2); g.fill(); }
-      g.restore();
-    }
-    // 4. Clearing floor & ancient mossy cobblestone ring encircling the hex grid
-    const flG = g.createRadialGradient(cx, cy, rx * 0.25, cx, cy, rx * 1.2);
-    if (R) { flG.addColorStop(0, '#2c2046'); flG.addColorStop(0.7, '#211736'); flG.addColorStop(1, 'rgba(20,14,34,0)'); }
-    else { flG.addColorStop(0, '#628a42'); flG.addColorStop(0.6, '#4c7534'); flG.addColorStop(0.88, '#345726'); flG.addColorStop(1, 'rgba(30,52,22,0)'); }
-    g.fillStyle = flG; g.beginPath(); g.ellipse(cx, cy, rx * 1.18, ry * 1.18, 0, 0, Math.PI * 2); g.fill();
-    // Outer ring of weathered stone slabs around the hex arena
-    const stoneN = 36;
-    for (let i = 0; i < stoneN; i++) {
-      const a = (i / stoneN) * Math.PI * 2;
-      if (Math.abs(Math.sin(a) + 1) < 0.16) continue; // gap for top stairs
-      const sx = cx + Math.cos(a) * rx * (1.03 + (rnd() - 0.5) * 0.04);
-      const sy = cy + Math.sin(a) * ry * (1.04 + (rnd() - 0.5) * 0.04);
-      const sw = s * (0.44 + rnd() * 0.22), sh = s * (0.28 + rnd() * 0.14);
-      g.save(); g.translate(sx, sy); g.rotate(a + Math.PI / 2 + (rnd() - 0.5) * 0.25);
-      g.fillStyle = R ? (i % 2 ? '#3d3058' : '#302448') : (i % 2 ? '#848c7e' : '#717a6c');
-      g.beginPath(); if (g.roundRect) g.roundRect(-sw / 2, -sh / 2, sw, sh, 5); else g.rect(-sw / 2, -sh / 2, sw, sh); g.fill();
-      g.strokeStyle = 'rgba(20,30,15,0.6)'; g.lineWidth = 1.4; g.stroke();
-      if (!R && rnd() < 0.65) { g.fillStyle = '#588c3f'; g.beginPath(); g.arc((rnd() - 0.5) * sw * 0.4, (rnd() - 0.5) * sh * 0.4, s * 0.11, 0, Math.PI * 2); g.fill(); }
-      g.restore();
-    }
-    // 5. Giant ancient tree trunks & roots framing the left and right of the glade
-    for (const [tx, ty, sc, flip] of [[cx - rx * 1.2, cy - ry * 0.22, 1.3, 1], [cx - rx * 0.94, cy - ry * 0.85, 0.92, 1], [cx + rx * 1.18, cy - ry * 0.08, 1.15, -1]]) {
-      g.save(); g.translate(tx, ty); g.scale(flip * sc, sc);
-      g.strokeStyle = '#3a2414'; g.fillStyle = '#593820'; g.lineWidth = 2;
-      for (const [rx0, ry0, rx1, ry1] of [[0, 0, s * 0.95, s * 0.45], [0, s * 0.15, s * 0.8, s * 0.68], [-s * 0.2, s * 0.1, -s * 0.7, s * 0.55]]) {
-        g.beginPath(); g.moveTo(rx0, ry0 - s * 0.3); g.quadraticCurveTo((rx0 + rx1) * 0.5, ry0 + s * 0.1, rx1, ry1);
-        g.quadraticCurveTo((rx0 + rx1) * 0.45, ry0 + s * 0.32, rx0 - s * 0.15, ry0 + s * 0.2); g.closePath(); g.fill(); g.stroke();
-      }
-      g.fillStyle = '#4d301b'; g.beginPath(); g.moveTo(-s * 0.45, s * 0.35); g.quadraticCurveTo(-s * 0.38, -s * 1.1, -s * 0.55, -s * 2.4);
-      g.lineTo(s * 0.45, -s * 2.4); g.quadraticCurveTo(s * 0.35, -s * 1.0, s * 0.52, s * 0.35); g.closePath(); g.fill(); g.stroke();
-      g.strokeStyle = 'rgba(30,16,8,0.45)'; g.lineWidth = 1.6;
-      for (let b = -1; b <= 1; b++) { g.beginPath(); g.moveTo(b * s * 0.16, s * 0.25); g.quadraticCurveTo(b * s * 0.12, -s * 0.9, b * s * 0.2, -s * 2.1); g.stroke(); }
-      for (const [lx, ly, lr, col] of [[-s * 0.5, -s * 2.2, s * 1.15, '#25522b'], [s * 0.35, -s * 2.1, s * 1.05, '#2d6333'], [0, -s * 2.55, s * 1.25, '#3b7a3e'], [-s * 0.2, -s * 2.4, s * 0.9, '#559c4e'], [s * 0.25, -s * 2.3, s * 0.75, '#74ba5e']]) {
-        g.fillStyle = R ? '#281d42' : col; g.beginPath(); g.arc(lx, ly, lr, 0, Math.PI * 2); g.fill();
-      }
-      g.restore();
-    }
-    // 6. Lush bushes, ferns, wildflowers and glowing mushrooms around the perimeter
-    for (let i = 0; i < 42; i++) {
-      const a = (i / 42) * Math.PI * 2 + rnd() * 0.12;
-      const dist = 1.08 + rnd() * 0.28;
-      const bx = cx + Math.cos(a) * rx * dist, by = cy + Math.sin(a) * ry * dist;
-      const br = s * (0.28 + rnd() * 0.26);
-      g.fillStyle = R ? (i % 2 ? '#251a3d' : '#322452') : (i % 2 ? '#2e5e2e' : '#3b7337');
-      g.beginPath(); g.arc(bx, by, br, 0, Math.PI * 2); g.fill();
-      g.fillStyle = R ? '#45326e' : '#589949';
-      g.beginPath(); g.arc(bx - br * 0.2, by - br * 0.22, br * 0.72, 0, Math.PI * 2); g.fill();
-      if (rnd() < 0.45) {
-        const fc = R ? '#b98cff' : ['#ffe066', '#ff9fd2', '#8fe3ff', '#ffb347'][(i * 3) % 4];
-        g.fillStyle = fc; g.beginPath(); g.arc(bx + (rnd() - 0.5) * br, by - (rnd() * 0.5) * br, s * 0.065, 0, Math.PI * 2); g.fill();
-      }
-    }
-    // 7. Warm glowing amber/gold crystal clusters on the right & lower-left edges (like Guild Run)
-    for (const [kx, ky, sc] of [[cx + rx * 1.1, cy + ry * 0.32, 1.18], [cx - rx * 1.08, cy + ry * 0.48, 0.88], [cx + rx * 0.98, cy - ry * 0.22, 0.78]]) {
-      g.save(); g.translate(kx, ky); g.scale(sc, sc);
-      const cg = g.createRadialGradient(0, -s * 0.3, 0, 0, -s * 0.3, s * 1.25);
-      cg.addColorStop(0, R ? 'rgba(195,130,255,0.55)' : 'rgba(255,205,70,0.55)');
-      cg.addColorStop(1, 'rgba(255,180,40,0)');
-      g.fillStyle = cg; g.beginPath(); g.arc(0, -s * 0.3, s * 1.25, 0, Math.PI * 2); g.fill();
-      for (const [dx, ang, h0, w0] of [[-s * 0.22, -0.28, s * 0.78, s * 0.22], [s * 0.18, 0.24, s * 0.68, s * 0.2], [0, 0.04, s * 1.02, s * 0.26]]) {
-        g.save(); g.translate(dx, 0); g.rotate(ang);
-        const crG = g.createLinearGradient(0, -h0, 0, 0);
-        if (R) { crG.addColorStop(0, '#f0d6ff'); crG.addColorStop(0.4, '#b975ff'); crG.addColorStop(1, '#5e28a8'); }
-        else { crG.addColorStop(0, '#fff7c2'); crG.addColorStop(0.4, '#ffbf3b'); crG.addColorStop(1, '#c46210'); }
-        g.fillStyle = crG;
-        g.beginPath(); g.moveTo(-w0, 0); g.lineTo(-w0 * 0.85, -h0 * 0.78); g.lineTo(0, -h0); g.lineTo(w0 * 0.85, -h0 * 0.78); g.lineTo(w0, 0); g.closePath(); g.fill();
-        g.strokeStyle = R ? '#f5e6ff' : '#ffe88a'; g.lineWidth = 1.2; g.stroke();
-        g.restore();
-      }
-      g.restore();
-    }
+    return false;
   }
-  // WHAT: continuous ambient life on the desktop glade ("everything breathes"): swaying ferns, pulsing crystal light, drifting golden spores, and foreground framing foliage.
+  // WHAT: subtle drifting golden spores / fireflies across the glade so the painted scene feels alive without vector plants.
   function drawWorldBreath(v, now) {
     const { ctx, size: s, w: W, h: H } = v, R = royal();
-    const cx = W / 2, cy = v.top + (v.flatH || s * 12) * K * 0.5;
-    const rx = (v.flatW || W * 0.72) * 0.56, ry = (v.flatH || s * 12) * K * 0.58;
     ctx.save();
-    // 1. Pulsing crystal glow & floating rune motes near crystal clusters
-    const pulse = 0.5 + 0.5 * Math.sin(now * 2.4);
-    for (const [kx, ky, sc] of [[cx + rx * 1.08, cy + ry * 0.32, 1.15], [cx - rx * 1.06, cy + ry * 0.48, 0.85], [cx + rx * 0.96, cy - ry * 0.22, 0.75]]) {
-      const r0 = s * 1.15 * sc * (0.9 + 0.2 * pulse);
-      const cg = ctx.createRadialGradient(kx, ky - s * 0.3, 0, kx, ky - s * 0.3, r0);
-      cg.addColorStop(0, R ? `rgba(210,150,255,${0.22 + 0.16 * pulse})` : `rgba(255,220,95,${0.22 + 0.16 * pulse})`);
-      cg.addColorStop(1, 'rgba(255,200,60,0)');
-      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(kx, ky - s * 0.3, r0, 0, Math.PI * 2); ctx.fill();
-    }
-    // 2. Swaying fern fronds around the clearing edge
-    const ferns = [[-1.08, -0.05, 1], [-1.02, 0.32, 1], [1.04, 0.08, -1], [0.98, 0.52, -1], [-0.82, -0.78, 1], [0.82, -0.75, -1]];
-    for (let i = 0; i < ferns.length; i++) {
-      const [fx, fy, dir] = ferns[i], x0 = cx + fx * rx, y0 = cy + fy * ry;
-      const sway = Math.sin(now * 1.8 + i * 1.3) * s * 0.08;
-      ctx.strokeStyle = R ? '#5a3d8a' : '#58a348'; ctx.lineWidth = Math.max(1.8, s * 0.045); ctx.lineCap = 'round';
-      for (let k = -1; k <= 1; k++) {
-        ctx.beginPath(); ctx.moveTo(x0, y0);
-        ctx.quadraticCurveTo(x0 + dir * s * 0.28 + sway * 0.5, y0 - s * (0.28 + Math.abs(k) * 0.08), x0 + dir * s * (0.52 - Math.abs(k) * 0.08) + sway, y0 - s * 0.15 + k * s * 0.16);
-        ctx.stroke();
-      }
-    }
-    // 3. Drifting golden spores / fireflies across the glade (even during deployment)
-    for (let i = 0; i < 18; i++) {
-      const p = (now * (0.07 + (i % 4) * 0.018) + i * 0.17) % 1;
-      const x = ((i * 97 + 31) % 100) / 100 * W + Math.sin(now * 1.2 + i * 2.1) * s * 0.45;
-      const y = H * (0.92 - p * 0.82) + Math.cos(now * 1.5 + i) * s * 0.15;
-      const a = Math.sin(p * Math.PI) * (0.45 + 0.45 * Math.sin(now * 3.5 + i * 1.7));
+    for (let i = 0; i < 16; i++) {
+      const p = (now * (0.06 + (i % 4) * 0.015) + i * 0.17) % 1;
+      const x = ((i * 97 + 31) % 100) / 100 * W + Math.sin(now * 1.1 + i * 2.1) * s * 0.4;
+      const y = H * (0.9 - p * 0.8) + Math.cos(now * 1.4 + i) * s * 0.15;
+      const a = Math.sin(p * Math.PI) * (0.4 + 0.4 * Math.sin(now * 3.2 + i * 1.7));
       if (a <= 0.05) continue;
       ctx.globalAlpha = a;
       ctx.fillStyle = R ? '#d8b4ff' : (i % 3 === 0 ? '#a8ff8a' : '#ffe885');
-      ctx.beginPath(); ctx.arc(x, y, s * (0.035 + (i % 3) * 0.015), 0, Math.PI * 2); ctx.fill();
-      ctx.globalAlpha = a * 0.32;
-      ctx.beginPath(); ctx.arc(x, y, s * 0.14, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    // 4. Foreground dark vignette framing branches/leaves at bottom-left and bottom-right corners (like Guild Run)
-    for (const dir of [-1, 1]) {
-      const bx = dir < 0 ? 0 : W, by = H;
-      const sway = Math.sin(now * 1.3 + (dir < 0 ? 0 : 2)) * s * 0.07;
-      ctx.fillStyle = R ? 'rgba(10, 6, 20, 0.82)' : 'rgba(10, 24, 14, 0.82)';
-      for (const [dx, dy, rx0, ry0, ang] of [[0.4, -0.15, 1.35, 0.55, 0.25], [0.15, -0.55, 1.1, 0.48, 0.65], [0.85, -0.05, 0.95, 0.42, 0.12]]) {
-        ctx.save();
-        ctx.translate(bx - dir * dx * s + sway, by + dy * s);
-        ctx.rotate(dir * ang);
-        ctx.beginPath(); ctx.ellipse(0, 0, s * rx0, s * ry0, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
-      }
+      ctx.beginPath(); ctx.arc(x, y, s * (0.03 + (i % 3) * 0.012), 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = a * 0.28;
+      ctx.beginPath(); ctx.arc(x, y, s * 0.12, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
   }
   function backdrop(v, boss) {
     const R = royal();
-    if (v.bd && v.bd.R === R && v.bd.boss === (boss || null) && v.bd.desk === !!v.desk) return v.bd.c;
+    const hasImg = !!getBattleBgImg();
+    if (v.bd && v.bd.R === R && v.bd.boss === (boss || null) && v.bd.desk === !!v.desk && v.bd.hasImg === hasImg) return v.bd.c;
     if (typeof document === 'undefined') return null;
     const c = document.createElement('canvas'), W = v.w + 24, H = v.h + 24, top = v.top + 12;
     c.width = Math.round(W * v.dpr); c.height = Math.round(H * v.dpr);
     const g = c.getContext('2d'); g.scale(v.dpr, v.dpr);
     let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     if (v.desk) {
-      paintWorldGlade(g, v, R, W, H, top, rnd);
+      const ok = paintWorldGlade(g, v, R, W, H);
       if (boss) bossBackdrop(g, boss, W, H, top, v.size, rnd);
-      v.bd = { R, boss: boss || null, desk: true, c }; return c;
+      v.bd = { R, boss: boss || null, desk: true, hasImg: ok, c }; return c;
     }
     const sky = g.createLinearGradient(0, 0, 0, H);
     if (R) { sky.addColorStop(0, '#120c1e'); sky.addColorStop(0.5, '#2a1c3f'); sky.addColorStop(1, '#0d0915'); }

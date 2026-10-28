@@ -44,7 +44,7 @@
 
   // ---- the page watcher
   const ATTRS = ['title', 'aria-label', 'placeholder', 'alt'];
-  const SKIP = 'SCRIPT,STYLE,TEXTAREA,INPUT,CANVAS,svg,[data-notr],#sugQueue,#sugDrafts,.usr';   // what players typed is never translated
+  const SKIP = 'SCRIPT,STYLE,TEXTAREA,INPUT,CANVAS,svg,#fx,[data-notr],#sugQueue,#sugDrafts,.usr';   // what players typed is never translated
   const seen = new WeakMap();   // text node -> the English text it was made from (so a language switch or a re-render never translates twice)
   function textNode(n) {
     const v = n.nodeValue, was = seen.get(n);
@@ -79,6 +79,7 @@
       obs.disconnect();
       try {
         for (const m of muts) {
+          if (m.target && (m.target.id === 'fx' || (m.target.closest && m.target.closest('#fx')))) continue;
           if (m.type === 'childList') m.addedNodes.forEach(walk);
           else if (m.type === 'characterData') walk(m.target);
           else if (m.type === 'attributes') { const el = m.target; if (!el.closest || !el.closest(SKIP)) attrs(el); }

@@ -602,6 +602,7 @@
   // v62q (review #114): the pointing hand on the start screens is shown for the first two runs a player ever starts
   const startHint = () => (+store.get('balance.starts', 0) || 0) < 2;
   function startHTML() {
+    const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
     const relics = run.relicOffer || [], n = ui.startPick.length;
     if (ui.startStep === 2 && n === CFG.startHeroes && relics.length) {
       const rsel = ui.startRelic && relics.includes(ui.startRelic) ? ui.startRelic : null;
@@ -617,8 +618,8 @@
       : 'Tap a hero';
     return `<section class="start s1 v3 ${dealIn(1)}">${stepsHTML(1)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
       ${heroStage(run.startOffer, f, 'start-pick', startHint())}${heroDetail(f)}
-      ${(run.locked || []).length ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : ''}
-      <div class="bar sbar"><button class="primary big hero-cta-btn ${n === CFG.startHeroes ? 'ready selected' : 'slot-unselected'}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${btnLabel}</button></div></section>`;
+      ${(run.locked || []).length ? `${desk ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : `<p class="sub locknote">🔒 ${run.locked.length} more hero${run.locked.length === 1 ? '' : 'es'} unlock as you play</p>`}` : ''}
+      <div class="bar sbar"><button class="primary big ${desk ? 'hero-cta-btn ' + (n === CFG.startHeroes ? 'ready selected' : 'slot-unselected') : (n === CFG.startHeroes ? 'ready' : '')}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${desk ? btnLabel : (n === CFG.startHeroes ? (relics.length && !introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero')}</button></div></section>`;
   }
   // v64 (review #124, David: "hero selection highlights are a bit wonky and persist after you choose another or deselect"): only the picked hero is lit;
   // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
@@ -650,6 +651,13 @@
   }
 
   function heroStage(offer, sel, act, hint) {
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    if (!desk) {
+      return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
+        const d = HEROES[k], on = sel === k;
+        return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}"><span class="cone"></span><span class="shine"></span>${por(k, 180, true)}<span class="flag">${esc(d.name)}</span>${on ? '<span class="chk">✓</span>' : ''}${i === 0 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`;
+      }).join('')}</div>`;
+    }
     return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
       const d = HEROES[k], on = sel === k;
       const r = (d.role || '').toLowerCase();
@@ -681,8 +689,9 @@
     }).join('')}</div>`;
   }
   function heroDetail(f) {
+    const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
     const h = f && HEROES[f];
-    return h ? `<div class="card detail hero-drawer-v5"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
+    return h ? `<div class="card detail ${desk ? "hero-drawer-v5" : ""}"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
         <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${esc(h.tag || h.abDesc || '')}</p>${statBars(h)}<button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
   }
   // v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
@@ -1579,6 +1588,7 @@
   <svg class="card-flourish br" viewBox="0 0 18 18" aria-hidden="true"><path d="M17,1 L17,13 C17,15.2 15.2,17 13,17 L1,17 M17,11 C14,11 11,14 11,17" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 
   function stockCard(s, i) {
+    const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
     const dis = s.sold || run.gold < s.price;
     let body = '';
     // v62m (review #109): heroes are splash cards (the full art, class and range on it), items and powers are rows with a glowing medallion
@@ -1588,11 +1598,11 @@
       const rar = it.tier || 'common';
       body = `${CORNER_FLOURISH_SVG}<div class="medal item-socket r-${rar}"><div class="socket-inner">${ico('item', s.id, 56, 'ico big')}</div></div><div class="meta"><div class="ctitle r-${rar}" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}${shopSynergyTag(s.id)}<div class="small item-desc">${fmt(it.desc)}</div>${setInfo(it)}</div>`;
     }
-    else { const r = RELIC[s.id]; body = `${CORNER_FLOURISH_SVG}<div class="medal"><div class="socket-inner">${ico('relic', s.id, 56, 'ico big')}</div></div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`; }
+    else { const r = RELIC[s.id]; body = desk ? `${CORNER_FLOURISH_SVG}<div class="medal"><div class="socket-inner">${ico('relic', s.id, 56, 'ico big')}</div></div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>` : `<div class="medal">${ico('relic', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`; }
     const rc = s.kind === 'item' ? TIER_COLOR[ITEM[s.id].tier] : s.kind === 'hero' ? HEROES[s.id].color : '#ffd23f';
     const shine = s.kind === 'item' && RANK(s.id) >= 3 ? ' shine' : s.kind === 'relic' ? ' shine soft' : '';
     const coinSVG = `<svg class="buy-coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f59e0b" stroke="#78350f" stroke-width="1.8"/><circle cx="12" cy="12" r="7.5" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/><circle cx="12" cy="12" r="4.5" fill="#fde68a" opacity="0.8"/></svg>`;
-    return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}<button class="${dis ? '' : 'primary'} buyb gold-ingot-btn" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `${coinSVG}<span class="price">${s.price}</span>` : 'Free!'}</button></div>`;
+    return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}${desk ? `<button class="${dis ? '' : 'primary'} buyb gold-ingot-btn" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `${coinSVG}<span class="price">${s.price}</span>` : 'Free!'}</button>` : `<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button>`}</div>`;
   }
   // v64 (review #127): with a full team, a hero bought in the Hero Shop takes the place of one of yours (its level, XP and items; powers picked at random)
   // WHAT: the sheet that asks which hero steps aside for the hero being bought.
@@ -1617,6 +1627,8 @@
     const cartSVG = `<svg class="shop-cart-glow" viewBox="0 0 24 24" aria-hidden="true"><path d="M2,3 L5,3 L7.5,15 L18,15 L20.5,6 L6.5,6" fill="none" stroke="url(#goldGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="19.5" r="2.2" fill="#ffd700"/><circle cx="17" cy="19.5" r="2.2" fill="#ffd700"/></svg>`;
     const rerollCoinSVG = `<svg class="btn-coin-sm" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/><circle cx="8" cy="8" r="4.5" fill="#fde047"/></svg>`;
 
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    if (!desk) return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${sellBagBtn}${note}</div>${swapTip}<div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div><div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
     return `<section class="shop sh-${c.kind} smithy-frame">
       <svg width="0" height="0" style="position:absolute" aria-hidden="true">
         <defs>

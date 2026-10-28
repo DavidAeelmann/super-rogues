@@ -21,22 +21,45 @@
   // ---------------------------------------------------------------- drawing kit
   // g = { ctx, v, W, T, S, size, K, pos(c, r), unitPos(u), burst, shock, cells(c, r, rad) }
   function cellsOf(g, c, r, rad) { return Hx.within(c, r, rad).map(h => ({ c: h.c, r: h.r, d: Hx.dist(h, { c, r }), p: g.pos(h.c, h.r) })); }
-  // the outline of a whole area (only the edges that face outside it), so a radius reads as one shape
+  // Cache Path2D outlines per (c, r, rad, size) so we never recompute geometry every frame
+  const EDGE_CACHE = new Map();
   function areaEdge(g, c, r, rad, col, alpha, lw) {
-    const ctx = g.ctx, set = new Set(Hx.within(c, r, rad).map(h => Hx.key(h.c, h.r))), size = g.size, ap = size * Math.sqrt(3) / 2;
-    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath();
-    for (const h of Hx.within(c, r, rad)) {
-      const P = Hx.px(h.c, h.r, size);
-      for (let i = 0; i < 6; i++) {
-        const na = Math.PI / 180 * (60 * i), nx = P.x + 2 * ap * Math.cos(na), ny = P.y + 2 * ap * Math.sin(na);
-        const out = !Hx.all().some(o => set.has(Hx.key(o.c, o.r)) && Math.abs(Hx.px(o.c, o.r, size).x - nx) < 1 && Math.abs(Hx.px(o.c, o.r, size).y - ny) < 1);
-        if (!out) continue;
-        const a0 = Math.PI / 180 * (60 * i - 30), a1 = Math.PI / 180 * (60 * i + 30);
-        const p0 = g.proj({ x: P.x + size * Math.cos(a0), y: P.y + size * Math.sin(a0) }), p1 = g.proj({ x: P.x + size * Math.cos(a1), y: P.y + size * Math.sin(a1) });
-        ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y);
+    const key = `${c},${r},${rad},${g.size}`;
+    let path = EDGE_CACHE.get(key);
+    if (!path) {
+      path = new Path2D();
+      const cells = Hx.within(c, r, rad);
+      const set = new Set(cells.map(h => Hx.key(h.c, h.r)));
+      const size = g.size, ap = size * Math.sqrt(3) / 2;
+      for (const h of cells) {
+        const P = Hx.px(h.c, h.r, size);
+        for (let i = 0; i < 6; i++) {
+          const na = Math.PI / 180 * (60 * i), nx = P.x + 2 * ap * Math.cos(na), ny = P.y + 2 * ap * Math.sin(na);
+          const nc = Hx.fromPx ? Hx.fromPx(nx, ny, size) : null;
+          // Fast neighbor lookup instead of scanning Hx.all() with trig
+          const hasNeighbor = nc ? set.has(Hx.key(nc.c, nc.r)) : Hx.neighbors
+            ? Hx.neighbors(h.c, h.r).some(nb => set.has(Hx.key(nb.c, nb.r)) && Math.hypot(Hx.px(nb.c, nb.r, size).x - nx, Hx.px(nb.c, nb.r, size).y - ny) < 2)
+            : false;
+          if (hasNeighbor) continue;
+          const a0 = Math.PI / 180 * (60 * i - 30), a1 = Math.PI / 180 * (60 * i + 30);
+          const p0 = g.proj({ x: P.x + size * Math.cos(a0), y: P.y + size * Math.sin(a0) });
+          const p1 = g.proj({ x: P.x + size * Math.cos(a1), y: P.y + size * Math.sin(a1) });
+          path.moveTo(p0.x, p0.y);
+          path.lineTo(p1.x, p1.y);
+        }
       }
+      if (EDGE_CACHE.size > 500) EDGE_CACHE.clear();
+      EDGE_CACHE.set(key, path);
     }
-    ctx.stroke(); ctx.restore();
+    const ctx = g.ctx;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = lw;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke(path);
+    ctx.restore();
   }
   // fills every hex of an area
   function fillCells(g, cells, col, alpha, shrink = 0.9) {
@@ -46,12 +69,79 @@
   }
   // a shape drawn upright at a ground point (the board is squashed, so things that stand up are drawn on screen coordinates)
   const star = (ctx, x, y, R, r, n, rot) => { ctx.beginPath(); for (let i = 0; i < n * 2; i++) { const a = rot + i * Math.PI / n, q = i % 2 ? r : R; i ? ctx.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q) : ctx.moveTo(x + Math.cos(a) * q, y + Math.sin(a) * q); } ctx.closePath(); };
+
+  // Offscreen pre-rendered stamps for emoji glyphs and radial gradients
+  const GLYPH_CACHE = new Map();
+  function getGlyphStamp(ch) {
+    let cv = GLYPH_CACHE.get(ch);
+    if (!cv && typeof document !== 'undefined') {
+      cv = document.createElement('canvas');
+      cv.width = 64;
+      cv.height = 64;
+      const c = cv.getContext('2d');
+      c.font = "48px 'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif";
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText(ch, 32, 32);
+      if (GLYPH_CACHE.size > 100) GLYPH_CACHE.clear();
+      GLYPH_CACHE.set(ch, cv);
+    }
+    return cv;
+  }
+
   function glyph(g, ch, x, y, px, rot = 0, alpha = 1) {
     const ctx = g.ctx; ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); if (rot) ctx.rotate(rot);
-    ctx.font = Math.round(px) + "px 'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, 0, 0); ctx.restore();
+    const stamp = getGlyphStamp(ch);
+    if (stamp) {
+      const s = Math.round(px);
+      ctx.drawImage(stamp, -s / 2, -s / 2, s, s);
+    } else {
+      ctx.font = Math.round(px) + "px 'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif";
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, 0, 0);
+    }
+    ctx.restore();
   }
+
+  const GLOW_CACHE = new Map();
+  function getGlowStamp(col) {
+    let cv = GLOW_CACHE.get(col);
+    if (!cv && typeof document !== 'undefined') {
+      cv = document.createElement('canvas');
+      cv.width = 64;
+      cv.height = 64;
+      const c = cv.getContext('2d');
+      const gr = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, col);
+      gr.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = gr;
+      c.beginPath();
+      c.arc(32, 32, 32, 0, TAU);
+      c.fill();
+      if (GLOW_CACHE.size > 100) GLOW_CACHE.clear();
+      GLOW_CACHE.set(col, cv);
+    }
+    return cv;
+  }
+
   // a glowing dot / soft light
-  function glow(g, x, y, R, col, alpha) { const ctx = g.ctx, gr = ctx.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(255,255,255,0)'); ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.fill(); ctx.restore(); }
+  function glow(g, x, y, R, col, alpha) {
+    const stamp = getGlowStamp(col);
+    const ctx = g.ctx;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (stamp) {
+      ctx.drawImage(stamp, x - R, y - R, R * 2, R * 2);
+    } else {
+      const gr = ctx.createRadialGradient(x, y, 0, x, y, R);
+      gr.addColorStop(0, col);
+      gr.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gr;
+      ctx.beginPath();
+      ctx.arc(x, y, R, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
   // a ground shockwave ring (an ellipse, the board is squashed)
   function wave(g, x, y, R, col, alpha, lw) { const ctx = g.ctx; ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.ellipse(x, y, R, R * g.K, 0, 0, TAU); ctx.stroke(); ctx.restore(); }
   // position along an arc from a to b (h = how high it flies, in pixels)
