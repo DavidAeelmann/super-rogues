@@ -1256,30 +1256,21 @@
     const f = run.cur;
     const map = Run.mapOf(run), need = Run.benched(run);
     if (introStage()) return `<section class="deploy intro"><div class="boardwrap"><canvas id="board"></canvas>${introStage() === 'move' ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Drag your hero to move it ⇉</div>' : ''}</div></section>`;   // v97 (review #179): only the battlefield
-    const wreathSVG = `<svg class="bhead-wreath" viewBox="0 0 24 24" aria-hidden="true"><path d="M4,18 C2,12 5,6 12,3 C11,8 7,13 4,18 Z M6,20 C10,19 16,14 18,8 C14,10 9,15 6,20 Z" fill="#ffd700" opacity="0.85"/></svg>`;
-    const ribbonHand = `<svg class="ribbon-hand" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,2 C10.9,2 10,2.9 10,4 L10,11 L9.2,10.2 C8.4,9.4 7.2,9.4 6.4,10.2 C5.6,11 5.6,12.2 6.4,13 L11.4,18 C12.2,18.8 13.3,19.2 14.4,19.2 L17.5,19.2 C19.4,19.2 21,17.6 21,15.7 L21,9 C21,7.9 20.1,7 19,7 C18.7,7 18.5,7.1 18.2,7.2 L18,7 C17.2,7 16.5,7.5 16.2,8.2 L16,8 C15.2,8 14.5,8.5 14.2,9.2 L14,4 C14,2.9 13.1,2 12,2 Z" fill="#fff" stroke="#9a6b13" stroke-width="1.2"/></svg>`;
-    const ribbonTailL = `<svg class="ribbon-tail tail-l" viewBox="0 0 20 36" aria-hidden="true"><polygon points="20,0 20,36 0,28 10,18 0,8" fill="#d48817"/><polygon points="20,0 20,36 12,18" fill="#9a6b13" opacity="0.65"/></svg>`;
-    const ribbonTailR = `<svg class="ribbon-tail tail-r" viewBox="0 0 20 36" aria-hidden="true"><polygon points="0,0 0,36 20,28 10,18 20,8" fill="#d48817"/><polygon points="0,0 0,36 8,18" fill="#734f0a" opacity="0.65"/></svg>`;
     const depbanContent = need.length
-      ? `${need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`}`
-      : 'DRAG HEROES TO REPOSITION';
+      ? (need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`)
+      : 'Drag heroes to reposition';
 
     return `<section class="deploy">
-      ${speedPills(!gau, 'dspeed')}<div class="bhead">${wreathSVG}<span class="bhead-title">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f.diff === 'boss' ? I('skull') + ' Boss fight' : I('swords') + ' ' + B.DIFF[f.diff].name + ' fight'}</span><span class="wreath-r">${wreathSVG}</span></div>
+      ${speedPills(!gau, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f.diff === 'boss' ? I('skull') + ' Boss fight' : I('swords') + ' ' + B.DIFF[f.diff].name + ' fight'}</div>
       ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
         : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
       ${benchHTML(need)}
       ${run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
       <div class="boardwrap">
         <canvas id="board"></canvas>
-        <svg class="deploy-fx-overlay" id="deployFxOverlay" aria-hidden="true"></svg>
-        <div class="depban-ribbon-wrap" aria-hidden="true">
-          ${ribbonTailL}
-          <div class="depban ${need.length ? 'need' : ''}">
-            ${need.length ? I('shield') : ribbonHand}
-            <span class="depban-text">${depbanContent}</span>
-          </div>
-          ${ribbonTailR}
+        <div class="depban ${need.length ? 'need' : ''}" aria-hidden="true">
+          ${need.length ? I('shield') : '<span class="dbh">✋</span>'}
+          <span class="depban-text">${depbanContent}</span>
         </div>
         ${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}
       </div>
