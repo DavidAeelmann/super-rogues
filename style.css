@@ -4023,426 +4023,6 @@ body.desk #top .top-track .tt-n.now {
   box-shadow: 0 0 10px rgba(255, 210, 63, 0.8);
 }
 
-/* Full-stage Sanctuary Glade framing on Desktop */
-body.desk:has(.deploy) {
-  background: radial-gradient(1100px 680px at 50% 45%, #1d382b 0%, #0f2019 55%, #08120e 100%) !important;
-}
-body.desk:has(.deploy) #top {
-  background: linear-gradient(180deg, rgba(10, 20, 16, 0.92), rgba(10, 20, 16, 0.65)) !important;
-  border-bottom: 1px solid rgba(190, 230, 150, 0.18);
-  padding: 8px 24px 6px !important;
-}
-body.desk:has(.deploy) #screen {
-  padding: 0 16px 90px !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-body.desk .deploy:not(.intro) {
-  position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: fit-content !important;
-  max-width: 100% !important;
-  margin: 0 auto !important;
-  padding: 0 !important;
-}
-
-body.desk .deploy .boardwrap {
-  position: relative !important;
-  margin: 0 auto !important;
-  z-index: 1;
-}
-
-body.desk .deploy #board {
-  border-radius: 26px !important;
-  border: 2.5px solid rgba(205, 232, 158, 0.32) !important;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.75), 0 0 0 6px rgba(12, 24, 18, 0.85), inset 0 0 32px rgba(0, 0, 0, 0.45) !important;
-  background: #14281d;
-}
-
-/* Deploy drag ribbon: sleek pill at upper-center of the clearing */
-body.desk .deploy .depban {
-  top: 14px !important;
-  bottom: auto !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  background: rgba(14, 24, 20, 0.88) !important;
-  border: 1.5px solid rgba(216, 245, 130, 0.55) !important;
-  color: #eef9d8 !important;
-  padding: 5px 16px !important;
-  font-size: 14px !important;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55) !important;
-}
-
-/* Top-Left Fight Badge & Hint Overlay */
-body.desk .deploy > .bhead {
-  position: absolute !important;
-  top: 14px !important;
-  left: 16px !important;
-  z-index: 5;
-  margin: 0 !important;
-  padding: 7px 16px !important;
-  border-radius: 14px !important;
-  background: #0d1722eb !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55) !important;
-  font-size: 16px !important;
-  color: #ffffff !important;
-  backdrop-filter: blur(8px);
-  max-width: 340px;
-}
-
-body.desk .deploy > .hint.tight {
-  position: absolute !important;
-  top: 56px !important;
-  left: 16px !important;
-  z-index: 5;
-  margin: 0 !important;
-  max-width: 280px !important;
-  text-align: left !important;
-  padding: 6px 12px !important;
-  border-radius: 12px !important;
-  background: #0d1722e6 !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  color: #e8f0ff !important;
-  font-size: 12.5px !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45) !important;
-}
-
-body.desk .deploy > .formline {
-  position: absolute !important;
-  top: 108px !important;
-  left: 16px !important;
-  z-index: 5;
-  margin: 0 !important;
-  justify-content: flex-start !important;
-}
-
-/* Top-Right Speed & Battle Clock HUD */
-body.desk .deploy > .dspeed {
-  position: absolute !important;
-  top: 14px !important;
-  right: 16px !important;
-  z-index: 6;
-  margin: 0 !important;
-  background: #0d1722eb !important;
-  padding: 4px 6px !important;
-  border-radius: 999px !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55) !important;
-}
-
-body.desk .deploy.battle > .hud {
-  position: absolute !important;
-  top: 14px !important;
-  left: 16px !important;
-  right: 16px !important;
-  z-index: 6;
-  margin: 0 !important;
-  pointer-events: none;
-}
-body.desk .deploy.battle > .hud > * {
-  pointer-events: auto;
-}
-body.desk .deploy.battle .hud-l {
-  background: #0d1722eb !important;
-  padding: 7px 16px !important;
-  border-radius: 14px !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55) !important;
-  flex: 0 1 auto !important;
-}
-body.desk .deploy.battle .hud .speed {
-  background: #0d1722eb !important;
-  padding: 4px 6px !important;
-  border-radius: 999px !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55) !important;
-}
-
-/* Bench Overlay (Left Glade Margin when new heroes need placement) */
-body.desk .deploy > .bench {
-  position: absolute !important;
-  left: 16px !important;
-  bottom: 112px !important;
-  width: 260px !important;
-  z-index: 6;
-  margin: 0 !important;
-  background: #141c2ef2 !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7) !important;
-}
-
-/* Right-Side Enemy Roster (Deploy) & Battle Stats Meter (Battle) */
-body.desk .deploy > .foes {
-  position: absolute !important;
-  top: 62px !important;
-  right: 16px !important;
-  width: 256px !important;
-  max-height: calc(100% - 165px) !important;
-  overflow-y: auto !important;
-  z-index: 5;
-  margin: 0 !important;
-  padding: 10px 12px !important;
-  background: #0d1624eb !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 18px !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65) !important;
-  backdrop-filter: blur(10px);
-}
-body.desk .deploy > .foes .fgrid {
-  grid-template-columns: 1fr !important;
-  gap: 6px !important;
-}
-body.desk .deploy > .foes .fo {
-  background: #172338 !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  padding: 6px 8px !important;
-}
-
-/* Unit Inspection Card (#info) on Desktop */
-body.desk .deploy > #info:not(.empty) {
-  position: absolute !important;
-  top: 50px !important;
-  right: 12px !important;
-  width: 250px !important;
-  z-index: 7;
-  margin: 0 !important;
-  background: rgba(14, 24, 40, 0.96) !important;
-  border: 1.5px solid #ffd23fbb !important;
-  border-radius: 14px !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75) !important;
-  backdrop-filter: blur(8px);
-}
-.info .hrow {
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-.info-close {
-  margin-left: auto;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  font-size: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.15s, transform 0.15s;
-}
-.info-close:hover {
-  background: rgba(255, 75, 75, 0.85);
-  border-color: #ff7575;
-  transform: scale(1.1);
-}
-
-/* Bottom-Center Guild Run Party Dock (Deploy) */
-body.desk .deploy > .dparty {
-  position: absolute !important;
-  bottom: 12px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  z-index: 5;
-  margin: 0 !important;
-  width: auto !important;
-  max-width: calc(100% - 460px) !important;
-}
-body.desk .deploy > .dparty .party {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  padding: 8px 14px !important;
-  background: #0d1624eb !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.72) !important;
-  backdrop-filter: blur(10px);
-}
-body.desk .deploy > .dparty .party > .bph {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  gap: 2px !important;
-  margin: 0 !important;
-  padding-right: 10px !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
-  white-space: nowrap;
-}
-body.desk .deploy > .dparty .pgrid {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-body.desk .deploy > .dparty .pm {
-  position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 7px !important;
-  padding: 5px 10px 5px 6px !important;
-  background: #17243a !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.18) !important;
-  border-radius: 14px !important;
-  min-width: 125px;
-  transition: transform 0.15s ease, border-color 0.15s ease;
-}
-body.desk .deploy > .dparty .pm:hover {
-  transform: translateY(-2px);
-  border-color: #ffd23f !important;
-}
-body.desk .deploy > .dparty .pm .pmi {
-  position: absolute !important;
-  top: -11px !important;
-  left: 8px !important;
-  display: flex !important;
-  gap: 3px !important;
-  z-index: 2;
-}
-body.desk .deploy > .dparty .pm .pmi .ico.xs {
-  width: 19px !important;
-  height: 19px !important;
-  border-radius: 5px !important;
-  background: #0d1526 !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), 0 0 0 1.5px #ffd23f !important;
-}
-body.desk .deploy > .dparty .relicline {
-  margin: 0 !important;
-  padding: 0 0 0 10px !important;
-  border-top: 0 !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.16) !important;
-}
-body.desk .deploy > .dparty .nextboss {
-  display: none !important;
-}
-
-/* Bottom-Right Fight & Items Action Dock */
-body.desk .deploy > .bar.sticky {
-  position: absolute !important;
-  bottom: 12px !important;
-  right: 16px !important;
-  top: auto !important;
-  z-index: 6;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  width: auto !important;
-}
-body.desk .deploy > .bar.sticky > button[data-act="team"] {
-  flex: 0 0 auto !important;
-  min-height: 52px !important;
-  padding: 0 18px !important;
-  background: #142238eb !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
-  color: #fff !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6) !important;
-}
-body.desk .deploy > .bar.sticky > button[data-act="fight"] {
-  flex: 0 0 auto !important;
-  min-width: 164px !important;
-  min-height: 58px !important;
-  font-size: 24px !important;
-  padding: 0 28px !important;
-  border-radius: 18px !important;
-  box-shadow: 0 6px 0 #b87400, 0 12px 28px rgba(0, 0, 0, 0.7) !important;
-}
-
-/* Battle Live Stats & Squad Dock on Desktop (.deploy.battle .bpanel) */
-body.desk .deploy.battle > .bpanel {
-  position: absolute !important;
-  top: 62px !important;
-  right: 16px !important;
-  width: 268px !important;
-  max-height: calc(100% - 78px) !important;
-  overflow-y: auto !important;
-  z-index: 5;
-  margin: 0 !important;
-  padding: 10px 12px !important;
-  background: #0d1624eb !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 18px !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.68) !important;
-  backdrop-filter: blur(10px);
-}
-body.desk .deploy.battle .teamstrip.v2 {
-  grid-template-columns: 1fr !important;
-  gap: 6px !important;
-}
-body.desk .deploy.battle .teamstrip.v2 .ts {
-  background: #162338 !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  padding: 6px 8px !important;
-  cursor: pointer;
-}
-body.desk .deploy.battle .teamstrip.v2 .ts:hover {
-  border-color: #ffd23f !important;
-}
-body.desk .deploy.battle .tsitems {
-  display: flex !important;
-  gap: 2px;
-  position: absolute;
-  bottom: -4px;
-  left: -2px;
-  z-index: 2;
-}
-body.desk .deploy.battle .tsitems .ico.xs {
-  width: 15px !important;
-  height: 15px !important;
-  border-radius: 4px;
-  background: #0b1220;
-  box-shadow: 0 0 0 1px #ffd23f;
-}
-body.desk .deploy.battle .estrip .ec {
-  cursor: pointer;
-}
-
-/* ==========================================================================
-   v130: Natural Warm Dark-Slate & Charcoal Palette (Clean, Organic, No Overlaps)
-   ========================================================================== */
-
-body.desk #bgstage:not([hidden]) {
-  position: absolute;
-  top: 48px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 0;
-  padding: 0 16px 88px;
-  box-sizing: border-box;
-}
-
-body.desk #bgstage::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(10, 14, 20, 0.5) 0%, rgba(8, 10, 16, 0.78) 100%);
-  backdrop-filter: blur(4px);
-  pointer-events: none;
-}
-
-body.desk #bgboard {
-  border-radius: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.7) !important;
-  background: #14281d;
-  filter: brightness(0.65) saturate(0.85);
-}
-
 body.desk {
   background: radial-gradient(1300px 750px at 50% 40%, #161920 0%, #101217 60%, #0a0b0e 100%) !important;
   color: #e4e7ec;
@@ -7310,4 +6890,358 @@ body.desk .smithy-frame .grid {
   body:not(.desk) section.result.v2 .rhead { padding: 6px 10px !important; margin-bottom: 2px !important; }
   body:not(.desk) section.result.v2 .rheroes .rh { padding: 4px 2px !important; }
   body:not(.desk) section.result.v2 .bar { margin-top: 4px !important; }
+}
+
+
+/* ==================================================================== */
+/* COMPREHENSIVE FIX PASS (SYSTEMIC + SCREENS 1 - 5)                    */
+/* ==================================================================== */
+
+/* 1. Systemic: Top Gold Pill Overlap Fix */
+#top .gold,
+body.desk #top .gold {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 12px !important;
+  min-height: 36px !important;
+  border-radius: 999px !important;
+}
+#top .gold::before,
+body.desk #top .gold::before {
+  content: '' !important;
+  display: inline-block !important;
+  position: static !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+}
+
+/* 2. Systemic: Chunky 3D Tabletop Bevel Borders on Top HUD & Modals */
+body.desk #top {
+  border-bottom: 4px solid rgba(0, 0, 0, 0.65) !important;
+}
+#modal .sheet,
+.m-box,
+.sheet {
+  border-width: 2.5px !important;
+  border-bottom-width: 4px !important;
+}
+
+/* 3. Screen 1: Main Menu Preview Box & Big Square Nav Cards */
+body.desk section.title.home .trailer {
+  border: 3px solid #d4af37 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.25) !important;
+  overflow: hidden !important;
+}
+.trailer-corner {
+  display: none !important;
+}
+
+body.desk section.title.home .homedock {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 16px !important;
+  max-width: 520px !important;
+  margin: 22px auto 0 !important;
+}
+
+body.desk section.title.home .dockitem {
+  width: 90px !important;
+  height: 80px !important;
+  min-height: 80px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 6px !important;
+  border-radius: 14px !important;
+  background: rgba(20, 24, 34, 0.92) !important;
+  border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  border-bottom: 4px solid rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5) !important;
+}
+body.desk section.title.home .dockitem:hover {
+  transform: translateY(-3px) !important;
+  border-color: #ffd23f !important;
+  box-shadow: 0 8px 22px rgba(255, 210, 63, 0.25) !important;
+}
+body.desk section.title.home .dockitem svg.ui {
+  width: 28px !important;
+  height: 28px !important;
+}
+body.desk section.title.home .dockitem b {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+.lvchip-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffcf5a;
+  margin-left: 2px;
+}
+
+/* 4. Screen 2: Path Selection Card Banner, Action Pill & Team Sidebar Dock */
+body.desk .map.road {
+  grid-template-columns: minmax(0, 1fr) 340px !important;
+  gap: 20px !important;
+  align-items: start !important;
+}
+body.desk section.map.road .mapside {
+  display: block !important;
+  width: 340px !important;
+  background: rgba(18, 22, 34, 0.95) !important;
+  border: 2px solid #38455e !important;
+  border-bottom: 4px solid #1a202c !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65) !important;
+  padding: 14px !important;
+}
+body.desk body.desk .banner.v2 {
+  min-height: 280px !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: 0 0 16px 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+body.desk body.desk .banner.v2 .scene {
+  width: 100% !important;
+  height: 110px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important;
+}
+body.desk body.desk .banner.v2 .bt {
+  padding: 6px 12px 2px !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+body.desk body.desk .banner.v2 .bd {
+  padding: 2px 14px 10px !important;
+  font-size: 12.5px !important;
+  line-height: 1.3 !important;
+  color: #cbd5e1 !important;
+}
+.card-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin: 8px auto 0 !important;
+  padding: 6px 18px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8) !important;
+  border: 1.5px solid #93c5fd !important;
+  border-bottom: 3px solid #1e3a8a !important;
+  color: #ffffff !important;
+  font-family: var(--fun) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+body:not(.desk) .card-action-btn { display: none !important; }
+.banner.v2.b-easy .card-action-btn,
+.banner.v2.b-hard .card-action-btn,
+.banner.v2.b-boss .card-action-btn {
+  background: linear-gradient(180deg, #ef4444, #b91c1c) !important;
+  border-color: #fca5a5 !important;
+  border-bottom-color: #7f1d1d !important;
+}
+
+/* 5. Screen 3: "A Hero Joins You!" Draft Stars & Stats Normal-Flow Fix */
+body.desk .hero-tarot-card {
+  border: 2px solid #c89b3c !important;
+  border-radius: 16px !important;
+}
+body.desk .hero-tarot-card .card-crest-top {
+  position: absolute !important;
+  top: -18px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: #161924 !important;
+  border: 2px solid #c89b3c !important;
+  border-radius: 50% !important;
+  width: 38px !important;
+  height: 38px !important;
+  z-index: 10 !important;
+}
+.card-vignette-bottom {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 14px 12px !important;
+  background: linear-gradient(180deg, transparent 0%, rgba(9, 11, 18, 0.88) 25%, #090b12 90%) !important;
+}
+.hero-card-title {
+  margin: 0 !important;
+  font-size: 22px !important;
+}
+.hero-role-pill {
+  margin: 0 !important;
+}
+.hero-stars-row {
+  margin: 0 !important;
+  font-size: 14px !important;
+}
+.hero-mini-stats {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin: 2px 0 0 !important;
+}
+.hero-mini-stats .mstat {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+/* 6. Screen 4: Pre-Combat Deployment Hero Cards & Inventory Polish */
+body.desk .deploy > .dparty {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 6 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+body.desk .deploy > .dparty .pgrid {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+body.desk .deploy > .dparty .pm {
+  background: rgba(18, 21, 33, 0.92) !important;
+  border: 2px solid #475569 !important;
+  border-bottom: 4px solid #1e293b !important;
+  border-radius: 12px !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+body.desk .deploy > .dparty .pm .por-btn {
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+}
+body.desk .deploy > .dparty .pm .por {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  border: 2px solid #ffd23f !important;
+}
+body.desk .deploy > .dparty .pm .dplv {
+  position: absolute !important;
+  bottom: -4px !important;
+  right: -4px !important;
+  background: #1e293b !important;
+  color: #ffd23f !important;
+  border: 1px solid #ffd23f !important;
+  border-radius: 6px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  padding: 1px 4px !important;
+}
+body.desk .deploy > .dparty .pm .pmb {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  align-items: flex-start !important;
+}
+body.desk .deploy > .dparty .pm .pmn b {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+}
+body.desk .deploy > .dparty .pm .pmi {
+  display: flex !important;
+  gap: 6px !important;
+}
+body.desk .deploy > .dparty .pm .pmi .dsock {
+  width: 36px !important;
+  height: 36px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 8px !important;
+  background: rgba(14, 20, 32, 0.85) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+body.desk .deploy > .dparty .pm .pmi .ico.xs {
+  width: 26px !important;
+  height: 26px !important;
+}
+body.desk .deploy > .dparty .hero-stat-pill {
+  font-size: 11px !important;
+  color: #93c5fd !important;
+  font-weight: 700 !important;
+}
+body.desk .deploy > .dparty .hero-stars {
+  font-size: 11px !important;
+  color: #fde047 !important;
+}
+.hero-crest,
+.crest-diamond,
+.crest-cyan,
+.crest-ruby {
+  display: none !important;
+}
+
+/* Left-Side Bag Margin */
+.dbag-top {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+.dl-count {
+  margin-top: 12px !important;
+  font-weight: 800 !important;
+  color: #cbd5e1 !important;
+}
+.empty-gem {
+  display: none !important;
+}
+
+/* Clean Enemies Panel */
+.fili-corner {
+  display: none !important;
+}
+.foe-subbadge {
+  display: none !important;
+}
+
+/* 7. Screen 5: Active Combat Defeated Enemies Grayscale */
+.ec.dead {
+  filter: grayscale(1) opacity(0.4) !important;
+  position: relative !important;
+}
+.ec.dead::after {
+  content: '✕' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ef4444 !important;
+  font-weight: 900 !important;
+  font-size: 18px !important;
+  text-shadow: 0 0 4px #000 !important;
+  pointer-events: none !important;
 }

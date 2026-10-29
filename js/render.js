@@ -432,11 +432,18 @@
       ctx.fillStyle = '#d3d8de'; ctx.beginPath(); ctx.ellipse(X - s * 0.22, Y - s * 0.45, s * 0.14, s * 0.07, -0.5, 0, Math.PI * 2); ctx.fill();
     } else if (x.k === 'ridge') {
       const P = [[-0.75, 0], [-0.55, -0.6], [-0.3, -1.2], [-0.05, -0.8], [0.25, -1.45], [0.55, -0.7], [0.75, 0]].map(([a, b]) => [X + a * s, Y + b * s]);
-      blob(ctx, P); ctx.fillStyle = '#b09474'; ctx.fill(); ctx.strokeStyle = '#6e5738'; ctx.stroke();
-      blob(ctx, [[X + 0.25 * s, Y - 1.45 * s], [X + 0.55 * s, Y - 0.7 * s], [X + 0.75 * s, Y], [X + 0.25 * s, Y], [X + 0.15 * s, Y - 0.6 * s]]); ctx.fillStyle = '#8c7254'; ctx.fill();
-      blob(ctx, [[X - 0.3 * s, Y - 1.2 * s], [X - 0.05 * s, Y - 0.8 * s], [X - 0.2 * s, Y - 0.9 * s], [X - 0.42 * s, Y - 0.92 * s]]); ctx.fillStyle = '#f4efe4'; ctx.fill();
-      blob(ctx, [[X + 0.25 * s, Y - 1.45 * s], [X + 0.4 * s, Y - 1.08 * s], [X + 0.22 * s, Y - 1.15 * s], [X + 0.1 * s, Y - 1.1 * s]]); ctx.fillStyle = '#f4efe4'; ctx.fill();
-      ctx.fillStyle = '#6bbf59'; for (const dx of [-0.6, 0.62]) { ctx.beginPath(); ctx.ellipse(X + dx * s, Y - s * 0.04, s * 0.14, s * 0.08, 0, 0, Math.PI * 2); ctx.fill(); }
+      const slateGrad = ctx.createLinearGradient(X, Y - 1.45 * s, X, Y);
+      slateGrad.addColorStop(0, '#64748b');
+      slateGrad.addColorStop(0.5, '#475569');
+      slateGrad.addColorStop(1, '#334155');
+      blob(ctx, P); ctx.fillStyle = slateGrad; ctx.fill(); ctx.strokeStyle = '#1e293b'; ctx.stroke();
+      const shadowGrad = ctx.createLinearGradient(X + 0.15 * s, Y - 1.45 * s, X + 0.75 * s, Y);
+      shadowGrad.addColorStop(0, '#334155');
+      shadowGrad.addColorStop(1, '#1e293b');
+      blob(ctx, [[X + 0.25 * s, Y - 1.45 * s], [X + 0.55 * s, Y - 0.7 * s], [X + 0.75 * s, Y], [X + 0.25 * s, Y], [X + 0.15 * s, Y - 0.6 * s]]); ctx.fillStyle = shadowGrad; ctx.fill();
+      blob(ctx, [[X - 0.3 * s, Y - 1.2 * s], [X - 0.05 * s, Y - 0.8 * s], [X - 0.2 * s, Y - 0.9 * s], [X - 0.42 * s, Y - 0.92 * s]]); ctx.fillStyle = '#cbd5e1'; ctx.fill();
+      blob(ctx, [[X + 0.25 * s, Y - 1.45 * s], [X + 0.4 * s, Y - 1.08 * s], [X + 0.22 * s, Y - 1.15 * s], [X + 0.1 * s, Y - 1.1 * s]]); ctx.fillStyle = '#94a3b8'; ctx.fill();
+      ctx.fillStyle = '#4ade80'; for (const dx of [-0.6, 0.62]) { ctx.beginPath(); ctx.ellipse(X + dx * s, Y - s * 0.04, s * 0.14, s * 0.08, 0, 0, Math.PI * 2); ctx.fill(); }
     }
     ctx.restore();
   }
@@ -532,8 +539,11 @@
     const sx = (1 + 0.06 * hitK + 0.06 * strike) * selScale;
     if (flash) ctx.filter = 'brightness(1.9) saturate(0.6)';
     ctx.save(); ctx.translate(bx0, p.y + selY); ctx.scale(sx, sy); ctx.translate(-bx0, -p.y);
+    const prevFilter = ctx.filter;
+    if (!flash && (!ctx.filter || ctx.filter === 'none')) ctx.filter = 'drop-shadow(0 6px 4px rgba(0,0,0,0.55))';
     if (art) B.Art.draw(ctx, art, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
     else B.Models.draw(ctx, mk, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
+    ctx.filter = prevFilter || 'none';
     ctx.restore();
     if (flash) ctx.filter = 'none';
     else if (since < 0.09 && !u.dead) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * (1 - since / 0.09); const g = ctx.createRadialGradient(bx0, p.y - S * 0.6, 0, bx0, p.y - S * 0.6, S * 0.6); g.addColorStop(0, '#fff'); g.addColorStop(0.5, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx0, p.y - S * 0.6, S * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
@@ -857,7 +867,24 @@
         const bKey = f.id ? `${f.id}_${nk}` : null;
         const bInfo = bKey ? numBatches.get(bKey) : null;
         const dispText = (bInfo && bInfo.fx === f && bInfo.count > 1) ? `${bInfo.total} ×${bInfo.count}` : f.text;
-        const ft = TT(dispText); ctx.strokeText(ft, 0, 0); ctx.fillStyle = f.color; ctx.fillText(ft, 0, 0); ctx.restore(); ctx.globalAlpha = 1;
+        const ft = TT(dispText);
+        let textColor = f.color;
+        if (f.k === 'num') {
+          if (nk === 'crit') textColor = '#fde047';
+          else if (u && u.side === 0) textColor = '#ef4444';
+          else if (nk === 'heal') textColor = '#4ade80';
+          else textColor = '#ffffff';
+        }
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#000000';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+        ctx.shadowBlur = 4;
+        ctx.strokeText(ft, 0, 0);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = textColor;
+        ctx.fillText(ft, 0, 0);
+        ctx.restore();
+        ctx.globalAlpha = 1;
       } else if (f.k === 'proj') {
         const src = W.byId[f.from], a = src ? { x: hexScreen(v, f.fc, f.fr).x, y: hexScreen(v, f.fc, f.fr).y - size * 0.8 * src.size } : hexScreen(v, f.fc, f.fr);
         const tu = f.to && W.byId[f.to] && !W.byId[f.to].dead ? W.byId[f.to] : null, t = tu ? chest(tu) : hexScreen(v, f.tc, f.tr);

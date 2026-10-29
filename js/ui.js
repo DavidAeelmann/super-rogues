@@ -364,7 +364,7 @@
       // v49 (review #60): the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
       // the ladder, suggestions, and the menu sheet with the rest)
       const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
+      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchip-label">LP</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
     if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
@@ -477,7 +477,7 @@
         : `<button class="primary big cta play" data-act="new-run">${I('play')} Play</button>`}
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
-      <div class="trailer"><div class="trailer-corner tl"></div><div class="trailer-corner tr"></div><div class="trailer-corner bl"></div><div class="trailer-corner br"></div><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
+      <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
       <span class="app-ver" aria-label="Game version">v0.1</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
@@ -829,7 +829,10 @@
   function posterHTML(i, kind, scene, title, body, reward, ribbon) {
     const coinPlaqueSVG = `<svg class="rw-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/><circle cx="10" cy="10" r="5.5" fill="#fde047"/></svg>`;
     const formattedReward = reward ? `<span class="rw gold-treasure-plaque">${coinPlaqueSVG}<span>${reward}</span></span>` : '';
-    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon rib-${kind}">${ribbon}</span>` : ''}</span><span class="bt">${title}</span><span class="bd">${body}</span>${formattedReward}</button>`;
+    const actionPill = (kind === 'shop') ? '<span class="card-action-btn">🛒 Browse Shop</span>'
+      : (kind === 'event') ? '<span class="card-action-btn">🎲 Enter Den</span>'
+      : '<span class="card-action-btn">⚔️ Battle</span>';
+    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon rib-${kind}">${ribbon}</span>` : ''}</span><span class="bt">${title}</span><span class="bd">${body}</span>${formattedReward}${actionPill}</button>`;
   }
   const mobsOf = f => { const cnt = {}, order = []; for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); if (!cnt[k]) order.push(k); cnt[k] = (cnt[k] || 0) + 1; } return order.map(k => ({ key: k.replace('*', ''), n: cnt[k], elite: k.endsWith('*') })); };
   const pickN = (arr, n, seed) => { const out = []; for (let k = 0; out.length < n && k < arr.length * 4; k++) { const v = arr[(seed * 7 + k * 5 + k * k) % arr.length]; if (!out.includes(v)) out.push(v); } return out; };
@@ -896,7 +899,7 @@
         const rarityClass = it.tier >= 3 ? 'r-epic' : it.tier === 2 ? 'r-rare' : it.tier === 1 ? 'r-magic' : 'r-common';
         bagSlots.push(`<button class="ditem eqitem ${rarityClass}" data-drag="b:${i}" data-drop="bag" data-tip="${tip}" aria-label="${esc(it.name)}"><span class="rarity-bloom"></span><img class="ico" src="${B.Icons.item(id, 28)}" alt=""></button>`);
       } else {
-        bagSlots.push(`<div class="ditem empty" data-drop="bag" title="Empty bag slot"><span class="empty-gem">◇</span></div>`);
+        bagSlots.push(`<div class="ditem empty" data-drop="bag" title="Empty bag slot"></div>`);
       }
     }
     const autoPill = `<button class="auto-equip-toggle ${autoOn() ? 'on' : ''}" data-act="gear-auto">Auto-equip <b class="a-pill">${autoOn() ? 'ON' : 'OFF'}</b></button>`;
@@ -925,30 +928,17 @@
           socks.push(`<div class="dsock empty slot-${j+1}" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
         }
       }
-      // Floating elemental crest per hero archetype
-      const k = h.key.toLowerCase();
-      const crestType = (k.includes('mael') || k.includes('frost') || k.includes('ice') || k.includes('gardener')) ? 'water-ice'
-        : (k.includes('ember') || k.includes('wyrm') || k.includes('bramble') || k.includes('fire')) ? 'ruby-fire'
-        : 'arcane-star';
-      const crestSVG = crestType === 'water-ice'
-        ? `<svg class="hero-crest crest-cyan" viewBox="0 0 24 24"><polygon points="12,2 21,9 12,22 3,9" fill="url(#cyanShard)"/><defs><linearGradient id="cyanShard" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0ffff"/><stop offset="50%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#006699"/></linearGradient></defs></svg>`
-        : crestType === 'ruby-fire'
-        ? `<svg class="hero-crest crest-ruby" viewBox="0 0 24 24"><polygon points="6,3 18,3 22,9 12,22 2,9" fill="url(#rubyFire)"/><defs><linearGradient id="rubyFire" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffb3ba"/><stop offset="40%" stop-color="#ff3344"/><stop offset="100%" stop-color="#800010"/></linearGradient></defs></svg>`
-        : `<svg class="hero-crest crest-diamond" viewBox="0 0 24 24"><polygon points="12,2 22,12 12,22 2,12" fill="url(#steelDia)"/><defs><linearGradient id="steelDia" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#80d8ff"/><stop offset="100%" stop-color="#2a5298"/></linearGradient></defs></svg>`;
       const starCount = Math.min(5, Math.max(1, h.lvl || 1));
       const starBar = `<div class="hero-stars" aria-label="${starCount} stars">${[...Array(5)].map((_, i) => `<span class="h-star ${i < starCount ? 'lit' : ''}">★</span>`).join('')}</div>`;
       const atkBonus = Math.round((h.lvl - 1) * 3 + 12);
       const statPill = `<div class="hero-stat-pill">+${atkBonus}% ATK Speed</div>`;
       return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
-        <div class="hero-crest-frame">
-          ${crestSVG}
-          <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 74, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
-          ${starBar}
-        </div>
+        <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 52, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
         <div class="pmb">
           <div class="pmn"><b>${esc(d.name || h.key)}</b></div>
           <div class="pmi">${socks.join('')}</div>
           ${statPill}
+          ${starBar}
         </div>
       </div>`;
     }).join('');
@@ -1043,10 +1033,9 @@
       return `<span class="foe-trait trait-star" title="Elite Enemy">★</span>`;
     };
     return `<div class="foes ${gau ? 'gau' : ''}">
-      ${filigreeCorner('tl')}${filigreeCorner('tr')}${filigreeCorner('bl')}${filigreeCorner('br')}
       <div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
       ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}" data-foe="${g.key}">
-        <div class="foe-bezel">${img(g.key, 44, 'por')}<span class="foe-subbadge">${g.ranged ? '🏹' : '⚔'}</span></div>
+        <div class="foe-bezel">${img(g.key, 44, 'por')}</div>
         <div class="foe-info"><div class="foe-title"><b>${nm(g)}</b>${traitBadge(g)}${g.elite ? ` <span class="elt">★ ${esc(g.elite)}</span>` : ''}</div><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div>
       </div>`).join('')}</div>` : ''}
       ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" data-foe="${g.key}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">★</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
