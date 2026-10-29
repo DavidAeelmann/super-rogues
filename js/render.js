@@ -539,11 +539,8 @@
     const sx = (1 + 0.06 * hitK + 0.06 * strike) * selScale;
     if (flash) ctx.filter = 'brightness(1.9) saturate(0.6)';
     ctx.save(); ctx.translate(bx0, p.y + selY); ctx.scale(sx, sy); ctx.translate(-bx0, -p.y);
-    const prevFilter = ctx.filter;
-    if (!flash && (!ctx.filter || ctx.filter === 'none')) ctx.filter = 'drop-shadow(0 6px 4px rgba(0,0,0,0.55))';
     if (art) B.Art.draw(ctx, art, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
     else B.Models.draw(ctx, mk, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
-    ctx.filter = prevFilter || 'none';
     ctx.restore();
     if (flash) ctx.filter = 'none';
     else if (since < 0.09 && !u.dead) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * (1 - since / 0.09); const g = ctx.createRadialGradient(bx0, p.y - S * 0.6, 0, bx0, p.y - S * 0.6, S * 0.6); g.addColorStop(0, '#fff'); g.addColorStop(0.5, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx0, p.y - S * 0.6, S * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
@@ -862,12 +859,9 @@
           else if (nk === 'heal') textColor = '#4ade80';
           else textColor = '#ffffff';
         }
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3.5;
         ctx.strokeStyle = '#000000';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-        ctx.shadowBlur = 4;
         ctx.strokeText(ft, 0, 0);
-        ctx.shadowBlur = 0;
         ctx.fillStyle = textColor;
         ctx.fillText(ft, 0, 0);
         ctx.restore();

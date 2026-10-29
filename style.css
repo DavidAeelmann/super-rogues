@@ -4053,7 +4053,7 @@ body.desk:has(.deploy) {
   background: radial-gradient(1300px 750px at 50% 40%, #151c19 0%, #0e1412 60%, #080c0a 100%) !important;
 }
 
-body.desk:has(.deploy) #screen {
+body.desk:has(.deploy:not(.battle)) #screen {
   padding: 0 16px 88px !important;
   display: flex !important;
   align-items: center !important;
@@ -7333,4 +7333,39 @@ body.desk section.levelup .sp-path.tree {
   border-radius: 18px !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+
+/* Post-Battle Result Screen Desktop Frame & Guaranteed Visibility */
+body.desk section.result.v2 {
+  max-width: 740px !important;
+  width: 100% !important;
+  margin: 20px auto !important;
+  padding: 20px 24px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, rgba(20, 25, 36, 0.96) 0%, rgba(12, 15, 24, 0.98) 100%) !important;
+  border: 2px solid #b48a3e !important;
+  border-bottom: 5px solid #6b4d1b !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  z-index: 10 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+body.desk section.result.v2 .bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  margin-top: 14px !important;
+  width: 100% !important;
+}
+body.desk section.result.v2 .bar button.primary {
+  min-width: 160px !important;
+  min-height: 48px !important;
+  font-size: 18px !important;
+  z-index: 15 !important;
+  cursor: pointer !important;
 }
