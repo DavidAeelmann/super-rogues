@@ -620,20 +620,7 @@
       }
     }
     if (u.lvl > 1 && hero && u.kind === 'hero') { ctx.font = "700 10px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.fillStyle = '#ffcf5a'; ctx.textAlign = 'left'; ctx.fillText(u.lvl, bx + bw + 2, by + 5); }
-    // Guild Run-style equipped item badges above hero health bars (desktop clearing)
-    if (v.desk && hero && u.kind === 'hero' && u.items && u.items.length && B.Icons && B.Icons.item) {
-      const isz = Math.max(11, Math.min(15, Math.round(size * 0.34))), igap = isz + 2;
-      const ix0 = p.x - (u.items.length * igap - 2) / 2, iy0 = by - isz - 4;
-      v.itemImgs = v.itemImgs || {};
-      u.items.forEach((iid, idx) => {
-        let im = v.itemImgs[iid];
-        if (!im && typeof Image !== 'undefined') { im = v.itemImgs[iid] = new Image(); im.src = B.Icons.item(iid, 24); }
-        const ix = ix0 + idx * igap;
-        ctx.fillStyle = '#090d1ecc'; rr(ix - 1, iy0 - 1, isz + 2, isz + 2, 3.5); ctx.fill();
-        ctx.strokeStyle = '#ffd23f99'; ctx.lineWidth = 1; rr(ix - 1, iy0 - 1, isz + 2, isz + 2, 3.5); ctx.stroke();
-        if (im && im.complete && im.naturalWidth) ctx.drawImage(im, ix, iy0, isz, isz);
-      });
-    }
+    // Items above hero heads removed
     // review #44: status effects as coloured badges (glyph on a disc) above the bars, one colour per effect
     const marks = [];
     // v122 (review #213, "Crowd Control badges: crisp micro-icons over the unit head"): the hard crowd control first (it decides fights), at most three
@@ -649,7 +636,7 @@
     if (u.st.slowU > s) marks.push(['🐌', '#4aa3ff']);
     if (marks.length > 3) marks.length = 3;
     if (marks.length) {
-      const itemOff = (v.desk && hero && u.kind === 'hero' && u.items && u.items.length) ? Math.max(13, Math.min(17, Math.round(size * 0.34) + 2)) : 0;
+      const itemOff = 0;
       const R = Math.max(7.5, size * 0.28), gap = R * 2 + 2, x0 = p.x - (marks.length - 1) * gap / 2, y0 = by - R - 3 - itemOff;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.font = `${Math.round(R * 1.35)}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif`;

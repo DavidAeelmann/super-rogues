@@ -4282,16 +4282,29 @@ body.desk .deploy > .dparty .pm .pmi {
   display: flex !important;
   gap: 4px !important;
 }
-body.desk .deploy > .dparty .pm .pmi .ico.xs,
 body.desk .deploy > .dparty .pm .pmi .dsock {
-  width: 24px !important;
-  height: 24px !important;
-  border-radius: 6px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 9px !important;
   background: rgba(14, 20, 32, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
   cursor: grab;
-  transition: transform 0.12s ease;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+body.desk .deploy > .dparty .pm .pmi .ico.xs {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain !important;
+  display: block !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 body.desk .deploy > .dparty .pm .pmi .ico.xs:hover {
   transform: scale(1.15);
@@ -7174,19 +7187,24 @@ body.desk .deploy > .dparty .pm .pmi {
   gap: 6px !important;
 }
 body.desk .deploy > .dparty .pm .pmi .dsock {
-  width: 36px !important;
-  height: 36px !important;
+  width: 38px !important;
+  height: 38px !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 8px !important;
+  border-radius: 9px !important;
   background: rgba(14, 20, 32, 0.85) !important;
   border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  padding: 0 !important;
 }
 body.desk .deploy > .dparty .pm .pmi .ico.xs {
-  width: 26px !important;
-  height: 26px !important;
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain !important;
+  display: block !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 body.desk .deploy > .dparty .hero-stat-pill {
   font-size: 11px !important;
@@ -7244,4 +7262,75 @@ body.desk .deploy > .dparty .hero-stars {
   font-size: 18px !important;
   text-shadow: 0 0 4px #000 !important;
   pointer-events: none !important;
+}
+
+
+/* Levelup & Modal Frame Solidity - Prevent Disappearing Menus */
+body.desk section.levelup {
+  max-width: 760px !important;
+  width: 100% !important;
+  margin: 20px auto !important;
+  padding: 24px 28px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, rgba(22, 27, 38, 0.98) 0%, rgba(14, 17, 26, 0.98) 100%) !important;
+  border: 2.5px solid #38455e !important;
+  border-bottom: 5px solid #1a202c !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 10 !important;
+}
+body.desk section.levelup .opts.spec2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 16px !important;
+  margin: 14px 0 !important;
+  width: 100% !important;
+}
+body.desk section.levelup .card.opt {
+  min-height: 140px !important;
+  padding: 18px 16px !important;
+  background: rgba(28, 35, 50, 0.9) !important;
+  border: 2px solid #4a5a78 !important;
+  border-bottom: 4px solid #1e2534 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  transition: transform 0.15s ease, border-color 0.15s ease !important;
+}
+body.desk section.levelup .card.opt:hover {
+  transform: translateY(-3px) !important;
+  border-color: #ffd23f !important;
+  box-shadow: 0 12px 30px rgba(255, 210, 63, 0.25) !important;
+}
+body.desk section.levelup .sp-path.tree {
+  width: 100% !important;
+  margin-top: 10px !important;
+  padding: 14px 18px !important;
+  background: rgba(18, 22, 32, 0.85) !important;
+  border: 1.5px solid #2e384d !important;
+  border-radius: 12px !important;
+}
+
+/* Modal Sheets & Daily Event Menus */
+#modal:not([hidden]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 100 !important;
+}
+#modal .sheet {
+  background: #141824 !important;
+  border: 2.5px solid #475569 !important;
+  border-bottom: 5px solid #0f172a !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88) !important;
+  border-radius: 18px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }

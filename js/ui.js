@@ -923,21 +923,19 @@
         if (id && ITEM[id]) {
           const it = ITEM[id];
           const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-          socks.push(`<button class="dsock filled slot-${j+1}" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 22)}" alt=""></button>`);
+          socks.push(`<button class="dsock filled slot-${j+1}" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 36)}" alt=""></button>`);
         } else {
           socks.push(`<div class="dsock empty slot-${j+1}" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
         }
       }
       const starCount = Math.min(5, Math.max(1, h.lvl || 1));
       const starBar = `<div class="hero-stars" aria-label="${starCount} stars">${[...Array(5)].map((_, i) => `<span class="h-star ${i < starCount ? 'lit' : ''}">★</span>`).join('')}</div>`;
-      const atkBonus = Math.round((h.lvl - 1) * 3 + 12);
-      const statPill = `<div class="hero-stat-pill">+${atkBonus}% ATK Speed</div>`;
+
       return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
         <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 52, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
         <div class="pmb">
           <div class="pmn"><b>${esc(d.name || h.key)}</b></div>
           <div class="pmi">${socks.join('')}</div>
-          ${statPill}
           ${starBar}
         </div>
       </div>`;
