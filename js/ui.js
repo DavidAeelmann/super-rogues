@@ -1413,9 +1413,16 @@
     const nextCta = !run ? 'Continue' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils! ★' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Continue';
     return `<section class="result v2 ${ui.rmore ? 'more' : ''}"><div class="rhead ${r.win ? 'win' : 'lose'}"><span class="rays"></span><h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Victory' : 'Defeat'}</h2>
         ${starRow}${loseTag}<p class="rwhat">${what}</p><p class="rmeta">${meta}</p></div>
-      ${eloLine(r)}${spoils}${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}${promo}${lostRun}
-      <div class="rheroes">${heroes}</div>${foes}
-      <div class="bar"><button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button><button class="primary big" data-act="result-ok" ${r.pending ? 'disabled' : ''}>${nextCta}</button></div></section>`;
+      ${eloLine(r)}${spoils}${promo}${lostRun}
+      <div class="rbody-cols">
+        <div class="rcol-left">
+          <div class="rheroes">${heroes}</div>${foes}
+        </div>
+        <div class="rcol-right">
+          ${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}
+          <div class="bar"><button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button><button class="primary big" data-act="result-ok" ${r.pending ? 'disabled' : ''}>${nextCta}</button></div>
+        </div>
+      </div></section>`;
   }
 
   // v42 (review #51, David: "more dopamine hits"): the rewards play in order. Confetti, the stars one by one, the gold

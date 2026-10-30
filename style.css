@@ -7371,7 +7371,7 @@ body.desk section.levelup .sp-path.tree {
 
 /* Post-Battle Result Screen Desktop Frame & Guaranteed Visibility */
 body.desk section.result.v2 {
-  max-width: 740px !important;
+  max-width: 840px !important;
   width: 100% !important;
   margin: 20px auto !important;
   padding: 20px 24px !important;
@@ -7387,6 +7387,45 @@ body.desk section.result.v2 {
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+body.desk section.result.v2 .rbody-cols {
+  display: grid !important;
+  grid-template-columns: 1fr 280px !important;
+  gap: 20px !important;
+  align-items: start !important;
+  width: 100% !important;
+}
+
+body.desk section.result.v2 .rcol-left {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+}
+
+body.desk section.result.v2 .rcol-right {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  background: rgba(14, 18, 26, 0.75) !important;
+  border: 1.5px solid rgba(255, 215, 0, 0.25) !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.desk section.result.v2 .rcol-right .rewards2 {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+body.desk section.result.v2 .rcol-right .rewards2 .rw {
+  justify-content: flex-start !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 body.desk section.result.v2 .bar {
   display: flex !important;
   align-items: center !important;
@@ -7395,10 +7434,19 @@ body.desk section.result.v2 .bar {
   margin-top: 14px !important;
   width: 100% !important;
 }
+body.desk section.result.v2 .rcol-right .bar {
+  margin-top: auto !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+}
 body.desk section.result.v2 .bar button.primary {
   min-width: 160px !important;
   min-height: 48px !important;
   font-size: 18px !important;
   z-index: 15 !important;
   cursor: pointer !important;
+}
+body.desk section.result.v2 .rcol-right .bar button.primary {
+  width: 100% !important;
 }
