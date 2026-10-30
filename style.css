@@ -4048,6 +4048,39 @@ body.desk #top {
   z-index: 20;
 }
 
+/* Background Battle Stage for Desktop Menus (Overlay cleanly without scrolling) */
+body.desk #bgstage:not([hidden]) {
+  position: absolute !important;
+  top: 48px !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  padding: 0 16px 88px !important;
+  box-sizing: border-box !important;
+}
+
+body.desk #bgstage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(10, 14, 20, 0.5) 0%, rgba(8, 10, 16, 0.78) 100%);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+body.desk #bgboard {
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.7) !important;
+  background: #14281d;
+  filter: brightness(0.65) saturate(0.85);
+}
+
 /* 1. Battlefield and Deployment Screen on Desktop */
 body.desk:has(.deploy) {
   background: radial-gradient(1300px 750px at 50% 40%, #151c19 0%, #0e1412 60%, #080c0a 100%) !important;
