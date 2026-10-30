@@ -29,7 +29,7 @@
       const w = 6 + Math.random() * 6; p.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${w * (0.4 + Math.random() * 0.5)}px;background:${(o.colors || COLORS)[i % (o.colors || COLORS).length]}`;
       L.appendChild(p);
       const a = -Math.PI / 2 + (Math.random() - 0.5) * (o.spread || 2.4), sp = (o.speed || 520) * (0.45 + Math.random() * 0.75);
-      const vx = Math.cos(a) * sp, vy = Math.sin(a) * sp, g = 900, T = 1.4 + Math.random() * 1.1, spin = (Math.random() - 0.5) * 1440, frames = [];
+      const vx = Math.cos(a) * sp, vy = Math.sin(a) * sp, g = 1100, T = 0.95 + Math.random() * 0.45, spin = (Math.random() - 0.5) * 1440, frames = [];
       for (let k = 0; k <= 8; k++) { const t = T * k / 8, drag = 1 - k / 8 * 0.35; frames.push({ transform: `translate(${vx * t * drag}px, ${Math.min(H, vy * t + g * t * t / 2)}px) rotate(${spin * k / 8}deg) rotateX(${k * 90}deg)`, opacity: k < 6 ? 1 : 1 - (k - 5) / 3 }); }
       p.animate(frames, { duration: T * 1000, easing: 'linear', delay: Math.random() * 120 }).onfinish = () => p.remove();
     }

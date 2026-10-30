@@ -1410,19 +1410,31 @@
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
     const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';   // v101 (reviews #186 #189)
     const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
-    const nextCta = !run ? 'Continue' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils! ★' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Continue';
-    return `<section class="result v2 ${ui.rmore ? 'more' : ''}"><div class="rhead ${r.win ? 'win' : 'lose'}"><span class="rays"></span><h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Victory' : 'Defeat'}</h2>
-        ${starRow}${loseTag}<p class="rwhat">${what}</p><p class="rmeta">${meta}</p></div>
+    const nextCta = !run ? 'Continue' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils! ★' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Proceed';
+    return `<section class="result v2 ${ui.rmore ? 'more' : ''}">
+      <div class="rhead ${r.win ? 'win' : 'lose'}">
+        <span class="rays"></span>
+        <h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Battle Won' : 'Defeat'}</h2>
+        ${starRow}${loseTag}
+        <p class="rwhat">${what}</p>
+        <p class="rmeta">${meta}</p>
+      </div>
       ${eloLine(r)}${spoils}${promo}${lostRun}
       <div class="rbody-cols">
         <div class="rcol-left">
+          <div class="rpanel-head"><span class="rp-title">STATS</span><span class="rp-sub">HERO PERFORMANCE</span></div>
           <div class="rheroes">${heroes}</div>${foes}
         </div>
         <div class="rcol-right">
+          <div class="rpanel-head"><span class="rp-title">RESULTS</span><span class="rp-sub">REWARDS</span></div>
           ${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}
-          <div class="bar"><button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button><button class="primary big" data-act="result-ok" ${r.pending ? 'disabled' : ''}>${nextCta}</button></div>
+          <div class="bar">
+            <button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button>
+            <button class="primary big proceed-cta" data-act="result-ok" ${r.pending ? 'disabled' : ''}>${nextCta}</button>
+          </div>
         </div>
-      </div></section>`;
+      </div>
+    </section>`;
   }
 
   // v42 (review #51, David: "more dopamine hits"): the rewards play in order. Confetti, the stars one by one, the gold
@@ -1433,11 +1445,11 @@
     if (r.fx) return;
     const fx = r.fx = {}, J = B.Juice, live = () => ui.result === r && screen === 'result';
     if (!J || J.reduced() || !r.win) { Object.assign(fx, { stars: r.stars || 0, gold: true, xp: true, done: true }); ui.goldHold = null; render(); return; }
-    const head = $('.rhead'); if (head) { J.confettiAt(head, 90); head.classList.add('rflash'); }   // v58 (review #70, P1): stronger rewards
+    const head = $('.rhead'); if (head) { J.confettiAt(head, 24); head.classList.add('rflash'); }   // v58 (review #70, P1): stronger rewards
     await J.wait(380);
     for (let i = 0; i < (r.stars || 0); i++) {
       if (!live()) return; fx.stars = i + 1;
-      const el = document.querySelectorAll('.rstars .st')[i]; if (el) { el.classList.add('lit', 'slam'); J.confettiAt(el, 22, { speed: 320 }); }
+      const el = document.querySelectorAll('.rstars .st')[i]; if (el) { el.classList.add('lit', 'slam'); J.confettiAt(el, 8, { speed: 280 }); }
       sfx('star', i); if (i === 2) { const fl = $('.flawless'); if (fl) fl.classList.add('on'); }
       await J.wait(300);
     }
