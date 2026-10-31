@@ -4107,6 +4107,9 @@ body.desk .deploy:not(.intro) {
   justify-content: center !important;
   width: fit-content !important;
   max-width: 100% !important;
+  height: calc(100dvh - 54px) !important;
+  max-height: calc(100dvh - 54px) !important;
+  overflow: hidden !important;
   margin: 0 auto !important;
   padding: 0 !important;
 }
@@ -4933,6 +4936,9 @@ body.desk section.map.road {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) 360px !important;
   gap: 20px !important;
+  height: calc(100dvh - 56px) !important;
+  max-height: calc(100dvh - 56px) !important;
+  overflow: hidden !important;
 }
 
 /* War-Table Map Container with Ornate Iron & Gold Bezel */
@@ -5926,22 +5932,24 @@ body.desk section.gintro2 {
   width: 100% !important;
   min-height: 0 !important;
   padding: 18px 24px 16px !important;
-  border-radius: 20px !important;
-  background: linear-gradient(180deg, rgba(16, 20, 32, 0.65) 0%, rgba(10, 12, 20, 0.82) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
-  border: 2px solid #b48a3e !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(180deg, rgba(16, 20, 32, 0.75) 0%, rgba(10, 12, 20, 0.88) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Master-Craft Post-Run Ranked LP Modal ("The Ward is Broken") */
+/* Post-Run Ranked LP Modal */
 body.desk section.lpscr {
   max-width: 640px !important;
   width: 100% !important;
   min-height: 0 !important;
   padding: 28px 32px 24px !important;
-  border-radius: 18px !important;
-  background: linear-gradient(180deg, rgba(16, 18, 28, 0.65) 0%, rgba(10, 12, 18, 0.82) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
-  border: 2.5px solid #b48a3e !important;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(180deg, rgba(16, 18, 28, 0.8) 0%, rgba(10, 12, 18, 0.92) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   box-sizing: border-box !important;
   margin: auto !important;
   display: flex !important;
@@ -5949,21 +5957,10 @@ body.desk section.lpscr {
   position: relative !important;
 }
 
-/* Corner Screw & Shield Accents on LP Modal */
 section.lpscr::before,
 section.lpscr::after {
-  content: '';
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffd700, #b48a3e 70%, #583e10);
-  border: 1.5px solid #20170a;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-  pointer-events: none;
+  display: none !important;
 }
-section.lpscr::before { top: 8px; left: 8px; }
-section.lpscr::after { top: 8px; right: 8px; }
 
 /* Top Dramatic Header */
 .lp-head-block {
@@ -6224,10 +6221,11 @@ body.desk section.xpscr {
   width: 100% !important;
   min-height: 0 !important;
   padding: 26px 30px !important;
-  border-radius: 18px !important;
-  background: linear-gradient(180deg, rgba(16, 20, 36, 0.62) 0%, rgba(10, 12, 22, 0.82) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
-  border: 2.5px solid #4f46e5 !important;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(180deg, rgba(16, 20, 36, 0.78) 0%, rgba(10, 12, 22, 0.9) 100%), url('art/arena/end-bg.jpg') center/cover no-repeat !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   box-sizing: border-box !important;
   margin: auto !important;
   display: flex !important;
@@ -7063,11 +7061,11 @@ body.desk .map.road {
 body.desk section.map.road .mapside {
   display: block !important;
   width: 340px !important;
-  background: rgba(18, 22, 34, 0.95) !important;
-  border: 2px solid #38455e !important;
-  border-bottom: 4px solid #1a202c !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 16px !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   padding: 14px !important;
 }
 body.desk body.desk .banner.v2 {
@@ -7508,13 +7506,12 @@ body.desk section.result.v2 .rcol-left {
   display: flex !important;
   flex-direction: column !important;
   min-width: 0 !important;
-  background: rgba(13, 17, 24, 0.9) !important;
+  background: rgba(15, 23, 42, 0.8) !important;
   backdrop-filter: blur(16px) !important;
-  border: 1.5px solid rgba(212, 175, 55, 0.35) !important;
-  border-bottom: 3.5px solid rgba(180, 138, 62, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 14px !important;
   padding: 16px !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
 }
 
 body.desk section.result.v2 .rcol-right {
@@ -7523,12 +7520,11 @@ body.desk section.result.v2 .rcol-right {
   justify-content: space-between !important;
   gap: 12px !important;
   padding: 16px !important;
-  background: rgba(13, 17, 24, 0.9) !important;
+  background: rgba(15, 23, 42, 0.8) !important;
   backdrop-filter: blur(16px) !important;
-  border: 1.5px solid rgba(212, 175, 55, 0.35) !important;
-  border-bottom: 3.5px solid rgba(180, 138, 62, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 14px !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
 }
 
 body.desk section.result.v2 .rpanel-head {
@@ -7770,17 +7766,18 @@ body.desk section.result.v2 .rcol-right .bar {
 body.desk section.result.v2 .bar button.primary,
 body.desk section.result.v2 .bar button.proceed-cta {
   width: 100% !important;
-  min-height: 52px !important;
+  min-height: 50px !important;
   font-size: 17px !important;
   font-weight: 800 !important;
   letter-spacing: 2px !important;
   text-transform: uppercase !important;
   border-radius: 12px !important;
-  background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%) !important;
-  border: 2px solid #5eead4 !important;
-  border-bottom: 4px solid #115e59 !important;
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%) !important;
+  border: 1.5px solid #fde68a !important;
+  border-bottom: 4px solid #92400e !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 18px rgba(13, 148, 136, 0.45), 0 0 20px rgba(94, 234, 212, 0.25) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45), 0 0 20px rgba(254, 240, 138, 0.25) !important;
   z-index: 15 !important;
   cursor: pointer !important;
   transition: transform 0.12s ease, filter 0.12s ease !important;
@@ -7790,7 +7787,7 @@ body.desk section.result.v2 .bar button.primary:hover:not(:disabled),
 body.desk section.result.v2 .bar button.proceed-cta:hover:not(:disabled) {
   transform: translateY(-2px) !important;
   filter: brightness(1.1) !important;
-  box-shadow: 0 6px 22px rgba(13, 148, 136, 0.6), 0 0 24px rgba(94, 234, 212, 0.4) !important;
+  box-shadow: 0 6px 22px rgba(245, 158, 11, 0.6), 0 0 24px rgba(254, 240, 138, 0.4) !important;
 }
 
 /* Deploy Movement Tutorial & Formline Clean Docking */

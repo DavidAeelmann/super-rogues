@@ -1075,7 +1075,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     const src = fs.readFileSync(path.join(root, 'js', 'art.js'), 'utf8'), names = new Set(Object.values(B.HEROES).map(h => slug(h.name)));
     const pairs = [...src.matchAll(/^ {4}(\w+): \{ splash: 'art\/([\w-]+)\//mg)].map(m => [m[1], m[2]]);
     ok(pairs.length >= 20 && pairs.every(([k, d]) => B.HEROES[k] && slug(B.HEROES[k].name) === d), 'v78 (review #155): each art folder in art.js is named after the hero as it is called now (' + pairs.filter(([k, d]) => !B.HEROES[k] || slug(B.HEROES[k].name) !== d).map(p => p.join('->')).join(', ') + ')');
-    ok(fs.readdirSync(path.join(root, 'art')).filter(d => fs.statSync(path.join(root, 'art', d)).isDirectory()).every(d => names.has(d)), 'v78: no art folder with an old or unknown name');
+    ok(fs.readdirSync(path.join(root, 'art')).filter(d => fs.statSync(path.join(root, 'art', d)).isDirectory() && d !== 'arena').every(d => names.has(d)), 'v78: no art folder with an old or unknown name');
     const paths = [...src.matchAll(/'art\/([\w-]+\/[\w.-]+)'/g)].map(m => m[1]).concat([...src.matchAll(/seq\('([\w-]+)', '(\w+)', (\d+)\)/g)].flatMap(m => Array.from({ length: +m[3] }, (_, i) => m[1] + '/' + m[2] + '-' + (i + 1) + '.webp')));
     // v116: since v113 (review #200) art.js lists splash pictures only (no battle sheets)
     const missing = paths.filter(p => !fs.existsSync(path.join(root, 'art', p))); ok(paths.length >= 20 && !missing.length, 'v78: every picture art.js lists exists (' + paths.length + ' checked' + (missing.length ? ', missing ' + missing.slice(0, 3).join(' ') : '') + ')'); }

@@ -3,12 +3,18 @@
 global.__BAL_MEM = true;
 process.env.ADMIN_KEY = process.env.ADMIN_KEY || 'dev-key';
 const http = require('http'), fs = require('fs'), path = require('path');
-const ROOT = path.join(__dirname, '..'), PORT = +(process.argv[2] || 3790);
+const ROOT = path.join(__dirname, '..'), PORT = +(process.env.PORT || process.argv[2] || 3000);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
 const HEADERS = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8')).headers[0].headers;
 http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://localhost');
-  for (const h of HEADERS) res.setHeader(h.key, h.value);
+  for (const h of HEADERS) {
+    if (h.key.toLowerCase() === 'content-security-policy') {
+      res.setHeader(h.key, h.value.replace(/frame-ancestors\s+'none'/gi, 'frame-ancestors *'));
+    } else {
+      res.setHeader(h.key, h.value);
+    }
+  }
   // dev-only: play Claude's part in tests (mark a batch reviewed and "ship" it). Never deployed: not under api/.
   if (u.pathname === '/__dev/resolve') {
     const M = global.__BAL_MEMDATA, b = +u.searchParams.get('batch'), now = Date.now();
@@ -34,4 +40,4 @@ http.createServer(async (req, res) => {
   res.setHeader('Content-Type', TYPES[path.extname(f)] || 'application/octet-stream');
   res.setHeader('Cache-Control', 'no-store');
   fs.createReadStream(f).pipe(res);
-}).listen(PORT, () => console.log('Balance on http://localhost:' + PORT));
+}).listen(PORT, '0.0.0.0', () => console.log('Balance on http://0.0.0.0:' + PORT));

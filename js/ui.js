@@ -371,7 +371,7 @@
     const stepN = Math.max(0, run.step);
     const g = run.g, seq = Run.pveSeq(run);
     const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + seq.length;
-    const track = !(g && g.kind === 'tower') && run.result !== 'clear' ? `<span class="top-track" aria-hidden="true">${seq.map((t, k) => `<i class="tt-n ${k < stepN ? 'done' : k === stepN ? 'now' : ''} tt-${t === 'B' ? 'boss' : t === 'S' ? 'shop' : t === 'R' ? 'rec' : t === 'P' ? 'pvp' : 'f'}">${k === stepN ? `<svg class="tt-sunburst" viewBox="0 0 24 24" aria-hidden="true"><g stroke="#ffea75" stroke-width="1.5" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="23"/><line x1="1" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="23" y2="12"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/></g></svg>` : ''}${t === 'B' ? '💀' : t === 'S' ? '🛒' : t === 'R' ? '⛺' : '⚔'}</i>`).join('')}</span>` : '';
+    const track = !(g && g.kind === 'tower') && run.result !== 'clear' ? `<span class="top-track" aria-hidden="true">${seq.map((t, k) => `<i class="tt-n ${k < stepN ? 'done' : k === stepN ? 'now' : ''} tt-${t === 'B' ? 'boss' : t === 'S' ? 'shop' : t === 'R' ? 'rec' : t === 'P' ? 'pvp' : 'f'}">${k === stepN ? '<span class="tt-sunburst" aria-hidden="true"></span>' : ''}<span class="tt-ico">${t === 'B' ? '💀' : t === 'S' ? '🛒' : t === 'R' ? '⛺' : '⚔'}</span></i>`).join('')}</span>` : '';
     const lgs = store.get('balance.league', null);
     h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
       <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey"><span class="stone-crack-l" aria-hidden="true"></span><span class="prog-txt">${prog}</span>${track}<span class="stone-crack-r" aria-hidden="true"></span></button>
@@ -691,7 +691,17 @@
   function heroDetail(f) {
     const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
     const h = f && HEROES[f];
-    return h ? `<div class="card detail ${desk ? "hero-drawer-v5" : ""}"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
+    if (desk) {
+      if (h) {
+        return `<div class="card detail hero-drawer-v5">
+          <div class="hdrawer-hero">${img(f, 38)}<div class="hdrawer-meta"><b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' Melee' : I('bow') + ' Ranged'}</span></div></div>
+          <div class="hdrawer-ab"><b class="htag-title">${esc(h.abName)}:</b> <span class="htag-desc">${esc(h.tag || h.abDesc || '')}</span></div>
+          <div class="hdrawer-actions">${statBars(h)}<button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>
+        </div>`;
+      }
+      return '<div class="card detail hero-drawer-v5 placeholder"><p class="ssub tap">Tap a hero above to view tactical role & ability</p></div>';
+    }
+    return h ? `<div class="card detail"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
         <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${esc(h.tag || h.abDesc || '')}</p>${statBars(h)}<button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
   }
   // v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
