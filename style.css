@@ -4002,88 +4002,45 @@ body.desk #top .prog {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   font-family: var(--fun) !important;
 }
+/* 3. Screen 1: Top Track & Choice Card Palette */
 body.desk #top .top-track {
   display: inline-flex !important;
   align-items: center !important;
   gap: 5px !important;
   padding-left: 10px !important;
   border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-body.desk #top .top-track .tt-n {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  position: relative !important;
-  width: 22px !important;
-  height: 22px !important;
-  border-radius: 50% !important;
-  font-style: normal !important;
-  font-size: 11px !important;
-  line-height: 1 !important;
-  background: rgba(15, 23, 42, 0.75) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  color: #64748b !important;
-  opacity: 0.65 !important;
-  transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease !important;
-}
-body.desk #top .top-track .tt-n.done {
-  opacity: 0.9 !important;
-  background: rgba(6, 182, 212, 0.18) !important;
-  border-color: rgba(56, 189, 248, 0.45) !important;
-  color: #38bdf8 !important;
-}
-body.desk #top .top-track .tt-n.now {
-  opacity: 1 !important;
-  transform: scale(1.18) !important;
-  background: rgba(245, 158, 11, 0.25) !important;
-  border: 1.5px solid #fbbf24 !important;
-  color: #fef08a !important;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5) !important;
-}
-body.desk #top .top-track .tt-ico {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  font-size: 11px !important;
-  line-height: 1 !important;
-}
-body.desk #top .top-track .tt-sunburst {
-  position: absolute !important;
-  inset: -3px !important;
-  border-radius: 50% !important;
-  border: 1px dashed rgba(251, 191, 36, 0.6) !important;
-  pointer-events: none !important;
-  animation: spin 10s linear infinite !important;
+  background: transparent !important;
 }
 
-body.desk {
-  background: radial-gradient(1300px 750px at 50% 40%, #161920 0%, #101217 60%, #0a0b0e 100%) !important;
-  color: #e4e7ec;
+/* Choice Cards: Add subtle color accents */
+.banner.v2.b-easy {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+}
+.banner.v2.b-medium {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+}
+.banner.v2.b-hard {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
 }
 
-/* Fixed-size desktop container: keeps layout stable and prevents jitter/awkward stretching */
-body.desk #app {
-  max-width: 1280px !important;
-  width: 1280px !important;
-  margin: 0 auto !important;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+/* Fix scrolling: Enforce strict height constraints and enable internal scrolling */
+body.desk section.start {
+  display: grid !important;
+  grid-template-rows: auto 1fr auto !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
 }
-
-body.desk #top {
-  background: rgba(16, 19, 26, 0.94) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
-  padding: 6px 20px 4px !important;
-  position: relative;
-  z-index: 20;
+body.desk .hero-drawer-v5 {
+  max-height: 200px !important;
+  overflow-y: auto !important;
 }
-
-/* Background Battle Stage for Desktop Menus (Overlay cleanly without scrolling) */
+body.desk section.map.road {
+  max-height: calc(100dvh - 54px) !important;
+  overflow: hidden !important;
+}
+.wmap {
+  overflow-y: auto !important;
+}
 body.desk #bgstage:not([hidden]) {
   position: absolute !important;
   top: 48px !important;
