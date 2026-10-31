@@ -3990,52 +3990,78 @@ body.desk .overbar .cta {
    ========================================================================== */
 #top .top-track, .tsitems { display: none; }
 
+body.desk #top {
+  background: linear-gradient(180deg, rgba(8, 12, 16, 0.85) 0%, rgba(8, 12, 16, 0.35) 75%, transparent 100%) !important;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.25) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
 body.desk #top .prog {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 10px !important;
-  background: rgba(15, 23, 42, 0.75) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 999px !important;
-  padding: 4px 14px !important;
-  color: #f8fafc !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  gap: 12px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  color: #f0e6d2 !important;
+  box-shadow: none !important;
   font-family: var(--fun) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
 }
-/* 3. Screen 1: Top Track & Choice Card Palette */
+/* Top Track: Floating nodes directly over the wide forest panorama */
 body.desk #top .top-track {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
-  padding-left: 10px !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+  gap: 6px !important;
+  padding-left: 12px !important;
+  border-left: 1px solid rgba(197, 160, 89, 0.35) !important;
   background: transparent !important;
 }
-
-/* Choice Cards: Add subtle color accents */
-.banner.v2.b-easy {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+body.desk #top .top-track .tt-n {
+  width: 22px !important;
+  height: 22px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  background: rgba(11, 18, 24, 0.75) !important;
+  border: 1px solid rgba(197, 160, 89, 0.4) !important;
+  color: #cbd5e1 !important;
+  font-size: 11px !important;
+  transition: all 0.2s ease !important;
 }
-.banner.v2.b-medium {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+body.desk #top .top-track .tt-n.done {
+  background: rgba(20, 184, 166, 0.25) !important;
+  border-color: #38bdf8 !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5) !important;
 }
-.banner.v2.b-hard {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+body.desk #top .top-track .tt-n.cur {
+  background: rgba(245, 158, 11, 0.3) !important;
+  border-color: #fbbf24 !important;
+  color: #fef08a !important;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.7) !important;
+  transform: scale(1.15) !important;
+}
+body.desk #top .top-track .tt-n.boss {
+  border-color: #f43f5e !important;
+  color: #fb7185 !important;
 }
 
 /* Fix scrolling: Enforce strict height constraints and enable internal scrolling */
 body.desk section.start {
-  display: grid !important;
-  grid-template-rows: auto 1fr auto !important;
-  height: 100dvh !important;
+  height: calc(100dvh - 70px) !important;
+  max-height: calc(100dvh - 70px) !important;
   overflow: hidden !important;
 }
 body.desk .hero-drawer-v5 {
-  max-height: 200px !important;
+  max-height: clamp(65px, 12vh, 100px) !important;
   overflow-y: auto !important;
 }
 body.desk section.map.road {
-  max-height: calc(100dvh - 54px) !important;
+  max-height: calc(100dvh - 64px) !important;
   overflow: hidden !important;
 }
 .wmap {
@@ -4552,14 +4578,21 @@ body.desk section.start {
   z-index: 5 !important;
   max-width: 1080px !important;
   width: 100% !important;
-  min-height: 0 !important;
+  height: calc(100dvh - 68px) !important;
+  max-height: calc(100dvh - 68px) !important;
   margin: 0 auto !important;
-  padding: 18px 24px 24px !important;
-  border-radius: 18px !important;
-  background: linear-gradient(180deg, rgba(10, 14, 24, 0.35) 0%, rgba(9, 12, 20, 0.65) 100%), url('art/arena/draft-bg.jpg') center/cover no-repeat !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(255, 215, 0, 0.25) !important;
-  border: 2px solid #38455e !important;
+  padding: 10px 24px 14px !important;
+  border-radius: 16px !important;
+  background: rgba(11, 18, 24, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
 }
 
 /* 3-Step Draft Wizard */
@@ -4568,11 +4601,11 @@ body.desk .ssteps {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 16px !important;
-  margin: 0 auto 12px !important;
-  padding: 6px 16px !important;
-  background: rgba(11, 14, 22, 0.85) !important;
-  border: 1.5px solid #2d3748 !important;
+  gap: 12px !important;
+  margin: 0 auto 4px !important;
+  padding: 4px 16px !important;
+  background: rgba(14, 22, 30, 0.85) !important;
+  border: 1px solid rgba(197, 160, 89, 0.3) !important;
   border-radius: 999px !important;
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
 }
@@ -4583,7 +4616,7 @@ body.desk .ssteps::before {
   right: 28px;
   top: 50%;
   height: 2px;
-  background: #334155;
+  background: rgba(197, 160, 89, 0.25);
   z-index: 0;
 }
 body.desk .ssteps li {
@@ -4592,107 +4625,111 @@ body.desk .ssteps li {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  padding: 4px 14px 4px 6px !important;
+  padding: 3px 12px 3px 6px !important;
   border-radius: 999px !important;
-  background: #141824 !important;
-  border: 1.5px solid #334155 !important;
+  background: rgba(11, 18, 24, 0.9) !important;
+  border: 1px solid rgba(197, 160, 89, 0.3) !important;
   color: #cbd5e1 !important;
   font-family: var(--fun) !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
 }
 body.desk .ssteps li i {
-  width: 22px !important;
-  height: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
   border-radius: 50% !important;
-  background: #1e293b !important;
+  background: rgba(30, 41, 59, 0.8) !important;
   color: #cbd5e1 !important;
   display: grid !important;
   place-items: center !important;
   font-style: normal !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 800 !important;
 }
 body.desk .ssteps li.on {
-  background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%) !important;
-  border-color: #38bdf8 !important;
-  color: #0f172a !important;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.65), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  background: linear-gradient(180deg, rgba(28, 75, 69, 0.95) 0%, rgba(13, 43, 39, 0.98) 100%) !important;
+  border-color: #45a29e !important;
+  color: #e6f9f8 !important;
+  box-shadow: 0 0 14px rgba(20, 184, 166, 0.5) !important;
 }
 body.desk .ssteps li.on i {
-  background: #38bdf8 !important;
-  color: #022c22 !important;
+  background: #45a29e !important;
+  color: #0d2b27 !important;
 }
 body.desk .ssteps li.done {
-  background: #1e293b !important;
-  border-color: #3ddc84 !important;
-  color: #f1f5f9 !important;
+  background: rgba(14, 22, 30, 0.9) !important;
+  border-color: rgba(197, 160, 89, 0.6) !important;
+  color: #f0e6d2 !important;
 }
 body.desk .ssteps li.done i {
-  background: #3ddc84 !important;
-  color: #064e3b !important;
+  background: #c5a059 !important;
+  color: #0b1218 !important;
 }
 
 /* Screen Title */
 body.desk .start.v3 h2.sc {
-  font-size: 34px !important;
+  font-size: clamp(20px, 2.5vh, 26px) !important;
   font-weight: 900 !important;
-  letter-spacing: 0.5px !important;
+  letter-spacing: 2px !important;
   text-align: center !important;
-  margin: 6px 0 2px !important;
-  color: #fef08a !important;
-  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(250, 204, 21, 0.35) !important;
+  margin: 2px 0 !important;
+  color: #f0e6d2 !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9) !important;
+  text-transform: uppercase !important;
 }
 body.desk .start.v3 .ssub {
-  color: #cbd5e1 !important;
-  font-size: 14px !important;
-  margin-bottom: 16px !important;
+  color: #94a3b8 !important;
+  font-size: clamp(11.5px, 1.4vh, 13px) !important;
+  margin-bottom: 6px !important;
 }
 
-/* Stage & Tarot Hero Cards */
+/* Stage & Tarot Hero Cards - Strictly Scaled to Prevent Overflow */
 body.desk section.start .stage {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 20px !important;
+  gap: 16px !important;
   max-width: 960px !important;
-  margin: 0 auto 16px !important;
+  margin: 0 auto 6px !important;
   background: none !important;
   border: none !important;
   box-shadow: none !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  align-items: center !important;
 }
 
 body.desk .hbanner.spot.hero-tarot-card {
   position: relative !important;
-  height: 380px !important;
-  min-height: 360px !important;
-  border-radius: 18px !important;
+  height: 100% !important;
+  max-height: clamp(160px, 28vh, 260px) !important;
+  min-height: 0 !important;
+  border-radius: 14px !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-end !important;
   padding: 0 !important;
   box-sizing: border-box !important;
-  background: #0b0d14 !important;
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.75) !important;
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, opacity 0.25s ease !important;
+  background: rgba(11, 18, 24, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75) !important;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease !important;
   cursor: pointer !important;
 }
 
 /* Theme borders for Citadel, Solace, Feuer */
 body.desk .hero-tarot-card.theme-citadel {
-  border: 3px solid #785b3b !important;
-  box-shadow: inset 0 0 0 1px #d97706, 0 14px 35px rgba(0, 0, 0, 0.75) !important;
+  border: 1.5px solid rgba(217, 119, 6, 0.55) !important;
 }
 body.desk .hero-tarot-card.theme-solace {
-  border: 3px solid #165b4c !important;
-  box-shadow: inset 0 0 0 1px #10b981, 0 14px 35px rgba(0, 0, 0, 0.75) !important;
+  border: 1.5px solid rgba(16, 185, 129, 0.55) !important;
 }
 body.desk .hero-tarot-card.theme-feuer {
-  border: 3px solid #852b1b !important;
-  box-shadow: inset 0 0 0 1px #ef4444, 0 14px 35px rgba(0, 0, 0, 0.75) !important;
+  border: 1.5px solid rgba(239, 68, 68, 0.55) !important;
 }
 body.desk .hero-tarot-card.theme-default {
-  border: 3px solid #334155 !important;
+  border: 1.5px solid rgba(197, 160, 89, 0.4) !important;
 }
 
 .hero-tarot-card:hover {
@@ -4833,25 +4870,30 @@ body.desk .hero-tarot-card.on .card-crest-top {
   font-size: 12px !important;
 }
 
-/* Instant Ability & Stat Drawer */
+/* Instant Ability & Stat Drawer (Compact Floating Dark Glass) */
 body.desk .hero-drawer-v5 {
   max-width: 680px !important;
-  margin: 0 auto 12px !important;
-  background: linear-gradient(180deg, #181d2c 0%, #0d101a 100%) !important;
-  border: 1.5px solid #38bdf8 !important;
-  border-radius: 14px !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), inset 0 0 16px rgba(56, 189, 248, 0.15) !important;
-  padding: 12px 18px !important;
+  margin: 0 auto 6px !important;
+  background: rgba(14, 22, 30, 0.92) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  padding: 8px 14px !important;
+  max-height: clamp(65px, 12vh, 100px) !important;
+  overflow-y: auto !important;
 }
 .hero-drawer-v5 .htag {
   color: #cbd5e1 !important;
-  font-size: 13px !important;
-  line-height: 1.4 !important;
-  margin: 6px 0 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  margin: 2px 0 !important;
 }
 .hero-drawer-v5 .htag-title {
-  color: #38bdf8 !important;
+  color: #c5a059 !important;
   font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
 }
 
 /* Unlock Progression Badge */
@@ -4859,57 +4901,55 @@ body.desk .hero-drawer-v5 {
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
-  padding: 6px 16px !important;
+  padding: 4px 14px !important;
   border-radius: 999px !important;
-  background: linear-gradient(180deg, #181c28 0%, #0f121a 100%) !important;
-  border: 1.5px solid #d97706 !important;
-  color: #fbbf24 !important;
+  background: rgba(11, 18, 24, 0.85) !important;
+  border: 1px solid rgba(197, 160, 89, 0.4) !important;
+  color: #f0e6d2 !important;
   font-family: var(--fun) !important;
   font-weight: 700 !important;
-  font-size: 13px !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 12px rgba(217, 119, 6, 0.3) !important;
+  font-size: 12px !important;
 }
 
-/* Primary CTA Button (Unselected Slot vs 3D Molten Gold) */
+/* Primary CTA Button (Teal-Emerald Jewel Button) */
 .hero-cta-btn.slot-unselected {
-  width: 340px !important;
-  height: 56px !important;
-  min-height: 56px !important;
-  border-radius: 14px !important;
-  background: linear-gradient(180deg, #1e2230 0%, #141722 100%) !important;
-  border: 2px dashed #475569 !important;
+  width: 320px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 8px !important;
+  background: rgba(14, 22, 30, 0.8) !important;
+  border: 1.5px dashed rgba(197, 160, 89, 0.3) !important;
   color: #94a3b8 !important;
   font-family: var(--fun) !important;
-  font-size: 18px !important;
+  font-size: 15px !important;
   font-weight: 700 !important;
-  letter-spacing: 0.5px !important;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+  letter-spacing: 1px !important;
   cursor: pointer !important;
 }
 
 .hero-cta-btn.ready.selected {
-  width: 380px !important;
-  height: 56px !important;
-  min-height: 56px !important;
-  border-radius: 14px !important;
-  background: linear-gradient(180deg, #fffbeb 0%, #fde047 15%, #f59e0b 55%, #b45309 100%) !important;
-  border: 2px solid #fef08a !important;
-  border-bottom: 5px solid #78350f !important;
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.65), 0 4px 12px rgba(0, 0, 0, 0.6) !important;
-  color: #1c1917 !important;
+  width: 340px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, rgba(28, 75, 69, 0.95) 0%, rgba(13, 43, 39, 0.98) 100%) !important;
+  border: 1.5px solid #45a29e !important;
+  color: #e6f9f8 !important;
   font-family: var(--fun) !important;
-  font-size: 20px !important;
+  font-size: 16px !important;
   font-weight: 900 !important;
-  letter-spacing: 0.5px !important;
-  transition: transform 0.15s, filter 0.15s !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 18px rgba(20, 184, 166, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease !important;
 }
 .hero-cta-btn.ready.selected:hover {
-  filter: brightness(1.1) !important;
+  filter: brightness(1.15) !important;
   transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(20, 184, 166, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
 }
 .hero-cta-btn.ready.selected:active {
-  transform: translateY(3px) !important;
-  border-bottom-width: 2px !important;
+  transform: translateY(1px) !important;
 }
 
 /* 3. Map Screen: Panoramic Valley Arena & Refined Dark Slate Glass Panels */
@@ -5026,18 +5066,18 @@ body.desk .wmap .rn.final .castle {
   width: 100% !important;
 }
 
-/* Choice Cards: Breathy Dark Slate Glass Architecture */
+/* Choice Cards: Floating Glass Architecture with Champagne Gold Hairline Borders */
 body.desk .banner.v2,
 .banner.v2 {
   flex: 1 !important;
-  max-width: 250px !important;
-  min-height: 280px !important;
-  border-radius: 16px !important;
-  background: rgba(15, 23, 42, 0.78) !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  max-width: 260px !important;
+  min-height: 290px !important;
+  border-radius: 14px !important;
+  background: rgba(11, 18, 24, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -5051,28 +5091,64 @@ body.desk .banner.v2,
 body.desk .banner.v2:hover,
 .banner.v2:hover:not(:disabled) {
   transform: translateY(-5px) !important;
-  border-color: rgba(255, 255, 255, 0.28) !important;
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.6) !important;
+  border-color: rgba(197, 160, 89, 0.75) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 20px rgba(197, 160, 89, 0.2) !important;
 }
 
-/* Eliminate toony checkered patterns, orange stripes, and heavy borders */
-.banner.v2.b-easy,
-.banner.v2.b-medium,
-.banner.v2.b-hard,
-.banner.v2.b-boss,
-.banner.v2.b-duel,
-.banner.v2.b-shop,
-.banner.v2.b-event {
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
-  background: rgba(15, 23, 42, 0.78) !important;
+/* Rich Jewel-Toned Atmospheric Radiance for Choices */
+.banner.v2.b-easy {
+  background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(16, 185, 129, 0.24) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
+  border-color: rgba(16, 185, 129, 0.45) !important;
 }
-.banner.v2.b-easy:hover { border-color: rgba(52, 211, 153, 0.45) !important; }
-.banner.v2.b-medium:hover { border-color: rgba(251, 191, 36, 0.45) !important; }
-.banner.v2.b-hard:hover { border-color: rgba(248, 113, 113, 0.45) !important; }
-.banner.v2.b-boss:hover { border-color: rgba(248, 113, 113, 0.6) !important; }
-.banner.v2.b-shop:hover { border-color: rgba(56, 189, 248, 0.45) !important; }
-.banner.v2.b-event:hover { border-color: rgba(192, 132, 252, 0.45) !important; }
+.banner.v2.b-easy:hover {
+  border-color: rgba(52, 211, 153, 0.8) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(16, 185, 129, 0.35) !important;
+}
+
+.banner.v2.b-medium {
+  background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(245, 158, 11, 0.24) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
+}
+.banner.v2.b-medium:hover {
+  border-color: rgba(251, 191, 36, 0.8) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 158, 11, 0.35) !important;
+}
+
+.banner.v2.b-hard {
+  background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(239, 68, 68, 0.26) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+}
+.banner.v2.b-hard:hover {
+  border-color: rgba(248, 113, 113, 0.8) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(239, 68, 68, 0.35) !important;
+}
+
+.banner.v2.b-boss {
+  background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(168, 85, 247, 0.3) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
+  border-color: rgba(168, 85, 247, 0.5) !important;
+}
+.banner.v2.b-boss:hover {
+  border-color: rgba(192, 132, 252, 0.85) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(168, 85, 247, 0.4) !important;
+}
+
+.banner.v2.b-shop {
+  background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(56, 189, 248, 0.26) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+}
+.banner.v2.b-shop:hover {
+  border-color: rgba(125, 211, 252, 0.8) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.35) !important;
+}
+
+.banner.v2.b-event {
+  background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(217, 70, 239, 0.26) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
+  border-color: rgba(217, 70, 239, 0.45) !important;
+}
+.banner.v2.b-event:hover {
+  border-color: rgba(240, 171, 252, 0.8) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(217, 70, 239, 0.35) !important;
+}
 
 /* Clean, elegant dark scene container without checkered/diagonal cartoons */
 .banner.v2 .scene,
@@ -5166,7 +5242,7 @@ body.desk .banner.v2:hover,
   margin-bottom: auto !important;
 }
 
-/* Currency pill - clean gold glass pill instead of 3D block */
+/* Currency pill - antique champagne gold glass plaque */
 .gold-treasure-plaque {
   display: inline-flex !important;
   align-items: center !important;
@@ -5174,14 +5250,15 @@ body.desk .banner.v2:hover,
   gap: 6px !important;
   margin-top: 8px !important;
   padding: 5px 14px !important;
-  border-radius: 999px !important;
-  background: rgba(245, 158, 11, 0.12) !important;
-  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  border-radius: 8px !important;
+  background: rgba(197, 160, 89, 0.12) !important;
+  border: 1px solid rgba(197, 160, 89, 0.4) !important;
   box-shadow: none !important;
-  color: #fbbf24 !important;
+  color: #f0e6d2 !important;
   font-family: var(--fun) !important;
   font-size: 13.5px !important;
   font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
   text-shadow: none !important;
 }
 .gold-treasure-plaque .pw.easy { color: #34d399 !important; }
@@ -5193,30 +5270,31 @@ body.desk .banner.v2:hover,
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* Unified Gold Primary Action CTA Button across all choice cards */
+/* Luminous Teal-Emerald Glass Action CTA Button (LoL/TFT Proceed Style) */
 .card-action-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
-  width: calc(100% - 24px) !important;
-  margin: 8px auto 0 !important;
+  gap: 8px !important;
+  width: calc(100% - 28px) !important;
+  margin: 10px auto 0 !important;
   padding: 8px 16px !important;
-  border-radius: 10px !important;
-  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%) !important;
-  border: 1px solid #fde68a !important;
-  color: #1c1917 !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, rgba(28, 75, 69, 0.95) 0%, rgba(13, 43, 39, 0.98) 100%) !important;
+  border: 1.5px solid #45a29e !important;
+  color: #e6f9f8 !important;
   font-family: var(--fun) !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   font-weight: 800 !important;
-  letter-spacing: 0.5px !important;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35) !important;
-  transition: transform 0.12s ease, filter 0.12s ease !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease !important;
 }
 .card-action-btn:hover {
-  filter: brightness(1.1) !important;
+  filter: brightness(1.15) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5) !important;
+  box-shadow: 0 6px 22px rgba(20, 184, 166, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
 }
 body:not(.desk) .card-action-btn { display: none !important; }
 .banner.v2.b-easy .card-action-btn,
@@ -5226,20 +5304,20 @@ body:not(.desk) .card-action-btn { display: none !important; }
 .banner.v2.b-duel .card-action-btn,
 .banner.v2.b-shop .card-action-btn,
 .banner.v2.b-event .card-action-btn {
-  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%) !important;
-  border: 1px solid #fde68a !important;
-  color: #1c1917 !important;
+  background: linear-gradient(180deg, rgba(28, 75, 69, 0.95) 0%, rgba(13, 43, 39, 0.98) 100%) !important;
+  border: 1.5px solid #45a29e !important;
+  color: #e6f9f8 !important;
 }
 
-/* Right Tactical Dock */
+/* Right Tactical Dock (Floating Glass Palette) */
 body.desk section.map.road .mapside {
-  background: rgba(15, 23, 42, 0.65) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 16px !important;
+  background: rgba(11, 18, 24, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  border-radius: 14px !important;
   padding: 16px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
@@ -6968,15 +7046,21 @@ body.desk .smithy-frame .grid {
 /* COMPREHENSIVE FIX PASS (SYSTEMIC + SCREENS 1 - 5)                    */
 /* ==================================================================== */
 
-/* 1. Systemic: Top Gold Pill Overlap Fix */
+/* 1. Systemic: Top Gold Pill & HUD Badges */
 #top .gold,
 body.desk #top .gold {
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
   padding: 4px 12px !important;
-  min-height: 36px !important;
-  border-radius: 999px !important;
+  min-height: 32px !important;
+  border-radius: 8px !important;
+  background: rgba(11, 18, 24, 0.85) !important;
+  border: 1px solid rgba(197, 160, 89, 0.45) !important;
+  color: #f0e6d2 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  font-family: var(--fun) !important;
+  font-weight: 800 !important;
 }
 #top .gold::before,
 body.desk #top .gold::before {
@@ -6988,29 +7072,31 @@ body.desk #top .gold::before {
   width: 14px !important;
   height: 14px !important;
   border-radius: 50% !important;
+  background: #f59e0b !important;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6) !important;
 }
 
-/* 2. Systemic: Refined Dark Slate Glass Frame on Top HUD & Modals (Anti-Toony) */
+/* 2. Systemic: Floating Dark Glass Frame on Top HUD, Sheets, and Modals */
 body.desk #top {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.22) !important;
 }
 #modal .sheet,
 body.desk .sheet,
 .m-box,
 .sheet {
   border-width: 1px !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  background: rgba(15, 23, 42, 0.94) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-  color: #f8fafc !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  background: rgba(11, 18, 24, 0.94) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  color: #f0e6d2 !important;
 }
 
-/* 3. Screen 1: Main Menu Preview Box & Nav Cards in Dark Slate Glass */
+/* 3. Screen 1: Main Menu Preview Box & Nav Cards in Floating Dark Glass */
 body.desk section.title.home .trailer {
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
   border-radius: 16px !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6) !important;
   overflow: hidden !important;
@@ -7037,23 +7123,25 @@ body.desk section.title.home .dockitem {
   justify-content: center !important;
   gap: 8px !important;
   padding: 10px 6px !important;
-  border-radius: 14px !important;
-  background: rgba(30, 41, 59, 0.6) !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+  border-radius: 12px !important;
+  background: rgba(14, 22, 30, 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.3) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
   transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease !important;
+  color: #f0e6d2 !important;
 }
 body.desk section.title.home .dockitem:hover {
   transform: translateY(-3px) !important;
-  border-color: rgba(245, 158, 11, 0.5) !important;
-  background: rgba(51, 65, 85, 0.8) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(197, 160, 89, 0.7) !important;
+  background: rgba(20, 30, 42, 0.9) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
 }
 body.desk section.title.home .dockitem svg.ui {
   width: 28px !important;
   height: 28px !important;
+  color: #c5a059 !important;
 }
 body.desk section.title.home .dockitem b {
   font-size: 13px !important;
@@ -7262,22 +7350,24 @@ body.desk .deploy > .dparty .hero-stars {
 }
 
 
-/* Levelup & Modal Frame Solidity - Prevent Disappearing Menus */
+/* Levelup & Modal Frame Solidity - Floating Dark Glass Palette */
 body.desk section.levelup {
   max-width: 760px !important;
   width: 100% !important;
   margin: 20px auto !important;
   padding: 24px 28px !important;
-  border-radius: 18px !important;
-  background: linear-gradient(180deg, rgba(22, 27, 38, 0.98) 0%, rgba(14, 17, 26, 0.98) 100%) !important;
-  border: 2.5px solid #38455e !important;
-  border-bottom: 5px solid #1a202c !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  background: rgba(11, 18, 24, 0.92) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
   display: flex !important;
   flex-direction: column !important;
   visibility: visible !important;
   opacity: 1 !important;
   z-index: 10 !important;
+  color: #f0e6d2 !important;
 }
 body.desk section.levelup .opts.spec2 {
   display: grid !important;
@@ -7289,10 +7379,9 @@ body.desk section.levelup .opts.spec2 {
 body.desk section.levelup .card.opt {
   min-height: 140px !important;
   padding: 18px 16px !important;
-  background: rgba(28, 35, 50, 0.9) !important;
-  border: 2px solid #4a5a78 !important;
-  border-bottom: 4px solid #1e2534 !important;
-  border-radius: 14px !important;
+  background: rgba(14, 22, 30, 0.88) !important;
+  border: 1px solid rgba(197, 160, 89, 0.3) !important;
+  border-radius: 12px !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
   cursor: pointer !important;
   display: flex !important;
@@ -7303,19 +7392,19 @@ body.desk section.levelup .card.opt {
 }
 body.desk section.levelup .card.opt:hover {
   transform: translateY(-3px) !important;
-  border-color: #ffd23f !important;
-  box-shadow: 0 12px 30px rgba(255, 210, 63, 0.25) !important;
+  border-color: rgba(197, 160, 89, 0.75) !important;
+  box-shadow: 0 12px 30px rgba(197, 160, 89, 0.2) !important;
 }
 body.desk section.levelup .sp-path.tree {
   width: 100% !important;
   margin-top: 10px !important;
   padding: 14px 18px !important;
-  background: rgba(18, 22, 32, 0.85) !important;
-  border: 1.5px solid #2e384d !important;
+  background: rgba(14, 22, 30, 0.85) !important;
+  border: 1px solid rgba(197, 160, 89, 0.25) !important;
   border-radius: 12px !important;
 }
 
-/* Modal Sheets & Daily Event Menus */
+/* Modal Sheets & Daily Event Menus (Floating Dark Glass Palette) */
 #modal:not([hidden]) {
   display: flex !important;
   align-items: center !important;
@@ -7323,11 +7412,13 @@ body.desk section.levelup .sp-path.tree {
   z-index: 100 !important;
 }
 #modal .sheet {
-  background: #141824 !important;
-  border: 2.5px solid #475569 !important;
-  border-bottom: 5px solid #0f172a !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88) !important;
-  border-radius: 18px !important;
+  background: rgba(11, 18, 24, 0.94) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  color: #f0e6d2 !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
@@ -7448,12 +7539,13 @@ body.desk section.result.v2 .rcol-left {
   display: flex !important;
   flex-direction: column !important;
   min-width: 0 !important;
-  background: rgba(15, 23, 42, 0.8) !important;
-  backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 14px !important;
+  background: rgba(11, 18, 24, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  border-radius: 12px !important;
   padding: 16px !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
 body.desk section.result.v2 .rcol-right {
@@ -7462,11 +7554,12 @@ body.desk section.result.v2 .rcol-right {
   justify-content: space-between !important;
   gap: 12px !important;
   padding: 16px !important;
-  background: rgba(15, 23, 42, 0.8) !important;
-  backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 14px !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  background: rgba(11, 18, 24, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
 body.desk section.result.v2 .rpanel-head {
@@ -7474,7 +7567,7 @@ body.desk section.result.v2 .rpanel-head {
   align-items: center !important;
   justify-content: space-between !important;
   padding-bottom: 6px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.2) !important;
   margin-bottom: 10px !important;
 }
 
@@ -7483,7 +7576,7 @@ body.desk section.result.v2 .rpanel-head .rp-title {
   font-size: 13px !important;
   font-weight: 800 !important;
   letter-spacing: 2px !important;
-  color: #f1f5f9 !important;
+  color: #c5a059 !important;
   text-transform: uppercase !important;
 }
 
@@ -7708,28 +7801,27 @@ body.desk section.result.v2 .rcol-right .bar {
 body.desk section.result.v2 .bar button.primary,
 body.desk section.result.v2 .bar button.proceed-cta {
   width: 100% !important;
-  min-height: 50px !important;
-  font-size: 17px !important;
+  min-height: 48px !important;
+  font-size: 16px !important;
   font-weight: 800 !important;
-  letter-spacing: 2px !important;
+  letter-spacing: 2.5px !important;
   text-transform: uppercase !important;
-  border-radius: 12px !important;
-  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%) !important;
-  border: 1.5px solid #fde68a !important;
-  border-bottom: 4px solid #92400e !important;
-  color: #ffffff !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
-  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.45), 0 0 20px rgba(254, 240, 138, 0.25) !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, rgba(28, 75, 69, 0.95) 0%, rgba(13, 43, 39, 0.98) 100%) !important;
+  border: 1.5px solid #45a29e !important;
+  color: #e6f9f8 !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8) !important;
+  box-shadow: 0 4px 18px rgba(20, 184, 166, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
   z-index: 15 !important;
   cursor: pointer !important;
-  transition: transform 0.12s ease, filter 0.12s ease !important;
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease !important;
 }
 
 body.desk section.result.v2 .bar button.primary:hover:not(:disabled),
 body.desk section.result.v2 .bar button.proceed-cta:hover:not(:disabled) {
   transform: translateY(-2px) !important;
-  filter: brightness(1.1) !important;
-  box-shadow: 0 6px 22px rgba(245, 158, 11, 0.6), 0 0 24px rgba(254, 240, 138, 0.4) !important;
+  filter: brightness(1.15) !important;
+  box-shadow: 0 6px 24px rgba(20, 184, 166, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
 }
 
 /* Deploy Movement Tutorial & Formline Clean Docking */
