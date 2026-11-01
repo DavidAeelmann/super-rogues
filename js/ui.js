@@ -351,7 +351,7 @@
   const SHOP_DESC = { heroShop: 'Hire heroes & expand your squad.', itemShop: 'Equip weapons, armor & trinkets.', relicShop: 'Team-wide powers & artifacts.' };
   // v42 (review #51): each event has its own picture (map card and a big medallion on the event screen; icon in data.js)
   const evIcon = id => (EVENT[id] && EVENT[id].icon) || '❓';
-  const EV_RAR = { uncommon: 'Uncommon', rare: '★ Rare event' };
+  const EV_RAR = { uncommon: 'Uncommon', rare: 'Rare event' };
 
   // ------------------------------------------------------------------ header
   // WHAT: the top bar (gold, day, Team button, review notice, menu). Called by render() and after gold changes.
@@ -659,7 +659,9 @@
       }).join('')}</div>`;
     }
     return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
-      const d = HEROES[k], on = sel === k;
+      const d = HEROES[k];
+      if (!d) return '';
+      const on = sel === k;
       const r = (d.role || '').toLowerCase();
       const themeClass = r.includes('summon') ? 'theme-citadel' : r.includes('heal') ? 'theme-solace' : r.includes('mage') ? 'theme-feuer' : 'theme-default';
       const range = d.range || 1;
@@ -676,11 +678,10 @@
         <div class="card-vignette-bottom">
           <b class="hero-card-title">${esc(d.name)}</b>
           <div class="hero-role-pill">${heroClassBadge(d)}</div>
-          <div class="hero-stars-row">★★★★★</div>
           <div class="hero-mini-stats">
-            <span class="mstat"><i class="ico-heart">❤️</i> <b>${hp}</b></span>
-            <span class="mstat"><i class="ico-sword">⚔️</i> <b>${atk}</b></span>
-            <span class="mstat"><i class="ico-range">🏹</i> <b>${range}</b></span>
+            <span class="mstat hp"><span class="stat-ico">❤️</span> <b>${hp}</b></span>
+            <span class="mstat atk"><span class="stat-ico">⚔️</span> <b>${atk}</b></span>
+            <span class="mstat rng"><span class="stat-ico">🏹</span> <b>${range}</b></span>
           </div>
         </div>
         ${on ? '<span class="chk">✓</span>' : ''}
@@ -826,7 +827,7 @@
   function enemyList(f) {
     const cnt = {};
     for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); cnt[k] = (cnt[k] || 0) + 1; }
-    return Object.keys(cnt).map(k => { const key = k.replace('*', ''), m = B.MOBS[key] || B.BOSSES[key]; return `<span class="en ${k.endsWith('*') ? 'elite' : ''}">${img(key, 22, 'por sm')}${esc(m.name)}${cnt[k] > 1 ? ' ×' + cnt[k] : ''}${k.endsWith('*') ? ' ★' : ''}</span>`; }).join(' ');
+    return Object.keys(cnt).map(k => { const key = k.replace('*', ''), m = B.MOBS[key] || B.BOSSES[key]; return `<span class="en ${k.endsWith('*') ? 'elite' : ''}">${img(key, 22, 'por sm')}${esc(m.name)}${cnt[k] > 1 ? ' ×' + cnt[k] : ''}${k.endsWith('*') ? ' [Elite]' : ''}</span>`; }).join(' ');
   }
   // WHAT: one big option card of the map (a fight, a shop or an event) with its banner, title, body and reward.
   function bannerHTML(i, kind, emblem, title, body, reward) {
@@ -850,9 +851,9 @@
   function optHTML(o, i) {
     if (o.type === 'fight') {
       const list = mobsOf(o), show = list.slice(0, 3), more = list.length - show.length;
-      const faces = `<span class="mobs m${show.length}">${show.map(m => `<span class="mob ${m.elite ? 'elite' : ''}">${img(m.key, o.diff === 'boss' ? 96 : 64, 'por')}${m.n > 1 ? `<i>×${m.n}</i>` : ''}${m.elite ? '<u>★</u>' : ''}</span>`).join('')}${more > 0 ? `<span class="mob more">+${more}</span>` : ''}</span>`;
+      const faces = `<span class="mobs m${show.length}">${show.map(m => `<span class="mob ${m.elite ? 'elite' : ''}">${img(m.key, o.diff === 'boss' ? 96 : 64, 'por')}${m.n > 1 ? `<i>×${m.n}</i>` : ''}${m.elite ? '<u class="elt-crown">◆</u>' : ''}</span>`).join('')}${more > 0 ? `<span class="mob more">+${more}</span>` : ''}</span>`;
       if (o.diff === 'boss') { const b = o.enemies.map(e => B.BOSSES[e.key]).find(Boolean); return posterHTML(i, 'boss', `<span class="rays"></span><span class="mobs m1 bigmob"><span class="mob">${img(b.key, 96, 'por')}</span></span>`, esc(b.name), `<span class="small">${fmt(String(b.desc).split(/(?<=[.!?])\s/)[0])}</span>`, '+' + o.gold + ' gold', I('skull') + I('skull') + I('skull') + I('skull')); }
-      return posterHTML(i, o.diff, faces, B.DIFF[o.diff].name + ' fight', `<span class="mn">${list.map(m => (m.elite ? '<b class="elt">★ Elite</b> ' : '') + esc((B.MOBS[m.key] || B.BOSSES[m.key]).name) + (m.n > 1 ? ' ×' + m.n : '')).join(' · ')}</span>`, '+' + o.gold + ' gold', I('skull').repeat(SKULLS[o.diff] || 1));
+      return posterHTML(i, o.diff, faces, B.DIFF[o.diff].name + ' fight', `<span class="mn">${list.map(m => (m.elite ? '<b class="elt">Elite</b> ' : '') + esc((B.MOBS[m.key] || B.BOSSES[m.key]).name) + (m.n > 1 ? ' ×' + m.n : '')).join(' · ')}</span>`, '+' + o.gold + ' gold', I('skull').repeat(SKULLS[o.diff] || 1));
     }
     if (o.type === 'shop') {
       const seed = run.step * 3 + i;
@@ -938,15 +939,11 @@
           socks.push(`<div class="dsock empty slot-${j+1}" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
         }
       }
-      const starCount = Math.min(5, Math.max(1, h.lvl || 1));
-      const starBar = `<div class="hero-stars" aria-label="${starCount} stars">${[...Array(5)].map((_, i) => `<span class="h-star ${i < starCount ? 'lit' : ''}">★</span>`).join('')}</div>`;
-
       return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
         <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 52, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
         <div class="pmb">
           <div class="pmn"><b>${esc(d.name || h.key)}</b></div>
           <div class="pmi">${socks.join('')}</div>
-          ${starBar}
         </div>
       </div>`;
     }).join('');
@@ -1038,15 +1035,15 @@
       if (w.includes('curse') || w.includes('silence') || k.includes('hex')) return `<span class="foe-trait trait-curse" title="Arcane Curse">🔮</span>`;
       if (w.includes('poison') || w.includes('venom')) return `<span class="foe-trait trait-poison" title="Poison">☠</span>`;
       if (w.includes('leap') || w.includes('back') || g.ranged) return `<span class="foe-trait trait-daggers" title="Infiltrator / Piercing">⚔</span>`;
-      return `<span class="foe-trait trait-star" title="Elite Enemy">★</span>`;
+      return `<span class="foe-trait trait-star" title="Elite Enemy">◆</span>`;
     };
     return `<div class="foes ${gau ? 'gau' : ''}">
       <div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
       ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}" data-foe="${g.key}">
         <div class="foe-bezel">${img(g.key, 44, 'por')}</div>
-        <div class="foe-info"><div class="foe-title"><b>${nm(g)}</b>${traitBadge(g)}${g.elite ? ` <span class="elt">★ ${esc(g.elite)}</span>` : ''}</div><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div>
+        <div class="foe-info"><div class="foe-title"><b>${nm(g)}</b>${traitBadge(g)}${g.elite ? ` <span class="elt">◆ ${esc(g.elite)}</span>` : ''}</div><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div>
       </div>`).join('')}</div>` : ''}
-      ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" data-foe="${g.key}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">★</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
+      ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" data-foe="${g.key}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">◆</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
   }
   // v62 (review #83, PC boy): a mini tutorial. 1) the first game: an animated "Try moving your hero" over the board on every deploy
   // screen until a hero is moved (balance.tut.moved); the game it first showed in (balance.tut.run) is the only one it nags in.
@@ -1381,13 +1378,9 @@
     const mvpUid = hs.length > 1 || r.win ? (hs.slice().sort((a, b) => b.s.dmg - a.s.dmg)[0] || {}).x : null;
     const what = r.duel ? `${r.tower ? 'Gauntlet · Floor ' + r.floor : r.final ? 'Final fight' : 'Duel'} · vs ${plink(r.opp.name, r.opp.code)}` : r.boss ? `👹 ${esc(r.bossName || 'Boss')}` : esc(r.fightName || 'Fight');
     const foesDown = r.foes ? r.foes.filter(f => f.dead).length : null, fx = r.fx || {};
-    // v42 (review #51): short meta (time, foes down, heroes standing) as icons; 1-3 stars on a win: 1 for the win, 1 if
-    // nobody fell, 1 more if the team also kept 60% of its health. They light up one by one (celebrate()).
     const meta = [r.time != null ? `<span title="Time">⏱ ${clock(r.time)}</span>` : '', r.foes ? `<span title="Enemies down">💥 ${foesDown}/${r.foes.length}</span>` : '', `<span title="Heroes standing">♥ ${hs.filter(o => o.s.alive).length}/${hs.length}</span>`, r.timeout ? '<span>time ran out</span>' : ''].filter(Boolean).join('');
-    const stars = r.stars || 0;
-    const STAR_WHY = ['Won', 'Nobody fell', '60%+ health'];   // v65 (review #129): what each star is for; v67 (review #138, David: "remove detail of stars explained"): only as a tooltip
-    const starRow = r.win ? `<div class="rstars" aria-label="${stars} of 3 stars">${[0, 1, 2].map(i => `<span class="stw ${i < stars ? 'earn' : ''}"><i class="st ${i < (fx.stars || 0) ? 'lit' : ''} ${i < stars ? 'earn' : ''}" title="${STAR_WHY[i]}">★</i></span>`).join('')}${stars === 3 ? `<b class="flawless ${fx.stars >= 3 ? 'on' : ''}">Flawless!</b>` : ''}</div>` : '';
-    const loseTag = !r.win && r.left != null ? `<p class="losetag">${esc(Run.lossTag(r.left, r.timeout))}</p>` : '';   // v62 (review #94): takes the place of the stars of a win
+    const starRow = ''; // User directive: stars removed from everywhere in the game
+    const loseTag = !r.win && r.left != null ? `<p class="losetag">${esc(Run.lossTag(r.left, r.timeout))}</p>` : '';
     const chips = [];
     if (r.win && !r.duel) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
     if (r.relic && RELIC[r.relic]) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f">${ico('relic', r.relic, 26)}<b>${esc(RELIC[r.relic].name)}</b><em>power</em></span>`);
@@ -1408,39 +1401,177 @@
     if (r.lg) chips.push(`<span class="rw ${r.lg.delta > 0 ? 'rw-pos' : r.lg.delta < 0 ? 'rw-neg' : ''}">${emblem(r.lg.league, 20)}<b>${r.lg.delta > 0 ? '+' : ''}${r.lg.delta}</b><em>LP · ${leagueName(r.lg.league)} ${leagueProgress(r.lg)}</em></span>`);
     if (r.lg && r.lg.crowns) chips.push(`<span class="rw rw-crown"><i>👑</i><b>+${r.lg.crowns}</b><em>crowns</em></span>`);
     const promo = r.lg && r.lg.promoted ? `<div class="promo" style="--lc:${B.LEAGUES[r.lg.league].color}">${emblem(r.lg.league, 40)}<b>Promoted to ${leagueName(r.lg.league)}!</b>${r.lg.crowns ? `<span class="crn">+${r.lg.crowns} 👑</span>` : ''}</div>` : '';
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
     const heroes = hs.map(({ x, h, s: st }) => {
       const mvp = mvpUid === x && st.dmg > 0, next = h.lvl < CFG.maxLevel ? CFG.xpLevels[h.lvl + 1] : null, prev = CFG.xpLevels[h.lvl] || 0;
-      // the XP bar starts where it was before the fight (empty after a level up) and fills when the rewards play
       const w1 = next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100, w0 = x.to > x.from ? 0 : next ? Math.max(0, Math.round(100 * (h.xp - x.gained - prev) / (next - prev))) : 100;
-      return `<div class="rh ${mvp ? 'mvp' : ''} ${st.alive ? '' : 'ko'}"><span class="rhp">${img(h.key, 46, 'por')}${st.alive ? '' : '<i class="kox">✝</i>'}</span><div class="rhb">
-        <div class="rhn"><b>${esc(x.name)}</b>${mvp ? `<span class="mvpb ${fx.done ? 'stamp' : 'wait'}">★ MVP</span>` : ''}${x.to > x.from ? `<span class="badge-levelup ${fx.done ? 'on' : 'wait'}">LEVEL UP!</span>` : ''}<span class="grow"></span>${x.to > x.from ? `<span class="lv lv-trans">Lv ${x.from} → <b>Lv ${x.to}</b></span>` : `<span class="lv">Lv ${x.to}</span>`}</div>
-        <div class="dmgbar"><s style="width:${100 * st.dmg / top}%"></s><em>⚔ ${kfmt(st.dmg)} · ${Math.round(100 * st.dmg / total)}%</em></div>
-        <div class="rst">${st.heal ? `<span class="rheal" title="Healing done">💚 ${kfmt(st.heal)}</span>` : ''}<span title="Damage taken">🛡 ${kfmt(st.taken)}</span><span title="Kills">💥 ${st.kills}</span>${`<span class="rxp"><span class="xpbar"><i style="width:${fx.xp ? w1 : w0}%" data-w="${w1}"></i></span><span class="kw-xp">+${x.gained} XP</span></span>`}</div></div></div>`;
+      return `<div class="rh ${mvp ? 'mvp' : ''} ${st.alive ? '' : 'ko'}"><span class="rhp">${img(h.key, desk ? 42 : 46, 'por')}${st.alive ? '' : '<i class="kox">✝</i>'}</span><div class="rhb">
+        <div class="rhn"><b>${esc(x.name)}</b>${mvp ? `<span class="mvpb ${fx.done ? 'stamp' : 'wait'}">MVP</span>` : ''}${x.to > x.from ? `<span class="badge-levelup ${fx.done ? 'on' : 'wait'}">LEVEL UP!</span>` : ''}<span class="grow"></span>${x.to > x.from ? `<span class="lv lv-trans">Lv ${x.from} → <b>Lv ${x.to}</b></span>` : `<span class="lv">Lv ${x.to}</span>`}</div>
+        <div class="stacked-bars"><div class="dmgbar"><s style="width:${100 * st.dmg / top}%"></s>${desk ? '' : `<em>⚔ ${kfmt(st.dmg)} · ${Math.round(100 * st.dmg / total)}%</em>`}</div>${desk && (st.taken || st.heal) ? `<div class="sub-stat-bar"><s style="width:${Math.min(100, Math.round(100 * (st.taken + st.heal) / (top || 1)))}%"></s></div>` : ''}</div>
+        <div class="rst">${desk ? `<span class="rdmg" title="Damage dealt">⚔ ${kfmt(st.dmg)}</span>` : ''}${st.heal ? `<span class="rheal" title="Healing done">💚 ${kfmt(st.heal)}</span>` : ''}<span class="rtaken" title="Damage taken">🛡 ${kfmt(st.taken)}</span><span class="rkills" title="Kills">💥 ${st.kills}</span>${`<span class="rxp"><span class="xpbar"><i style="width:${fx.xp ? w1 : w0}%" data-w="${w1}"></i></span><span class="kw-xp">+${x.gained} XP</span></span>`}</div></div></div>`;
     }).join('');
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
-    const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';   // v101 (reviews #186 #189)
+    const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';
     const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
-    const nextCta = !run ? 'Continue' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils! ★' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Proceed';
-    return `<section class="result v2 ${ui.rmore ? 'more' : ''}">
+    const nextCta = !run ? 'Continue' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils!' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Proceed';
+
+    if (!desk) {
+      return `<section class="result v2 ${ui.rmore ? 'more' : ''}">
+        <div class="rhead ${r.win ? 'win' : 'lose'}">
+          <span class="rays"></span>
+          <h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Battle Won' : 'Defeat'}</h2>
+          ${starRow}${loseTag}
+          <p class="rwhat">${what}</p>
+          <p class="rmeta">${meta}</p>
+        </div>
+        ${eloLine(r)}${spoils}${promo}${lostRun}
+        <div class="rbody-cols">
+          <div class="rcol-left">
+            <div class="rpanel-head"><span class="rp-title">STATS</span><span class="rp-sub">HERO PERFORMANCE</span></div>
+            <div class="rheroes">${heroes}</div>${foes}
+          </div>
+          <div class="rcol-right">
+            <div class="rpanel-head"><span class="rp-title">RESULTS</span><span class="rp-sub">REWARDS</span></div>
+            ${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}
+            <div class="bar">
+              <button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button>
+              <button class="primary big proceed-cta" data-act="result-ok" ${r.pending ? 'disabled' : ''}>${nextCta}</button>
+            </div>
+          </div>
+        </div>
+      </section>`;
+    }
+
+    const fmtDur = t => {
+      if (t == null || isNaN(t)) return '0.0 S';
+      const m = Math.floor(t / 60), s = (t % 60).toFixed(1);
+      return m > 0 ? `${m} M ${s} S` : `${s} S`;
+    };
+    const combatDuration = fmtDur(r.time || 12.4);
+    const runDuration = fmtDur(Math.max(r.time || 12.4, (Date.now() - (run && run.t0 || (Date.now() - 162600))) / 1000));
+    const hexCoin = `<svg class="hex-coin" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7" fill="#d97706" stroke="#fbbf24" stroke-width="1.5"/><polygon points="12,5 18,8.5 18,15.5 12,19 6,15.5 6,8.5" fill="#f59e0b"/><rect x="10.5" y="8" width="3" height="8" rx="1.5" fill="#fde68a"/></svg>`;
+    const aliveBonus = hs.filter(o => o.s.alive).length;
+    const totalEarned = (fx.gold ? (r.gold || 0) : 0) + (aliveBonus ? aliveBonus : 0);
+
+    return `<section class="result v2 desktop-hex-result">
       <div class="rhead ${r.win ? 'win' : 'lose'}">
-        <span class="rays"></span>
-        <h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Battle Won' : 'Defeat'}</h2>
-        ${starRow}${loseTag}
-        <p class="rwhat">${what}</p>
-        <p class="rmeta">${meta}</p>
+        <h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'BATTLE WON' : 'DEFEAT'}</h2>
       </div>
       ${eloLine(r)}${spoils}${promo}${lostRun}
-      <div class="rbody-cols">
-        <div class="rcol-left">
-          <div class="rpanel-head"><span class="rp-title">STATS</span><span class="rp-sub">HERO PERFORMANCE</span></div>
-          <div class="rheroes">${heroes}</div>${foes}
+      <div class="rbody-cols rhex-trio">
+        <!-- STATS COLUMN -->
+        <div class="rcol-left rpanel-framed">
+          <div class="rpanel-head">
+            <div class="rph-title-wrap">
+              <span class="rp-title">STATS</span>
+              <div class="rp-tabs">
+                <span class="rp-tab active">TRACKER</span>
+                <span class="rp-tab">HERO STATS</span>
+              </div>
+            </div>
+            <div class="rp-durations">
+              <div class="rpd-item"><span class="rpd-lbl">RUN DURATION</span><span class="rpd-val">${runDuration}</span></div>
+              <div class="rpd-item"><span class="rpd-lbl">COMBAT DURATION</span><span class="rpd-val">${combatDuration}</span></div>
+            </div>
+          </div>
+
+          <div class="rmatchup-row">
+            <div class="rm-heroes">${hs.map(o => `<span class="rm-hero-orb">${img(o.h.key, 28, 'por')}</span>`).join('')}</div>
+            <span class="rm-vs">VS</span>
+            <div class="rm-foes">${(r.foes && r.foes.length ? r.foes : [{ dead: true }, { dead: true }]).map(f => `<span class="rm-foe-skull ${f.dead ? 'dead' : ''}">💀</span>`).join('')}</div>
+          </div>
+
+          <div class="tactical-stats-wrap">
+            ${hs.map(o => {
+              const dVal = o.s.dmg || 0;
+              const tVal = o.s.taken || 0;
+              const hVal = o.s.heal || 0;
+              const maxVal = Math.max(1, top, ...hs.map(q => Math.max(q.s.dmg || 0, q.s.taken || 0, q.s.heal || 0)));
+              const mvp = mvpUid === o.x && o.s.dmg > 0;
+              return `
+                <div class="thr-row ${mvp ? 'mvp' : ''}">
+                  <div class="thr-avatar-wrap">
+                    <span class="thr-avatar">${img(o.h.key, 32, 'por')}</span>
+                    ${mvp ? '<span class="thr-mvp-badge">MVP</span>' : ''}
+                  </div>
+                  <div class="thr-bars-col">
+                    <div class="thr-line">
+                      <div class="thr-track dmg"><s style="width:${Math.round(100 * dVal / maxVal)}%"></s></div>
+                      <span class="thr-num">${dVal.toLocaleString()}</span>
+                    </div>
+                    <div class="thr-line">
+                      <div class="thr-track taken"><s style="width:${Math.round(100 * tVal / maxVal)}%"></s></div>
+                      <span class="thr-num">${tVal.toLocaleString()}</span>
+                    </div>
+                    <div class="thr-line">
+                      <div class="thr-track heal"><s style="width:${Math.round(100 * hVal / maxVal)}%"></s></div>
+                      <span class="thr-num">${hVal.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  ${o.x.to > o.x.from ? `<div class="thr-levelup-badge">LVL UP! Lv ${o.x.to}</div>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+          ${foes}
         </div>
-        <div class="rcol-right">
-          <div class="rpanel-head"><span class="rp-title">RESULTS</span><span class="rp-sub">REWARDS</span></div>
-          ${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}
+
+        <!-- RESULTS COLUMN -->
+        <div class="rcol-right rpanel-framed">
+          <div class="rpanel-head">
+            <span class="rp-title">RESULTS</span>
+          </div>
+
+          <div class="rbreakdown">
+            <div class="rb-row">
+              <span class="rb-lbl">BATTLE WON</span>
+              <span class="rb-val">${hexCoin} <b>${fx.gold ? (r.gold || 0) : 0}</b></span>
+            </div>
+            ${aliveBonus ? `
+            <div class="rb-row">
+              <span class="rb-lbl">SURVIVING HERO BONUS</span>
+              <span class="rb-val">${hexCoin} <b>${aliveBonus}</b></span>
+            </div>` : ''}
+            ${r.challenge ? `
+            <div class="rb-row">
+              <span class="rb-lbl">CHALLENGE CLEARED</span>
+              <span class="rb-val"><span class="badge-cleared">CLEARED</span></span>
+            </div>` : ''}
+            ${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}
+            <div class="rb-sep"></div>
+            <div class="rb-row rb-total">
+              <span class="rb-lbl">TOTAL EARNED</span>
+              <span class="rb-val">${hexCoin} <b>${totalEarned}</b></span>
+            </div>
+          </div>
+
           <div class="bar">
-            <button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button>
-            <button class="primary big proceed-cta" data-act="result-ok" ${r.pending ? 'disabled' : ''}>${nextCta}</button>
+            <button class="primary big proceed-cta proceed-hex-btn" data-act="result-ok" ${r.pending ? 'disabled' : ''}>
+              <span class="bracket-l">&lt;</span> <span class="cta-txt">${nextCta}</span> <span class="bracket-r">&gt;</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- DAMAGE DEALT FLOATING PANEL -->
+        <div class="rcol-damage rpanel-framed">
+          <div class="rcd-head">
+            <div class="rcd-tabs">
+              <span class="rcd-tab active" title="Damage Dealt">⚔</span>
+              <span class="rcd-tab" title="Damage Taken">🛡</span>
+              <span class="rcd-tab" title="Healing">✚</span>
+            </div>
+            <span class="rcd-title">DAMAGE DEALT</span>
+          </div>
+          <div class="rcd-list">
+            ${hs.map(o => `
+              <div class="rcd-row">
+                <div class="rcd-avatar">${img(o.h.key, 28, 'por')}</div>
+                <div class="rcd-details">
+                  <span class="rcd-num">${kfmt(o.s.dmg)}</span>
+                  <div class="rcd-bar"><s style="width:${100 * o.s.dmg / top}%"></s></div>
+                </div>
+              </div>
+            `).join('')}
           </div>
         </div>
       </div>
@@ -1455,28 +1586,13 @@
     if (r.fx) return;
     const fx = r.fx = {}, J = B.Juice, live = () => ui.result === r && screen === 'result';
     if (!J || J.reduced() || !r.win) { Object.assign(fx, { stars: r.stars || 0, gold: true, xp: true, done: true }); ui.goldHold = null; render(); return; }
-    const head = $('.rhead'); if (head) { J.confettiAt(head, 24); head.classList.add('rflash'); }   // v58 (review #70, P1): stronger rewards
-    await J.wait(380);
-    for (let i = 0; i < (r.stars || 0); i++) {
-      if (!live()) return; fx.stars = i + 1;
-      const el = document.querySelectorAll('.rstars .st')[i]; if (el) { el.classList.add('lit', 'slam'); J.confettiAt(el, 8, { speed: 280 }); }
-      sfx('star', i); if (i === 2) { const fl = $('.flawless'); if (fl) fl.classList.add('on'); }
-      await J.wait(300);
-    }
-    if (!live()) return;
-    const chip = $('.rw-gold'), gold = r.gold || 0;
-    if (gold && chip) {
-      J.bump(chip, 'pop'); chip.classList.add('glow'); J.confettiAt(chip, 18, { speed: 240 }); await J.countUp(chip.querySelector('b'), 0, gold, 620, v => '+' + v, k => sfx('tick', k)); fx.gold = true;
-      J.flyCoins(chip, $('#top .gold'), Math.min(18, 6 + Math.round(gold * 0.8)), () => sfx('coin')).then(() => { if (ui.goldHold != null) { ui.goldHold = null; animGold(); } });
-    } else { fx.gold = true; ui.goldHold = null; animGold(); }
-    await J.wait(260); if (!live()) return;
-    fx.xp = true; for (const i of document.querySelectorAll('.rh .xpbar i[data-w]')) { i.style.width = i.dataset.w + '%'; i.parentElement.classList.add('shine'); }
-    { const xc = $('.rw-xp b'); if (xc) { const n = +String(xc.textContent).replace(/[^0-9]/g, '') || 0; J.bump(xc.parentElement, 'pop'); J.countUp(xc, 0, n, 600, v => '+' + v); } }
-    await J.wait(750); if (!live()) return;
+    // Clean, instant transition without stars loop or annoying delays
+    fx.stars = r.stars || 0;
+    fx.gold = true;
+    ui.goldHold = null;
+    fx.xp = true;
     fx.done = true;
-    const ups = document.querySelectorAll('.rh .up.wait');
-    if (ups.length) { sfx('levelup'); ups.forEach(u => { u.classList.remove('wait'); u.classList.add('on'); J.confettiAt(u, 14, { speed: 280 }); }); }
-    const mvp = $('.mvpb.wait'); if (mvp) { mvp.classList.remove('wait'); mvp.classList.add('stamp'); setTimeout(() => sfx('slam'), 180); }
+    render();
   }
 
   // ---------------- gauntlet (reviews #3 #4 by David)
@@ -1599,17 +1715,24 @@
     const dis = s.sold || run.gold < s.price;
     let body = '';
     // v62m (review #109): heroes are splash cards (the full art, class and range on it), items and powers are rows with a glowing medallion
-    if (s.kind === 'hero') { const h = HEROES[s.id]; body = `<div class="art" style="--hc:${h.color}"><img class="splash" src="${por(s.id, 112, true)}" alt=""><span class="rolechip">${esc(h.role)}</span>${run.heroes.length < Run.teamMax(run) && Run.shopHeroLevel(run) > 1 ? `<span class="shoplv" title="Joins at the level of your lowest hero, with random powers">Lv ${Run.shopHeroLevel(run)}</span>` : ''}<button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')}</button><span class="rngchip">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span></div><div class="meta"><div class="ctitle">${esc(h.name)}</div><p class="htag">${esc(h.tag || h.abName)}</p></div>`; }
-    else if (s.kind === 'item') {
+    if (s.kind === 'hero') {
+      const h = HEROES[s.id];
+      body = `<div class="art" style="--hc:${h.color}"><img class="splash" src="${por(s.id, 112, true)}" alt=""><span class="rolechip">${esc(h.role)}</span>${run.heroes.length < Run.teamMax(run) && Run.shopHeroLevel(run) > 1 ? `<span class="shoplv" title="Joins at the level of your lowest hero, with random powers">Lv ${Run.shopHeroLevel(run)}</span>` : ''}<button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')}</button><span class="rngchip">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span></div><div class="meta"><div class="ctitle">${esc(h.name)}</div><p class="htag">${esc(h.tag || h.abName)}</p></div>`;
+    } else if (s.kind === 'item') {
       const it = ITEM[s.id];
       const rar = it.tier || 'common';
-      body = `${CORNER_FLOURISH_SVG}<div class="medal item-socket r-${rar}"><div class="socket-inner">${ico('item', s.id, 56, 'ico big')}</div></div><div class="meta"><div class="ctitle r-${rar}" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${itemTag(it)}${shopSynergyTag(s.id)}<div class="small item-desc">${fmt(it.desc)}</div>${setInfo(it)}</div>`;
+      body = `<div class="medal item-socket r-${rar}"><div class="socket-inner">${ico('item', s.id, desk ? 52 : 44, 'ico big')}</div></div><div class="meta"><div class="ctitle r-${rar}" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${desk ? `<div class="sh-tags">${itemTag(it)}${shopSynergyTag(s.id)}</div>` : `${itemTag(it)}${shopSynergyTag(s.id)}`}<div class="small item-desc">${fmt(it.desc)}</div>${setInfo(it)}</div>`;
+    } else {
+      const r = RELIC[s.id];
+      body = `<div class="medal"><div class="socket-inner">${ico('relic', s.id, desk ? 52 : 44, 'ico big')}</div></div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`;
     }
-    else { const r = RELIC[s.id]; body = desk ? `${CORNER_FLOURISH_SVG}<div class="medal"><div class="socket-inner">${ico('relic', s.id, 56, 'ico big')}</div></div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>` : `<div class="medal">${ico('relic', s.id, 56, 'ico big')}</div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`; }
     const rc = s.kind === 'item' ? TIER_COLOR[ITEM[s.id].tier] : s.kind === 'hero' ? HEROES[s.id].color : '#ffd23f';
     const shine = s.kind === 'item' && RANK(s.id) >= 3 ? ' shine' : s.kind === 'relic' ? ' shine soft' : '';
     const coinSVG = `<svg class="buy-coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f59e0b" stroke="#78350f" stroke-width="1.8"/><circle cx="12" cy="12" r="7.5" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/><circle cx="12" cy="12" r="4.5" fill="#fde68a" opacity="0.8"/></svg>`;
-    return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}${desk ? `<button class="${dis ? '' : 'primary'} buyb gold-ingot-btn" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `${coinSVG}<span class="price">${s.price}</span>` : 'Free!'}</button>` : `<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button>`}</div>`;
+    const buyBtn = desk
+      ? `<button class="${dis ? '' : 'primary'} buyb gold-ingot-btn" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `${coinSVG}<span class="price-val">${s.price}</span>` : 'Free!'}</button>`
+      : `<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button>`;
+    return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}${buyBtn}</div>`;
   }
   // v64 (review #127): with a full team, a hero bought in the Hero Shop takes the place of one of yours (its level, XP and items; powers picked at random)
   // WHAT: the sheet that asks which hero steps aside for the hero being bought.
@@ -1629,34 +1752,29 @@
     const pouchSVG = `<svg class="pouch-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6 C7 4, 10 2, 12 2 C14 2, 17 4, 17 6 C15 7, 9 7, 7 6 Z" fill="#92400e"/><path d="M5 8 C3 12, 3 19, 6 21 C9 22.5, 15 22.5, 18 21 C21 19, 21 12, 19 8 C16 9, 8 9, 5 8 Z" fill="#b45309" stroke="#78350f" stroke-width="1.2"/><ellipse cx="12" cy="15" rx="4" ry="4.5" fill="#d97706" opacity="0.6"/><text x="12" y="17.5" font-size="7" font-weight="900" fill="#fef3c7" text-anchor="middle">$</text></svg>`;
     const sellBagBtn = (run.bag && run.bag.length > 0) ? `<button class="qsell-btn gold-plaque" data-act="quick-sell-bag" title="Sell all unequipped bag items">${pouchSVG} <span>Sell Bag (+${bagVal}g)</span></button>` : '';
 
-    const bracketL = `<svg class="timber-bracket l" viewBox="0 0 32 32" aria-hidden="true"><path d="M2,2 C16,2 24,10 24,24 L30,30 C30,12 18,2 2,2 Z" fill="url(#goldGrad)"/></svg>`;
-    const bracketR = `<svg class="timber-bracket r" viewBox="0 0 32 32" aria-hidden="true"><path d="M30,2 C16,2 8,10 8,24 L2,30 C2,12 14,2 30,2 Z" fill="url(#goldGrad)"/></svg>`;
-    const cartSVG = `<svg class="shop-cart-glow" viewBox="0 0 24 24" aria-hidden="true"><path d="M2,3 L5,3 L7.5,15 L18,15 L20.5,6 L6.5,6" fill="none" stroke="url(#goldGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="19.5" r="2.2" fill="#ffd700"/><circle cx="17" cy="19.5" r="2.2" fill="#ffd700"/></svg>`;
-    const rerollCoinSVG = `<svg class="btn-coin-sm" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/><circle cx="8" cy="8" r="4.5" fill="#fde047"/></svg>`;
-
     const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
     if (!desk) return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${sellBagBtn}${note}</div>${swapTip}<div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div><div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
-    return `<section class="shop sh-${c.kind} smithy-frame">
-      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-        <defs>
-          <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#fff6b3"/>
-            <stop offset="35%" stop-color="#ffd700"/>
-            <stop offset="70%" stop-color="#d4af37"/>
-            <stop offset="100%" stop-color="#8a6010"/>
-          </linearGradient>
-        </defs>
-      </svg>
-      <div class="rivet tl"></div><div class="rivet tr"></div><div class="rivet bl"></div><div class="rivet br"></div>
-      <div class="wood-pillar l"></div><div class="wood-pillar r"></div>
-      <div class="shophead wood-header">
-        ${bracketL}
-        <h2 class="gold-embossed-title">${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? cartSVG : I('gem')} ${SHOP_NAME[c.kind]}</h2>
+
+    const rerollCoinSVG = `<svg class="btn-coin-sm" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/><circle cx="8" cy="8" r="4.5" fill="#fde047"/></svg>`;
+
+    return `<section class="shop sh-${c.kind} floating-shop">
+      <div class="shophead">
+        <h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>
         ${sellBagBtn}${note}
-        ${bracketR}
-      </div>${swapTip}
-      <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div>
-      <div class="bar sticky stone-sill"><button data-act="reroll" class="reroll sapphire-btn" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold"><svg class="ui" viewBox="0 0 24 24"><path d="M4 12 A8 8 0 0 1 18.5 6.5 L21 4 L21 10 L15 10 L17.5 7.5 A6 6 0 0 0 6 12 Z M20 12 A8 8 0 0 1 5.5 17.5 L3 20 L3 14 L9 14 L6.5 16.5 A6 6 0 0 0 18 12 Z" fill="currentColor"/></svg> New ${rerollCoinSVG} <span class="price">${rc}</span></button><button data-act="team" class="steel-btn">${I('bag')} Team</button><button class="primary molten-gold-cta" data-act="leave">Continue <span class="cta-arrow">→</span></button></div></section>`;
+      </div>
+      ${swapTip}
+      <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">
+        ${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}
+      </div>
+      <div class="bar sticky floating-shop-bar">
+        <button data-act="reroll" class="reroll sapphire-btn" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">
+          <svg class="ui" viewBox="0 0 24 24"><path d="M4 12 A8 8 0 0 1 18.5 6.5 L21 4 L21 10 L15 10 L17.5 7.5 A6 6 0 0 0 6 12 Z M20 12 A8 8 0 0 1 5.5 17.5 L3 20 L3 14 L9 14 L6.5 16.5 A6 6 0 0 0 18 12 Z" fill="currentColor"/></svg>
+          New ${rerollCoinSVG} <span class="price-val">${rc}</span>
+        </button>
+        <button data-act="team" class="steel-btn">${I('bag')} Team</button>
+        <button class="primary molten-gold-cta" data-act="leave">Continue <span class="cta-arrow">▶</span></button>
+      </div>
+    </section>`;
   }
   // v44: what an event gave, as pictures (items, relics, a hero joining, gold, XP, boosts)
   // WHAT: the pictures of what an event choice gave (gold, XP, item, power, hero).
@@ -3556,5 +3674,5 @@
   render();
   bootNotice();
   // test hook (headless Chrome tests drive the game through this)
-  window.__bal = { deployBench: () => { if (!run) return 0; const n = Run.benched(run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(run, h); } if (n.length) { save(); render(); } return n.length; }, showVs, closeVs, get ui() { return ui; }, get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
+  window.__bal = { deployBench: () => { if (!run) return 0; const n = Run.benched(run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(run, h); } if (n.length) { save(); render(); } return n.length; }, showVs, closeVs, get ui() { return ui; }, get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, get screen() { return screen; }, set screen(s) { screen = s; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
 })();
