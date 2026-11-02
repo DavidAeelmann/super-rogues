@@ -5042,7 +5042,7 @@ body.desk .wmap .rn.final .castle {
 }
 
 /* Encounter Choice Container */
-.rtoday {
+body.desk .rtoday {
   background: none !important;
   border: none !important;
   box-shadow: none !important;
@@ -5050,7 +5050,7 @@ body.desk .wmap .rn.final .castle {
   flex-direction: column !important;
   align-items: center !important;
 }
-.rtoday .banners {
+body.desk .rtoday .banners {
   display: flex !important;
   gap: 20px !important;
   justify-content: center !important;
@@ -5058,8 +5058,7 @@ body.desk .wmap .rn.final .castle {
 }
 
 /* Choice Cards: Floating Glass Architecture with Champagne Gold Hairline Borders */
-body.desk .banner.v2,
-.banner.v2 {
+body.desk .banner.v2 {
   flex: 1 !important;
   max-width: 260px !important;
   min-height: 290px !important;
@@ -5079,74 +5078,73 @@ body.desk .banner.v2,
   position: relative !important;
   overflow: hidden !important;
 }
-body.desk .banner.v2:hover,
-.banner.v2:hover:not(:disabled) {
+body.desk .banner.v2:hover {
   transform: translateY(-5px) !important;
   border-color: rgba(197, 160, 89, 0.75) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 20px rgba(197, 160, 89, 0.2) !important;
 }
 
 /* Rich Jewel-Toned Atmospheric Radiance for Choices */
-.banner.v2.b-easy {
+body.desk .banner.v2.b-easy {
   background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(16, 185, 129, 0.24) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
   border-color: rgba(16, 185, 129, 0.45) !important;
 }
-.banner.v2.b-easy:hover {
+body.desk .banner.v2.b-easy:hover {
   border-color: rgba(52, 211, 153, 0.8) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(16, 185, 129, 0.35) !important;
 }
 
-.banner.v2.b-medium {
+body.desk .banner.v2.b-medium {
   background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(245, 158, 11, 0.24) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
   border-color: rgba(245, 158, 11, 0.45) !important;
 }
-.banner.v2.b-medium:hover {
+body.desk .banner.v2.b-medium:hover {
   border-color: rgba(251, 191, 36, 0.8) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(245, 158, 11, 0.35) !important;
 }
 
-.banner.v2.b-hard {
+body.desk .banner.v2.b-hard {
   background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(239, 68, 68, 0.26) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
   border-color: rgba(239, 68, 68, 0.45) !important;
 }
-.banner.v2.b-hard:hover {
+body.desk .banner.v2.b-hard:hover {
   border-color: rgba(248, 113, 113, 0.8) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(239, 68, 68, 0.35) !important;
 }
 
-.banner.v2.b-boss {
+body.desk .banner.v2.b-boss {
   background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(168, 85, 247, 0.3) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
   border-color: rgba(168, 85, 247, 0.5) !important;
 }
-.banner.v2.b-boss:hover {
+body.desk .banner.v2.b-boss:hover {
   border-color: rgba(192, 132, 252, 0.85) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(168, 85, 247, 0.4) !important;
 }
 
-.banner.v2.b-shop {
+body.desk .banner.v2.b-shop {
   background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(56, 189, 248, 0.26) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
   border-color: rgba(56, 189, 248, 0.45) !important;
 }
-.banner.v2.b-shop:hover {
+body.desk .banner.v2.b-shop:hover {
   border-color: rgba(125, 211, 252, 0.8) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.35) !important;
 }
 
-.banner.v2.b-event {
+body.desk .banner.v2.b-event {
   background: radial-gradient(ellipse 95% 48% at 50% 0%, rgba(217, 70, 239, 0.26) 0%, rgba(11, 18, 24, 0.9) 70%) !important;
   border-color: rgba(217, 70, 239, 0.45) !important;
 }
-.banner.v2.b-event:hover {
+body.desk .banner.v2.b-event:hover {
   border-color: rgba(240, 171, 252, 0.8) !important;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(217, 70, 239, 0.35) !important;
 }
 
 /* Clean, elegant dark scene container without checkered/diagonal cartoons */
-.banner.v2 .scene,
-.banner.v2.b-easy .scene,
-.banner.v2.b-medium .scene,
-.banner.v2.b-hard .scene,
-.banner.v2.b-boss .scene {
+body.desk .banner.v2 .scene,
+body.desk .banner.v2.b-easy .scene,
+body.desk .banner.v2.b-medium .scene,
+body.desk .banner.v2.b-hard .scene,
+body.desk .banner.v2.b-boss .scene {
   position: relative !important;
   width: 100% !important;
   height: 105px !important;
@@ -5160,12 +5158,12 @@ body.desk .banner.v2:hover,
   mask-image: none !important;
   -webkit-mask-image: none !important;
 }
-.banner.v2 .scene::before {
+body.desk .banner.v2 .scene::before {
   display: none !important;
 }
 
 /* Subtle, quiet difficulty badge in corner */
-.banner.v2 .ribbon {
+body.desk .banner.v2 .ribbon {
   position: absolute !important;
   top: 8px !important;
   left: 8px !important;
@@ -5180,28 +5178,28 @@ body.desk .banner.v2:hover,
 }
 
 /* Enemy Preview Medallions */
-.banner.v2 .mobs {
+body.desk .banner.v2 .mobs {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   margin: 0 auto !important;
 }
-.banner.v2 .mob {
+body.desk .banner.v2 .mob {
   position: relative !important;
   margin: 0 -6px !important;
 }
-.banner.v2 .mob img.por {
+body.desk .banner.v2 .mob img.por {
   width: 50px !important;
   height: 50px !important;
   border-radius: 50% !important;
   border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6) !important;
 }
-.banner.v2.b-hard .mob img.por {
+body.desk .banner.v2.b-hard .mob img.por {
   border-color: rgba(248, 113, 113, 0.6) !important;
 }
-.banner.v2 .mob i,
-.banner.v2 .mob.more {
+body.desk .banner.v2 .mob i,
+body.desk .banner.v2 .mob.more {
   position: absolute !important;
   right: -4px !important;
   bottom: -2px !important;
@@ -5215,7 +5213,7 @@ body.desk .banner.v2:hover,
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6) !important;
 }
 
-.banner.v2 .bt {
+body.desk .banner.v2 .bt {
   font-family: var(--fun) !important;
   font-size: 18px !important;
   font-weight: 800 !important;
@@ -5224,7 +5222,7 @@ body.desk .banner.v2:hover,
   padding: 0 10px !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6) !important;
 }
-.banner.v2 .bd {
+body.desk .banner.v2 .bd {
   font-size: 12px !important;
   color: #94a3b8 !important;
   line-height: 1.3 !important;
@@ -5234,7 +5232,7 @@ body.desk .banner.v2:hover,
 }
 
 /* Currency pill - antique champagne gold glass plaque */
-.gold-treasure-plaque {
+body.desk .gold-treasure-plaque {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -5252,9 +5250,9 @@ body.desk .banner.v2:hover,
   letter-spacing: 0.5px !important;
   text-shadow: none !important;
 }
-.gold-treasure-plaque .pw.easy { color: #34d399 !important; }
-.gold-treasure-plaque .pw.even { color: #fbbf24 !important; }
-.gold-treasure-plaque .pw.hard { color: #f87171 !important; }
+body.desk .gold-treasure-plaque .pw.easy { color: #34d399 !important; }
+body.desk .gold-treasure-plaque .pw.even { color: #fbbf24 !important; }
+body.desk .gold-treasure-plaque .pw.hard { color: #f87171 !important; }
 .rw-coin {
   width: 16px;
   height: 16px;
@@ -5262,7 +5260,7 @@ body.desk .banner.v2:hover,
 }
 
 /* Luminous Teal-Emerald Glass Action CTA Button (LoL/TFT Proceed Style) */
-.card-action-btn {
+body.desk .card-action-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -5282,19 +5280,19 @@ body.desk .banner.v2:hover,
   box-shadow: 0 4px 16px rgba(20, 184, 166, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
   transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease !important;
 }
-.card-action-btn:hover {
+body.desk .card-action-btn:hover {
   filter: brightness(1.15) !important;
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 22px rgba(20, 184, 166, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
 }
 body:not(.desk) .card-action-btn { display: none !important; }
-.banner.v2.b-easy .card-action-btn,
-.banner.v2.b-medium .card-action-btn,
-.banner.v2.b-hard .card-action-btn,
-.banner.v2.b-boss .card-action-btn,
-.banner.v2.b-duel .card-action-btn,
-.banner.v2.b-shop .card-action-btn,
-.banner.v2.b-event .card-action-btn {
+body.desk .banner.v2.b-easy .card-action-btn,
+body.desk .banner.v2.b-medium .card-action-btn,
+body.desk .banner.v2.b-hard .card-action-btn,
+body.desk .banner.v2.b-boss .card-action-btn,
+body.desk .banner.v2.b-duel .card-action-btn,
+body.desk .banner.v2.b-shop .card-action-btn,
+body.desk .banner.v2.b-event .card-action-btn {
   background: linear-gradient(180deg, rgba(28, 75, 69, 0.95) 0%, rgba(13, 43, 39, 0.98) 100%) !important;
   border: 1.5px solid #45a29e !important;
   color: #e6f9f8 !important;
