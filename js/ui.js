@@ -691,7 +691,10 @@
   }
   function heroDetail(f) {
     const h = f && HEROES[f];
-
+    return h ? `<div class="card detail floating-hero-detail">
+        <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${esc(h.tag || h.abDesc || '')}</p>
+        <button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button>
+      </div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
   }
   // v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
   // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
