@@ -132,6 +132,20 @@ await ev(`
   }
 `);
 await sleep(600);
+const pmInfo = await ev(`(() => {
+  const el = document.querySelector('.mapside .pm') || document.querySelector('.pm');
+  if (!el) return 'no pm';
+  const cs = window.getComputedStyle(el);
+  return JSON.stringify({
+    tag: el.tagName,
+    classes: el.className,
+    parentClass: el.parentElement ? el.parentElement.className : '',
+    bg: cs.background,
+    bgColor: cs.backgroundColor,
+    bgImage: cs.backgroundImage
+  });
+})()`);
+console.log('PM INFO:', pmInfo);
 await shot('audit-map');
 
 // 5. Recruit screen (2nd hero selection)

@@ -690,20 +690,8 @@
     }).join('')}</div>`;
   }
   function heroDetail(f) {
-    const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
     const h = f && HEROES[f];
-    if (desk) {
-      if (h) {
-        return `<div class="card detail hero-drawer-v5">
-          <div class="hdrawer-hero">${img(f, 38)}<div class="hdrawer-meta"><b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' Melee' : I('bow') + ' Ranged'}</span></div></div>
-          <div class="hdrawer-ab"><b class="htag-title">${esc(h.abName)}:</b> <span class="htag-desc">${esc(h.tag || h.abDesc || '')}</span></div>
-          <div class="hdrawer-actions">${statBars(h)}<button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>
-        </div>`;
-      }
-      return '<div class="card detail hero-drawer-v5 placeholder"><p class="ssub tap">Tap a hero above to view tactical role & ability</p></div>';
-    }
-    return h ? `<div class="card detail"><div class="hrow">${img(f, 48)}<b>${esc(h.name)}</b><span class="role">${h.role} · ${h.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span></div>
-        <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${esc(h.tag || h.abDesc || '')}</p>${statBars(h)}<button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button></div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
+
   }
   // v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
   // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,

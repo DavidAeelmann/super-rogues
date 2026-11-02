@@ -3179,7 +3179,7 @@ body.side .bench .bnarrow::before, body.landscape .bench .bnarrow::before { cont
    ===================================================================================================== */
 
 /* 1. Chunky 3D Buttons: Skeuomorphic Flat Depth */
-button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn) {
+button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):not(.pm) {
   background: linear-gradient(180deg, #323d8c 0%, #20286b 60%, #171d54 100%) !important;
   color: #fff !important;
   border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
@@ -3190,11 +3190,11 @@ button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):no
   transition: transform .06s ease, filter .08s ease, box-shadow .06s ease;
 }
 
-button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):hover:not(:disabled) {
+button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):not(.pm):hover:not(:disabled) {
   filter: brightness(1.1);
 }
 
-button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):active:not(:disabled) {
+button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):not(.pm):active:not(:disabled) {
   transform: translateY(2.5px) scale(0.985) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 1px 0 #0d123e, 0 2px 4px rgba(0, 0, 0, 0.3) !important;
   filter: brightness(0.92);
@@ -5360,26 +5360,34 @@ body.desk section.map.road .mapside {
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
-  padding: 8px 10px !important;
-  border-radius: 12px !important;
-  background: rgba(30, 41, 59, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+
+  padding: 8px 6px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
   cursor: pointer !important;
-  transition: border-color 0.15s, transform 0.15s, background 0.15s !important;
+  transition: background 0.15s ease, transform 0.15s ease !important;
   text-align: left !important;
 }
 .tactical-dock .pm:hover {
-  border-color: rgba(255, 255, 255, 0.25) !important;
-  background: rgba(30, 41, 59, 0.7) !important;
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-bottom-color: rgba(200, 170, 110, 0.5) !important;
+  transform: translateX(2px) !important;
+
 }
 .tactical-dock .pm .por {
   width: 48px !important;
   height: 48px !important;
-  border-radius: 10px !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(200, 170, 110, 0.45) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
   flex-shrink: 0;
 }
 .tactical-dock .pmb {
@@ -5488,30 +5496,33 @@ body.desk section.map.road .mapside {
 .tactical-dock .boss-arcane-card {
   width: 100% !important;
   margin-top: 10px !important;
-  padding: 10px 12px !important;
-  border-radius: 12px !important;
-  background: rgba(24, 20, 30, 0.75) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(239, 68, 68, 0.28) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(200, 170, 110, 0.28) !important;
+  box-shadow: none !important;
+
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
   cursor: pointer !important;
   text-align: left !important;
-  transition: border-color 0.15s, background 0.15s !important;
+
+  transition: background 0.15s ease, border-color 0.15s ease !important;
 }
 .tactical-dock .boss-arcane-card:hover {
-  border-color: rgba(239, 68, 68, 0.5) !important;
-  background: rgba(30, 24, 38, 0.88) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(200, 170, 110, 0.6) !important;
 }
 .tactical-dock .boss-frame .por {
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 8px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(200, 170, 110, 0.4) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+  object-fit: cover !important;
+
 }
 .tactical-dock .boss-meta {
   flex: 1 !important;
@@ -7145,6 +7156,78 @@ body.desk section.title.home .dockitem b {
   margin-left: 2px;
 }
 
+
+/* 4. Screen 2: Path Selection Card Banner, Action Pill & Team Sidebar Dock */
+body.desk .map.road {
+  grid-template-columns: minmax(0, 1fr) 340px !important;
+  gap: 20px !important;
+  align-items: start !important;
+}
+body.desk section.map.road .mapside {
+  display: block !important;
+  width: 340px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+body.desk body.desk .banner.v2 {
+  min-height: 280px !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: 0 0 16px 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+body.desk body.desk .banner.v2 .scene {
+  width: 100% !important;
+  height: 110px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important;
+}
+body.desk body.desk .banner.v2 .bt {
+  padding: 6px 12px 2px !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+body.desk body.desk .banner.v2 .bd {
+  padding: 2px 14px 10px !important;
+  font-size: 12.5px !important;
+  line-height: 1.3 !important;
+  color: #cbd5e1 !important;
+}
+.card-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin: 8px auto 0 !important;
+  padding: 6px 18px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8) !important;
+  border: 1.5px solid #93c5fd !important;
+  border-bottom: 3px solid #1e3a8a !important;
+  color: #ffffff !important;
+  font-family: var(--fun) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+body:not(.desk) .card-action-btn { display: none !important; }
+.banner.v2.b-easy .card-action-btn,
+.banner.v2.b-hard .card-action-btn,
+.banner.v2.b-boss .card-action-btn {
+  background: linear-gradient(180deg, #ef4444, #b91c1c) !important;
+  border-color: #fca5a5 !important;
+  border-bottom-color: #7f1d1d !important;
+}
+
+
 /* 5. Screen 3: "A Hero Joins You!" Draft Stars & Stats Normal-Flow Fix */
 body.desk .hero-tarot-card {
   border: 2px solid #c89b3c !important;
@@ -8321,13 +8404,19 @@ body.desk .hero-mini-stats .mstat.rng b {
 /* Eradicate hero stars everywhere */
 .hero-stars-row,
 .hero-stars,
-.h-star {
+.h-star,
+.star-row,
+.st.held,
+.stars {
   display: none !important;
 }
 
 /* NO CONTAINER BOX WITH SCROLLING: floating single-line text */
+.card.detail,
+.card.detail.floating-hero-detail,
 body.desk .hero-drawer-v5,
-body.desk .card.detail.hero-drawer-v5 {
+body.desk .card.detail.hero-drawer-v5,
+section.start .card.detail {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -8338,10 +8427,16 @@ body.desk .card.detail.hero-drawer-v5 {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  width: 100% !important;
+  max-width: 760px !important;
 }
+.card.detail .hrow,
+.card.detail .htraits,
+.card.detail .sbars,
 body.desk .hero-drawer-v5 .hrow {
   display: none !important;
 }
+.card.detail .htag,
 body.desk .hero-drawer-v5 .htag {
   color: #f1f5f9 !important;
   font-size: 13px !important;
@@ -8349,15 +8444,17 @@ body.desk .hero-drawer-v5 .htag {
   text-align: center !important;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
 }
+.card.detail .hdet,
 body.desk .hero-drawer-v5 .hdet {
   margin-left: 8px !important;
-  padding: 2px 8px !important;
+  padding: 2px 10px !important;
   min-height: 22px !important;
-  font-size: 10.5px !important;
+  font-size: 11px !important;
   border-radius: 999px !important;
   background: rgba(30, 41, 59, 0.8) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: #f8fafc !important;
+  cursor: pointer !important;
 }
 body.desk section.start p.ssub.tap {
   margin: 4px 0 !important;
@@ -8427,38 +8524,81 @@ body.desk .wmap .wtrack {
   box-shadow: none !important;
 }
 
-/* Rich, vibrant fight choice cards */
+/* Tactical Hextech Fight Choice Cards (Breathy, Muted Dark Slate with Tier Accents) */
+body.desk .banner.v2 {
+  background: linear-gradient(180deg, rgba(17, 24, 38, 0.94) 0%, rgba(9, 13, 20, 0.98) 100%) !important;
+  backdrop-filter: blur(12px) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7) !important;
+  position: relative !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+}
+body.desk .banner.v2:hover {
+  transform: translateY(-4px) !important;
+}
 body.desk .banner.v2.b-easy {
-  background: linear-gradient(180deg, #065f46 0%, #047857 55%, #064e3b 100%) !important;
-  border: 2.5px solid #34d399 !important;
-  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border: 1.5px solid rgba(52, 211, 153, 0.5) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), inset 0 2px 0 #34d399 !important;
+}
+body.desk .banner.v2.b-easy:hover {
+  border-color: #34d399 !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(52, 211, 153, 0.25) !important;
 }
 body.desk .banner.v2.b-med,
 body.desk .banner.v2.b-medium {
-  background: linear-gradient(180deg, #d97706 0%, #b45309 55%, #78350f 100%) !important;
-  border: 2.5px solid #fbbf24 !important;
-  box-shadow: 0 10px 28px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border: 1.5px solid rgba(245, 158, 11, 0.5) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), inset 0 2px 0 #fbbf24 !important;
+}
+body.desk .banner.v2.b-med:hover,
+body.desk .banner.v2.b-medium:hover {
+  border-color: #fbbf24 !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.25) !important;
 }
 body.desk .banner.v2.b-hard,
 body.desk .banner.v2.b-horde {
-  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 55%, #7f1d1d 100%) !important;
-  border: 2.5px solid #f87171 !important;
-  box-shadow: 0 10px 28px rgba(239, 68, 68, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border: 1.5px solid rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), inset 0 2px 0 #f87171 !important;
+}
+body.desk .banner.v2.b-hard:hover,
+body.desk .banner.v2.b-horde:hover {
+  border-color: #f87171 !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(239, 68, 68, 0.25) !important;
 }
 body.desk .banner.v2.b-boss {
-  background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 55%, #4c1d95 100%) !important;
-  border: 2.5px solid #c084fc !important;
-  box-shadow: 0 10px 28px rgba(139, 92, 246, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border: 1.5px solid rgba(168, 85, 247, 0.55) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), inset 0 2px 0 #c084fc !important;
+}
+body.desk .banner.v2.b-boss:hover {
+  border-color: #c084fc !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(168, 85, 247, 0.3) !important;
+}
+body.desk .banner.v2 .gold-treasure-plaque {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  border-radius: 999px !important;
+  padding: 3px 12px !important;
+  color: #fde047 !important;
+  box-shadow: none !important;
+}
+body.desk .banner.v2 .card-action-btn {
+  background: linear-gradient(180deg, #163638 0%, #0d2022 100%) !important;
+  border: 1px solid #2dd4bf !important;
+  color: #ccfbf1 !important;
+  border-radius: 4px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
 }
 body.desk .banner.v2 .scene {
-  background: rgba(0, 0, 0, 0.2) !important;
+  background: rgba(0, 0, 0, 0.25) !important;
 }
 body.desk .banner.v2 .bt {
   color: #ffffff !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
 body.desk .banner.v2 .bd {
-  color: #f1f5f9 !important;
+  color: #cbd5e1 !important;
 }
 
 body.desk .wtrack .banner.v2 {
@@ -8466,13 +8606,37 @@ body.desk .wtrack .banner.v2 {
   margin: 0 6px !important;
 }
 
-/* Translucent floating sidebar dock */
+/* Translucent floating single-layer sidebar dock with hextech corner brackets */
 body.desk section.map.road .mapside .party,
 body.desk .party.tactical-dock {
-  background: rgba(10, 16, 26, 0.78) !important;
-  backdrop-filter: blur(14px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75) !important;
+  background: rgba(9, 13, 17, 0.84) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(200, 170, 110, 0.32) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+  border-radius: 6px !important;
+  position: relative !important;
+  padding: 14px 16px !important;
+}
+body.desk .party.tactical-dock::before,
+body.desk .party.tactical-dock::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 6px !important;
+  height: 6px !important;
+  border-color: #c8aa6e !important;
+  pointer-events: none !important;
+}
+body.desk .party.tactical-dock::before {
+  top: -1px !important;
+  left: -1px !important;
+  border-top: 2px solid #c8aa6e !important;
+  border-left: 2px solid #c8aa6e !important;
+}
+body.desk .party.tactical-dock::after {
+  bottom: -1px !important;
+  right: -1px !important;
+  border-bottom: 2px solid #c8aa6e !important;
+  border-right: 2px solid #c8aa6e !important;
 }
 
 /* 5. Item Shop (Floating, Clean, Breathable, Single Coin) */
@@ -8660,5 +8824,43 @@ body.desk .floating-shop-bar button.molten-gold-cta {
   border-radius: 12px !important;
   font-size: 16px !important;
   font-weight: 900 !important;
+}
+
+/* Ultimate Overrides: Low-Container Floating Aesthetic for Team Sidebar Dock */
+body.desk .party.tactical-dock .pgrid .pm,
+body.desk .party .pgrid .pm,
+body.desk .mapside .party .pm,
+body.desk .mapside .pm,
+.tactical-dock .pm,
+.tactical-dock .pgrid .pm {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 8px 4px !important;
+}
+body.desk .party.tactical-dock .pgrid .pm:hover,
+body.desk .mapside .pm:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-bottom-color: rgba(200, 170, 110, 0.5) !important;
+}
+body.desk .party.tactical-dock .boss-arcane-card,
+body.desk .mapside .boss-arcane-card,
+.tactical-dock .boss-arcane-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  background-image: none !important;
+  border: 1px solid rgba(200, 170, 110, 0.3) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+body.desk .party.tactical-dock .relicbtn,
+body.desk .mapside .relicbtn {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(200, 170, 110, 0.35) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
 }
 
