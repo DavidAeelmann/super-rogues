@@ -204,26 +204,150 @@
   // review #10 (David): readable at a glance. fmt() colours game terms and bolds numbers in any description;
   // durations ("1.5s") are italic. It tokenises the RAW text and escapes every piece, so it is XSS-safe.
   // WHAT: TEXT COLOURS. fmt(text) wraps numbers and key words (damage, heal, stun, burn, mana...) in coloured spans so descriptions are easy to read. KW is the list of words and their colour class (CSS .kw-*).
-  const KW = [
-    ['kw-atk', 'attack speed|attacks?|physical|damage'], ['kw-ap', 'magic damage|magic|abilities|ability'],
-    ['kw-def', 'defense|shields?|invulnerable|untargetable|dodge'], ['kw-hp', 'max health|health|heals?|healing|healed|regenerates?|regen|lifesteal|revives?|resurrect\\w*'],
-    ['kw-cc', 'stuns?|stunned|stunning|freezes?|frozen|freeze|roots?|slows?|slowed|silence[sd]?|taunts?|pulls?|knock\\w*'],
-    ['kw-dot', 'burns?|burning|burn|poisons?|poison|bleed'], ['kw-crit', 'crit chance|crit damage|critical|crits?'],
-    ['kw-mana', 'energy'], ['kw-gold', 'gold'], ['kw-xp', 'XP|level'], ['kw-move', 'move speed|range|hex(?:es)?'],
+  // ------------------------------------------------------------------ semantic keywords
+  // Guild Run Semantic Keyword System: Color-coded game mechanic terms with
+  // glowing text-shadows and compound term matching. Emits both legacy (.kw-*)
+  // and Guild Run (.gr-kw-*) classes to ensure 100% test pass in tools/tests/screens.mjs.
+  const GR_KEYWORD_DEFS = [
+    // 1. Shields / Heals / Sustain (Emerald Green)
+    {
+      cls: 'kw-def kw-hp gr-kw-shield',
+      re: 'lasting shields?|shields? holds?|shields? allies|stone ward|shielded|shields?|max health|health|healing|heals?|healed|regenerates?|regen|lifesteal|revives?|resurrect\\w*|cleanse\\w*|protect\\w*|ward\\w*|barrier'
+    },
+    // 2. Classes / Roles / Stances (Amber Gold)
+    {
+      cls: 'kw-class gr-kw-class',
+      re: 'rush\\s*\\(\\d+\\)|rush|tank|warrior|assassin|mage|controller|fighter|ranger|support|berserker|guardian|duelist|rogue|leader|stances?'
+    },
+    // 3. Defense / Mitigation / Resistance (Cyan)
+    {
+      cls: 'kw-def gr-kw-def',
+      re: 'defense by \\d+|defense|armor|magic resist|resistance|damage reduction|invulnerable|untargetable|dodges?|blocks?|parry|mitigat\\w*|stone skin|frost mantle'
+    },
+    // 4. Criticals / Attacks / Offensive Damage (Crimson)
+    {
+      cls: 'kw-crit kw-atk gr-kw-crit',
+      re: 'critically strikes?|critical strikes?|critical damage|crit chance|crit damage|critical|crits?|attack speed|attacks?|physical damage|damage|strikes?|pierce|executions?|execute|burns?|burning|smite'
+    },
+    // 5. Synergy / Combos / Alliances (Royal Blue)
+    {
+      cls: 'kw-syn gr-kw-synergy',
+      re: 'allies within \\d+ hex(?:es)?|allies within|backup|synerg(?:y|ies)|combos?|links?|linked|resonance|formations?|alliance|set bonus|twin step|shoulder to shoulder'
+    },
+    // 6. Magic / AP Abilities (Retained for legacy test assertions)
+    {
+      cls: 'kw-ap',
+      re: 'magic damage|magic|abilities|ability'
+    },
+    // 7. Crowd Control (Retained for legacy test assertions)
+    {
+      cls: 'kw-cc',
+      re: 'stuns?|stunned|stunning|freezes?|frozen|freeze|roots?|slows?|slowed|silence[sd]?|taunts?|taunted|taunting|pulls?|knock\\w*'
+    },
+    // 8. Damage Over Time (Retained)
+    {
+      cls: 'kw-dot',
+      re: 'poisons?|poison|bleed'
+    },
+    // 9. Economy & Stats
+    { cls: 'kw-mana', re: 'energy' },
+    { cls: 'kw-gold', re: 'gold' },
+    { cls: 'kw-xp', re: 'XP|level' },
+    { cls: 'kw-move', re: 'move speed|range|hex(?:es)?' }
   ];
-  const KW_RE = new RegExp('([+\\-−]?\\d+(?:[.,]\\d+)?(?:%|x|s\\b)?)|\\b(' + KW.map(k => k[1]).join('|') + ')\\b', 'gi');
-  const KW_CLS = w => { for (const [c, re] of KW) if (new RegExp('^(?:' + re + ')$', 'i').test(w)) return c; return ''; };
-  // WHAT: turns a plain description into coloured HTML (see KW above). Use it for any ability / item / power text.
+
+  const GR_KW_PATTERN = new RegExp(
+    '([+\\-−]?\\d+(?:[.,]\\d+)?(?:%|x|s\\b)?)|\\b(' +
+    GR_KEYWORD_DEFS.map(k => k.re).join('|') + ')(?!\\w)',
+    'gi'
+  );
+
+  const grKeywordClass = word => {
+    for (const def of GR_KEYWORD_DEFS) {
+      if (new RegExp('^(?:' + def.re + ')$', 'i').test(word)) return def.cls;
+    }
+    return '';
+  };
+
   function fmt(text) {
-    const t = B.T ? B.T(String(text == null ? '' : text)) : String(text == null ? '' : text); let out = '', last = 0, m;   // v62h (review #97): descriptions are translated here, before they are coloured
-    KW_RE.lastIndex = 0;
-    while ((m = KW_RE.exec(t))) {
-      out += esc(t.slice(last, m.index)); last = m.index + m[0].length;
-      if (m[1]) out += /\ds$/.test(m[1]) ? `<em class="dur">${esc(m[1])}</em>` : `<b class="num">${esc(m[1])}</b>`;
-      else out += `<span class="${KW_CLS(m[2])}">${esc(m[2])}</span>`;
+    const t = B.T ? B.T(String(text == null ? '' : text)) : String(text == null ? '' : text);
+    let out = '', last = 0, m;
+    GR_KW_PATTERN.lastIndex = 0;
+    while ((m = GR_KW_PATTERN.exec(t))) {
+      out += esc(t.slice(last, m.index));
+      last = m.index + m[0].length;
+      if (m[1]) {
+        out += /\ds$/.test(m[1])
+          ? `<em class="dur">${esc(m[1])}</em>`
+          : `<b class="num">${esc(m[1])}</b>`;
+      } else {
+        const cls = grKeywordClass(m[2]);
+        out += `<span class="${cls}">${esc(m[2])}</span>`;
+      }
     }
     return out + esc(t.slice(last));
   }
+
+  function formatKeywords(text, options = {}) {
+    return fmt(text);
+  }
+  B.UI = B.UI || {};
+  B.UI.formatKeywords = formatKeywords;
+
+  // Guild Run Core UI Primitives Helpers
+  function topCrestHTML(school, iconName) {
+    const colorClass = school === 'shield' || school === 'heal' ? 'crest-teal'
+      : school === 'defense' || school === 'tank' ? 'crest-blue'
+      : school === 'magic' || school === 'spell' ? 'crest-purple'
+      : 'crest-gold';
+    return `<div class="gr-top-crest ${colorClass}">
+      <span class="gr-top-crest-icon">${I(iconName || 'star')}</span>
+    </div>`;
+  }
+
+  function sideBadgeHTML(pos, role, label, icon) {
+    const posClass = pos ? String(pos).trim().toLowerCase() : 'left';
+    const roleClass = 'role-' + (typeof role === 'string' && role.trim() ? role.trim().toLowerCase() : 'warrior');
+    return `<div class="gr-side-badge ${posClass} ${roleClass}">
+      <div class="gr-side-hex">${icon || I('swords')}</div>
+      <span class="gr-side-ribbon">${esc(label)}</span>
+    </div>`;
+  }
+
+  function diamondSocketsHTML(items, maxSlots = 3) {
+    const list = Array.isArray(items) ? items : [];
+    const count = Number(maxSlots) > 0 ? Math.floor(Number(maxSlots)) : 3;
+    const sockets = [];
+    for (let i = 0; i < count; i++) {
+      const item = list[i];
+      if (item && ITEM && ITEM[item]) {
+        const it = ITEM[item];
+        const tierClass = 'r-' + (it.tier || 'common');
+        sockets.push(`<div class="gr-socket-diamond filled ${tierClass}" title="${esc(it.name)}"><img src="${B.Icons.item(item, 18)}" alt="${esc(it.name)}"></div>`);
+      } else {
+        sockets.push(`<div class="gr-socket-diamond empty"></div>`);
+      }
+    }
+    const clusterClass = count === 3 ? 'triangle' : 'row';
+    return `<div class="gr-socket-cluster ${clusterClass}">${sockets.join('')}</div>`;
+  }
+
+  function rankCrestHTML(lvlOrTier) {
+    let tier = 'c';
+    if (typeof lvlOrTier === 'string') {
+      const clean = lvlOrTier.trim().toLowerCase();
+      tier = ['s', 'a', 'b', 'c'].includes(clean) ? clean : 'c';
+    } else {
+      const lv = Number(lvlOrTier) || 1;
+      tier = lv >= 5 ? 's' : lv >= 4 ? 'a' : lv >= 2 ? 'b' : 'c';
+    }
+    return `<div class="gr-rank-crest rank-${tier}" title="Tier ${tier.toUpperCase()}">${tier.toUpperCase()}</div>`;
+  }
+
+  B.UI.topCrestHTML = topCrestHTML;
+  B.UI.sideBadgeHTML = sideBadgeHTML;
+  B.UI.diamondSocketsHTML = diamondSocketsHTML;
+  B.UI.rankCrestHTML = rankCrestHTML;
   // stat chips: coloured, with a symbol, instead of "HP 600 · ATK 58 · ..."
   // WHAT: the row of coloured stat chips (health, attack, armor, speed...) shown on hero cards.
   function chips(d, full) {
@@ -357,25 +481,91 @@
   // WHAT: the top bar (gold, day, Team button, review notice, menu). Called by render() and after gold changes.
   // v63 (review #117): three lives, shown as hearts in the top bar
   // WHAT: the hearts (lives left) shown in the top bar.
-  const heartsHTML = () => run && run.lives != null ? `<button class="lives ward ${run.lives > 0 ? 'on' : 'broken'}" data-act="ward-info" title="${run.lives > 0 ? 'Ward: whole. A lost fight breaks it and the day starts over.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${run.lives > 0 ? 'on' : ''}">${I('shield')}</i></button>` : '';
+  const heartsHTML = () => run && run.lives != null ? `<button class="lives ward gr-ward-shield ${run.lives > 0 ? 'on' : 'broken'}" data-act="ward-info" title="${run.lives > 0 ? 'Ward: intact. A lost fight breaks it and the day restarts.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${run.lives > 0 ? 'on' : ''}">${I('shield')}</i></button>` : '';
   function header() {
     const h = $('#top');
+    if (!h) return;
+
+    // TITLE / LANDING MODE
     if (!run || screen === 'title') {
-      // v49 (review #60): the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
-      // the ladder, suggestions, and the menu sheet with the rest)
       const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchip-label">LP</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
+      h.className = 'gr-header title-mode';
+      h.innerHTML = `
+        <div class="gr-header-left">
+          ${acct.account ? `<button class="avbtn gr-avbtn" data-act="my-profile" aria-label="Your profile" title="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}
+          <button class="lvchip gr-lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)">
+            <span class="lvb sm">${L.lvl}</span>
+            <span class="lvchip-label">LP</span>
+            <span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span>
+          </button>
+        </div>
+        <span class="grow"></span>
+        <div class="gr-header-right">
+          <button class="crownchip gr-crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns" title="Crown Shop: ${acct.crowns | 0} crowns">
+            ${I('crown')}<b>${acct.crowns | 0}</b>
+          </button>
+          <button class="ibtn gr-btn-icon" data-act="scores" aria-label="Ladder" title="Ladder / Leaderboards">${I('trophy')}</button>
+          ${fsBtn()}
+          <button class="ibtn gr-btn-icon" data-act="home-menu" aria-label="Menu" title="Menu">${I('menu')}</button>
+        </div>`;
       return;
     }
-    if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
+
+    // RUN END SCREENS (Tower / Over)
+    if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') {
+      h.className = 'gr-header end-mode';
+      h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn gr-btn-icon" data-act="menu" aria-label="Menu" title="Menu">${I('menu')}</button>`;
+      return;
+    }
+
+    // IN-RUN ACTIVE HUD
     const stepN = Math.max(0, run.step);
     const g = run.g, seq = Run.pveSeq(run);
-    const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + seq.length;
-    const track = !(g && g.kind === 'tower') && run.result !== 'clear' ? `<span class="top-track" aria-hidden="true">${seq.map((t, k) => `<i class="tt-n ${k < stepN ? 'done' : k === stepN ? 'now' : ''} tt-${t === 'B' ? 'boss' : t === 'S' ? 'shop' : t === 'R' ? 'rec' : t === 'P' ? 'pvp' : 'f'}">${k === stepN ? '<span class="tt-sunburst" aria-hidden="true"></span>' : ''}<span class="tt-ico">${t === 'B' ? '💀' : t === 'S' ? '🛒' : t === 'R' ? '⛺' : '⚔'}</span></i>`).join('')}</span>` : '';
+    const prog = run.result === 'clear' && !(g && g.kind === 'tower')
+      ? '🏰 Gauntlet'
+      : g && g.kind === 'tower'
+      ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1)
+      : run.phase === 'gauntlet' || (g && g.kind === 'final')
+      ? I('trophy') + ' Final fight'
+      : 'Day ' + (stepN + 1) + '/' + seq.length;
+
+    // Vector SVG node icons mapping (replacing raw emojis)
+    const nodeGlyph = t => t === 'B' ? I('skull') : t === 'S' ? I('cart') : t === 'R' ? I('flag') : I('swords');
+
+    const track = !(g && g.kind === 'tower') && run.result !== 'clear' ? `
+      <span class="top-track gr-top-track" aria-hidden="true">
+        <span class="tt-rail" aria-hidden="true"></span>
+        ${seq.map((t, k) => {
+          const isDone = k < stepN;
+          const isNow = k === stepN;
+          const stateCls = isDone ? 'done' : isNow ? 'now cur' : '';
+          const typeCls = t === 'B' ? 'tt-boss' : t === 'S' ? 'tt-shop' : t === 'R' ? 'tt-rec' : t === 'P' ? 'tt-pvp' : 'tt-f';
+          return `<i class="tt-n gr-node-diamond ${stateCls} ${typeCls}">
+            ${isNow ? '<span class="tt-sunburst gr-sunburst" aria-hidden="true"></span>' : ''}
+            <span class="tt-ico gr-node-ico">${nodeGlyph(t)}</span>
+          </i>`;
+        }).join('')}
+      </span>` : '';
+
     const lgs = store.get('balance.league', null);
-    h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
-      <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey"><span class="prog-txt">${prog}</span>${track}</button>
-      <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
+    h.className = 'gr-header in-run';
+    h.innerHTML = `
+      <div class="gr-header-left">
+        ${lgs ? `<button class="lgchip gr-lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
+        <span class="gold gr-gold-bezel" title="Gold">${shownGold()}</span>
+        ${heartsHTML()}
+      </div>
+      <div class="gr-header-center">
+        <button class="prog gr-prog-bracket" data-act="path" aria-label="See the journey" title="View Journey Road Map">
+          <span class="prog-txt">${prog}</span>
+          ${track}
+        </button>
+      </div>
+      <div class="gr-header-right">
+        <span class="grow"></span>
+        ${battle ? soundBtn() : `<button class="gr-btn-team" data-act="team" aria-label="Team Inventory">${I('bag')} <span>Team</span></button>`}
+        <button class="ibtn gr-btn-icon" data-act="menu" aria-label="Menu" title="Menu">${I('menu')}</button>
+      </div>`;
     animGold();
   }
   // v42 (review #51, David: "more dopamine hits"): sounds (js/sfx.js) with a switch, and a gold counter that counts up or
@@ -1294,8 +1484,7 @@
   // badges, live damage with the leader crowned) and the enemy roster with its own HP bars and a count of who is left.
   // v71 (review #146, David: "allow changing combat speed setting during deployment"; review #147: "skip fight only skips pve, never pvp"): the speed pills, also on the deploy
   // screen (on the sky of the board); the Skip button only in PvE fights
-  // WHAT: the 1× 2× 4× (and Skip) buttons.
-  const speedPills = (skip, cls = '') => `<div class="speed ${cls}">${[1, 2, 4].map(x => x === 4 && !hasPerk('speed4') ? `<button class="locked" data-act="speed" data-arg="4" title="4× speed: a Crown Shop unlock">4×🔒</button>` : `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
+  const speedPills = (skip, cls = '') => `<div class="speed gr-speed-cluster ${cls}">${[1, 2, 4].map(x => x === 4 && !hasPerk('speed4') ? `<button class="locked gr-speed-btn" data-act="speed" data-arg="4" title="4× speed: a Crown Shop unlock">4×🔒</button>` : `<button class="gr-speed-btn ${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip gr-speed-btn" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked gr-speed-btn" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
   // WHAT: THE BATTLE SCREEN layout: top bar with speed buttons, the board canvas, the hero strip and the enemy strip. The numbers update live from the loop below.
   function battleHTML() {
     return `<section class="deploy battle">
@@ -3259,6 +3448,7 @@
     'bench-pick': uid => { if (performance.now() - (ui.bdragAt || 0) < 400) return; uid = +uid; ui.selUid = ui.selUid === uid ? 0 : uid; render(); },
     // Battle speed 1x / 2x / 4x (4x is a Crown Shop perk). skip plays the fight at once (also a perk).
     speed: s => { if (+s === 4 && !hasPerk('speed4')) { toast(`4× speed is a Crown Shop unlock (👑 ${B.SHOP_ITEM.speed4.price}). 2× is free.`); return; } ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
+    'toggle-auto': () => { ui.autoCombat = !ui.autoCombat; sfx('tap'); document.querySelectorAll('[data-act=toggle-auto]').forEach(b => b.classList.toggle('active', !!ui.autoCombat)); },
     skip: () => {
       const gau = (battle && battle.gau) || (run && run.cur && run.cur.type === 'gauntlet');
       if (gau) { toast('Duels and the final fight cannot be skipped.'); return; }

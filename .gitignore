@@ -7,3 +7,9 @@ tools/watcher.log
 art-inbox/
 
 tools/results/*.json
+.agents/
+* - Copy*
+*- Copy*
+audit-*.png
+*.zip
+repomix-output*.xml

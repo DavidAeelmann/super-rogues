@@ -20,6 +20,54 @@
   --border-steel: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 45%, #475569 85%, #cbd5e1 100%);
   --shadow-socket: inset 0 3px 6px rgba(0,0,0,0.85), inset 0 0 0 1px rgba(255,255,255,0.05), 0 1px 0 rgba(255,255,255,0.12);
   --shadow-gold-rim: 0 4px 12px rgba(0,0,0,0.75), inset 0 1px 1px rgba(255,245,200,0.65);
+
+  /* ==========================================================================
+     GUILD RUN MASTER DESIGN TOKENS (M1)
+     ========================================================================== */
+  /* Typography */
+  --gr-font-header: "Cinzel", "Marcellus", "Georgia", serif;
+  --gr-font-ui: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Primary Dark Slates & Backdrops */
+  --gr-bg-void: #080b10;
+  --gr-bg-slate-dark: #0d131a;
+  --gr-bg-slate-card: #121824;
+  --gr-bg-slate-inner: #16202e;
+  --gr-bg-panel-glass: rgba(13, 20, 28, 0.88);
+  --gr-bg-ruby-burst: #8b1117;
+
+  /* Metallic Trims, Frames & Bevels */
+  --gr-gold-bright: #fde047;
+  --gr-gold-base: #d4af37;
+  --gr-gold-antique: #b38b22;
+  --gr-gold-shadow: #6b4f10;
+  --gr-border-gold: linear-gradient(135deg, #fde047 0%, #d4af37 40%, #8a6010 80%, #c59b27 100%);
+  --gr-border-silver: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 45%, #475569 85%, #cbd5e1 100%);
+
+  /* Action Buttons & Emerald / Teal Palette */
+  --gr-teal-bright: #2dd4bf;
+  --gr-teal-base: #1f6d6b;
+  --gr-teal-dark: #114443;
+  --gr-teal-aura: rgba(16, 185, 129, 0.35);
+
+  /* HUD & Semantic Combat Colors */
+  --gr-hp-hero: #22c55e;
+  --gr-hp-enemy: #ef4444;
+  --gr-energy: #38bdf8;
+  --gr-dps-magenta: #d946ef;
+
+  /* Semantic Ability Keywords */
+  --gr-kw-shield: #4ade80;
+  --gr-kw-class: #f59e0b;
+  --gr-kw-crit: #ef4444;
+  --gr-kw-def: #38bdf8;
+  --gr-kw-synergy: #60a5fa;
+  --gr-kw-num: #ffffff;
+  --gr-kw-dur: #fde047;
+
+  /* Card Geometry Defaults (Desktop) */
+  --gr-cut: 14px;
+  --gr-dip: 32px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -8861,4 +8909,1348 @@ body.desk .mapside .relicbtn {
   border-radius: 6px !important;
   box-shadow: none !important;
 }
+
+/* ==========================================================================
+   GUILD RUN DESIGN SYSTEM & CORE UI PRIMITIVES (MILESTONE 1)
+   ========================================================================== */
+
+/* Mobile Breakpoint Token Overrides */
+@media (max-width: 480px) {
+  :root {
+    --gr-cut: 11px;
+    --gr-dip: 22px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   1. POLYGONAL SHIELD CARD CONTAINER (.gr-card-shield)
+   -------------------------------------------------------------------------- */
+
+/* Outer Positioning & Badge Wrapper */
+.gr-card-shield {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 114px;
+  height: 195px;
+  margin: 0 auto;
+  user-select: none;
+  cursor: pointer;
+  overflow: visible;
+  touch-action: manipulation;
+}
+
+/* Vertical Emerald Light Pillar (Back-Aura) */
+.gr-card-pillar {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%) scaleY(0.7);
+  width: 130%;
+  height: 140%;
+  background: radial-gradient(ellipse at 50% 85%, var(--gr-teal-aura) 0%, rgba(16, 185, 129, 0.08) 50%, transparent 75%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1), transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+  z-index: 0;
+}
+.gr-card-shield.selected .gr-card-pillar,
+.gr-card-shield:hover .gr-card-pillar {
+  opacity: 1;
+  transform: translateX(-50%) scaleY(1);
+}
+
+/* Layer 1: Clipped Outer Metallic Bevel Body */
+.gr-card-shield-body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--gr-border-silver);
+  clip-path: polygon(
+    var(--gr-cut) 0%,
+    calc(100% - var(--gr-cut)) 0%,
+    100% var(--gr-cut),
+    100% calc(100% - var(--gr-dip)),
+    50% 100%,
+    0% calc(100% - var(--gr-dip)),
+    0% var(--gr-cut)
+  );
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.85));
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+              filter 0.2s cubic-bezier(0.2, 0, 0, 1),
+              background 0.2s ease;
+  will-change: transform, filter;
+  z-index: 1;
+}
+
+/* Hover State */
+.gr-card-shield:hover .gr-card-shield-body {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.35)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.9));
+}
+
+/* Selected State: Radiant Gold Halo & Emerald Lift */
+.gr-card-shield.selected .gr-card-shield-body {
+  background: var(--gr-border-gold);
+  transform: translateY(-5px);
+  filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.6)) drop-shadow(0 10px 24px rgba(0, 0, 0, 0.95));
+}
+
+/* Layer 2: 1px Dark Groove Inset */
+.gr-card-groove {
+  position: absolute;
+  inset: 2px;
+  background: var(--gr-bg-void);
+  clip-path: polygon(
+    calc(var(--gr-cut) - 1px) 0%,
+    calc(100% - (var(--gr-cut) - 1px)) 0%,
+    100% calc(var(--gr-cut) - 1px),
+    100% calc(100% - (var(--gr-dip) - 1px)),
+    50% 100%,
+    0% calc(100% - (var(--gr-dip) - 1px)),
+    0% calc(var(--gr-cut) - 1px)
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Layer 3: Inner Slate Plate & Content Surface */
+.gr-card-inner {
+  position: absolute;
+  inset: 3px;
+  background: radial-gradient(120% 100% at 50% 0%, var(--gr-bg-slate-inner) 0%, var(--gr-bg-slate-card) 60%, #0a0d14 100%);
+  clip-path: polygon(
+    calc(var(--gr-cut) - 1.5px) 0%,
+    calc(100% - (var(--gr-cut) - 1.5px)) 0%,
+    100% calc(var(--gr-cut) - 1.5px),
+    100% calc(100% - (var(--gr-dip) - 1.5px)),
+    50% 100%,
+    0% calc(100% - (var(--gr-dip) - 1.5px)),
+    0% calc(var(--gr-cut) - 1.5px)
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px 16px;
+  z-index: 2;
+}
+
+/* Selected Hero Ruby Sunburst Plate (Image 3 Yuuna) */
+.gr-card-shield.selected .gr-card-inner {
+  background: radial-gradient(120% 100% at 50% 15%, #991b1b 0%, #6b1117 40%, var(--gr-bg-slate-card) 85%);
+}
+
+/* Chevron Tail Diamond Sockets In Card */
+.gr-tail-sockets {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+  margin-bottom: 2px;
+}
+
+/* Floating 3D Golden Chevron Cursor */
+.gr-cursor-arrow {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  color: var(--gr-gold-bright);
+  font-size: 13px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9));
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 4;
+}
+.gr-card-shield.selected .gr-cursor-arrow {
+  opacity: 1;
+  transform: translate(2px, 2px);
+}
+
+/* Desktop Adaptation for Shield Cards */
+body.desk .gr-card-shield {
+  --gr-cut: 14px;
+  --gr-dip: 32px;
+  max-width: 250px;
+  height: 420px;
+}
+body.desk .gr-card-shield:hover .gr-card-shield-body {
+  transform: translateY(-5px);
+}
+body.desk .gr-card-shield.selected .gr-card-shield-body {
+  transform: translateY(-8px);
+}
+body.desk .gr-top-crest {
+  top: -14px;
+  width: 32px;
+  height: 32px;
+}
+body.desk .gr-top-crest-icon {
+  font-size: 15px;
+}
+body.desk .gr-side-badge {
+  top: 48px;
+  font-size: 11px;
+  padding: 2px 8px;
+}
+body.desk .gr-side-badge.left { left: -12px; }
+body.desk .gr-side-badge.right { right: -12px; }
+body.desk .gr-socket-diamond {
+  width: 24px;
+  height: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   2. TACTILE 3D ACTION BUTTONS & CONTROLS
+   -------------------------------------------------------------------------- */
+
+/* Common 3D Button Base */
+.gr-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--gr-font-header, 'Cinzel', 'Georgia', serif);
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  padding: 12px 28px;
+  min-height: 48px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  transition: transform 0.08s ease, filter 0.12s ease;
+}
+
+/* 45° Chamfered Silhouette */
+.gr-btn-chamfer {
+  clip-path: polygon(
+    10px 0%, calc(100% - 10px) 0%,
+    100% 10px, 100% calc(100% - 10px),
+    calc(100% - 10px) 100%, 10px 100%,
+    0% calc(100% - 10px), 0% 10px
+  );
+}
+
+/* Tactile Active Press Displacement */
+.gr-btn:active:not(:disabled):not(.locked) {
+  transform: translateY(2px) !important;
+}
+
+/* Disabled / Locked State */
+.gr-btn:disabled,
+.gr-btn.locked {
+  filter: grayscale(0.85) brightness(0.65) drop-shadow(0 2px 0 #1e293b) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  opacity: 0.65 !important;
+  pointer-events: none !important;
+}
+
+/* A. .gr-btn-fight (Emerald / Teal Primary Combat Trigger) */
+.gr-btn-fight,
+body.desk .deploy > .bar.sticky > button[data-act="fight"],
+.deploy > .bar.sticky > button[data-act="fight"] {
+  background: linear-gradient(180deg, #2dd4bf 0%, #1f6d6b 14%, #134e4a 55%, #0d3835 100%) !important;
+  color: #f0fdf4 !important;
+  border: 1.5px solid #5eead4 !important;
+  filter: drop-shadow(0 4px 0 #072120) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.75)) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(45, 212, 191, 0.65) !important;
+}
+
+.gr-btn-fight:hover:not(:disabled):not(.locked),
+body.desk .deploy > .bar.sticky > button[data-act="fight"]:hover:not(:disabled):not(.locked) {
+  filter: brightness(1.15) drop-shadow(0 5px 0 #072120) drop-shadow(0 10px 22px rgba(45, 212, 191, 0.4)) !important;
+  transform: translateY(-1px) !important;
+}
+
+.gr-btn-fight:active:not(:disabled):not(.locked),
+body.desk .deploy > .bar.sticky > button[data-act="fight"]:active:not(:disabled):not(.locked) {
+  filter: brightness(0.95) drop-shadow(0 2px 0 #072120) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.8)) !important;
+  transform: translateY(2px) !important;
+}
+
+/* Gold Corner Bracket Accents */
+.gr-btn-bracket {
+  display: inline-block;
+  color: #fde047;
+  font-weight: 900;
+  text-shadow: 0 0 8px rgba(253, 224, 71, 0.8);
+  font-size: 1.1em;
+}
+
+/* B. .gr-btn-proceed (Emerald-Cyan Progression / Result CTA) */
+.gr-btn-proceed,
+.proceed-cta,
+button[data-act="result-ok"] {
+  background: linear-gradient(180deg, #34d399 0%, #059669 20%, #047857 60%, #064e3b 100%) !important;
+  color: #ffffff !important;
+  border: 1.5px solid #a7f3d0 !important;
+  filter: drop-shadow(0 4px 0 #022c22) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.7)) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(52, 211, 153, 0.6) !important;
+}
+
+.gr-btn-proceed:hover:not(:disabled),
+.proceed-cta:hover:not(:disabled),
+button[data-act="result-ok"]:hover:not(:disabled) {
+  filter: brightness(1.15) drop-shadow(0 5px 0 #022c22) drop-shadow(0 10px 20px rgba(52, 211, 153, 0.4)) !important;
+  transform: translateY(-1px) !important;
+}
+
+.gr-btn-proceed:active:not(:disabled),
+.proceed-cta:active:not(:disabled),
+button[data-act="result-ok"]:active:not(:disabled) {
+  filter: brightness(0.95) drop-shadow(0 2px 0 #022c22) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.8)) !important;
+  transform: translateY(2px) !important;
+}
+
+/* C. .gr-btn-gold (Molten Radiant Gold CTA) */
+.gr-btn-gold,
+.gold-ingot-btn,
+button.primary.gold-cta,
+button[data-act="start-next"].ready {
+  background: linear-gradient(180deg, #fef08a 0%, #facc15 18%, #ca8a04 60%, #854d0e 100%) !important;
+  color: #361e02 !important;
+  border: 1.5px solid #fffbeb !important;
+  filter: drop-shadow(0 4px 0 #451a03) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.75)) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+}
+
+.gr-btn-gold:hover:not(:disabled),
+.gold-ingot-btn:hover:not(:disabled),
+button[data-act="start-next"].ready:hover:not(:disabled) {
+  filter: brightness(1.12) drop-shadow(0 5px 0 #451a03) drop-shadow(0 10px 22px rgba(250, 204, 21, 0.45)) !important;
+  transform: translateY(-1px) !important;
+}
+
+.gr-btn-gold:active:not(:disabled),
+.gold-ingot-btn:active:not(:disabled),
+button[data-act="start-next"].ready:active:not(:disabled) {
+  filter: brightness(0.95) drop-shadow(0 2px 0 #451a03) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.8)) !important;
+  transform: translateY(2px) !important;
+}
+
+/* D. .gr-btn-steel (Burnished Gunmetal Secondary Action Button) */
+.gr-btn-steel,
+.steel-btn,
+button[data-act="start-back"],
+button[data-act="result-more"],
+button[data-act="hero-peek"] {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 50%, #0f172a 100%) !important;
+  color: #e2e8f0 !important;
+  border: 1.5px solid #64748b !important;
+  filter: drop-shadow(0 3px 0 #05080f) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+.gr-btn-steel:hover:not(:disabled),
+.steel-btn:hover:not(:disabled),
+button[data-act="start-back"]:hover:not(:disabled),
+button[data-act="result-more"]:hover:not(:disabled) {
+  filter: brightness(1.15) drop-shadow(0 4px 0 #05080f) drop-shadow(0 6px 14px rgba(100, 116, 139, 0.35)) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+}
+
+.gr-btn-steel:active:not(:disabled),
+.steel-btn:active:not(:disabled),
+button[data-act="start-back"]:active:not(:disabled) {
+  filter: brightness(0.95) drop-shadow(0 1.5px 0 #05080f) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7)) !important;
+  transform: translateY(2px) !important;
+}
+
+/* Speed Controls Cluster */
+.speed.gr-speed-cluster,
+.speed {
+  display: inline-flex !important;
+  align-items: center !important;
+  background: #070a0f !important;
+  border: 1.5px solid #334155 !important;
+  border-radius: 4px !important;
+  padding: 2px !important;
+  gap: 2px !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Speed Button Segments */
+.speed button,
+body.desk .speed button {
+  min-height: 28px !important;
+  min-width: 34px !important;
+  padding: 2px 8px !important;
+  font-family: var(--gr-font-ui, 'Inter', system-ui, sans-serif) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  border-radius: 2px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: #111622 !important;
+  color: #94a3b8 !important;
+  cursor: pointer !important;
+  transition: all 0.1s ease !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.speed button:hover:not(.on):not(.locked) {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* Active Speed Button */
+.speed button.on,
+body.desk .speed button.on,
+body.desk .deploy.battle .hud .speed button.on {
+  background: linear-gradient(180deg, #fde047 0%, #d4af37 60%, #996515 100%) !important;
+  color: #2e1700 !important;
+  font-weight: 900 !important;
+  border-color: #fef08a !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 0 10px rgba(253, 224, 71, 0.5) !important;
+  text-shadow: none !important;
+  transform: none !important;
+}
+
+/* Locked Speed Button */
+.speed button.locked {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  background: #090d14 !important;
+  color: #475569 !important;
+}
+
+/* Skip Button */
+.speed .skip {
+  background: linear-gradient(180deg, #334155, #1e293b) !important;
+  color: #f59e0b !important;
+  border-color: #64748b !important;
+}
+.speed .skip:hover:not(.locked) {
+  color: #fde047 !important;
+  background: linear-gradient(180deg, #475569, #334155) !important;
+}
+
+/* Dedicated [AUTO] Button */
+.gr-btn-auto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 2px 10px;
+  font-family: var(--gr-font-ui, 'Inter', system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  border: 1px solid #1f6d6b;
+  background: linear-gradient(180deg, #132e2e 0%, #0d2020 100%);
+  color: #5eead4;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+  transition: all 0.12s ease;
+}
+
+.gr-btn-auto.active {
+  background: linear-gradient(180deg, #0d9488 0%, #0f766e 60%, #115e59 100%);
+  border-color: #22c55e;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  text-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
+}
+
+/* --------------------------------------------------------------------------
+   3. BADGES, CRESTS & DIAMOND SOCKETS
+   -------------------------------------------------------------------------- */
+
+/* Top Projecting Diamond Crest */
+.gr-top-crest {
+  position: absolute;
+  top: -19px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 38px;
+  height: 38px;
+  background: radial-gradient(circle at 35% 35%, #1e293b 0%, #0b0f17 100%);
+  border: 2px solid var(--gr-gold-base, #d4af37);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Category Color Variants */
+.gr-top-crest.crest-teal {
+  background: radial-gradient(circle at 35% 35%, #134e4a 0%, #071f1e 100%);
+  border-color: #2dd4bf;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), 0 0 10px rgba(45, 212, 191, 0.4);
+}
+
+.gr-top-crest.crest-blue {
+  background: radial-gradient(circle at 35% 35%, #1e3a8a 0%, #091530 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.gr-top-crest.crest-gold {
+  background: radial-gradient(circle at 35% 35%, #78350f 0%, #291202 100%);
+  border-color: #fde047;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), 0 0 10px rgba(253, 224, 71, 0.4);
+}
+
+.gr-top-crest.crest-purple {
+  background: radial-gradient(circle at 35% 35%, #581c87 0%, #1c072e 100%);
+  border-color: #c084fc;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), 0 0 10px rgba(192, 132, 252, 0.4);
+}
+
+/* Upright Counter-Rotated Icon Inside Crest */
+.gr-top-crest-icon {
+  transform: rotate(-45deg);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+.gr-top-crest-icon svg,
+.gr-top-crest-icon i {
+  width: 18px;
+  height: 18px;
+}
+
+/* Side-Anchored Hexagonal Trait Badges */
+.gr-side-badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  z-index: 8;
+  pointer-events: auto;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85));
+  transition: transform 0.15s ease;
+}
+
+.gr-side-badge:hover {
+  transform: scale(1.08);
+}
+
+.gr-side-badge.left {
+  left: -14px;
+  flex-direction: row;
+}
+
+.gr-side-badge.right {
+  right: -14px;
+  flex-direction: row-reverse;
+}
+
+/* Hexagonal Emblem Token */
+.gr-side-hex {
+  width: 24px;
+  height: 26px;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(180deg, #991b1b 0%, #450a0a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.25);
+}
+
+.gr-side-hex svg,
+.gr-side-hex i {
+  width: 14px;
+  height: 14px;
+  color: #ffffff;
+}
+
+/* Extension Ribbon */
+.gr-side-ribbon {
+  height: 20px;
+  background: #080b11;
+  border: 1px solid #334155;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  font-family: var(--gr-font-ui, 'Inter', system-ui, sans-serif);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin-left: -2px;
+  z-index: 1;
+}
+
+.gr-side-badge.right .gr-side-ribbon {
+  margin-left: 0;
+  margin-right: -2px;
+}
+
+/* Archetype Theme Variants */
+.gr-side-badge.role-crit .gr-side-hex,
+.gr-side-badge.role-assassin .gr-side-hex {
+  background: linear-gradient(180deg, #dc2626 0%, #7f1d1d 100%);
+  box-shadow: inset 0 0 0 1.5px #fca5a5;
+}
+
+.gr-side-badge.role-tank .gr-side-hex {
+  background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%);
+  box-shadow: inset 0 0 0 1.5px #93c5fd;
+}
+
+.gr-side-badge.role-warrior .gr-side-hex {
+  background: linear-gradient(180deg, #d97706 0%, #78350f 100%);
+  box-shadow: inset 0 0 0 1.5px #fde68a;
+}
+
+.gr-side-badge.role-mage .gr-side-hex {
+  background: linear-gradient(180deg, #9333ea 0%, #581c87 100%);
+  box-shadow: inset 0 0 0 1.5px #d8b4fe;
+}
+
+.gr-side-badge.role-healer .gr-side-hex {
+  background: linear-gradient(180deg, #059669 0%, #064e3b 100%);
+  box-shadow: inset 0 0 0 1.5px #6ee7b7;
+}
+
+/* Diamond Equipment Sockets */
+.gr-socket-diamond,
+body.desk .dparty .dsock,
+.dsock {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  transform: rotate(45deg);
+  background: #070a0e !important;
+  border: 1.5px solid #334155 !important;
+  border-radius: 2px !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(255, 255, 255, 0.08) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 3px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Empty Socket Center Pip */
+.gr-socket-diamond.empty::after,
+.dsock.empty::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 1px;
+}
+
+/* Filled / Equipped Socket */
+.gr-socket-diamond.filled,
+.dsock.filled {
+  border-color: var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4), inset 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Counter-Rotated Item Icon Inside Socket */
+.gr-socket-diamond img,
+.gr-socket-diamond svg,
+.gr-socket-diamond .ico,
+.dsock img,
+.dsock svg,
+.dsock .ico {
+  transform: rotate(-45deg);
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+/* Rarity Tier Border Overrides */
+.gr-socket-diamond.r-uncommon { border-color: #4ade80 !important; box-shadow: 0 0 6px rgba(74, 222, 128, 0.4) !important; }
+.gr-socket-diamond.r-rare     { border-color: #38bdf8 !important; box-shadow: 0 0 8px rgba(56, 189, 248, 0.4) !important; }
+.gr-socket-diamond.r-epic     { border-color: #c084fc !important; box-shadow: 0 0 10px rgba(192, 132, 252, 0.45) !important; }
+.gr-socket-diamond.r-legendary{ border-color: #fbbf24 !important; box-shadow: 0 0 12px rgba(251, 191, 36, 0.55) !important; }
+
+/* Diamond Socket Cluster */
+.gr-socket-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.gr-socket-cluster.triangle {
+  display: grid;
+  grid-template-columns: repeat(2, 22px);
+  grid-template-rows: repeat(2, 22px);
+  gap: 6px;
+  justify-content: center;
+}
+
+.gr-socket-cluster.triangle .gr-socket-diamond:first-child {
+  grid-column: 1 / span 2;
+  margin: 0 auto !important;
+}
+
+/* Circular Rank Medallions */
+.gr-rank-crest {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--gr-font-header, 'Cinzel', serif);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  user-select: none;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.85);
+}
+
+/* Tier C — Silver / Steel (Common / Level 1) */
+.gr-rank-crest.rank-c {
+  background: radial-gradient(circle at 35% 35%, #334155 0%, #0f172a 100%);
+  border: 2px solid #94a3b8;
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px #000000;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+/* Tier B — Radiant Gold (Rare / Level 2-3) */
+.gr-rank-crest.rank-b {
+  background: radial-gradient(circle at 35% 35%, #78350f 0%, #200f02 100%);
+  border: 2px solid #fde047;
+  color: #fef08a;
+  text-shadow: 0 1px 2px #000000, 0 0 8px rgba(253, 224, 71, 0.6);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.85), 0 0 12px rgba(212, 175, 55, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+/* Tier A — Amethyst Purple (Epic / Level 4) */
+.gr-rank-crest.rank-a {
+  background: radial-gradient(circle at 35% 35%, #581c87 0%, #170729 100%);
+  border: 2px solid #e879f9;
+  color: #fae8ff;
+  text-shadow: 0 1px 2px #000000, 0 0 8px rgba(232, 121, 249, 0.6);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.85), 0 0 12px rgba(168, 85, 247, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+/* Tier S — Prismatic Solar (Legendary / Level 5) */
+.gr-rank-crest.rank-s {
+  background: radial-gradient(circle at 35% 35%, #7c2d12 0%, #200602 100%);
+  border: 2px solid #fbbf24;
+  color: #fffbeb;
+  text-shadow: 0 1px 2px #000000, 0 0 10px rgba(251, 191, 36, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.9), 0 0 16px rgba(245, 158, 11, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+}
+
+/* --------------------------------------------------------------------------
+   4. PERSISTENT HEADER OVERHAUL
+   -------------------------------------------------------------------------- */
+
+#stick {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+}
+
+/* Ornate Bracketed Banner */
+#top.gr-header,
+#top {
+  position: relative;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  min-height: 52px !important;
+  max-height: 54px !important;
+  padding: 4px 14px !important;
+  background: linear-gradient(180deg, #182230 0%, #0d141e 75%, #070a10 100%) !important;
+  border-bottom: 2px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(253, 224, 71, 0.45),
+    inset 0 -1px 0 rgba(107, 79, 16, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Chamfered Gilded End-Bracket Accents */
+#top::before,
+#top::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 3;
+}
+#top::before {
+  left: 0;
+  border-left: 2px solid var(--gr-gold-bright, #fde047);
+  border-bottom: 2px solid var(--gr-gold-bright, #fde047);
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+#top::after {
+  right: 0;
+  border-right: 2px solid var(--gr-gold-bright, #fde047);
+  border-bottom: 2px solid var(--gr-gold-bright, #fde047);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* Header Sub-Containers */
+.gr-header-left,
+.gr-header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.gr-header-center {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Amber / Gold Faceted Hexagonal Bezel Gold Counter */
+#top .gold.gr-gold-bezel,
+#top .gold {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 12px 0 10px !important;
+  background: linear-gradient(180deg, #2b1d06 0%, #170e02 100%) !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  clip-path: polygon(
+    6px 0%, calc(100% - 6px) 0%,
+    100% 50%,
+    calc(100% - 6px) 100%, 6px 100%,
+    0% 50%
+  ) !important;
+  border-radius: 0 !important;
+  box-shadow: 
+    0 3px 8px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(253, 224, 71, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.8) !important;
+  color: #fff9db !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  font-variant-numeric: tabular-nums !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+  cursor: default !important;
+}
+
+/* Embossed Coin Emblem (Pure CSS Pseudo-Element - Survives textContent update) */
+#top .gold::before {
+  content: '' !important;
+  display: inline-block !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 35% 35%, #fff5a5 0%, #eab308 55%, #78350f 100%) !important;
+  box-shadow: 0 0 0 1px #3a2204, 0 0 6px rgba(250, 204, 21, 0.6) !important;
+  flex-shrink: 0 !important;
+}
+
+/* Knightly Heraldic Shield Crest Ward Indicator */
+#top .lives.ward.gr-ward-shield,
+#top .lives.ward {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 38px !important;
+  min-width: 32px !important;
+  padding: 0 !important;
+  background: linear-gradient(180deg, #10263f 0%, #071320 100%) !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0% 0%, 100% 0%,
+    100% 68%,
+    50% 100%,
+    0% 68%
+  ) !important;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+}
+#top .lives.ward:hover {
+  transform: scale(1.08) !important;
+  filter: brightness(1.2) !important;
+}
+#top .lives.ward:active {
+  transform: scale(0.96) !important;
+}
+#top .lives.ward .hrt {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#top .lives.ward .hrt svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: #38bdf8 !important;
+  filter: drop-shadow(0 0 6px #38bdf8) !important;
+  transition: filter 0.2s ease !important;
+}
+#top .lives.ward.on {
+  animation: grWardPulse 3s ease-in-out infinite !important;
+}
+@keyframes grWardPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.35); }
+  50% { box-shadow: 0 0 16px rgba(56, 189, 248, 0.7); }
+}
+
+/* Broken Ward State */
+#top .lives.ward.broken {
+  background: #11141b !important;
+  border-color: #475569 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+  animation: none !important;
+}
+#top .lives.ward.broken .hrt svg {
+  color: #64748b !important;
+  filter: none !important;
+  opacity: 0.6 !important;
+}
+#top .lives.ward.broken::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 48% !important;
+  top: 6% !important;
+  width: 2px !important;
+  height: 86% !important;
+  background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%) !important;
+  transform: rotate(24deg) !important;
+  box-shadow: 0 0 4px #ef4444 !important;
+  border-radius: 2px !important;
+  pointer-events: none !important;
+}
+
+/* Run Journey Progress Indicator (.prog, .top-track) */
+#top .prog.gr-prog-bracket,
+#top .prog {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  height: 36px !important;
+  padding: 0 12px !important;
+  background: rgba(9, 13, 20, 0.85) !important;
+  border: 1px solid rgba(212, 175, 55, 0.35) !important;
+  border-radius: 4px !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+  color: #e2e8f0 !important;
+  cursor: pointer !important;
+  transition: border-color 0.15s ease, background 0.15s ease !important;
+}
+#top .prog:hover {
+  border-color: var(--gr-gold-base, #d4af37) !important;
+  background: rgba(14, 20, 30, 0.95) !important;
+}
+#top .prog .prog-txt {
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.08em !important;
+  color: #fde047 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+  white-space: nowrap !important;
+}
+
+/* Diamond Node Track with Gilded Connection Rail */
+#top .top-track.gr-top-track,
+#top .top-track {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 4px !important;
+  border-left: none !important;
+  background: transparent !important;
+}
+#top .top-track::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 6px !important;
+  right: 6px !important;
+  top: 50% !important;
+  height: 2px !important;
+  transform: translateY(-50%) !important;
+  background: linear-gradient(90deg, #475569 0%, #b38b22 50%, #475569 100%) !important;
+  z-index: 1 !important;
+}
+
+/* Diamond Node Markers */
+#top .top-track .tt-n.gr-node-diamond,
+#top .top-track .tt-n {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 18px !important;
+  height: 18px !important;
+  transform: rotate(45deg) !important;
+  border-radius: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #090e16 !important;
+  border: 1.5px solid #475569 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7) !important;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+/* Counter-Rotated Node Glyphs */
+#top .top-track .tt-n .tt-ico.gr-node-ico,
+#top .top-track .tt-n .tt-ico {
+  transform: rotate(-45deg) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 11px !important;
+  height: 11px !important;
+}
+#top .top-track .tt-n .tt-ico svg {
+  width: 10px !important;
+  height: 10px !important;
+  color: #94a3b8 !important;
+}
+
+/* Cleared Node State */
+#top .top-track .tt-n.done {
+  background: linear-gradient(135deg, #0f3d38 0%, #071f1d 100%) !important;
+  border-color: #2dd4bf !important;
+  box-shadow: 0 0 6px rgba(45, 212, 191, 0.4) !important;
+}
+#top .top-track .tt-n.done .tt-ico svg {
+  color: #2dd4bf !important;
+}
+
+/* Active / Current Node State */
+#top .top-track .tt-n.now,
+#top .top-track .tt-n.cur {
+  transform: rotate(45deg) scale(1.25) !important;
+  background: radial-gradient(circle, #fef08a 0%, #eab308 55%, #854d0e 100%) !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.8), 0 0 20px rgba(234, 179, 8, 0.5) !important;
+  animation: grNodePulse 1.8s ease-in-out infinite !important;
+}
+#top .top-track .tt-n.now .tt-ico svg,
+#top .top-track .tt-n.cur .tt-ico svg {
+  color: #1a0f02 !important;
+  filter: drop-shadow(0 0 1px #fff) !important;
+}
+@keyframes grNodePulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.7); }
+  50% { box-shadow: 0 0 18px rgba(250, 204, 21, 1), 0 0 25px rgba(234, 179, 8, 0.6); }
+}
+
+/* Boss Node Marker */
+#top .top-track .tt-n.tt-boss {
+  border-color: #ef4444 !important;
+  background: #2b0b11 !important;
+}
+#top .top-track .tt-n.tt-boss .tt-ico svg {
+  color: #ef4444 !important;
+}
+#top .top-track .tt-n.tt-boss.now,
+#top .top-track .tt-n.tt-boss.cur {
+  background: radial-gradient(circle, #fca5a5 0%, #ef4444 60%, #7f1d1d 100%) !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.9), 0 0 24px rgba(185, 28, 28, 0.6) !important;
+}
+
+/* Action & Utility Buttons in Header */
+#top [data-act="team"].gr-btn-team,
+#top [data-act="team"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  background: linear-gradient(180deg, #242c38 0%, #151a22 100%) !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  border-radius: 4px !important;
+  color: #f1f5f9 !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  cursor: pointer !important;
+  transition: filter 0.15s ease, transform 0.15s ease !important;
+}
+#top [data-act="team"]:hover {
+  filter: brightness(1.2) !important;
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.35) !important;
+}
+#top [data-act="team"]:active {
+  transform: translateY(1px) !important;
+}
+#top [data-act="team"] svg {
+  width: 16px !important;
+  height: 16px !important;
+  color: #fde047 !important;
+}
+
+/* Gilded Square Icon Buttons (.ibtn, .sndbtn, .fsbtn) */
+#top .ibtn.gr-btn-icon,
+#top .ibtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  padding: 0 !important;
+  background: linear-gradient(180deg, #1c222b 0%, #10141a 100%) !important;
+  border: 1px solid #475569 !important;
+  border-radius: 4px !important;
+  color: #cbd5e1 !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.6) !important;
+  cursor: pointer !important;
+  transition: border-color 0.15s ease, filter 0.15s ease, transform 0.15s ease !important;
+}
+#top .ibtn:hover {
+  border-color: var(--gr-gold-base, #d4af37) !important;
+  color: #fde047 !important;
+  filter: brightness(1.15) !important;
+}
+#top .ibtn:active {
+  transform: translateY(1px) !important;
+}
+#top .ibtn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Title Mode Badges & Chips */
+#top .crownchip.gr-crownchip,
+#top .crownchip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  background: linear-gradient(180deg, #2b1d06 0%, #170e02 100%) !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  border-radius: 4px !important;
+  color: #fef08a !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7) !important;
+}
+#top .crownchip svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: #fde047 !important;
+}
+#top .lvchip.gr-lvchip,
+#top .lvchip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 8px !important;
+  background: rgba(13, 20, 28, 0.9) !important;
+  border: 1px solid #475569 !important;
+  border-radius: 4px !important;
+  color: #e2e8f0 !important;
+}
+#top .lvchip .lvb {
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-weight: 800 !important;
+  color: #fde047 !important;
+}
+#top .lvchipbar {
+  width: 40px !important;
+  height: 6px !important;
+  background: #090e15 !important;
+  border: 1px solid #334155 !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+}
+#top .lvchipbar i {
+  display: block !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, #38bdf8, #2dd4bf) !important;
+}
+#top .avbtn.gr-avbtn,
+#top .avbtn {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4) !important;
+  overflow: hidden !important;
+}
+#top .lgchip.gr-lgchip,
+#top .lgchip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  background: linear-gradient(180deg, #182230 0%, #0d141e 100%) !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  border-radius: 4px !important;
+  color: #fde047 !important;
+  font-weight: 700 !important;
+}
+
+/* Responsive Viewport Scaling & Zero-Scroll Guarantee */
+@media (max-width: 600px), (max-height: 500px) {
+  #top {
+    gap: 4px !important;
+    padding: 3px 6px !important;
+    min-height: 48px !important;
+  }
+  .gr-header-left,
+  .gr-header-right {
+    gap: 4px !important;
+  }
+  /* Mobile Header Top-Track Collision Fix:
+     Hide 16-node journey track on mobile viewports so Day text, gold counter,
+     ward shield, team inventory, and menu buttons fit cleanly with zero collisions */
+  #top .top-track,
+  #top .top-track.gr-top-track {
+    display: none !important;
+  }
+  #top .prog {
+    padding: 0 8px !important;
+    gap: 4px !important;
+  }
+  #top .prog .prog-txt {
+    font-size: 12px !important;
+  }
+  #top .gold {
+    height: 30px !important;
+    padding: 0 6px 0 5px !important;
+    font-size: 12px !important;
+  }
+  #top .gold::before {
+    width: 11px !important;
+    height: 11px !important;
+  }
+  #top .lives.ward {
+    width: 26px !important;
+    height: 32px !important;
+    min-width: 26px !important;
+  }
+  #top .lives.ward .hrt svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  #top [data-act="team"] {
+    padding: 0 6px !important;
+    font-size: 11px !important;
+  }
+  #top [data-act="team"] span {
+    display: none;
+  }
+}
+
+/* Explicit Mobile Landscape Safeguard (e.g. 740x360 phones) */
+body.landscape #top .top-track,
+body.landscape #top .top-track.gr-top-track {
+  display: none !important;
+}
+
+/* Desktop Viewport Alignment */
+body.desk #top {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  border-radius: 0 0 10px 10px !important;
+  border-left: 1px solid rgba(212, 175, 55, 0.4) !important;
+  border-right: 1px solid rgba(212, 175, 55, 0.4) !important;
+}
+
+/* Retain top-track in full glory on desktop web viewports */
+body.desk #top .top-track,
+body.desk #top .top-track.gr-top-track {
+  display: inline-flex !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. SEMANTIC KEYWORD STYLING
+   -------------------------------------------------------------------------- */
+
+/* 1. Shield & Sustain (Emerald Green) */
+.gr-kw-shield {
+  color: var(--gr-kw-shield, #4ade80) !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.45) !important;
+  letter-spacing: 0.01em;
+}
+
+/* 2. Class & Stance (Amber Gold) */
+.gr-kw-class {
+  color: var(--gr-kw-class, #f59e0b) !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.45) !important;
+  letter-spacing: 0.02em;
+}
+
+/* 3. Attack & Crit (Crimson Red) */
+.gr-kw-crit {
+  color: var(--gr-kw-crit, #ef4444) !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 6px rgba(239, 68, 68, 0.5) !important;
+  letter-spacing: 0.01em;
+}
+
+/* 4. Defense & Mitigation (Cyan Blue) */
+.gr-kw-def {
+  color: var(--gr-kw-def, #38bdf8) !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 6px rgba(56, 189, 248, 0.45) !important;
+  letter-spacing: 0.01em;
+}
+
+/* 5. Synergy & Team Link (Royal Blue) */
+.gr-kw-synergy {
+  color: var(--gr-kw-synergy, #60a5fa) !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 6px rgba(96, 165, 250, 0.45) !important;
+  letter-spacing: 0.01em;
+}
+
+/* Numbers & Durations */
+.gr-kw-num,
+b.num {
+  color: var(--gr-kw-num, #ffffff) !important;
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95) !important;
+}
+
+.gr-kw-dur,
+em.dur {
+  color: var(--gr-kw-dur, #fde047) !important;
+  font-style: italic !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
 
