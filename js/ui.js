@@ -655,25 +655,31 @@
     const has = run && run.phase !== 'over' && run.phase !== 'start';
     const canShop = (acct.crowns | 0) >= 30; // notification pip if crowns are available to spend
     const hasRewards = (acct.axp | 0) > 0;
-    return `<section class="title home">
-      <div class="menu-ambient" aria-hidden="true">
-        <span class="m-glow"></span>
-        <div class="m-particles">${[...Array(12)].map((_, i) => `<i class="m-dot m-dot-${i}"></i>`).join('')}</div>
+    return `<section class="title home gr-title-screen">
+      <div class="menu-ambient gr-menu-ambient" aria-hidden="true">
+        <span class="m-glow gr-ambient-glow"></span>
+        <div class="m-particles gr-particles">${[...Array(12)].map((_, i) => `<i class="m-dot m-dot-${i}"></i>`).join('')}</div>
       </div>
-      ${logoHTML()}
-      <div class="stack">
-        ${has ? `<button class="primary big cta" data-act="continue-run"><span>${I('play')} Continue</span><small>${run.phase === 'gauntlet' ? 'Final fight' : 'Day ' + (Math.max(0, run.step) + 1) + '/' + Run.pveSeq(run).length} · ${run.heroes.length} hero${run.heroes.length === 1 ? '' : 'es'} · ${run.gold} gold</small></button>
-        <button class="giveup" data-act="give-up">${I('flag')} Give up</button>`
-        : `<button class="primary big cta play" data-act="new-run">${I('play')} Play</button>`}
-        ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
+      <div class="gr-title-brand">${logoHTML()}</div>
+      <div class="stack gr-title-stack">
+        ${has ? `<button class="primary big cta gr-btn-fight gr-cta-continue" data-act="continue-run"><span class="gr-btn-bracket" aria-hidden="true">[</span><span class="gr-btn-lbl">${I('play')} Continue</span><span class="gr-btn-bracket" aria-hidden="true">]</span><small class="gr-cta-meta">${run.phase === 'gauntlet' ? 'Final fight' : 'Day ' + (Math.max(0, run.step) + 1) + '/' + Run.pveSeq(run).length} · ${run.heroes.length} hero${run.heroes.length === 1 ? '' : 'es'} · ${run.gold} gold</small></button>
+        <button class="giveup gr-btn-giveup" data-act="give-up">${I('flag')} Give up</button>`
+        : `<button class="primary big cta play gr-btn-fight gr-cta-play" data-act="new-run"><span class="gr-btn-bracket" aria-hidden="true">[</span><span class="gr-btn-lbl">${I('play')} Play</span><span class="gr-btn-bracket" aria-hidden="true">]</span></button>`}
+        ${acct.account ? `<span class="playstk gr-playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
-      <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v0.1</span>
-      <nav class="homedock" aria-label="Quick navigation">
-        <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
-        <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
-        <a href="#" class="dockitem" data-act="shop">${I('crown')}<b>Shop</b>${canShop ? '<span class="pip red"></span>' : ''}</a>
-        <a href="#" class="dockitem" data-act="scores">${I('trophy')}<b>Ranks</b></a>
+      <div class="trailer gr-trailer-frame">
+        <canvas id="trailer" aria-label="A fight playing by itself"></canvas>
+        <span class="gr-frame-corner tl" aria-hidden="true"></span>
+        <span class="gr-frame-corner tr" aria-hidden="true"></span>
+        <span class="gr-frame-corner bl" aria-hidden="true"></span>
+        <span class="gr-frame-corner br" aria-hidden="true"></span>
+      </div>
+      <span class="app-ver gr-app-ver" aria-label="Game version">v0.1</span>
+      <nav class="homedock gr-homedock" aria-label="Quick navigation">
+        <a href="#" class="dockitem gr-dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
+        <a href="#" class="dockitem gr-dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
+        <a href="#" class="dockitem gr-dockitem" data-act="shop">${I('crown')}<b>Shop</b>${canShop ? '<span class="pip red"></span>' : ''}</a>
+        <a href="#" class="dockitem gr-dockitem" data-act="scores">${I('trophy')}<b>Ranks</b></a>
       </nav>
     </section>`;
   }
@@ -718,8 +724,10 @@
       ${row('scores', 'trophy', 'Ladder', 'Top players and leagues')}
       <div class="mpair"><button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span></button><button class="mrow sub" data-act="tutorial">${I('help')}<span><b>Tutorial: ${guideOn() ? 'On' : 'Off'}</b></span></button></div>
       <div class="msep"></div>
+      ${row('art-lab', 'palette', 'Art Lab', 'Your art on the heroes')}
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
-      ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}</div>`;
+      ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}
+      ${row('suggest', 'bulb', 'Suggest a change', 'Help build the game')}</div>`;
   }
   // v62h (review #97, David: "In the menu add an option to change language to Portuguese and German"): the sheet opened by the Language row
   // WHAT: the language chooser: English, Portuguese, German. Picking one stores it and reloads the page (js/i18n.js).
@@ -791,121 +799,442 @@
   // WHAT: the start flow screens (pick your first hero, pick a power).
   // v62q (review #114): the pointing hand on the start screens is shown for the first two runs a player ever starts
   const startHint = () => (+store.get('balance.starts', 0) || 0) < 2;
+  function tacticalGridHTML(d) {
+    const atk = Math.round(d.atk || 50);
+    const def = Math.round(d.armor || 0);
+    const spd = d.as ? d.as.toFixed(2) : '1.0';
+    const rng = d.range || 1;
+    const crit = Math.round((d.crit || 0.05) * 100);
+    const res = Math.round((d.armor || 0) * 0.8);
+    const ms = d.ms || 2;
+    const mana = d.m0 != null ? d.m0 : Math.round((d.mana || 100) * 0.3);
+
+    return `<div class="gr-tactical-grid">
+      <div class="gr-stat-cell" title="Attack Power"><span class="gr-stat-ico">⚔️</span><span class="gr-stat-val">${atk}</span></div>
+      <div class="gr-stat-cell" title="Armor / Defense"><span class="gr-stat-ico">🛡️</span><span class="gr-stat-val">${def}</span></div>
+      <div class="gr-stat-cell" title="Attack Speed"><span class="gr-stat-ico">⚡</span><span class="gr-stat-val">${spd}</span></div>
+      <div class="gr-stat-cell" title="Attack Range"><span class="gr-stat-ico">🏹</span><span class="gr-stat-val">${rng}</span></div>
+      <div class="gr-stat-cell" title="Critical Chance"><span class="gr-stat-ico">💥</span><span class="gr-stat-val">${crit}%</span></div>
+      <div class="gr-stat-cell" title="Resistance"><span class="gr-stat-ico">💎</span><span class="gr-stat-val">${res}</span></div>
+      <div class="gr-stat-cell" title="Move Speed"><span class="gr-stat-ico">👟</span><span class="gr-stat-val">${ms}</span></div>
+      <div class="gr-stat-cell" title="Energy"><span class="gr-stat-ico">✨</span><span class="gr-stat-val">${mana}</span></div>
+    </div>`;
+  }
+
+  function tailDiamondSocketsHTML(d, isSelected) {
+    const glyph = d.glyph || (d.range > 1 ? '🏹' : '⚔️');
+    return `<div class="gr-tail-sockets">
+      <div class="gr-socket-diamond active-ability ${isSelected ? 'glow-teal' : ''}" title="${esc(d.abName || '')}: ${esc(d.abDesc || '')}">
+        <span class="gr-socket-icon">${glyph}</span>
+      </div>
+      <div class="gr-socket-cluster-row">
+        <div class="gr-socket-diamond empty" title="Equipment Slot 1"></div>
+        <div class="gr-socket-diamond empty" title="Equipment Slot 2"></div>
+        <div class="gr-socket-diamond empty" title="Equipment Slot 3"></div>
+      </div>
+    </div>`;
+  }
+
+  function heroBadgePairHTML(d, k, isSelected) {
+    const r = (d.role || 'Fighter').toLowerCase();
+    const traits = (B.HERO_TRAITS && B.HERO_TRAITS[k]) || [];
+    let leftIcon = '⚔️', leftTag = 'BRAWL', leftCls = 'warrior';
+    let rightIcon = '🛡️', rightTag = d.role.toUpperCase(), rightCls = r;
+
+    if (r.includes('assassin')) {
+      rightIcon = '🗡️'; rightTag = 'ASSASSIN'; rightCls = 'assassin';
+      leftIcon = '💥'; leftTag = 'CRIT'; leftCls = 'crit';
+    } else if (r.includes('tank')) {
+      rightIcon = '🛡️'; rightTag = 'TANK'; rightCls = 'tank';
+      leftIcon = '🏰'; leftTag = 'GUARD'; leftCls = 'tank';
+    } else if (r.includes('mage')) {
+      rightIcon = '🔥'; rightTag = 'MAGE'; rightCls = 'mage';
+      leftIcon = '✨'; leftTag = traits.includes('aoe') ? 'AOE' : 'BURST'; leftCls = 'mage';
+    } else if (r.includes('ranger')) {
+      rightIcon = '🏹'; rightTag = 'RANGER'; rightCls = 'ranger';
+      leftIcon = '🎯'; leftTag = 'REACH'; leftCls = 'ranger';
+    } else if (r.includes('control')) {
+      rightIcon = '❄️'; rightTag = 'CONTROL'; rightCls = 'controller';
+      leftIcon = '⌛'; leftTag = 'SLOW'; leftCls = 'controller';
+    } else if (r.includes('heal') || r.includes('support')) {
+      rightIcon = '💚'; rightTag = 'AID'; rightCls = 'healer';
+      leftIcon = '✚'; leftTag = 'HEAL'; leftCls = 'healer';
+    } else if (r.includes('summon')) {
+      rightIcon = '🏰'; rightTag = 'SUMMON'; rightCls = 'summon';
+      leftIcon = '👥'; leftTag = 'SWARM'; leftCls = 'summon';
+    }
+
+    return `${sideBadgeHTML('left', leftCls, isSelected ? leftTag : '', leftIcon)}
+            ${sideBadgeHTML('right', rightCls, isSelected ? rightTag : '', rightIcon)}`;
+  }
+
   function startHTML() {
     const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
     const relics = run.relicOffer || [], n = ui.startPick.length;
+
+    // Step 2: Power / Relic selection
     if (ui.startStep === 2 && n === CFG.startHeroes && relics.length) {
       const rsel = ui.startRelic && relics.includes(ui.startRelic) ? ui.startRelic : null;
-      return `<section class="start s2 v3 ${dealIn(2)}">${stepsHTML(2)}<h2 class="sc">Pick a power</h2><p class="ssub">A bonus for your whole team, all game long.</p>
-        <div class="stage pedestals srelics big">${relics.map((id, i) => `<button class="srelic ped ${rsel === id ? 'on' : rsel ? 'off' : ''}" data-act="start-relic" data-arg="${id}" style="--i:${i}"><span class="rays"></span><span class="shaft"></span><span class="orb">${ico('relic', id, 56)}</span><span class="plinth"><i></i><u></u></span><span class="srt"><b class="relic">${esc(RELIC[id].name)}</b><small class="srd">${esc(RELIC[id].short)}</small></span>${rsel === id ? '<span class="chk">✓</span>' : ''}${i === 1 && !rsel && startHint() ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`).join('')}</div>
-        ${rsel ? `<button class="hdet more srmore" data-act="relic-info" data-arg="${rsel}">${I('info')} More about ${esc(RELIC[rsel].name)}</button>` : ''}
-        <div class="bar sbar"><button data-act="start-back">◀ Back</button><button class="primary big ${rsel ? 'ready' : ''}" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a power'}</button></div></section>`;
+      return `<section class="start s2 v3 ${dealIn(2)} gr-power-draft">
+        ${stepsHTML(2)}
+        <div class="gr-draft-header">
+          <h2 class="sc gr-screen-title">PICK A POWER</h2>
+          <p class="ssub gr-screen-subtitle">A bonus for your whole team, all game long.</p>
+        </div>
+        
+        <div class="stage pedestals srelics big gr-tablets-stage" role="radiogroup" aria-label="Starting Powers">
+          ${relics.map((id, i) => {
+            const r = RELIC[id];
+            const on = rsel === id;
+            const off = rsel && !on;
+            const descFormatted = fmt(r.desc || r.short);
+            const shortFormatted = fmt(r.short);
+            const school = r.fl === 'feather' || (r.mods && r.mods.regen) ? 'heal'
+              : (r.mods && r.mods.shieldStartPct) || (r.mods && r.mods.armor) ? 'shield'
+              : (r.mods && r.mods.ap) || r.fl === 'thunder' ? 'magic'
+              : 'warrior';
+            const crestIcon = school === 'heal' ? 'heart'
+              : school === 'shield' ? 'shield'
+              : school === 'magic' ? 'rune'
+              : 'swords';
+
+            return `
+            <button class="srelic ped gr-tablet ${on ? 'on selected' : off ? 'off' : ''}" 
+                    data-act="start-relic" 
+                    data-arg="${id}" 
+                    style="--i:${i}" 
+                    role="radio" 
+                    aria-checked="${on}">
+              <div class="gr-top-crest crest-${school}">
+                <span class="gr-top-crest-icon">${I(crestIcon) || '✦'}</span>
+              </div>
+
+              <span class="gr-tablet-rune-halo"></span>
+
+              <div class="gr-tablet-head">
+                <span class="gr-tablet-kicker">ANCIENT RELIC</span>
+                <b class="relic gr-tablet-title">${esc(r.name)}</b>
+              </div>
+
+              <div class="gr-tablet-socket-frame">
+                <div class="gr-socket-diamond filled" title="${esc(r.name)}">
+                  ${ico('relic', id, 44, 'gr-relic-ico')}
+                </div>
+                <span class="gr-tablet-tier-pill">TIER I</span>
+              </div>
+
+              <div class="srt gr-tablet-plate">
+                <div class="srd gr-tablet-desc">${shortFormatted}</div>
+                <div class="gr-tablet-full-desc">${descFormatted}</div>
+              </div>
+
+              ${on ? '<span class="chk gr-chk-seal" aria-label="Selected">✓</span>' : ''}
+              ${i === 1 && !rsel && startHint() ? '<span class="hand" aria-hidden="true">👆</span>' : ''}
+            </button>`;
+          }).join('')}
+        </div>
+
+        ${rsel ? `
+          <div class="gr-relic-detail-bar">
+            <button class="hdet more srmore gr-btn-detail gr-btn-steel" data-act="relic-info" data-arg="${rsel}">
+              ${I('info')} More about <b>${esc(RELIC[rsel].name)}</b>
+            </button>
+          </div>` : ''}
+
+        <div class="bar sbar gr-action-bar">
+          <button class="gr-btn-steel" data-act="start-back">◀ Back</button>
+          <button class="primary big gr-btn gr-btn-proceed gr-btn-chamfer ${rsel ? 'ready' : ''}" 
+                  data-act="start-go" 
+                  ${rsel ? '' : 'disabled'}>
+            <span class="gr-btn-bracket">[</span> ${rsel ? 'Start the game!' : 'Tap a power'} <span class="gr-btn-bracket">]</span>
+          </button>
+        </div>
+      </section>`;
     }
+
+    // Step 1: Hero Draft
     const f = ui.startPick[0] || null;
     const heroName = f && HEROES[f] ? HEROES[f].name : '';
-    const btnLabel = n === CFG.startHeroes
+    const isSelected = n === CFG.startHeroes;
+    const btnLabel = isSelected
       ? (heroName ? `Select ${esc(heroName)} ➔` : (relics.length && !introOn() ? 'Next ▶' : 'Start the game!'))
       : 'Tap a hero';
-    return `<section class="start s1 v3 ${dealIn(1)}">${stepsHTML(1)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
-      ${heroStage(run.startOffer, f, 'start-pick', startHint())}${heroDetail(f)}
-      ${(run.locked || []).length ? `${desk ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : `<p class="sub locknote">🔒 ${run.locked.length} more hero${run.locked.length === 1 ? '' : 'es'} unlock as you play</p>`}` : ''}
-      <div class="bar sbar"><button class="primary big ${desk ? 'hero-cta-btn ' + (n === CFG.startHeroes ? 'ready selected' : 'slot-unselected') : (n === CFG.startHeroes ? 'ready' : '')}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${desk ? btnLabel : (n === CFG.startHeroes ? (relics.length && !introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero')}</button></div></section>`;
+
+    return `<section class="start s1 v3 ${dealIn(1)} gr-draft-screen">
+      ${stepsHTML(1)}
+      <h2 class="sc gr-screen-title">CHOOSE HERO</h2>
+      <p class="ssub">Pick your first champion · Two more join free on your journey</p>
+      
+      ${heroStage(run.startOffer, f, 'start-pick', startHint())}
+      ${heroDetail(f)}
+
+      ${(run.locked || []).length ? `<p class="center lock-notice"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : ''}
+
+      <div class="bar sbar">
+        <button class="primary big gr-btn gr-btn-proceed gr-btn-chamfer hero-cta-btn ${isSelected ? 'ready selected' : 'slot-unselected'}" data-act="start-next" ${isSelected ? '' : 'disabled'}>
+          <span class="gr-btn-bracket">[</span>
+          <span class="gr-btn-label">${btnLabel}</span>
+          <span class="gr-btn-bracket">]</span>
+        </button>
+      </div>
+    </section>`;
   }
-  // v64 (review #124, David: "hero selection highlights are a bit wonky and persist after you choose another or deselect"): only the picked hero is lit;
-  // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
-  // WHAT: the stage of heroes under spotlights (sel = the picked one, act = the button action) and the card that says what the picked hero does.
-    // Web & itch.io progression: Hero Mastery (Gold frames for winning heroes) and Discovery (??? for unknown heroes)
+
+  // Web & itch.io progression: Hero Mastery (Gold frames for winning heroes) and Discovery (??? for unknown heroes)
   const wonHeroKeys = () => { const s = store.get('balance.wonHeroes', []); return Array.isArray(s) ? s : []; };
   const recordHeroWin = key => { if (!key) return; const cur = wonHeroKeys(); if (!cur.includes(key)) store.set('balance.wonHeroes', cur.concat(key)); };
   const recordTeamWins = heroes => { (heroes || []).forEach(h => recordHeroWin(h.key || h)); };
   const knownHeroKeys = () => {
     const s = store.get('balance.knownHeroes', []);
     const base = Array.isArray(s) ? s : [];
-    // Free starting heroes and won heroes are always known
     const free = B.PORTRAITS_FREE || ['barian', 'solara', 'groth', 'tiberius'];
     const set = new Set([...free, ...wonHeroKeys(), ...base]);
     return set;
   };
   const markHeroKnown = key => { if (!key) return; const k = knownHeroKeys(); if (!k.has(key)) { k.add(key); store.set('balance.knownHeroes', Array.from(k)); } };
 
-  function heroClassBadge(d) {
-    const r = (d.role || '').toLowerCase();
-    const isRanged = d.range > 1;
-    let icon = '⚔️';
-    if (r.includes('summon')) icon = '🏰';
-    else if (r.includes('heal')) icon = '✚';
-    else if (r.includes('mage')) icon = '🔥';
-    else if (r.includes('tank') || r.includes('control')) icon = '🛡️';
-    else if (r.includes('hunt') || isRanged) icon = '🏹';
-    return `<span class="hbadge-crest">${icon}</span><span class="hbadge-txt">${esc(d.role).toUpperCase()} • ${isRanged ? 'RANGED' : 'MELEE'}</span>`;
-  }
-
   function heroStage(offer, sel, act, hint) {
     const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
-    if (!desk) {
-      return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
-        const d = HEROES[k], on = sel === k;
-        return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}"><span class="cone"></span><span class="shine"></span>${por(k, 180, true)}<span class="flag">${esc(d.name)}</span>${on ? '<span class="chk">✓</span>' : ''}${i === 0 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`;
-      }).join('')}</div>`;
-    }
-    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
+
+    return `<div class="stage spotlights hbanners gr-draft-stage ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
       const d = HEROES[k];
       if (!d) return '';
       const on = sel === k;
-      const r = (d.role || '').toLowerCase();
-      const themeClass = r.includes('summon') ? 'theme-citadel' : r.includes('heal') ? 'theme-solace' : r.includes('mage') ? 'theme-feuer' : 'theme-default';
-      const range = d.range || 1;
+      const splashSrc = por(k, desk ? 220 : 160, true);
       const hp = Math.round(d.hp || 500);
-      const atk = Math.round(d.atk || 50);
-      const splashSrc = por(k, 180, true);
-      const topBadgeIcon = r.includes('summon') ? '🏰' : r.includes('heal') ? '🌿' : r.includes('mage') ? '🔥' : '⚔️';
+      const mana = Math.round(d.mana || 100);
+      const isWon = wonHeroKeys().includes(k);
 
-      return `<button class="hbanner spot hero-tarot-card ${themeClass} ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
-        <span class="cone"></span>
-        <span class="shine"></span>
-        <div class="card-crest-top">${on ? '<span class="chk-crest">✓</span>' : `<span class="class-crest-icon">${topBadgeIcon}</span>`}</div>
-        <img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" src="${splashSrc}" alt="${esc(d.name)}">
-        <div class="card-vignette-bottom">
-          <b class="hero-card-title">${esc(d.name)}</b>
-          <div class="hero-role-pill">${heroClassBadge(d)}</div>
-          <div class="hero-mini-stats">
-            <span class="mstat hp"><span class="stat-ico">❤️</span> <b>${hp}</b></span>
-            <span class="mstat atk"><span class="stat-ico">⚔️</span> <b>${atk}</b></span>
-            <span class="mstat rng"><span class="stat-ico">🏹</span> <b>${range}</b></span>
+      return `<button class="hbanner spot gr-card-shield ${on ? 'on selected' : sel ? 'off' : ''} ${isWon ? 'master-tier' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
+        <div class="gr-card-pillar" aria-hidden="true"></div>
+        <div class="gr-card-shield-body">
+          <div class="gr-card-groove"></div>
+          <div class="gr-card-inner">
+            <span class="gr-card-info-badge" data-act="hero-peek" data-arg="${k}" title="Hero Details" aria-label="Details">?</span>
+            
+            <div class="gr-hero-art-chamber">
+              <img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" src="${splashSrc}" alt="${esc(d.name)}">
+            </div>
+
+            <div class="gr-hero-nameplate">
+              <b class="gr-hero-name">${esc(d.name)}</b>
+            </div>
+
+            ${desk && on ? `
+              <div class="gr-hero-status-row">
+                ${rankCrestHTML('c')}
+                <div class="gr-resource-bars">
+                  <div class="gr-bar-track hp" title="Health: ${hp}">
+                    <span class="gr-bar-fill hp" style="width: 100%"></span>
+                    <span class="gr-bar-lbl"><span class="gr-bar-ico">❤️</span> ${hp}</span>
+                  </div>
+                  <div class="gr-bar-track energy" title="Energy: ${mana}">
+                    <span class="gr-bar-fill energy" style="width: 75%"></span>
+                    <span class="gr-bar-lbl"><span class="gr-bar-ico">✨</span> ${mana}</span>
+                  </div>
+                </div>
+              </div>
+              ${tacticalGridHTML(d)}
+            ` : `
+              <div class="gr-card-center-crest">
+                ${rankCrestHTML('c')}
+              </div>
+            `}
+
+            ${tailDiamondSocketsHTML(d, on)}
           </div>
         </div>
-        ${on ? '<span class="chk">✓</span>' : ''}
+
+        ${heroBadgePairHTML(d, k, on)}
+        <span class="gr-cursor-arrow" aria-hidden="true">▼</span>
+        ${on ? '<span class="chk gr-chk-gold">✓</span>' : ''}
         ${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}
       </button>`;
     }).join('')}</div>`;
   }
+
   function heroDetail(f) {
     const h = f && HEROES[f];
-    return h ? `<div class="card detail floating-hero-detail">
-        <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${esc(h.tag || h.abDesc || '')}</p>
-        <button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button>
-      </div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    if (!h) {
+      return '<p class="ssub tap">Tap a hero to see what it does</p>';
+    }
+
+    return `<div class="card detail floating-hero-detail gr-hero-tactical-plate">
+      <div class="gr-plate-highlight"></div>
+      <div class="gr-plate-content">
+        <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${fmt(h.tag || h.abDesc || '')}</p>
+        <button class="hdet gr-btn-steel" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button>
+      </div>
+      ${!desk ? `
+        <div class="gr-mobile-stats-row">
+          ${tacticalGridHTML(h)}
+        </div>
+      ` : ''}
+    </div>`;
   }
-  // v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
-  // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
-  // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
-  // WHAT: four bars of a hero's strengths, each against the best hero of the game.
-  // v117 (review #204): what the hero is good at (B.HERO_TRAITS, from its kit) and its power curve (from its growth); v116's measured bars are gone
-  // WHAT: the strength chips of a hero card.
-  function statBars(h) {
-    const tr = (B.HERO_TRAITS && B.HERO_TRAITS[h.key]) || [], g = h.grow || 1;
-    const curve = g >= 1.5 ? ['Peaks late', 'late'] : g <= 0.6 ? ['Strong early', 'early'] : null;
-    return tr.length || curve ? `<div class="htraits">${tr.filter(k => B.TRAIT[k]).map(k => `<span class="htr c-${B.TRAIT[k][1]}">${B.TRAIT[k][0]}</span>`).join('')}${curve ? `<span class="htr curve ${curve[1]}">${curve[1] === 'late' ? '📈' : '⚡'} ${curve[0]}</span>` : ''}</div>` : '';
-  }
+
   // WHAT: 'deal' the first time a start step shows (its cards fly in), '' on the redraws after a tap.
   function dealIn(step) { const k = (run && run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
-  // v64 (review #126, David: "hero select at start is 1 out of 3. After each day, add 1 more hero select free, same style screen, until 3")
-  // WHAT: the free recruit screen between days: three heroes (one of each class, the ones your team lacks first), pick one and it joins.
+
   function recruitHTML() {
-    const offer = run.recruitOffer || [], f = offer.includes(ui.recruitPick) ? ui.recruitPick : null, k = (run.recruits || 0) + 1;
-    return `<section class="start s1 recruit"><h2 class="sc">A hero joins you!</h2><p class="ssub">Free hero ${k} of ${CFG.freeRecruits}. Your team: ${run.heroes.map(h => img(h.key, 26, 'por xs')).join('')}</p>
-      ${heroStage(offer, f, 'recruit-pick', false)}${heroDetail(f)}
-      <div class="bar"><button class="primary big" data-act="recruit-go" ${f ? '' : 'disabled'}>${f ? `Recruit ${esc(HEROES[f].name)} ▶` : 'Tap a hero'}</button></div></section>`;
+    const offer = run.recruitOffer || [];
+    const f = offer.includes(ui.recruitPick) ? ui.recruitPick : null;
+    const k = (run.recruits || 0) + 1;
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    
+    // Calculate Party Synergies from current party + candidate preview
+    const currentTeam = run.heroes || [];
+    const roleCounts = {};
+    for (const h of currentTeam) {
+      const heroDef = HEROES[h.key];
+      if (heroDef && heroDef.role) {
+        const r = heroDef.role;
+        roleCounts[r] = (roleCounts[r] || 0) + 1;
+      }
+    }
+
+    return `<section class="start s1 recruit gr-recruit-screen">
+      <div class="gr-recruit-header">
+        <div class="gr-screen-badge">ALLIANCE REINFORCEMENTS</div>
+        <h2 class="sc gr-screen-title">A hero joins you!</h2>
+        <p class="ssub gr-screen-subtitle">
+          Free hero ${k} of ${CFG.freeRecruits}. Your team: ${currentTeam.map(h => img(h.key, 26, 'por xs')).join('')}
+        </p>
+      </div>
+
+      <div class="stage spotlights hbanners gr-recruit-stage" role="radiogroup" aria-label="Recruit Hero Options">
+        ${offer.map((heroKey, idx) => {
+          const d = HEROES[heroKey];
+          if (!d) return '';
+          const on = f === heroKey;
+          const off = f && !on;
+          const role = d.role || 'Warrior';
+          const roleLower = role.toLowerCase();
+          const isRanged = (d.range || 1) > 1;
+          const hp = Math.round(d.hp || 500);
+          const atk = Math.round(d.atk || 50);
+          const armor = Math.round(d.armor || 20);
+          const range = d.range || 1;
+          const splashSrc = por(heroKey, 180, true);
+
+          const crestSchool = roleLower.includes('tank') ? 'defense'
+            : roleLower.includes('heal') ? 'shield'
+            : roleLower.includes('mage') ? 'magic'
+            : 'warrior';
+          const crestIcon = roleLower.includes('tank') ? 'shield'
+            : roleLower.includes('heal') ? 'heart'
+            : roleLower.includes('mage') ? 'rune'
+            : 'swords';
+
+          return `
+          <button class="hbanner spot gr-card-shield hero-tarot-card ${on ? 'on selected' : off ? 'off' : ''}" 
+                  data-act="recruit-pick" 
+                  data-arg="${heroKey}" 
+                  style="--cloth:${d.color || '#d4af37'};--i:${idx}" 
+                  role="radio" 
+                  aria-pressed="${on}">
+            <div class="gr-card-pillar" aria-hidden="true"></div>
+
+            <div class="gr-top-crest crest-${crestSchool}">
+              <span class="gr-top-crest-icon">${I(crestIcon) || '⚔️'}</span>
+            </div>
+
+            <div class="gr-side-badge left role-${roleLower}">
+              <div class="gr-side-hex">${isRanged ? '🏹' : '⚔️'}</div>
+              <span class="gr-side-ribbon">${isRanged ? 'RANGED' : 'MELEE'}</span>
+            </div>
+            <div class="gr-side-badge right role-${roleLower}">
+              <div class="gr-side-hex">★</div>
+              <span class="gr-side-ribbon">${esc(role).toUpperCase()}</span>
+            </div>
+
+            <div class="gr-card-art-plate">
+              <span class="cone"></span>
+              <span class="shine"></span>
+              <img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" 
+                   src="${splashSrc}" 
+                   alt="${esc(d.name)}">
+            </div>
+
+            <div class="gr-card-vignette">
+              <div class="gr-card-hero-header">
+                <b class="hero-card-title">${esc(d.name)}</b>
+                <div class="gr-rank-crest rank-c" title="Tier C Veteran">C</div>
+              </div>
+
+              <div class="gr-stat-grid">
+                <div class="gr-stat-item"><span class="gr-stat-icon">❤️</span><span class="gr-stat-value">${hp}</span></div>
+                <div class="gr-stat-item"><span class="gr-stat-icon">⚔️</span><span class="gr-stat-value">${atk}</span></div>
+                <div class="gr-stat-item"><span class="gr-stat-icon">🛡️</span><span class="gr-stat-value">${armor}</span></div>
+                <div class="gr-stat-item"><span class="gr-stat-icon">🏹</span><span class="gr-stat-value">${range}</span></div>
+              </div>
+
+              <div class="gr-socket-cluster triangle">
+                <div class="gr-socket-diamond filled" title="${esc(d.abName)}">
+                  <span style="font-size:11px;transform:rotate(-45deg)">✦</span>
+                </div>
+              </div>
+            </div>
+
+            ${on ? '<span class="chk gr-chk-seal">✓</span>' : ''}
+          </button>`;
+        }).join('')}
+      </div>
+
+      <div class="gr-recruit-detail-zone">
+        ${heroDetail(f)}
+      </div>
+
+      <div class="gr-party-dock">
+        <div class="gr-party-dock-header">
+          <span class="gr-party-dock-label">WARBAND ACTIVE SQUAD</span>
+          <span class="gr-party-count">${currentTeam.length}/${CFG.maxTeam || 3} HEROES</span>
+        </div>
+        
+        <div class="gr-party-dock-content">
+          <div class="gr-party-roster">
+            ${currentTeam.map(h => {
+              const hd = HEROES[h.key];
+              if (!hd) return '';
+              return `
+              <div class="gr-party-hero-token" title="${esc(hd.name)} (${hd.role})">
+                <div class="gr-party-avatar-ring">
+                  ${por(h.key, 40, true)}
+                  <span class="gr-party-lv">Lv ${h.lvl || 1}</span>
+                </div>
+                <span class="gr-party-hero-name">${esc(hd.name)}</span>
+              </div>`;
+            }).join('')}
+            ${Array.from({ length: Math.max(0, (CFG.maxTeam || 3) - currentTeam.length) }).map((_, i) => `
+              <div class="gr-party-hero-token empty ${i === 0 && f ? 'candidate' : ''}">
+                <div class="gr-party-avatar-ring empty">
+                  ${i === 0 && f ? por(f, 40, true) : '<span class="empty-plus">+</span>'}
+                </div>
+                <span class="gr-party-hero-name">${i === 0 && f ? esc(HEROES[f].name) : 'Vacant'}</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="gr-party-synergies">
+            ${Object.entries(roleCounts).map(([role, count]) => `
+              <span class="gr-synergy-pill ${f && HEROES[f] && HEROES[f].role === role ? 'boosted' : ''}">
+                <span class="gr-syn-icon">✦</span> ${esc(role)}: <b>${count}${f && HEROES[f] && HEROES[f].role === role ? ' +1' : ''}</b>
+              </span>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="bar sbar gr-recruit-actions">
+        <button class="primary big gr-btn-proceed gr-btn-gold ${f ? 'ready' : ''}" 
+                data-act="recruit-go" 
+                ${f ? '' : 'disabled'}>
+          <span class="gr-cost-chip free">FREE</span>
+          ${f ? `Recruit ${esc(HEROES[f].name)} ▶` : 'Tap a hero'}
+        </button>
+      </div>
+    </section>`;
   }
 
   // WHAT: the "path" sheet: the days of the run as a track (fight, shop/event, boss, last shop, Gauntlet) with where you are.
@@ -960,14 +1289,14 @@
     return `<div class="wmap" id="wmap" data-today="${todayTop}" data-key="${run.seed}:${step}"><div class="wtrack" style="height:${H}px"><span class="wsky"></span><span class="wpeaks"></span>${decor.join('')}${road}
       <span class="rn camp done" style="left:50%;top:${start[1]}px"><span class="ri">⛺</span><span class="rl rgt"><b>Start</b></span></span>${nodes}
       ${leader ? `<span class="rtok" style="left:${last[0]}%;top:${last[1]}px" data-to="${last[0]},${last[1]}" data-from="${prev[0]},${prev[1]}">${img(leader.key, 44, 'por')}</span>` : ''}
-      <div class="rtoday" style="top:${todayTop}px;height:${today}px">
-        <div class="path-ribbon-wrap">
+      <div class="rtoday gr-rtoday" style="top:${todayTop}px;height:${today}px">
+        <div class="path-ribbon-wrap gr-path-ribbon-wrap">
           ${ribbonTailL}
-          <div class="rday-ribbon">${rdayTitle}${title}</div>
+          <div class="rday-ribbon rday gr-day-ribbon">${rdayTitle}${title}</div>
           ${ribbonTailR}
         </div>
-        ${run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(run.nextMod))}</p>` : ''}
-        <div class="banners rb${k}">${opts.map(optHTML).join('')}</div></div></div></div>`;
+        ${run.nextMod ? `<p class="nextmod gr-nextmod">${I('bolt')} Next fight: ${fmt(modText(run.nextMod))}</p>` : ''}
+        <div class="banners rb${k} gr-banners">${opts.map(optHTML).join('')}</div></div></div></div>`;
   }
   // WHAT: fits the road to the screen (the page itself never scrolls) and opens it on today; a redraw on the same day keeps where you scrolled to.
   function layoutMap(keep) {
@@ -997,8 +1326,8 @@
   }
   // WHAT: the team under the road on phones (portraits with levels, items waiting in the bag, powers); on computers the full party panel sits beside it.
   function mstripHTML() {
-    return `<div class="mstrip"><button class="mteam" data-act="team" aria-label="Team">${run.heroes.map(h => `<span class="mh">${img(h.key, 40, 'por')}<i>${h.lvl}</i></span>`).join('')}${run.bag.length ? `<span class="mbag">${I('bag')}<b>${run.bag.length}</b></span>` : ''}</button>
-      ${run.relics.length ? `<span class="mrel">${run.relics.slice(0, 4).map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 28)}</button>`).join('')}${run.relics.length > 4 ? `<button class="mmore" data-act="team">+${run.relics.length - 4}</button>` : ''}</span>` : ''}</div>`;
+    return `<div class="mstrip gr-mstrip"><button class="mteam gr-mteam" data-act="team" aria-label="Team">${run.heroes.map(h => `<span class="mh gr-mh"><span class="gr-por-ring">${img(h.key, 40, 'por')}</span><i class="gr-lvl-badge">${h.lvl}</i></span>`).join('')}${run.bag.length ? `<span class="mbag gr-mbag">${I('bag')}<b>${run.bag.length}</b></span>` : ''}</button>
+      ${run.relics.length ? `<span class="mrel gr-mrel">${run.relics.slice(0, 4).map(id => `<button class="relicbtn gr-socket-diamond" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 22)}</button>`).join('')}${run.relics.length > 4 ? `<button class="mmore gr-mmore" data-act="team">+${run.relics.length - 4}</button>` : ''}</span>` : ''}</div>`;
   }
   // WHAT: the little progress track shown above the map.
   function trackHTML() {
@@ -1019,12 +1348,12 @@
   // with its own scene: the enemies' faces for a fight (skulls = how hard), a fan of mystery cards for a shop, the boss with red rays, the event's picture
   // WHAT: the poster of one map option: a scene on top, then title, a line of text and the reward.
   function posterHTML(i, kind, scene, title, body, reward, ribbon) {
-    const coinPlaqueSVG = `<svg class="rw-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/><circle cx="10" cy="10" r="5.5" fill="#fde047"/></svg>`;
-    const formattedReward = reward ? `<span class="rw gold-treasure-plaque">${coinPlaqueSVG}<span>${reward}</span></span>` : '';
-    const actionPill = (kind === 'shop') ? '<span class="card-action-btn">🛒 Browse Shop</span>'
-      : (kind === 'event') ? '<span class="card-action-btn">🎲 Enter Den</span>'
-      : '<span class="card-action-btn">⚔️ Battle</span>';
-    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon rib-${kind}">${ribbon}</span>` : ''}</span><span class="bt">${title}</span><span class="bd">${body}</span>${formattedReward}${actionPill}</button>`;
+    const coinPlaqueSVG = `<svg class="rw-coin gr-rw-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/><circle cx="10" cy="10" r="5.5" fill="#fde047"/></svg>`;
+    const formattedReward = reward ? `<span class="rw gold-treasure-plaque gr-gold-plaque">${coinPlaqueSVG}<span>${reward}</span></span>` : '';
+    const actionPill = (kind === 'shop') ? '<span class="card-action-btn gr-btn-action gr-action-shop"><span class="gr-btn-bracket" aria-hidden="true">[</span> 🛒 BROWSE <span class="gr-btn-bracket" aria-hidden="true">]</span></span>'
+      : (kind === 'event') ? '<span class="card-action-btn gr-btn-action gr-action-event"><span class="gr-btn-bracket" aria-hidden="true">[</span> 🎲 ENTER <span class="gr-btn-bracket" aria-hidden="true">]</span></span>'
+      : '<span class="card-action-btn gr-btn-action gr-action-battle gr-btn-fight"><span class="gr-btn-bracket" aria-hidden="true">[</span> ⚔️ BATTLE <span class="gr-btn-bracket" aria-hidden="true">]</span></span>';
+    return `<button class="banner v2 b-${kind} gr-encounter-card" data-act="choose" data-arg="${i}"><span class="scene gr-encounter-scene">${scene}${ribbon ? `<span class="ribbon rib-${kind} gr-encounter-badge">${ribbon}</span>` : ''}</span><span class="bt gr-encounter-title">${title}</span><span class="bd gr-encounter-body">${body}</span>${formattedReward}${actionPill}</button>`;
   }
   const mobsOf = f => { const cnt = {}, order = []; for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); if (!cnt[k]) order.push(k); cnt[k] = (cnt[k] || 0) + 1; } return order.map(k => ({ key: k.replace('*', ''), n: cnt[k], elite: k.endsWith('*') })); };
   const pickN = (arr, n, seed) => { const out = []; for (let k = 0; out.length < n && k < arr.length * 4; k++) { const v = arr[(seed * 7 + k * 5 + k * k) % arr.length]; if (!out.includes(v)) out.push(v); } return out; };
@@ -1070,7 +1399,7 @@
   }
   // WHAT: THE MAP SCREEN: the road (mapRoad) with today's options (run.opts built by Run.advance), the team strip under it on phones, the party panel beside it on computers.
   function mapHTML() {
-    return `<section class="map road"><div class="mapmain">${mapRoad()}${mstripHTML()}</div><aside class="mapside">${partyHTML()}</aside></section>`;
+    return `<section class="map road gr-map-screen"><div class="mapmain gr-map-main">${mapRoad()}${mstripHTML()}</div><aside class="mapside gr-map-side">${partyHTML()}</aside></section>`;
   }
   // review #18: the party under the map (levels, XP, worn items, relics) and the next boss, so each choice is informed
   // WHAT: deploy powers column and unequipped items bag dock on desktop deploy screen
@@ -1103,10 +1432,14 @@
       </div>
     </div>`;
   }
-  // WHAT: deploy hero slots: only splash arts and equipped items next to each hero, no container box
+  // WHAT: unified Guild Run Deploy Dock: PARTY (deployed heroes + empty slots) and RESERVE (benched heroes) (Ref 1 & 2)
   function deployPartyHTML() {
     if (!run || !run.heroes) return '';
-    const heroes = run.heroes.map(h => {
+    const teamMax = Run.teamMax(run);
+    const activeHeroes = run.heroes.filter(h => !h.bench);
+    const benchedHeroes = Run.benched(run);
+
+    const renderHeroToken = h => {
       const d = HEROES[h.key] || {};
       const maxS = Run.slots(run, h);
       const socks = [];
@@ -1115,20 +1448,58 @@
         if (id && ITEM[id]) {
           const it = ITEM[id];
           const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-          socks.push(`<button class="dsock filled slot-${j+1}" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 36)}" alt=""></button>`);
+          socks.push(`<button class="dsock gr-socket-diamond filled slot-${j+1}" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 28)}" alt=""></button>`);
         } else {
-          socks.push(`<div class="dsock empty slot-${j+1}" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
+          socks.push(`<div class="dsock gr-socket-diamond empty slot-${j+1}" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
         }
       }
-      return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
-        <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 52, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
-        <div class="pmb">
+      return `<div class="pm${h.bench ? ' benched' : ''} gr-dock-hero-unit" data-drop="hero:${h.uid}">
+        <span class="por-btn gr-por-ring ${h.uid === ui.selUid ? 'selected' : ''}" aria-label="${esc(d.name || h.key)}">
+          ${img(h.key, 46, 'por')}
+          <span class="dplv gr-hero-lvl-badge">Lv ${h.lvl}</span>
+        </span>
+        <div class="pmb gr-dock-info">
           <div class="pmn"><b>${esc(d.name || h.key)}</b></div>
-          <div class="pmi">${socks.join('')}</div>
+          <div class="pmi gr-dock-gear-cluster">${socks.join('')}</div>
         </div>
       </div>`;
-    }).join('');
-    return `<div class="pgrid">${heroes}</div>`;
+    };
+
+    const emptySlotsCount = Math.max(0, teamMax - activeHeroes.length);
+    const emptySlotsHTML = Array.from({ length: emptySlotsCount }, (_, i) => `
+      <div class="gr-dock-slot-empty" title="Available Party Slot">
+        <div class="gr-slot-circle-dashed"><span class="gr-slot-plus">+</span></div>
+      </div>
+    `).join('');
+
+    const reserveSlotsHTML = benchedHeroes.length ? benchedHeroes.map(renderHeroToken).join('') : `
+      <div class="gr-dock-slot-empty reserve-empty" title="No heroes in reserve">
+        <div class="gr-slot-circle-dashed dim"><span class="gr-slot-minus">—</span></div>
+      </div>
+    `;
+
+    return `<div class="dparty gr-deploy-dock gr-panel-slate gr-frame-gold">
+      <div class="gr-dock-section gr-dock-party">
+        <div class="gr-dock-header">
+          <span class="gr-dock-tag">PARTY</span>
+          <span class="gr-dock-count">${activeHeroes.length}/${teamMax}</span>
+        </div>
+        <div class="pgrid gr-dock-slots">
+          ${activeHeroes.map(renderHeroToken).join('')}
+          ${emptySlotsHTML}
+        </div>
+      </div>
+      <div class="gr-dock-divider" aria-hidden="true"></div>
+      <div class="gr-dock-section gr-dock-reserve">
+        <div class="gr-dock-header">
+          <span class="gr-dock-tag">RESERVE</span>
+          <span class="gr-dock-count">${benchedHeroes.length}</span>
+        </div>
+        <div class="gr-dock-slots">
+          ${reserveSlotsHTML}
+        </div>
+      </div>
+    </div>`;
   }
 
   // WHAT: the party row (hero portraits with levels and items) shown on the map screen.
@@ -1452,8 +1823,8 @@
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${foesHTML(gau, f)}
       ${deployLeftHTML()}
-      <div class="bar sticky"><button class="fight-gold-btn ${need.length ? 'locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}><span class="fight-sparks"></span><span class="fight-lbl">${need.length ? (need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`) : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</span></button></div>
-      <div class="dparty">${deployPartyHTML()}</div>
+      <div class="bar sticky"><button class="gr-btn-fight fight-gold-btn ${need.length ? 'locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}><span class="gr-btn-bracket">[</span><span class="fight-sparks"></span><span class="fight-lbl">${need.length ? (need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`) : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</span><span class="gr-btn-bracket">]</span></button></div>
+      ${deployPartyHTML()}
     </section>`;
   }
   // v44: what a challenge pays
@@ -1484,21 +1855,53 @@
   // badges, live damage with the leader crowned) and the enemy roster with its own HP bars and a count of who is left.
   // v71 (review #146, David: "allow changing combat speed setting during deployment"; review #147: "skip fight only skips pve, never pvp"): the speed pills, also on the deploy
   // screen (on the sky of the board); the Skip button only in PvE fights
-  const speedPills = (skip, cls = '') => `<div class="speed gr-speed-cluster ${cls}">${[1, 2, 4].map(x => x === 4 && !hasPerk('speed4') ? `<button class="locked gr-speed-btn" data-act="speed" data-arg="4" title="4× speed: a Crown Shop unlock">4×🔒</button>` : `<button class="gr-speed-btn ${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip gr-speed-btn" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked gr-speed-btn" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
+  const speedPills = (skip, cls = '') => `<div class="speed gr-speed-cluster ${cls}">
+    <button class="gr-auto-btn ${ui.autoCombat ? 'active' : ''}" data-act="toggle-auto" title="Toggle Auto Combat" aria-label="Toggle Auto Combat">
+      <span class="gr-auto-dot"></span>AUTO
+    </button>
+    <div class="gr-speed-btns">
+      ${[1, 2, 4].map(x => x === 4 && !hasPerk('speed4') ? `<button class="locked gr-speed-btn" data-act="speed" data-arg="4" title="4× speed: a Crown Shop unlock">4×🔒</button>` : `<button class="gr-speed-btn ${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}
+      ${!skip ? '' : hasPerk('skip') ? '<button class="skip gr-speed-btn" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked gr-speed-btn" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}
+    </div>
+  </div>`;
   // WHAT: THE BATTLE SCREEN layout: top bar with speed buttons, the board canvas, the hero strip and the enemy strip. The numbers update live from the loop below.
   function battleHTML() {
-    return `<section class="deploy battle">
-      <div class="hud"><div id="bhud" class="hud-l"></div>
-        ${tutSpeedOn() ? '<div class="tutspeed" aria-hidden="true">⬆ Tap here to speed up the fight!</div>' : ''}${speedPills(!(battle && battle.gau))}</div>
+    const dpsTab = ui.dpsTab || 'dmg';
+    const dpsTitle = dpsTab === 'taken' ? 'DAMAGE TAKEN' : dpsTab === 'heal' ? 'HEALING DONE' : 'DAMAGE DEALT';
+    return `<section class="deploy battle gr-battle-stage">
+      <div class="hud gr-battle-hud">
+        <div id="bhud" class="hud-l gr-hud-banner"></div>
+        ${tutSpeedOn() ? '<div class="tutspeed" aria-hidden="true">⬆ Tap here to speed up the fight!</div>' : ''}
+        <div class="gr-battle-controls">
+          ${speedPills(!(battle && battle.gau))}
+        </div>
+      </div>
       <div class="boardwrap"><canvas id="board"></canvas></div>
-      <div class="bpanel"><div class="teamstrip v2" id="tstrip"></div>
-        <div class="bph"><b>Enemies</b><span id="ecount" class="dim small"></span></div><div class="estrip" id="estrip"></div></div>
-      <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div></section>`;
+      <div class="bpanel gr-dps-panel gr-panel-glass gr-frame-gold tab-${dpsTab} ${ui.dpsClosed ? 'collapsed' : ''}" id="dps">
+        <div class="gr-dps-header">
+          <div class="gr-dps-tabs" role="tablist">
+            <button class="gr-dps-tab ${dpsTab === 'dmg' ? 'active' : ''}" data-act="dps-tab" data-arg="dmg" title="Damage Dealt" aria-label="Damage Dealt">${I('swords')}</button>
+            <button class="gr-dps-tab ${dpsTab === 'taken' ? 'active' : ''}" data-act="dps-tab" data-arg="taken" title="Damage Taken" aria-label="Damage Taken">${I('shield')}</button>
+            <button class="gr-dps-tab ${dpsTab === 'heal' ? 'active' : ''}" data-act="dps-tab" data-arg="heal" title="Healing Done" aria-label="Healing Done">${I('heart')}</button>
+          </div>
+          <div class="gr-dps-title">${dpsTitle}</div>
+          <button class="gr-dps-toggle" data-act="dps-toggle" title="Toggle Meter" aria-label="Toggle Damage Meter">${I('chart')}</button>
+        </div>
+        <div class="teamstrip v2 gr-dps-list" id="tstrip"></div>
+        <div class="bph gr-foes-header"><b>Enemies</b><span id="ecount" class="dim small"></span></div>
+        <div class="estrip gr-foes-strip" id="estrip"></div>
+      </div>
+      <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
+    </section>`;
   }
   // WHAT: battle strips: dmgBy = damage done per hero, ccHTML = status badges (stun, slow...), stripHTML builds the hero cards and updateStrip refreshes their bars every few frames.
   const kfmt = n => n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(Math.round(n));
   // damage per hero, summons counted for their owner
   function dmgBy(W) { const d = {}; for (const u of W.units) { const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side === 0 && o.kind === 'hero') d[o.id] = (d[o.id] || 0) + (u.dmgDone || 0); } return d; }
+  // damage taken per hero, summons counted for their owner
+  function takenBy(W) { const d = {}; for (const u of W.units) { const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side === 0 && o.kind === 'hero') d[o.id] = (d[o.id] || 0) + (u.dmgTaken || 0); } return d; }
+  // healing done per hero, summons counted for their owner
+  function healBy(W) { const d = {}; for (const u of W.units) { const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side === 0 && o.kind === 'hero') d[o.id] = (d[o.id] || 0) + (u.healDone || 0); } return d; }
   const CC_STATUS = [['stun', 'STUN', 'st'], ['silence', 'SILENCE', 'si'], ['root', 'ROOT', 'ro'], ['frozenU', 'FROZEN', 'fr'], ['confuseU', 'CONFUSED', 'co'], ['blindU', 'BLIND', 'bl'], ['slowU', 'SLOW', 'sl'], ['tauntU', 'TAUNTED', 'ta']];
   function ccHTML(W, u) { return u.dead ? '' : CC_STATUS.filter(([k]) => u.st[k] > W.t).slice(0, 2).map(([, t, c]) => `<span class="sb sb-${c}">${t}</span>`).join(''); }
   function stripHTML(W) {
@@ -1510,22 +1913,25 @@
   function updateStrip(W) {
     const el = $('#tstrip'); if (!el) return;
     if (!el.firstChild) el.innerHTML = stripHTML(W);
-    const dmg = dmgBy(W), top = Math.max(1, ...Object.values(dmg));
+    const tab = ui.dpsTab || 'dmg';
+    const metrics = tab === 'taken' ? takenBy(W) : tab === 'heal' ? healBy(W) : dmgBy(W);
+    const top = Math.max(1, ...Object.values(metrics));
     let topHeal = 1;
     for (const u of W.units) if (u.side === 0 && (u.healDone || 0) > topHeal) topHeal = u.healDone;
     for (const d of el.querySelectorAll('.ts')) {
       const u = W.byId[d.dataset.id]; if (!u) continue;
-      const ready = !u.dead && u.maxMana > 0 && u.mana >= u.maxMana, dd = dmg[u.id] || 0, hh = u.healDone || 0, sh = u.shield > 0 && u.shieldU > W.t ? Math.round(u.shield) : 0;
-      d.classList.toggle('dead', !!u.dead); d.classList.toggle('ready', ready); d.classList.toggle('mvp', dd > 0 && dd >= top);
+      const ready = !u.dead && u.maxMana > 0 && u.mana >= u.maxMana, val = metrics[u.id] || 0, hh = u.healDone || 0, sh = u.shield > 0 && u.shieldU > W.t ? Math.round(u.shield) : 0;
+      d.classList.toggle('dead', !!u.dead); d.classList.toggle('ready', ready); d.classList.toggle('mvp', val > 0 && val >= top);
       d.querySelector('.hp s').style.width = Math.max(0, 100 * u.hp / u.maxHp) + '%';
       d.querySelector('.hp em').textContent = u.dead ? 'fallen' : Math.max(0, Math.round(u.hp)) + ' / ' + u.maxHp + (sh ? '  +' + sh + ' shield' : '');
       d.querySelector('.mp s').style.width = (u.maxMana ? Math.min(100, 100 * u.mana / u.maxMana) : 0) + '%';
-      d.querySelector('.dm s').style.width = 100 * dd / top + '%';
+      d.querySelector('.dm s').style.width = (100 * val / top) + '%';
       const dmb = d.querySelector('.dm .dmb');
       if (dmb) dmb.style.width = (hh > 0 ? (100 * hh / topHeal) : 0) + '%';
-      d.querySelector('.tsd').textContent = '⚔ ' + kfmt(dd);
+      const prefix = tab === 'taken' ? '🛡 ' : tab === 'heal' ? '💚 ' : '⚔ ';
+      d.querySelector('.tsd').textContent = prefix + kfmt(val);
       const tsh = d.querySelector('.tsh');
-      if (tsh) tsh.textContent = hh >= 20 ? ('💚 ' + kfmt(hh)) : '';
+      if (tsh) tsh.textContent = (tab !== 'heal' && hh >= 20) ? ('💚 ' + kfmt(hh)) : '';
       const st = ccHTML(W, u), sd = d.querySelector('.tsst'); if (sd.innerHTML !== st) sd.innerHTML = st;
     }
     const es = $('#estrip'); if (!es) return;
@@ -1559,7 +1965,9 @@
     const what = r.duel ? `${r.tower ? 'Gauntlet · Floor ' + r.floor : r.final ? 'Final fight' : 'Duel'} · vs ${plink(r.opp.name, r.opp.code)}` : r.boss ? `👹 ${esc(r.bossName || 'Boss')}` : esc(r.fightName || 'Fight');
     const foesDown = r.foes ? r.foes.filter(f => f.dead).length : null, fx = r.fx || {};
     const meta = [r.time != null ? `<span title="Time">⏱ ${clock(r.time)}</span>` : '', r.foes ? `<span title="Enemies down">💥 ${foesDown}/${r.foes.length}</span>` : '', `<span title="Heroes standing">♥ ${hs.filter(o => o.s.alive).length}/${hs.length}</span>`, r.timeout ? '<span>time ran out</span>' : ''].filter(Boolean).join('');
-    const starRow = ''; // User directive: stars removed from everywhere in the game
+    const stars = r.stars || 0;
+    const STAR_WHY = ['Won', 'Nobody fell', '60%+ health'];
+    const starRow = r.win ? `<div class="rstars" aria-label="${stars} of 3 stars">${[0, 1, 2].map(i => `<span class="stw ${i < stars ? 'earn' : ''}"><i class="st ${i < (fx.stars || 0) ? 'lit' : ''} ${i < stars ? 'earn' : ''}" title="${STAR_WHY[i]}">★</i></span>`).join('')}${stars === 3 ? `<b class="flawless ${fx.stars >= 3 ? 'on' : ''}">Flawless!</b>` : ''}</div>` : '';
     const loseTag = !r.win && r.left != null ? `<p class="losetag">${esc(Run.lossTag(r.left, r.timeout))}</p>` : '';
     const chips = [];
     if (r.win && !r.duel) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
@@ -2063,6 +2471,9 @@
     const parts = B.lpParts({ done: won, failed: !won && run.result === 'defeat', pve: !!run.reachedFinal, pvp: run.pvpLog, duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, streak: lg.streak ? lg.streak.to : 0 }, from.league), raw = parts.reduce((a, x) => a + x.lp, 0);
     const NAME = { pve: () => 'PvE finished', fail: () => 'Run lost', duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Run complete', loss: n => `${n} PvP lost`, streak: n => `Streak ${n}` };
     const ICON = { fail: I('skull'), pve: I('flag'), duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥' };
+    const why = parts.map(x => `<span class="lpw ${x.lp < 0 ? 'neg' : 'pos'}">${ICON[x.id]} ${NAME[x.id](x.n)} <b>${x.lp > 0 ? '+' : ''}${x.lp}</b></span>`).join('')
+      + (run.tower && run.tower.lp ? `<span class="lpw pos">🏰 Gauntlet <b>+${run.tower.lp}</b></span>` : '')
+      + (!parts.length ? '<span class="lpw">A lost run costs no LP in Bronze</span>' : from.league === 0 && raw < 0 ? '<span class="lpw">Bronze never loses LP</span>' : '');
     const s = lg.streak || { to: 0, from: 0, best: 2 };
     const winStreakTo = s.to || 0, winStreakBest = s.best || 2;
     const fightsWon = run.won != null ? run.won : 7;
@@ -2099,6 +2510,7 @@
       ${metaSummaryPill}
       <div class="lp-body-grid">
         <div class="lp-left-crest-card" id="lpmeter" style="--lc:${l.color};--lh:${l.hi}">
+          <span class="lgem" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">${emblem(lgi, 58)}</span>
           <div class="crest-emblem-wrap">
             ${bronzeWingsSVG}
             ${bronzeShieldSVG}
@@ -2114,6 +2526,7 @@
         <div class="lp-right-panel">
           <div class="lp-delta-row">
             <span class="lp-delta-val ${lg.delta >= 0 ? 'pos' : 'neg'}"><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : (lg.delta >= 0 ? '+' : '') + '0'}</span> <small>LP</small></span>
+            <b class="vmbig" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">LP</b>
           </div>
 
           <div class="rank-protect-badge">
@@ -2132,6 +2545,9 @@
           </div>
 
           <div class="streak-sub-note">🔥 Win streak best ${winStreakBest}</div>
+          <div class="vmstk" id="lpstk" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">${flameHTML(done ? s.to : s.from)}<span>Win streak</span></div>
+          <p class="vmcall" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">Beat other players to rise in the league!</p>
+          <div class="lpwhy">${why}</div>
           <div class="vmpromo" id="lppromo">${done && lg.promoted ? `<b>Promoted to ${l.name}!</b>` : done && lg.demoted ? `<b class="lose">Dropped to ${l.name}</b>` : ''}</div>
         </div>
       </div>
@@ -2262,7 +2678,7 @@
           </div>
 
           <div class="xp-right-col">
-            <div class="xp-gain-val">+<span id="xpbig">${done ? got : 0}</span> XP</div>
+            <div class="xp-gain-val"><span id="xpbig">+${done ? got : 0}</span> XP</div>
             ${log.length ? `<div class="xp-pills-row">${xpChips(log).map((c, i) => `<span class="xp-chip-pill" style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i> <b>${esc(c.name)}</b> <span class="chip-add">+${c.xp}</span></span>`).join('')}</div>` : note ? `<p class="small dim">${note}</p>` : ''}
           </div>
         </div>
@@ -2279,6 +2695,9 @@
       <!-- Bottom Tier: 3D Chest & Loot Drop Cards -->
       <div class="xp-bottom-loot-tier">
         ${chestLoot}
+      </div>
+      <div class="vmwrap xp" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+        <ul class="xplines">${xpChips(log).map((c, i) => `<li style="--i:${i}"><i>${XP_ICON[c.k] || '✨'}</i><span>${esc(c.name)}</span><b>+${c.xp}</b></li>`).join('')}</ul>
       </div>
     </div>`;
   }
@@ -2993,6 +3412,12 @@
   // review #19 (David: "include ability to read hero ability in item screen"): the hero card on top of the team sheet
   // v51 (review #63): a hero's Details from the shop or the start: the picture, what it does in plain words, the whole
   // ability with its numbers, its stats, and every level's two powers
+  function statBars(h) {
+    const tr = (B.HERO_TRAITS && B.HERO_TRAITS[h.key]) || [], g = h.grow || 1;
+    const curve = g >= 1.5 ? ['Peaks late', 'late'] : g <= 0.6 ? ['Strong early', 'early'] : null;
+    return tr.length || curve ? `<div class="htraits">${tr.filter(k => B.TRAIT[k]).map(k => `<span class="htr c-${B.TRAIT[k][1]}">${B.TRAIT[k][0]}</span>`).join('')}${curve ? `<span class="htr curve ${curve[1]}">${curve[1] === 'late' ? '📈' : '⚡'} ${curve[0]}</span>` : ''}</div>` : '';
+  }
+
   // WHAT: the "details" sheet of a hero (stats, ability, all his powers) opened from cards.
   function heroPeekHTML(key) {
     const d = HEROES[key]; if (!d) return '';
@@ -3429,12 +3854,14 @@
     // v64 (review #126): the free recruit between days
     'recruit-pick': k => { markHeroKnown(k); ui.recruitPick = ui.recruitPick === k ? null : k; render(); },
     'recruit-go': () => { if (!ui.recruitPick) return; const err = Run.recruit(run, ui.recruitPick); if (err) { toast(err); return; } ui.recruitPick = null; sfx('levelup'); save(); render(); window.scrollTo(0, 0); },
+    recruit: () => ACT['recruit-go'](),
     'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (introOn() && (run.relicOffer || []).length) { ui.startRelic = run.relicOffer[0]; ACT['start-go'](); return; }   // v97 (review #179): straight to the battlefield
       if ((run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
     'start-back': () => { ui.startStep = 1; render(); },
     'coach-ok': () => { coachDone(); sfx('tap'); render(); },
     'hswap-ok': () => { store.set('balance.hint.hswap', 1); render(); },
     'start-relic': id => { const was = ui.startRelic; ui.focusRelic = id; ui.startRelic = id; render(); if (was !== id && B.Juice) B.Juice.confettiAt('.start .srelic.ped.on .orb', 30); },
+    'pick-power': id => ACT['start-relic'](id),
     'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((run.relicOffer || []).length && !ui.startRelic)) return; const intro = introOn(); store.set('balance.starts', (+store.get('balance.starts', 0) || 0) + 1); Run.pickStart(run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1;
       if (intro) { store.set('balance.intro', 1); Run.startIntro(run); ui.introT0 = 0; }   // v97 (review #179): the first fight is the intro
       save(); render(); },
@@ -3449,6 +3876,24 @@
     // Battle speed 1x / 2x / 4x (4x is a Crown Shop perk). skip plays the fight at once (also a perk).
     speed: s => { if (+s === 4 && !hasPerk('speed4')) { toast(`4× speed is a Crown Shop unlock (👑 ${B.SHOP_ITEM.speed4.price}). 2× is free.`); return; } ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
     'toggle-auto': () => { ui.autoCombat = !ui.autoCombat; sfx('tap'); document.querySelectorAll('[data-act=toggle-auto]').forEach(b => b.classList.toggle('active', !!ui.autoCombat)); },
+    'dps-tab': tab => {
+      ui.dpsTab = tab;
+      document.querySelectorAll('.gr-dps-tab').forEach(b => b.classList.toggle('active', b.dataset.arg === tab));
+      const title = document.querySelector('.gr-dps-title');
+      if (title) title.textContent = tab === 'taken' ? 'DAMAGE TAKEN' : tab === 'heal' ? 'HEALING DONE' : 'DAMAGE DEALT';
+      const panel = document.querySelector('.bpanel');
+      if (panel) {
+        panel.classList.toggle('tab-taken', tab === 'taken');
+        panel.classList.toggle('tab-heal', tab === 'heal');
+        panel.classList.toggle('tab-dmg', !tab || tab === 'dmg');
+      }
+      if (battle && battle.W) updateStrip(battle.W);
+    },
+    'dps-toggle': () => {
+      ui.dpsClosed = !ui.dpsClosed;
+      const p = document.querySelector('.bpanel');
+      if (p) p.classList.toggle('collapsed', !!ui.dpsClosed);
+    },
     skip: () => {
       const gau = (battle && battle.gau) || (run && run.cur && run.cur.type === 'gauntlet');
       if (gau) { toast('Duels and the final fight cannot be skipped.'); return; }
@@ -3642,7 +4087,7 @@
 
   // v42: every tap has a sound; these actions have their own (null = the action plays it, it depends on the outcome)
   // WHAT: which sound each button makes (null = silent).
-  const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: null, 'start-go': 'go', choose: 'pick', 'start-pick': 'pick', 'recruit-pick': 'pick', 'over-next': 'pick', 'start-relic': 'pick', 'start-next': 'pick', 'start-back': 'back',
+  const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: null, 'start-go': 'go', choose: 'pick', 'start-pick': 'pick', 'recruit-pick': 'pick', 'recruit-go': 'levelup', recruit: 'levelup', 'over-next': 'pick', 'start-relic': 'pick', 'pick-power': 'pick', 'start-next': 'pick', 'start-back': 'back',
     spec: 'unlock', event: 'pick', 'event-target': 'pick', equip: 'pick', bag: 'pick', unequip: 'back', close: 'back', 'event-back': 'back', sell: 'coin', 'result-ok': 'pick', 'stat-info': null, 'cos-preview': null };
   document.addEventListener('click', e => {
     if (e.target.closest('#notice')) return;

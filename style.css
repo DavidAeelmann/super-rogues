@@ -7042,8 +7042,22 @@ body:not(.desk) section.lpscr .badge-txt .badge-title { font-size: 11px !importa
 body:not(.desk) section.lpscr .badge-txt .badge-sub { font-size: 10.5px !important; }
 body:not(.desk) section.lpscr .lp-horiz-track { height: 22px !important; }
 body:not(.desk) section.lpscr .lp-horiz-text { font-size: 11.5px !important; }
-body:not(.desk) section.lpscr .lp-footer { justify-content: center !important; margin-top: 4px !important; }
-body:not(.desk) section.lpscr .lp-next-btn { width: 100% !important; height: 46px !important; min-height: 46px !important; }
+body:not(.desk) section.lpscr .lp-footer,
+body:not(.desk) section.xpscr .xp-footer {
+  position: absolute !important;
+  bottom: 8px !important;
+  left: 12px !important;
+  right: 12px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  justify-content: center !important;
+}
+body:not(.desk) section.lpscr .lp-next-btn,
+body:not(.desk) section.xpscr .xp-again-btn {
+  width: 100% !important;
+  height: 48px !important;
+  min-height: 48px !important;
+}
 
 body:not(.desk) section.xpscr .xp-modal-wrap { gap: 8px !important; }
 body:not(.desk) section.xpscr .xp-top-card { padding: 10px 12px !important; }
@@ -7058,7 +7072,6 @@ body:not(.desk) section.xpscr .chest-wrap-3d { width: 96px !important; height: 8
 body:not(.desk) section.xpscr .fantasy-chest-3d { width: 90px !important; height: 78px !important; }
 body:not(.desk) section.xpscr .xp-bottom-loot-tier .chestzone { gap: 12px !important; flex-wrap: wrap !important; }
 body:not(.desk) section.xpscr .loot-card-3d { width: 76px !important; height: 76px !important; min-width: 76px !important; min-height: 76px !important; }
-body:not(.desk) section.xpscr .xp-again-btn { width: 100% !important; height: 48px !important; min-height: 48px !important; }
 
 body.desk .lpscr .vmtube.mini-thermometer {
   width: 44px !important;
@@ -10254,3 +10267,2494 @@ em.dur {
 }
 
 
+
+/* ==========================================================================
+   MILESTONE 2: PRE-BATTLE & NAVIGATION SCREENS GUILD RUN OVERHAUL
+   (Title, Hero Draft Ref 3, Power Draft Ref 4, Road Map, Mid-Run Recruit)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. TITLE SCREEN CONTAINER & ATMOSPHERE
+   -------------------------------------------------------------------------- */
+
+.title.home.gr-title-screen {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 460px !important;
+  margin: 0 auto !important;
+  padding: clamp(6px, 1.8vh, 12px) 12px clamp(8px, 2vh, 16px) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  background: radial-gradient(circle at 50% 25%, #131b26 0%, var(--gr-bg-void, #080b10) 80%) !important;
+}
+
+.gr-menu-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.gr-ambient-glow {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, rgba(16, 185, 129, 0.05) 45%, transparent 70%);
+  filter: blur(28px);
+}
+
+.gr-particles .m-dot {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(253, 224, 71, 0.6);
+  box-shadow: 0 0 6px rgba(253, 224, 71, 0.8);
+  pointer-events: none;
+  animation: grEmberFloat 8s ease-in-out infinite alternate;
+}
+@keyframes grEmberFloat {
+  0% { transform: translateY(0) scale(0.8); opacity: 0.3; }
+  100% { transform: translateY(-40px) scale(1.2); opacity: 0.9; }
+}
+
+/* --------------------------------------------------------------------------
+   2. CHISELED GOLD LOGO & TYPOGRAPHY
+   -------------------------------------------------------------------------- */
+
+.gr-title-brand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2px 0 0;
+}
+
+.title.home .logo-big {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: var(--gr-font-header, "Cinzel", "Georgia", serif) !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+.title.home .logo-big .wm {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.title.home .logo-big .w1 {
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: clamp(13px, 2.8vw, 17px) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.32em !important;
+  text-transform: uppercase !important;
+  color: #94a3b8 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+  margin-bottom: 2px !important;
+}
+
+.title.home .logo-big .w2 {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  letter-spacing: 0.16em !important;
+}
+
+.title.home .logo-big .w2 i {
+  display: inline-block !important;
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-style: normal !important;
+  font-size: clamp(28px, 6.2vw, 40px) !important;
+  font-weight: 900 !important;
+  background: linear-gradient(180deg, #fff7cc 0%, #fde047 30%, #d4af37 65%, #8a6010 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 2px 0 #3a2204) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.9)) !important;
+  text-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. GILDED TRAILER CANVAS FRAME
+   -------------------------------------------------------------------------- */
+
+.trailer.gr-trailer-frame,
+.title.home .trailer {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 270px !important;
+  height: 138px !important;
+  margin: clamp(4px, 1vh, 8px) auto !important;
+  background: #080b10 !important;
+  border: 2px solid var(--gr-gold-base, #d4af37) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85), inset 0 0 16px rgba(0, 0, 0, 0.9) !important;
+  overflow: hidden !important;
+  z-index: 1 !important;
+}
+
+.trailer.gr-trailer-frame canvas#trailer {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  filter: saturate(1.1) contrast(1.05) !important;
+}
+
+/* Metallic L-Bracket Corner Reinforcements */
+.gr-frame-corner {
+  position: absolute !important;
+  width: 12px !important;
+  height: 12px !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+  display: block !important;
+}
+.gr-frame-corner.tl {
+  top: -1px !important;
+  left: -1px !important;
+  border-top: 3px solid #fde047 !important;
+  border-left: 3px solid #fde047 !important;
+}
+.gr-frame-corner.tr {
+  top: -1px !important;
+  right: -1px !important;
+  border-top: 3px solid #fde047 !important;
+  border-right: 3px solid #fde047 !important;
+}
+.gr-frame-corner.bl {
+  bottom: -1px !important;
+  left: -1px !important;
+  border-bottom: 3px solid #b38b22 !important;
+  border-left: 3px solid #b38b22 !important;
+}
+.gr-frame-corner.br {
+  bottom: -1px !important;
+  right: -1px !important;
+  border-bottom: 3px solid #b38b22 !important;
+  border-right: 3px solid #b38b22 !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. HEAVY BEVELED EMERALD PLAY / CONTINUE CTA
+   -------------------------------------------------------------------------- */
+
+.gr-title-stack,
+.title.home .stack {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 340px !important;
+  margin: clamp(4px, 1.2vh, 10px) auto !important;
+}
+
+/* Play CTA Button */
+.title.home .cta.play.gr-btn-fight,
+.title.home .cta.play {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 320px !important;
+  height: clamp(48px, 7vh, 58px) !important;
+  min-height: 48px !important;
+  padding: 8px 24px !important;
+  border: 1.5px solid #5eead4 !important;
+  background: linear-gradient(180deg, #2dd4bf 0%, #1f6d6b 18%, #134e4a 55%, #0d3835 100%) !important;
+  clip-path: polygon(
+    8px 0%, calc(100% - 8px) 0%,
+    100% 8px, 100% calc(100% - 8px),
+    calc(100% - 8px) 100%, 8px 100%,
+    0% calc(100% - 8px), 0% 8px
+  ) !important;
+  filter: drop-shadow(0 4px 0 #072120) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.75)) !important;
+  color: #f0fdf4 !important;
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: clamp(17px, 3.6vw, 21px) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: none !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(45, 212, 191, 0.65) !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: transform 0.08s ease, filter 0.12s ease !important;
+}
+
+.title.home .cta.play:hover {
+  filter: brightness(1.15) drop-shadow(0 5px 0 #072120) drop-shadow(0 10px 22px rgba(45, 212, 191, 0.4)) !important;
+  transform: translateY(-1px) !important;
+}
+
+.title.home .cta.play:active {
+  transform: translateY(2px) !important;
+  filter: brightness(0.95) drop-shadow(0 2px 0 #072120) !important;
+}
+
+/* Continue Run Variant */
+.title.home .cta.gr-cta-continue {
+  flex-direction: column !important;
+  height: clamp(56px, 8.5vh, 68px) !important;
+  padding: 6px 16px !important;
+  gap: 3px !important;
+}
+
+.gr-cta-meta {
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  color: #a7f3d0 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Secondary Give Up Button */
+.title.home .giveup.gr-btn-giveup,
+.title.home .giveup {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  height: 32px !important;
+  padding: 0 16px !important;
+  background: linear-gradient(180deg, #1c232f 0%, #111620 100%) !important;
+  border: 1px solid #475569 !important;
+  border-radius: 4px !important;
+  color: #94a3b8 !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.title.home .giveup:hover {
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+/* Win Streak Flame */
+.gr-playstk {
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   5. GILDED ARCHITECTURAL BOTTOM DOCK
+   -------------------------------------------------------------------------- */
+
+.homedock.gr-homedock,
+.title.home .homedock {
+  position: relative !important;
+  z-index: 2 !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  margin: clamp(4px, 1.2vh, 8px) auto 0 !important;
+  padding: 6px 8px !important;
+  background: rgba(9, 13, 20, 0.88) !important;
+  border: 1px solid rgba(212, 175, 55, 0.35) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.dockitem.gr-dockitem,
+.title.home .dockitem {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 6px !important;
+  background: linear-gradient(180deg, #182230 0%, #0d141e 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 4px !important;
+  color: #e2e8f0 !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  text-decoration: none !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6) !important;
+  transition: all 0.15s ease !important;
+}
+
+.dockitem.gr-dockitem:hover,
+.title.home .dockitem:hover {
+  border-color: var(--gr-gold-base, #d4af37) !important;
+  color: #fde047 !important;
+  filter: brightness(1.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+.dockitem.gr-dockitem:active,
+.title.home .dockitem:active {
+  transform: translateY(1px) !important;
+}
+
+.dockitem.gr-dockitem svg.ui,
+.title.home .dockitem svg.ui {
+  width: 14px !important;
+  height: 14px !important;
+  color: #fde047 !important;
+}
+
+.dockitem .pip {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 6px currentColor !important;
+}
+
+.gr-app-ver,
+.title.home .app-ver {
+  position: absolute !important;
+  bottom: 6px !important;
+  right: 12px !important;
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.08em !important;
+  color: #64748b !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. ROAD MAP SCREEN & ENCOUNTER NODES
+   -------------------------------------------------------------------------- */
+
+.map.road.gr-map-screen {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  background: radial-gradient(circle at 50% 20%, #151d29 0%, var(--gr-bg-void, #080b10) 85%) !important;
+}
+
+/* Gilded Diamond Encounter Nodes (.rn) */
+.wtrack .rn {
+  width: 22px !important;
+  height: 22px !important;
+  transform: rotate(45deg) !important;
+  border-radius: 2px !important;
+  background: #090e16 !important;
+  border: 1.5px solid #475569 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.75) !important;
+  transition: transform 0.2s ease, border-color 0.2s ease !important;
+}
+
+.wtrack .rn .ri {
+  transform: rotate(-45deg) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 11px !important;
+}
+
+.wtrack .rn.done {
+  border-color: #2dd4bf !important;
+  background: linear-gradient(135deg, #0f3d38 0%, #071f1d 100%) !important;
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.45) !important;
+  color: #2dd4bf !important;
+}
+
+.wtrack .rn.boss {
+  border-color: #ef4444 !important;
+  background: #2b0b11 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6) !important;
+}
+.wtrack .rn.boss .ri svg {
+  color: #ef4444 !important;
+}
+
+.wtrack .rn.final {
+  border-color: #fde047 !important;
+  background: #2b1f07 !important;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.6) !important;
+}
+
+.wtrack .rn .rl {
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  color: #fde047 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. GILDED DAY HEADER RIBBON
+   -------------------------------------------------------------------------- */
+
+.rday-ribbon.gr-day-ribbon,
+.rday-ribbon,
+.rday {
+  background: linear-gradient(180deg, rgba(22, 32, 46, 0.96) 0%, rgba(13, 19, 26, 0.98) 100%) !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  border-radius: 4px !important;
+  color: #fef08a !important;
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  padding: 5px 18px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(212, 175, 55, 0.3) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.rday-ribbon b,
+.rday b {
+  color: #fde047 !important;
+  margin-right: 6px !important;
+}
+
+.nextmod.gr-nextmod,
+.nextmod {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  border-radius: 4px !important;
+  color: #fde047 !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. TACTICAL ENCOUNTER TABLETS (.banner.v2)
+   -------------------------------------------------------------------------- */
+
+.banner.v2.gr-encounter-card,
+.banner.v2 {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  background: linear-gradient(180deg, #131924 0%, #0a0d14 100%) !important;
+  border-radius: 6px !important;
+  clip-path: polygon(
+    8px 0%, calc(100% - 8px) 0%,
+    100% 8px, 100% calc(100% - 8px),
+    calc(100% - 8px) 100%, 8px 100%,
+    0% calc(100% - 8px), 0% 8px
+  ) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  padding: 10px 8px 14px !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, filter 0.15s ease, border-color 0.15s ease !important;
+}
+
+.banner.v2:hover {
+  transform: translateY(-3px) !important;
+  filter: brightness(1.1) !important;
+}
+
+.banner.v2.b-easy {
+  border: 1.5px solid #34d399 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(52, 211, 153, 0.4) !important;
+}
+.banner.v2.b-med,
+.banner.v2.b-medium {
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(253, 224, 71, 0.5) !important;
+}
+.banner.v2.b-hard {
+  border: 1.5px solid #ef4444 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(239, 68, 68, 0.5) !important;
+}
+.banner.v2.b-boss {
+  border: 2px solid #c084fc !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.9), 0 0 16px rgba(168, 85, 247, 0.4), inset 0 1px 0 #e9d5ff !important;
+}
+.banner.v2.b-shop {
+  border: 1.5px solid #38bdf8 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(56, 189, 248, 0.4) !important;
+}
+.banner.v2.b-event {
+  border: 1.5px solid #a855f7 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(168, 85, 247, 0.4) !important;
+}
+
+.banner.v2 .bt.gr-encounter-title,
+.banner.v2 .bt {
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+  margin: 6px 0 2px !important;
+}
+
+.banner.v2 .bd.gr-encounter-body,
+.banner.v2 .bd {
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 11.5px !important;
+  color: #cbd5e1 !important;
+  text-align: center !important;
+}
+
+.card-action-btn.gr-btn-action,
+.card-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 6px 16px !important;
+  min-height: 32px !important;
+  border-radius: 4px !important;
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  margin-top: auto !important;
+  cursor: pointer !important;
+}
+
+.card-action-btn.gr-action-battle,
+.banner.v2 .card-action-btn {
+  background: linear-gradient(180deg, #2dd4bf 0%, #1f6d6b 20%, #134e4a 60%, #0d3835 100%) !important;
+  border: 1.5px solid #5eead4 !important;
+  color: #f0fdf4 !important;
+  text-shadow: 0 0 8px rgba(45, 212, 191, 0.6) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+}
+
+.card-action-btn.gr-action-shop {
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%) !important;
+  border: 1.5px solid #7dd3fc !important;
+  color: #ffffff !important;
+}
+
+.card-action-btn.gr-action-event {
+  background: linear-gradient(180deg, #c084fc 0%, #7e22ce 100%) !important;
+  border: 1.5px solid #d8b4fe !important;
+  color: #ffffff !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. MOBILE BOTTOM PARTY TRAY (.mstrip)
+   -------------------------------------------------------------------------- */
+
+.mstrip.gr-mstrip,
+.mstrip {
+  position: relative !important;
+  z-index: 5 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  height: 50px !important;
+  max-height: 50px !important;
+  padding: 4px 8px !important;
+  background: rgba(9, 13, 20, 0.95) !important;
+  border-top: 1.5px solid rgba(212, 175, 55, 0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  box-sizing: border-box !important;
+  margin-top: 0 !important;
+}
+
+.mstrip .mteam.gr-mteam,
+.mstrip .mteam {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mstrip .mh.gr-mh,
+.mstrip .mh {
+  position: relative !important;
+  display: inline-flex !important;
+}
+
+.mstrip .mh .gr-por-ring,
+.mstrip .mh img.por {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8) !important;
+}
+
+.mstrip .mh i.gr-lvl-badge,
+.mstrip .mh i {
+  position: absolute !important;
+  right: -3px !important;
+  bottom: -2px !important;
+  min-width: 15px !important;
+  height: 14px !important;
+  line-height: 14px !important;
+  padding: 0 3px !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, #fde047 0%, #b38b22 100%) !important;
+  border: 1px solid #080b10 !important;
+  color: #111824 !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  font-style: normal !important;
+  text-align: center !important;
+}
+
+.mstrip .mbag.gr-mbag,
+.mstrip .mbag {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin-left: auto !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%) !important;
+  border: 1px solid #fde047 !important;
+  color: #ffffff !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+}
+
+.mstrip .mrel.gr-mrel,
+.mstrip .mrel {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.mstrip .mrel .relicbtn.gr-socket-diamond,
+.mstrip .mrel .relicbtn {
+  width: 26px !important;
+  height: 26px !important;
+  transform: rotate(45deg) !important;
+  background: #090e16 !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  border-radius: 2px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.85) !important;
+}
+
+.mstrip .mrel .relicbtn img,
+.mstrip .mrel .relicbtn svg {
+  transform: rotate(-45deg) !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* --------------------------------------------------------------------------
+   10. FEATURE 9: HERO DRAFT SCREEN OVERHAUL (Reference Image 3: CHOOSE HERO)
+   -------------------------------------------------------------------------- */
+
+#app:has(.gr-draft-screen),
+#app:has(.gr-recruit-screen),
+#app:has(section.start) {
+  padding-bottom: 0 !important;
+  overflow: hidden !important;
+}
+
+section.start.gr-draft-screen,
+section.start.s1.gr-draft-screen,
+section.start.s2.gr-draft-screen,
+.start.s1.recruit.gr-recruit-screen,
+body.desk section.start.gr-draft-screen {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  height: calc(100dvh - 54px) !important;
+  max-width: 1100px !important;
+  max-height: calc(100dvh - 54px) !important;
+  margin: 0 auto !important;
+  padding: 2px 10px 4px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.gr-screen-title,
+section.start h2.sc.gr-screen-title {
+  font-family: var(--gr-font-header, 'Cinzel', 'Georgia', serif) !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: #fef9c3 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95), 0 0 16px rgba(253, 224, 71, 0.45) !important;
+  margin: 2px 0 2px !important;
+}
+
+body.desk .gr-screen-title {
+  font-size: 24px !important;
+  letter-spacing: 0.22em !important;
+  margin: 4px 0 2px !important;
+}
+
+.stage.spotlights.gr-draft-stage {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: flex-end !important;
+  gap: 12px !important;
+  width: 100% !important;
+  max-width: 960px !important;
+  margin: 4px auto 6px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+body.desk .stage.spotlights.gr-draft-stage {
+  gap: 28px !important;
+  margin: 10px auto 10px !important;
+}
+
+/* Polygonal Chevron Shield Card Silhouette */
+.gr-card-shield {
+  --gr-cut: 9px;
+  --gr-dip: 18px;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 108px !important;
+  height: 220px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  overflow: visible !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+body.desk .gr-card-shield {
+  --gr-cut: 14px;
+  --gr-dip: 32px;
+  width: 255px !important;
+  max-width: 260px !important;
+  height: 440px !important;
+}
+
+/* Volumetric Emerald Light Pillar */
+.gr-card-pillar {
+  position: absolute !important;
+  top: -40px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 135% !important;
+  height: calc(100% + 80px) !important;
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0) 0%, rgba(16, 185, 129, 0.18) 25%, rgba(45, 212, 191, 0.42) 60%, rgba(16, 185, 129, 0) 100%) !important;
+  filter: blur(24px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  transition: opacity 0.35s ease !important;
+}
+
+.gr-card-shield.selected .gr-card-pillar,
+.gr-card-shield.on .gr-card-pillar {
+  opacity: 1 !important;
+}
+
+/* Layered Polygonal Frame & Bevels */
+.gr-card-shield-body {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: var(--gr-border-silver, linear-gradient(180deg, #94a3b8 0%, #475569 50%, #1e293b 100%)) !important;
+  clip-path: polygon(
+    var(--gr-cut) 0%,
+    calc(100% - var(--gr-cut)) 0%,
+    100% var(--gr-cut),
+    100% calc(100% - var(--gr-dip)),
+    50% 100%,
+    0% calc(100% - var(--gr-dip)),
+    0% var(--gr-cut)
+  ) !important;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.85)) !important;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), filter 0.2s ease, background 0.2s ease !important;
+  z-index: 1 !important;
+}
+
+.gr-card-shield:hover .gr-card-shield-body {
+  transform: translateY(-4px) !important;
+  filter: drop-shadow(0 0 14px rgba(212, 175, 55, 0.4)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.9)) !important;
+}
+
+.gr-card-shield.selected .gr-card-shield-body,
+.gr-card-shield.on .gr-card-shield-body {
+  background: var(--gr-border-gold, linear-gradient(180deg, #fde047 0%, #d4af37 50%, #78350f 100%)) !important;
+  transform: translateY(-6px) !important;
+  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.65)) drop-shadow(0 12px 28px rgba(0, 0, 0, 0.95)) !important;
+}
+
+.gr-card-groove {
+  position: absolute !important;
+  inset: 2px !important;
+  background: var(--gr-bg-void, #080b10) !important;
+  clip-path: polygon(
+    calc(var(--gr-cut) - 1px) 0%,
+    calc(100% - (var(--gr-cut) - 1px)) 0%,
+    100% calc(var(--gr-cut) - 1px),
+    100% calc(100% - (var(--gr-dip) - 1px)),
+    50% 100%,
+    0% calc(100% - (var(--gr-dip) - 1px)),
+    0% calc(var(--gr-cut) - 1px)
+  ) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+.gr-card-inner {
+  position: absolute !important;
+  inset: 3px !important;
+  background: radial-gradient(120% 100% at 50% 0%, #1a2332 0%, #111622 60%, #080b11 100%) !important;
+  clip-path: polygon(
+    calc(var(--gr-cut) - 1.5px) 0%,
+    calc(100% - (var(--gr-cut) - 1.5px)) 0%,
+    100% calc(var(--gr-cut) - 1.5px),
+    100% calc(100% - (var(--gr-dip) - 1.5px)),
+    50% 100%,
+    0% calc(100% - (var(--gr-dip) - 1.5px)),
+    0% calc(var(--gr-cut) - 1.5px)
+  ) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 6px 4px 10px !important;
+  box-sizing: border-box !important;
+  z-index: 2 !important;
+  overflow: hidden !important;
+}
+
+.gr-card-shield.selected .gr-card-inner,
+.gr-card-shield.on .gr-card-inner {
+  background: radial-gradient(120% 100% at 50% 15%, #991b1b 0%, #580c11 45%, #140407 85%) !important;
+  box-shadow: inset 0 1px 0 rgba(254, 202, 202, 0.35) !important;
+}
+
+.gr-card-info-badge {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #e2e8f0 !important;
+  font-family: var(--gr-font-ui, sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 5 !important;
+  transition: transform 0.12s ease, border-color 0.12s ease !important;
+}
+.gr-card-info-badge:hover {
+  transform: scale(1.15) !important;
+  border-color: #fde047 !important;
+  color: #ffffff !important;
+}
+
+.gr-hero-art-chamber {
+  position: relative !important;
+  width: 100% !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.gr-hero-art-chamber img.splash {
+  max-width: 90% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85)) !important;
+}
+
+.gr-hero-nameplate {
+  width: 100% !important;
+  text-align: center !important;
+  margin: 2px 0 !important;
+  padding: 1px 0 !important;
+  background: linear-gradient(90deg, transparent 0%, rgba(8, 12, 18, 0.8) 20%, rgba(8, 12, 18, 0.8) 80%, transparent 100%) !important;
+}
+
+.gr-hero-name {
+  font-family: var(--gr-font-header, 'Cinzel', serif) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  color: #f8fafc !important;
+  text-shadow: 0 1px 3px #000000 !important;
+  text-transform: uppercase !important;
+}
+
+body.desk .gr-hero-name {
+  font-size: 15px !important;
+  letter-spacing: 0.14em !important;
+}
+
+.gr-card-center-crest {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 3px 0 !important;
+}
+
+.gr-hero-status-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 92% !important;
+  margin: 4px 0 !important;
+}
+
+.gr-resource-bars {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  flex: 1 !important;
+}
+
+.gr-bar-track {
+  position: relative !important;
+  height: 12px !important;
+  background: #080c10 !important;
+  border: 1px solid #334155 !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+}
+
+.gr-bar-fill.hp {
+  background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%) !important;
+  height: 100% !important;
+}
+
+.gr-bar-fill.energy {
+  background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%) !important;
+  height: 100% !important;
+}
+
+.gr-bar-lbl {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: var(--gr-font-ui, sans-serif) !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px #000000 !important;
+  line-height: 1 !important;
+}
+
+.gr-tactical-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  grid-template-rows: repeat(2, 1fr) !important;
+  gap: 4px !important;
+  width: 94% !important;
+  margin: 4px 0 !important;
+  padding: 4px !important;
+  background: rgba(7, 10, 15, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 4px !important;
+  box-sizing: border-box !important;
+}
+
+.gr-stat-cell {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2px 0 !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: 2px !important;
+}
+
+.gr-stat-ico {
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.gr-stat-val {
+  font-family: var(--gr-font-ui, sans-serif) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #f1f5f9 !important;
+  text-shadow: 0 1px 2px #000000 !important;
+  font-feature-settings: "tnum" 1 !important;
+}
+
+.gr-tail-sockets {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+  margin-top: auto !important;
+  margin-bottom: 2px !important;
+}
+
+.gr-socket-cluster-row {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 4px !important;
+}
+
+.gr-socket-diamond.active-ability {
+  border-color: #2dd4bf !important;
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.5), inset 0 1px 2px rgba(0, 0, 0, 0.7) !important;
+}
+
+.gr-socket-diamond.glow-teal {
+  border-color: var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.7) !important;
+}
+
+.gr-socket-icon {
+  transform: rotate(-45deg) !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.gr-hero-tactical-plate,
+.card.detail.floating-hero-detail {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 600px !important;
+  margin: 6px auto !important;
+  padding: 8px 14px !important;
+  background: linear-gradient(180deg, #16202c 0%, #0d141e 100%) !important;
+  border: 1.5px solid #334155 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  box-sizing: border-box !important;
+}
+
+.gr-plate-content {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+
+.gr-hero-tactical-plate p.htag {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  color: #cbd5e1 !important;
+  margin: 0 !important;
+}
+
+.gr-hero-tactical-plate b.htag-title {
+  color: #fde047 !important;
+  font-family: var(--gr-font-header, 'Cinzel', serif) !important;
+}
+
+.gr-mobile-stats-row {
+  margin-top: 6px !important;
+}
+
+.hero-cta-btn.ready.selected {
+  background: linear-gradient(180deg, #2dd4bf 0%, #1f6d6b 18%, #134e4a 60%, #0d3835 100%) !important;
+  border: 2px solid #5eead4 !important;
+  color: #ffffff !important;
+  filter: drop-shadow(0 4px 0 #072120) drop-shadow(0 8px 20px rgba(45, 212, 191, 0.5)) !important;
+}
+
+.hero-cta-btn.slot-unselected {
+  filter: grayscale(0.7) brightness(0.6) !important;
+}
+
+@media (max-width: 768px) {
+  .stage.spotlights.gr-draft-stage {
+    gap: 8px !important;
+    margin: 2px auto 4px !important;
+  }
+  .gr-card-shield {
+    width: 104px !important;
+    height: 215px !important;
+    --gr-cut: 8px !important;
+    --gr-dip: 16px !important;
+  }
+  .gr-side-badge {
+    transform: scale(0.85) !important;
+  }
+  .gr-side-badge.left { left: -8px !important; }
+  .gr-side-badge.right { right: -8px !important; }
+  .gr-side-ribbon { display: none !important; }
+}
+
+/* --------------------------------------------------------------------------
+   11. GUILD RUN POWER DRAFT / UPGRADE TABLETS (M2 - Ref Image 4)
+   -------------------------------------------------------------------------- */
+
+.start.s2.gr-power-draft {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: calc(100vh - 54px) !important;
+  max-height: 100vh !important;
+  box-sizing: border-box !important;
+  padding: 8px 12px 14px !important;
+  overflow: hidden !important;
+}
+
+.gr-draft-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  margin-bottom: 2px !important;
+}
+
+.start.s2 .stage.pedestals.gr-tablets-stage {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 2px auto !important;
+  padding: 8px 4px 4px !important;
+  width: 100% !important;
+  max-width: 960px !important;
+  box-sizing: border-box !important;
+  align-items: stretch !important;
+}
+
+.start.s2 .srelic.ped.gr-tablet {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding: 14px 6px 6px !important;
+  background: linear-gradient(180deg, #131a26 0%, #0c1118 60%, #070a0f 100%) !important;
+  border: 2px solid #334155 !important;
+  border-radius: 8px !important;
+  clip-path: polygon(
+    10px 0%, calc(100% - 10px) 0%,
+    100% 10px, 100% calc(100% - 10px),
+    calc(100% - 10px) 100%, 10px 100%,
+    0% calc(100% - 10px), 0% 10px
+  ) !important;
+  box-shadow: 
+    0 10px 24px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(212, 175, 55, 0.15) !important;
+  cursor: pointer !important;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              border-color 0.2s ease, 
+              box-shadow 0.2s ease, 
+              filter 0.2s ease !important;
+  outline: none !important;
+  user-select: none !important;
+}
+
+.gr-tablet .gr-top-crest {
+  position: absolute !important;
+  top: -14px !important;
+  left: 50% !important;
+  transform: translateX(-50%) rotate(45deg) !important;
+  width: 28px !important;
+  height: 28px !important;
+  background: #090e15 !important;
+  border: 2px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.9) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 4 !important;
+}
+.gr-tablet .gr-top-crest .gr-top-crest-icon {
+  transform: rotate(-45deg) !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+}
+.gr-tablet .gr-top-crest.crest-heal { border-color: #22c55e !important; color: #4ade80 !important; }
+.gr-tablet .gr-top-crest.crest-shield { border-color: #38bdf8 !important; color: #38bdf8 !important; }
+.gr-tablet .gr-top-crest.crest-magic { border-color: #a855f7 !important; color: #c084fc !important; }
+.gr-tablet .gr-top-crest.crest-warrior { border-color: #f59e0b !important; color: #fbbf24 !important; }
+
+.gr-tablet-head {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+  width: 100% !important;
+}
+.gr-tablet-kicker {
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: #94a3b8 !important;
+  margin-bottom: 2px !important;
+}
+.gr-tablet-title {
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: #fef08a !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+  line-height: 1.2 !important;
+}
+
+.gr-tablet-socket-frame {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  margin: 4px 0 8px !important;
+  position: relative !important;
+}
+.gr-tablet-socket-frame .gr-socket-diamond {
+  width: 38px !important;
+  height: 38px !important;
+  transform: rotate(45deg) !important;
+  background: #080c12 !important;
+  border: 2px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 12px rgba(212, 175, 55, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.gr-tablet-socket-frame .gr-socket-diamond .ico,
+.gr-tablet-socket-frame .gr-socket-diamond img {
+  transform: rotate(-45deg) !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+.gr-tablet-tier-pill {
+  position: absolute !important;
+  bottom: -6px !important;
+  background: #090e15 !important;
+  border: 1px solid var(--gr-gold-antique, #b38b22) !important;
+  border-radius: 4px !important;
+  padding: 1px 6px !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  text-transform: uppercase !important;
+  z-index: 2 !important;
+}
+
+.gr-tablet-plate {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  background: rgba(8, 12, 18, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 6px 6px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  flex: 1 1 auto !important;
+  justify-content: center !important;
+}
+.gr-tablet-desc {
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+  color: #cbd5e1 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+.gr-tablet-full-desc {
+  display: none !important;
+}
+
+.gr-chk-seal {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(180deg, #fde047 0%, #d4af37 100%) !important;
+  color: #422006 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 10px rgba(253, 224, 71, 0.6) !important;
+  font-weight: 900 !important;
+  font-size: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 5 !important;
+}
+
+.start.s2 .srelic.ped.gr-tablet.on {
+  border-color: var(--gr-gold-bright, #fde047) !important;
+  background: linear-gradient(180deg, #1b2636 0%, #101824 60%, #0a0f18 100%) !important;
+  box-shadow: 
+    0 0 22px rgba(212, 175, 55, 0.55),
+    0 12px 28px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 1px rgba(253, 224, 71, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-4px) !important;
+}
+.start.s2 .srelic.ped.gr-tablet.off {
+  opacity: 0.6 !important;
+  filter: saturate(0.6) !important;
+  transform: scale(0.97) !important;
+}
+
+/* --------------------------------------------------------------------------
+   12. GUILD RUN MID-RUN RECRUIT SCREEN (M2 - Ref Image 3 & 4)
+   -------------------------------------------------------------------------- */
+
+.start.s1.recruit.gr-recruit-screen {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  height: calc(100dvh - 54px) !important;
+  max-height: calc(100dvh - 54px) !important;
+  box-sizing: border-box !important;
+  padding: 4px 8px 8px !important;
+  overflow: hidden !important;
+}
+
+.gr-recruit-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  margin-bottom: 2px !important;
+}
+.gr-screen-badge {
+  display: inline-block !important;
+  padding: 1px 8px !important;
+  background: rgba(212, 175, 55, 0.15) !important;
+  border: 1px solid rgba(212, 175, 55, 0.35) !important;
+  border-radius: 4px !important;
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  text-transform: uppercase !important;
+  margin-bottom: 2px !important;
+}
+
+.gr-recruit-stage {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  margin: 4px auto !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  box-sizing: border-box !important;
+}
+
+.gr-recruit-stage .gr-card-shield {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 18px 4px 18px !important;
+  background: linear-gradient(180deg, #151c28 0%, #0d1219 100%) !important;
+  border: 2px solid #475569 !important;
+  clip-path: polygon(
+    12px 0%, calc(100% - 12px) 0%,
+    100% 12px, 100% calc(100% - 24px),
+    50% 100%,
+    0% calc(100% - 24px), 0% 12px
+  ) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.gr-card-art-plate {
+  position: relative !important;
+  width: 100% !important;
+  height: 90px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+.gr-card-art-plate .splash {
+  max-height: 100% !important;
+  width: auto !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.7)) !important;
+}
+
+.gr-card-vignette {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin-top: 2px !important;
+}
+.gr-card-hero-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin-bottom: 4px !important;
+}
+.gr-card-hero-header .hero-card-title {
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  letter-spacing: 0.08em !important;
+}
+
+.gr-recruit-stage .gr-card-shield.on {
+  border-color: var(--gr-gold-bright, #fde047) !important;
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.55), 0 12px 28px rgba(0, 0, 0, 0.9) !important;
+  transform: translateY(-4px) !important;
+}
+.gr-recruit-stage .gr-card-shield.on .gr-light-pillar {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: radial-gradient(ellipse at 50% 40%, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0.08) 60%, transparent 80%) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+.gr-party-dock {
+  background: linear-gradient(180deg, rgba(15, 23, 34, 0.95) 0%, rgba(8, 12, 18, 0.98) 100%) !important;
+  border: 1.5px solid var(--gr-gold-antique, #b38b22) !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  margin: 4px auto !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+.gr-party-dock-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 4px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding-bottom: 2px !important;
+}
+.gr-party-dock-label {
+  font-family: var(--gr-font-ui, "Inter", sans-serif) !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: var(--gr-gold-base, #d4af37) !important;
+}
+.gr-party-count {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+}
+.gr-party-dock-content {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+.gr-party-roster {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.gr-party-hero-token {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+.gr-party-avatar-ring {
+  position: relative !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--gr-gold-base, #d4af37) !important;
+  background: #090e15 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.gr-party-avatar-ring.empty {
+  border: 1.5px dashed #475569 !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  color: #64748b !important;
+}
+.gr-party-hero-token.candidate .gr-party-avatar-ring {
+  border: 2px solid #22c55e !important;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5) !important;
+}
+.gr-party-lv {
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  background: #000000bb !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  padding: 0 2px !important;
+  color: #fde047 !important;
+}
+.gr-party-hero-name {
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+}
+
+.gr-party-synergies {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+  justify-content: flex-end !important;
+}
+.gr-synergy-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid #334155 !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 9px !important;
+  color: #cbd5e1 !important;
+}
+.gr-synergy-pill.boosted {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #86efac !important;
+}
+
+.gr-recruit-actions {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin-top: 4px !important;
+}
+.gr-cost-chip.free {
+  display: inline-block !important;
+  background: #166534 !important;
+  color: #bbf7d0 !important;
+  border: 1px solid #22c55e !important;
+  border-radius: 3px !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  padding: 1px 5px !important;
+  margin-right: 6px !important;
+}
+
+/* --------------------------------------------------------------------------
+   13. DESKTOP ADAPTATION & ZERO-SCROLL GUARANTEE (body.desk)
+   -------------------------------------------------------------------------- */
+
+body.desk .title.home.gr-title-screen {
+  display: grid !important;
+  grid-template-columns: 1fr 1.15fr !important;
+  grid-template-areas:
+    "brand trailer"
+    "stack trailer"
+    "dock trailer" !important;
+  max-width: 1080px !important;
+  height: calc(100vh - 64px) !important;
+  max-height: 720px !important;
+  padding: 24px 32px !important;
+  gap: 16px 40px !important;
+  align-items: center !important;
+  margin: 0 auto !important;
+}
+
+body.desk .title.home .gr-title-brand {
+  grid-area: brand !important;
+  align-self: end !important;
+}
+
+body.desk .title.home .gr-title-stack {
+  grid-area: stack !important;
+  align-self: center !important;
+  margin: 0 !important;
+}
+
+body.desk .title.home .homedock.gr-homedock {
+  grid-area: dock !important;
+  align-self: start !important;
+  margin: 0 !important;
+}
+
+body.desk .title.home .trailer.gr-trailer-frame {
+  grid-area: trailer !important;
+  max-width: 520px !important;
+  width: 100% !important;
+  height: 290px !important;
+  margin: 0 !important;
+}
+
+body.desk .map.road .mapside {
+  display: block !important;
+}
+body.desk .map.road .mstrip {
+  display: none !important;
+}
+
+body.desk .party.tactical-dock {
+  background: rgba(13, 19, 26, 0.92) !important;
+  border: 1.5px solid rgba(212, 175, 55, 0.4) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(16px) !important;
+  padding: 16px 18px !important;
+}
+
+body.desk .party.tactical-dock .bph {
+  font-family: var(--gr-font-header, "Cinzel", serif) !important;
+  font-size: 14px !important;
+  letter-spacing: 0.12em !important;
+  color: #fde047 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+body.desk .party.tactical-dock .pm {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 8px 6px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.desk .party.tactical-dock .pm img.por {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8) !important;
+}
+
+body.desk .party.tactical-dock .mslot {
+  width: 22px !important;
+  height: 22px !important;
+  transform: rotate(45deg) !important;
+  background: #080b10 !important;
+  border: 1.5px solid rgba(212, 175, 55, 0.4) !important;
+  border-radius: 2px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+body.desk .party.tactical-dock .mslot img,
+body.desk .party.tactical-dock .mslot svg {
+  transform: rotate(-45deg) !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+body.desk .start.s2.gr-power-draft,
+body.desk .start.s1.recruit.gr-recruit-screen {
+  max-width: 1040px !important;
+  margin: 0 auto !important;
+  padding: 16px 24px !important;
+}
+
+body.desk .gr-tablets-stage {
+  gap: 20px !important;
+  min-height: 280px !important;
+}
+
+body.desk .srelic.ped.gr-tablet {
+  padding: 28px 14px 16px !important;
+}
+
+body.desk .gr-tablet-socket-frame .gr-socket-diamond {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+body.desk .gr-tablet-socket-frame .gr-socket-diamond .ico,
+body.desk .gr-tablet-socket-frame .gr-socket-diamond img {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+body.desk .gr-tablet-title {
+  font-size: 15px !important;
+}
+
+body.desk .gr-tablet-desc {
+  font-size: 12.5px !important;
+}
+
+body.desk .gr-recruit-stage {
+  gap: 20px !important;
+}
+
+body.desk .gr-recruit-stage .gr-card-shield {
+  padding: 24px 8px 24px !important;
+  min-height: 290px !important;
+}
+
+body.desk .gr-card-art-plate {
+  height: 120px !important;
+}
+
+
+/* ==========================================================================
+   MILESTONE 3: DEPLOY SCREEN & ACTIVE BATTLE HUD (REF IMAGES 1 & 2)
+   ========================================================================== */
+
+/* 1. Unified Guild Run Deploy Dock (Ref 1 & 2) */
+.deploy > .dparty.gr-deploy-dock {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: linear-gradient(180deg, rgba(20, 28, 42, 0.94) 0%, rgba(10, 15, 24, 0.98) 100%) !important;
+  border: 1.5px solid rgba(212, 175, 55, 0.55) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  box-sizing: border-box !important;
+  padding: 4px 10px !important;
+  gap: 10px !important;
+  z-index: 6 !important;
+  pointer-events: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.gr-dock-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.gr-dock-party {
+  flex: 1 !important;
+}
+
+.gr-dock-reserve {
+  flex-shrink: 0 !important;
+}
+
+.gr-dock-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.gr-dock-tag {
+  font-family: var(--serif, 'Cinzel', serif) !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.2px !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  text-transform: uppercase !important;
+}
+
+.gr-dock-count {
+  font-size: 9px !important;
+  font-variant-numeric: tabular-nums !important;
+  color: #94a3b8 !important;
+  font-weight: 600 !important;
+}
+
+.gr-dock-slots {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.gr-dock-divider {
+  width: 1px !important;
+  height: 44px !important;
+  background: linear-gradient(180deg, transparent 0%, rgba(212, 175, 55, 0.6) 50%, transparent 100%) !important;
+  flex-shrink: 0 !important;
+}
+
+.gr-dock-hero-unit {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 2px 4px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.gr-por-ring {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+  overflow: visible !important;
+}
+
+.gr-por-ring .por {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+
+.gr-por-ring.selected {
+  border-color: var(--gr-gold-bright, #fde047) !important;
+  box-shadow: 0 0 12px rgba(253, 224, 71, 0.7) !important;
+}
+
+.gr-hero-lvl-badge {
+  position: absolute !important;
+  bottom: -3px !important;
+  right: -3px !important;
+  background: rgba(12, 18, 28, 0.92) !important;
+  border: 1px solid var(--gr-gold-base, #d4af37) !important;
+  border-radius: 4px !important;
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  padding: 1px 3px !important;
+  line-height: 1 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+.gr-dock-info {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.gr-dock-info .pmn b {
+  font-size: 11px !important;
+  color: #f1f5f9 !important;
+  white-space: nowrap !important;
+}
+
+.gr-dock-gear-cluster {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* Diamond Sockets (Ref 1 & 2) */
+.dsock.gr-socket-diamond {
+  width: 18px !important;
+  height: 18px !important;
+  transform: rotate(45deg) !important;
+  border-radius: 2px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 2px !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+}
+
+.dsock.gr-socket-diamond img,
+.dsock.gr-socket-diamond .ico,
+.dsock.gr-socket-diamond .empty-sil {
+  transform: rotate(-45deg) !important;
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 9px !important;
+  line-height: 14px !important;
+}
+
+.dsock.gr-socket-diamond.empty {
+  border: 1px dashed rgba(212, 175, 55, 0.4) !important;
+  color: rgba(212, 175, 55, 0.4) !important;
+}
+
+.dsock.gr-socket-diamond.filled {
+  background: linear-gradient(135deg, rgba(28, 38, 54, 0.95), rgba(16, 22, 32, 0.95)) !important;
+  border: 1.2px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.3) !important;
+}
+
+.gr-dock-slot-empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+}
+
+.gr-slot-circle-dashed {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  border: 1.5px dashed rgba(212, 175, 55, 0.35) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: rgba(212, 175, 55, 0.45) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.gr-slot-circle-dashed.dim {
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  color: rgba(148, 163, 184, 0.35) !important;
+}
+
+/* 2. Tactile 3D Fight Button */
+.deploy .bar.sticky {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 4px 0 !important;
+  z-index: 7 !important;
+}
+
+.deploy .bar.sticky .gr-btn-fight,
+.deploy .bar.sticky .fight-gold-btn {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 8px 24px !important;
+  min-height: 44px !important;
+  background: linear-gradient(180deg, #10b981 0%, #059669 60%, #047857 100%) !important;
+  border: 1.5px solid #34d399 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  font-family: var(--serif, 'Cinzel', serif) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7) !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+.gr-btn-bracket {
+  font-family: var(--serif, 'Cinzel', serif) !important;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  text-shadow: 0 0 6px rgba(253, 224, 71, 0.6) !important;
+}
+
+.fight-gold-btn.locked {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+  border-color: #475569 !important;
+  color: #94a3b8 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  opacity: 0.8 !important;
+  cursor: not-allowed !important;
+}
+
+.fight-gold-btn.locked .gr-btn-bracket {
+  color: #64748b !important;
+  text-shadow: none !important;
+}
+
+/* 3. Speed & AUTO Cluster */
+.speed.gr-speed-cluster {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: rgba(14, 20, 30, 0.85) !important;
+  border: 1px solid rgba(212, 175, 55, 0.4) !important;
+  border-radius: 999px !important;
+  padding: 2px 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.gr-auto-btn {
+  background: rgba(16, 36, 32, 0.85) !important;
+  border: 1.2px solid #10b981 !important;
+  border-radius: 999px !important;
+  padding: 3px 8px !important;
+  min-height: 24px !important;
+  color: #6ee7b7 !important;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.gr-auto-btn .gr-auto-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #10b981 !important;
+  box-shadow: 0 0 5px #10b981 !important;
+}
+
+.gr-auto-btn.active {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+  color: #022c22 !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6) !important;
+}
+
+.gr-auto-btn.active .gr-auto-dot {
+  background: #ffffff !important;
+  box-shadow: 0 0 6px #ffffff !important;
+}
+
+.gr-speed-btns {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+}
+
+.gr-speed-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  color: #cbd5e1 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  min-height: 24px !important;
+  cursor: pointer !important;
+}
+
+.gr-speed-btn.on {
+  background: rgba(212, 175, 55, 0.25) !important;
+  border-color: var(--gr-gold-bright, #fde047) !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  box-shadow: 0 0 6px rgba(253, 224, 71, 0.4) !important;
+}
+
+/* 4. Active Battle HUD & Translucent DPS Meter (Ref 1) */
+.gr-battle-hud {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 4px 6px !important;
+  z-index: 6 !important;
+}
+
+.gr-hud-banner {
+  background: linear-gradient(180deg, rgba(20, 26, 38, 0.92) 0%, rgba(12, 16, 24, 0.96) 100%) !important;
+  border: 1px solid rgba(212, 175, 55, 0.45) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 10px rgba(212, 175, 55, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 4px 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #f1f5f9 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  max-width: calc(100% - 150px) !important;
+  overflow: hidden !important;
+}
+
+.gr-hud-banner b {
+  font-family: var(--serif, 'Cinzel', serif) !important;
+  font-size: 13px !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  letter-spacing: 0.5px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.gr-hud-banner .clock {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 999px !important;
+  padding: 2px 8px !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  color: #cbd5e1 !important;
+}
+
+.gr-battle-controls {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* Translucent DPS Meter Panel */
+.gr-dps-panel {
+  background: linear-gradient(180deg, rgba(16, 22, 34, 0.88) 0%, rgba(10, 14, 22, 0.94) 100%) !important;
+  border: 1px solid rgba(212, 175, 55, 0.4) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  padding: 6px 10px !important;
+  box-sizing: border-box !important;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease !important;
+}
+
+.gr-dps-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding-bottom: 5px !important;
+  margin-bottom: 6px !important;
+}
+
+.gr-dps-tabs {
+  display: inline-flex !important;
+  gap: 3px !important;
+}
+
+.gr-dps-tab {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  padding: 3px 6px !important;
+  min-height: 24px !important;
+  color: #94a3b8 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.15s ease !important;
+}
+
+.gr-dps-tab.active {
+  background: rgba(212, 175, 55, 0.2) !important;
+  border-color: var(--gr-gold-base, #d4af37) !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.35) !important;
+}
+
+.gr-dps-tab svg.ui {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.gr-dps-title {
+  font-family: var(--serif, 'Cinzel', serif) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.2px !important;
+  color: var(--gr-gold-bright, #fde047) !important;
+  text-transform: uppercase !important;
+  flex: 1 !important;
+  text-align: center !important;
+}
+
+.gr-dps-toggle {
+  background: rgba(16, 40, 36, 0.8) !important;
+  border: 1px solid #10b981 !important;
+  border-radius: 6px !important;
+  padding: 3px 6px !important;
+  min-height: 24px !important;
+  color: #6ee7b7 !important;
+  cursor: pointer !important;
+}
+
+.gr-dps-toggle svg.ui {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Hero Rows inside DPS Meter */
+.gr-dps-list .ts {
+  background: linear-gradient(90deg, rgba(25, 33, 48, 0.65), rgba(15, 20, 30, 0.85)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 8px !important;
+  padding: 4px 6px !important;
+  gap: 8px !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.gr-dps-list .ts .tsp .por {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid var(--gr-gold-base, #d4af37) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+}
+
+.gr-dps-list .ts .tsn b {
+  font-size: 12px !important;
+  color: #f1f5f9 !important;
+}
+
+.gr-dps-list .ts .tsd {
+  color: var(--gr-dps-magenta, #d946ef) !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* Prominent Vibrant Horizontal Damage Fill Bar (Ref 1) */
+.gr-dps-list .ts .dm {
+  height: 6px !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  border-radius: 3px !important;
+  overflow: hidden !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Tab 1: Damage Dealt (Vibrant Fuchsia / Magenta) */
+.gr-dps-panel.tab-dmg .ts .dm s,
+.gr-dps-panel:not(.tab-taken):not(.tab-heal) .ts .dm s {
+  background: linear-gradient(90deg, #a21caf 0%, #d946ef 60%, #f472b6 100%) !important;
+  box-shadow: 0 0 8px rgba(217, 70, 239, 0.5) !important;
+}
+
+/* Tab 2: Damage Taken (Vibrant Steel / Cyan) */
+.gr-dps-panel.tab-taken .ts .dm s {
+  background: linear-gradient(90deg, #0284c7 0%, #38bdf8 60%, #7dd3fc 100%) !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5) !important;
+}
+
+.gr-dps-panel.tab-taken .ts .tsd {
+  color: #38bdf8 !important;
+}
+
+/* Tab 3: Healing Done (Vibrant Emerald / Green) */
+.gr-dps-panel.tab-heal .ts .dm s {
+  background: linear-gradient(90deg, #16a34a 0%, #4ade80 60%, #86efac 100%) !important;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5) !important;
+}
+
+.gr-dps-panel.tab-heal .ts .tsd {
+  color: #4ade80 !important;
+}
+
+/* Mini HP & MP Sub-bars */
+.gr-dps-list .ts .hp {
+  height: 5px !important;
+  border-radius: 2.5px !important;
+}
+.gr-dps-list .ts .hp s {
+  background: linear-gradient(90deg, #16a34a, #4ade80) !important;
+}
+.gr-dps-list .ts .mp {
+  height: 4px !important;
+  border-radius: 2px !important;
+}
+.gr-dps-list .ts .mp s {
+  background: linear-gradient(90deg, #0284c7, #38bdf8) !important;
+}
+
+/* 5. Desktop Multi-Column Layout (body.desk) */
+body.desk .deploy > .dparty {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  top: auto !important;
+  min-width: 580px !important;
+  max-width: 820px !important;
+  z-index: 6 !important;
+  margin: 0 !important;
+  display: flex !important;
+}
+
+body.desk .deploy > .bar.sticky {
+  position: absolute !important;
+  right: 24px !important;
+  bottom: 12px !important;
+  top: auto !important;
+  z-index: 7 !important;
+  margin: 0 !important;
+}
+
+body.desk .deploy > .bar.sticky .gr-btn-fight {
+  min-width: 170px !important;
+  min-height: 50px !important;
+  font-size: 16px !important;
+}
+
+body.desk .deploy.battle > .bpanel {
+  position: absolute !important;
+  top: 50px !important;
+  right: 16px !important;
+  width: 250px !important;
+  max-height: calc(100% - 65px) !important;
+  overflow-y: auto !important;
+  z-index: 5 !important;
+  margin: 0 !important;
+}
+
+body.desk .deploy.battle > .bpanel.collapsed,
+body.desk .bpanel.collapsed {
+  width: 44px !important;
+  overflow: hidden !important;
+  padding: 6px 4px !important;
+}
+
+body.desk .deploy.battle > .bpanel.collapsed .gr-dps-tabs,
+body.desk .deploy.battle > .bpanel.collapsed .gr-dps-title,
+body.desk .deploy.battle > .bpanel.collapsed .gr-dps-list,
+body.desk .deploy.battle > .bpanel.collapsed .gr-foes-header,
+body.desk .deploy.battle > .bpanel.collapsed .gr-foes-strip,
+body.desk .bpanel.collapsed .gr-dps-tabs,
+body.desk .bpanel.collapsed .gr-dps-title,
+body.desk .bpanel.collapsed .gr-dps-list,
+body.desk .bpanel.collapsed .gr-foes-header,
+body.desk .bpanel.collapsed .gr-foes-strip {
+  display: none !important;
+}
+
+/* 6. Landscape Viewport Compliance (740x360) */
+body.landscape .deploy .dparty {
+  display: none !important;
+}
+
+body.landscape .deploy .bar {
+  position: relative !important;
+  margin-top: 4px !important;
+}
+
+/* 7. Mobile Portrait Strict 0-Scroll Layout */
+@media (max-width: 639px) and (orientation: portrait) {
+  .deploy {
+    max-height: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .deploy > .dparty.gr-deploy-dock {
+    max-width: 100% !important;
+    padding: 3px 6px !important;
+    gap: 6px !important;
+  }
+  .deploy > .dparty .gr-por-ring {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .deploy > .dparty .gr-por-ring .por {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  .deploy > .dparty .gr-dock-slot-empty {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .deploy > .dparty .gr-slot-circle-dashed {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .deploy > .dparty .dsock.gr-socket-diamond {
+    width: 15px !important;
+    height: 15px !important;
+  }
+  .deploy > .dparty .dsock.gr-socket-diamond img {
+    width: 11px !important;
+    height: 11px !important;
+  }
+  .deploy > .dparty .pmn b {
+    font-size: 10px !important;
+  }
+  .deploy .bar.sticky {
+    margin: 2px 0 !important;
+  }
+  .deploy .bar.sticky .gr-btn-fight {
+    min-height: 40px !important;
+    padding: 6px 18px !important;
+    font-size: 14px !important;
+  }
+  .deploy.battle .bpanel {
+    margin-top: 2px !important;
+    padding: 4px 6px !important;
+    max-height: 160px !important;
+    overflow-y: auto !important;
+  }
+  .deploy.battle .bpanel.collapsed {
+    max-height: 36px !important;
+    overflow: hidden !important;
+    padding: 4px 6px !important;
+  }
+  .deploy.battle .bpanel.collapsed .gr-dps-header {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+  .deploy.battle .bpanel.collapsed .gr-dps-list,
+  .deploy.battle .bpanel.collapsed .gr-foes-header,
+  .deploy.battle .bpanel.collapsed .gr-foes-strip {
+    display: none !important;
+  }
+  .deploy.battle .gr-dps-header {
+    margin-bottom: 3px !important;
+    padding-bottom: 3px !important;
+  }
+  .deploy.battle .gr-dps-list {
+    gap: 3px !important;
+  }
+  .deploy.battle .ts {
+    padding: 3px 5px !important;
+  }
+}

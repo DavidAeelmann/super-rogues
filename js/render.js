@@ -147,6 +147,96 @@
     if (o.deploy) return r >= 4 ? `hsl(205,62%,${58 + n * 5}%)` : `hsl(4,58%,${63 + n * 4}%)`;
     return (c + r) % 2 ? `hsl(104,46%,${50 + n * 5}%)` : `hsl(96,44%,${56 + n * 5}%)`;
   }
+  // WHAT: draws a 3D faceted golden downward chevron arrow over a target hex (Ref 2)
+  function drawHexChevronIndicator(ctx, v, c, r, now = 0) {
+    const { size } = v;
+    const p = hexScreen(v, c, r);
+    // Smooth hover bobbing: 3.5px amplitude sine oscillation
+    const bob = Math.sin(now * 5.2) * (size * 0.08);
+    const cx = p.x;
+    // Position above the tile, pointing down towards the hex center
+    const cy = p.y - size * 0.58 + bob;
+    const w = size * 0.36;
+    const h = size * 0.40;
+    const dth = size * 0.09; // 3D extrusion thickness
+
+    ctx.save();
+    ctx.lineJoin = 'miter';
+
+    // 1. Soft drop shadow under chevron
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + h + 4);
+    ctx.lineTo(cx - w, cy + h * 0.3 + 4);
+    ctx.lineTo(cx - w * 0.45, cy + 4);
+    ctx.lineTo(cx, cy + h * 0.5 + 4);
+    ctx.lineTo(cx + w * 0.45, cy + 4);
+    ctx.lineTo(cx + w, cy + h * 0.3 + 4);
+    ctx.closePath();
+    ctx.fill();
+
+    // 2. Extruded Bottom/Side Shadow Facets (dark golden bronze)
+    ctx.fillStyle = '#6b4f0a';
+    ctx.beginPath();
+    ctx.moveTo(cx - w, cy + h * 0.3);
+    ctx.lineTo(cx, cy + h);
+    ctx.lineTo(cx, cy + h + dth);
+    ctx.lineTo(cx - w, cy + h * 0.3 + dth);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#423105';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + h);
+    ctx.lineTo(cx + w, cy + h * 0.3);
+    ctx.lineTo(cx + w, cy + h * 0.3 + dth);
+    ctx.lineTo(cx, cy + h + dth);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Right Facet (shaded gold gradient)
+    const gRight = ctx.createLinearGradient(cx, cy, cx + w, cy + h);
+    gRight.addColorStop(0, '#e5a912');
+    gRight.addColorStop(1, '#996d05');
+    ctx.fillStyle = gRight;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + h * 0.55);
+    ctx.lineTo(cx, cy + h);
+    ctx.lineTo(cx + w, cy + h * 0.3);
+    ctx.lineTo(cx + w * 0.48, cy + h * 0.05);
+    ctx.closePath();
+    ctx.fill();
+
+    // 4. Left Facet (illuminated bright radiant gold gradient)
+    const gLeft = ctx.createLinearGradient(cx - w, cy, cx, cy + h);
+    gLeft.addColorStop(0, '#fff494');
+    gLeft.addColorStop(0.4, '#ffd700');
+    gLeft.addColorStop(1, '#f0b000');
+    ctx.fillStyle = gLeft;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + h * 0.55);
+    ctx.lineTo(cx, cy + h);
+    ctx.lineTo(cx - w, cy + h * 0.3);
+    ctx.lineTo(cx - w * 0.48, cy + h * 0.05);
+    ctx.closePath();
+    ctx.fill();
+
+    // 5. Crisp metallic dark contour
+    ctx.strokeStyle = '#261b02';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Center crest ridge highlight
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + h * 0.55);
+    ctx.lineTo(cx, cy + h);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
   // WHAT: draws the hex tiles (our half blue, theirs red), the slab edge, the deploy line and the selected / drop highlights.
   // v62b (review: "the web version still lags"): the ~64 tiles (side faces, grit texture, bevels) never change during a fight, so they are
   // painted once into an offscreen canvas and copied each frame; it is repainted only when the skin, deploy mode, drop hex or terrain changes
@@ -170,16 +260,51 @@
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
       ctx.restore();
     }
-    if (o.hoverHex && !tk[Hx.key(o.hoverHex.c, o.hoverHex.r)]) {
-      const hh = o.hoverHex, pts = corners(v, hh.c, hh.r, size * 0.94);
+    // Render interactive hover / target hex highlight with Guild Run gold glow & 3D chevron (Ref 2)
+    const activeTargetHex = o.drop || (o.hoverHex && (!tk[Hx.key(o.hoverHex.c, o.hoverHex.r)]));
+    if (activeTargetHex) {
+      const hh = activeTargetHex;
+      const ok = !o.deploy || hh.r >= 4;
+      const pts = corners(v, hh.c, hh.r, size * 0.94);
+      const pCen = hexScreen(v, hh.c, hh.r);
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
+
       ctx.save();
       path(ctx, pts);
-      const ok = !o.deploy || hh.r >= 4;
-      ctx.fillStyle = ok ? 'rgba(230, 255, 160, 0.22)' : 'rgba(255, 120, 110, 0.16)';
-      ctx.fill();
-      ctx.strokeStyle = ok ? 'rgba(235, 255, 175, 0.9)' : 'rgba(255, 140, 130, 0.75)';
-      ctx.lineWidth = 2.2;
-      ctx.stroke();
+
+      if (ok) {
+        // 1. Radiant gold radial glow fill
+        const radGlow = ctx.createRadialGradient(pCen.x, pCen.y, 0, pCen.x, pCen.y, size * 0.85);
+        radGlow.addColorStop(0, 'rgba(255, 235, 120, 0.55)');
+        radGlow.addColorStop(0.65, 'rgba(212, 175, 55, 0.32)');
+        radGlow.addColorStop(1, 'rgba(212, 175, 55, 0.05)');
+        ctx.fillStyle = radGlow;
+        ctx.fill();
+
+        // 2. Glowing gold inner hex border with bloom
+        ctx.strokeStyle = '#ffe066';
+        ctx.lineWidth = 2.8;
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+
+        // 3. Second fine white-gold rim
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 1.2;
+        path(ctx, corners(v, hh.c, hh.r, size * 0.88));
+        ctx.stroke();
+
+        // 4. Draw 3D downward chevron indicator
+        drawHexChevronIndicator(ctx, v, hh.c, hh.r, now);
+      } else {
+        // Invalid deploy target (enemy half or blocked terrain)
+        ctx.fillStyle = 'rgba(255, 100, 90, 0.22)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 120, 110, 0.85)';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+      }
       ctx.restore();
     }
   }
@@ -520,12 +645,48 @@
       ctx.save(); ctx.translate(p.x, p.y); ctx.scale(1, K * 0.55); ctx.translate(-p.x, -p.y); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
     const isSel = !!(o.sel && o.sel === u.uid && hero), isInfo = !!(o.infoId && o.infoId === u.id && !u.dead);
-    const rim = isSel ? '#ffd23f' : isInfo ? (hero ? '#ffd23f' : '#ff5c6e') : u.elite ? '#ffcf5a' : `rgba(${sideC},0.75)`;
-    ctx.strokeStyle = rim; ctx.lineWidth = (isSel || isInfo) ? 3.5 : u.elite ? 2.2 : 1.4;
-    ctx.beginPath(); ctx.ellipse(p.x, p.y, S * 0.46, S * 0.46 * K * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
-    if (isSel || isInfo) {
-      ctx.strokeStyle = '#ffffffbb'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.ellipse(p.x, p.y, S * 0.53, S * 0.53 * K * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+
+    // Guild Run ornate double gold ground ring with radial light pool under selected hero
+    if (isSel && !u.dead) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.scale(1, K * 0.55);
+      ctx.translate(-p.x, -p.y);
+      const gp = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, S * 0.65);
+      gp.addColorStop(0, 'rgba(255, 215, 0, 0.45)');
+      gp.addColorStop(0.7, 'rgba(212, 175, 55, 0.18)');
+      gp.addColorStop(1, 'rgba(212, 175, 55, 0)');
+      ctx.fillStyle = gp;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, S * 0.65, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Outer gold rim with radiant bloom
+      ctx.save();
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = '#ffe066';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, S * 0.52, S * 0.52 * K * 0.55, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // Inner white-gold ring
+      ctx.strokeStyle = '#fff8db';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, S * 0.44, S * 0.44 * K * 0.55, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      const rim = isInfo ? (hero ? '#ffd23f' : '#ff5c6e') : u.elite ? '#ffcf5a' : `rgba(${sideC},0.75)`;
+      ctx.strokeStyle = rim; ctx.lineWidth = isInfo ? 3.5 : u.elite ? 2.2 : 1.4;
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, S * 0.46, S * 0.46 * K * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+      if (isInfo) {
+        ctx.strokeStyle = '#ffffffbb'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.ellipse(p.x, p.y, S * 0.53, S * 0.53 * K * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+      }
     }
     const pose = poseOf(W, u, T, d, dt);
     const mk = u.key === 'clone' ? 'mirage' : u.key, art = B.Art && B.Art.sprite(mk);
