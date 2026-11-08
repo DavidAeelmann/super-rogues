@@ -653,14 +653,17 @@
     ctx.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
     ctx.clearRect(0, 0, v.w, v.h);
     const AF = B.AbilFx;
+    if (S.hitStop > 0 && !o.deploy) {
+      S.hitStop = Math.max(0, S.hitStop - dt);
+    }
     if (S.shake > 0.05 && !o.deploy) {
-      S.shake = Math.min(S.shake, 6);
+      S.shake = Math.min(S.shake, 8);
       const ang = S.shakeAng != null ? S.shakeAng : now * 61;
       const decay = Math.pow(0.002, dt);
-      ctx.translate(Math.cos(ang) * S.shake * 0.75 + Math.sin(now * 53) * S.shake * 0.25, Math.sin(ang) * S.shake * 0.75 + Math.cos(now * 43) * S.shake * 0.25);
+      ctx.translate(Math.cos(ang) * S.shake * 0.8 + Math.sin(now * 53) * S.shake * 0.25, Math.sin(ang) * S.shake * 0.8 + Math.cos(now * 43) * S.shake * 0.25);
       S.shake *= decay;
       if (S.shake <= 0.05) { S.shake = 0; S.shakeAng = null; }
-    } else S.shake = 0;   // v62p (review #112): no more flicker
+    } else S.shake = 0;
     const boss = W && W.units.find(u => u.boss && u.side === 1), bd = backdrop(v, boss ? boss.key : null); if (bd) ctx.drawImage(bd, -12, -12, v.w + 24, v.h + 24); else { ctx.fillStyle = royal() ? '#1a1228' : '#9fd4ff'; ctx.fillRect(0, 0, v.w, v.h); }
     drawBoard(v, o, W);
     if (boss && !o.deploy) bossTiles(v, boss.key, now);
@@ -1169,7 +1172,7 @@
   // Particles are spawned from the sim's fx events the first time the renderer sees them, so the sim stays pure.
   // WHAT: BATTLE EFFECTS. Particles (sparks, confetti), floating damage numbers, text and banners. spawnFromFx turns the simulation's fx events (W.fx) into pictures; drawParts and drawCalls paint them.
   const MAXP = 420;
-  function fxState(v) { if (!v.fxs) v.fxs = { parts: [], seen: new WeakSet(), landed: new WeakSet(), ab: {}, dead: new Set(), calls: [], shake: 0, last: 0, embers: 0, kb: {}, streak: {} }; return v.fxs; }
+  function fxState(v) { if (!v.fxs) v.fxs = { parts: [], seen: new WeakSet(), landed: new WeakSet(), ab: {}, dead: new Set(), calls: [], shake: 0, last: 0, embers: 0, kb: {}, streak: {}, hitStop: 0, flash: 0 }; return v.fxs; }
   // v62n (review #110, David: "make the abilities' particles and animations more noticeable and rewarding, a true dopamine hit"): shockwave rings on the ground,
   // light pillars, streaking sparks, twinkling stars, a soft colour flash over the whole board and an impact burst where every ability projectile lands
   // WHAT: effect helpers: shock (an expanding ground ring), pillar (a column of light), flash (a brief tint over the board); burst takes shape 'spark' or 'star' too.
@@ -1225,9 +1228,10 @@
             const isOverkill = u.dead || u.hp <= 0;
             const callText = isOverkill ? 'OVERKILL!' : 'MASSIVE HIT!';
             S.calls.push({ id: u.id, text: callText, t: 0, col: isOverkill ? '#ff4055' : '#ffd23f', big: true });
-            S.shake = Math.max(S.shake, 5.5);
-            burst(S, p.x, p.y - size * 1.1, 16, isOverkill ? '#ff3b30' : '#ffe066', { speed: 190, life: 0.55, r: 3.2, shape: 'star' });
-            sfx('slam');
+            S.shake = Math.max(S.shake, 6.8);
+            S.hitStop = Math.max(S.hitStop || 0, isOverkill ? 0.065 : 0.04);
+            burst(S, p.x, p.y - size * 1.1, 20, isOverkill ? '#ff3b30' : '#ffe066', { speed: 210, life: 0.6, r: 3.5, shape: 'star' });
+            sfx('ultimate');
           }
         }
       } else if (f.k === 'ring') {
@@ -1237,9 +1241,16 @@
       else if (f.k === 'text' && /^(SLAM|EXECUTE|REAPED|LONGWATCH)$/.test(f.text)) sfx('slam');
       else if (f.k === 'text' && /^(miss|blind)$/.test(f.text)) sfx('dodge');
       else if (f.k === 'cast' && u) {
-        sfx('cast');
-        if (!mine) { shock(S, p.x, p.y, u.color || '#fff', size * 1.5, { life: 0.45, w: 3 }); burst(S, p.x, p.y - size * 0.3, 10, u.color || '#fff', { speed: 70, g: -100, life: 0.8, r: 2.2, spread: 1.4, glow: true }); }
-        const hd = B.HEROES && B.HEROES[u.key]; if (hd) S.calls.push({ id: u.id, text: hd.abName, t: 0, col: u.color || '#ffe066' });
+        sfx('ultimate');
+        S.shake = Math.max(S.shake, u.boss ? 7.5 : 5.0);
+        S.hitStop = Math.max(S.hitStop || 0, 0.05);
+        if (!mine) {
+          shock(S, p.x, p.y, u.color || '#ffd23f', size * 2.2, { life: 0.6, w: 4.5 });
+          shock(S, p.x, p.y, '#ffffff', size * 1.2, { life: 0.35, w: 2 });
+          burst(S, p.x, p.y - size * 0.5, 16, u.color || '#ffe066', { speed: 120, g: -80, life: 0.7, r: 2.8, spread: 1.4, glow: true, shape: 'star' });
+          burst(S, p.x, p.y - size * 0.3, 10, '#ffffff', { speed: 90, g: -40, life: 0.5, r: 2.0, glow: true });
+        }
+        const hd = B.HEROES && B.HEROES[u.key]; if (hd) S.calls.push({ id: u.id, text: hd.abName, t: 0, col: u.color || '#ffe066', big: true });
       }
     }
     for (const u of W.units) if (u.dead && !S.dead.has(u.id) && W.t - u.deathT < 12) {

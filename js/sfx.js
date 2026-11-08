@@ -12,7 +12,7 @@
   let ctx = null, out = null, noiseBuf = null, voices = 0;
   const last = {};
   // WHAT: the minimum time between two plays of a busy sound (hits, heals) so a big fight is not a wall of noise.
-  const GAP = { hit: 0.045, crit: 0.06, heal: 0.09, tick: 0.04, cast: 0.08, ko: 0.05, tap: 0.03, dodge: 0.08 };
+  const GAP = { hit: 0.045, crit: 0.06, heal: 0.09, tick: 0.04, cast: 0.08, ko: 0.05, tap: 0.03, dodge: 0.08, slam: 0.1, ultimate: 0.18 };
 
   function ac() {
     if (!on) return null;
@@ -76,6 +76,12 @@
     heal: () => tone(NOTE(84), 0.16, { to: NOTE(91), type: 'sine', vol: 0.06 }),
     dodge: () => noise(0.08, { filter: 'highpass', f: 3000, vol: 0.08 }),
     cast: () => { noise(0.32, { filter: 'bandpass', f: 500, fTo: 3200, q: 1.5, vol: 0.16 }); tone(NOTE(76), 0.26, { to: NOTE(88), type: 'triangle', vol: 0.07 }); },
+    ultimate: () => {
+      noise(0.42, { filter: 'lowpass', f: 450, fTo: 80, q: 1.8, vol: 0.45 });
+      tone(70, 0.45, { to: 28, type: 'sine', vol: 0.65 });
+      tone(140, 0.28, { to: 45, type: 'triangle', vol: 0.28 });
+      tone(NOTE(74), 0.32, { to: NOTE(86), type: 'sawtooth', vol: 0.05, at: 0.03 });
+    },
     ko: () => { tone(620, 0.2, { to: 140, type: 'square', vol: 0.07 }); noise(0.12, { f: 700, vol: 0.14 }); },
     streak: n => { arp([76, 79, 83, 88].slice(0, Math.min(4, n + 1)), 0.06, { type: 'square', vol: 0.06, dur: 0.14 }); sparkle(0.2, 4); },
     boss: () => { noise(0.7, { f: 120, vol: 0.5 }); tone(55, 0.8, { to: 35, vol: 0.45 }); tone(82, 0.6, { type: 'sawtooth', vol: 0.05, at: 0.05 }); },
