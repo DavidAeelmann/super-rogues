@@ -915,7 +915,7 @@
     return '<div class="dleft-dock">' +
       (relics ? '<div class="dpowers-col"><div class="dl-title">POWERS</div><div class="dl-list">' + relics + '</div></div>' : '') +
       '<div class="dbag-drawer" data-drop="bag">' +
-        '<div class="dbag-top">' + autoPill + '<span class="dl-count">BAG (' + actualCount + ')</span></div>' +
+        '<div class="dbag-top">' + autoPill + '<span class="dl-count">BAG (' + actualCount + ')</span></div>' + (dsel && dsel.k === 'b' && run.bag[dsel.i] ? '<div class="dsel-panel"><div class="dsel-desc"><b class="dsel-name">' + esc(ITEM[run.bag[dsel.i]].name) + '</b> <span class="dsel-val">(+' + Run.sellValue(run.bag[dsel.i]) + 'g)</span></div><button class="dsell-btn gold-plaque" data-act="dsell">Sell</button></div>' : '') +
         '<div class="dl-slots">' + bagSlots.join('') + '</div>' +
       '</div>' +
     '</div>';
@@ -2763,7 +2763,7 @@
   }
   function manualGear() { if (autoOn()) { run.autoGear = false; toast('Auto-equip is off: you choose. The purple button turns it back on.'); } }
   // WHAT: runs a manual gear change, turns Auto-equip off, refreshes the screens and plays the effect.
-  function gearDo(fn, uid) { manualGear(); const h = run.heroes.find(x => x.uid === uid), before = h ? gearStats(h) : null; const r = fn(); ui.gsel = null; ui.gHero = uid; save(); openGear(); refreshBehind(); if (r && r.sock >= 0 && before) gearFx(uid, r.sock, r.id, before); }
+  function gearDo(fn, uid) { manualGear(); const h = run.heroes.find(x => x.uid === uid), before = h ? gearStats(h) : null; const r = fn(); ui.gsel = null; ui.gHero = uid; save(); if (ui.modal === 'gear') openGear(); if (run && run.phase === 'deploy') render(); else refreshBehind(); if (r && r.sock >= 0 && before) gearFx(uid, r.sock, r.id, before); }
   // v57 (review #69): the decisions live in run.js (Run.autoEquip: hero profiles, item scores, best match first)
   // WHAT: the purple button: Run.autoEquip for the whole team.
   function gearAuto() { return Run.autoEquip(run); }
@@ -3447,6 +3447,19 @@
     'event-target': arg => { const i = run.cur.pick; run.cur.pick = null; if (i == null) return; Run.eventAct(run, i, arg); save(); render(); },
     'event-back': () => { run.cur.pick = null; render(); },
     // Deploy screen click-to-select and click-to-place (click-and-click item manipulation)
+    'dsell': () => {
+      if (!run || run.phase !== 'deploy' || !ui.dsel || ui.dsel.k !== 'b') return;
+      const id = run.bag[ui.dsel.i];
+      if (!id) return;
+      const val = Run.sellValue(id);
+      Run.sell(run, ui.dsel.i);
+      ui.dsel = null;
+      sfx('coin');
+      save();
+      header();
+      render();
+      toast('Sold ' + ITEM[id].name + ' for +' + val + ' gold');
+    },
     'ditem-click': arg => {
       if (!run || run.phase !== 'deploy') return;
       const [k, idxStr] = arg.split(':');
@@ -3570,7 +3583,14 @@
       }
     },
     // The Items / Team button: opens the gear screen. hero-info / gear-* / sell are its buttons.
-    team: () => { if (!run || battle) return; ui.gsel = null; ui.heroInfo = 0; ui.gPage = 0; openGear(); },
+    team: () => {
+      if (!run || battle) return;
+      if (run.phase === 'deploy') {
+        toast('Manage gear right here on the battlefield');
+      } else if (run.phase === 'map') {
+        toast('Equip gear during battle deploy before each fight');
+      }
+    },
     'hero-info': uid => { ui.heroInfo = +uid && ui.heroInfo !== +uid ? +uid : 0; ui.gsel = null; openGear(); },
     'gear-hero': uid => { ui.gHero = +uid; ui.gsel = null; openGear(); },
     'gear-pick': a => { const [k, x, y] = a.split(':'), sl = k === 'b' ? { k, i: +x } : { k, uid: +x, i: +y }; ui.gsel = ui.gsel && JSON.stringify(ui.gsel) === JSON.stringify(sl) ? null : sl; if (k === 'w') ui.gHero = +x; openGear(); },

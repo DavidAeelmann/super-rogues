@@ -8666,6 +8666,7 @@ body.desk .smithy-frame .gold-embossed-title {
 }
 
 body.desk .floating-shop .grid.rows,
+body.desk .floating-shop .grid.rels,
 body.desk .smithy-frame .grid.rows {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
@@ -8675,6 +8676,7 @@ body.desk .smithy-frame .grid.rows {
 }
 
 body.desk .floating-shop .card.stock.v2,
+body.desk .floating-shop .card.stock.v2.k-relic,
 body.desk .smithy-frame .card.stock.v2 {
   display: grid !important;
   grid-template-columns: 56px minmax(0, 1fr) auto !important;
@@ -8702,12 +8704,27 @@ body.desk .card.stock.v2 .medal {
   border-radius: 12px !important;
 }
 
-body.desk .card.stock.v2 .meta {
+body.desk .card.stock.v2 .meta,
+body.desk .floating-shop .card.stock.v2.k-relic .meta {
   min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
+  align-items: flex-start !important;
+  text-align: left !important;
   gap: 3px !important;
   padding: 0 !important;
+}
+body.desk .floating-shop .card.stock.v2.k-relic .buyb {
+  align-self: center !important;
+  margin: 0 !important;
+  width: auto !important;
+}
+body.desk .floating-shop .card.stock.v2.k-relic .htag {
+  font-size: 12.5px !important;
+  color: #cbd5e1 !important;
+  line-height: 1.35 !important;
+  margin: 2px 0 0 !important;
+  white-space: normal !important;
 }
 
 body.desk .card.stock.v2 .meta .ctitle {
@@ -9466,4 +9483,49 @@ body.desk .hero-mini-stats .mstat.atk b {
 }
 body.desk .hero-mini-stats .mstat.rng b {
   color: #4cc9f0 !important;
+}
+
+/* Selected bag item inspection & sell panel in deploy */
+.dsel-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: rgba(254, 240, 138, 0.12);
+  border: 1px solid rgba(254, 240, 138, 0.3);
+  border-radius: 6px;
+  padding: 4px 6px;
+  margin-top: 2px;
+}
+.dsel-desc {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dsel-name {
+  color: #fde047;
+}
+.dsel-val {
+  color: #34d399;
+  font-weight: 700;
+}
+.dsell-btn {
+  font-family: var(--fun);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+  border: 1px solid #fef08a;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.dsell-btn:hover {
+  filter: brightness(1.15);
+  transform: scale(1.04);
 }
