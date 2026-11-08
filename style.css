@@ -6983,7 +6983,7 @@ body:not(.desk) section.lpscr .lp-left-crest-card { padding: 8px 6px 6px !import
 body:not(.desk) section.lpscr .bronze-wings { width: 96px !important; height: 30px !important; }
 body:not(.desk) section.lpscr .bronze-shield-3d { width: 42px !important; height: 50px !important; margin-top: -20px !important; }
 body:not(.desk) section.lpscr .crest-tier-title { font-size: 11px !important; margin: 2px 0 4px !important; }
-body:not(.desk) section.lpscr .mini-thermometer { width: 32px !important; min-height: 44px !important; height: 44px !important; }
+body:not(.desk) section.lpscr .mini-thermometer { width: 38px !important; min-height: 52px !important; height: 52px !important; border-width: 2.5px !important; }
 body:not(.desk) section.lpscr .crest-lp-foot { font-size: 11px !important; margin-top: 3px !important; }
 body:not(.desk) section.lpscr .lp-right-panel { gap: 6px !important; }
 body:not(.desk) section.lpscr .lp-delta-val { font-size: 32px !important; }
@@ -7005,7 +7005,9 @@ body:not(.desk) section.xpscr .crest-num { font-size: 20px !important; }
 body:not(.desk) section.xpscr .crest-lbl { font-size: 8.5px !important; }
 body:not(.desk) section.xpscr .xp-heading { font-size: 18px !important; }
 body:not(.desk) section.xpscr .xp-gain-val { font-size: 28px !important; }
-body:not(.desk) section.xpscr .xp-chip-pill { padding: 2px 7px !important; font-size: 10.5px !important; }
+body:not(.desk) section.xpscr .xp-chip-pill { padding: 3px 8px !important; font-size: 11px !important; }
+body:not(.desk) section.xpscr .xp-horiz-track { height: 28px !important; min-height: 28px !important; border-width: 2px !important; }
+body:not(.desk) section.xpscr .xp-horiz-label { font-size: 13.5px !important; font-weight: 900 !important; }
 body:not(.desk) section.xpscr .chest-wrap-3d { width: 96px !important; height: 84px !important; }
 body:not(.desk) section.xpscr .fantasy-chest-3d { width: 90px !important; height: 78px !important; }
 body:not(.desk) section.xpscr .xp-bottom-loot-tier .chestzone { gap: 12px !important; flex-wrap: wrap !important; }
