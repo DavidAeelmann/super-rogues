@@ -100,9 +100,9 @@ for (const r of RELICS) {
 // review #22: 1 hero and 1 relic at the start, the hero shop is offered while you have a single hero, old runs keep 13 steps
 {
   const run = Run.newRun(77);
-  ok(run.startOffer.length === 3 && run.relicOffer.length === 3 && run.relicOffer.every(id => B.RELIC[id]), '3 heroes and 3 relics offered');
-  Run.pickStart(run, [run.startOffer[1]], run.relicOffer[2]);
-  ok(run.heroes.length === 1 && run.heroes[0].key === run.startOffer[1] && run.relics.includes(run.relicOffer[2]), 'the run starts with the chosen hero and relic');
+  ok(run.startOffer.length === 3 && run.relicOffer.length === 0, '3 heroes offered, no starting relics');
+  Run.pickStart(run, [run.startOffer[1]], null);
+  ok(run.heroes.length === 1 && run.heroes[0].key === run.startOffer[1] && run.relics.length === 0, 'the run starts with the chosen hero and no relic');
   Run.choose(run, 0); const W = Run.fightWorld(run); W.over = true; W.winner = 0; Run.finishFight(run, W); while (run.pending.length) Run.chooseSpec(run, 0);
   ok(run.opts.some(o => o.kind === 'heroShop'), 'with a single hero, the first shop/event step offers the Hero Shop');
   const b1 = Run.makeFight(run, 'boss', 4, 1), b2 = Run.makeFight(run, 'boss', 8, 2);
@@ -875,7 +875,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   const run = Run.newRun(21);
   ok(run.lives === 1, 'v101 (review #186): the run has one Ward');
   Run.pickStart(run, run.startOffer.slice(0, 3), run.relicOffer[0]);
-  ok(run.heroes.length === 3 && run.relics.length === 1 && run.heroes.reduce((a, h) => a + h.items.length, 0) + run.bag.length === 2, 'the run starts with 3 heroes, 1 power and 2 common items');
+  ok(run.heroes.length === 3 && run.heroes.reduce((a, h) => a + h.items.length, 0) + run.bag.length === 2, 'the run starts with 3 heroes and 2 common items');
   B.CFG.startItems = 0;
   // lives: the third lost fight ends the run
   const r = Run.newRun(22); Run.pickStart(r, r.startOffer.slice(0, 3), r.relicOffer[0]);
@@ -1030,7 +1030,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     ok(B.UNLOCKS.some(u => u.kind === 'taunt') && B.UNLOCKS.some(u => u.kind === 'title') && [...new Set(B.UNLOCKS.map(u => u.lvl))].every(l => B.UNLOCKS.filter(u => u.lvl === l && u.kind === 'hero').length <= (l <= 1 + B.EARLY_PAIRS ? 2 : 1)), 'v74 (review #152): voice lines and titles drop between the heroes; v91: two heroes a level only on the early levels'); }
   // v81 (review #159): a run counts what it was offered and what it took (run.tele), for the balance evidence
   { const { playRun } = require('../pve/engine.js'); const r = Run.newRun(4242); Run.pickStart(r, r.startOffer.slice(0, 1), r.relicOffer[0]);
-    const t = r.tele || { o: {}, p: {} }; ok(r.startOffer.every(k => t.o['hero:' + k] >= 1) && t.p['hero:' + r.startOffer[0]] === 1 && t.p['relic:' + r.relicOffer[0]] === 1, 'v81: the start offers and picks are counted');
+    const t = r.tele || { o: {}, p: {} }; ok(r.startOffer.every(k => t.o['hero:' + k] >= 1) && t.p['hero:' + r.startOffer[0]] === 1, 'v81: the start offers and picks are counted');
   }
   // v91 (review #172): the early chests hold two heroes each, later ones one
   { const hl = l => B.UNLOCKS.filter(u => u.kind === 'hero' && u.lvl === l).length; ok([2, 3, 4, 5].every(l => hl(l) === 2) && hl(6) === 0 && B.UNLOCKS.filter(u => u.kind === 'hero').length === B.HERO_UNLOCKS.length && Math.max(...B.UNLOCKS.filter(u => u.kind === 'hero').map(u => u.lvl)) === 5, 'v99 (review #181): two heroes a level from 2 to 5, all open at 5'); }

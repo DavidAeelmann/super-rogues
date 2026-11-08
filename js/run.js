@@ -74,7 +74,7 @@
     run.freeDeck = JSON.parse(JSON.stringify((opts && opts.deck) || {}));   // v100 (review #182): the free-pick queues, carried from game to game by ui.js
     // v63 (review #118): heroes offered by class (v64, review #126: one of each class, the player picks one); v100: drawn from the free-pick queues
     run.startOffer = [].concat(...B.CLASSES.map(cl => { const o = []; for (let i = 0; i < C.startOffer / B.CLASSES.length; i++) { const k = drawFree(run, cl, new Set(o)); if (k) o.push(k); } return o; }));
-    run.relicOffer = pickN(run, relicsOf(run).map(r => r.id), C.startRelics || 3);  // review #22: the run also starts with a relic
+    run.relicOffer = C.startRelics ? pickN(run, relicsOf(run).map(r => r.id), C.startRelics) : [];
     run.lives = C.lives; run.wardV = 1;
     run.bosses = B.BOSS_SLOTS.map(s => pick(run, s));   // v52 (review #64): which boss waits in each slot this game
     return run;
