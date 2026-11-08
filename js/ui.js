@@ -679,9 +679,9 @@
           <b class="hero-card-title">${esc(d.name)}</b>
           <div class="hero-role-pill">${heroClassBadge(d)}</div>
           <div class="hero-mini-stats">
-            <span class="mstat hp"><span class="stat-ico">❤️</span> <b>${hp}</b></span>
-            <span class="mstat atk"><span class="stat-ico">⚔️</span> <b>${atk}</b></span>
-            <span class="mstat rng"><span class="stat-ico">🏹</span> <b>${range}</b></span>
+            <span class="mstat hp"><span class="stat-ico">❤️</span> <span class="stat-lbl">HP</span> <b>${hp}</b></span>
+            <span class="mstat atk"><span class="stat-ico">⚔️</span> <span class="stat-lbl">ATK</span> <b>${atk}</b></span>
+            <span class="mstat rng"><span class="stat-ico">🏹</span> <span class="stat-lbl">RNG</span> <b>${range}</b></span>
           </div>
         </div>
         ${on ? '<span class="chk">✓</span>' : ''}
@@ -2209,7 +2209,7 @@
   }
   function mountBgBoard() {
     const desk = document.body.classList.contains('desk');
-    const needBg = desk && run && screen !== 'title' && screen !== 'battle' && !(screen === 'run' && run.phase === 'deploy') && !(screen === 'run' && run.phase === 'start');
+    const needBg = desk && run && screen !== 'title' && screen !== 'battle' && !(screen === 'run' && run.phase === 'deploy') && !(screen === 'run' && run.phase === 'start') && !(screen === 'run' && run.phase === 'recruit');
     let st = $('#bgstage');
     if (!needBg) {
       if (st) st.hidden = true;

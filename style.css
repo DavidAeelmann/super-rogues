@@ -4574,11 +4574,11 @@ body.desk section.start {
   margin: 0 auto !important;
   padding: 10px 24px 14px !important;
   border-radius: 16px !important;
-  background: rgba(11, 18, 24, 0.88) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(197, 160, 89, 0.35) !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
   box-sizing: border-box !important;
   display: flex !important;
   flex-direction: column !important;
@@ -4970,11 +4970,11 @@ body.desk section.map.road {
   overflow-x: hidden !important;
 }
 body.desk .wmap {
-  background: rgba(15, 23, 42, 0.65) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 body.desk .wmap .wtrack {
   background: transparent !important;
@@ -9074,4 +9074,394 @@ body.desk .mapside .relicbtn {
   border-color: #ffd700 !important;
   background: rgba(255, 215, 0, 0.2) !important;
   transform: scale(1.1) !important;
+}
+
+
+/* ========================================================================= */
+/* HERO SELECTION & RECRUIT ENHANCEMENTS: TALL SPLASHES & BEAUTIFUL STATS   */
+/* ========================================================================= */
+
+/* Guarantee full cathedral church background on all hero selection screens (start & recruit) */
+#app:has(section.start),
+body.desk:has(section.start),
+#screen:has(section.start),
+#app:has(section.recruit),
+body.desk:has(section.recruit),
+#screen:has(section.recruit),
+body.desk:has(section.start.recruit) {
+  background: linear-gradient(180deg, rgba(8, 10, 16, 0.3) 0%, rgba(8, 10, 16, 0.55) 100%),
+              url('art/arena/draft-bg.jpg') center center / cover no-repeat fixed !important;
+}
+
+/* Hide bgstage blur overlay on hero selection & recruit screens */
+body.desk:has(section.start) #bgstage,
+body.desk:has(section.recruit) #bgstage {
+  display: none !important;
+}
+
+/* Remove blur from map and daily select path */
+body.desk .map.road .wmap,
+body.desk section.map.road .wmap,
+body.desk .wmap,
+body.desk .banner.v2 {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Tall, breathtaking Tarot Hero Cards */
+body.desk .stage.spotlights {
+  max-width: 960px !important;
+  gap: 22px !important;
+}
+
+body.desk .hbanner.spot.hero-tarot-card {
+  height: 380px !important;
+  min-height: 380px !important;
+  max-height: 420px !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  background: #0d1017 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.14) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  padding: 0 !important;
+}
+
+/* Tall full-body hero splash art: centered and clearly visible */
+body.desk .hero-tarot-card .splash {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 15% !important;
+  z-index: 0 !important;
+}
+
+/* Clean, elegant bottom vignette gradient so hero art shines */
+body.desk .card-vignette-bottom {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  background: linear-gradient(180deg, transparent 0%, rgba(8, 11, 18, 0.75) 25%, rgba(6, 8, 14, 0.96) 90%) !important;
+  padding: 24px 12px 14px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+body.desk .hero-card-title {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9) !important;
+  margin: 0 !important;
+}
+
+body.desk .hero-role-pill {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #cbd5e1 !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Prettier, crystal-clear and understandable stat pills */
+body.desk .hero-mini-stats,
+.hero-mini-stats {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-top: 4px !important;
+  padding: 4px 8px !important;
+  background: rgba(12, 16, 26, 0.88) !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+}
+
+body.desk .hero-mini-stats .mstat,
+.hero-mini-stats .mstat {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  line-height: 1.2 !important;
+}
+
+.hero-mini-stats .stat-ico {
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.hero-mini-stats .stat-lbl {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+body.desk .hero-mini-stats .mstat.hp b {
+  color: #ff6b6b !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+body.desk .hero-mini-stats .mstat.atk b {
+  color: #ffd166 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+body.desk .hero-mini-stats .mstat.rng b {
+  color: #4cc9f0 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+
+/* Positioning card-vignette-bottom cleanly inside tarot cards */
+.hero-tarot-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+}
+
+body.desk .hbanner.spot.hero-tarot-card {
+  height: 380px !important;
+  min-height: 380px !important;
+  max-height: 420px !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  background: #0d1017 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.14) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  padding: 0 !important;
+}
+
+/* Tall full-body hero splash art: centered and clearly visible */
+body.desk .hero-tarot-card .splash {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 15% !important;
+  z-index: 0 !important;
+}
+
+/* Eliminate any old pseudo overlays or plates from v62 */
+body.desk .hero-tarot-card::after,
+body.desk .hero-tarot-card::before,
+body.desk .hero-tarot-card .plate,
+body.desk .hero-tarot-card .cone {
+  display: none !important;
+}
+
+.card-vignette-bottom,
+body.desk .card-vignette-bottom {
+  position: relative !important;
+  z-index: 5 !important;
+  width: 100% !important;
+  background: linear-gradient(180deg, rgba(7, 9, 15, 0) 0%, rgba(7, 9, 15, 0.72) 20%, rgba(7, 9, 15, 0.96) 80%) !important;
+  padding: 24px 10px 12px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+/* Hero card title */
+body.desk .hero-card-title {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9) !important;
+  margin: 0 !important;
+}
+
+/* Hero role pill */
+body.desk .hero-role-pill {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #cbd5e1 !important;
+  letter-spacing: 0.5px !important;
+  margin: 0 !important;
+}
+
+/* Beautiful, high-contrast, structured stat badges */
+.hero-mini-stats,
+body.desk .hero-mini-stats,
+.start .hero-mini-stats {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin-top: 4px !important;
+  padding: 4px 8px !important;
+  background: rgba(14, 18, 28, 0.92) !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  width: auto !important;
+}
+
+.hero-mini-stats .mstat,
+body.desk .hero-mini-stats .mstat {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 2px 8px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  line-height: 1.2 !important;
+}
+
+.hero-mini-stats .stat-ico {
+  font-size: 11px !important;
+}
+
+.hero-mini-stats .stat-lbl {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  color: #94a3b8 !important;
+}
+
+.hero-mini-stats .mstat b,
+body.desk .hero-mini-stats .mstat b {
+  font-family: var(--fun) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px !important;
+}
+
+body.desk .hero-mini-stats .mstat.hp b {
+  color: #ff6b6b !important;
+}
+body.desk .hero-mini-stats .mstat.atk b {
+  color: #ffd166 !important;
+}
+body.desk .hero-mini-stats .mstat.rng b {
+  color: #4cc9f0 !important;
+}
+
+
+/* ========================================================================= */
+/* FIX HERO CARD B OVERRIDE & PERFECT HORIZONTAL STAT PILLS                  */
+/* ========================================================================= */
+
+/* Reset .start .stage .hbanner.spot b inside tarot cards */
+.start .stage .hbanner.spot.hero-tarot-card b,
+body.desk .start .stage .hbanner.spot.hero-tarot-card b,
+.hero-tarot-card b {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  transform: none !important;
+  display: inline-block !important;
+}
+
+/* Hero Mini Stats Container: sleek pill holding the 3 stats */
+.hero-mini-stats,
+body.desk .hero-mini-stats,
+.start .hero-mini-stats,
+.hero-tarot-card .hero-mini-stats {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-top: 4px !important;
+  padding: 5px 12px !important;
+  background: rgba(10, 14, 24, 0.88) !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Individual Stat Item */
+.hero-mini-stats .mstat,
+body.desk .hero-mini-stats .mstat,
+.hero-tarot-card .hero-mini-stats .mstat {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  line-height: 1 !important;
+}
+
+.hero-mini-stats .stat-ico {
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.hero-mini-stats .stat-lbl {
+  font-family: var(--fun) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  color: #94a3b8 !important;
+  line-height: 1 !important;
+}
+
+.hero-mini-stats .mstat b,
+body.desk .hero-mini-stats .mstat b,
+.hero-tarot-card .hero-mini-stats .mstat b {
+  font-family: var(--fun) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1 !important;
+}
+
+body.desk .hero-mini-stats .mstat.hp b {
+  color: #ff6b6b !important;
+}
+body.desk .hero-mini-stats .mstat.atk b {
+  color: #ffd166 !important;
+}
+body.desk .hero-mini-stats .mstat.rng b {
+  color: #4cc9f0 !important;
 }
