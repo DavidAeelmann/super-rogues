@@ -889,58 +889,66 @@
     const relics = (run.relics || []).filter(id => RELIC[id]).map(id => {
       const r = RELIC[id];
       const tip = esc(r.name + ': ' + (r.desc || r.short || ''));
-      return `<button class="relicbtn" data-act="relic-info" data-arg="${id}" data-tip="${tip}" aria-label="${esc(r.name)}"><img class="ico sm" src="${B.Icons.relic(id, 26)}" alt=""></button>`;
+      return '<button class="relicbtn" data-act="relic-info" data-arg="' + id + '" data-tip="' + tip + '" aria-label="' + esc(r.name) + '"><img class="ico sm" src="' + B.Icons.relic(id, 26) + '" alt=""></button>';
     }).join('');
+
+    // Always render at least 4 empty slots in the bag so dragging & dropping is always accessible
     const bagSlots = [];
-    const maxBagSlots = Math.max(3, Math.min(6, (run.bag || []).length));
-    for (let i = 0; i < maxBagSlots; i++) {
+    const minSlots = 4;
+    const actualCount = (run.bag || []).length;
+    const totalSlots = Math.max(minSlots, Math.ceil((actualCount + 1) / 2) * 2);
+    const dsel = ui.dsel;
+
+    for (let i = 0; i < totalSlots; i++) {
       const id = (run.bag || [])[i];
+      const isSelected = dsel && dsel.k === 'b' && dsel.i === i;
       if (id && ITEM[id]) {
         const it = ITEM[id];
         const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
         const rarityClass = it.tier >= 3 ? 'r-epic' : it.tier === 2 ? 'r-rare' : it.tier === 1 ? 'r-magic' : 'r-common';
-        bagSlots.push(`<button class="ditem eqitem ${rarityClass}" data-drag="b:${i}" data-drop="bag" data-tip="${tip}" aria-label="${esc(it.name)}"><span class="rarity-bloom"></span><img class="ico" src="${B.Icons.item(id, 28)}" alt=""></button>`);
+        bagSlots.push('<button class="ditem eqitem ' + rarityClass + (isSelected ? ' dsel-active' : '') + '" data-drag="b:' + i + '" data-drop="bag:' + i + '" data-act="ditem-click" data-arg="b:' + i + '" data-tip="' + tip + '" aria-label="' + esc(it.name) + '"><span class="rarity-bloom"></span><img class="ico" src="' + B.Icons.item(id, 32) + '" alt=""></button>');
       } else {
-        bagSlots.push(`<div class="ditem empty" data-drop="bag" title="Empty bag slot"></div>`);
+        bagSlots.push('<button class="ditem empty' + (isSelected ? ' dsel-active' : '') + '" data-drop="bag:' + i + '" data-act="ditem-click" data-arg="b:' + i + '" title="Empty bag slot"></button>');
       }
     }
-    const autoPill = `<button class="auto-equip-toggle ${autoOn() ? 'on' : ''}" data-act="gear-auto">Auto-equip <b class="a-pill">${autoOn() ? 'ON' : 'OFF'}</b></button>`;
-    return `<div class="dleft-dock">
-      ${relics ? `<div class="dpowers-col"><div class="dl-title">POWERS</div><div class="dl-list">${relics}</div></div>` : ''}
-      <div class="dbag-drawer" data-drop="bag">
-        <div class="dbag-top">${autoPill}<span class="dl-count">BAG (${(run.bag || []).length})</span></div>
-        <div class="dl-slots">${bagSlots.join('')}</div>
-      </div>
-    </div>`;
+    const autoPill = '<button class="auto-equip-toggle ' + (autoOn() ? 'on' : '') + '" data-act="gear-auto">Auto-equip <b class="a-pill">' + (autoOn() ? 'ON' : 'OFF') + '</b></button>';
+    return '<div class="dleft-dock">' +
+      (relics ? '<div class="dpowers-col"><div class="dl-title">POWERS</div><div class="dl-list">' + relics + '</div></div>' : '') +
+      '<div class="dbag-drawer" data-drop="bag">' +
+        '<div class="dbag-top">' + autoPill + '<span class="dl-count">BAG (' + actualCount + ')</span></div>' +
+        '<div class="dl-slots">' + bagSlots.join('') + '</div>' +
+      '</div>' +
+    '</div>';
   }
   // WHAT: deploy hero slots: only splash arts and equipped items next to each hero, no container box
   function deployPartyHTML() {
     if (!run || !run.heroes) return '';
+    const dsel = ui.dsel;
     const heroes = run.heroes.map(h => {
       const d = HEROES[h.key] || {};
       const maxS = Run.slots(run, h);
       const socks = [];
       for (let j = 0; j < Math.max(2, maxS); j++) {
         const id = h.items[j];
+        const isSelected = dsel && dsel.k === 'w' && dsel.uid === h.uid && dsel.i === j;
         if (id && ITEM[id]) {
           const it = ITEM[id];
           const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-          socks.push(`<button class="dsock filled slot-${j+1}" data-drag="w:${h.uid}:${j}" data-drop="sock:${h.uid}:${j}" data-tip="${tip}" aria-label="${esc(it.name)}"><img class="ico xs" src="${B.Icons.item(id, 36)}" alt=""></button>`);
+          socks.push('<button class="dsock filled slot-' + (j + 1) + (isSelected ? ' dsel-active' : '') + '" data-drag="w:' + h.uid + ':' + j + '" data-drop="sock:' + h.uid + ':' + j + '" data-act="dsock-click" data-arg="w:' + h.uid + ':' + j + '" data-tip="' + tip + '" aria-label="' + esc(it.name) + '"><img class="ico xs" src="' + B.Icons.item(id, 36) + '" alt=""></button>');
         } else {
-          socks.push(`<div class="dsock empty slot-${j+1}" data-drop="sock:${h.uid}:${j}" title="Drag item here to equip"><span class="empty-sil" aria-hidden="true">${j === 0 ? '⚔' : '🛡'}</span></div>`);
+          socks.push('<button class="dsock empty slot-' + (j + 1) + (isSelected ? ' dsel-active' : '') + '" data-drop="sock:' + h.uid + ':' + j + '" data-act="dsock-click" data-arg="w:' + h.uid + ':' + j + '" title="Equip or swap item here"><span class="empty-sil" aria-hidden="true">' + (j === 0 ? '⚔' : '🛡') + '</span></button>');
         }
       }
-      return `<div class="pm${h.bench ? ' benched' : ''}" data-drop="hero:${h.uid}">
-        <span class="por-btn" aria-label="${esc(d.name)}">${img(h.key, 52, 'por')}<span class="dplv">Lv ${h.lvl}</span></span>
-        <div class="pmb">
-          <div class="pmn"><b>${esc(d.name || h.key)}</b></div>
-          <div class="pmi">${socks.join('')}</div>
-        </div>
-      </div>`;
+      return '<div class="pm' + (h.bench ? ' benched' : '') + '" data-drop="hero:' + h.uid + '">' +
+        '<span class="por-btn" aria-label="' + esc(d.name) + '">' + img(h.key, 52, 'por') + '<span class="dplv">Lv ' + h.lvl + '</span></span>' +
+        '<div class="pmb">' +
+          '<div class="pmn"><b>' + esc(d.name || h.key) + '</b></div>' +
+          '<div class="pmi">' + socks.join('') + '</div>' +
+        '</div>' +
+      '</div>';
     }).join('');
-    return `<div class="pgrid">${heroes}</div>`;
+    return '<div class="pgrid">' + heroes + '</div>';
   }
-
   // WHAT: the party row (hero portraits with levels and items) shown on the map screen.
   function partyHTML() {
     const heroes = run.heroes.map(h => {
@@ -2791,12 +2799,84 @@
     const t = document.elementFromPoint(e.clientX, e.clientY), drop = t && t.closest('[data-drop]'); if (!drop) return;
     const [dk, da, db] = drop.dataset.drop.split(':'), [sk, sa, sb] = src.split(':');
     const inDeploy = !ui.modal && run && run.phase === 'deploy';
-    const postDo = () => { if (inDeploy) render(); };
-    if (dk === 'bag' && sk === 'w') { gearDo(() => { Run.unequip(run, +sa, +sb); sfx('back'); }, +sa); postDo(); }
-    else if ((dk === 'hero' || dk === 'sock') && sk === 'b') { const id = run.bag[+sa]; gearDo(() => ({ sock: gearPut(+sa, +da, dk === 'sock' ? +db : null), id }), +da); postDo(); }
-    else if ((dk === 'hero' || dk === 'sock') && sk === 'w' && +da !== +sa) {
-      const from = run.heroes.find(x => x.uid === +sa), id = from && from.items[+sb];
-      if (id) { gearDo(() => { Run.unequip(run, +sa, +sb); return { sock: gearPut(run.bag.length - 1, +da, dk === 'sock' ? +db : null), id }; }, +da); postDo(); }
+    const postDo = () => { ui.dsel = null; if (inDeploy) render(); };
+
+    // 1) Worn item dropped on bag
+    if (dk === 'bag' && sk === 'w') {
+      gearDo(() => { Run.unequip(run, +sa, +sb); sfx('back'); }, +sa);
+      postDo();
+    }
+    // 2) Bag item dropped on hero or socket
+    else if ((dk === 'hero' || dk === 'sock') && sk === 'b') {
+      const targetUid = +da;
+      const targetSock = dk === 'sock' ? +db : null;
+      const targetHero = run.heroes.find(x => x.uid === targetUid);
+      if (targetHero) {
+        manualGear();
+        const bagIdx = +sa;
+        const bagId = run.bag[bagIdx];
+        if (targetSock != null && targetHero.items[targetSock]) {
+          // Direct replace on socket
+          const oldWorn = targetHero.items[targetSock];
+          run.bag[bagIdx] = oldWorn;
+          targetHero.items[targetSock] = bagId;
+          sfx('buy');
+          save();
+          if (ui.modal === 'gear') openGear();
+          postDo();
+        } else {
+          // Regular equip
+          gearDo(() => ({ sock: gearPut(bagIdx, targetUid, targetSock), id: bagId }), targetUid);
+          postDo();
+        }
+      }
+    }
+    // 3) Worn item dropped on another hero or socket (or same hero different socket)
+    else if ((dk === 'hero' || dk === 'sock') && sk === 'w') {
+      const fromUid = +sa, fromSock = +sb;
+      const targetUid = +da, targetSock = dk === 'sock' ? +db : null;
+      const fromHero = run.heroes.find(x => x.uid === fromUid);
+      const targetHero = run.heroes.find(x => x.uid === targetUid);
+
+      if (fromHero && targetHero && fromHero.items[fromSock]) {
+        manualGear();
+        if (fromUid === targetUid) {
+          // Reorder or swap sockets on the same hero
+          if (targetSock != null && targetSock !== fromSock) {
+            const temp = fromHero.items[fromSock];
+            fromHero.items[fromSock] = fromHero.items[targetSock];
+            if (fromHero.items[fromSock] == null) delete fromHero.items[fromSock];
+            fromHero.items[targetSock] = temp;
+            fromHero.items = fromHero.items.filter(Boolean);
+            sfx('buy');
+            save();
+            if (ui.modal === 'gear') openGear();
+            postDo();
+          }
+        } else {
+          // Cross-hero transfer or swap
+          const fromItem = fromHero.items[fromSock];
+          if (targetSock != null && targetHero.items[targetSock]) {
+            // Direct 1-to-1 swap between heroes!
+            const targetItem = targetHero.items[targetSock];
+            fromHero.items[fromSock] = targetItem;
+            targetHero.items[targetSock] = fromItem;
+            sfx('buy');
+            save();
+            if (ui.modal === 'gear') openGear();
+            postDo();
+          } else {
+            // Transfer to target hero (unequip from A, equip on B)
+            Run.unequip(run, fromUid, fromSock);
+            const bagIdx = run.bag.length - 1;
+            gearPut(bagIdx, targetUid, targetSock);
+            sfx('buy');
+            save();
+            if (ui.modal === 'gear') openGear();
+            postDo();
+          }
+        }
+      }
     }
   }
   document.addEventListener('pointerdown', gearDown);
@@ -3366,6 +3446,129 @@
     },
     'event-target': arg => { const i = run.cur.pick; run.cur.pick = null; if (i == null) return; Run.eventAct(run, i, arg); save(); render(); },
     'event-back': () => { run.cur.pick = null; render(); },
+    // Deploy screen click-to-select and click-to-place (click-and-click item manipulation)
+    'ditem-click': arg => {
+      if (!run || run.phase !== 'deploy') return;
+      const [k, idxStr] = arg.split(':');
+      const idx = +idxStr;
+      const dsel = ui.dsel;
+      const bagItem = (run.bag || [])[idx];
+
+      if (!dsel) {
+        if (bagItem) {
+          ui.dsel = { k: 'b', i: idx };
+          sfx('pick');
+          render();
+        }
+        return;
+      }
+
+      if (dsel.k === 'b') {
+        if (dsel.i === idx) {
+          ui.dsel = null;
+          sfx('back');
+          render();
+        } else {
+          // Reorder or pick new bag slot
+          if (bagItem) {
+            ui.dsel = { k: 'b', i: idx };
+            sfx('pick');
+          } else {
+            // Move item to empty slot
+            const it = run.bag.splice(dsel.i, 1)[0];
+            run.bag.splice(idx, 0, it);
+            ui.dsel = null;
+            sfx('tap');
+            save();
+          }
+          render();
+        }
+      } else if (dsel.k === 'w') {
+        // Unequip worn item to this bag slot
+        manualGear();
+        const hero = run.heroes.find(x => x.uid === dsel.uid);
+        if (hero && hero.items[dsel.i]) {
+          const wornId = hero.items[dsel.i];
+          if (bagItem) {
+            // Swap worn item with clicked bag item
+            hero.items[dsel.i] = bagItem;
+            run.bag[idx] = wornId;
+            sfx('buy');
+          } else {
+            Run.unequip(run, dsel.uid, dsel.i);
+            sfx('back');
+          }
+          ui.dsel = null;
+          save();
+          render();
+        }
+      }
+    },
+    'dsock-click': arg => {
+      if (!run || run.phase !== 'deploy') return;
+      const [k, uidStr, sockStr] = arg.split(':');
+      const uid = +uidStr, sockIdx = +sockStr;
+      const dsel = ui.dsel;
+      const targetHero = run.heroes.find(x => x.uid === uid);
+      if (!targetHero) return;
+      const targetItem = targetHero.items[sockIdx];
+
+      if (!dsel) {
+        if (targetItem) {
+          ui.dsel = { k: 'w', uid, i: sockIdx };
+          sfx('pick');
+          render();
+        }
+        return;
+      }
+
+      if (dsel.k === 'b') {
+        // Equip bag item to this hero socket
+        manualGear();
+        const bagIdx = dsel.i;
+        const bagId = run.bag[bagIdx];
+        if (bagId) {
+          if (targetItem) {
+            // Direct swap
+            run.bag[bagIdx] = targetItem;
+            targetHero.items[sockIdx] = bagId;
+            sfx('buy');
+          } else {
+            gearPut(bagIdx, uid, sockIdx);
+            sfx('buy');
+          }
+          ui.dsel = null;
+          save();
+          render();
+        }
+      } else if (dsel.k === 'w') {
+        if (dsel.uid === uid && dsel.i === sockIdx) {
+          ui.dsel = null;
+          sfx('back');
+          render();
+        } else {
+          // Swap or transfer between sockets
+          manualGear();
+          const fromHero = run.heroes.find(x => x.uid === dsel.uid);
+          if (fromHero && fromHero.items[dsel.i]) {
+            const fromItem = fromHero.items[dsel.i];
+            if (targetItem) {
+              // Direct swap
+              fromHero.items[dsel.i] = targetItem;
+              targetHero.items[sockIdx] = fromItem;
+            } else {
+              fromHero.items.splice(dsel.i, 1);
+              targetHero.items[sockIdx] = fromItem;
+              targetHero.items = targetHero.items.filter(Boolean);
+            }
+            sfx('buy');
+            ui.dsel = null;
+            save();
+            render();
+          }
+        }
+      }
+    },
     // The Items / Team button: opens the gear screen. hero-info / gear-* / sell are its buttons.
     team: () => { if (!run || battle) return; ui.gsel = null; ui.heroInfo = 0; ui.gPage = 0; openGear(); },
     'hero-info': uid => { ui.heroInfo = +uid && ui.heroInfo !== +uid ? +uid : 0; ui.gsel = null; openGear(); },

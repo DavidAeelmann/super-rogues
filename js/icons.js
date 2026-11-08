@@ -653,20 +653,39 @@
     const slot = kind === 'slot';
     const spec = slot ? [SLOT[id] || 'gem', '#8a90a0'] : (kind === 'item' ? IT : RE)[id] || ['gem'], tier = kind === 'item' ? (B.ITEM[id] || {}).tier || 'common' : 'relic';
     const cv = document.createElement('canvas'), dpr = 4; cv.width = cv.height = px * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr);   // v62h: 4x so the glyph stays crisp on a phone
-    // frame: dark bevelled plate + rarity-coloured rim; rarer items get a tinted plate and a glow (mythic a double rim)
+    // frame: tactical dark glass plate + glowing rarity rim with rich bevel depth
     const f = slot ? '#3a4050' : tierColor(tier), r = px * 0.18, hi = !slot && (tier === 'legendary' || tier === 'mythic' || tier === 'set');
     const rr = (x, y, w, h, q) => { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, q) : c.rect(x, y, w, h); };
-    const g = c.createRadialGradient(px * 0.45, px * 0.35, px * 0.05, px / 2, px / 2, px * 0.75);
-    g.addColorStop(0, slot ? '#1c2029' : hi ? M().shade(f, -0.55) : '#2c3242'); g.addColorStop(1, slot ? '#0c0e13' : '#0e1016');
+    const g = c.createRadialGradient(px * 0.5, px * 0.38, px * 0.08, px / 2, px / 2, px * 0.72);
+    if (slot) {
+      g.addColorStop(0, '#1a202c');
+      g.addColorStop(1, '#090d14');
+    } else {
+      const tint = M().shade(f, -0.65);
+      g.addColorStop(0, hi ? M().shade(f, -0.35) : '#1e2638');
+      g.addColorStop(0.55, tint);
+      g.addColorStop(1, '#080a0f');
+    }
     c.fillStyle = g; rr(1, 1, px - 2, px - 2, r); c.fill();
-    if (slot) { c.setLineDash([3, 3]); c.strokeStyle = f; c.lineWidth = 1.5; c.stroke(); c.setLineDash([]); }
+    // Inner bevel highlight on top edge
+    c.save();
+    c.beginPath();
+    c.ellipse(px * 0.5, px * 0.22, px * 0.36, px * 0.14, 0, 0, Math.PI * 2);
+    c.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    c.fill();
+    c.restore();
+    if (slot) { c.setLineDash([3, 3]); c.strokeStyle = 'rgba(255, 255, 255, 0.2)'; c.lineWidth = 1.5; c.stroke(); c.setLineDash([]); }
     else {
-      if (hi) { c.save(); c.shadowColor = f; c.shadowBlur = px * 0.2; c.strokeStyle = f; c.lineWidth = 2; c.stroke(); c.restore(); }
-      c.strokeStyle = f; c.lineWidth = 2; c.stroke();
-      if (tier === 'mythic') { c.strokeStyle = '#ffd27a'; c.lineWidth = 1; rr(4, 4, px - 8, px - 8, r * 0.7); c.stroke(); }
+      c.save();
+      c.strokeStyle = f; c.lineWidth = hi ? 2.2 : 1.75;
+      if (hi) { c.shadowColor = f; c.shadowBlur = px * 0.22; }
+      rr(1.5, 1.5, px - 3, px - 3, r - 0.5);
+      c.stroke();
+      c.restore();
+      if (tier === 'mythic') { c.strokeStyle = '#ffd27a'; c.lineWidth = 1; rr(3.5, 3.5, px - 7, px - 7, r * 0.7); c.stroke(); }
     }
     c.save(); c.translate(px / 2, px / 2); c.scale(px / 108, px / 108);   // v62h (review #104): the glyph fills the plate
-    if (!slot) glow(c, 0, 0, 50, spec[1] || tierColor(tier), 0.22);
+    if (!slot) glow(c, 0, 0, 52, spec[1] || tierColor(tier), 0.28);
     if (slot) { c.globalAlpha = 0.28; (D[spec[0]] || D.gem)(c, spec[1], spec[2]); c.restore(); }
     else {
       // v125 (review #217): the glyph is drawn on its own layer, then laid on a dark outline of its whole shape and a soft shadow, so it reads at 30 px

@@ -8862,3 +8862,216 @@ body.desk .mapside .relicbtn {
   box-shadow: none !important;
 }
 
+
+
+/* ========================================================================= */
+/* TACTICAL GEAR UP & DEPLOY DRAG/DROP & CLICK/CLICK OVERHAUL                */
+/* ========================================================================= */
+
+/* Gear Sheet Modal: Breathable dark slate glass without nested blue boxes */
+.sheet.gearsheet {
+  background: rgba(11, 15, 23, 0.96) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid rgba(197, 160, 89, 0.35) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Hero Tabs: Sleek Floating Slate Badges */
+.gtabs {
+  gap: 10px !important;
+}
+.gtab {
+  background: rgba(18, 25, 38, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  padding: 8px 10px !important;
+  transition: all 0.18s ease !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+.gtab:hover {
+  background: rgba(28, 38, 56, 0.8) !important;
+  border-color: rgba(197, 160, 89, 0.4) !important;
+}
+.gtab.on, body.desk .sheet.gearsheet .gtab.on {
+  background: linear-gradient(180deg, rgba(30, 42, 62, 0.95), rgba(16, 23, 35, 0.98)) !important;
+  border: 1.5px solid rgba(255, 215, 0, 0.8) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 215, 0, 0.25) !important;
+  color: #fff !important;
+}
+.gtab.on b {
+  color: #fff !important;
+}
+.gtab.on i, body.desk .sheet.gearsheet .gtab.on i {
+  color: #ffd700 !important;
+  font-weight: 800 !important;
+}
+.gtab .por {
+  border-radius: 10px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Hero Doll & Sockets: Clean floating dark glass */
+.gstage {
+  background: rgba(15, 21, 32, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+.gart img {
+  border-radius: 14px !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2), 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+.gart .glv {
+  background: rgba(15, 21, 32, 0.9) !important;
+  border: 1px solid rgba(255, 215, 0, 0.5) !important;
+  color: #ffd700 !important;
+}
+.gstats span {
+  background: rgba(18, 25, 38, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+}
+
+/* Sockets on Hero Doll */
+.gsock.full {
+  background: rgba(16, 22, 34, 0.85) !important;
+  border: 1.5px solid var(--tier) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5) !important;
+}
+.gsock.empty {
+  border: 1.5px dashed rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: 12px !important;
+}
+.gsock.locked {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(10, 14, 22, 0.5) !important;
+  border-radius: 12px !important;
+  opacity: 0.5;
+}
+
+/* Item Detail Callout Banner */
+.gdet {
+  background: rgba(16, 23, 35, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-left: 3px solid var(--tier) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Bag Section in Gear Sheet */
+.gbag {
+  background: rgba(13, 18, 28, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+}
+.gitem {
+  background: rgba(17, 24, 36, 0.8) !important;
+  border: 1.5px solid var(--tier) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+.gitem:hover:not(.nofit) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), 0 0 10px var(--tier) !important;
+}
+
+/* Tactical Deploy Drawer & Slots */
+.dbag-drawer {
+  background: rgba(11, 16, 26, 0.9) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+.dbag-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 2px !important;
+}
+.auto-equip-toggle {
+  font-family: var(--fun) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #cbd5e1 !important;
+  cursor: pointer !important;
+}
+.auto-equip-toggle.on {
+  background: rgba(139, 92, 246, 0.25) !important;
+  border-color: rgba(167, 139, 250, 0.6) !important;
+  color: #e0e7ff !important;
+}
+.auto-equip-toggle .a-pill {
+  color: #34d399 !important;
+  margin-left: 2px !important;
+}
+.dl-count {
+  font-family: var(--fun) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+.dl-slots {
+  display: grid !important;
+  grid-template-columns: repeat(2, 40px) !important;
+  gap: 6px !important;
+}
+.ditem {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 9px !important;
+  background: rgba(17, 24, 38, 0.85) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: transform 0.12s ease, border-color 0.12s ease !important;
+}
+.ditem.empty {
+  border: 1.5px dashed rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  cursor: pointer !important;
+}
+.ditem:hover, .dsock:hover {
+  transform: scale(1.08);
+  border-color: #ffd700 !important;
+}
+
+/* Deploy Selection Glow for Click-and-Click item manipulation */
+.dsel-active {
+  outline: 2px solid #ffd700 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.7), inset 0 0 6px rgba(255, 215, 0, 0.4) !important;
+  animation: dselPulse 1.2s infinite alternate ease-in-out !important;
+  border-color: #ffd700 !important;
+}
+@keyframes dselPulse {
+  0% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 215, 0, 0.5); }
+  100% { transform: scale(1.06); box-shadow: 0 0 20px rgba(255, 215, 0, 0.9); }
+}
+
+/* Active drop target highlight */
+.dropover {
+  border-color: #ffd700 !important;
+  background: rgba(255, 215, 0, 0.2) !important;
+  transform: scale(1.1) !important;
+}
