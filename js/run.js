@@ -185,9 +185,10 @@
       for (const k in (s.ab || {})) ab[k] = (ab[k] || 0) + s.ab[k];
       for (const f of (s.fl || [])) fl.push(f);
     }
+    const isGlassPrism = !!m.glassPrism;
     return {
       kind: 'hero', uid: h.uid, key: h.key, name: b.name, glyph: b.glyph, color: b.color, lvl: h.lvl,
-      hp: (b.hp + (m.hp || 0)) * (1 + 0.15 * g * L) * (1 + (m.hpPct || 0) + all) * tp,
+      hp: isGlassPrism ? 1 : (b.hp + (m.hp || 0)) * (1 + 0.15 * g * L) * (1 + (m.hpPct || 0) + all) * tp,
       atk: (b.atk + (m.atk || 0)) * (1 + 0.15 * g * L) * (1 + (m.atkPct || 0) + all) * tp,
       ap: (100 + 30 * g * L + (m.ap || 0)) * (1 + all) * tp,   // review #26: AP 100 at Lv 1, +30 per level (it now scales abilities on its own)
       armor: (b.armor + 4 * L + (m.armor || 0)) * (1 + all),
@@ -1130,9 +1131,9 @@
   const NORM = { atk: 10, ap: 20, asPct: 0.1, crit: 0.1, critDmg: 0.25, hp: 150, hpPct: 0.1, armor: 15, ls: 0.1, dodge: 0.08, ms: 1, range: 1,
     manaStart: 20, manaRegen: 2, manaOnHit: 3, manaMaxPct: -0.15, regen: 0.01, thorns: 0.2, shieldStart: 150, shieldStartPct: 0.15, allPct: 0.05 };
   // WHAT: item effects grouped by who likes them: on-hit effects (attackers), on-cast effects (casters), defensive effects (tanks).
-  const ON_HIT = ['burnOnHit', 'poisonOnHit', 'slowOnHit', 'curHpOnHit', 'splash', 'multishot', 'chainEvery', 'antiHeal', 'stackAtk', 'stackAs', 'armorPen', 'firstMoveAtk', 'killAtk', 'rampAtk', 'giantSlayer', 'execute', 'reap', 'critStack'];
+  const ON_HIT = ['burnOnHit', 'poisonOnHit', 'slowOnHit', 'curHpOnHit', 'splash', 'multishot', 'chainEvery', 'antiHeal', 'stackAtk', 'stackAs', 'armorPen', 'firstMoveAtk', 'killAtk', 'rampAtk', 'giantSlayer', 'execute', 'reap', 'critStack', 'bountyMark', 'bloodhoundTeleport', 'blinkEveryAtk', 'soulHarvestKill'];
   const ON_CAST = ['abilityBurn', 'omni', 'apPerSec', 'apPerAtk'];
-  const ON_DEF = ['revive', 'stasis', 'cleanseOnce', 'dmgReduce', 'rampArmor', 'rampHpPct', 'titan', 'ccResist', 'onDeathHeal', 'sunfire'];
+  const ON_DEF = ['revive', 'stasis', 'cleanseOnce', 'dmgReduce', 'rampArmor', 'rampHpPct', 'titan', 'ccResist', 'onDeathHeal', 'sunfire', 'crucibleDeath', 'martyrAbsorb', 'glassPrism', 'spawnCloneStart', 'chaosNovaInterval', 'tether'];
   // WHAT: how good an item is for a hero (higher is better): stats weighted by the hero's profile, plus a small bonus per rarity.
   function itemScore(key, id) {
     const it = B.ITEM[id], m = it.mods || {}, P = heroProfile(key), ap = P.apShare, dm = P.tank ? 1.8 : 1, om = P.tank ? 0.7 : 1;

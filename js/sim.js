@@ -89,6 +89,16 @@
         if (a.stat === 'armor') v.armor += a.val; else buff(v, a.stat, a.val, 1e9);
       }
     }
+    for (const u of W.units.slice()) {
+      if (u.m && u.m.spawnCloneStart && !u.dead) {
+        const cl = spawn(W, {
+          kind: 'summon', owner: u.id, key: u.key, name: u.name + ' (Echo)', glyph: u.glyph, color: '#90e0ef',
+          hp: Math.max(1, Math.round(u.maxHp * 0.5)), atk: Math.round(u.atk * 0.6), ap: Math.round(u.ap * 0.6),
+          armor: Math.round(u.armor * 0.5), as: u.as, range: u.range, ms: u.ms, mana: 0, abil: null, fl: [],
+        }, u.side, u.c, u.r);
+        if (cl) fxRing(W, cl.c, cl.r, 1, '#90e0ef', 12);
+      }
+    }
     for (const u of W.units) {
       if (u.fl.has('dive')) dive(W, u);
       if (u.fl.has('factory')) A.turret(W, u, true);
@@ -366,7 +376,31 @@
     if (tgt.st.vulnU > W.t) amp += tgt.st.vulnP;
     if (src && src.st.tauntU > W.t) { const tb = W.byId[src.st.tauntBy]; if (tb && tb.ab && tb.ab.weaken) amp -= tb.ab.weaken; }   // v105: Aegir's Humbling Taunt
     if (tgt.st.shatterU > W.t) amp += tgt.st.shatterP;
+    if (src && src.m && src.m.bountyMark) {
+      const foes = enemies(W, src);
+      let high = null;
+      for (const f of foes) if (!high || f.maxHp > high.maxHp) high = f;
+      if (high && tgt.id === high.id) amp += 1.0;
+      else amp = Math.max(0.1, amp - 0.3);
+    }
     dmg *= amp;
+
+    if (tgt.m && tgt.m.glassPrism && !o._intercepted) {
+      const gProtector = allies(W, tgt).find(a => a !== tgt && !a.dead && Hx.dist(a, tgt) <= 1);
+      if (gProtector) {
+        fx(W, { k: 'bolt', pts: [[tgt.c, tgt.r], [gProtector.c, gProtector.r]], color: '#7cc8ff', t1: W.t + 4 });
+        return deal(W, src, gProtector, raw, type, Object.assign({}, o, { _intercepted: true }));
+      }
+    }
+
+    if (!o._martyrShared && tgt.side === 0) {
+      const martyr = allies(W, tgt).find(a => a !== tgt && !a.dead && a.m && a.m.martyrAbsorb && Hx.dist(a, tgt) <= 1);
+      if (martyr) {
+        const absorbed = Math.round(dmg * martyr.m.martyrAbsorb);
+        dmg -= absorbed;
+        deal(W, src, martyr, absorbed, type, Object.assign({}, o, { _martyrShared: true }));
+      }
+    }
     if (type === 'phys') { const arm = Math.max(0, armorOf(W, tgt) * (1 - Math.min(0.9, (src ? src.m.armorPen || 0 : 0) + (o.pen || 0)))); dmg *= 100 / (100 + arm); }
     else if (type === 'magic') dmg *= 100 / (100 + Math.max(0, armorOf(W, tgt)));   // v62h (review #96): Defense protects against magic too
     dmg *= 1 - Math.min(0.8, (tgt.m.dmgReduce || 0) + bsum(W, tgt, 'dr'));
@@ -395,6 +429,7 @@
     const total = dmg + abs;
     if (src) src.dmgDone = (src.dmgDone || 0) + total;
     tgt.dmgTaken = (tgt.dmgTaken || 0) + total;
+    if (tgt.m && tgt.m.crucibleDeath) tgt._crucibleAbsorbed = (tgt._crucibleAbsorbed || 0) + total;
     // v122 (review #213, David: "Floating Combat Text hierarchy: normal damage small, muted white/gray; magic / burns purple / orange ticking; critical strikes 2x larger,
     // bold yellow with a slight upward bounce"): each number carries its kind (n: 'hit' | 'magic' | 'crit' | 'dot'); damage over time now shows as small ticks
     if (!o.dot) fx(W, { k: 'num', c: tgt.c, r: tgt.r, id: tgt.id, text: String(total), n: crit ? 'crit' : type === 'magic' ? 'magic' : type === 'true' ? 'true' : 'hit', color: crit ? '#ffd23f' : type === 'magic' ? '#c9a2ff' : type === 'true' ? '#ffffff' : '#e4e6ee', big: crit, t1: W.t + (crit ? 20 : 16) });
@@ -448,6 +483,27 @@
     if (src && src.side !== u.side) src.kb = (src.kb || 0) + 1;  // review #25: kills per unit, for the after-battle screen
     // on-death effects
     if (u.m.onDeathHeal) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) heal(W, a, a.maxHp * u.m.onDeathHeal, true);
+    if (u.m && u.m.crucibleDeath && u._crucibleAbsorbed > 0) {
+      const foes = enemies(W, u).filter(e => !e.dead);
+      if (foes.length) {
+        const spl = Math.round(u._crucibleAbsorbed / foes.length);
+        fxRing(W, u.c, u.r, 2, '#ff4444', 16);
+        fxText(W, u, 'CRUCIBLE NOVA!', '#ff4444');
+        for (const e of foes) deal(W, u, e, spl, 'magic', { ability: true });
+      }
+    }
+    if (src && src.m && src.m.bountyMark && src.side === 0) {
+      if (typeof B.Run !== 'undefined' && W._run) {
+        W._run.gold = (W._run.gold || 0) + 3;
+        fxText(W, src, '+3 GOLD!', '#ffd23f');
+      }
+    }
+    if (src && src.m && src.m.soulHarvestKill && !src.dead) {
+      src.maxHp += src.m.soulHarvestKill;
+      src.hp += src.m.soulHarvestKill;
+      src.bAtk += 3;
+      fxText(W, src, '+SOUL', '#a855f7');
+    }
     if (u.explode > 0) { for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 1) { deal(W, u, e, u.explode, 'magic', { ability: true }); slow(W, e, 0.3, 2); } fxRing(W, u.c, u.r, 1, '#ff6fb5'); }
     const burner = u.dots.find(d => d.k === 'burn' && d.until > W.t && W.byId[d.src] && W.byId[d.src].fl.has('combustion'));
     if (burner) { const s = W.byId[burner.src]; for (const e of enemies(W, s)) if (Hx.dist(e, u) <= 1) deal(W, s, e, 0.24 * apOf(s), 'magic', { ability: true }); fxRing(W, u.c, u.r, 1, '#ff7a3d'); }
@@ -650,6 +706,14 @@
     const atk = atkOf(W, u) + (u.ab && u.ab.biteArmor ? u.ab.biteArmor * armorOf(W, u) : 0);   // v104: Onyx's Snapping Jaws
     const dealt = deal(W, u, tgt, atk * mult, 'phys', { atk: true });
     u.atkN++;
+    if (u.m && u.m.blinkEveryAtk && u.atkN % u.m.blinkEveryAtk === 0 && alive(tgt)) {
+      const freeH = freeNeighbors(W, tgt.c, tgt.r)[0];
+      if (freeH) {
+        blink(W, u, freeH.c, freeH.r);
+        cc(W, tgt, 'stun', 1.0);
+        fxText(W, u, 'WARP STRIKE', '#00ffcc');
+      }
+    }
     if (u.garrison && dealt > 0) { const t = W.byId[u.garrison]; if (t && !t.dead && t.maxMana) t.mana = Math.min(t.maxMana, t.mana + 5); }   // v60: Citadel
     if (!u.dead) {
       if (!u.fl.has('brute')) u.mana = Math.min(u.maxMana, u.mana + (10 + (u.m.manaOnHit || 0)) * manaGain(W, u)); if (u.ab.focus) u.focus = Math.min(u.ab.focusCap || 15, u.focus + 1); if (u.m.titan) u.titan = Math.min(15, u.titan + 0.5);
@@ -1901,6 +1965,41 @@
         fxRing(W, u.c, u.r, 0, '#c77dff', 8);
       }
       if (u.fl.has('thunderstorm') && W.t % sec(3) === 0) { const es = enemies(W, u); if (es.length) { const e = es[Math.floor(W.rng() * es.length)]; fx(W, { k: 'bolt', pts: [[e.c, e.r - 2], [e.c, e.r]], color: '#fff6a0', t1: W.t + 6 }); deal(W, u, e, 0.4 * apOf(u), 'magic', { ability: true }); } }
+      // Voltaic Tether: beam to furthest ally damaging and slowing foes crossing it
+      if (m.tether) {
+        const farAlly = allies(W, u).filter(a => a !== u && !a.dead).sort((a, b) => Hx.dist(b, u) - Hx.dist(a, u))[0];
+        if (farAlly) {
+          fx(W, { k: 'bolt', pts: [[u.c, u.r], [farAlly.c, farAlly.r]], color: '#00f0ff', t1: W.t + 8 });
+          for (const e of enemies(W, u)) {
+            if (e.dead) continue;
+            const dU = Hx.dist(e, u), dA = Hx.dist(e, farAlly), totalD = Hx.dist(u, farAlly);
+            if (Math.abs((dU + dA) - totalD) <= 1) {
+              deal(W, u, e, apOf(u) * m.tether, 'magic', { dot: true });
+              slow(W, e, 0.5, 1.2);
+            }
+          }
+        }
+      }
+      // Chaos Engine: periodic nova every 6s
+      if (m.chaosNovaInterval && W.t % sec(m.chaosNovaInterval) === 0) {
+        fxRing(W, u.c, u.r, 2, '#ff00aa', 14);
+        fxText(W, u, 'CHAOS NOVA!', '#ff00aa');
+        for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 2) deal(W, u, e, apOf(u) * 1.2, 'magic', { ability: true });
+        for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) { a.shield = (a.shield || 0) + a.maxHp * 0.2; a.shieldU = W.t + sec(4); }
+      }
+      // Bloodhound Cleaver: teleport behind any foe < 50% HP (once every 4s)
+      if (m.bloodhoundTeleport && W.t >= (u._bloodhoundCd || 0)) {
+        const hurtFoe = enemies(W, u).find(e => !e.dead && e.hp > 0 && (e.hp / e.maxHp) <= 0.5);
+        if (hurtFoe) {
+          const hx = freeNeighbors(W, hurtFoe.c, hurtFoe.r)[0];
+          if (hx) {
+            u._bloodhoundCd = W.t + sec(4);
+            blink(W, u, hx.c, hx.r);
+            deal(W, u, hurtFoe, atkOf(W, u) * 1.5, 'phys', { atk: true, canCrit: true, forceCrit: true });
+            fxText(W, u, 'BLOODHOUND!', '#ff0055');
+          }
+        }
+      }
     }
     if (u.kind === 'hero' && u.side === 0) u.xpT++;
   }

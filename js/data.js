@@ -982,6 +982,17 @@
     N('offhand', 'tidepearl', 'Tide Pearl', 'epic', { ap: 53.36, manaStart: 23.73, armor: 15.4 }, '+45 Magic, +20 starting Energy, +13 Defense'),
     N('boots', 'moonslippers', 'Moonstep Slippers', 'epic', { ms: 1.06, dodge: 0.1569, manaRegen: 2.09 }, '+1 move speed, +15% dodge, +2 Energy per second'),
     N('weapon', 'comethammer', 'Comet Hammer', 'legendary', { atk: 43.03, ap: 37.78, splash: 0.3148 }, '+42 Attack, +37 Magic, attacks splash 30% to adjacent enemies'),
+    // Strategy & Gameplan-Altering Items
+    N('offhand', 'voltaic_tether', 'Voltaic Tether', 'rare', { ap: 35, tether: 0.6 }, '+35 Magic. Tethers to furthest ally: foes crossing the beam take 60% Magic/s and are slowed 50%'),
+    N('armor', 'living_crucible', 'Living Crucible', 'epic', { armor: 35, crucibleDeath: 1.0 }, '+35 Defense. On death, detonates dealing 100% of all damage absorbed during battle split among surviving foes'),
+    N('trinket', 'bounty_monocle', 'Bounty Monocle', 'rare', { atk: 12, bountyMark: 1.0 }, '+12 Attack. Marks highest-threat foe: deals +100% damage to mark, but -30% to others. Slaying mark awards +3 Gold'),
+    N('weapon', 'bloodhound_cleaver', 'Bloodhound Cleaver', 'epic', { atk: 25, bloodhoundTeleport: 1 }, '+25 Attack. Blinks behind any enemy falling below 50% HP, striking with guaranteed Critical damage'),
+    N('trinket', 'glass_prism', "Glass Cannon's Prism", 'legendary', { asPct: 1.0, ap: 75, glassPrism: 1 }, '+100% attack speed, +75 Magic. Max HP is locked to 1; adjacent allies intercept all incoming damage for wearer'),
+    N('weapon', 'soul_siphon_scythe', 'Soul Harvester', 'rare', { atk: 18, soulHarvestKill: 15 }, '+18 Attack. Each takedown permanently grants +15 Max HP and +3 Attack for the rest of combat'),
+    N('boots', 'chronostep_boots', 'Warp Spikes', 'epic', { ms: 1.5, dodge: 0.15, blinkEveryAtk: 4 }, '+1.5 move speed, +15% dodge. Every 4th attack teleports the wearer to their target, stunning for 1s'),
+    N('offhand', 'martyrs_aegis', "Martyr's Aegis", 'epic', { armor: 25, hp: 180, martyrAbsorb: 0.5 }, '+25 Defense, +180 Health. Intercepts 50% of all damage taken by adjacent allies into wearer'),
+    N('helmet', 'mirage_mirror', 'Doppelgänger Mask', 'legendary', { ap: 40, spawnCloneStart: 1 }, '+40 Magic. Combat starts by spawning an exact illusory duplicate with 50% HP and 60% Attack'),
+    N('armor', 'chaos_engine', 'Volatile Reactor', 'legendary', { armor: 20, ap: 45, chaosNovaInterval: 6 }, '+20 Defense, +45 Magic. Every 6s releases a cosmic blast: dealing 120% Magic to foes and shielding allies for 20% max HP'),
   );
   // set bonuses count the pieces worn by the SAME hero (Run.heroMods)
   // WHAT: item SETS. Wearing 2 or 3 pieces of a set on one hero gives the bonus. The pieces are the items with that set id.
