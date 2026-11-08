@@ -1246,7 +1246,7 @@
       : 'Drag heroes to reposition';
 
     return `<section class="deploy">
-      ${speedPills(!gau, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f.diff === 'boss' ? I('skull') + ' Boss fight' : I('swords') + ' ' + B.DIFF[f.diff].name + ' fight'}</div>
+      ${speedPills(!gau, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f && f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f && f.diff === 'boss' ? I('skull') + ' Boss fight' : f && f.diff && B.DIFF[f.diff] ? I('swords') + ' ' + B.DIFF[f.diff].name + ' fight' : I('swords') + ' Battle'}</div>
       ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
         : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
       ${benchHTML(need)}
@@ -2476,7 +2476,11 @@
     const hud = $('#bhud');
     if (hud) {
       const secs = Math.floor(b.W.t / Sim.TPS);
-      const title = b.gau ? `${I('trophy')} ${duelName(run.g)} · ${esc(run.g.opp.name)}` : run.cur.challenge ? I('bolt') + ' ' + esc(run.cur.challenge.name) : run.cur.diff === 'boss' ? I('skull') + ' Boss' : I('swords') + ' ' + B.DIFF[run.cur.diff].name;
+      const title = b.gau ? `${I('trophy')} ${duelName(run.g)} · ${esc(run.g.opp.name)}`
+        : run.cur && run.cur.challenge ? I('bolt') + ' ' + esc(run.cur.challenge.name)
+        : run.cur && run.cur.diff === 'boss' ? I('skull') + ' Boss'
+        : run.cur && run.cur.diff && B.DIFF[run.cur.diff] ? I('swords') + ' ' + B.DIFF[run.cur.diff].name
+        : I('swords') + ' Fight';
       const toSd = CFG.suddenDeath - secs, clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
       const str = `<b>${title}</b><span class="clock ${toSd <= 0 ? 'sd' : toSd <= 10 ? 'warn' : ''}">⏱ ${clock}${toSd <= 0 ? ' · SUDDEN DEATH' : toSd <= 10 ? ' · sudden death in ' + toSd + 's' : ''}</span>`;
       if (str !== b.hudStr) { hud.innerHTML = str; b.hudStr = str; }
