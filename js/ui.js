@@ -406,9 +406,9 @@
     if (screen === 'title' || !run) m.innerHTML = titleHTML();
     else if (screen === 'battle') { m.innerHTML = battleHTML(); mountBoard(); }
     else if (screen === 'result') m.innerHTML = resultHTML();
-    else if (run.phase === 'over') m.innerHTML = overHTML();
     else if (run.pendingUpgrade && run.phase !== 'deploy') m.innerHTML = upgradeHTML();
     else if (run.pending.length && run.phase !== 'deploy') m.innerHTML = levelHTML();
+    else if (run.phase === 'over') m.innerHTML = overHTML();
     else if (run.phase === 'steal') m.innerHTML = stealHTML();
     else if (run.phase === 'recruit') m.innerHTML = recruitHTML();
     else if (run.phase === 'gauntlet') m.innerHTML = gauntletHTML();
@@ -482,7 +482,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v0.2</span>
+      <span class="app-ver" aria-label="Game version">v0.3</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -1458,6 +1458,7 @@
     const xp = hs.reduce((a, o) => a + o.x.gained, 0), ups = hs.filter(o => o.x.to > o.x.from).length;
     if (xp) chips.push(`<span class="rw rw-xp"><i>✨</i><b>+${xp}</b><em>XP</em></span>`);
     if (ups) chips.push(`<span class="rw rw-up"><i>▲</i><b>${ups}</b><em>level up${ups > 1 ? 's' : ''}</em></span>`);
+    if (r.boss && r.win) chips.push(`<span class="rw rw-up" style="--tier:#ffd23f">★ <b>Boss Upgrade</b><em>choose a path</em></span>`);
     if (r.trophy) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f"><i>🏆</i><b>${esc(r.trophy.name)}</b><em>trophy · +${r.trophy.crowns || 1} 👑</em></span>`);   // v64 (review #125)
     if (r.lg) chips.push(`<span class="rw ${r.lg.delta > 0 ? 'rw-pos' : r.lg.delta < 0 ? 'rw-neg' : ''}">${emblem(r.lg.league, 20)}<b>${r.lg.delta > 0 ? '+' : ''}${r.lg.delta}</b><em>LP · ${leagueName(r.lg.league)} ${leagueProgress(r.lg)}</em></span>`);
     if (r.lg && r.lg.crowns) chips.push(`<span class="rw rw-crown"><i>👑</i><b>+${r.lg.crowns}</b><em>crowns</em></span>`);

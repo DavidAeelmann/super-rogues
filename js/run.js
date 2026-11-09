@@ -460,7 +460,7 @@
     if (!win) {
       if (run.lives > 0) { run.lives--; res.lives = run.lives; res.retry = true; redoDay(run, f); } else { res.lives = 0; run.phase = 'over'; run.result = 'defeat'; }
     } else {
-      if (f.diff === 'boss' && run.heroes.some(h => h.path == null)) {
+      if ((f.diff === 'boss' || f.boss) && run.heroes.some(h => h.path == null)) {
         run.pendingUpgrade = { fightNo: f.fightNo };
       }
       advance(run);
