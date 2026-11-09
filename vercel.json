@@ -29,6 +29,18 @@
   ],
   "rewrites": [
     {
+      "source": "/art/sprites/boulder.png",
+      "destination": "/art/boulder/sprite.png"
+    },
+    {
+      "source": "/art/sprites/pyro.png",
+      "destination": "/art/feuer/sprite.png"
+    },
+    {
+      "source": "/art/sprites/pyra.png",
+      "destination": "/art/feuer/sprite.png"
+    },
+    {
       "source": "/c/art/:dir/:file",
       "destination": "/art/:dir/:file"
     },

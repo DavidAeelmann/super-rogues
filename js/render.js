@@ -493,34 +493,228 @@
   const FILTER = false;
   const deadTicks = u => B.Art && B.Art.deathTicks ? B.Art.deathTicks(u.key) : 12;
 
-  // Boulder 2D Sprite Test Asset Loader Hook (art/sprites/boulder.png with fallback)
-  const BOULDER_SRCS = ['art/sprites/boulder.png', 'art/boulder/sprite.png'];
-  const BOULDER_FALLBACK_SVG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"%3E%3Cellipse cx="64" cy="80" rx="44" ry="36" fill="%237a5a3a"/%3E%3Cellipse cx="64" cy="96" rx="36" ry="20" fill="%235a4028"/%3E%3Cellipse cx="64" cy="54" rx="32" ry="28" fill="%239a704a"/%3E%3Ccircle cx="52" cy="48" r="5" fill="%232a1a0a"/%3E%3Ccircle cx="76" cy="48" r="5" fill="%232a1a0a"/%3E%3Ccircle cx="54" cy="46" r="2" fill="%23ffffff"/%3E%3Ccircle cx="78" cy="46" r="2" fill="%23ffffff"/%3E%3Cpolygon points="48,64 80,64 64,78" fill="%233a2414"/%3E%3Cellipse cx="30" cy="76" rx="14" ry="24" fill="%23b8906a"/%3E%3Cellipse cx="98" cy="76" rx="14" ry="24" fill="%23b8906a"/%3E%3Cpolygon points="100,50 114,20 120,24 104,56" fill="%23503820"/%3E%3C/svg%3E';
-  let boulderImg = null;
-  let boulderLoaded = false;
-  let boulderSrcIdx = 0;
-  function getBoulderSprite() {
-    if (typeof Image === 'undefined') return null;
-    if (!boulderImg) {
-      boulderImg = new Image();
-      boulderImg.onload = () => { boulderLoaded = true; };
-      boulderImg.onerror = () => {
-        boulderSrcIdx++;
-        if (boulderSrcIdx < BOULDER_SRCS.length) {
-          boulderImg.src = BOULDER_SRCS[boulderSrcIdx];
-        } else if (!boulderImg.src.startsWith('data:')) {
-          boulderImg.src = BOULDER_FALLBACK_SVG;
-        }
-      };
-      boulderImg.src = BOULDER_SRCS[0];
+  // ------------------------------------------------------------------ 2.5D Procedural Sprite Registry & Preloader
+  const SPRITE_FALLBACKS = {
+    grok: 'art/boulder/sprite.png',
+    boulder: 'art/boulder/sprite.png',
+    pyra: 'art/feuer/sprite.png',
+    pyro: 'art/feuer/sprite.png',
+    feuer: 'art/feuer/sprite.png'
+  };
+
+  const SpriteManager = {
+    cache: {},
+    get(heroId) {
+      if (typeof Image === 'undefined') return null;
+      const id = (heroId || '').toLowerCase().trim();
+      if (!id) return null;
+      let entry = this.cache[id];
+      if (!entry) {
+        entry = this.cache[id] = { img: new Image(), loaded: false, failed: false, srcIdx: 0, srcs: [] };
+        const baseSrcs = [`art/sprites/${id}.png`];
+        const canonKey = (B.heroKey && B.heroKey(id)) || id;
+        if (SPRITE_FALLBACKS[id]) baseSrcs.push(SPRITE_FALLBACKS[id]);
+        if (canonKey !== id && SPRITE_FALLBACKS[canonKey]) baseSrcs.push(SPRITE_FALLBACKS[canonKey]);
+        entry.srcs = baseSrcs;
+
+        entry.img.onload = () => { entry.loaded = true; entry.failed = false; };
+        entry.img.onerror = () => {
+          entry.srcIdx++;
+          if (entry.srcIdx < entry.srcs.length) {
+            entry.img.src = entry.srcs[entry.srcIdx];
+          } else {
+            entry.failed = true;
+          }
+        };
+        entry.img.src = entry.srcs[0];
+      }
+      return (entry.loaded && entry.img.naturalWidth) ? entry.img : null;
+    },
+    preload(heroIds) {
+      if (typeof Image === 'undefined' || !Array.isArray(heroIds)) return;
+      for (const id of heroIds) {
+        if (id) this.get(id);
+      }
     }
-    return (boulderLoaded && boulderImg.naturalWidth) ? boulderImg : null;
+  };
+  B.SpriteManager = SpriteManager;
+
+  function getUnitSprite(u) {
+    if (!u) return null;
+    const heroId = u.heroId || u.key || '';
+    let img = SpriteManager.get(heroId);
+    if (!img && B.heroKey) {
+      const canon = B.heroKey(heroId);
+      if (canon && canon !== heroId) img = SpriteManager.get(canon);
+    }
+    return img;
   }
-  function isBoulderUnit(u) {
-    if (!u) return false;
-    const k = (u.key || '').toLowerCase();
-    const id = (u.heroId || '').toLowerCase();
-    return k === 'boulder' || k === 'grok' || id === 'boulder' || id === 'grok';
+
+  // ------------------------------------------------------------------ Procedural 2.5D Sprite Rendering
+  function drawProceduralSprite(ctx, W, u, p, S, pose, spriteImg, isSel, isInfo, since, size) {
+    const time = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    let scaleX = 1, scaleY = 1, rot = 0, offX = 0, offY = 0;
+    const isHit = since < 0.12 && !u.dead; // 3-frame hit reaction (~0.12s)
+    const isDead = !!u.dead;
+    const isCaster = (u.range > 1) || (u.role && /mage|cleric|healer|support|caster|ranger/i.test(u.role));
+
+    // Universal: Hit-reaction random jitter
+    if (isHit) {
+      offX += (Math.random() - 0.5) * 6;
+      offY += (Math.random() - 0.5) * 6;
+    }
+
+    if (isDead) {
+      // Universal: Lethal Defeat / Death
+      // Fast 90-degree tilt toward ground, sink downward into hex, horizontal compression, alpha fade out
+      const pDead = pose.dead != null ? pose.dead : 1;
+      rot = pDead * (Math.PI * 0.5);
+      offY += pDead * 12;
+      scaleY = Math.max(0.01, 1 - pDead);
+      scaleX = 1 + pDead * 0.2;
+      ctx.globalAlpha = Math.max(0, (ctx.globalAlpha || 1) * (1 - pDead));
+    } else if (pose.walk != null) {
+      // Movement / Walk
+      if (isCaster) {
+        // Caster / Ranged: smooth glide with gentle bob
+        const cycle = pose.walk * Math.PI * 2;
+        rot = Math.sin(cycle) * 0.04;
+        offY += Math.sin(cycle) * 2 - 2;
+      } else {
+        // Melee Archetype: Running tilt oscillation with vertical footstep hop
+        // rotation = Math.sin(time * 0.012) * 0.09, offsetY = -Math.abs(Math.sin(time * 0.012)) * 4
+        rot = Math.sin(time * 0.012) * 0.09;
+        offY += -Math.abs(Math.sin(time * 0.012)) * 4;
+      }
+    } else if (isCaster && pose.cast != null) {
+      // B. Caster Archetype Cast / Spell Cycle
+      const pCast = pose.cast; // 0..1
+      const auraCol = u.color || (u.key === 'pyra' || u.key === 'pyro' ? '#ff6020' : '#8855ff');
+      if (pCast < 0.7) {
+        // Anticipation & Power Charge (0% to 70%)
+        const chargeRatio = pCast / 0.7;
+        // Levitation: offsetY = -Math.sin(chargeRatio * Math.PI * 0.5) * 8px
+        offY += -Math.sin(chargeRatio * Math.PI * 0.5) * 8;
+        // Power charge stretch & horizontal vibration
+        scaleY = 1 + 0.15 * chargeRatio;
+        scaleX = 1 - 0.08 * chargeRatio;
+        offX += (Math.random() - 0.5) * 2;
+
+        // Under-Glow Aura on hex tile below feet
+        ctx.save();
+        const auraR = size * 0.65 * (0.6 + 0.4 * chargeRatio);
+        const auraG = ctx.createRadialGradient(p.x, p.y + size * 0.1, 0, p.x, p.y + size * 0.1, auraR);
+        auraG.addColorStop(0, auraCol);
+        auraG.addColorStop(0.6, auraCol + '66');
+        auraG.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = auraG;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y + size * 0.1, auraR, auraR * 0.45, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        // Spell Release & Recoil (70% to 100%)
+        const rRatio = (pCast - 0.7) / 0.3; // 0..1
+        // The Kickback: snap caster backward by 8-12px away from target direction, dropping to floor
+        const kickback = (1 - rRatio) * 10;
+        offX += -((pose.face || 1) < 0 ? -1 : 1) * kickback;
+        offY += (rRatio - 1) * 4; // return downward
+        // Squash on drop
+        scaleY = 0.85 + 0.15 * rRatio;
+        scaleX = 1.15 - 0.15 * rRatio;
+      }
+    } else if (pose.atk != null) {
+      // Physical Strike (Lunge & Snap)
+      const pAtk = pose.atk; // 0..1
+      if (isCaster) {
+        // Ranged / Caster standard shot
+        if (pAtk < 0.5) {
+          scaleX = 0.94;
+          scaleY = 1.08;
+          offX += -((pose.face || 1) < 0 ? -1 : 1) * 3 * (pAtk / 0.5);
+        } else {
+          scaleX = 1.06;
+          scaleY = 0.94;
+          offX += ((pose.face || 1) < 0 ? -1 : 1) * 4 * (1 - (pAtk - 0.5) / 0.5);
+        }
+      } else {
+        // Melee Strike:
+        // Windup & Leap (0% to 50%): interpolate (X, Y) 15-25px toward target hex, stretch horizontally
+        const faceSign = (pose.face || 1) < 0 ? -1 : 1;
+        if (pAtk < 0.5) {
+          const w = pAtk / 0.5;
+          offX += faceSign * (18 * w);
+          offY += -Math.sin(w * Math.PI) * 5;
+          scaleX = 1 + 0.25 * w;
+          scaleY = 1 - 0.2 * w;
+        } else if (pAtk < 0.75) {
+          // Impact & hit frame
+          const sq = (pAtk - 0.5) / 0.25;
+          offX += faceSign * (18 * (1 - sq * 0.4));
+          scaleX = 1.25 - 0.15 * sq;
+          scaleY = 0.8 + 0.15 * sq;
+        } else {
+          // Return elastically to home hex with overshooting squash
+          const ret = (pAtk - 0.75) / 0.25;
+          const bounce = Math.sin(ret * Math.PI) * 0.12;
+          offX += faceSign * (11 * (1 - ret));
+          scaleX = 1.1 + (1 - 1.1) * ret - bounce;
+          scaleY = 0.95 + (1 - 0.95) * ret + bounce;
+        }
+      }
+    } else {
+      // Idle / Stance
+      if (isCaster) {
+        // Slow rhythmic floating or grounded focus breathing
+        scaleY = 1 - Math.sin(time * 0.003) * 0.025;
+        scaleX = 1 + Math.sin(time * 0.003) * 0.012;
+        offY += Math.sin(time * 0.003) * 1.5;
+      } else {
+        // Melee Idle: Gentle sine-wave breathing on scale:
+        // scaleY = 1 - Math.sin(time * 0.004) * 0.03, scaleX = 1 + Math.sin(time * 0.004) * 0.015
+        scaleY = 1 - Math.sin(time * 0.004) * 0.03;
+        scaleX = 1 + Math.sin(time * 0.004) * 0.015;
+      }
+    }
+
+    const selScale = isSel ? 1.08 : isInfo ? 1.06 : 1, selY = isSel ? -S * 0.1 : isInfo ? -S * 0.07 : 0;
+    const faceDir = (pose.face || 1) < 0 ? -1 : 1;
+
+    ctx.save();
+    // Translate to feet anchor point on hex
+    ctx.translate(p.x + offX, p.y + selY + offY);
+
+    // Hit-reaction damage flash or Caster Muzzle Flare
+    const isCastMuzzle = isCaster && pose.cast != null && pose.cast >= 0.7 && pose.cast <= 0.76;
+    if (isHit) {
+      if (ctx.filter) ctx.filter = 'brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(3)';
+    } else if (isCastMuzzle) {
+      if (ctx.filter) ctx.filter = 'brightness(1.8)';
+    }
+
+    // Facing direction flip & combat state kinetic scale
+    ctx.scale(faceDir * scaleX * selScale, scaleY * selScale);
+    ctx.rotate(rot);
+
+    // Render sprite token anchored at bottom-center (feet at 0, 0)
+    const sw = spriteImg.naturalWidth || 128, sh = spriteImg.naturalHeight || 128;
+    const targetH = S * 1.5;
+    const targetW = targetH * (sw / sh);
+    ctx.drawImage(spriteImg, 0, 0, sw, sh, -targetW * 0.5, -targetH, targetW, targetH);
+
+    // Hit-reaction overlay fallback/tint if filter is unsupported
+    if (isHit) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = 'rgba(255, 40, 40, 0.45)';
+      ctx.fillRect(-targetW * 0.5, -targetH, targetW, targetH);
+      ctx.restore();
+      if (ctx.filter) ctx.filter = 'none';
+    } else if (isCastMuzzle) {
+      if (ctx.filter) ctx.filter = 'none';
+    }
+
+    ctx.restore();
   }
 
   // WHAT: which animation a unit is in right now (idle, walk, attack windup, cast, hurt, death) with how far along it is.
@@ -562,29 +756,30 @@
     ctx.globalAlpha = Math.max(0, alpha);
     // selection / side ring on the ground
     const hero = u.side === 0;
-    const isBoulder = isBoulderUnit(u);
-    const bImg = isBoulder ? getBoulderSprite() : null;
+    const pose = poseOf(W, u, T, d, dt);
+    const spriteImg = getUnitSprite(u);
 
-    // Contact Shadows: dark elliptical shadow (width: 75% of hex width, height: 24%)
-    // Soft grounded shadow anchored to the hex tile under Boulder's base (rgba(0, 0, 0, 0.45))
+    // Dynamic Contact Shadow anchored to hex tile under unit's base
     if (!u.dead) {
       ctx.save();
       ctx.translate(p.x, p.y + size * 0.14);
-      const shW = size * 1.5 * 0.75;
-      const shH = shW * 0.24;
-      const shG = ctx.createRadialGradient(0, 0, 0, 0, 0, shW * 0.5);
-      if (bImg) {
-        shG.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
-        shG.addColorStop(0.7, 'rgba(0, 0, 0, 0.2)');
-        shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      } else {
-        shG.addColorStop(0, 'rgba(0, 0, 0, 0.65)');
-        shG.addColorStop(0.7, 'rgba(0, 0, 0, 0.22)');
-        shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      let shW = size * 1.5 * 0.75;
+      let shH = shW * 0.24;
+      let shAlpha = spriteImg ? 0.45 : 0.65;
+      // When casters levitate during cast, soften and shrink shadow to sell depth
+      if (spriteImg && (u.range > 1 || (u.role && /mage|cleric|healer|support|caster|ranger/i.test(u.role))) && pose.cast != null) {
+        const lev = Math.sin(Math.min(1, pose.cast / 0.7) * Math.PI * 0.5);
+        shW *= (1 - lev * 0.2);
+        shH *= (1 - lev * 0.2);
+        shAlpha *= (1 - lev * 0.35);
       }
+      const shG = ctx.createRadialGradient(0, 0, 0, 0, 0, shW * 0.5);
+      shG.addColorStop(0, `rgba(0, 0, 0, ${shAlpha.toFixed(3)})`);
+      shG.addColorStop(0.7, `rgba(0, 0, 0, ${(shAlpha * 0.44).toFixed(3)})`);
+      shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = shG;
       ctx.beginPath();
-      ctx.scale(1, shH / shW);
+      ctx.scale(1, shH / Math.max(1, shW));
       ctx.arc(0, 0, shW * 0.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
@@ -604,86 +799,10 @@
       ctx.strokeStyle = '#ffffffbb'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.ellipse(p.x, p.y, S * 0.53, S * 0.53 * K * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
     }
-    const pose = poseOf(W, u, T, d, dt);
     const mk = u.key === 'clone' ? 'mirage' : u.key, art = B.Art && B.Art.sprite(mk);
 
-    if (bImg) {
-      // Kinetic procedural animation for Boulder 2D sprite test
-      const time = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      let scaleX = 1, scaleY = 1, rot = 0, offX = 0, offY = 0;
-      const isHit = since < 0.12 && !u.dead; // Taking damage / Hit-reaction (3 frames ~0.12s)
-
-      if (isHit) {
-        // 3-frame horizontal jitter
-        offX += (Math.random() - 0.5) * size * 0.12;
-      }
-
-      if (pose.walk != null && !pose.dead) {
-        // Movement / Walk: Running tilt oscillation with vertical bounce
-        const cycle = pose.walk * Math.PI * 2;
-        rot = Math.sin(cycle) * 0.08;
-        offY += -Math.abs(Math.sin(cycle)) * 4;
-      } else if (pose.atk != null && !pose.dead) {
-        // Attacking (Slam/Lunge): impact scale squash, then snappy elastic return
-        const pAtk = pose.atk; // 0..1
-        if (pAtk < 0.5) {
-          // Windup / anticipatory slight stretch
-          const w = pAtk / 0.5;
-          scaleX = 1 - 0.1 * w;
-          scaleY = 1 + 0.15 * w;
-        } else if (pAtk < 0.8) {
-          // Strike impact squash
-          const sq = (pAtk - 0.5) / 0.3;
-          scaleX = 0.9 + (1.25 - 0.9) * sq;
-          scaleY = 1.15 + (0.8 - 1.15) * sq;
-        } else {
-          // Snappy elastic return to 1
-          const ret = (pAtk - 0.8) / 0.2;
-          const bounce = Math.sin(ret * Math.PI) * 0.12;
-          scaleX = 1.25 + (1 - 1.25) * ret - bounce;
-          scaleY = 0.8 + (1 - 0.8) * ret + bounce;
-        }
-      } else if (pose.dead) {
-        scaleY = Math.max(0.01, 1 - pose.dead);
-        scaleX = 1 + pose.dead * 0.25;
-        offY += pose.dead * 6;
-      } else {
-        // Idle / Prep Phase: Subtle vertical sine-wave breathing
-        scaleY = 1 + Math.sin(time * 0.003) * 0.03;
-        scaleX = 1 - Math.sin(time * 0.003) * 0.015;
-      }
-
-      const selScale = isSel ? 1.08 : isInfo ? 1.06 : 1, selY = isSel ? -S * 0.1 : isInfo ? -S * 0.07 : 0;
-      const faceDir = (pose.face || 1) < 0 ? -1 : 1;
-
-      ctx.save();
-      // Translate to feet anchor point on hex
-      ctx.translate(p.x + offX, p.y + selY + offY);
-      // Canvas flash filter / red tint overlay on hit
-      if (isHit) {
-        if (ctx.filter) ctx.filter = 'brightness(1.6) saturate(1.8)';
-      }
-      // Facing direction flip & combat state kinetic scale
-      ctx.scale(faceDir * scaleX * selScale, scaleY * selScale);
-      ctx.rotate(rot);
-
-      // Render sprite token anchored at bottom-center (feet at 0, 0)
-      const sw = bImg.naturalWidth || 128, sh = bImg.naturalHeight || 128;
-      const targetH = S * 1.5;
-      const targetW = targetH * (sw / sh);
-      ctx.drawImage(bImg, 0, 0, sw, sh, -targetW * 0.5, -targetH, targetW, targetH);
-
-      // Hit-reaction overlay fallback/tint if filter is unsupported
-      if (isHit) {
-        ctx.save();
-        ctx.globalCompositeOperation = 'source-atop';
-        ctx.fillStyle = 'rgba(255, 60, 60, 0.4)';
-        ctx.fillRect(-targetW * 0.5, -targetH, targetW, targetH);
-        ctx.restore();
-        if (ctx.filter) ctx.filter = 'none';
-      }
-
-      ctx.restore();
+    if (spriteImg) {
+      drawProceduralSprite(ctx, W, u, p, S, pose, spriteImg, isSel, isInfo, since, size);
     } else {
       // Standard vector model or B.Art sprite rendering fallback
       const bx0 = p.x - (pose.face > 0 ? 1 : -1) * flinch, flash = since < 0.09 && !u.dead && FILTER;
@@ -702,7 +821,7 @@
       if (flash) ctx.filter = 'none';
     }
 
-    if (since < 0.09 && !u.dead && !bImg) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * (1 - since / 0.09); const g = ctx.createRadialGradient(p.x, p.y - S * 0.6, 0, p.x, p.y - S * 0.6, S * 0.6); g.addColorStop(0, '#fff'); g.addColorStop(0.5, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y - S * 0.6, S * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    if (since < 0.09 && !u.dead && !spriteImg) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * (1 - since / 0.09); const g = ctx.createRadialGradient(p.x, p.y - S * 0.6, 0, p.x, p.y - S * 0.6, S * 0.6); g.addColorStop(0, '#fff'); g.addColorStop(0.5, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y - S * 0.6, S * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
     if (u.st.frozenU > s) { ctx.globalAlpha = 0.45; ctx.fillStyle = '#9fe8ff'; ctx.beginPath(); ctx.moveTo(p.x, p.y - S * 1.45); ctx.lineTo(p.x + S * 0.42, p.y - S * 0.7); ctx.lineTo(p.x, p.y + S * 0.05); ctx.lineTo(p.x - S * 0.42, p.y - S * 0.7); ctx.closePath(); ctx.fill(); }
     if (u.shield > 0 && u.shieldU > s && !u.dead) { ctx.globalAlpha = 0.25; ctx.strokeStyle = '#e8ecff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(p.x, p.y - S * 0.62, S * 0.5, S * 0.8, 0, 0, Math.PI * 2); ctx.stroke(); }
     ctx.globalAlpha = 1;
