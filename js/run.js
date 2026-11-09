@@ -146,6 +146,9 @@
   function heroMods(run, h) {
     const m = {};
     addMods(m, B.HEROES[h.key].mods);
+    if (h.path != null && B.HERO_PATHS && B.HERO_PATHS[h.key] && B.HERO_PATHS[h.key][h.path]) {
+      addMods(m, B.HERO_PATHS[h.key][h.path].mods);
+    }
     for (const id of h.specs) addMods(m, (specOf(h.key, id) || {}).mods);
     for (const id of h.items) addMods(m, (B.ITEM[id] || {}).mods);
     for (const b of setBonuses(h.items)) addMods(m, b.mods);
@@ -180,6 +183,13 @@
     const pk = B.heroKey ? B.heroKey(h.key) : h.key; let g = (b.grow || 1) * ((B.TUNE && B.TUNE.growth) || 1), tp = ((B.TUNE && (B.TUNE.power[pk] || B.TUNE.power[h.key])) || 1) * ((B.TUNE && B.TUNE.base) || 1);
     for (const id of h.specs) tp *= specTune(id);   // v88 (review #167): the level-up powers' own balance factor   // v62o: tp = the balance tuner's power factor for this hero; v62q (review #113): g also takes the global growth (what a level gives: Health, Attack, Magic and so the ability numbers)
     const ab = Object.assign({}, b.ab), fl = (b.fl || []).slice();
+    let heroName = b.name;
+    if (h.path != null && B.HERO_PATHS && B.HERO_PATHS[h.key] && B.HERO_PATHS[h.key][h.path]) {
+      const up = B.HERO_PATHS[h.key][h.path];
+      heroName = up.name;
+      for (const k in (up.ab || {})) ab[k] = (ab[k] || 0) + up.ab[k];
+      for (const f of (up.fl || [])) fl.push(f);
+    }
     for (const id of h.specs) {
       const s = specOf(h.key, id); if (!s) continue;
       for (const k in (s.ab || {})) ab[k] = (ab[k] || 0) + s.ab[k];
@@ -187,7 +197,7 @@
     }
     const isGlassPrism = !!m.glassPrism;
     return {
-      kind: 'hero', uid: h.uid, key: h.key, name: b.name, glyph: b.glyph, color: b.color, lvl: h.lvl,
+      kind: 'hero', uid: h.uid, key: h.key, name: heroName, glyph: b.glyph, color: b.color, lvl: h.lvl,
       hp: isGlassPrism ? 1 : (b.hp + (m.hp || 0)) * (1 + 0.15 * g * L) * (1 + (m.hpPct || 0) + all) * tp,
       atk: (b.atk + (m.atk || 0)) * (1 + 0.15 * g * L) * (1 + (m.atkPct || 0) + all) * tp,
       ap: (100 + 30 * g * L + (m.ap || 0)) * (1 + all) * tp,   // review #26: AP 100 at Lv 1, +30 per level (it now scales abilities on its own)
@@ -212,6 +222,25 @@
     const p = run.pending.shift(); if (!p) return;
     const h = run.heroes.find(x => x.uid === p.uid); if (!h) return;
     const pair = B.HEROES[h.key].specs[p.lvl - 2]; h.specs.push(pair[idx ? 1 : 0].id);
+  }
+  // WHAT: Boss upgrade paths: upgradeHero applies one of 3 distinct paths to a hero of the loadout. Each hero can only be upgraded once.
+  function upgradeHero(run, uid, pathIdx) {
+    const h = run.heroes.find(x => x.uid === uid);
+    if (!h || h.path != null) return false;
+    const paths = (B.HERO_PATHS && B.HERO_PATHS[h.key]) || [];
+    if (!paths[pathIdx]) return false;
+    h.path = pathIdx;
+    h.pathName = paths[pathIdx].name;
+    h.pathDesc = paths[pathIdx].desc;
+    run.pendingUpgrade = null;
+    return true;
+  }
+  function heroNameOf(h) {
+    if (!h) return "";
+    if (h.path != null && B.HERO_PATHS && B.HERO_PATHS[h.key] && B.HERO_PATHS[h.key][h.path]) {
+      return B.HERO_PATHS[h.key][h.path].name;
+    }
+    return (B.HEROES[h.key] || {}).name || h.key;
   }
 
   // ------------------------------------------------------------------ terrain maps (review #39, David)
@@ -428,7 +457,14 @@
     if (f.challenge) { res.challenge = f.challenge.name; if (win) challengeReward(run, f, res); }
     // v101 (reviews #186 #189): every lost PvE fight (event fights too) breaks the Ward and the day starts over with new choices (a boss waits again);
     // lost with the Ward already broken, the run ends
-    if (!win) { if (run.lives > 0) { run.lives--; res.lives = run.lives; res.retry = true; redoDay(run, f); } else { res.lives = 0; run.phase = 'over'; run.result = 'defeat'; } } else advance(run);
+    if (!win) {
+      if (run.lives > 0) { run.lives--; res.lives = run.lives; res.retry = true; redoDay(run, f); } else { res.lives = 0; run.phase = 'over'; run.result = 'defeat'; }
+    } else {
+      if (f.diff === 'boss' && run.heroes.some(h => h.path == null)) {
+        run.pendingUpgrade = { fightNo: f.fightNo };
+      }
+      advance(run);
+    }
     return res;
   }
   // v73 (reviews #150 #151): achievements the run sees (B.ACHIEVEMENTS by 'run'); the account ones are checked by the server at the end of the run
@@ -642,7 +678,7 @@
     return run.heroes.map(h => {
       const bonus = Object.assign({}, h.bonus);
       if (x) { bonus.atkPct = (bonus.atkPct || 0) + x; bonus.hpPct = (bonus.hpPct || 0) + x; }
-      return { key: h.key, lvl: h.lvl, specs: h.specs.slice(), items: h.items.slice(), bonus, pos: { c: h.pos.c, r: h.pos.r } };
+      return { key: h.key, lvl: h.lvl, specs: h.specs.slice(), items: h.items.slice(), path: h.path, bonus, pos: { c: h.pos.c, r: h.pos.r } };
     });
   }
   // WHAT: builds the simulation of a Gauntlet duel: your team against the ghost of another player (the ghost's own powers apply to it, its formation is mirrored).
@@ -1221,7 +1257,7 @@
   }
 
   // WHAT: the public list. Other files (ui.js, tools, tests) can only call what is named here. Add a name here when another file needs a new function.
-  B.Run = { benched, pveSeq, startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, autoPlace, setPos, makeFight, fightWorld,
+  B.Run = { benched, pveSeq, startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, upgradeHero, heroNameOf, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
     eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, evalAutoEquip, itemScore, heroProfile, randomItem };

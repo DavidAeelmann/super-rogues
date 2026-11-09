@@ -15,6 +15,7 @@
   const I = (n, c) => B.UI ? B.UI.i(n, c) : '';   // v49 (review #61): the interface icons (js/uiicons.js)
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const hName = h => h ? (h.pathName || (Run.heroNameOf ? Run.heroNameOf(h) : (HEROES[h.key] || {}).name || h.key)) : '';
   // WHAT: the browser's small memory (localStorage), always safe: store.get(key, default), store.set(key, value), store.del(key). Saved game, name, speed and tutorial flags live here.
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
@@ -406,6 +407,7 @@
     else if (screen === 'battle') { m.innerHTML = battleHTML(); mountBoard(); }
     else if (screen === 'result') m.innerHTML = resultHTML();
     else if (run.phase === 'over') m.innerHTML = overHTML();
+    else if (run.pendingUpgrade && run.phase !== 'deploy') m.innerHTML = upgradeHTML();
     else if (run.pending.length && run.phase !== 'deploy') m.innerHTML = levelHTML();
     else if (run.phase === 'steal') m.innerHTML = stealHTML();
     else if (run.phase === 'recruit') m.innerHTML = recruitHTML();
@@ -440,13 +442,15 @@
   function screenKey() {
     if (screen === 'title' || !run) return 'title';
     if (screen !== 'run') return screen;
+    if (run.pendingUpgrade && run.phase !== 'deploy') return 'upgrade:' + (ui.upgradeHero || 0);
     if (run.pending.length && run.phase !== 'deploy') return 'level:' + run.pending[0].uid + ':' + run.pending[0].lvl;
     return run.phase + (run.phase === 'start' ? ui.startStep || 1 : '') + ':' + run.step + ':' + (run.g ? run.g.round + ':' + run.g.status : '') + ':' + (run.cur && run.cur.pick != null ? 'pick' : '') + (run.cur && run.cur.done ? 'done' : '');
   }
   // WHAT: sounds and confetti played when a new screen appears (level up, event result).
   function onEnter(key) {
     if (!B.Juice) return;
-    if (key.startsWith('level:')) { sfx('levelup'); const el = $('.lufull'); if (el) setTimeout(() => B.Juice.confettiAt(el, 50), 150); }
+    if (key.startsWith('upgrade:')) { sfx('unlock'); const el = $('.upg-header'); if (el) setTimeout(() => B.Juice.confettiAt(el, 70), 150); }
+    else if (key.startsWith('level:')) { sfx('levelup'); const el = $('.lufull'); if (el) setTimeout(() => B.Juice.confettiAt(el, 50), 150); }
     else if (key.startsWith('event:') && key.endsWith('done')) { const g = $('.gains'); if (g) { sfx('unlock'); B.Juice.confettiAt(g, 40); } else sfx('back'); }
   }
 
@@ -478,7 +482,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v0.1</span>
+      <span class="app-ver" aria-label="Game version">v0.2</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -960,7 +964,7 @@
         if (id) slots.push(`<span class="mslot filled"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></span>`);
         else slots.push(`<span class="mslot empty"><svg class="slot-rune" viewBox="0 0 16 16"><path d="M8 3 L13 8 L8 13 L3 8 Z" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"/></svg></span>`);
       }
-      return `<button class="pm${h.bench ? ' benched' : ''}" data-act="team">${img(h.key, 48, 'por')}<span class="pmb"><span class="pmn"><b>${esc(HEROES[h.key].name)}</b><span class="lv">Lv ${h.lvl}</span>${h.bench ? '<span class="pmbench">Not placed</span>' : ''}</span>
+      return `<button class="pm${h.bench ? ' benched' : ''}" data-act="team">${img(h.key, 48, 'por')}<span class="pmb"><span class="pmn"><b>${esc(hName(h))}</b><span class="lv">Lv ${h.lvl}</span>${h.path != null ? '<span class="chk-gold" title="Boss Upgraded">★</span>' : ''}${h.bench ? '<span class="pmbench">Not placed</span>' : ''}</span>
         <span class="xpbar glossy-tube"><i style="width:${next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100}%"></i></span>
         <span class="pmi slots3">${slots.join('')}</span></span></button>`;
     }).join('');
@@ -1007,6 +1011,64 @@
       <h3>Pick a new power</h3>
       <div class="opts spec2">${pair.map((sp, i) => `<button class="card opt" data-act="spec" data-arg="${i}" title="${esc(sp.desc)}"><div class="ptags">${specTags(sp)}</div><div class="ctitle spec">${esc(sp.name)}</div><div class="small">${fmt(plainAb(sp.desc))}</div></button>`).join('')}</div>
       <div class="sp-path tree"><div class="bph"><b>Power path</b><span class="dim small">one of two at each level</span></div>${path}</div></section>`;
+  }
+
+  // BOSS UPGRADE: after beating a boss, player chooses an un-upgraded hero of their loadout to upgrade along 1 of 3 distinct paths
+  function upgradeHTML() {
+    const unupgraded = run.heroes.filter(h => h.path == null);
+    if (!unupgraded.length) {
+      run.pendingUpgrade = null;
+      render();
+      return '';
+    }
+    const selUid = ui.upgradeHero && unupgraded.some(h => h.uid === ui.upgradeHero) ? ui.upgradeHero : unupgraded[0].uid;
+    ui.upgradeHero = selUid;
+    const h = run.heroes.find(x => x.uid === selUid);
+    const d = HEROES[h.key];
+    const paths = (B.HERO_PATHS && B.HERO_PATHS[h.key]) || [];
+
+    const heroPickers = run.heroes.map(x => {
+      const isUpgraded = x.path != null;
+      const isSelected = x.uid === selUid;
+      const xName = hName(x);
+      return `<button class="upg-hero-tab ${isSelected ? 'selected' : ''} ${isUpgraded ? 'done' : 'ready'}" data-act="upgrade-select-hero" data-arg="${x.uid}">
+        <span class="uht-pic">${img(x.key, 44, 'por')}${isUpgraded ? '<span class="chk-gold">✓</span>' : ''}</span>
+        <div class="uht-meta"><b class="uht-name">${esc(xName)}</b><span class="uht-status">${isUpgraded ? 'Upgraded' : 'Available'}</span></div>
+      </button>`;
+    }).join('');
+
+    const pathCards = paths.map((p, idx) => {
+      return `<button class="card opt upg-path-card" data-act="upgrade-path" data-arg="${idx}" style="--cloth:${d.color}">
+        <div class="upg-badge"><span class="star-icon">★</span> Path ${idx + 1}</div>
+        <div class="ctitle upg-title">${esc(p.name)}</div>
+        <div class="small upg-desc">${fmt(p.desc)}</div>
+        <div class="upg-cta-label">Awaken ${esc(p.name)} ➔</div>
+      </button>`;
+    }).join('');
+
+    return `<section class="levelup upgrade-screen">
+      <div class="upg-header">
+        <h2 class="sc headline win"><span class="star-gold">★</span> Boss Conquered! <span class="star-gold">★</span></h2>
+        <p class="ssub">Choose a hero of your loadout to empower with an exclusive Boss Path</p>
+      </div>
+
+      <div class="upg-team-dock">
+        <div class="bph"><b>Select Loadout Hero</b><span class="dim small">Each hero can only be upgraded once</span></div>
+        <div class="upg-heroes-row">${heroPickers}</div>
+      </div>
+
+      <div class="luhero upg-hero-showcase">
+        <img class="lufull" src="${por(h.key, 104, true)}" alt="">
+        <div>
+          <b class="luname">${esc(d.name)}</b>
+          <span class="lulv">Role: <b>${esc(d.role)}</b> · Lv ${h.lvl}</span>
+          <p class="small lugain">${esc(d.tag || d.abDesc || '')}</p>
+        </div>
+      </div>
+
+      <div class="bph upg-paths-head"><b>Choose 1 of 3 Paths for ${esc(d.name)}</b></div>
+      <div class="opts upg-paths-grid">${pathCards}</div>
+    </section>`;
   }
 
   // review #18: the enemy roster on the deploy screen, grouped, with what each one does (positioning is the decision here)
@@ -1224,7 +1286,7 @@
     if (!need.length) return '';
     const sel = need.some(h => h.uid === ui.selUid);
     return `<div class="bench" id="bench"><div class="bnh"><span class="bnew">NEW</span><b>${need.length > 1 ? 'Deploy your new heroes' : 'Deploy your new hero'}</b><span class="bnarrow" aria-hidden="true"></span></div>
-      <div class="bnl">${need.map(h => `<button class="bnc${h.uid === ui.selUid ? ' on' : ''}" data-act="bench-pick" data-arg="${h.uid}" data-bench="${h.uid}" aria-label="${esc(HEROES[h.key].name)}">${img(h.key, 44)}<span class="bnb"><b>${esc(HEROES[h.key].name)}</b><span class="dim small">${esc(HEROES[h.key].role)} · ${HEROES[h.key].range <= 1 ? 'Front row' : 'Back row'}</span></span></button>`).join('')}</div>
+      <div class="bnl">${need.map(h => `<button class="bnc${h.uid === ui.selUid ? ' on' : ''}" data-act="bench-pick" data-arg="${h.uid}" data-bench="${h.uid}" aria-label="${esc(hName(h))}">${img(h.key, 44)}<span class="bnb"><b>${esc(hName(h))}</b><span class="dim small">${esc(HEROES[h.key].role)} · ${HEROES[h.key].range <= 1 ? 'Front row' : 'Back row'}</span></span></button>`).join('')}</div>
       <p class="bnt small">${sel ? 'Now tap a glowing hex on your half.' : 'Drag onto your half of the board, or tap it and then a hex.'}</p></div>`;
   }
   // WHAT: Fight was pressed with heroes still on the bench: say who, shake the bench.
@@ -1412,7 +1474,7 @@
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
     const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';
     const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
-    const nextCta = !run ? 'Continue' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils!' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Proceed';
+    const nextCta = !run ? 'Continue' : (run.pendingUpgrade) ? 'Upgrade Hero! ★' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils!' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Proceed';
 
     if (!desk) {
       return `<section class="result v2 ${ui.rmore ? 'more' : ''}">
@@ -2683,7 +2745,7 @@
     const h = gearHero(); if (!h) return '';
     ui.gHero = h.uid;
     const d = HEROES[h.key], sl = Run.slots(run, h), st = gearStats(h), sel = ui.gsel;
-    const tabs = run.heroes.map(x => `<button class="gtab ${x.uid === h.uid ? 'on' : ''}" data-act="gear-hero" data-arg="${x.uid}" data-drop="hero:${x.uid}">${img(x.key, 44, 'por')}<b>${esc(HEROES[x.key].name)}</b><i>${x.items.length}/${Run.slots(run, x)}</i></button>`).join('');
+    const tabs = run.heroes.map(x => `<button class="gtab ${x.uid === h.uid ? 'on' : ''}" data-act="gear-hero" data-arg="${x.uid}" data-drop="hero:${x.uid}">${img(x.key, 44, 'por')}<b>${esc(hName(x))}</b><i>${x.items.length}/${Run.slots(run, x)}</i></button>`).join('');
     // sockets: worn items, empty ones, then the ones a level opens
     const microStat = it => {
       if (!it || !it.desc) return '';
@@ -2906,7 +2968,7 @@
   // WHAT: a hero card inside sheets.
   function heroCardHTML(h) {
     const d = HEROES[h.key], def = Run.heroDef(run, h), specs = h.specs.map(id => Run.specOf(h.key, id)).filter(Boolean);
-    return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(d.name)}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}</span>
+    return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(hName(h))}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}${h.path != null ? ' · ★ ' + esc(h.pathName) : ''}</span>
         <div class="small">${abilHTML(d)}</div></div><button class="chip" data-act="hero-info" data-arg="0" aria-label="Close">✕</button></div>
       ${scalingHTML(def)}
       ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
@@ -3337,6 +3399,26 @@
     choose: i => { Run.choose(run, +i); ui.info = null; save(); render(); window.scrollTo(0, 0); },
     // A power was picked at a level-up.
     spec: i => { Run.chooseSpec(run, +i); save(); render(); },
+    // Hero chosen to inspect for Boss Upgrade
+    'upgrade-select-hero': uid => { ui.upgradeHero = +uid; sfx('tap'); render(); },
+    // Path chosen for Boss Upgrade
+    'upgrade-path': idx => {
+      const unupgraded = run.heroes.filter(h => h.path == null);
+      const selUid = ui.upgradeHero && unupgraded.some(h => h.uid === ui.upgradeHero) ? ui.upgradeHero : (unupgraded[0] || {}).uid;
+      if (!selUid) return;
+      const ok = Run.upgradeHero(run, selUid, +idx);
+      if (ok) {
+        sfx('levelup');
+        const h = run.heroes.find(x => x.uid === selUid);
+        if (B.Juice) {
+          const el = document.querySelector('.upgrade-screen');
+          if (el) B.Juice.confettiAt(el, 100);
+        }
+        toast((h ? h.pathName : 'Hero') + ' Awakened!');
+        save();
+        render();
+      }
+    },
     // The big Fight! button on the deploy screen.
     fight: () => { const need = run ? Run.benched(run) : []; if (need.length && !introStage()) { benchNudge(need); return; } sfx('go'); coachDone(); startBattle(); },   // v126 (review #224): locked until the bench is empty
     // v126 (review #224): a tap on a hero of the bench picks it (then a tap on a hex places it); a drag is handled by the bench listeners (benchDown)
