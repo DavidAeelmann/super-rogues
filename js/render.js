@@ -132,20 +132,20 @@
       return (c + r) % 2 ? `hsla(268,30%,${17 + n * 4}%,${desk ? 0.88 : 1})` : `hsla(38,34%,${18 + n * 4}%,${desk ? 0.88 : 1})`;
     }
     if (desk) {
-      // Semi-transparent tactical tiles so the hand-painted HD glade clearing shines through underneath
+      // Dark weathered slate stone with tactical alpha for desktop clearing backdrop
       if (o.deploy) {
         if (r >= 4) {
-          const l1 = Math.round(46 + n * 6);
-          return `hsla(98, 48%, ${l1}%, 0.42)`;
+          const l1 = Math.round(18 + n * 4);
+          return `hsla(215, 26%, ${l1}%, 0.78)`;
         }
-        const dl1 = Math.round(38 + n * 5);
-        return `hsla(28, 32%, ${dl1}%, 0.42)`;
+        const dl1 = Math.round(16 + n * 3);
+        return `hsla(350, 24%, ${dl1}%, 0.78)`;
       }
-      return (c + r) % 2 ? `hsla(98, 42%, ${42 + n * 5}%, 0.32)` : `hsla(92, 46%, ${46 + n * 5}%, 0.36)`;
+      return (c + r) % 2 ? `hsla(222, 20%, ${15 + n * 3}%, 0.72)` : `hsla(224, 22%, ${18 + n * 3}%, 0.72)`;
     }
-    // v29 (owner: "more child friendly"): a sunny meadow; while deploying, your rows glow sky blue and theirs soft red
-    if (o.deploy) return r >= 4 ? `hsl(205,62%,${58 + n * 5}%)` : `hsl(4,58%,${63 + n * 4}%)`;
-    return (c + r) % 2 ? `hsl(104,46%,${50 + n * 5}%)` : `hsl(96,44%,${56 + n * 5}%)`;
+    // Dark weathered slate stone (#1e222d = hsl(222, 20%, 15%)); while deploying, player rows dark blue-slate, enemy dark crimson-slate
+    if (o.deploy) return r >= 4 ? `hsl(215,26%,${20 + n * 4}%)` : `hsl(350,22%,${18 + n * 3}%)`;
+    return (c + r) % 2 ? `hsl(222,20%,${15 + n * 3}%)` : `hsl(224,22%,${18 + n * 3}%)`;
   }
   // WHAT: draws the hex tiles (our half blue, theirs red), the slab edge, the deploy line and the selected / drop highlights.
   // v62b (review: "the web version still lags"): the ~64 tiles (side faces, grit texture, bevels) never change during a fight, so they are
@@ -164,7 +164,7 @@
       const y = hexScreen(v, 0, 4).y - size * 0.75 * K;
       const x0 = v.desk ? (v.padX || 0) - size * 0.4 : 0, x1 = v.desk ? v.w - (v.padX || 0) + size * 0.4 : v.w;
       ctx.save();
-      ctx.strokeStyle = v.desk ? 'rgba(235, 255, 180, 0.75)' : 'rgba(255,255,255,0.85)';
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.85)';
       ctx.lineWidth = v.desk ? 2.2 : 2;
       ctx.setLineDash([7, 6]);
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
@@ -175,9 +175,9 @@
       ctx.save();
       path(ctx, pts);
       const ok = !o.deploy || hh.r >= 4;
-      ctx.fillStyle = ok ? 'rgba(230, 255, 160, 0.22)' : 'rgba(255, 120, 110, 0.16)';
+      ctx.fillStyle = ok ? 'rgba(212, 175, 55, 0.22)' : 'rgba(210, 60, 60, 0.2)';
       ctx.fill();
-      ctx.strokeStyle = ok ? 'rgba(235, 255, 175, 0.9)' : 'rgba(255, 140, 130, 0.75)';
+      ctx.strokeStyle = ok ? 'rgba(235, 195, 85, 0.95)' : 'rgba(240, 90, 80, 0.85)';
       ctx.lineWidth = 2.2;
       ctx.stroke();
       ctx.restore();
@@ -189,8 +189,8 @@
     // 1. Board Drop Shadow: Render a subtle blurred polygon under the hex grid perimeter
     if (desk) {
       ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
       ctx.shadowBlur = 12;
       ctx.shadowOffsetY = 8;
       ctx.beginPath();
@@ -213,13 +213,13 @@
       const isTerr = !!tk[Hx.key(c, r)];
       const friendly = r >= 4;
 
-      // 3D Side-Wall Extrusion (depth = 6px on desktop, semi-transparent so the HD background clearing blends in):
+      // 3D Side-Wall Extrusion (weathered slate stone faces with depth):
       // Left-Bottom Face [0, 1], Center-Bottom Face [1, 2], Right-Bottom Face [2, 3]
       if (desk) {
         const dth = 6;
-        const leftFace = isTerr ? 'rgba(61,66,75,0.55)' : friendly ? 'rgba(59,99,41,0.5)' : 'rgba(89,64,43,0.5)';
-        const centerFace = isTerr ? 'rgba(49,53,60,0.6)' : friendly ? 'rgba(45,77,30,0.55)' : 'rgba(66,47,31,0.55)';
-        const rightFace = isTerr ? 'rgba(38,41,47,0.65)' : friendly ? 'rgba(34,59,22,0.6)' : 'rgba(48,34,22,0.6)';
+        const leftFace = isTerr ? 'rgba(21,24,33,0.75)' : friendly ? 'rgba(26,32,46,0.75)' : 'rgba(34,26,30,0.75)';
+        const centerFace = isTerr ? 'rgba(17,20,27,0.8)' : friendly ? 'rgba(20,26,38,0.8)' : 'rgba(27,20,24,0.8)';
+        const rightFace = isTerr ? 'rgba(13,15,21,0.85)' : friendly ? 'rgba(16,21,30,0.85)' : 'rgba(21,16,19,0.85)';
         const faceColors = [leftFace, centerFace, rightFace];
         for (let fi = 0; fi < 3; fi++) {
           const [i, j] = [[0, 1], [1, 2], [2, 3]][fi];
@@ -234,7 +234,7 @@
         }
       } else {
         for (const [i, j] of [[0, 1], [1, 2], [2, 3]]) {
-          ctx.fillStyle = royal() ? (i === 1 ? '#1c1206' : i === 0 ? '#3a2a10' : '#2a1d0a') : i === 1 ? '#6b4524' : i === 0 ? '#8a5a2e' : '#7a4f28';
+          ctx.fillStyle = royal() ? (i === 1 ? '#1c1206' : i === 0 ? '#3a2a10' : '#2a1d0a') : i === 1 ? '#11141b' : i === 0 ? '#1b202a' : '#151821';
           ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.lineTo(pts[j].x, pts[j].y + th); ctx.lineTo(pts[i].x, pts[i].y + th); ctx.closePath(); ctx.fill();
         }
       }
@@ -242,17 +242,16 @@
       const top = corners(v, c, r, size * (desk ? 0.93 : 0.94));
       path(ctx, top);
       const drop = o.drop && o.drop.c === c && o.drop.r === r;
-      // review #39: terrain hexes keep the meadow colour while deploying (nobody can be placed there)
+      // Semi-transparent gradient shading on top hex face for desktop deploy mode
       if (desk && !isTerr && !drop && o.deploy) {
-        // Semi-transparent gradient shading on top hex face so the clearing floor shows through
         const pCen = hexScreen(v, c, r);
         const topGrad = ctx.createLinearGradient(pCen.x, pCen.y - size * 0.5, pCen.x, pCen.y + size * 0.5);
         if (friendly) {
-          topGrad.addColorStop(0, 'rgba(124, 179, 66, 0.44)');
-          topGrad.addColorStop(1, 'rgba(85, 139, 47, 0.48)');
+          topGrad.addColorStop(0, 'rgba(30, 42, 60, 0.72)');
+          topGrad.addColorStop(1, 'rgba(22, 32, 46, 0.78)');
         } else {
-          topGrad.addColorStop(0, 'rgba(141, 110, 99, 0.38)');
-          topGrad.addColorStop(1, 'rgba(109, 76, 65, 0.44)');
+          topGrad.addColorStop(0, 'rgba(46, 28, 34, 0.72)');
+          topGrad.addColorStop(1, 'rgba(36, 22, 27, 0.78)');
         }
         ctx.fillStyle = topGrad;
       } else {
@@ -262,10 +261,10 @@
       if (v.grit && !desk) { ctx.globalAlpha = royal() ? 0.9 : 0.35; ctx.fillStyle = v.grit; ctx.fill(); ctx.globalAlpha = 1; }
 
       if (desk) {
-        // 1.5px inner top highlight
+        // Gold inner top highlight & border
         ctx.save();
-        ctx.lineWidth = 1.8;
-        ctx.strokeStyle = friendly ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.16)';
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = friendly ? 'rgba(212, 175, 55, 0.45)' : 'rgba(212, 175, 55, 0.25)';
         ctx.beginPath();
         ctx.moveTo(top[4].x, top[4].y);
         ctx.lineTo(top[5].x, top[5].y);
@@ -273,7 +272,7 @@
         ctx.stroke();
 
         // Bottom edge shadow
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
         ctx.beginPath();
         ctx.moveTo(top[1].x, top[1].y);
         ctx.lineTo(top[2].x, top[2].y);
@@ -287,62 +286,81 @@
           // Interior radial glow
           const pCen = hexScreen(v, c, r);
           const radGlow = ctx.createRadialGradient(pCen.x, pCen.y, 0, pCen.x, pCen.y, size * 0.7);
-          radGlow.addColorStop(0, 'rgba(46, 204, 113, 0.38)');
-          radGlow.addColorStop(0.7, 'rgba(0, 255, 170, 0.12)');
-          radGlow.addColorStop(1, 'rgba(0, 255, 170, 0)');
+          radGlow.addColorStop(0, 'rgba(212, 175, 55, 0.32)');
+          radGlow.addColorStop(0.7, 'rgba(212, 175, 55, 0.12)');
+          radGlow.addColorStop(1, 'rgba(212, 175, 55, 0)');
           ctx.fillStyle = radGlow;
           path(ctx, top);
           ctx.fill();
 
-          // Glowing inner hex border
-          ctx.strokeStyle = '#00ffaa';
+          // Glowing inner hex border in warm gold
+          ctx.strokeStyle = '#d4af37';
           ctx.lineWidth = 2.4;
-          ctx.shadowColor = '#00ff88';
+          ctx.shadowColor = '#e5c158';
           ctx.shadowBlur = 8;
           path(ctx, top);
           ctx.stroke();
 
           // Elder Futhark Rune glyph in center
-          ctx.strokeStyle = '#a8ffdb';
+          ctx.strokeStyle = '#f5e4a8';
           ctx.lineWidth = 1.8;
-          ctx.shadowColor = '#00ffaa';
+          ctx.shadowColor = '#d4af37';
           ctx.shadowBlur = 6;
           drawRuneGlyph(ctx, pCen.x, pCen.y, size * 0.28, (c * 0.5) % 3.14);
           ctx.restore();
         } else {
           path(ctx, top);
           ctx.lineWidth = 1.2;
-          ctx.strokeStyle = drop ? '#ffffff' : 'rgba(255, 255, 255, 0.15)';
+          ctx.strokeStyle = drop ? '#ffffff' : 'rgba(212, 175, 55, 0.35)';
           ctx.stroke();
         }
       } else {
-        // bevel: lit upper-left edges, shaded lower-right edges
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = royal() ? 'rgba(255,207,90,0.38)' : 'rgba(255,255,255,0.45)'; ctx.beginPath(); ctx.moveTo(top[3].x, top[3].y); ctx.lineTo(top[4].x, top[4].y); ctx.lineTo(top[5].x, top[5].y); ctx.lineTo(top[0].x, top[0].y); ctx.stroke();
-        ctx.strokeStyle = royal() ? 'rgba(0,0,0,0.45)' : 'rgba(40,70,20,0.35)'; ctx.beginPath(); ctx.moveTo(top[0].x, top[0].y); ctx.lineTo(top[1].x, top[1].y); ctx.lineTo(top[2].x, top[2].y); ctx.lineTo(top[3].x, top[3].y); ctx.stroke();
+        // Gold grid lines & bevel: lit upper-left edges in warm gold, shaded lower-right edges in dark slate
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = royal() ? 'rgba(255,207,90,0.5)' : 'rgba(212, 175, 55, 0.65)';
+        ctx.beginPath(); ctx.moveTo(top[3].x, top[3].y); ctx.lineTo(top[4].x, top[4].y); ctx.lineTo(top[5].x, top[5].y); ctx.lineTo(top[0].x, top[0].y); ctx.stroke();
+        ctx.strokeStyle = royal() ? 'rgba(0,0,0,0.45)' : 'rgba(10, 12, 17, 0.75)';
+        ctx.beginPath(); ctx.moveTo(top[0].x, top[0].y); ctx.lineTo(top[1].x, top[1].y); ctx.lineTo(top[2].x, top[2].y); ctx.lineTo(top[3].x, top[3].y); ctx.stroke();
+        // Subtle full perimeter gold wireframe
+        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+        path(ctx, top);
+        ctx.stroke();
       }
       if (!isTerr && !drop && !desk) tileDecor(ctx, v, c, r, o);
     }
     if (!desk) sideDecor(v);
   }
-  // v113 (review #200, David: "improve detail of the battle arena and enemies and background"): every tile gets a few grass tufts, now and then a flower or
-  // pebbles (seeded per hex, so the board looks the same every fight), and the slab's front shows layers of soil, stones and roots under a grassy lip
-  // WHAT: the small things on one tile top (tufts, flowers, pebbles). Painted into the cached board picture.
+  // WHAT: subtle weathered stone details (fine slate fractures, chisel marks, gold veins/pebbles). Painted into the cached board picture.
   function tileDecor(ctx, v, c, r, o) {
     const { size } = v, p = hexScreen(v, c, r); let sd = (c * 73856093 ^ r * 19349663) >>> 0; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
-    const R = royal(), dep = o.deploy, grass = R ? 'rgba(255,207,90,0.28)' : dep ? 'rgba(255,255,255,0.35)' : 'rgba(40,100,30,0.55)', lit = R ? 'rgba(255,230,160,0.25)' : dep ? 'rgba(255,255,255,0.45)' : 'rgba(170,230,120,0.7)';
-    ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1, size * 0.035);
-    for (let i = 0; i < 3; i++) { const x = p.x + (rnd() - 0.5) * size * 1.1, y = p.y + (rnd() - 0.5) * size * 0.75 * K, h = size * (0.08 + rnd() * 0.06);
-      ctx.strokeStyle = grass; ctx.beginPath(); ctx.moveTo(x - h * 0.5, y); ctx.lineTo(x - h * 0.7, y - h); ctx.moveTo(x, y); ctx.lineTo(x, y - h * 1.25); ctx.moveTo(x + h * 0.5, y); ctx.lineTo(x + h * 0.8, y - h); ctx.stroke();
-      ctx.strokeStyle = lit; ctx.lineWidth = Math.max(0.8, size * 0.02); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - h * 1.2); ctx.stroke(); ctx.lineWidth = Math.max(1, size * 0.035); }
+    const R = royal(), dep = o.deploy;
+    const vein = R ? 'rgba(255,207,90,0.3)' : dep ? 'rgba(212,175,55,0.35)' : 'rgba(212,175,55,0.22)';
+    const fissure = R ? 'rgba(20,12,30,0.6)' : 'rgba(14,16,22,0.65)';
+    ctx.save(); ctx.lineCap = 'round';
+    // Subtle slate fissures and chisel lines
+    for (let i = 0; i < 2; i++) {
+      const x = p.x + (rnd() - 0.5) * size * 0.9, y = p.y + (rnd() - 0.5) * size * 0.65 * K, len = size * (0.12 + rnd() * 0.1);
+      const angle = (rnd() - 0.5) * 1.2;
+      ctx.strokeStyle = fissure; ctx.lineWidth = Math.max(0.8, size * 0.025);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len * 0.6); ctx.stroke();
+      if (rnd() < 0.4) {
+        ctx.strokeStyle = vein; ctx.lineWidth = Math.max(0.6, size * 0.018);
+        ctx.beginPath(); ctx.moveTo(x + 1, y - 0.5); ctx.lineTo(x + Math.cos(angle) * len * 0.7, y + Math.sin(angle) * len * 0.45); ctx.stroke();
+      }
+    }
     const f = rnd();
-    if (!dep && !R && f < 0.22) { const x = p.x + (rnd() - 0.5) * size * 0.9, y = p.y + (rnd() - 0.5) * size * 0.6 * K, col = ['#fff6f0', '#ffe066', '#ff9fd2', '#b8d8ff'][(rnd() * 4) | 0], rr = size * 0.045;
-      for (let k = 0; k < 5; k++) { const a = k * Math.PI * 0.4; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.8, rr * 0.7, 0, Math.PI * 2); ctx.fill(); } ctx.fillStyle = '#ffb030'; ctx.beginPath(); ctx.arc(x, y, rr * 0.55, 0, Math.PI * 2); ctx.fill(); }
-    else if (f > 0.84) for (let k = 0; k < 3; k++) { const x = p.x + (rnd() - 0.5) * size * 0.8, y = p.y + (rnd() - 0.5) * size * 0.55 * K, rr = size * (0.03 + rnd() * 0.035);
-      ctx.fillStyle = R ? 'rgba(20,12,30,0.6)' : 'rgba(110,110,100,0.75)'; ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.7, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = R ? 'rgba(255,207,90,0.25)' : 'rgba(235,235,225,0.8)'; ctx.beginPath(); ctx.ellipse(x - rr * 0.3, y - rr * 0.25, rr * 0.4, rr * 0.25, 0, 0, Math.PI * 2); ctx.fill(); }
+    // Weathered stone flecks and polished gold flecks
+    if (f > 0.75) for (let k = 0; k < 2; k++) {
+      const x = p.x + (rnd() - 0.5) * size * 0.75, y = p.y + (rnd() - 0.5) * size * 0.5 * K, rr = size * (0.025 + rnd() * 0.03);
+      ctx.fillStyle = R ? 'rgba(20,12,30,0.6)' : 'rgba(16,19,26,0.8)';
+      ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.65, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = (f > 0.88 || R) ? 'rgba(212,175,55,0.45)' : 'rgba(55,62,80,0.7)';
+      ctx.beginPath(); ctx.ellipse(x - rr * 0.25, y - rr * 0.2, rr * 0.35, rr * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+    }
     ctx.restore();
   }
-  // WHAT: the front of the slab under the last row: a grassy lip, a darker soil band, stones and a few roots. Painted into the cached board picture.
+  // WHAT: the front of the slab under the last row: chiselled dark slate stone layers and gold-trimmed rim. Painted into the cached board picture.
   function sideDecor(v) {
     const { ctx, size } = v, th = v.slab, R = royal(); let sd = 97; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
     ctx.save();
@@ -351,11 +369,29 @@
       for (const [i, j] of [[0, 1], [1, 2], [2, 3]]) {
         const a = pts[i], b = pts[j];
         ctx.save(); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(b.x, b.y + th); ctx.lineTo(a.x, a.y + th); ctx.closePath(); ctx.clip();
-        ctx.fillStyle = R ? 'rgba(0,0,0,0.25)' : 'rgba(60,30,10,0.3)'; ctx.beginPath(); ctx.moveTo(a.x, a.y + th * 0.55); ctx.lineTo(b.x, b.y + th * 0.55); ctx.lineTo(b.x, b.y + th); ctx.lineTo(a.x, a.y + th); ctx.closePath(); ctx.fill();
-        for (let k = 0; k < 3; k++) { const t = rnd(), x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t + th * (0.35 + rnd() * 0.5), rr = size * (0.035 + rnd() * 0.04); ctx.fillStyle = R ? '#2a1d0a' : ['#a08870', '#8a7a68', '#b8a088'][k]; ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.7, rnd(), 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(40,20,8,0.5)'; ctx.lineWidth = 1; ctx.stroke(); }
-        if (!R && rnd() < 0.5) { const t = rnd(), x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t; ctx.strokeStyle = 'rgba(70,40,15,0.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, y + th * 0.15); ctx.quadraticCurveTo(x + size * 0.06, y + th * 0.4, x - size * 0.03, y + th * 0.7); ctx.stroke(); }
+        // Lower shaded stone stratum
+        ctx.fillStyle = R ? 'rgba(0,0,0,0.3)' : 'rgba(12,14,20,0.6)'; ctx.beginPath(); ctx.moveTo(a.x, a.y + th * 0.5); ctx.lineTo(b.x, b.y + th * 0.5); ctx.lineTo(b.x, b.y + th); ctx.lineTo(a.x, a.y + th); ctx.closePath(); ctx.fill();
+        for (let k = 0; k < 2; k++) {
+          const t = rnd(), x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t + th * (0.35 + rnd() * 0.45), rr = size * (0.03 + rnd() * 0.03);
+          ctx.fillStyle = R ? '#2a1d0a' : ['#181c25', '#13161f', '#222735'][k];
+          ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.65, rnd(), 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+        }
         ctx.restore();
-        if (!R) { ctx.fillStyle = '#4f9e3a'; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); for (let k = 6; k >= 0; k--) { const t = k / 6, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t; ctx.lineTo(x, y + th * (k % 2 ? 0.16 : 0.26)); } ctx.closePath(); ctx.fill(); }
+        // Dark chiselled slate upper lip with gold rim
+        if (!R) {
+          ctx.fillStyle = '#171a23';
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+          for (let k = 6; k >= 0; k--) {
+            const t = k / 6, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+            ctx.lineTo(x, y + th * (k % 2 ? 0.12 : 0.2));
+          }
+          ctx.closePath(); ctx.fill();
+          // Subtle gold edge on the slab lip
+          ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y + 1); ctx.lineTo(b.x, b.y + 1); ctx.stroke();
+        }
       }
     }
     ctx.restore();
