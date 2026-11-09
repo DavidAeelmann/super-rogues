@@ -1447,8 +1447,8 @@ body.desk #screen {
 body.desk #screen > section { margin-top: auto; margin-bottom: auto; }
 /* computers with room to spare: the short screens (map, shops, events, results) are drawn bigger instead of floating
    small in the middle of the window (zoom keeps every proportion; the board screens are left alone) */
-@media (min-height: 780px) and (min-width: 1200px) { body.desk #screen > section.map, body.desk #screen > section.shop, body.desk #screen > section.event, body.desk #screen > section.result { zoom: 1.18; } }
-@media (min-height: 1000px) and (min-width: 1600px) { body.desk #screen > section.map, body.desk #screen > section.shop, body.desk #screen > section.event, body.desk #screen > section.result { zoom: 1.32; } }
+@media (min-height: 780px) and (min-width: 1200px) { body.desk #screen > section.start, body.desk #screen > section.map, body.desk #screen > section.shop, body.desk #screen > section.event, body.desk #screen > section.result { zoom: 1.18; } }
+@media (min-height: 1000px) and (min-width: 1600px) { body.desk #screen > section.start, body.desk #screen > section.map, body.desk #screen > section.shop, body.desk #screen > section.event, body.desk #screen > section.result { zoom: 1.32; } }
 /* the rarity pill never wraps */
 .card.stock .itag, .card.stock .tier { white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 10.5px; }
 section.event > p { text-align: center; max-width: 760px; margin-left: auto; margin-right: auto; }
@@ -8277,19 +8277,28 @@ body.desk section.start {
 }
 
 body.desk section.start h2.sc {
-  font-size: 24px !important;
-  margin: 0 0 2px !important;
+  font-size: 30px !important;
+  margin: 0 0 4px !important;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 210, 63, 0.3) !important;
 }
 body.desk section.start p.ssub {
-  font-size: 12px !important;
-  margin: 0 0 6px !important;
-  color: #94a3b8 !important;
+  font-size: 15px !important;
+  margin: 0 0 8px !important;
+  color: #cbd5e1 !important;
 }
 body.desk section.start .ssteps {
-  margin: 0 auto 4px !important;
-  padding: 3px 12px !important;
-  scale: 0.9 !important;
+  margin: 0 auto 6px !important;
+  padding: 4px 14px !important;
+  scale: 1 !important;
+}
+body.desk section.start .ssteps li {
+  font-size: 14px !important;
+  padding: 4px 14px 4px 8px !important;
+}
+body.desk section.start .ssteps li i {
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 12px !important;
 }
 
 /* Tall, elegant floating Tarot Hero Cards */
@@ -8300,21 +8309,21 @@ body.desk .stage.spotlights {
   padding: 0 !important;
   margin: 0 auto !important;
   width: 100% !important;
-  max-width: 900px !important;
+  max-width: 980px !important;
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 18px !important;
+  gap: 20px !important;
 }
 
 body.desk .hbanner.spot.hero-tarot-card {
-  height: 270px !important;
-  min-height: 270px !important;
-  max-height: 270px !important;
-  border-radius: 14px !important;
+  height: clamp(320px, 42vh, 380px) !important;
+  min-height: 310px !important;
+  max-height: 400px !important;
+  border-radius: 16px !important;
   overflow: hidden !important;
   position: relative !important;
   background: #11141e !important;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.14) !important;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
 }
 
@@ -8330,15 +8339,15 @@ body.desk .hero-tarot-card.on {
 }
 
 body.desk .hero-tarot-card .card-crest-top {
-  width: 28px !important;
-  height: 28px !important;
-  top: 8px !important;
-  right: 8px !important;
-  font-size: 13px !important;
+  width: 32px !important;
+  height: 32px !important;
+  top: 10px !important;
+  right: 10px !important;
+  font-size: 15px !important;
 }
 
 body.desk .hero-card-title {
-  font-size: 17px !important;
+  font-size: 22px !important;
   font-weight: 800 !important;
   letter-spacing: 0.5px !important;
   color: #ffffff !important;
@@ -8346,8 +8355,8 @@ body.desk .hero-card-title {
 }
 
 body.desk .hero-role-pill {
-  font-size: 10px !important;
-  padding: 1px 8px !important;
+  font-size: 12.5px !important;
+  padding: 3px 12px !important;
 }
 
 /* Clearly readable hero stats (horizontal inline, no wrapping, high contrast) */
@@ -8448,17 +8457,17 @@ body.desk .hero-drawer-v5 .hrow {
 .card.detail .htag,
 body.desk .hero-drawer-v5 .htag {
   color: #f1f5f9 !important;
-  font-size: 13px !important;
+  font-size: 15px !important;
   margin: 0 !important;
   text-align: center !important;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
 }
 .card.detail .hdet,
 body.desk .hero-drawer-v5 .hdet {
-  margin-left: 8px !important;
-  padding: 2px 10px !important;
-  min-height: 22px !important;
-  font-size: 11px !important;
+  margin-left: 10px !important;
+  padding: 3px 12px !important;
+  min-height: 24px !important;
+  font-size: 13px !important;
   border-radius: 999px !important;
   background: rgba(30, 41, 59, 0.8) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -8466,50 +8475,52 @@ body.desk .hero-drawer-v5 .hdet {
   cursor: pointer !important;
 }
 body.desk section.start p.ssub.tap {
-  margin: 4px 0 !important;
-  font-size: 12.5px !important;
-  color: #94a3b8 !important;
+  margin: 6px 0 4px !important;
+  font-size: 14px !important;
+  color: #cbd5e1 !important;
 }
 body.desk section.start .lockpill {
-  margin: 2px 0 4px !important;
-  padding: 2px 10px !important;
-  font-size: 11px !important;
+  margin: 3px 0 6px !important;
+  padding: 3px 12px !important;
+  font-size: 13px !important;
 }
 body.desk section.start .bar.sbar {
-  margin-top: 4px !important;
+  margin-top: 6px !important;
 }
 body.desk section.start .hero-cta-btn {
-  min-height: 42px !important;
-  height: 42px !important;
-  padding: 0 28px !important;
-  font-size: 15px !important;
+  min-height: 48px !important;
+  height: 48px !important;
+  padding: 0 32px !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.5px !important;
 }
 
 /* 3. Power Draft Screen (Section.start.s2) - Compact Height */
 body.desk section.start.s2 .stage.pedestals,
 .start.v3 .stage.pedestals {
-  min-height: 185px !important;
-  max-height: 195px !important;
-  margin: 2px auto 6px !important;
-  padding: 2px !important;
-  max-width: 900px !important;
-  gap: 16px !important;
+  min-height: 200px !important;
+  max-height: 220px !important;
+  margin: 4px auto 8px !important;
+  padding: 4px !important;
+  max-width: 960px !important;
+  gap: 18px !important;
 }
 body.desk .start .ped .orb {
-  width: 48px !important;
-  height: 48px !important;
+  width: 52px !important;
+  height: 52px !important;
 }
 body.desk .start .ped .orb .ico {
-  width: 36px !important;
-  height: 36px !important;
+  width: 40px !important;
+  height: 40px !important;
 }
 body.desk .start.v3 .ped .srt b {
-  font-size: 13.5px !important;
+  font-size: 16px !important;
 }
 body.desk .start.v3 .ped .srt small {
-  font-size: 11px !important;
-  max-width: 200px !important;
-  line-height: 1.25 !important;
+  font-size: 13px !important;
+  max-width: 240px !important;
+  line-height: 1.35 !important;
 }
 
 /* 4. Day Path Selection (Map Screen) */
@@ -9461,16 +9472,16 @@ body.desk .hero-mini-stats .mstat,
 }
 
 .hero-mini-stats .stat-ico {
-  font-size: 11px !important;
+  font-size: 13px !important;
   line-height: 1 !important;
 }
 
 .hero-mini-stats .stat-lbl {
   font-family: var(--fun) !important;
-  font-size: 10px !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
   letter-spacing: 0.5px !important;
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
   line-height: 1 !important;
 }
 
@@ -9478,7 +9489,7 @@ body.desk .hero-mini-stats .mstat,
 body.desk .hero-mini-stats .mstat b,
 .hero-tarot-card .hero-mini-stats .mstat b {
   font-family: var(--fun) !important;
-  font-size: 13px !important;
+  font-size: 15px !important;
   font-weight: 800 !important;
   letter-spacing: 0.3px !important;
   line-height: 1 !important;
