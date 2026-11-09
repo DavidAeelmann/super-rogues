@@ -492,6 +492,37 @@
   // of the stutter (tools/perf-battle.mjs: frames over 33 ms fell from ~15 to ~3 in 12 s). The flash is now a quick additive white glow over the body.
   const FILTER = false;
   const deadTicks = u => B.Art && B.Art.deathTicks ? B.Art.deathTicks(u.key) : 12;
+
+  // Boulder 2D Sprite Test Asset Loader Hook (art/sprites/boulder.png with fallback)
+  const BOULDER_SRCS = ['art/sprites/boulder.png', 'art/boulder/sprite.png'];
+  const BOULDER_FALLBACK_SVG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"%3E%3Cellipse cx="64" cy="80" rx="44" ry="36" fill="%237a5a3a"/%3E%3Cellipse cx="64" cy="96" rx="36" ry="20" fill="%235a4028"/%3E%3Cellipse cx="64" cy="54" rx="32" ry="28" fill="%239a704a"/%3E%3Ccircle cx="52" cy="48" r="5" fill="%232a1a0a"/%3E%3Ccircle cx="76" cy="48" r="5" fill="%232a1a0a"/%3E%3Ccircle cx="54" cy="46" r="2" fill="%23ffffff"/%3E%3Ccircle cx="78" cy="46" r="2" fill="%23ffffff"/%3E%3Cpolygon points="48,64 80,64 64,78" fill="%233a2414"/%3E%3Cellipse cx="30" cy="76" rx="14" ry="24" fill="%23b8906a"/%3E%3Cellipse cx="98" cy="76" rx="14" ry="24" fill="%23b8906a"/%3E%3Cpolygon points="100,50 114,20 120,24 104,56" fill="%23503820"/%3E%3C/svg%3E';
+  let boulderImg = null;
+  let boulderLoaded = false;
+  let boulderSrcIdx = 0;
+  function getBoulderSprite() {
+    if (typeof Image === 'undefined') return null;
+    if (!boulderImg) {
+      boulderImg = new Image();
+      boulderImg.onload = () => { boulderLoaded = true; };
+      boulderImg.onerror = () => {
+        boulderSrcIdx++;
+        if (boulderSrcIdx < BOULDER_SRCS.length) {
+          boulderImg.src = BOULDER_SRCS[boulderSrcIdx];
+        } else if (!boulderImg.src.startsWith('data:')) {
+          boulderImg.src = BOULDER_FALLBACK_SVG;
+        }
+      };
+      boulderImg.src = BOULDER_SRCS[0];
+    }
+    return (boulderLoaded && boulderImg.naturalWidth) ? boulderImg : null;
+  }
+  function isBoulderUnit(u) {
+    if (!u) return false;
+    const k = (u.key || '').toLowerCase();
+    const id = (u.heroId || '').toLowerCase();
+    return k === 'boulder' || k === 'grok' || id === 'boulder' || id === 'grok';
+  }
+
   // WHAT: which animation a unit is in right now (idle, walk, attack windup, cast, hurt, death) with how far along it is.
   function poseOf(W, u, T, d, dt) {
     const s = W.t, pose = { t: T / 20 + u.id * 0.37, face: 1 };
@@ -531,16 +562,26 @@
     ctx.globalAlpha = Math.max(0, alpha);
     // selection / side ring on the ground
     const hero = u.side === 0;
+    const isBoulder = isBoulderUnit(u);
+    const bImg = isBoulder ? getBoulderSprite() : null;
+
     // Contact Shadows: dark elliptical shadow (width: 75% of hex width, height: 24%)
+    // Soft grounded shadow anchored to the hex tile under Boulder's base (rgba(0, 0, 0, 0.45))
     if (!u.dead) {
       ctx.save();
       ctx.translate(p.x, p.y + size * 0.14);
       const shW = size * 1.5 * 0.75;
       const shH = shW * 0.24;
       const shG = ctx.createRadialGradient(0, 0, 0, 0, 0, shW * 0.5);
-      shG.addColorStop(0, 'rgba(0, 0, 0, 0.65)');
-      shG.addColorStop(0.7, 'rgba(0, 0, 0, 0.22)');
-      shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      if (bImg) {
+        shG.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+        shG.addColorStop(0.7, 'rgba(0, 0, 0, 0.2)');
+        shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      } else {
+        shG.addColorStop(0, 'rgba(0, 0, 0, 0.65)');
+        shG.addColorStop(0.7, 'rgba(0, 0, 0, 0.22)');
+        shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      }
       ctx.fillStyle = shG;
       ctx.beginPath();
       ctx.scale(1, shH / shW);
@@ -565,21 +606,103 @@
     }
     const pose = poseOf(W, u, T, d, dt);
     const mk = u.key === 'clone' ? 'mirage' : u.key, art = B.Art && B.Art.sprite(mk);
-    const bx0 = p.x - (pose.face > 0 ? 1 : -1) * flinch, flash = since < 0.09 && !u.dead && FILTER;
-    // v55: squash and stretch from the feet: a pop when the fight starts, a squash on the strike and when hit
-    const intro = Math.min(1, T / 8), hitK = since < 0.16 ? Math.sin(since / 0.16 * Math.PI) : 0, strike = pose.atk != null && pose.atk > 0.75 ? Math.sin((pose.atk - 0.75) / 0.25 * Math.PI) : 0;
-    // v70 (review #145, David: "between deployment then 3 2 1 the whole board and figures are getting squished"): the countdown holds the fight at its first frame,
-    // where the start pop is squashed; while it runs (o.still) the units stand tall and the pop plays when FIGHT! lets the fight go
-    const selScale = isSel ? 1.08 : isInfo ? 1.06 : 1, selY = isSel ? -S * 0.1 : isInfo ? -S * 0.07 : 0;
-    const sy = (o.deploy || o.still ? 1 : 0.6 + 0.4 * (1 - Math.pow(1 - intro, 3))) * (1 - 0.07 * hitK - 0.05 * strike) * selScale;
-    const sx = (1 + 0.06 * hitK + 0.06 * strike) * selScale;
-    if (flash) ctx.filter = 'brightness(1.9) saturate(0.6)';
-    ctx.save(); ctx.translate(bx0, p.y + selY); ctx.scale(sx, sy); ctx.translate(-bx0, -p.y);
-    if (art) B.Art.draw(ctx, art, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
-    else B.Models.draw(ctx, mk, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
-    ctx.restore();
-    if (flash) ctx.filter = 'none';
-    else if (since < 0.09 && !u.dead) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * (1 - since / 0.09); const g = ctx.createRadialGradient(bx0, p.y - S * 0.6, 0, bx0, p.y - S * 0.6, S * 0.6); g.addColorStop(0, '#fff'); g.addColorStop(0.5, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx0, p.y - S * 0.6, S * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+
+    if (bImg) {
+      // Kinetic procedural animation for Boulder 2D sprite test
+      const time = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      let scaleX = 1, scaleY = 1, rot = 0, offX = 0, offY = 0;
+      const isHit = since < 0.12 && !u.dead; // Taking damage / Hit-reaction (3 frames ~0.12s)
+
+      if (isHit) {
+        // 3-frame horizontal jitter
+        offX += (Math.random() - 0.5) * size * 0.12;
+      }
+
+      if (pose.walk != null && !pose.dead) {
+        // Movement / Walk: Running tilt oscillation with vertical bounce
+        const cycle = pose.walk * Math.PI * 2;
+        rot = Math.sin(cycle) * 0.08;
+        offY += -Math.abs(Math.sin(cycle)) * 4;
+      } else if (pose.atk != null && !pose.dead) {
+        // Attacking (Slam/Lunge): impact scale squash, then snappy elastic return
+        const pAtk = pose.atk; // 0..1
+        if (pAtk < 0.5) {
+          // Windup / anticipatory slight stretch
+          const w = pAtk / 0.5;
+          scaleX = 1 - 0.1 * w;
+          scaleY = 1 + 0.15 * w;
+        } else if (pAtk < 0.8) {
+          // Strike impact squash
+          const sq = (pAtk - 0.5) / 0.3;
+          scaleX = 0.9 + (1.25 - 0.9) * sq;
+          scaleY = 1.15 + (0.8 - 1.15) * sq;
+        } else {
+          // Snappy elastic return to 1
+          const ret = (pAtk - 0.8) / 0.2;
+          const bounce = Math.sin(ret * Math.PI) * 0.12;
+          scaleX = 1.25 + (1 - 1.25) * ret - bounce;
+          scaleY = 0.8 + (1 - 0.8) * ret + bounce;
+        }
+      } else if (pose.dead) {
+        scaleY = Math.max(0.01, 1 - pose.dead);
+        scaleX = 1 + pose.dead * 0.25;
+        offY += pose.dead * 6;
+      } else {
+        // Idle / Prep Phase: Subtle vertical sine-wave breathing
+        scaleY = 1 + Math.sin(time * 0.003) * 0.03;
+        scaleX = 1 - Math.sin(time * 0.003) * 0.015;
+      }
+
+      const selScale = isSel ? 1.08 : isInfo ? 1.06 : 1, selY = isSel ? -S * 0.1 : isInfo ? -S * 0.07 : 0;
+      const faceDir = (pose.face || 1) < 0 ? -1 : 1;
+
+      ctx.save();
+      // Translate to feet anchor point on hex
+      ctx.translate(p.x + offX, p.y + selY + offY);
+      // Canvas flash filter / red tint overlay on hit
+      if (isHit) {
+        if (ctx.filter) ctx.filter = 'brightness(1.6) saturate(1.8)';
+      }
+      // Facing direction flip & combat state kinetic scale
+      ctx.scale(faceDir * scaleX * selScale, scaleY * selScale);
+      ctx.rotate(rot);
+
+      // Render sprite token anchored at bottom-center (feet at 0, 0)
+      const sw = bImg.naturalWidth || 128, sh = bImg.naturalHeight || 128;
+      const targetH = S * 1.5;
+      const targetW = targetH * (sw / sh);
+      ctx.drawImage(bImg, 0, 0, sw, sh, -targetW * 0.5, -targetH, targetW, targetH);
+
+      // Hit-reaction overlay fallback/tint if filter is unsupported
+      if (isHit) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = 'rgba(255, 60, 60, 0.4)';
+        ctx.fillRect(-targetW * 0.5, -targetH, targetW, targetH);
+        ctx.restore();
+        if (ctx.filter) ctx.filter = 'none';
+      }
+
+      ctx.restore();
+    } else {
+      // Standard vector model or B.Art sprite rendering fallback
+      const bx0 = p.x - (pose.face > 0 ? 1 : -1) * flinch, flash = since < 0.09 && !u.dead && FILTER;
+      // v55: squash and stretch from the feet: a pop when the fight starts, a squash on the strike and when hit
+      const intro = Math.min(1, T / 8), hitK = since < 0.16 ? Math.sin(since / 0.16 * Math.PI) : 0, strike = pose.atk != null && pose.atk > 0.75 ? Math.sin((pose.atk - 0.75) / 0.25 * Math.PI) : 0;
+      // v70 (review #145, David: "between deployment then 3 2 1 the whole board and figures are getting squished"): the countdown holds the fight at its first frame,
+      // where the start pop is squashed; while it runs (o.still) the units stand tall and the pop plays when FIGHT! lets the fight go
+      const selScale = isSel ? 1.08 : isInfo ? 1.06 : 1, selY = isSel ? -S * 0.1 : isInfo ? -S * 0.07 : 0;
+      const sy = (o.deploy || o.still ? 1 : 0.6 + 0.4 * (1 - Math.pow(1 - intro, 3))) * (1 - 0.07 * hitK - 0.05 * strike) * selScale;
+      const sx = (1 + 0.06 * hitK + 0.06 * strike) * selScale;
+      if (flash) ctx.filter = 'brightness(1.9) saturate(0.6)';
+      ctx.save(); ctx.translate(bx0, p.y + selY); ctx.scale(sx, sy); ctx.translate(-bx0, -p.y);
+      if (art) B.Art.draw(ctx, art, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
+      else B.Models.draw(ctx, mk, bx0, p.y, S, pose, u.color || (hero ? '#9df' : '#f99'));
+      ctx.restore();
+      if (flash) ctx.filter = 'none';
+    }
+
+    if (since < 0.09 && !u.dead && !bImg) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5 * (1 - since / 0.09); const g = ctx.createRadialGradient(p.x, p.y - S * 0.6, 0, p.x, p.y - S * 0.6, S * 0.6); g.addColorStop(0, '#fff'); g.addColorStop(0.5, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y - S * 0.6, S * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
     if (u.st.frozenU > s) { ctx.globalAlpha = 0.45; ctx.fillStyle = '#9fe8ff'; ctx.beginPath(); ctx.moveTo(p.x, p.y - S * 1.45); ctx.lineTo(p.x + S * 0.42, p.y - S * 0.7); ctx.lineTo(p.x, p.y + S * 0.05); ctx.lineTo(p.x - S * 0.42, p.y - S * 0.7); ctx.closePath(); ctx.fill(); }
     if (u.shield > 0 && u.shieldU > s && !u.dead) { ctx.globalAlpha = 0.25; ctx.strokeStyle = '#e8ecff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(p.x, p.y - S * 0.62, S * 0.5, S * 0.8, 0, 0, Math.PI * 2); ctx.stroke(); }
     ctx.globalAlpha = 1;
