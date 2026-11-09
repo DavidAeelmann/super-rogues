@@ -9,7 +9,7 @@
  *   - Strategic Event & Map Routing
  *
  * Tracks empirical-Bayes shrunk clear rates, Wilson confidence intervals, and Benjamini-Hochberg FDR across:
- *   - Heroes -> B.TUNE.power
+ *   - Heroes -> starting values and growth in B.HEROES (actual printed stats, no hidden modifier)
  *   - Specs / Talents -> B.TUNE.spec
  *   - Items (worn) -> numeric stat mods in js/data.js (fine internal precision, clean rounded text)
  *   - Relics / Powers -> numeric stat mods in js/data.js

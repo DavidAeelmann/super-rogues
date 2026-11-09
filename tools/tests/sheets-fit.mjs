@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..'), PORT = 3798, CDP = 9438, sleep = ms => new Promise(r => setTimeout(r, ms));
 const server = spawn(process.execPath, [ROOT + '/tools/dev-server.js', String(PORT)], { stdio: 'ignore' }); await sleep(600);
-const chrome = spawn('C:/Program Files/Google/Chrome/Application/chrome.exe', ['--headless=new', `--remote-debugging-port=${CDP}`, '--user-data-dir=' + ROOT + '/tools/tests/.output/chrome-sheets', 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn((process.platform === "win32" ? "C:/Program Files/Google/Chrome/Application/chrome.exe" : (process.env.CHROME_BIN || (fs.existsSync("/usr/bin/google-chrome") ? "/usr/bin/google-chrome" : "/usr/bin/chromium"))), ['--headless=new', `--remote-debugging-port=${CDP}`, '--user-data-dir=' + ROOT + '/tools/tests/.output/chrome-sheets', 'about:blank', "--no-sandbox"], { stdio: 'ignore' });
 let ws, id = 0; const pending = {};
 for (let i = 0; i < 60 && !ws; i++) { try { const p = (await (await fetch(`http://127.0.0.1:${CDP}/json`)).json()).find(x => x.type === 'page'); if (p) { ws = new WebSocket(p.webSocketDebuggerUrl); break; } } catch (_) {} await sleep(250); }
 await new Promise(r => ws.onopen = r);

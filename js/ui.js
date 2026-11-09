@@ -482,7 +482,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v0.3</span>
+      <span class="app-ver" aria-label="Game version">v0.4</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -1364,8 +1364,7 @@
   // badges, live damage with the leader crowned) and the enemy roster with its own HP bars and a count of who is left.
   // v71 (review #146, David: "allow changing combat speed setting during deployment"; review #147: "skip fight only skips pve, never pvp"): the speed pills, also on the deploy
   // screen (on the sky of the board); the Skip button only in PvE fights
-  // WHAT: the 1× 2× 4× (and Skip) buttons.
-  const speedPills = (skip, cls = '') => `<div class="speed ${cls}">${[1, 2, 4].map(x => x === 4 && !hasPerk('speed4') ? `<button class="locked" data-act="speed" data-arg="4" title="4× speed: a Crown Shop unlock">4×🔒</button>` : `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
+  const speedPills = (skip, cls = '') => `<div class="speed ${cls}">${[1, 2, 4].map(x => `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
   // WHAT: THE BATTLE SCREEN layout: top bar with speed buttons, the board canvas, the hero strip and the enemy strip. The numbers update live from the loop below.
   function battleHTML() {
     return `<section class="deploy battle">
@@ -3157,11 +3156,11 @@
       <p class="small">🏆 Every duel you win: +1 crown. And the first time you reach a league this season, the crowns on its banner (league points come at the end of each run). A new season every ${B.SEASON.days} days sends everyone back to Bronze, so the crowns come again.</p>
       <div class="crlist">${leagues}</div>` : ''}
       ${(ui.shopTab || 'perks') === 'style' ? styleTab(buyBtn) : ''}
-      ${(ui.shopTab || 'perks') === 'perks' ? `${perk(B.SHOP_ITEM.speed4)}${perk(B.SHOP_ITEM.xp2)}${perk(B.SHOP_ITEM.skip)}` : ''}
+      ${(ui.shopTab || 'perks') === 'perks' ? `${perk(B.SHOP_ITEM.xp2)}${perk(B.SHOP_ITEM.skip)}` : ''}
       ${(ui.shopTab || 'perks') === 'king' ? `<div class="perk"><span class="pi">${rn.icon}</span><div class="pb"><b>${esc(rn.name)}</b><p class="small">${esc(rn.desc)}${a.account ? ` Now: <b>${esc(a.name || '')}</b>.` : ''}</p>
         <form class="row" data-form="rename"><input name="name" maxlength="16" placeholder="New name" ${a.account ? '' : 'disabled'}><button class="cprice" ${!a.account || (a.crowns | 0) < rn.price ? 'disabled' : ''}>👑 ${rn.price}</button></form></div></div>
       <div class="king ${king ? 'own' : ''}"><div class="kh"><span class="kcrown">👑</span><div><b>King Tier</b><span class="small">${king ? 'You are a King' : 'The top of the shop'}</span></div><span class="rboard" aria-hidden="true"></span></div>
-        <ul class="small"><li><b>Royal board</b>: violet and gold stone, only for Kings</li><li><b>Deeper profiles</b>, yours and everyone else's: most played heroes, best win rate heroes, the wins and losses of all their ghosts</li><li>A 👑 next to your name on the ladder and on your profile</li><li>Includes <b>4× speed</b></li></ul>
+        <ul class="small"><li><b>Royal board</b>: violet and gold stone, only for Kings</li><li><b>Deeper profiles</b>, yours and everyone else's: most played heroes, best win rate heroes, the wins and losses of all their ghosts</li><li>A 👑 next to your name on the ladder and on your profile</li></ul>
         ${king ? `<div class="row"><span class="small">Board</span><button class="${skin === 'royal' ? 'on' : ''}" data-act="skin" data-arg="royal">Royal</button><button class="${skin !== 'royal' ? 'on' : ''}" data-act="skin" data-arg="classic">Classic</button></div>` : buyBtn(K)}</div>` : ''}
       ${(ui.shopTab || 'perks') === 'invite' ? `<h3>Invite friends</h3>
       <div class="invite"><p class="small">A friend who starts playing from your link is yours for good: every time they earn crowns by playing, you get ${Math.round(B.CROWNS.referPct * 100)}% of it (at least ${B.CROWNS.referMin} crown).</p>
@@ -3287,7 +3286,7 @@
       <li><b>🏆 Leagues & LP:</b> League points (LP): a completed run +${B.LP.final}, plus +${B.LP_PVE[0]} in Bronze and +${B.LP_PVE[1]} in Silver, plus its 🔥 win streak (+${B.LP.streak} LP per run in the streak); then each Gauntlet floor won pays its number (floor 3 = +3). In Master a completed run pays no LP: only Gauntlet floors do. A lost run costs 5 LP per league above Bronze (Silver 5, Gold 10...); a fall in the Gauntlet costs nothing. Higher leagues are harder to climb: a win pays less (×${B.LP_LEAGUE.gain[0]} in Bronze to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Master) and a loss costs more (×${B.LP_LEAGUE.loss[0]} to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}). A completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
       <li><b>🏰 The Gauntlet Champions:</b> After a completed run you may climb a tower of other players' saved teams (ghosts). The tower is one floor taller than the champion's own climb (a champion who climbed 4 floors sits on floor 5). Floor 1 holds one of the weakest ghosts and each floor up a stronger one; the strength is a hidden rating that every Gauntlet fight moves. Each floor won gives as many LP as its number (floor 3 = +3); falling costs nothing, and your team stays in the tower as a ghost for others to fight. Beat the champion on the top floor and you are the new champion: the tower grows to your climb plus one. Your best floor shows on the ladder, and the current champion wears the glowing crown there.</li>
       <li><b>🔥 Win Streak & Trophies:</b> The runs you completed in a row (everyone starts at 1). Losing a run, or giving it up, puts it back to 0. Every duel you win is a trophy with the name of the player you beat, and 1 crown. A profile shows its trophies and your duels against that player.</li>
-      <li><b>👑 Crowns & Profile:</b> Earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: 4× battle speed, Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles). Tap any player's name to open their profile: league, win streak, trophies, runs completed and your duels against them. Follow players there to see them in the Friends ladder. Your picture is a hero portrait: every account level opens one more.</li>
+      <li><b>👑 Crowns & Profile:</b> Earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles). Tap any player's name to open their profile: league, win streak, trophies, runs completed and your duels against them. Follow players there to see them in the Friends ladder. Your picture is a hero portrait: every account level opens one more.</li>
       <li><b>✨ Account Level:</b> Every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for completing the run, +${B.GAME_XP.duel} per Gauntlet floor won, +${B.GAME_XP.champion} for the Gauntlet crown), plus bonuses the first time you complete a run with each hero (+${B.ACCOUNT.heroClear}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and every level opens rewards: new heroes (two a level up to level 5), items, powers, hero portraits, voice lines and titles (see the road on the title or in Ladder → Player).</li>
     </ol></details>`;
 
@@ -3424,8 +3423,8 @@
     fight: () => { const need = run ? Run.benched(run) : []; if (need.length && !introStage()) { benchNudge(need); return; } sfx('go'); coachDone(); startBattle(); },   // v126 (review #224): locked until the bench is empty
     // v126 (review #224): a tap on a hero of the bench picks it (then a tap on a hex places it); a drag is handled by the bench listeners (benchDown)
     'bench-pick': uid => { if (performance.now() - (ui.bdragAt || 0) < 400) return; uid = +uid; ui.selUid = ui.selUid === uid ? 0 : uid; render(); },
-    // Battle speed 1x / 2x / 4x (4x is a Crown Shop perk). skip plays the fight at once (also a perk).
-    speed: s => { if (+s === 4 && !hasPerk('speed4')) { toast(`4× speed is a Crown Shop unlock (👑 ${B.SHOP_ITEM.speed4.price}). 2× is free.`); return; } ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
+    // Battle speed 1x / 2x / 4x (unlocked for all players). skip plays the fight at once (perk).
+    speed: s => { ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
     skip: () => {
       const gau = (battle && battle.gau) || (run && run.cur && run.cur.type === 'gauntlet');
       if (gau) { toast('Duels and the final fight cannot be skipped.'); return; }
@@ -3968,8 +3967,7 @@
     if (u.searchParams.has('ref')) { u.searchParams.delete('ref'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); }
   } catch (_) {}
   applySkin();
-  if (ui.speed === 4 && !hasPerk('speed4')) ui.speed = 2;
-  loadAcct().then(() => { if (ui.speed === 4 && !hasPerk('speed4')) ui.speed = 2; if (screen === 'title' && !ui.modal) render(); });
+  loadAcct().then(() => { if (screen === 'title' && !ui.modal) render(); });
   screen = 'title';
   layoutClasses();
   render();

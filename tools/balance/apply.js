@@ -12,7 +12,7 @@ function safeWrite(filePath, content) {
 }
 
 // Writes the decisions of tools/balance/run.js into the game (review #159). Called by run.js --apply; never on its own.
-//   heroes  -> B.TUNE.power[key] in js/data.js (the <TUNE-BEGIN> block)
+//   heroes  -> hp and atk in B.HEROES in js/data.js (actual printed stats, no hidden modifier)
 //   items   -> the numbers of the item (its mods) AND the same numbers in its text, in js/data.js; the translations of that text in
 //              js/lang-pt.js and js/lang-de.js follow (the old English text is their key, the numbers inside the translation change too)
 //   powers  -> the numbers of its mods (a power without numeric mods is a design decision: reported, not written)
@@ -76,10 +76,17 @@ function retranslate(oldText, newText, swaps) {
 function apply(dec) {
   let s = fs.readFileSync(DATA, 'utf8'); const L = [];
   // heroes
+  // heroes: apply directly to starting hp and atk in B.HEROES (no hidden modifier)
   for (const h of dec.hero.filter(r => r.sig)) {
-    const re = new RegExp('(<TUNE-BEGIN>[\\s\\S]*?power: \\{[^}]*?\\b' + h.id + ': )([\\d.]+)');
-    if (re.test(s)) { s = s.replace(re, '$1' + h.next); L.push(`hero ${h.name} (${h.id}): power ${h.knob} -> ${h.next} (${h.dir}, start rate ${(100 * h.sim.p).toFixed(1)}%, z ${h.comb.z.toFixed(1)})`); }
-    else if (/power: \{/.test(s)) { s = s.replace(/(<TUNE-BEGIN>[\s\S]*?power: \{ )/, `$1${h.id}: ${h.next}, `); L.push(`hero ${h.name} (${h.id}): power 1 -> ${h.next} (${h.dir})`); }
+    const heroRe = new RegExp('(\\b' + h.id + ':\\s*H\\(\\{[\\s\\S]*?\\bhp:\\s*)(\\d+)(,\\s*atk:\\s*)(\\d+)');
+    const m = s.match(heroRe);
+    if (m) {
+      const curHp = +m[2], curAtk = +m[4];
+      const step = h.knob ? (h.next / h.knob) : 1;
+      const newHp = Math.round(curHp * step / 5) * 5, newAtk = Math.max(1, Math.round(curAtk * step));
+      s = s.replace(heroRe, `$1${newHp}$3${newAtk}`);
+      L.push(`hero ${h.name} (${h.id}): stats adjusted hp ${curHp}->${newHp}, atk ${curAtk}->${newAtk} (${h.dir}, start rate ${(100 * h.sim.p).toFixed(1)}%, z ${h.comb.z.toFixed(1)})`);
+    }
   }
   // items and powers: their line, its mods literal and its text
   const edit = (kind, row, lineRe) => {

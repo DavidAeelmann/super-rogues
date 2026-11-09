@@ -56,7 +56,7 @@
   B.ROLES = ['Tank', 'Fighter', 'Assassin', 'Ranger', 'Mage', 'Summoner', 'Healer', 'Support', 'Controller'];
   B.HEROES = {
     bastion: H({ name: 'Aegir', glyph: '🛡', role: 'Tank', color: '#4f7cff',
-      hp: 805, atk: 37, armor: 38, as: 0.65, range: 1, ms: 2, mana: 106, m0: 30, grow: 0.8,
+      hp: 815, atk: 38, armor: 38, as: 0.65, range: 1, ms: 2, mana: 106, m0: 30, grow: 0.8,
       abil: 'bulwark', abName: 'Stoneward', abDesc: 'Raises a stone ward: a shield of 33% of his max Health. Taunts enemies within 2 hexes for 2.5s.',
       ab: { shield: 0.33, radius: 2, taunt: 2.5, allyShield: 0, burst: 0, stun: 0 },
       specs: [
@@ -70,7 +70,7 @@
          { id: 'bas5b', name: 'Tremor', desc: 'Taunted enemies are also stunned for 1.2s.', ab: { stun: 1.2 } }],
       ] }),
     vex: H({ name: 'Vex', glyph: '🗡', role: 'Assassin', color: '#a05cff',
-      hp: 555, atk: 71, armor: 20, as: 0.95, range: 1, ms: 3, mana: 61, m0: 40, crit: 0.2, grow: 0.73,
+      hp: 680, atk: 87, armor: 20, as: 0.95, range: 1, ms: 3, mana: 61, m0: 40, crit: 0.2, grow: 0.73,
       abil: 'shadowstep', abName: 'Veilstrike', abDesc: 'Blinks next to the weakest enemy and strikes for 300% Attack as physical damage.',
       ab: { dmg: 3, twin: 0, execute: 0, untarg: 0, mark: 0 },
       specs: [
@@ -84,7 +84,7 @@
          { id: 'vex5b', name: 'Vanishing Act', desc: 'When Vex kills, she blinks to the weakest enemy left and strikes it for 100% Attack.', fl: ['vanish'] }],
       ] }),
     pyra: H({ name: 'Feuer', glyph: '🔥', role: 'Mage', color: '#ff7a3d',
-      hp: 785, atk: 59, armor: 23, as: 0.75, range: 3, ms: 2, mana: 46, m0: 20, grow: 1.28,
+      hp: 805, atk: 61, armor: 23, as: 0.75, range: 3, ms: 2, mana: 46, m0: 20, grow: 1.28,
       abil: 'fireball', abName: 'Cinder Comet', abDesc: 'Hurls a comet at the densest enemy group: 95% Magic as magic damage in 1 hex, and a burn of 14% Magic per second for 3s.',
       ab: { dmg: 0.95, radius: 1, burn: 0.14, twin: 0, stun: 0, patch: 0 },
       specs: [
@@ -98,7 +98,7 @@
          { id: 'pyr5b', name: 'Last Flare', desc: 'When she falls, a full-power Cinder Comet crashes where she stood.', ab: { ashFall: 1 } }],
       ] }),
     glacia: H({ name: 'Frostbane', glyph: '❄', role: 'Controller', color: '#5fd4ff',
-      hp: 945, atk: 63, armor: 28, as: 0.7, range: 3, ms: 2, mana: 46, m0: 30, grow: 0.67,
+      hp: 555, atk: 37, armor: 28, as: 0.7, range: 3, ms: 2, mana: 46, m0: 30, grow: 0.67,
       abil: 'blizzard', abName: 'Rime Squall', abDesc: 'Freezes the densest enemy group for 1.5s with 70% Magic as magic damage, then slows them by 40% for 2s.',
       ab: { dmg: 0.7, radius: 1, freeze: 1.5, slow: 0.4, shatter: 0, iceArmor: 0 },
       specs: [
@@ -112,7 +112,7 @@
          { id: 'gla5b', name: 'Glacial Prison', desc: 'At fight start, freezes the toughest enemy for 3s.', fl: ['prison'] }],
       ] }),
     brakk: H({ name: 'Ironhorn', glyph: '🐗', role: 'Fighter', color: '#c4513a',
-      hp: 625, atk: 47, armor: 25, as: 0.8, range: 1, ms: 2.5, mana: 91, m0: 50, ls: 0.1, grow: 0.92,
+      hp: 905, atk: 68, armor: 25, as: 0.8, range: 1, ms: 2.5, mana: 91, m0: 50, ls: 0.1, grow: 0.92,
       abil: 'charge', abName: 'Ramming Charge', abDesc: 'Charges the farthest enemy within 4 hexes: 150% Attack as physical damage and a 1s stun to adjacent enemies, and gains 30% lifesteal for 4s.',
       ab: { dmg: 1.5, stun: 1, lsBuff: 0.3, frenzy: 0, sunder: 0, reach: 4 },
       specs: [
@@ -126,7 +126,7 @@
          { id: 'bra5b', name: 'War Cry', desc: 'Landing his Charge gives allies within 2 hexes +25% attack speed for 4s.', ab: { warcry: 0.25 } }],
       ] }),
     lumen: H({ name: 'Solace', glyph: '✚', role: 'Healer', color: '#ffe066',
-      hp: 700, atk: 39, armor: 25, as: 0.7, range: 3, ms: 2, mana: 61, m0: 25, grow: 0.5,
+      hp: 420, atk: 23, armor: 25, as: 0.7, range: 3, ms: 2, mana: 61, m0: 25, grow: 0.5,
       abil: 'radiance', abName: 'Dawnmend', abDesc: 'Heals the weakest ally for 245% Magic and allies next to them for 105% Magic.',
       ab: { heal: 2.45, splash: 1.05, radius: 1, shield: 0, regen: 0, smite: 0, cleanse: 0 },
       specs: [
@@ -140,7 +140,7 @@
          { id: 'lum5b', name: 'Sanctuary', desc: 'The ally she heals takes 30% less damage for 3s.', ab: { ward: 0.3 } }],
       ] }),
     kestrel: H({ name: 'Talon', glyph: '🏹', role: 'Ranger', color: '#7bd66b',
-      hp: 490, atk: 54, armor: 15, as: 0.9, range: 4, ms: 2, mana: 63, m0: 0, grow: 1.5,
+      hp: 565, atk: 62, armor: 15, as: 0.9, range: 4, ms: 2, mana: 63, m0: 0, grow: 1.5,
       abil: 'volley', abName: 'Volley', abDesc: 'Passive (Focus): each attack gives +3% attack speed (stacks 15x). Active: fires 5 arrows at random enemies, 100% Attack as physical damage each.',
       ab: { count: 5, dmg: 1, all: 0, pierce: 0, focus: 0.03, focusCap: 15 },
       specs: [
@@ -154,7 +154,7 @@
          { id: 'kes5b', name: 'Arrow Storm', desc: 'Volley fires 4 more arrows.', ab: { count: 4 } }],
       ] }),
     morrow: H({ name: 'Graveborn', glyph: '💀', role: 'Summoner', color: '#9aa3b5',
-      hp: 500, atk: 32, armor: 25, as: 0.7, range: 3, ms: 2, mana: 71, m0: 60, grow: 1.59,
+      hp: 355, atk: 23, armor: 25, as: 0.7, range: 3, ms: 2, mana: 71, m0: 60, grow: 1.59,
       abil: 'raise', abName: 'Bone Call', abDesc: 'Raises 2 skeleton warriors next to Graveborn, each with 300% Magic as Health and 30% Magic as attack.',
       ab: { count: 2, hpMul: 1, archers: 0, explode: 0, colossus: 0 },
       specs: [
@@ -168,7 +168,7 @@
          { id: 'mor5b', name: 'Army of Bones', desc: 'He raises one more skeleton each time.', ab: { count: 1 } }],
       ] }),
     tempest: H({ name: 'Tempest', glyph: '⚡', role: 'Mage', color: '#b9a8ff',
-      hp: 740, atk: 58, armor: 23, as: 0.8, range: 3, ms: 2, mana: 48, m0: 30, grow: 1.79,
+      hp: 675, atk: 53, armor: 23, as: 0.8, range: 3, ms: 2, mana: 48, m0: 30, grow: 1.79,
       abil: 'chain', abName: 'Arc Cascade', abDesc: 'Lightning bounces between 4 enemies: 90% Magic as magic damage each (10% less per bounce), stunning each for 0.4s.',
       ab: { bounces: 4, dmg: 0.9, stun: 0.4, falloff: 0.1, twice: 0 },
       specs: [
@@ -182,7 +182,7 @@
          { id: 'tem5b', name: 'Twin Cascade', desc: 'Arc Cascade is cast twice.', ab: { twice: 1 } }],
       ] }),
     grimhook: H({ name: 'Hookjaw', glyph: '⚓', role: 'Controller', color: '#2fb3a0',
-      hp: 960, atk: 65, armor: 33, as: 0.75, range: 1, ms: 2, mana: 62, m0: 30, grow: 0.5,
+      hp: 985, atk: 67, armor: 33, as: 0.75, range: 1, ms: 2, mana: 62, m0: 30, grow: 0.5,
       abil: 'hook', abName: 'Hook', abDesc: 'Hooks the farthest enemy within 5 hexes and drags it next to Hookjaw: 120% Attack as physical damage and a 1.5s stun.',
       ab: { reach: 5, dmg: 1.2, stun: 1.5, count: 1, vuln: 0, whirl: 0, pullAll: 0 },
       specs: [
@@ -196,7 +196,7 @@
          { id: 'gri5b', name: 'Pull of the Deep', desc: 'Also drags every enemy within 3 hexes one step closer and stuns them 1s.', ab: { pullAll: 1 } }],
       ] }),
     mirage: H({ name: 'Mirage', glyph: '🎭', role: 'Summoner', color: '#ff6fb5',
-      hp: 410, atk: 41, armor: 22, as: 0.9, range: 2, ms: 3, mana: 79, m0: 20, dodge: 0.15, grow: 1.15,
+      hp: 465, atk: 46, armor: 22, as: 0.9, range: 2, ms: 3, mana: 79, m0: 20, dodge: 0.15, grow: 1.15,
       abil: 'mirror', abName: 'Twinned Veil', abDesc: 'Creates 2 decoy clones with 40% of her Health, Attack and Defense, and blinks to the safest hex.',
       ab: { count: 2, stat: 0.4, explode: 0, backstab: 0, silence: 0 },
       specs: [
@@ -210,7 +210,7 @@
          { id: 'mir5b', name: 'Phase Shift', desc: 'Once per fight, lethal damage instead leaves Mirage untargetable for 2s and heals 30%.', fl: ['phaseshift'] }],
       ] }),
     rook: H({ name: 'Rivet', glyph: '⚙', role: 'Summoner', color: '#d9a441',
-      hp: 625, atk: 42, armor: 23, as: 0.8, range: 2, ms: 2, mana: 70, m0: 50, grow: 1.18,
+      hp: 645, atk: 43, armor: 23, as: 0.8, range: 2, ms: 2, mana: 70, m0: 50, grow: 1.18,
       abil: 'turret', abName: 'Clockwork Turret', abDesc: 'Builds a turret (range 3, 80% of his Attack as attack) next to Rivet. Max 2; at max, repairs them instead.',
       ab: { max: 2, hpMul: 1, asMul: 1, burn: 0, stun: 0, mortar: 0 },
       specs: [
@@ -225,7 +225,7 @@
       ] }),
     // ---- v5 (review #2): heroes whose power grows during the fight (passive scaling, from the start or on upgrade)
     thorne: H({ name: 'Ravager', glyph: '🪓', role: 'Fighter', color: '#d4483b',
-      hp: 775, atk: 52, armor: 23, as: 0.8, range: 1, ms: 2.5, mana: 70, m0: 20, grow: 1.6,
+      hp: 840, atk: 56, armor: 23, as: 0.8, range: 1, ms: 2.5, mana: 70, m0: 20, grow: 1.6,
       mods: { stackAtk: 2, stackAtkCap: 25 },
       abil: 'whirl', abName: 'Crimson Spin', abDesc: 'Passive (Fury): +2 Attack per hit (stacks 25x). Active: spins, hitting every adjacent enemy for 180% Attack as physical damage and healing 15% of the damage.',
       ab: { dmg: 1.8, heal: 0.15, radius: 1 },
@@ -240,7 +240,7 @@
          { id: 'thr5b', name: 'Titan Swing', desc: 'The spin deals double damage.', ab: { dmg: 1.8 } }],
       ] }),
     seraph: H({ name: 'Radiant', glyph: '😇', role: 'Tank', color: '#f0d27a',
-      hp: 755, atk: 38, armor: 33, as: 0.7, range: 1, ms: 2, mana: 92, m0: 30, grow: 0.5,
+      hp: 885, atk: 45, armor: 33, as: 0.7, range: 1, ms: 2, mana: 92, m0: 30, grow: 0.5,
       mods: { rampArmor: 2, rampArmorCap: 40 },
       abil: 'consecrate', abName: 'Hallowed Ground', abDesc: 'Passive: +2 Defense per second (up to +40). Active: blesses the ground around her for 4s: enemies on it take 30% Magic per second, allies heal 3% max Health per second.',
       ab: { radius: 1, dur: 4, dps: 0.3, heal: 0.03, shield: 0 },
@@ -255,7 +255,7 @@
          { id: 'ser5b', name: 'Ascension', desc: 'Her Defense keeps growing up to +80.', mods: { rampArmorCap: 40 } }],
       ] }),
     nyx: H({ name: 'Nyx', glyph: '🌑', role: 'Fighter', color: '#35c6d6',
-      hp: 540, atk: 53, armor: 23, as: 0.9, range: 1, ms: 3, mana: 66, m0: 20, grow: 1.25,
+      hp: 720, atk: 71, armor: 23, as: 0.9, range: 1, ms: 3, mana: 66, m0: 20, grow: 1.25,
       mods: { killAtk: 8, killAtkCap: 80 },
       abil: 'eclipse', abName: 'Umbral Edge', abDesc: 'Passive: +8 Attack when an enemy dies within 3 hexes (up to +80). Active: her next 3 attacks deal +100% Attack as magic damage and heal her 20% of it.',
       ab: { hits: 3, bonus: 1, heal: 0.2 },
@@ -270,7 +270,7 @@
          { id: 'nyx5b', name: 'Void Burst', desc: 'Umbral Edge attacks deal +200% instead.', ab: { bonus: 1 } }],
       ] }),
     bramble: H({ name: 'Bramble', glyph: '🌳', role: 'Tank', color: '#6a9a3a',
-      hp: 1115, atk: 48, armor: 30, as: 0.6, range: 1, ms: 1.8, mana: 80, m0: 30, grow: 0.5,
+      hp: 1100, atk: 47, armor: 30, as: 0.6, range: 1, ms: 1.8, mana: 80, m0: 30, grow: 0.5,
       mods: { rampHpPct: 0.01, rampHpPctCap: 0.4 },
       abil: 'entangle', abName: 'Rootsnare', abDesc: 'Passive: +1% max Health every second (up to +40%). Active: roots every enemy within 2 hexes for 2s and deals 45% Magic as magic damage.',
       ab: { radius: 2, root: 2, dmg: 0.45, shield: 0 },
@@ -285,7 +285,7 @@
          { id: 'brm5b', name: 'Briar Ward', desc: 'Rootsnare also shields allies within 2 hexes for 15% of his max Health.', ab: { briar: 0.15 } }],
       ] }),
     echo: H({ name: 'Lyric', glyph: '🎻', role: 'Support', color: '#c77dff',
-      hp: 645, atk: 39, armor: 24, as: 0.75, range: 3, ms: 2, mana: 61, m0: 30, grow: 0.61,
+      hp: 575, atk: 35, armor: 24, as: 0.75, range: 3, ms: 2, mana: 61, m0: 30, grow: 0.61,
       fl: ['crescendo'],
       abil: 'anthem', abName: 'Rallying Refrain', abDesc: 'Passive: every 4s all allies get +3% attack speed (up to 10x). Active: allies within 2 hexes heal 90% Magic and get +25% Attack for 4s.',
       ab: { radius: 2, heal: 0.9, atk: 0.25, slow: 0, stun: 0 },
@@ -300,7 +300,7 @@
          { id: 'ech5b', name: 'Showstopper', desc: 'Rallying Refrain stuns adjacent enemies for 1s.', ab: { stun: 1 } }],
       ] }),
     blaze: H({ name: 'Flint', glyph: '🔫', role: 'Ranger', color: '#e08a3a',
-      hp: 650, atk: 59, armor: 15, as: 0.95, range: 3, ms: 2.5, mana: 50, m0: 10, crit: 0.1, grow: 1.8,
+      hp: 675, atk: 61, armor: 15, as: 0.95, range: 3, ms: 2.5, mana: 50, m0: 10, crit: 0.1, grow: 1.8,
       mods: { critStack: 0.02, critStackCap: 0.3 },
       abil: 'fan', abName: 'Six-Shot Flurry', abDesc: 'Passive: every crit gives +2% crit chance (up to +30%). Active: fires 6 quick shots at the target, 70% Attack as physical damage each.',
       ab: { shots: 6, dmg: 0.7, ricochet: 0, splash: 0, pen: 0 },
@@ -316,7 +316,7 @@
       ] }),
     // ---- v12 (review #11, David: "many more unique heroes, go wild")
     hippolyta: H({ name: 'Skara', glyph: '🔱', role: 'Ranger', color: '#c98a3a',
-      hp: 400, atk: 32, armor: 21, as: 1.0, range: 2, ms: 2.5, mana: 92, m0: 10, grow: 0.5,
+      hp: 590, atk: 47, armor: 21, as: 1.0, range: 2, ms: 2.5, mana: 92, m0: 10, grow: 0.5,
       mods: { stackAs: 0.04, stackAsCap: 10, poisonOnHit: 0.012 },
       abil: 'javelin', abName: 'Skyspear Barrage', abDesc: 'Passive: +4% attack speed per hit (up to 10x); her spear poisons. Active: javelins hit 3 enemies for 150% Attack each and poison them for 2% max Health per second.',
       ab: { count: 3, dmg: 1.5, poison: 0.02, root: 0 },
@@ -331,7 +331,7 @@
          { id: 'hip5b', name: "Queen's Spear", desc: 'Her first javelin always hits the strongest enemy, for double damage.', ab: { queen: 1 } }],
       ] }),
     deadshot: H({ name: 'Deadeye', glyph: '🎯', role: 'Ranger', color: '#6a7a5a',
-      hp: 625, atk: 115, armor: 12, as: 0.45, range: 7, ms: 1.8, mana: 54, m0: 20, crit: 0.2, fl: ['sniper'], grow: 1.8,
+      hp: 525, atk: 97, armor: 12, as: 0.45, range: 7, ms: 1.8, mana: 54, m0: 20, crit: 0.2, fl: ['sniper'], grow: 1.8,
       abil: 'headshot', abName: 'Longwatch Round', abDesc: 'Passive: +8% damage per hex of distance. Active: shoots the weakest enemy anywhere for 400% Attack; finishes it below 15% Health.',
       ab: { dmg: 4, shots: 1, stun: 0, camo: 0, exec: 0.15 },
       specs: [
@@ -345,7 +345,7 @@
          { id: 'dsh5b', name: 'Spotter', desc: 'After Longwatch Round, his whole team deals 25% more to that target for 5s.', ab: { spot: 0.25 } }],
       ] }),
     vesper: H({ name: 'Vesper', glyph: '🧛', role: 'Fighter', color: '#8a1f3a',
-      hp: 600, atk: 44, armor: 25, as: 0.85, range: 1, ms: 3, mana: 74, m0: 20, ls: 0.15, grow: 0.58,
+      hp: 620, atk: 45, armor: 25, as: 0.85, range: 1, ms: 3, mana: 74, m0: 20, ls: 0.15, grow: 0.58,
       mods: { omni: 0.2 },
       abil: 'bloodfeast', abName: 'Crimson Draught', abDesc: 'Passive: abilities heal 20% of their damage. Active: drains every enemy within 2 hexes for 70% Attack + 40% Magic as magic damage and heals for all of it.',
       ab: { radius: 2, dmg: 0.7, apdmg: 0.4, share: 0, bats: 0, bleed: 0 },
@@ -360,7 +360,7 @@
          { id: 'ves5b', name: 'Sanguine Lord', desc: 'Crimson Draught deals double.', ab: { dmg: 0.7, apdmg: 0.4 } }],
       ] }),
     kage: H({ name: 'Eclipse', glyph: '🥷', role: 'Assassin', color: '#3a3f55',
-      hp: 410, atk: 42, armor: 18, as: 1.1, range: 1, ms: 3.2, mana: 75, m0: 20, dodge: 0.2, grow: 1.16,
+      hp: 580, atk: 60, armor: 18, as: 1.1, range: 1, ms: 3.2, mana: 75, m0: 20, dodge: 0.2, grow: 1.16,
       abil: 'smoke', abName: 'Ashveil', abDesc: 'Blinds enemies within 1 hex for 1.5s (their attacks miss), vanishes for 1.5s and throws 4 shuriken, 90% Attack as physical damage each.',
       ab: { radius: 1, blind: 1.5, count: 4, dmg: 0.9, poison: 0, backstab: 0, heal: 0 },
       specs: [
@@ -374,7 +374,7 @@
          { id: 'kag5b', name: 'Blossom of Blades', desc: 'Shuriken deal 80% more.', ab: { dmg: 0.72 } }],
       ] }),
     rex: H({ name: 'Fang', glyph: '🐕', role: 'Fighter', color: '#a0703a',
-      hp: 515, atk: 34, armor: 23, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.71,
+      hp: 690, atk: 45, armor: 23, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.71,
       abil: 'howl', abName: 'Howl & Pounce', abDesc: 'Passive: regenerates 1% Health per second. Active: allies within 3 hexes get +20% Attack and attack speed for 4s, then Fang pounces on the nearest enemy: 150% Attack and a bleed of 2% max Health per second for 3s.',
       ab: { radius: 3, buff: 0.2, dmg: 1.5, bleed: 0.02, stun: 0, taunt: 0, reach: 0, cleave: 0 },
       specs: [
@@ -388,7 +388,7 @@
          { id: 'rex5b', name: 'Cerberus', desc: 'The bite hits every adjacent enemy.', ab: { cleave: 1 } }],
       ] }),
     vey: H({ name: 'Mesmer', glyph: '🌀', role: 'Controller', color: '#7a4ac8',
-      hp: 680, atk: 46, armor: 25, as: 0.75, range: 3, ms: 2, mana: 62, m0: 30, grow: 1.68,
+      hp: 730, atk: 49, armor: 25, as: 0.75, range: 3, ms: 2, mana: 62, m0: 30, grow: 1.68,
       abil: 'hypnosis', abName: 'Dreamspiral', abDesc: 'Hypnotizes the densest enemy group: for 2.5s they attack their own allies, and they take 30% Magic as magic damage.',
       ab: { radius: 1, dur: 2.5, dmg: 0.3, amp: 0, shield: 0, dot: 0 },
       specs: [
@@ -402,7 +402,7 @@
          { id: 'vey5b', name: 'Nightmare', desc: 'Hypnotized enemies lose 5% max Health per second.', ab: { dot: 0.05 } }],
       ] }),
     pip: H({ name: 'Jinx', glyph: '🤡', role: 'Controller', color: '#e0406a',
-      hp: 740, atk: 53, armor: 22, as: 0.9, range: 2, ms: 2.5, mana: 49, m0: 25, dodge: 0.1, grow: 1.34,
+      hp: 650, atk: 47, armor: 22, as: 0.9, range: 2, ms: 2.5, mana: 49, m0: 25, dodge: 0.1, grow: 1.34,
       abil: 'trick', abName: 'Grab Bag', abDesc: 'A random trick: a pie (150% Attack, 2s stun), balloons (all allies heal 85% Magic), 5 juggling knives (100% Attack each), a confetti bomb (40% Attack + 20% Magic, 50% slow) or a squirting flower (3s blind).',
       ab: { pie: 2, heal: 0.85, knives: 5, silence: 0, encore: 0 },
       specs: [
@@ -416,7 +416,7 @@
          { id: 'pip5b', name: 'Rigged Deck', desc: 'He picks the right trick: balloons when an ally is hurt, the pie otherwise.', ab: { rig: 1 } }],
       ] }),
     barley: H({ name: 'Rumble', glyph: '🍺', role: 'Tank', color: '#b8792a',
-      hp: 685, atk: 40, armor: 25, as: 0.8, range: 1, ms: 2, mana: 85, m0: 30, dodge: 0.2, grow: 0.83,
+      hp: 745, atk: 44, armor: 25, as: 0.8, range: 1, ms: 2, mana: 85, m0: 30, dodge: 0.2, grow: 0.83,
       abil: 'keg', abName: 'Barrel Breaker', abDesc: 'Passive: his drunken stagger gives 20% dodge. Active: smashes a barrel on adjacent enemies: 150% Attack, a 1s stun and a slow. Then a swig heals him 15% max Health.',
       ab: { radius: 1, dmg: 1.5, stun: 1, heal: 0.15, burn: 0 },
       specs: [
@@ -430,7 +430,7 @@
          { id: 'bar5b', name: 'Last Call', desc: 'Barrel Breaker deals double.', ab: { dmg: 1.5 } }],
       ] }),
     azgul: H({ name: 'Inferno', glyph: '😈', role: 'Fighter', color: '#c8321e',
-      hp: 565, atk: 46, armor: 25, as: 0.8, range: 1, ms: 2.5, mana: 89, m0: 30, mods: { rageDmg: 1 }, grow: 1.34,
+      hp: 745, atk: 61, armor: 25, as: 0.8, range: 1, ms: 2.5, mana: 89, m0: 30, mods: { rageDmg: 1 }, grow: 1.34,
       abil: 'hellfire', abName: 'Brimstone Nova', abDesc: 'Passive: +1% damage per 1% Health missing. Active: spends 10% of his Health to blast enemies within 2 hexes for 120% Attack + 70% Magic, then burns them for 40% Attack per second for 3s.',
       ab: { radius: 2, dmg: 1.2, apdmg: 0.7, burn: 0.4, cost: 0.1, imps: 0 },
       specs: [
@@ -444,7 +444,7 @@
          { id: 'azg5b', name: 'Undying Flame', desc: 'Once per fight, lethal damage leaves him at 1 Health and invulnerable for 2s.', fl: ['undying'] }],
       ] }),
     grok: H({ name: 'Boulder', glyph: '🪨', role: 'Tank', color: '#8a6a4a',
-      hp: 900, atk: 56, armor: 23, as: 0.7, range: 1, ms: 2, mana: 76, m0: 30, mods: { ccResist: 0.5 }, grow: 1.02,
+      hp: 1210, atk: 75, armor: 23, as: 0.7, range: 1, ms: 2, mana: 76, m0: 30, mods: { ccResist: 0.5 }, grow: 1.02,
       abil: 'boulder', abName: 'Boulder Toss', abDesc: 'Passive: crowd control on him lasts half as long. Active: hurls a boulder at the farthest enemy within 5 hexes: 200% Attack and a 1.5s stun, plus 100% Attack to enemies next to it.',
       ab: { dmg: 2, stun: 1.5, radius: 1, frenzy: 0 },
       specs: [
@@ -458,7 +458,7 @@
          { id: 'grk5b', name: 'Earthquake', desc: 'The boulder knocks every enemy it splashes 1 hex back.', ab: { quake: 1 } }],
       ] }),
     imhotep: H({ name: 'Ankh', glyph: '🧟', role: 'Tank', color: '#c8b88a',
-      hp: 860, atk: 48, armor: 30, as: 0.7, range: 1, ms: 1.8, mana: 71, m0: 30, mods: { revive: 0.3 }, grow: 0.5,
+      hp: 985, atk: 55, armor: 30, as: 0.7, range: 1, ms: 1.8, mana: 71, m0: 30, mods: { revive: 0.3 }, grow: 0.5,
       abil: 'wrap', abName: 'Linen of Ages', abDesc: 'Passive: once per fight, rises again at 30% Health. Active: wraps the 2 nearest enemies: rooted 2s, healing halved, losing 3% max Health per second.',
       ab: { count: 2, root: 2, decay: 0.03, shield: 0, vuln: 0 },
       specs: [
@@ -472,7 +472,7 @@
          { id: 'imh5b', name: 'Curse of the Tomb', desc: 'Wrapped enemies take 25% more damage.', ab: { vuln: 0.25 } }],
       ] }),
     leonidas: H({ name: 'Phalanx', glyph: '🏛', role: 'Tank', color: '#b8322a',
-      hp: 765, atk: 43, armor: 33, as: 0.75, range: 2, ms: 2, mana: 92, m0: 30, mods: { aura: [{ r: 1, stat: 'armor', val: 10 }] }, grow: 1.8,
+      hp: 925, atk: 52, armor: 33, as: 0.75, range: 2, ms: 2, mana: 92, m0: 30, mods: { aura: [{ r: 1, stat: 'armor', val: 10 }] }, grow: 1.8,
       abil: 'phalanx', abName: 'Phalanx', abDesc: 'Passive: adjacent allies get +10 Defense. Active: raises his shield (allies within 1 hex take 30% less damage for 4s), then spears the 2 nearest enemies for 180% Attack.',
       ab: { radius: 1, dr: 0.3, dmg: 1.8, hits: 2, stun: 0, taunt: 0 },
       specs: [
@@ -486,7 +486,7 @@
          { id: 'leo5b', name: 'Hero of the Pass', desc: 'The thrust hits every enemy within 2 hexes.', ab: { hits: 9 } }],
       ] }),
     harlequin: H({ name: 'Rapture', glyph: '🃏', role: 'Assassin', color: '#d23a8a',
-      hp: 540, atk: 54, armor: 19, as: 1.05, range: 1, ms: 3, mana: 60, m0: 20, crit: 0.15, mods: { critStack: 0.015, critStackCap: 0.15 }, grow: 1.8,
+      hp: 780, atk: 78, armor: 19, as: 1.05, range: 1, ms: 3, mana: 60, m0: 20, crit: 0.15, mods: { critStack: 0.015, critStackCap: 0.15 }, grow: 1.8,
       abil: 'waltz', abName: 'Steel Minuet', abDesc: 'Passive: each crit gives +1.5% crit (up to +15%). Active: dances through up to 3 enemies, striking each for 120% Attack as physical damage.',
       ab: { hits: 3, dmg: 1.2, silence: 0, untarg: 0 },
       specs: [
@@ -500,7 +500,7 @@
          { id: 'har5b', name: 'Grand Finale', desc: 'The last strike of the waltz deals triple damage.', ab: { curtain: 2 } }],
       ] }),
     sprocket: H({ name: 'Vial', glyph: '⚗', role: 'Support', color: '#5ab88a',
-      hp: 710, atk: 51, armor: 22, as: 0.8, range: 3, ms: 2, mana: 50, m0: 20, grow: 0.83,
+      hp: 595, atk: 43, armor: 22, as: 0.8, range: 3, ms: 2, mana: 50, m0: 20, grow: 0.83,
       abil: 'flask', abName: 'Unstable Flasks', abDesc: 'Throws 3 random flasks: acid (65% Magic, -20 Defense), healing (120% Magic to the weakest ally), frost (1s stun) or poison (3% max Health per second).',
       ab: { count: 3, radius: 0, heal: 1.2, acid: 0.65, mana: 0 },
       specs: [
@@ -514,7 +514,7 @@
          { id: 'spr5b', name: 'Chain Reaction', desc: 'Throws 3 more flasks.', ab: { count: 3 } }],
       ] }),
     zephyr: H({ name: 'Kaze', glyph: '🌪', role: 'Fighter', color: '#7ac8c8',
-      hp: 705, atk: 56, armor: 25, as: 1.0, range: 1, ms: 3, mana: 54, m0: 20, dodge: 0.1, grow: 1.8,
+      hp: 700, atk: 55, armor: 25, as: 1.0, range: 1, ms: 3, mana: 54, m0: 20, dodge: 0.1, grow: 1.8,
       abil: 'galekick', abName: 'Squall Kick', abDesc: 'Kicks the target 2 hexes back for 170% Attack as physical damage. Anyone it crashes into takes 100% Attack and is stunned for 1s.',
       ab: { dmg: 1.7, push: 2, stun: 0, splash: 0, targets: 1, tailwind: 0 },
       specs: [
@@ -529,7 +529,7 @@
       ] }),
     // v30 (review #28, PC boy): three heroes unlocked by the account level (B.UNLOCKS)
     buzzwell: H({ name: 'Stinger', glyph: '🐝', role: 'Mage', color: '#ffc21a',
-      hp: 655, atk: 42, armor: 23, as: 0.8, range: 3, ms: 2, mana: 65, m0: 25, grow: 1.1,
+      hp: 530, atk: 34, armor: 23, as: 0.8, range: 3, ms: 2, mana: 65, m0: 25, grow: 1.1,
       abil: 'hive', abName: 'Honey Hive', abDesc: 'Drops a beehive on the densest enemy group: bees sting everyone within 1 hex for 30% Magic per second for 4s, and the weakest ally heals 120% Magic.',
       ab: { radius: 1, dur: 4, dps: 0.3, honey: 1.2, slow: 0, twin: 0 },
       specs: [
@@ -543,7 +543,7 @@
          { id: 'buz5b', name: "Queen's Guard", desc: 'A second, smaller hive guards her own spot (half the stings).', ab: { guardHive: 0.5 } }],
       ] }),
     coralie: H({ name: 'Maelstrom', glyph: '🌊', role: 'Controller', color: '#2fb8d8',
-      hp: 965, atk: 62, armor: 27, as: 0.75, range: 3, ms: 2, mana: 37, m0: 25, grow: 0.5,
+      hp: 890, atk: 57, armor: 27, as: 0.75, range: 3, ms: 2, mana: 37, m0: 25, grow: 0.5,
       abil: 'wave', abName: 'Tidal Wave', abDesc: 'A wave crashes over the densest enemy group: 75% Magic as magic damage within 1 hex, pushes them 1 hex back and slows them 30% for 2s.',
       ab: { radius: 1, dmg: 0.75, push: 1, slow: 0.3, stun: 0, foam: 0, echo: 0 },
       specs: [
@@ -557,7 +557,7 @@
          { id: 'cor5b', name: 'Whirlpool', desc: 'The wave also stuns for 1s.', ab: { stun: 1 } }],
       ] }),
     stellan: H({ name: 'Astral', glyph: '⭐', role: 'Mage', color: '#8a7aff',
-      hp: 730, atk: 59, armor: 25, as: 0.85, range: 3, ms: 2, mana: 59, m0: 25, grow: 1.8,
+      hp: 600, atk: 48, armor: 25, as: 0.85, range: 3, ms: 2, mana: 59, m0: 25, grow: 1.8,
       abil: 'starfall', abName: 'Falling Star', abDesc: 'Calls a star onto the densest enemy group; 0.8s later it crashes: 120% Attack + 60% Magic as magic damage in 1 hex and a 1.2s stun.',
       ab: { radius: 1, dmg: 1.2, apdmg: 0.6, stun: 1.2, delay: 0.8, shards: 0, blessing: 0, veil: 0 },
       specs: [
@@ -574,7 +574,7 @@
     // friend or foe: if friend heal, if foe, deal damage. Option to have more than 1 ray. Gains mana as more damage or
     // healing is dealt; ultimate is supercharging the beams"
     prism: H({ name: 'Prism', glyph: '🔆', role: 'Support', color: '#5fe0ff', fl: ['beam'],
-      hp: 615, atk: 34, armor: 27, as: 1, range: 3, ms: 2, mana: 83, m0: 0, grow: 0.74,
+      hp: 450, atk: 25, armor: 27, as: 1, range: 3, ms: 2, mana: 83, m0: 0, grow: 0.74,
       abil: 'overcharge', abName: 'Overcharge', abDesc: 'Passive (Beam): besides attacking, a beam locks onto the nearest unit in range: it heals an ally 20% Magic per second or burns an enemy 32% Magic per second, and fills Energy. Active: for 4s the beams are twice as strong and split into one more.',
       ab: { dmg: 0.32, heal: 0.2, rays: 1, dur: 4, mult: 2, extra: 1, gain: 1, shield: 0 },
       specs: [
@@ -591,7 +591,7 @@
     // them): melees or archers. Cannot move, but can be killed like others. No auto attack. When soldiers attack he
     // charges mana. Ultimate is putting all his units in a frenzy"
     citadel: H({ name: 'Citadel', glyph: '🏰', role: 'Summoner', color: '#c9a26a', fl: ['tower'],
-      hp: 775, atk: 29, armor: 35, as: 0.5, range: 2, ms: 0, mana: 101, m0: 0, grow: 0.84,
+      hp: 970, atk: 36, armor: 35, as: 0.5, range: 2, ms: 0, mana: 101, m0: 0, grow: 0.84,
       abil: 'garrison', abName: 'Call to Arms', abDesc: 'Passive (Garrison): cannot move or attack. Every 7s it sends out a soldier (up to 3): a footman (165% Magic as Health, 18% Magic as attack) or an archer (100% Magic as Health, 16% Magic as attack, range 3). Their hits fill its Energy. Active: soldiers heal 30% and frenzy for 5s (+50% attack speed, +25% Attack), and one more marches out (max 5).',
       ab: { every: 7, max: 3, frenzy: 5, fhp: 1.65, fatk: 0.18, ahp: 1.0, aatk: 0.16, vet: 0, shields: 0, champion: 0, last: 0 },
       specs: [
@@ -611,7 +611,7 @@
     // which if destroyed kills him, but after a few seconds revives the hero (only one egg per combat). Fire phoenix whose
     // short but still range ability is making a wall of fire on target, line 3 hexes that does dot damage for a time."
     smolder: H({ name: 'Smolder', glyph: '🌋', role: 'Tank', color: '#ff6a2a', fl: ['devour'],
-      hp: 1040, atk: 42, armor: 27, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.8,
+      hp: 1125, atk: 45, armor: 27, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.8,
       abil: 'flamethrower', abName: 'Flamethrower', abDesc: 'Passive (Devour): at the start of each fight it eats one of its items and keeps its stats for good (not its effect). Active: a cone of fire 2 hexes ahead: 30% Magic, then a burn of 30% Magic per second for 4s.',
       ab: { dmg: 0.3, burn: 0.3, dur: 4, reach: 2, spread: 1, devour: 1, boost: 1, vuln: 0, heal: 0 },
       specs: [
@@ -625,7 +625,7 @@
          { id: 'smo5b', name: 'Fire Brand', desc: 'Burning enemies take 20% more damage from everyone.', ab: { vuln: 0.2 } }],
       ] }),
     tom: H({ name: 'Tom', glyph: '🍲', role: 'Support', color: '#e8d9b0',
-      hp: 1040, atk: 54, armor: 23, as: 0.9, range: 2, ms: 2, mana: 39, m0: 15, grow: 0.5,
+      hp: 810, atk: 42, armor: 23, as: 0.9, range: 2, ms: 2, mana: 39, m0: 15, grow: 0.5,
       abil: 'dishes', abName: 'Daily Special', abDesc: 'Serves 2 different dishes to random allies: hot pie (heals 90% Magic), jerky (+25% Attack for 8s), pepper soup (+30% attack speed for 8s) or pudding (a shield of 110% Magic).',
       ab: { dishes: 2, heal: 0.9, atk: 0.25, as: 0.3, shield: 1.1, big: 0, dur: 8, all: 0, double: 0, mana: 0, pan: 0 },
       specs: [
@@ -639,7 +639,7 @@
          { id: 'tom5b', name: 'Spice Rack', desc: 'Every dish gives two effects.', ab: { double: 1 } }],
       ] }),
     ashwing: H({ name: 'Ashwing', glyph: '🦅', role: 'Mage', color: '#ff8a2a', fl: ['rebirth'],
-      hp: 640, atk: 45, armor: 23, as: 0.9, range: 2, ms: 2, mana: 56, m0: 15, grow: 1.8,
+      hp: 600, atk: 42, armor: 23, as: 0.9, range: 2, ms: 2, mana: 56, m0: 15, grow: 1.8,
       abil: 'firewall', abName: 'Wall of Fire', abDesc: 'Passive (Rebirth): once per fight it falls into an egg with half its max Health; if the egg survives 5s it is reborn at 60% Health. Active: a wall of fire 3 hexes wide, up to 3 hexes away, burns enemies on it for 50% Magic per second for 4s.',
       ab: { dps: 0.5, dur: 4, reach: 3, width: 1, burn: 0.2, slow: 0, eggHp: 0.5, hatch: 5, revive: 0.6, burst: 0 },
       specs: [
@@ -654,7 +654,7 @@
       ] }),
     // v62i (review #105, David): Rohammer, a huge brute with a very slow hammer
     rohammer: H({ name: 'Rohammer', glyph: '🔨', role: 'Tank', color: '#e8943a', fl: ['brute'],
-      hp: 1040, atk: 78, armor: 30, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 0.98,
+      hp: 1055, atk: 79, armor: 30, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 0.98,
       abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): slow hammer blows stun for 0.2s; it gains Energy only from damage taken (2 per 1% of max Health). Active: sweeps enemies within 2 hexes in front: 150% Attack, knocked back 2 hexes and stunned 1s.',
       ab: { dmg: 1.5, reach: 2, push: 2, stun: 1, tap: 0.2, gain: 2 },
       specs: [
@@ -669,7 +669,7 @@
       ] }),
     // v62h (reviews #98, #100, #101, #102, David): a stationary plasma cannon, a duelist, a combat medic and a gardener
     plasma: H({ name: 'Plasma Cannon', glyph: '💥', role: 'Ranger', color: '#5fe0ff', fl: ['closest', 'plasma'],
-      hp: 695, atk: 68, armor: 22, as: 0.6, range: 6, ms: 0, mana: 55, m0: 20, grow: 1.11,
+      hp: 425, atk: 42, armor: 22, as: 0.6, range: 6, ms: 0, mana: 55, m0: 20, grow: 1.11,
       abil: 'tripleshot', abName: 'Triple Shot', abDesc: 'Passive (Overload): never moves; shoots the closest enemy, +12% damage per hex nearer than 5, and shoves it back 1 hex. Active: three shots at the closest enemy, 150% Attack each, each shoving it back 2 hexes.',
       ab: { dmg: 1.5, shots: 3, push: 2, knock: 1, close: 0.12 },
       specs: [
@@ -683,7 +683,7 @@
          { id: 'pla5b', name: 'Railgun', desc: 'Triple Shot does 50% more damage.', ab: { dmg: 0.75 } }],
       ] }),
     duelist: H({ name: 'Duelist', glyph: '🤺', role: 'Fighter', color: '#ffd23f', fl: ['duelist'],
-      hp: 780, atk: 60, armor: 24, as: 1, range: 1, ms: 3, mana: 40, m0: 25, grow: 1.68,
+      hp: 675, atk: 52, armor: 24, as: 1, range: 1, ms: 3, mana: 40, m0: 25, grow: 1.68,
       abil: 'duel', abName: 'Challenge', abDesc: 'Challenges the nearest enemy (never a boss): they only fight each other until one falls. In the duel: +30% Attack, +15 Defense and 10% lifesteal.',
       ab: { edge: 0.3, guard: 15, ls: 0.1, parry: 0, strike: 0, stun: 0, winHeal: 0, winMana: 0, rematch: 0 },
       specs: [
@@ -699,7 +699,7 @@
     // v121 (reviews #209 #210 #211 #212, David: three new heroes, "balance the stats and abilities, these are just suggestions for new champs, do them")
     // Chronos: "A battlefield manipulator who controls the flow of combat and turns back time on damage"
     chronos: H({ name: 'Chronos', glyph: '⏳', role: 'Controller', color: '#4dd0e1',
-      hp: 695, atk: 44, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.5,
+      hp: 505, atk: 32, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.5,
       abil: 'rewind', abName: 'Rewind', abDesc: 'Passive (Decelerate): his attacks slow 5% per hit (up to 5x, 3s). Active: the most hurt ally goes back 2.5s in time: its Health returns to what it was (at least 150% Magic healed) and it ignores crowd control for 2s.',
       ab: { heal: 1.5, back: 2.5, immune: 2, decel: 0.05, decelCap: 5, paradox: 0, stasis: 0, warp: 0, anchor: 0, shock: 0, accel: 0, targets: 1, timestop: 0 },
       specs: [
@@ -714,7 +714,7 @@
       ] }),
     // Belladonna: "A lingering attrition mage that stacks toxic blights, degrading enemy attack speed and healing"
     bella: H({ name: 'Belladonna', glyph: '🧪', role: 'Mage', color: '#7cb342',
-      hp: 660, atk: 43, armor: 22, as: 0.85, range: 3, ms: 2, mana: 80, m0: 20, grow: 0.77,
+      hp: 640, atk: 42, armor: 22, as: 0.85, range: 3, ms: 2, mana: 80, m0: 20, grow: 0.77,
       abil: 'epidemic', abName: 'Epidemic', abDesc: 'Passive (Virulence): her attacks add Toxin (up to 5 stacks, 4s): 15% Magic per second per stack and 6% less healing per stack. Active: every Toxin bursts for 35% Magic per stack and spreads to the enemies next to it.',
       ab: { tox: 0.15, toxCap: 5, toxDur: 4, antiHeal: 0.06, burst: 0.35, numb: 0, spore: 0, leech: 0, paralyze: 0, corrode: 0, pandemic: 0, miasma: 0 },
       specs: [
@@ -729,7 +729,7 @@
       ] }),
     // Kitsune: "An evasive trickster that dashes across the hex board, bamboozling target priority and backlining"
     kitsune: H({ name: 'Kitsune', glyph: '🦊', role: 'Assassin', color: '#ff7043',
-      hp: 530, atk: 53, armor: 20, as: 0.95, range: 1, ms: 3, mana: 74, m0: 35, crit: 0.1, grow: 0.82,
+      hp: 695, atk: 70, armor: 20, as: 0.95, range: 1, ms: 3, mana: 74, m0: 35, crit: 0.1, grow: 0.82,
       abil: 'foxfire', abName: 'Foxfire', abDesc: 'Passive (Spirit Jaunt): every 3rd hit on her misses and she dashes behind the attacker, gaining +30% attack speed for 2s. Active: 4 spirit flames hit the 2 farthest enemies for 80% Magic + 40% Attack each and charm them for 1.2s (they come at Kitsune).',
       ab: { flames: 4, dmg: 0.8, dmgAtk: 0.4, charm: 1.2, jauntEvery: 3, jauntAs: 0.3, swipe: 0, ninetails: 0, bewitch: 0, eclipse: 0, ward: 0 },
       specs: [
@@ -746,7 +746,7 @@
     // seconds bursts back out, stunning all adjacent enemies and inflicting damage. Second, also passive ability, is that enemies who attack him with
     // autoattack get damaged x% of his defense"): two passives, no cast (shellguard never fires)
     onyx: H({ name: 'Onyx', glyph: '🐢', role: 'Tank', color: '#3fae8a', fl: ['shell', 'spikes'],
-      hp: 810, atk: 32, armor: 46, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1.06,
+      hp: 835, atk: 33, armor: 46, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1.06,
       abil: 'shellguard', abName: 'Shell', abDesc: 'Passive (Shell): the first time he falls, he hides in his shell for 4s (untouchable, blocks the way), then bursts out at 40% Health: 150% Attack and a 1.5s stun to adjacent enemies. Passive (Spiked Shell): attackers take 60% of his Defense as damage.',
       ab: { shellT: 4, shellHp: 0.4, burst: 1.5, burstStun: 1.5, burstRad: 0, burstArmor: 0, spike: 0.6, shells: 0, shellTaunt: 0, biteArmor: 0 },
       specs: [
@@ -762,7 +762,7 @@
     // v104 (review #184, David: "dragon. Tanky dragon. Active ability: flies in the direction with the most enemies in a straight line, leaving a line of
     // fire in his wake, then lands at the end (the farthest hex in that line still in the map). Invulnerable while flying")
     dragon: H({ name: 'Ember Wyrm', glyph: '🐉', role: 'Tank', color: '#e2543a',
-      hp: 865, atk: 42, armor: 34, as: 0.7, range: 1, ms: 2, mana: 98, m0: 35, grow: 0.97,
+      hp: 1515, atk: 73, armor: 34, as: 0.7, range: 1, ms: 2, mana: 98, m0: 35, grow: 0.97,
       abil: 'skydive', abName: 'Skyfire Dive', abDesc: 'Flies along the line with the most enemies and lands at its far end, untouchable in the air. Enemies below take 80% Magic, and his trail burns for 4s (25% Magic per second).',
       ab: { dmg: 0.8, dps: 0.25, dur: 4, landStun: 0, refund: 0, lineSlow: 0, wide: 0, landShield: 0, aura: 0 },
       specs: [
@@ -776,7 +776,7 @@
          { id: 'dra5b', name: 'Ancient Wyrm', desc: 'Landing gives him a shield of 25% of his max Health.', ab: { landShield: 0.25 } }],
       ] }),
     medic: H({ name: 'Combat Medic', glyph: '⛑️', role: 'Healer', color: '#7dffb0', fl: ['medic'],
-      hp: 525, atk: 33, armor: 22, as: 0.9, range: 2, ms: 2, mana: 93, m0: 15, grow: 0.5,
+      hp: 330, atk: 21, armor: 22, as: 0.9, range: 2, ms: 2, mana: 93, m0: 15, grow: 0.5,
       abil: 'grenade', abName: 'Field Grenade', abDesc: 'Passive (Triage): its attacks heal a hurt ally within 2 hexes for 110% Attack (+60% if under 40% Health); with nobody hurt, it attacks. Active: a grenade up to 4 hexes away: enemies within 1 hex take 40% Magic, allies heal 50% Magic.',
       ab: { heal: 1.1, triage: 0.6, stim: 0, dmg: 0.4, healNade: 0.5, radius: 1, reach: 4, stun: 0, shield: 0 },
       specs: [
@@ -790,7 +790,7 @@
          { id: 'med5b', name: 'Armour Gel', desc: 'The grenade also shields allies for 80% Magic.', ab: { shield: 0.8 } }],
       ] }),
     gardener: H({ name: 'Gardener', glyph: '🌿', role: 'Summoner', color: '#7ee08e',
-      hp: 475, atk: 31, armor: 20, as: 0.8, range: 3, ms: 2, mana: 80, m0: 15, grow: 0.5,
+      hp: 325, atk: 21, armor: 20, as: 0.8, range: 3, ms: 2, mana: 80, m0: 15, grow: 0.5,
       abil: 'plant', abName: 'Overgrowth', abDesc: 'Plants 3 plants within 3 hexes, nearest the enemy first. They cannot be attacked, block the way and last 9s (max 4). In turn: Thornbush (shoots for 27% Magic), Healing Bloom (heals 25% Magic), Shield Lily (shields 38% Magic), Spore Pod (poisons within 2 hexes, 13% Magic per second).',
       ab: { count: 3, life: 9, cap: 4, reach: 3, pace: 0.7, dmg: 0.27, heal: 0.25, shield: 0.38, poison: 0.13 },
       specs: [
@@ -2881,7 +2881,7 @@
   //   pvp  = a multiplier on Health, Attack and Magic in PvP fights only (duels and the final fight, both teams): a healer that is fair in the
   //          PvE can be weak against players and the reverse, and one number cannot fit both, so PvP has its own.
   // <TUNE-BEGIN>
-  B.TUNE = { base: 1.173, growth: 0.711, power: { bella: 0.97, kitsune: 1.3114, chronos: 0.7246, onyx: 1.0334, dragon: 1.7494, ashwing: 0.9347, azgul: 1.3222, barley: 1.091, bastion: 1.0151, blaze: 1.04, brakk: 1.45, bramble: 0.985, buzzwell: 0.8102, citadel: 1.2495, coralie: 0.9244, deadshot: 0.8403, duelist: 0.8642, echo: 0.8952, gardener: 0.6845, glacia: 0.5865, grimhook: 1.028, grok: 1.3447, harlequin: 1.4483, hippolyta: 1.4706, imhotep: 1.144, kage: 1.4178, kestrel: 1.1494, leonidas: 1.2062, lumen: 0.5994, medic: 0.6261, mirage: 1.1309, morrow: 0.7101, nyx: 1.3325, pip: 0.8774, plasma: 0.6108, prism: 0.7348, pyra: 1.0258, rex: 1.3362, rohammer: 1.0163, rook: 1.0317, seraph: 1.1749, smolder: 1.0818, sprocket: 0.8386, stellan: 0.8213, tempest: 0.9118, thorne: 1.0831, tom: 0.7766, vesper: 1.0303, vex: 1.2209, vey: 1.0743, zephyr: 0.9907 }, spec: { ash2a: 1.0283, ash2b: 0.9712, ash3a: 0.9835, ash3b: 1.0112, ash4a: 0.9828, ash4b: 1.0037, ash5a: 0.94, ash5b: 1.06, azg2a: 1.0167, azg2b: 0.9699, azg3a: 0.9399, azg3b: 1.0556, azg4a: 0.9686, azg4b: 1.0273, azg5a: 0.9686, azg5b: 1.0245, bar2a: 0.9877, bar2b: 1.0096, bar3a: 1.0157, bar3b: 0.982, bar4a: 1.0288, bar4b: 0.9262, bar5a: 0.98, bar5b: 1.02, bas2a: 1.0245, bas2b: 0.9751, bas3a: 0.972, bas3b: 1.0191, bas4a: 0.9585, bas4b: 1.0402, bas5a: 0.9699, bas5b: 1.0052, bel2a: 0.9998, bel2b: 0.9979, bel3a: 1.1182, bel3b: 0.8878, bel4a: 1.0457, bel4b: 0.9409, blz2a: 0.9851, blz2b: 1.0059, blz3a: 0.9852, blz3b: 1.0112, blz4a: 0.9693, blz4b: 1.0252, blz5a: 0.8897, blz5b: 1.1044, bra2a: 1.0315, bra2b: 0.9679, bra3a: 1.0242, bra3b: 0.974, bra4a: 1.0069, bra4b: 0.9677, bra5a: 0.99, brm2a: 1.147, brm2b: 0.8655, brm3a: 0.9864, brm3b: 1.0049, brm4a: 0.8149, brm4b: 1.1985, brm5a: 1.0358, brm5b: 0.9615, buz2a: 1.0752, buz2b: 0.9276, buz3a: 1.028, buz3b: 0.972, buz4a: 1.0497, buz4b: 0.9902, buz5a: 1.03, chr2a: 0.9879, chr2b: 1.011, chr3a: 1.0986, chr3b: 0.9064, chr4a: 1.139, chr4b: 0.8745, chr5a: 0.8306, chr5b: 1.191, cit2a: 0.9686, cit2b: 1.0033, cit3a: 0.9489, cit3b: 1.0482, cit4a: 0.9931, cit4b: 1.0009, cit5a: 0.8431, cit5b: 1.1749, cor2a: 1.0049, cor2b: 0.9918, cor3a: 1.3068, cor3b: 0.7384, cor4a: 0.9356, cor4b: 0.9776, cor5a: 1.01, cor5b: 0.99, dra2a: 0.9822, dra2b: 1.0109, dra3a: 0.9702, dra3b: 1.0263, dra4a: 0.997, dra4b: 0.9906, dra5a: 1.1236, dra5b: 0.8836, dsh2a: 0.9606, dsh2b: 1.0343, dsh3a: 0.9236, dsh3b: 1.072, dsh4a: 0.9982, dsh4b: 0.9926, dsh5a: 0.9985, dsh5b: 1.1236, due2a: 1.0046, due2b: 0.9866, due3a: 0.9573, due3b: 1.0474, due4a: 1.0101, due4b: 0.9791, due5a: 0.95, due5b: 1.05, ech2a: 1.0483, ech2b: 0.9506, ech3a: 1.0791, ech3b: 0.9245, ech4a: 1.0384, ech4b: 0.9535, gar2a: 0.966, gar2b: 1.0306, gar3a: 0.9605, gar3b: 1.0399, gar4a: 1.0353, gar4b: 0.9646, gar5a: 1.03, gar5b: 0.97, gla2a: 0.8432, gla2b: 1.1357, gla3a: 0.9224, gla3b: 1.0796, gla4a: 0.6412, gla4b: 1.5095, gla5a: 0.87, gla5b: 1.13, gri2a: 0.9183, gri2b: 1.0764, gri3a: 1.0998, gri3b: 0.8984, gri4a: 1.0072, gri4b: 0.9808, gri5a: 0.94, gri5b: 1.06, grk2a: 1.0037, grk2b: 0.9909, grk3a: 1.0453, grk3b: 0.9522, grk4a: 1.0027, grk4b: 1.0306, grk5a: 1.02, har2a: 1.0066, har2b: 0.9891, har3a: 1.0025, har3b: 0.9958, har4a: 1.0102, har4b: 0.9713, har5a: 0.8979, har5b: 1.0417, hip2a: 1.0303, hip2b: 0.9657, hip3a: 0.9374, hip3b: 1.0515, hip4a: 1.0492, hip4b: 0.9485, hip5a: 0.9186, hip5b: 1.1134, imh2a: 1.0693, imh2b: 0.9311, imh3a: 0.9762, imh3b: 1.0125, imh4a: 1.1734, imh4b: 0.844, imh5a: 1.06, imh5b: 0.94, kag2a: 1.0518, kag2b: 0.9461, kag3a: 0.9907, kag3b: 1.0074, kag4a: 1.0442, kag4b: 0.9085, kag5a: 0.9648, kag5b: 1.032, kes2a: 1.0057, kes2b: 0.9877, kes3a: 1.0099, kes3b: 0.9755, kes4a: 1.0556, kes4b: 0.93, kes5a: 1.1794, kes5b: 0.8388, kit2a: 0.9273, kit2b: 1.0745, kit3a: 0.9752, kit3b: 1.0225, kit4a: 1.0232, kit4b: 0.9627, kit5a: 0.935, kit5b: 1.0582, leo2a: 1.0101, leo2b: 0.9879, leo3a: 0.983, leo3b: 1.0121, leo4a: 0.9829, leo4b: 1.014, leo5a: 0.8836, leo5b: 1.2023, lum2a: 1.1228, lum2b: 0.9948, lum3a: 1.0886, lum3b: 0.9169, lum4a: 1.1897, lum4b: 0.835, lum5a: 0.9206, lum5b: 1.0278, med2a: 0.9157, med2b: 1.0451, med3a: 1.134, med3b: 0.8956, med4a: 1.0283, med4b: 0.9715, med5a: 1.0247, med5b: 0.9583, mir2a: 0.9131, mir2b: 1.0604, mir3a: 0.9678, mir3b: 1.0302, mir4a: 0.984, mir4b: 1.0091, mir5a: 0.95, mir5b: 1.05, mor2a: 0.9615, mor2b: 1.0299, mor3a: 0.7376, mor3b: 1.3327, mor4a: 1.0407, mor4b: 0.9562, mor5a: 0.92, nyx2a: 1.0614, nyx2b: 0.9538, nyx3a: 1.005, nyx3b: 0.985, nyx4a: 1.0581, nyx4b: 0.9397, nyx5a: 1.2262, nyx5b: 0.8052, ony2a: 1.0075, ony2b: 0.9905, ony3a: 0.8665, ony3b: 1.1445, ony4a: 0.9091, ony4b: 1.0937, ony5a: 1.0944, ony5b: 0.9064, pip2a: 1.0317, pip2b: 0.9641, pip3a: 1.0257, pip3b: 0.9705, pip4a: 1.0371, pip4b: 0.9851, pip5a: 0.95, pla2a: 0.9342, pla2b: 1.0764, pla3a: 0.9555, pla3b: 1.072, pla4a: 1.0048, pla4b: 1.0073, pla5a: 0.9825, pla5b: 1.0133, pri2a: 0.9413, pri2b: 1.0596, pri3a: 0.9432, pri3b: 1.0587, pri4a: 0.9985, pri4b: 1.0355, pri5a: 1.09, pri5b: 0.91, pyr2a: 1.021, pyr2b: 1.0625, pyr3a: 0.9771, pyr3b: 1.0209, pyr4a: 0.9509, pyr4b: 1.043, pyr5a: 0.9157, pyr5b: 1.0966, rex2a: 0.8543, rex2b: 1.1635, rex3a: 1.0354, rex3b: 0.9556, rex4a: 1.0174, rex4b: 0.9768, rex5a: 0.95, rex5b: 1.05, roh2a: 1.0841, roh2b: 0.9184, roh3a: 0.9755, roh3b: 1.0174, roh4a: 0.9501, roh4b: 1.0492, roh5a: 1.1564, roh5b: 0.8593, roo2a: 0.9493, roo2b: 1.0499, roo3a: 0.905, roo3b: 1.0858, roo4a: 0.8475, roo4b: 1.1628, roo5b: 1.1, ser2a: 0.9891, ser2b: 1.0059, ser3a: 1.0405, ser3b: 0.9548, ser4a: 0.8921, ser4b: 1.1126, ser5b: 1.03, smo2a: 1.0075, smo2b: 0.9794, smo3a: 1.0309, smo3b: 0.9881, smo4a: 1.1085, smo4b: 0.8933, smo5a: 0.95, smo5b: 1.05, spr2a: 0.8661, spr2b: 1.0523, spr3a: 0.9176, spr3b: 1.0742, spr4a: 0.8646, spr4b: 1.1361, spr5b: 0.95, ste2a: 0.9758, ste2b: 1.024, ste3a: 0.944, ste3b: 1.0552, ste4a: 0.9963, ste4b: 0.9968, ste5a: 1.02, ste5b: 0.98, tem2a: 1.0066, tem2b: 0.9867, tem3a: 0.8507, tem3b: 1.0797, tem4a: 0.9217, tem4b: 1.0766, tem5a: 1.15, tem5b: 0.85, thr2a: 1.0146, thr2b: 1.0433, thr3a: 1.0118, thr3b: 0.9794, thr4a: 0.9108, thr4b: 1.0833, thr5a: 1.0689, thr5b: 0.9245, tom2a: 1.0636, tom2b: 1.0137, tom3a: 0.925, tom3b: 1.095, tom4a: 0.949, tom4b: 1.052, tom5a: 1.12, tom5b: 0.88, ves2a: 0.9864, ves2b: 1.0058, ves3a: 1.0039, ves3b: 0.9942, ves4a: 0.9836, ves4b: 1.008, ves5a: 1.0408, ves5b: 0.9309, vex2a: 1.0285, vex2b: 1.0133, vex3a: 1.0501, vex3b: 0.943, vex4a: 0.9928, vex4b: 0.9979, vex5a: 1.0349, vex5b: 0.9602, vey2a: 0.93, vey2b: 1.07, vey3a: 0.9524, vey3b: 0.9754, vey4a: 1.3242, vey4b: 0.731, vey5a: 1.03, vey5b: 0.97, zep2a: 1.0759, zep2b: 1.0096, zep3a: 1.0828, zep3b: 0.9092, zep4a: 0.9898, zep4b: 0.9962, zep5a: 0.97, zep5b: 1.03 }, pvp: { ashwing: 1.009, azgul: 0.692, barley: 1.051, blaze: 0.877, brakk: 0.799, bramble: 1.108, buzzwell: 1.189, citadel: 1.115, coralie: 0.983, deadshot: 0.836, echo: 1.322, gardener: 1.295, glacia: 0.865, grimhook: 1.057, grok: 0.653, harlequin: 0.646, hippolyta: 0.744, imhotep: 0.645, kage: 0.788, kestrel: 1.092, leonidas: 0.776, lumen: 1.384, medic: 1.6, mirage: 1.159, morrow: 1.308, nyx: 0.85, plasma: 1.171, prism: 1.256, pyra: 0.771, rex: 0.785, rohammer: 0.81, rook: 1.122, seraph: 1.137, smolder: 0.933, sprocket: 1.041, stellan: 0.99, tempest: 0.764, tom: 1.063, vesper: 1.15, vex: 0.907, vey: 0.901, zephyr: 0.9 } };
+  B.TUNE = { base: 1.173, growth: 0.711, power: {}, spec: { ash2a: 1.0283, ash2b: 0.9712, ash3a: 0.9835, ash3b: 1.0112, ash4a: 0.9828, ash4b: 1.0037, ash5a: 0.94, ash5b: 1.06, azg2a: 1.0167, azg2b: 0.9699, azg3a: 0.9399, azg3b: 1.0556, azg4a: 0.9686, azg4b: 1.0273, azg5a: 0.9686, azg5b: 1.0245, bar2a: 0.9877, bar2b: 1.0096, bar3a: 1.0157, bar3b: 0.982, bar4a: 1.0288, bar4b: 0.9262, bar5a: 0.98, bar5b: 1.02, bas2a: 1.0245, bas2b: 0.9751, bas3a: 0.972, bas3b: 1.0191, bas4a: 0.9585, bas4b: 1.0402, bas5a: 0.9699, bas5b: 1.0052, bel2a: 0.9998, bel2b: 0.9979, bel3a: 1.1182, bel3b: 0.8878, bel4a: 1.0457, bel4b: 0.9409, blz2a: 0.9851, blz2b: 1.0059, blz3a: 0.9852, blz3b: 1.0112, blz4a: 0.9693, blz4b: 1.0252, blz5a: 0.8897, blz5b: 1.1044, bra2a: 1.0315, bra2b: 0.9679, bra3a: 1.0242, bra3b: 0.974, bra4a: 1.0069, bra4b: 0.9677, bra5a: 0.99, brm2a: 1.147, brm2b: 0.8655, brm3a: 0.9864, brm3b: 1.0049, brm4a: 0.8149, brm4b: 1.1985, brm5a: 1.0358, brm5b: 0.9615, buz2a: 1.0752, buz2b: 0.9276, buz3a: 1.028, buz3b: 0.972, buz4a: 1.0497, buz4b: 0.9902, buz5a: 1.03, chr2a: 0.9879, chr2b: 1.011, chr3a: 1.0986, chr3b: 0.9064, chr4a: 1.139, chr4b: 0.8745, chr5a: 0.8306, chr5b: 1.191, cit2a: 0.9686, cit2b: 1.0033, cit3a: 0.9489, cit3b: 1.0482, cit4a: 0.9931, cit4b: 1.0009, cit5a: 0.8431, cit5b: 1.1749, cor2a: 1.0049, cor2b: 0.9918, cor3a: 1.3068, cor3b: 0.7384, cor4a: 0.9356, cor4b: 0.9776, cor5a: 1.01, cor5b: 0.99, dra2a: 0.9822, dra2b: 1.0109, dra3a: 0.9702, dra3b: 1.0263, dra4a: 0.997, dra4b: 0.9906, dra5a: 1.1236, dra5b: 0.8836, dsh2a: 0.9606, dsh2b: 1.0343, dsh3a: 0.9236, dsh3b: 1.072, dsh4a: 0.9982, dsh4b: 0.9926, dsh5a: 0.9985, dsh5b: 1.1236, due2a: 1.0046, due2b: 0.9866, due3a: 0.9573, due3b: 1.0474, due4a: 1.0101, due4b: 0.9791, due5a: 0.95, due5b: 1.05, ech2a: 1.0483, ech2b: 0.9506, ech3a: 1.0791, ech3b: 0.9245, ech4a: 1.0384, ech4b: 0.9535, gar2a: 0.966, gar2b: 1.0306, gar3a: 0.9605, gar3b: 1.0399, gar4a: 1.0353, gar4b: 0.9646, gar5a: 1.03, gar5b: 0.97, gla2a: 0.8432, gla2b: 1.1357, gla3a: 0.9224, gla3b: 1.0796, gla4a: 0.6412, gla4b: 1.5095, gla5a: 0.87, gla5b: 1.13, gri2a: 0.9183, gri2b: 1.0764, gri3a: 1.0998, gri3b: 0.8984, gri4a: 1.0072, gri4b: 0.9808, gri5a: 0.94, gri5b: 1.06, grk2a: 1.0037, grk2b: 0.9909, grk3a: 1.0453, grk3b: 0.9522, grk4a: 1.0027, grk4b: 1.0306, grk5a: 1.02, har2a: 1.0066, har2b: 0.9891, har3a: 1.0025, har3b: 0.9958, har4a: 1.0102, har4b: 0.9713, har5a: 0.8979, har5b: 1.0417, hip2a: 1.0303, hip2b: 0.9657, hip3a: 0.9374, hip3b: 1.0515, hip4a: 1.0492, hip4b: 0.9485, hip5a: 0.9186, hip5b: 1.1134, imh2a: 1.0693, imh2b: 0.9311, imh3a: 0.9762, imh3b: 1.0125, imh4a: 1.1734, imh4b: 0.844, imh5a: 1.06, imh5b: 0.94, kag2a: 1.0518, kag2b: 0.9461, kag3a: 0.9907, kag3b: 1.0074, kag4a: 1.0442, kag4b: 0.9085, kag5a: 0.9648, kag5b: 1.032, kes2a: 1.0057, kes2b: 0.9877, kes3a: 1.0099, kes3b: 0.9755, kes4a: 1.0556, kes4b: 0.93, kes5a: 1.1794, kes5b: 0.8388, kit2a: 0.9273, kit2b: 1.0745, kit3a: 0.9752, kit3b: 1.0225, kit4a: 1.0232, kit4b: 0.9627, kit5a: 0.935, kit5b: 1.0582, leo2a: 1.0101, leo2b: 0.9879, leo3a: 0.983, leo3b: 1.0121, leo4a: 0.9829, leo4b: 1.014, leo5a: 0.8836, leo5b: 1.2023, lum2a: 1.1228, lum2b: 0.9948, lum3a: 1.0886, lum3b: 0.9169, lum4a: 1.1897, lum4b: 0.835, lum5a: 0.9206, lum5b: 1.0278, med2a: 0.9157, med2b: 1.0451, med3a: 1.134, med3b: 0.8956, med4a: 1.0283, med4b: 0.9715, med5a: 1.0247, med5b: 0.9583, mir2a: 0.9131, mir2b: 1.0604, mir3a: 0.9678, mir3b: 1.0302, mir4a: 0.984, mir4b: 1.0091, mir5a: 0.95, mir5b: 1.05, mor2a: 0.9615, mor2b: 1.0299, mor3a: 0.7376, mor3b: 1.3327, mor4a: 1.0407, mor4b: 0.9562, mor5a: 0.92, nyx2a: 1.0614, nyx2b: 0.9538, nyx3a: 1.005, nyx3b: 0.985, nyx4a: 1.0581, nyx4b: 0.9397, nyx5a: 1.2262, nyx5b: 0.8052, ony2a: 1.0075, ony2b: 0.9905, ony3a: 0.8665, ony3b: 1.1445, ony4a: 0.9091, ony4b: 1.0937, ony5a: 1.0944, ony5b: 0.9064, pip2a: 1.0317, pip2b: 0.9641, pip3a: 1.0257, pip3b: 0.9705, pip4a: 1.0371, pip4b: 0.9851, pip5a: 0.95, pla2a: 0.9342, pla2b: 1.0764, pla3a: 0.9555, pla3b: 1.072, pla4a: 1.0048, pla4b: 1.0073, pla5a: 0.9825, pla5b: 1.0133, pri2a: 0.9413, pri2b: 1.0596, pri3a: 0.9432, pri3b: 1.0587, pri4a: 0.9985, pri4b: 1.0355, pri5a: 1.09, pri5b: 0.91, pyr2a: 1.021, pyr2b: 1.0625, pyr3a: 0.9771, pyr3b: 1.0209, pyr4a: 0.9509, pyr4b: 1.043, pyr5a: 0.9157, pyr5b: 1.0966, rex2a: 0.8543, rex2b: 1.1635, rex3a: 1.0354, rex3b: 0.9556, rex4a: 1.0174, rex4b: 0.9768, rex5a: 0.95, rex5b: 1.05, roh2a: 1.0841, roh2b: 0.9184, roh3a: 0.9755, roh3b: 1.0174, roh4a: 0.9501, roh4b: 1.0492, roh5a: 1.1564, roh5b: 0.8593, roo2a: 0.9493, roo2b: 1.0499, roo3a: 0.905, roo3b: 1.0858, roo4a: 0.8475, roo4b: 1.1628, roo5b: 1.1, ser2a: 0.9891, ser2b: 1.0059, ser3a: 1.0405, ser3b: 0.9548, ser4a: 0.8921, ser4b: 1.1126, ser5b: 1.03, smo2a: 1.0075, smo2b: 0.9794, smo3a: 1.0309, smo3b: 0.9881, smo4a: 1.1085, smo4b: 0.8933, smo5a: 0.95, smo5b: 1.05, spr2a: 0.8661, spr2b: 1.0523, spr3a: 0.9176, spr3b: 1.0742, spr4a: 0.8646, spr4b: 1.1361, spr5b: 0.95, ste2a: 0.9758, ste2b: 1.024, ste3a: 0.944, ste3b: 1.0552, ste4a: 0.9963, ste4b: 0.9968, ste5a: 1.02, ste5b: 0.98, tem2a: 1.0066, tem2b: 0.9867, tem3a: 0.8507, tem3b: 1.0797, tem4a: 0.9217, tem4b: 1.0766, tem5a: 1.15, tem5b: 0.85, thr2a: 1.0146, thr2b: 1.0433, thr3a: 1.0118, thr3b: 0.9794, thr4a: 0.9108, thr4b: 1.0833, thr5a: 1.0689, thr5b: 0.9245, tom2a: 1.0636, tom2b: 1.0137, tom3a: 0.925, tom3b: 1.095, tom4a: 0.949, tom4b: 1.052, tom5a: 1.12, tom5b: 0.88, ves2a: 0.9864, ves2b: 1.0058, ves3a: 1.0039, ves3b: 0.9942, ves4a: 0.9836, ves4b: 1.008, ves5a: 1.0408, ves5b: 0.9309, vex2a: 1.0285, vex2b: 1.0133, vex3a: 1.0501, vex3b: 0.943, vex4a: 0.9928, vex4b: 0.9979, vex5a: 1.0349, vex5b: 0.9602, vey2a: 0.93, vey2b: 1.07, vey3a: 0.9524, vey3b: 0.9754, vey4a: 1.3242, vey4b: 0.731, vey5a: 1.03, vey5b: 0.97, zep2a: 1.0759, zep2b: 1.0096, zep3a: 1.0828, zep3b: 0.9092, zep4a: 0.9898, zep4b: 0.9962, zep5a: 0.97, zep5b: 1.03 }, pvp: { ashwing: 1.009, azgul: 0.692, barley: 1.051, blaze: 0.877, brakk: 0.799, bramble: 1.108, buzzwell: 1.189, citadel: 1.115, coralie: 0.983, deadshot: 0.836, echo: 1.322, gardener: 1.295, glacia: 0.865, grimhook: 1.057, grok: 0.653, harlequin: 0.646, hippolyta: 0.744, imhotep: 0.645, kage: 0.788, kestrel: 1.092, leonidas: 0.776, lumen: 1.384, medic: 1.6, mirage: 1.159, morrow: 1.308, nyx: 0.85, plasma: 1.171, prism: 1.256, pyra: 0.771, rex: 0.785, rohammer: 0.81, rook: 1.122, seraph: 1.137, smolder: 0.933, sprocket: 1.041, stellan: 0.99, tempest: 0.764, tom: 1.063, vesper: 1.15, vex: 0.907, vey: 0.901, zephyr: 0.9 } };
   // <TUNE-END>
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
@@ -2995,7 +2995,7 @@
   B.SHOP = [
     { id: 'speed4', icon: '⏩', name: '4× battle speed', price: 25, desc: 'Unlocks the 4× speed button in battle. 1× and 2× stay free.' },
     { id: 'rename', icon: '✎', name: 'Name change', price: 10, desc: 'Pick a new name. Your ghosts take it too. Pay each time you change it.', use: true },
-    { id: 'king', icon: '👑', name: 'King Tier', price: 300, king: true, desc: "The Royal board skin, only for Kings. Deeper profiles, yours and everyone else's: most played heroes, best win rate heroes, and the record of their ghosts. A crown next to your name. Includes 4× speed and Content Elo." },
+    { id: 'king', icon: '👑', name: 'King Tier', price: 300, king: true, desc: "The Royal board skin, only for Kings. Deeper profiles, yours and everyone else's: most played heroes, best win rate heroes, and the record of their ghosts. A crown next to your name." },
   ];
   // v30 (review #28): two more perks
   B.SHOP.splice(2, 0,
@@ -3120,7 +3120,7 @@
   // where an XP total sits: its level, the XP into that level and what the level costs
   B.levelProgress = xp => { const lvl = B.levelOf(xp), into = Math.max(0, xp || 0) - B.xpForLevel(lvl); return { lvl, into, need: B.xpToNext(lvl) }; };
   B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl && ['hero', 'item', 'relic'].includes(u.kind)).map(u => u.id);   // v65: portraits are pictures, they never lock a hero
-  B.hasPerk = (perks, id) => (perks || []).includes(id) || (id === 'speed4' && (perks || []).includes('king'));   // v64: Content Elo is gone (review #122: the Balance lab has it)
+  B.hasPerk = (perks, id) => (perks || []).includes(id);
 
   // ---------------------------------------------------------------- terrain (review #39, David)
   // "Add some interesting features to the hex map so the fights aren't all the same ... an impassable ridge, a tree ...

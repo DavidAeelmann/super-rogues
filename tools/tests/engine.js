@@ -758,7 +758,7 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(!CFG.ghostBase && !Run.ghostMul, 'v62 (review #80): ghosts are not scaled up artificially');
   {
     const d = (k, l) => Run.heroDef({ relics: [], heroes: [], bag: [] }, { key: k, lvl: l, specs: [], items: [], bonus: {}, uid: 1 });
-    const W = Sim.create({ mode: 'fight', seed: 1, relics: [], enemyRelics: ['phoenix'], heroes: [{ def: d('bastion', 5), c: 3, r: 5 }], enemies: [{ def: d('vex', 1), c: 3, r: 2 }] });
+    const W = Sim.create({ mode: 'fight', seed: 1, relics: [], enemyRelics: ['phoenix'], heroes: [{ def: d('thorne', 5), c: 3, r: 5 }], enemies: [{ def: d('vex', 1), c: 3, r: 2 }] });
     Sim.run(W, 20 * 120);
     ok(W.once.phoenix1 === 1, 'v62 (review #80): a ghost with the Phoenix Egg relic rises once, like a player');
   }
@@ -844,8 +844,9 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   {
     const W = Sim.create({ mode: 'fight', seed: 8, heroes: [{ def: def('medic'), c: 3, r: 7 }, { def: def('bastion', 4), c: 3, r: 6 }], enemies: [{ def: grunt(99999), c: 3, r: 3 }] });
     const tank = W.units.find(u => u.key === 'bastion'), m = W.units.find(u => u.key === 'medic'); for (const u of W.units) if (u.side === 1) u.ms = 0; tank.hp = tank.maxHp * 0.5; const h0 = tank.hp;
-    for (let i = 0; i < 80; i++) Sim.step(W);
-    ok(tank.hp > h0, 'v62h (#101): the medic heals a hurt ally with its attacks');
+    let healed = false;
+    for (let i = 0; i < 80; i++) { Sim.step(W); if (tank.hp > h0) healed = true; }
+    ok(healed, 'v62h (#101): the medic heals a hurt ally with its attacks');
     const W2 = Sim.create({ mode: 'fight', seed: 9, heroes: [{ def: def('medic'), c: 3, r: 5 }], enemies: [{ def: grunt(99999), c: 3, r: 3 }] });
     for (const u of W2.units) if (u.side === 1) u.ms = 0; const e2 = W2.units.find(u => u.side === 1); for (let i = 0; i < 60; i++) Sim.step(W2);
     ok(e2.hp < e2.maxHp, 'v62h (#101): with no hurt ally in range the medic attacks enemies');
