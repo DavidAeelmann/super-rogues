@@ -41,6 +41,102 @@
       "destination": "/art/feuer/sprite.png"
     },
     {
+      "source": "/art/sprites/bastion.png",
+      "destination": "/art/aegir/sprite.png"
+    },
+    {
+      "source": "/art/sprites/aegir.png",
+      "destination": "/art/aegir/sprite.png"
+    },
+    {
+      "source": "/art/sprites/vex.png",
+      "destination": "/art/vex/sprite.png"
+    },
+    {
+      "source": "/art/sprites/glacia.png",
+      "destination": "/art/frostbane/sprite.png"
+    },
+    {
+      "source": "/art/sprites/frostbane.png",
+      "destination": "/art/frostbane/sprite.png"
+    },
+    {
+      "source": "/art/sprites/brakk.png",
+      "destination": "/art/ironhorn/sprite.png"
+    },
+    {
+      "source": "/art/sprites/ironhorn.png",
+      "destination": "/art/ironhorn/sprite.png"
+    },
+    {
+      "source": "/art/sprites/lumen.png",
+      "destination": "/art/solace/sprite.png"
+    },
+    {
+      "source": "/art/sprites/solace.png",
+      "destination": "/art/solace/sprite.png"
+    },
+    {
+      "source": "/art/sprites/kestrel.png",
+      "destination": "/art/talon/sprite.png"
+    },
+    {
+      "source": "/art/sprites/talon.png",
+      "destination": "/art/talon/sprite.png"
+    },
+    {
+      "source": "/art/sprites/morrow.png",
+      "destination": "/art/graveborn/sprite.png"
+    },
+    {
+      "source": "/art/sprites/graveborn.png",
+      "destination": "/art/graveborn/sprite.png"
+    },
+    {
+      "source": "/art/sprites/tempest.png",
+      "destination": "/art/tempest/sprite.png"
+    },
+    {
+      "source": "/art/sprites/grimhook.png",
+      "destination": "/art/hookjaw/sprite.png"
+    },
+    {
+      "source": "/art/sprites/hookjaw.png",
+      "destination": "/art/hookjaw/sprite.png"
+    },
+    {
+      "source": "/art/sprites/mirage.png",
+      "destination": "/art/mirage/sprite.png"
+    },
+    {
+      "source": "/art/sprites/rook.png",
+      "destination": "/art/rivet/sprite.png"
+    },
+    {
+      "source": "/art/sprites/rivet.png",
+      "destination": "/art/rivet/sprite.png"
+    },
+    {
+      "source": "/art/sprites/thorne.png",
+      "destination": "/art/ravager/sprite.png"
+    },
+    {
+      "source": "/art/sprites/ravager.png",
+      "destination": "/art/ravager/sprite.png"
+    },
+    {
+      "source": "/art/sprites/seraph.png",
+      "destination": "/art/radiant/sprite.png"
+    },
+    {
+      "source": "/art/sprites/radiant.png",
+      "destination": "/art/radiant/sprite.png"
+    },
+    {
+      "source": "/art/sprites/nyx.png",
+      "destination": "/art/nyx/sprite.png"
+    },
+    {
       "source": "/c/art/:dir/:file",
       "destination": "/art/:dir/:file"
     },

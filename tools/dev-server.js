@@ -35,8 +35,27 @@ http.createServer(async (req, res) => {
   let p = decodeURIComponent(u.pathname); if (p === '/') p = '/index.html';
   if (p.startsWith('/c/art/')) p = p.slice(2);   // v124: a short card page asks for art/... relative to /c/ (vercel.json rewrites it the same way)
   if (p.startsWith('/art/sprites/')) {
-    const heroName = p.slice(13).replace(/\.png$/i, '');
-    const spriteDir = heroName === 'boulder' || heroName === 'grok' ? 'boulder' : heroName === 'pyro' || heroName === 'pyra' || heroName === 'feuer' ? 'feuer' : heroName;
+    const heroName = p.slice(13).replace(/\.png$/i, '').toLowerCase();
+    const map = {
+      boulder: 'boulder', grok: 'boulder',
+      pyro: 'feuer', pyra: 'feuer', feuer: 'feuer',
+      bastion: 'aegir', aegir: 'aegir',
+      vex: 'vex',
+      glacia: 'frostbane', frostbane: 'frostbane',
+      brakk: 'ironhorn', ironhorn: 'ironhorn',
+      lumen: 'solace', solace: 'solace',
+      kestrel: 'talon', talon: 'talon',
+      morrow: 'graveborn', graveborn: 'graveborn',
+      tempest: 'tempest',
+      grimhook: 'hookjaw', hookjaw: 'hookjaw',
+      mirage: 'mirage',
+      rook: 'rivet', rivet: 'rivet',
+      thorne: 'ravager', ravager: 'ravager',
+      seraph: 'radiant', radiant: 'radiant',
+      nyx: 'nyx',
+      bramble: 'bramble'
+    };
+    const spriteDir = map[heroName] || heroName;
     p = '/art/' + spriteDir + '/sprite.png';
   }
   if (!/^\/(index\.html|stats\.html|card\.html|style\.css|js\/[a-z0-9-]+\.js|fonts\/[a-z]+\.woff2|art\/[a-z_-]+\/[a-z0-9-]+\.(webp|jpg|png))$/.test(p)) { res.statusCode = 404; return res.end('not found'); }
