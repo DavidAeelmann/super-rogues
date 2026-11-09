@@ -482,7 +482,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v0.7</span>
+      <span class="app-ver" aria-label="Game version">v0.8</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -621,8 +621,16 @@
     const btnLabel = n === CFG.startHeroes
       ? (heroName ? `Select ${esc(heroName)} ➔` : (relics.length && !introOn() ? 'Next ▶' : 'Start the game!'))
       : 'Tap a hero';
+    const offer = (run.startOffer || []).slice();
+    if (!offer.includes('grok')) {
+      const tankIdx = offer.findIndex(k => B.heroClass && B.heroClass(k) === 'tank');
+      if (tankIdx !== -1) offer[tankIdx] = 'grok';
+      else if (offer.length) offer[0] = 'grok';
+      else offer.push('grok');
+      run.startOffer = offer;
+    }
     return `<section class="start s1 v3 ${dealIn(1)}">${stepsHTML(1, relics.length > 0)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
-      ${heroStage(run.startOffer, f, 'start-pick', startHint())}${heroDetail(f)}
+      ${heroStage(offer, f, 'start-pick', startHint())}${heroDetail(f)}
       ${(run.locked || []).length ? `${desk ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : `<p class="sub locknote">🔒 ${run.locked.length} more hero${run.locked.length === 1 ? '' : 'es'} unlock as you play</p>`}` : ''}
       <div class="bar sbar"><button class="primary big ${desk ? 'hero-cta-btn ' + (n === CFG.startHeroes ? 'ready selected' : 'slot-unselected') : (n === CFG.startHeroes ? 'ready' : '')}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${desk ? btnLabel : (n === CFG.startHeroes ? (relics.length && !introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero')}</button></div></section>`;
   }
