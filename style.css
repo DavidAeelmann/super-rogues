@@ -6654,8 +6654,23 @@ body.desk #modal .shead {
   background: linear-gradient(180deg, #141822 75%, transparent) !important;
 }
 
-/* Small phone (360x640) itemShop height tightening so 4-row item shops with synergy pills never scroll */
+/* Small phone (360x640) itemShop and menu height tightening so modals never scroll */
 @media (max-height: 650px) and (max-width: 420px) {
+  body:not(.desk) .mlist {
+    gap: 0px !important;
+    margin: 1px 0 2px !important;
+  }
+  body:not(.desk) .mrow {
+    min-height: 42px !important;
+    padding: 3px 8px !important;
+  }
+  body:not(.desk) .mpair {
+    margin: 1px 0 !important;
+  }
+  body:not(.desk) .mpair .mrow {
+    min-height: 34px !important;
+    padding: 3px 6px !important;
+  }
   body:not(.desk) .shop.v2 {
     gap: 3px !important;
     padding-top: 2px !important;

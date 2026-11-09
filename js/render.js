@@ -655,6 +655,10 @@
     const AF = B.AbilFx;
     if (S.hitStop > 0 && !o.deploy) {
       S.hitStop = Math.max(0, S.hitStop - dt);
+      if (S.freezeT == null) S.freezeT = T;
+      T = S.freezeT;
+    } else {
+      S.freezeT = null;
     }
     if (S.shake > 0.05 && !o.deploy) {
       S.shake = Math.min(S.shake, 8);
@@ -1214,6 +1218,7 @@
           if (f.big) {
             burst(S, p.x, p.y - size * 0.8, 4, '#fff', { speed: 100, life: 0.5, r: 2.2, g: 40, shape: 'star' });
             S.shake = Math.max(S.shake, 3.8);
+            S.hitStop = Math.max(S.hitStop || 0, 0.05);
             if (u && u.tgt) {
               const opp = W.byId[u.tgt];
               if (opp) {
@@ -1229,7 +1234,7 @@
             const callText = isOverkill ? 'OVERKILL!' : 'MASSIVE HIT!';
             S.calls.push({ id: u.id, text: callText, t: 0, col: isOverkill ? '#ff4055' : '#ffd23f', big: true });
             S.shake = Math.max(S.shake, 6.8);
-            S.hitStop = Math.max(S.hitStop || 0, isOverkill ? 0.065 : 0.04);
+            S.hitStop = Math.max(S.hitStop || 0, isOverkill ? 0.065 : 0.05);
             burst(S, p.x, p.y - size * 1.1, 20, isOverkill ? '#ff3b30' : '#ffe066', { speed: 210, life: 0.6, r: 3.5, shape: 'star' });
             sfx('ultimate');
           }
@@ -1255,6 +1260,7 @@
     }
     for (const u of W.units) if (u.dead && !S.dead.has(u.id) && W.t - u.deathT < 12) {
       S.dead.add(u.id); const p = unitPos(v, W, u, T);
+      S.hitStop = Math.max(S.hitStop || 0, 0.05);
       burst(S, p.x, p.y - size * 0.6, u.boss ? 56 : 20, u.side ? '#ff8a8a' : '#9fd8ff', { speed: u.boss ? 210 : 130, life: 0.65, r: 2.5 }); burst(S, p.x, p.y - size * 0.6, u.boss ? 24 : 8, '#fff', { speed: u.boss ? 200 : 120, life: 0.6, r: 2.4, shape: 'spark' }); shock(S, p.x, p.y, u.side ? '#ff8a8a' : '#9fd8ff', size * (u.boss ? 3.2 : 1.5), { life: 0.55, w: u.boss ? 6 : 3 });
       S.parts.push({ x: p.x, y: p.y - size * 0.8, vx: 0, vy: -40, g: -10, life: 1.4, t: 0, r: 5, col: '#e8f4ff', glow: true, wisp: true });
       if (u.boss) { S.shake = 10; sfx('boss'); } else sfx('ko');
