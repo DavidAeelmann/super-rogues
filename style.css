@@ -670,11 +670,11 @@ body.wide .gauntlet { max-width: 1000px; margin: 0 auto; }
 .ts .crown { position: absolute; left: -6px; top: -9px; font-size: 14px; opacity: 0; transform: rotate(-20deg); transition: opacity .3s; }
 .ts.mvp .crown { opacity: 1; }
 .ts .tsb { flex: 1; min-width: 0; display: grid; gap: 3px; }
-.ts .tsn { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-.ts .tsn b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ts .tsst { display: flex; gap: 3px; }
-.ts .tsd { margin-left: auto; font-size: 12px; font-weight: 800; color: #ffb38a; font-variant-numeric: tabular-nums; }
-.ts i { position: relative; display: block; height: 12px; border-radius: 6px; background: #0b0c10; overflow: hidden; box-shadow: inset 0 0 0 1px #ffffff14; }
+.ts .tsn { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; }
+.ts .tsn b { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ts .tsst { display: flex; gap: 3px; flex-shrink: 0; }
+.ts .tsd { margin-left: auto; font-size: 12px; font-weight: 800; color: #ffb38a; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.ts i { position: relative; display: block; height: 12px; border-radius: 6px; background: #0b0c10; overflow: hidden; box-shadow: inset 0 0 0 1px #ffffff14; min-width: 0; }
 .ts i s { position: absolute; inset: 0 auto 0 0; display: block; border-radius: 6px; transition: width .15s linear; }
 .ts i em { position: relative; display: block; font-style: normal; font-size: 9.5px; line-height: 12px; padding: 0 6px; color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ts .hp s { background: linear-gradient(90deg, #3fae5c, #6be08a); }
@@ -4227,9 +4227,10 @@ body.desk .deploy.battle > .bpanel {
   position: absolute !important;
   top: 50px !important;
   right: 12px !important;
-  width: 240px !important;
-  max-height: calc(100% - 65px) !important;
+  width: 270px !important;
+  max-height: calc(100% - 58px) !important;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
   z-index: 5;
   margin: 0 !important;
   padding: 8px 10px !important;
@@ -4238,6 +4239,14 @@ body.desk .deploy.battle > .bpanel {
   border-radius: 14px !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 16px rgba(212, 175, 55, 0.1) !important;
   backdrop-filter: blur(8px);
+  scrollbar-width: thin;
+}
+body.desk .deploy.battle > .bpanel .teamstrip.v2 .ts {
+  padding: 6px 8px !important;
+  gap: 6px !important;
+}
+body.desk .deploy.battle > .bpanel .teamstrip.v2 .tsb b {
+  font-size: 14px !important;
 }
 
 /* Bottom Party Dock */
