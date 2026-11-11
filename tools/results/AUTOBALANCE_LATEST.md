@@ -1,148 +1,162 @@
 # Automated Rogues Offline Balance Report (Iteration 1)
 
 - **Total Runs Simulated:** 10000
-- **Overall PvE Clear Rate:** 36.66%
-- **Hero Win Rate Spread (SD):** 1.34pp (Range: 33.7% – 39.9%)
-- **Timestamp:** 2026-11-11T12:43:35.696Z
+- **Overall PvE Clear Rate:** 37.09%
+- **Hero Win Rate Spread (SD):** 1.80pp (Range: 33.1% – 41.0%)
+- **Timestamp:** 2026-11-11T12:46:59.229Z
 
 ## Fights & Boss Difficulty Rates
 | Difficulty | Played | Win Rate | Target | Adjustment |
 |---|---|---|---|---|
-| Easy | 12700 | 98.7% | 99.0% | hold |
-| Medium | 32769 | 92.9% | 92.0% | harder (x1.0061) |
-| Hard | 12561 | 63.0% | 65.0% | easier (x0.9870) |
-| Boss | 19203 | 59.7% | 60.0% | hold |
+| Easy | 12935 | 98.6% | 99.0% | hold |
+| Medium | 32168 | 92.5% | 92.0% | hold |
+| Hard | 12945 | 65.5% | 65.0% | hold |
+| Boss | 19250 | 60.2% | 60.0% | hold |
 
 ## Heroes Win & Clear Rates
 | Hero | Runs | Win Rate | Target Gap | Flat Stats & Growth (HP / ATK / Grow) | Action |
 |---|---|---|---|---|---|
-| Tom (tom) | 196 | 39.9% | +3.1pp | 785/40/0.5 -> 775/40/0.5 | nerf |
-| Flint (blaze) | 196 | 39.0% | +2.1pp | 675/61/1.8 -> 670/61/1.79 | nerf |
-| Smolder (smolder) | 196 | 38.7% | +1.9pp | 1150/46/1.82 | hold |
-| Gardener (gardener) | 196 | 38.7% | +1.8pp | 300/20/0.49 | hold |
-| Prism (prism) | 196 | 38.6% | +1.8pp | 420/24/0.72 | hold |
-| Kitsune (kitsune) | 196 | 38.5% | +1.7pp | 685/69/0.81 | hold |
-| Phalanx (leonidas) | 196 | 38.2% | +1.4pp | 910/51/1.79 | hold |
-| Graveborn (morrow) | 196 | 38.2% | +1.4pp | 305/20/1.47 | hold |
-| Belladonna (bella) | 196 | 38.1% | +1.3pp | 640/42/0.77 | hold |
-| Onyx (onyx) | 196 | 38.1% | +1.3pp | 825/33/1.05 | hold |
-| Hookjaw (grimhook) | 196 | 37.9% | +1.1pp | 1015/69/0.51 | hold |
-| Skara (hippolyta) | 196 | 37.9% | +1.1pp | 610/49/0.5 | hold |
-| Vex (vex) | 197 | 37.8% | +1.0pp | 650/83/0.72 | hold |
-| Lyric (echo) | 196 | 37.8% | +1.0pp | 595/36/0.62 | hold |
-| Ankh (imhotep) | 196 | 37.7% | +0.9pp | 975/54/0.5 | hold |
-| Deadeye (deadshot) | 196 | 37.7% | +0.9pp | 525/97/1.8 | hold |
-| Solace (lumen) | 196 | 37.6% | +0.8pp | 365/20/0.47 | hold |
-| Rohammer (rohammer) | 196 | 37.6% | +0.8pp | 1045/77/0.98 | hold |
-| Ravager (thorne) | 196 | 37.6% | +0.8pp | 860/57/1.61 | hold |
-| Bramble (bramble) | 196 | 37.6% | +0.8pp | 1090/46/0.5 | hold |
-| Vesper (vesper) | 196 | 37.4% | +0.6pp | 650/47/0.58 | hold |
-| Stinger (buzzwell) | 196 | 37.3% | +0.5pp | 520/33/1.09 | hold |
-| Ironhorn (brakk) | 196 | 37.3% | +0.4pp | 905/68/0.92 | hold |
-| Fang (rex) | 196 | 37.2% | +0.4pp | 690/45/0.71 | hold |
-| Jinx (pip) | 196 | 37.0% | +0.2pp | 660/47/1.35 | hold |
-| Radiant (seraph) | 196 | 37.0% | +0.1pp | 885/45/0.5 | hold |
-| Tempest (tempest) | 196 | 36.9% | +0.1pp | 680/53/1.8 | hold |
-| Rumble (barley) | 196 | 36.7% | -0.1pp | 740/44/0.83 | hold |
-| Boulder (grok) | 196 | 36.7% | -0.1pp | 1185/73/1 | hold |
-| Kaze (zephyr) | 196 | 36.4% | -0.4pp | 710/55/1.82 | hold |
-| Combat Medic (medic) | 196 | 36.4% | -0.4pp | 345/21/0.5 | hold |
-| Rapture (harlequin) | 196 | 36.3% | -0.6pp | 790/78/1.81 | hold |
-| Maelstrom (coralie) | 196 | 36.2% | -0.6pp | 925/59/0.51 | hold |
-| Plasma Cannon (plasma) | 196 | 36.1% | -0.7pp | 430/43/1.12 | hold |
-| Mirage (mirage) | 196 | 36.1% | -0.7pp | 465/46/1.15 | hold |
-| Eclipse (kage) | 196 | 36.0% | -0.8pp | 580/60/1.16 | hold |
-| Ashwing (ashwing) | 196 | 35.8% | -1.0pp | 585/42/1.77 | hold |
-| Astral (stellan) | 196 | 35.7% | -1.1pp | 610/49/1.82 | hold |
-| Ember Wyrm (dragon) | 196 | 35.5% | -1.4pp | 1560/75/0.99 | hold |
-| Feuer (pyra) | 197 | 35.5% | -1.4pp | 800/62/1.28 | hold |
-| Duelist (duelist) | 196 | 35.4% | -1.4pp | 680/52/1.69 | hold |
-| Aegir (bastion) | 197 | 35.4% | -1.4pp | 830/38/0.8 | hold |
-| Nyx (nyx) | 196 | 35.4% | -1.4pp | 720/71/1.25 | hold |
-| Vial (sprocket) | 196 | 35.3% | -1.5pp | 595/43/0.83 | hold |
-| Frostbane (glacia) | 197 | 35.3% | -1.6pp | 575/38/0.68 | hold |
-| Talon (kestrel) | 196 | 35.2% | -1.6pp | 580/63/1.51 | hold |
-| Mesmer (vey) | 196 | 35.2% | -1.7pp | 745/50/1.69 | hold |
-| Chronos (chronos) | 196 | 34.8% | -2.0pp | 505/32/0.5 -> 510/32/0.5 | buff |
-| Citadel (citadel) | 196 | 34.7% | -2.1pp | 1065/39/0.88 -> 1070/39/0.88 | buff |
-| Rivet (rook) | 196 | 34.6% | -2.2pp | 660/43/1.21 -> 665/43/1.21 | buff |
-| Inferno (azgul) | 196 | 33.7% | -3.1pp | 745/61/1.34 -> 750/62/1.35 | buff |
+| Ironhorn (brakk) | 196 | 41.0% | +3.7pp | 905/68/0.92 -> 895/67/0.91 | nerf |
+| Rohammer (rohammer) | 196 | 40.0% | +2.8pp | 1045/77/0.98 -> 1035/76/0.98 | nerf |
+| Onyx (onyx) | 196 | 40.0% | +2.8pp | 825/33/1.05 -> 820/33/1.05 | nerf |
+| Boulder (grok) | 196 | 39.9% | +2.6pp | 1185/73/1 -> 1175/72/1 | nerf |
+| Tom (tom) | 196 | 39.8% | +2.6pp | 775/40/0.5 -> 770/40/0.5 | nerf |
+| Vex (vex) | 197 | 39.6% | +2.3pp | 650/83/0.72 -> 645/82/0.72 | nerf |
+| Prism (prism) | 196 | 39.5% | +2.3pp | 420/24/0.72 -> 415/24/0.72 | nerf |
+| Ravager (thorne) | 196 | 39.4% | +2.2pp | 860/57/1.61 -> 855/57/1.6 | nerf |
+| Kitsune (kitsune) | 196 | 39.2% | +2.0pp | 685/69/0.81 | hold |
+| Aegir (bastion) | 197 | 38.8% | +1.6pp | 830/38/0.8 | hold |
+| Gardener (gardener) | 196 | 38.8% | +1.5pp | 300/20/0.49 | hold |
+| Eclipse (kage) | 196 | 38.7% | +1.5pp | 580/60/1.16 | hold |
+| Maelstrom (coralie) | 196 | 38.6% | +1.3pp | 925/59/0.51 | hold |
+| Rapture (harlequin) | 196 | 38.6% | +1.3pp | 790/78/1.81 | hold |
+| Flint (blaze) | 196 | 38.6% | +1.3pp | 670/61/1.79 | hold |
+| Talon (kestrel) | 196 | 38.5% | +1.2pp | 580/63/1.51 | hold |
+| Phalanx (leonidas) | 196 | 38.4% | +1.1pp | 910/51/1.79 | hold |
+| Solace (lumen) | 196 | 38.3% | +1.1pp | 365/20/0.47 | hold |
+| Nyx (nyx) | 196 | 38.3% | +1.0pp | 720/71/1.25 | hold |
+| Skara (hippolyta) | 196 | 38.1% | +0.9pp | 610/49/0.5 | hold |
+| Ankh (imhotep) | 196 | 37.7% | +0.5pp | 975/54/0.5 | hold |
+| Astral (stellan) | 196 | 37.5% | +0.3pp | 610/49/1.82 | hold |
+| Vial (sprocket) | 196 | 37.5% | +0.3pp | 595/43/0.83 | hold |
+| Jinx (pip) | 196 | 37.3% | +0.0pp | 660/47/1.35 | hold |
+| Belladonna (bella) | 196 | 37.2% | -0.0pp | 640/42/0.77 | hold |
+| Rumble (barley) | 196 | 37.2% | -0.0pp | 740/44/0.83 | hold |
+| Mirage (mirage) | 196 | 37.0% | -0.2pp | 465/46/1.15 | hold |
+| Lyric (echo) | 196 | 36.9% | -0.3pp | 595/36/0.62 | hold |
+| Deadeye (deadshot) | 196 | 36.7% | -0.5pp | 525/97/1.8 | hold |
+| Radiant (seraph) | 196 | 36.7% | -0.6pp | 885/45/0.5 | hold |
+| Bramble (bramble) | 196 | 36.6% | -0.6pp | 1090/46/0.5 | hold |
+| Vesper (vesper) | 196 | 36.6% | -0.7pp | 650/47/0.58 | hold |
+| Fang (rex) | 196 | 36.5% | -0.7pp | 690/45/0.71 | hold |
+| Plasma Cannon (plasma) | 196 | 36.4% | -0.9pp | 430/43/1.12 | hold |
+| Inferno (azgul) | 196 | 36.4% | -0.9pp | 750/62/1.35 | hold |
+| Combat Medic (medic) | 196 | 36.3% | -0.9pp | 345/21/0.5 | hold |
+| Smolder (smolder) | 196 | 36.3% | -1.0pp | 1150/46/1.82 | hold |
+| Graveborn (morrow) | 196 | 35.9% | -1.3pp | 305/20/1.47 | hold |
+| Stinger (buzzwell) | 196 | 35.8% | -1.4pp | 520/33/1.09 | hold |
+| Frostbane (glacia) | 197 | 35.8% | -1.5pp | 575/38/0.68 | hold |
+| Ashwing (ashwing) | 196 | 35.7% | -1.5pp | 585/42/1.77 | hold |
+| Mesmer (vey) | 196 | 35.6% | -1.6pp | 745/50/1.69 | hold |
+| Kaze (zephyr) | 196 | 35.4% | -1.8pp | 710/55/1.82 | hold |
+| Hookjaw (grimhook) | 196 | 35.3% | -2.0pp | 1015/69/0.51 | hold |
+| Rivet (rook) | 196 | 35.2% | -2.0pp | 665/43/1.21 -> 670/43/1.21 | buff |
+| Ember Wyrm (dragon) | 196 | 35.0% | -2.2pp | 1560/75/0.99 -> 1570/76/0.99 | buff |
+| Tempest (tempest) | 196 | 35.0% | -2.2pp | 680/53/1.8 -> 685/53/1.81 | buff |
+| Chronos (chronos) | 196 | 34.6% | -2.6pp | 510/32/0.5 -> 515/32/0.5 | buff |
+| Feuer (pyra) | 197 | 34.3% | -2.9pp | 800/62/1.28 -> 805/63/1.29 | buff |
+| Duelist (duelist) | 196 | 33.5% | -3.8pp | 680/52/1.69 -> 690/53/1.7 | buff |
+| Citadel (citadel) | 196 | 33.1% | -4.2pp | 1070/39/0.88 -> 1085/40/0.89 | buff |
 
 ## Talent & Ability Specs Out of Balance
 | Hero | Ability Spec | Runs | Win Rate | Gap to Pair | Power Multiplier |
 |---|---|---|---|---|---|
-| glacia | Frost Mantle (gla4a) | 126 | 67.5% | -14.8pp | 0.6646 -> 0.6978 (buff) |
-| glacia | Frostbite (gla4b) | 45 | 82.2% | +14.8pp | 1.4545 -> 1.3818 (nerf) |
-| lumen | Purify (lum2a) | 303 | 47.2% | +12.1pp | 1.106 -> 1.0593 (nerf) |
-| lumen | Answered Prayer (lum2b) | 387 | 35.1% | -12.1pp | 1.0097 -> 1.0523 (buff) |
-| kestrel | Eagle Eye (kes2a) | 198 | 32.8% | -7.3pp | 0.9785 -> 1.0034 (buff) |
-| kestrel | Barbed Volley (kes2b) | 197 | 40.1% | +7.3pp | 1.0144 -> 0.9886 (nerf) |
-| morrow | Legion (mor3a) | 122 | 46.7% | -10.0pp | 0.7215 -> 0.7468 (buff) |
-| morrow | Bone Archers (mor3b) | 178 | 56.7% | +10.0pp | 1.3618 -> 1.314 (nerf) |
-| grimhook | Drag Under (gri4a) | 60 | 65.0% | +16.5pp | 1.04 -> 0.988 (nerf) |
-| grimhook | Chain Whirl (gri4b) | 66 | 48.5% | -16.5pp | 0.9489 -> 0.9963 (buff) |
-| mirage | Hall of Mirrors (mir3a) | 151 | 37.7% | -9.0pp | 0.9678 -> 0.9981 (buff) |
-| mirage | Shatterglass (mir3b) | 167 | 46.7% | +9.0pp | 1.0302 -> 0.9979 (nerf) |
-| seraph | Sanctified Ground (ser3a) | 321 | 57.0% | +10.7pp | 1.0584 -> 1.0189 (nerf) |
-| seraph | Mending Light (ser3b) | 233 | 46.4% | -10.7pp | 0.9379 -> 0.9729 (buff) |
-| blaze | Bounty Hunter (blz2a) | 210 | 34.3% | -10.2pp | 0.9814 -> 1.0165 (buff) |
-| blaze | Dead or Alive (blz2b) | 200 | 44.5% | +10.2pp | 1.0087 -> 0.9726 (nerf) |
-| kage | Smoke Trail (kag4a) | 32 | 46.9% | -26.1pp | 0.992 -> 1.0416 (buff) |
-| kage | Gust Step (kag4b) | 37 | 73.0% | +26.1pp | 0.9539 -> 0.9062 (nerf) |
-| rex | Loyal (rex2a) | 204 | 34.8% | -12.4pp | 0.8543 -> 0.8912 (buff) |
-| rex | Lockjaw (rex2b) | 176 | 47.2% | +12.4pp | 1.1635 -> 1.1132 (nerf) |
-| rex | Pack Leader (rex3a) | 147 | 40.8% | -13.9pp | 1.0354 -> 1.0858 (buff) |
-| rex | Rabid (rex3b) | 159 | 54.7% | +13.9pp | 0.9556 -> 0.9091 (nerf) |
-| azgul | Crimson Covenant (azg3a) | 116 | 50.0% | +8.3pp | 0.9819 -> 0.9533 (nerf) |
-| azgul | Wider Inferno (azg3b) | 192 | 41.7% | -8.3pp | 1.0084 -> 1.0378 (buff) |
-| azgul | Wrath (azg4a) | 32 | 46.9% | -21.1pp | 0.9408 -> 0.9878 (buff) |
-| azgul | Imp Servants (azg4b) | 25 | 68.0% | +21.1pp | 1.0568 -> 1.004 (nerf) |
-| harlequin | Encore Minuet (har3a) | 182 | 43.4% | +9.0pp | 1.0025 -> 0.9708 (nerf) |
-| harlequin | Mockery (har3b) | 160 | 34.4% | -9.0pp | 0.9951 -> 1.0266 (buff) |
-| sprocket | Elixir of Life (spr4a) | 76 | 69.7% | +12.0pp | 0.9462 -> 0.9063 (nerf) |
-| sprocket | Catalyst (spr4b) | 52 | 57.7% | -12.0pp | 1.0349 -> 1.0785 (buff) |
-| zephyr | Whirlwind (zep2a) | 196 | 32.7% | -13.2pp | 1.0759 -> 1.1254 (buff) |
-| zephyr | Second Wind (zep2b) | 179 | 45.8% | +13.2pp | 1.0096 -> 0.9631 (nerf) |
-| citadel | Barracks (cit2a) | 302 | 38.7% | +6.8pp | 0.9795 -> 0.9561 (nerf) |
-| citadel | Stone Walls (cit2b) | 351 | 31.9% | -6.8pp | 0.992 -> 1.0157 (buff) |
-| ashwing | Quick Hatch (ash3a) | 107 | 57.0% | +11.1pp | 0.9606 -> 0.9233 (nerf) |
-| ashwing | Thick Shell (ash3b) | 183 | 45.9% | -11.1pp | 1.0348 -> 1.075 (buff) |
-| duelist | Sharper Blade (due2a) | 190 | 29.5% | -15.3pp | 0.9666 -> 1.0149 (buff) |
-| duelist | Iron Resolve (due2b) | 181 | 44.8% | +15.3pp | 1.0246 -> 0.9734 (nerf) |
-| kitsune | Will-o'-Wisp (kit3a) | 124 | 52.4% | +12.7pp | 1.0304 -> 0.9847 (nerf) |
-| kitsune | Tail Swipe (kit3b) | 244 | 39.8% | -12.7pp | 0.9661 -> 1.0089 (buff) |
-| onyx | Sharper Spines (ony2a) | 392 | 44.9% | +7.6pp | 1.0061 -> 0.9794 (nerf) |
-| onyx | Shell Shock (ony2b) | 335 | 37.3% | -7.6pp | 0.9912 -> 1.0175 (buff) |
+| vex | Executioner (vex4a) | 35 | 45.7% | -29.3pp | 0.9454 -> 0.9927 (buff) |
+| vex | Red Surge (vex4b) | 32 | 75.0% | +29.3pp | 1.0455 -> 0.9932 (nerf) |
+| glacia | Deep Chill (gla2a) | 202 | 32.2% | -5.6pp | 0.8658 -> 0.8828 (buff) |
+| glacia | Ice Lance (gla2b) | 532 | 37.8% | +5.6pp | 1.1049 -> 1.0832 (nerf) |
+| lumen | Rebuke (lum4a) | 86 | 74.4% | +12.9pp | 1.1334 -> 1.0821 (nerf) |
+| lumen | Renewal (lum4b) | 122 | 61.5% | -12.9pp | 0.8755 -> 0.9152 (buff) |
+| grimhook | Double Hook (gri3a) | 277 | 48.7% | +9.1pp | 1.131 -> 1.0951 (nerf) |
+| grimhook | Reel In (gri3b) | 353 | 39.7% | -9.1pp | 0.8732 -> 0.9009 (buff) |
+| grimhook | Drag Under (gri4a) | 67 | 40.3% | -14.7pp | 0.988 -> 1.0374 (buff) |
+| grimhook | Chain Whirl (gri4b) | 80 | 55.0% | +14.7pp | 0.9963 -> 0.9465 (nerf) |
+| mirage | Sharper Images (mir2a) | 193 | 29.0% | -14.3pp | 0.8836 -> 0.9278 (buff) |
+| mirage | Switcheroo (mir2b) | 224 | 43.3% | +14.3pp | 1.0946 -> 1.0399 (nerf) |
+| mirage | Hall of Mirrors (mir3a) | 166 | 47.6% | +10.8pp | 0.9981 -> 0.9605 (nerf) |
+| mirage | Shatterglass (mir3b) | 201 | 36.8% | -10.8pp | 0.9979 -> 1.0355 (buff) |
+| thorne | Bloodlust (thr2a) | 197 | 37.6% | -8.0pp | 1.0146 -> 1.0429 (buff) |
+| thorne | Unending Rage (thr2b) | 202 | 45.5% | +8.0pp | 1.0433 -> 1.0142 (nerf) |
+| seraph | Judgement (ser2a) | 367 | 36.0% | -5.0pp | 0.9891 -> 1.0066 (buff) |
+| seraph | Pilgrimage (ser2b) | 395 | 41.0% | +5.0pp | 1.0059 -> 0.9881 (nerf) |
+| seraph | Sunward Guard (ser4a) | 88 | 67.0% | -20.2pp | 0.861 -> 0.9041 (buff) |
+| seraph | Verdict (ser4b) | 47 | 87.2% | +20.2pp | 1.1514 -> 1.0938 (nerf) |
+| blaze | Extra Mag (blz3a) | 175 | 53.1% | +14.9pp | 0.9852 -> 0.9359 (nerf) |
+| blaze | Ricochet (blz3b) | 183 | 38.3% | -14.9pp | 1.0112 -> 1.0618 (buff) |
+| vesper | Blood Moon (ves2a) | 212 | 30.7% | -12.3pp | 0.96 -> 1.0015 (buff) |
+| vesper | Mist Form (ves2b) | 193 | 43.0% | +12.3pp | 1.0327 -> 0.9881 (nerf) |
+| kage | Thick Smoke (kag3a) | 198 | 53.0% | +10.3pp | 1.0028 -> 0.9667 (nerf) |
+| kage | Assassinate (kag3b) | 145 | 42.8% | -10.3pp | 0.9939 -> 1.0296 (buff) |
+| rex | Loyal (rex2a) | 206 | 47.6% | +15.4pp | 0.8912 -> 0.8466 (nerf) |
+| rex | Lockjaw (rex2b) | 196 | 32.1% | -15.4pp | 1.1132 -> 1.1689 (buff) |
+| rex | Pack Leader (rex3a) | 139 | 54.0% | +9.5pp | 1.0858 -> 1.0497 (nerf) |
+| rex | Rabid (rex3b) | 180 | 44.4% | -9.5pp | 0.9091 -> 0.9394 (buff) |
+| barley | Liquid Courage (bar2a) | 399 | 42.6% | +6.1pp | 0.9877 -> 0.9665 (nerf) |
+| barley | Iron Liver (bar2b) | 373 | 36.5% | -6.1pp | 1.0096 -> 1.0313 (buff) |
+| barley | Belch of Fire (bar3a) | 235 | 46.4% | -7.2pp | 1.0157 -> 1.0415 (buff) |
+| barley | Bar Brawl (bar3b) | 358 | 53.6% | +7.2pp | 0.982 -> 0.9571 (nerf) |
+| grok | Avalanche (grk3a) | 305 | 54.1% | +11.3pp | 1.0603 -> 1.0184 (nerf) |
+| grok | Concussion (grk3b) | 292 | 42.8% | -11.3pp | 0.9374 -> 0.9744 (buff) |
+| grok | Unga Bunga (grk4a) | 35 | 60.0% | -17.4pp | 1.027 -> 1.0783 (buff) |
+| grok | Fire Rock (grk4b) | 31 | 77.4% | +17.4pp | 1.0057 -> 0.9554 (nerf) |
+| imhotep | Mummify (imh2a) | 383 | 37.1% | -6.1pp | 1.067 -> 1.0896 (buff) |
+| imhotep | Tomb Dust (imh2b) | 408 | 43.1% | +6.1pp | 0.9326 -> 0.9128 (nerf) |
+| imhotep | Many Wraps (imh3a) | 292 | 45.5% | -8.6pp | 0.9762 -> 1.0057 (buff) |
+| imhotep | Tight Wraps (imh3b) | 323 | 54.2% | +8.6pp | 1.0125 -> 0.9819 (nerf) |
+| leonidas | Shield Bash (leo2a) | 359 | 36.2% | -6.8pp | 0.9999 -> 1.0238 (buff) |
+| leonidas | Long Spear (leo2b) | 302 | 43.0% | +6.8pp | 0.9979 -> 0.974 (nerf) |
+| leonidas | Shield Wall (leo3a) | 164 | 55.5% | +8.7pp | 0.9865 -> 0.9566 (nerf) |
+| leonidas | Hoplite Kick (leo3b) | 346 | 46.8% | -8.7pp | 1.0071 -> 1.0376 (buff) |
+| zephyr | Whirlwind (zep2a) | 208 | 40.9% | +7.0pp | 1.1254 -> 1.0978 (nerf) |
+| zephyr | Second Wind (zep2b) | 189 | 33.9% | -7.0pp | 0.9631 -> 0.9867 (buff) |
+| buzzwell | Bigger Hive (buz3a) | 391 | 44.5% | -7.8pp | 1.0152 -> 1.0428 (buff) |
+| buzzwell | Sticky Honey (buz3b) | 199 | 52.3% | +7.8pp | 0.9835 -> 0.9568 (nerf) |
+| coralie | Riptide (cor3a) | 219 | 41.1% | -8.4pp | 1.2527 -> 1.2896 (buff) |
+| coralie | Sea Foam (cor3b) | 402 | 49.5% | +8.4pp | 0.7695 -> 0.7469 (nerf) |
+| citadel | Barracks (cit2a) | 323 | 37.5% | +7.2pp | 0.9561 -> 0.932 (nerf) |
+| citadel | Stone Walls (cit2b) | 380 | 30.3% | -7.2pp | 1.0157 -> 1.0413 (buff) |
+| ashwing | Quick Hatch (ash3a) | 104 | 38.5% | -9.1pp | 0.9233 -> 0.9528 (buff) |
+| ashwing | Thick Shell (ash3b) | 187 | 47.6% | +9.1pp | 1.075 -> 1.0406 (nerf) |
+| bella | Spore Burst (bel3a) | 133 | 51.9% | +10.7pp | 1.1182 -> 1.0763 (nerf) |
+| bella | Leeching Venom (bel3b) | 187 | 41.2% | -10.7pp | 0.8878 -> 0.9211 (buff) |
+| dragon | Wing Buffet (dra4a) | 112 | 49.1% | +11.7pp | 0.997 -> 0.9561 (nerf) |
+| dragon | Fire Breath (dra4b) | 123 | 37.4% | -11.7pp | 0.9906 -> 1.0312 (buff) |
+| medic | Better Bandages (med2a) | 356 | 45.2% | +8.6pp | 0.9157 -> 0.8881 (nerf) |
+| medic | Field Surgeon (med2b) | 314 | 36.6% | -8.6pp | 1.0451 -> 1.0766 (buff) |
 
 ## Numeric Item Adjustments
 | Item | Tier | Runs | Clear Rate | Tier Gap | Stat Scale Multiplier |
 |---|---|---|---|---|---|
-| Scholar's Circlet (h_circlet) | uncommon | 803 | 36.1% | -4.9pp | x1.0219 (buff) |
-| Repeating Arbalest (crossbow) | rare | 502 | 41.2% | -4.0pp | x1.0181 (buff) |
-| Starloom Robe (manaweave) | rare | 281 | 51.4% | +6.2pp | x0.9723 (nerf) |
-| Cracked Monocle (crackedlens) | rare | 626 | 40.7% | -4.5pp | x1.0204 (buff) |
-| Wargreaves (b_greaves) | rare | 461 | 41.5% | -3.7pp | x1.0167 (buff) |
-| Voltaic Tether (voltaic_tether) | rare | 452 | 56.6% | +11.4pp | x0.9488 (nerf) |
-| Mountain Grips (titan) | epic | 181 | 57.8% | +9.8pp | x0.9559 (nerf) |
-| Tide Pearl (tidepearl) | epic | 474 | 43.7% | -4.3pp | x1.0195 (buff) |
-| Living Crucible (living_crucible) | epic | 382 | 52.1% | +4.1pp | x0.9817 (nerf) |
-| Shield of First Light (aegis) | legendary | 337 | 40.7% | -4.6pp | x1.0207 (buff) |
-| Crown of the Conclave (magicrown) | legendary | 434 | 51.1% | +5.8pp | x0.9739 (nerf) |
-| Heart of the Peak (mountainheart) | legendary | 363 | 52.7% | +7.4pp | x0.9667 (nerf) |
-| Glass Cannon's Prism (glass_prism) | legendary | 519 | 24.0% | -21.3pp | x1.0959 (buff) |
-| Doppelgänger Mask (mirage_mirror) | legendary | 319 | 50.8% | +5.5pp | x0.9754 (nerf) |
+| Cracked Monocle (crackedlens) | rare | 597 | 42.0% | -3.2pp | x1.0146 (buff) |
+| Voltaic Tether (voltaic_tether) | rare | 441 | 50.1% | +4.9pp | x0.9778 (nerf) |
+| Martyr's Aegis (martyrs_aegis) | epic | 409 | 53.9% | +5.9pp | x0.9735 (nerf) |
+| Crown of the Conclave (magicrown) | legendary | 400 | 50.9% | +5.5pp | x0.9751 (nerf) |
+| Gauntlets of Wrath (furygauntlets) | legendary | 283 | 51.3% | +6.0pp | x0.973 (nerf) |
+| Heart of the Peak (mountainheart) | legendary | 361 | 52.9% | +7.6pp | x0.966 (nerf) |
+| Comet Hammer (comethammer) | legendary | 438 | 49.9% | +4.6pp | x0.9793 (nerf) |
+| Glass Cannon's Prism (glass_prism) | legendary | 499 | 20.5% | -24.8pp | x1.1118 (buff) |
+| Doppelgänger Mask (mirage_mirror) | legendary | 349 | 40.7% | -4.6pp | x1.0209 (buff) |
 
 ## Numeric Relic / Power Adjustments
 | Power | Runs | Clear Rate | Avg Gap | Stat Scale Multiplier |
 |---|---|---|---|---|
-| Clan Drum (drum) | 396 | 53.4% | +4.4pp | x0.9801 (nerf) |
-| Wisp Lantern (lens) | 470 | 42.4% | -6.5pp | x1.0294 (buff) |
-| Moonwell Basin (font) | 489 | 44.7% | -4.3pp | x1.0191 (buff) |
-| Wayfarer's Satchel (backpack) | 688 | 42.2% | -6.7pp | x1.0303 (buff) |
-| Energy Coil (battery) | 492 | 57.3% | +8.3pp | x0.9625 (nerf) |
-| Warm Teapot (teapot) | 677 | 52.7% | +3.7pp | x0.9833 (nerf) |
-| Marble Pouch (marbles) | 494 | 43.1% | -5.8pp | x1.0261 (buff) |
-| Pinwheel (pinwheel) | 415 | 53.3% | +4.4pp | x0.9803 (nerf) |
-| Gravecaller Lantern (gravecaller) | 356 | 44.3% | -4.7pp | x1.0209 (buff) |
-| Overflow Cup (fullmana) | 403 | 13.4% | -35.5pp | x1.12 (buff) |
-| Glass Crown (glass) | 596 | 60.8% | +11.9pp | x0.9465 (nerf) |
+| Clan Drum (drum) | 429 | 53.2% | +3.9pp | x0.9827 (nerf) |
+| Wisp Lantern (lens) | 472 | 44.5% | -4.9pp | x1.0221 (buff) |
+| Wayfarer's Satchel (backpack) | 726 | 43.3% | -6.1pp | x1.0274 (buff) |
+| Tail Gust (wind) | 411 | 58.5% | +9.1pp | x0.9591 (nerf) |
+| Crimson Contract (bloodpact) | 422 | 57.5% | +8.1pp | x0.9634 (nerf) |
+| Energy Coil (battery) | 499 | 54.1% | +4.7pp | x0.9787 (nerf) |
+| Marble Pouch (marbles) | 518 | 45.5% | -3.9pp | x1.0176 (buff) |
+| Overflow Cup (fullmana) | 423 | 12.4% | -36.9pp | x1.12 (buff) |
+| Glass Crown (glass) | 705 | 61.4% | +12.1pp | x0.9458 (nerf) |
+| Giant's Brew (giant) | 316 | 45.1% | -4.2pp | x1.0191 (buff) |
