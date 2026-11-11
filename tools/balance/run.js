@@ -113,10 +113,15 @@ function decide(sim, lv) {
     const c = S.combine(both), v = verdict('hero', c);
     if (disagree) { v.sig = false; v.dir = 'hold (sources disagree)'; }
     const pk = pickOf('hero:' + k);
-    const cur = D.TUNE.power[k] || 1, step = v.sig ? Math.max(-RULE.MAX_STEP.hero, Math.min(RULE.MAX_STEP.hero, -RULE.ETA * c.d / eHero)) : 0;
-    out.hero.push(Object.assign(v, { id: k, name: D.HEROES[k].name, sim: { k: x.k, n: x.n, p, ci: S.wilson(x.k, x.n), wins: x.n ? x.w / x.n : 0 }, live: lt.r ? { games: lt.r.games, wins: lt.r.wins, shrunk: lt.sh } : null,
+    const hDef = D.HEROES[k];
+    const curHp = hDef.hp, curAtk = hDef.atk, curGrow = hDef.grow || 1.0;
+    const step = v.sig ? Math.max(-RULE.MAX_STEP.hero, Math.min(RULE.MAX_STEP.hero, -RULE.ETA * c.d / eHero)) : 0;
+    const nextHp = step !== 0 ? Math.round(curHp * (1 + step) / 5) * 5 : curHp;
+    const nextAtk = step !== 0 ? Math.max(1, Math.round(curAtk * (1 + step))) : curAtk;
+    const nextGrow = step !== 0 ? +(curGrow * (1 + step * 0.5)).toFixed(2) : curGrow;
+    out.hero.push(Object.assign(v, { id: k, name: hDef.name, sim: { k: x.k, n: x.n, p, ci: S.wilson(x.k, x.n), wins: x.n ? x.w / x.n : 0 }, live: lt.r ? { games: lt.r.games, wins: lt.r.wins, shrunk: lt.sh } : null,
       pick: pk ? { offered: pk.offered, picked: pk.picked, rate: pk.offered ? pk.picked / pk.offered : null, pwr: pk.pruns ? pk.pwins / pk.pruns : null, pruns: pk.pruns } : null,
-      comb: c, mde: S.mde(hMean, x.n), knob: cur, next: +(cur * (1 + step)).toFixed(3) }));
+      comb: c, mde: S.mde(hMean, x.n), curHp, nextHp, curAtk, nextAtk, curGrow, nextGrow, knob: 1, next: +(1 + step).toFixed(3) }));
   }
   // ---- ITEMS: the gain of starting with the item, against the items of the same rarity
   const I = count(sim.itm, r => r.tag), li = L('item'), liPrior = S.betaFit(li.map(r => ({ k: r.wins, n: r.games })));
@@ -166,7 +171,17 @@ function decide(sim, lv) {
   // multiple comparisons: per kind, a change also needs the Benjamini-Hochberg rule (false discovery rate RULE.FDR)
   for (const kind of ['hero', 'item', 'relic']) {
     const rows = out[kind], pass = S.bh(rows.map(r => S.pOfZ(r.comb.z)), RULE.FDR);
-    rows.forEach((r, i) => { r.p = S.pOfZ(r.comb.z); if (r.sig && !pass.has(i)) { r.sig = false; r.design = false; r.dir = 'hold (could be chance: FDR)'; r.next = r.knob; r.scale = 1; } });
+    rows.forEach((r, i) => {
+      r.p = S.pOfZ(r.comb.z);
+      if (r.sig && !pass.has(i)) {
+        r.sig = false;
+        r.design = false;
+        r.dir = 'hold (could be chance: FDR)';
+        r.next = r.knob;
+        r.scale = 1;
+        if (r.curHp != null) { r.nextHp = r.curHp; r.nextAtk = r.curAtk; r.nextGrow = r.curGrow; }
+      }
+    });
   }
   // how much of the hero spread is real: the observed spread minus what the sample sizes alone give
   { const v = out.hero.map(r => r.sim.p), m = v.reduce((a, b) => a + b, 0) / v.length, sd2 = v.reduce((a, b) => a + (b - m) ** 2, 0) / v.length, noise2 = out.hero.reduce((s, r) => s + m * (1 - m) / Math.max(1, r.sim.n), 0) / v.length;
@@ -197,7 +212,7 @@ function report(dec, ver) {
   const liveCol = ['live win (games)', r => r.live ? `${f2(r.live.wins / r.live.games)} (${r.live.games})` : '-'];
   table('Fights (enemies)', dec.fight, [['difficulty', r => r.name], ['target', r => f2(r.target)], ['simulation (n)', r => `${S.pct(r.sim.p)} (${r.sim.n})`], ['players (n)', r => r.live ? `${S.pct(r.live.p)} (${r.live.n})` : '-'], ['z', r => r.comb.z.toFixed(1)], ['verdict', r => r.dir + (r.step ? ` (enemies ${r.step > 0 ? '+' : ''}${(100 * r.step).toFixed(1)}%)` : '')]]);
   const sorted = a => a.slice().sort((x, y) => (y.sig - x.sig) || Math.abs(y.comb.z) - Math.abs(x.comb.z));
-  table('Heroes (start rate vs all heroes, ' + S.pct(dec.hero.reduce((s, r) => s + r.sim.p, 0) / dec.hero.length) + ')', sorted(dec.hero), [['hero', r => r.name + ' (' + r.id + ')'], ['simulation (n) [95% CI]', r => `${S.pct(r.sim.p)} (${r.sim.n}) [${S.pct(r.sim.ci[0], 0)}-${S.pct(r.sim.ci[1], 0)}]`], liveCol, pickCol, ['gap', r => S.pp(r.comb.d)], ['z', r => r.comb.z.toFixed(1)], ['verdict', r => r.dir + (r.sig ? ` (power ${r.knob} -> ${r.next})` : '')]]);
+  table('Heroes (start rate vs all heroes, ' + S.pct(dec.hero.reduce((s, r) => s + r.sim.p, 0) / dec.hero.length) + ')', sorted(dec.hero), [['hero', r => r.name + ' (' + r.id + ')'], ['simulation (n) [95% CI]', r => `${S.pct(r.sim.p)} (${r.sim.n}) [${S.pct(r.sim.ci[0], 0)}-${S.pct(r.sim.ci[1], 0)}]`], liveCol, pickCol, ['gap', r => S.pp(r.comb.d)], ['z', r => r.comb.z.toFixed(1)], ['verdict', r => r.dir + (r.sig ? ` (hp ${r.curHp}->${r.nextHp}, atk ${r.curAtk}->${r.nextAtk}, grow ${r.curGrow}->${r.nextGrow})` : '')]]);
   table('Items (gain of starting with it vs its rarity)', sorted(dec.item), [['item', r => r.name + ' (' + r.tier + ')'], ['completion (n)', r => `${S.pct(r.sim.p)} (${r.sim.n})`], ['gain', r => S.pp(r.sim.gain)], ['rarity gain', r => S.pp(r.peer)], liveCol, pickCol, ['z', r => r.comb.z.toFixed(1)], ['verdict', r => r.dir + (r.sig ? (r.numeric ? ` (numbers x${r.scale})` : ' (no numbers: design)') : '')]]);
   table('Powers (gain of starting with it vs all powers, ' + S.pp(dec.relic[0] ? dec.relic[0].peer : 0) + ')', sorted(dec.relic), [['power', r => r.name + ' (' + r.id + ')'], ['completion (n)', r => `${S.pct(r.sim.p)} (${r.sim.n})`], ['gain', r => S.pp(r.sim.gain)], liveCol, pickCol, ['z', r => r.comb.z.toFixed(1)], ['verdict', r => r.dir + (r.sig ? (r.numeric ? ` (numbers x${r.scale})` : ' (special effect: design)') : '')]]);
   table('Events (from the players\' picks)', dec.event, [['event', r => r.name], ['offered', r => r.offered], ['choices (share taken / win rate of those runs)', r => r.rows.map(x => `${x.choice}: ${f2(x.share)} / ${f2(x.pwr)}`).join(', ') || '-'], ['flag', r => r.flag]]);

@@ -76,16 +76,23 @@ function retranslate(oldText, newText, swaps) {
 function apply(dec) {
   let s = fs.readFileSync(DATA, 'utf8'); const L = [];
   // heroes
-  // heroes: apply directly to starting hp and atk in B.HEROES (no hidden modifier)
+  // heroes: apply directly to starting hp, atk and growth in B.HEROES (no hidden modifier)
   for (const h of dec.hero.filter(r => r.sig)) {
-    const heroRe = new RegExp('(\\b' + h.id + ':\\s*H\\(\\{[\\s\\S]*?\\bhp:\\s*)(\\d+)(,\\s*atk:\\s*)(\\d+)');
+    const heroRe = new RegExp('(\\b' + h.id + ':\\s*H\\(\\{[\\s\\S]*?\\bhp:\\s*)(\\d+)(,\\s*atk:\\s*)(\\d+)([\\s\\S]*?\\bgrow:\\s*)([\\d.]+)');
     const m = s.match(heroRe);
     if (m) {
-      const curHp = +m[2], curAtk = +m[4];
-      const step = h.knob ? (h.next / h.knob) : 1;
-      const newHp = Math.round(curHp * step / 5) * 5, newAtk = Math.max(1, Math.round(curAtk * step));
-      s = s.replace(heroRe, `$1${newHp}$3${newAtk}`);
-      L.push(`hero ${h.name} (${h.id}): stats adjusted hp ${curHp}->${newHp}, atk ${curAtk}->${newAtk} (${h.dir}, start rate ${(100 * h.sim.p).toFixed(1)}%, z ${h.comb.z.toFixed(1)})`);
+      const curHp = +m[2], curAtk = +m[4], curGrow = +m[6];
+      let newHp = h.nextHp != null ? h.nextHp : curHp;
+      let newAtk = h.nextAtk != null ? h.nextAtk : curAtk;
+      let newGrow = h.nextGrow != null ? h.nextGrow : curGrow;
+      if (h.nextHp == null && h.knob) {
+        const step = h.next / h.knob;
+        newHp = Math.round(curHp * step / 5) * 5;
+        newAtk = Math.max(1, Math.round(curAtk * step));
+        newGrow = +(curGrow * (1 + (step - 1) * 0.5)).toFixed(2);
+      }
+      s = s.replace(heroRe, `$1${newHp}$3${newAtk}$5${newGrow}`);
+      L.push(`hero ${h.name} (${h.id}): stats adjusted hp ${curHp}->${newHp}, atk ${curAtk}->${newAtk}, grow ${curGrow}->${newGrow} (${h.dir}, start rate ${(100 * (h.sim?.p || h.rate)).toFixed(1)}%, z ${(h.comb?.z || h.z || 0).toFixed(1)})`);
     }
   }
   // items and powers: their line, its mods literal and its text

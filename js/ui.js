@@ -482,7 +482,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v1.1</span>
+      <span class="app-ver" aria-label="Game version">v1.2</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -622,13 +622,6 @@
       ? (heroName ? `Select ${esc(heroName)} ➔` : (relics.length && !introOn() ? 'Next ▶' : 'Start the game!'))
       : 'Tap a hero';
     const offer = (run.startOffer || []).slice();
-    if (!offer.includes('grok')) {
-      const tankIdx = offer.findIndex(k => B.heroClass && B.heroClass(k) === 'tank');
-      if (tankIdx !== -1) offer[tankIdx] = 'grok';
-      else if (offer.length) offer[0] = 'grok';
-      else offer.push('grok');
-      run.startOffer = offer;
-    }
     if (B.SpriteManager && B.SpriteManager.preload) B.SpriteManager.preload(offer);
     return `<section class="start s1 v3 ${dealIn(1)}">${stepsHTML(1, relics.length > 0)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
       ${heroStage(offer, f, 'start-pick', startHint())}${heroDetail(f)}

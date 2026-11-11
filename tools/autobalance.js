@@ -168,7 +168,8 @@ function computeDecisions(stats) {
     const rate = heroRates[i];
     const gap = rate - heroMean;
     const z = data.startRuns ? (gap / S.seRate(rate, data.startRuns)) : 0;
-    const currentKnob = D.TUNE.power[k] || 1.0;
+    const hDef = D.HEROES[k];
+    const curHp = hDef.hp, curAtk = hDef.atk, curGrow = hDef.grow || 1.0;
 
     let step = 0;
     let dir = 'hold';
@@ -177,9 +178,13 @@ function computeDecisions(stats) {
       dir = gap > 0 ? 'nerf' : 'buff';
     }
 
+    const nextHp = step !== 0 ? Math.round(curHp * (1 + step) / 5) * 5 : curHp;
+    const nextAtk = step !== 0 ? Math.max(1, Math.round(curAtk * (1 + step))) : curAtk;
+    const nextGrow = step !== 0 ? +(curGrow * (1 + step * 0.5)).toFixed(2) : curGrow;
+
     decisions.hero.push({
       id: k,
-      name: D.HEROES[k].name,
+      name: hDef.name,
       runs: data.startRuns,
       clears: data.startClears,
       rate,
@@ -187,8 +192,12 @@ function computeDecisions(stats) {
       z,
       dir,
       sig: dir !== 'hold',
-      knob: currentKnob,
-      next: +(currentKnob * (1 + step)).toFixed(4),
+      curHp,
+      nextHp,
+      curAtk,
+      nextAtk,
+      curGrow,
+      nextGrow,
       comb: { z, d: gap },
       sim: { p: rate, ci: S.wilson(data.startClears, data.startRuns), n: data.startRuns }
     });
@@ -405,11 +414,14 @@ function generateMarkdownReport(stats, decisions, iteration) {
 
   // Heroes
   L.push('## Heroes Win & Clear Rates');
-  L.push('| Hero | Runs | Win Rate | Target Gap | Power Factor | Action |');
+  L.push('| Hero | Runs | Win Rate | Target Gap | Flat Stats & Growth (HP / ATK / Grow) | Action |');
   L.push('|---|---|---|---|---|---|');
   const sortedHeroes = decisions.hero.slice().sort((a, b) => b.rate - a.rate);
   for (const h of sortedHeroes) {
-    L.push(`| ${h.name} (${h.id}) | ${h.runs} | ${(h.rate * 100).toFixed(1)}% | ${(h.gap >= 0 ? '+' : '')}${(h.gap * 100).toFixed(1)}pp | ${h.knob} -> ${h.next} | ${h.dir} |`);
+    const statsStr = h.sig
+      ? `${h.curHp}/${h.curAtk}/${h.curGrow} -> ${h.nextHp}/${h.nextAtk}/${h.nextGrow}`
+      : `${h.curHp}/${h.curAtk}/${h.curGrow}`;
+    L.push(`| ${h.name} (${h.id}) | ${h.runs} | ${(h.rate * 100).toFixed(1)}% | ${(h.gap >= 0 ? '+' : '')}${(h.gap * 100).toFixed(1)}pp | ${statsStr} | ${h.dir} |`);
   }
   L.push('');
 
