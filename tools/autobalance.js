@@ -167,14 +167,15 @@ function computeDecisions(stats) {
     const data = stats.heroes[k] || { startRuns: 0, startClears: 0, teamRuns: 0, teamClears: 0 };
     const rate = heroRates[i];
     const gap = rate - heroMean;
-    const z = data.startRuns ? (gap / S.seRate(rate, data.startRuns)) : 0;
+    const se = data.startRuns ? Math.sqrt(0.75 * 0.75 * (rate * (1 - rate) / data.startRuns) + (data.teamRuns ? 0.25 * 0.25 * (rate * (1 - rate) / data.teamRuns) : 0)) : 1;
+    const z = se > 0 ? (gap / se) : 0;
     const hDef = D.HEROES[k];
     const curHp = hDef.hp, curAtk = hDef.atk, curGrow = hDef.grow || 1.0;
 
     let step = 0;
     let dir = 'hold';
-    if (Math.abs(gap) >= 0.01 && data.startRuns >= 20 && Math.abs(z) >= 1.5) {
-      step = Math.max(-0.07, Math.min(0.07, -0.55 * (gap / 1.45)));
+    if (Math.abs(gap) >= 0.02 && data.startRuns >= 20 && Math.abs(z) >= 0.75) {
+      step = Math.max(-0.06, Math.min(0.06, -0.45 * (gap / 1.45)));
       dir = gap > 0 ? 'nerf' : 'buff';
     }
 
@@ -470,7 +471,17 @@ function generateMarkdownReport(stats, decisions, iteration) {
   for (let it = 1; it <= ITERATIONS; it++) {
     console.log(`--- [Iteration ${it}/${ITERATIONS}] Simulating ${TOTAL_RUNS} runs across all CPU cores... ---`);
     const t0 = Date.now();
-    const recs = await runBatch(TOTAL_RUNS, SEED + it * 100);
+    const CHUNK_SIZE = 10000;
+    const recs = [];
+    for (let c = 0; c < TOTAL_RUNS; c += CHUNK_SIZE) {
+      const thisChunk = Math.min(CHUNK_SIZE, TOTAL_RUNS - c);
+      const chunkSeed = SEED + it * 100000 + c;
+      const c0 = Date.now();
+      const chunkRecs = await runBatch(thisChunk, chunkSeed);
+      recs.push(...chunkRecs);
+      const cDuration = ((Date.now() - c0) / 1000).toFixed(1);
+      console.log(`  -> Progress: ${recs.length}/${TOTAL_RUNS} runs (${cDuration}s for this ${thisChunk} batch)`);
+    }
     const duration = ((Date.now() - t0) / 1000).toFixed(1);
     console.log(`Completed ${recs.length} runs in ${duration}s.`);
 

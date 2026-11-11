@@ -655,17 +655,20 @@ function mapChoiceIn(o) {
     const ORD = ['easy', 'medium', 'hard'];
     if (POLICY === 'hard') { const h = o.findIndex(x => x.diff === 'hard'); if (h >= 0) return h; return o.length - 1; }
     if (POLICY === 'easy') { const e = o.findIndex(x => x.diff === 'easy'); return e >= 0 ? e : 0; }
-    if (POLICY === 'smart') {
+    if (POLICY === 'smart' || POLICY === 'medium') {
       // Bounty Hunter's Map: Hard fights pay double gold, Easy fights pay 0!
       if (run.relics.includes('huntmap')) {
         const h = o.findIndex(x => x.diff === 'hard');
         if (h >= 0 && run.lives > 0) return h;
       }
-      // Estimate team strength vs fight number: if well-geared and Ward is intact, take Hard for +4 extra gold; if Ward is broken and early, take Easy/Medium
+      // Estimate team strength vs fight number: if well-geared and Ward is intact, take Hard for +4 extra gold
       const avgItems = run.heroes.reduce((s, h) => s + h.items.length, 0) / Math.max(1, run.heroes.length);
-      if (run.lives > 0 && run.heroes.length >= 3 && avgItems >= 1.8 && run.fightNo >= 3 && run.fightNo <= 6) {
-        const h = o.findIndex(x => x.diff === 'hard');
-        if (h >= 0) return h;
+      const h = o.findIndex(x => x.diff === 'hard');
+      if (h >= 0 && run.lives > 0) {
+        if (run.heroes.length >= 3 && avgItems >= 1.0 && run.fightNo >= 2) return h;
+        // Natural player distribution: confident players take hard ~30% of the time when offered
+        const roll = fastHash(run.seed, run.step * 17 + 101);
+        if (roll < 0.32) return h;
       }
     }
     const m = o.findIndex(x => x.diff === 'medium'); if (m >= 0) return m;

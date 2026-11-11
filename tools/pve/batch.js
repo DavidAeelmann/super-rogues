@@ -14,7 +14,7 @@ if (!isMainThread) {
   function parentPost(o) { parentPort.postMessage(o); }
 } else {
   // runBatch(runs, seed) -> Promise<records[]>
-  const runBatch = (runs, seed = 1, tune = null, mode = 'hero', list = null, policy = 'medium', cores = Math.max(1, os.cpus().length - 1)) => new Promise((resolve, reject) => {
+  const runBatch = (runs, seed = 1, tune = null, mode = 'hero', list = null, policy = 'medium', cores = Math.max(1, os.cpus().length)) => new Promise((resolve, reject) => {
     const all = []; let done = 0;
     for (let w = 0; w < cores; w++) {
       const wk = new Worker(__filename, { workerData: { from: w, to: runs, step: cores, seed, tune, mode, list, policy } });
