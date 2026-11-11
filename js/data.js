@@ -24,7 +24,7 @@
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
     // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
-    fightScale: [1, 1.53, 1.665, 1.81, 1.788, 2.227, 2.422, 2.632, 2.884],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%; v126 (review #223, David: "make the 2nd half of pve (after the first boss) slight, keyword SLIGHTLY, harder"): fights 5-7 x1.04, the second boss x1.02
+    fightScale: [1, 1.539, 1.675, 1.821, 1.788, 2.241, 2.437, 2.648, 2.884],   // v61 (review #73) tuned by tools/tune-pve.js (medium ~90%, bosses ~55%); v62 (review #86) gentler: fights 1-3 medium 95% hard 72%, first boss 62; v62h: retuned after the Defense merge (review #96)%; v126 (review #223, David: "make the 2nd half of pve (after the first boss) slight, keyword SLIGHTLY, harder"): fights 5-7 x1.04, the second boss x1.02
     firstFight: 0.3,  // review #22: the first fight is fought by a single hero: a small enemy budget (v64, review #126: one hero again; 0.3 measured, a gentle first win)
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // review #24: sudden death burns every unit for 1%, 2%, 3%... of max HP per second
@@ -210,7 +210,7 @@
          { id: 'mir5b', name: 'Phase Shift', desc: 'Once per fight, lethal damage instead leaves Mirage untargetable for 2s and heals 30%.', fl: ['phaseshift'] }],
       ] }),
     rook: H({ name: 'Rivet', glyph: '⚙', role: 'Summoner', color: '#d9a441',
-      hp: 660, atk: 43, armor: 23, as: 0.8, range: 2, ms: 2, mana: 70, m0: 50, grow: 1.21,
+      hp: 665, atk: 43, armor: 23, as: 0.8, range: 2, ms: 2, mana: 70, m0: 50, grow: 1.21,
       abil: 'turret', abName: 'Clockwork Turret', abDesc: 'Builds a turret (range 3, 80% of his Attack as attack) next to Rivet. Max 2; at max, repairs them instead.',
       ab: { max: 2, hpMul: 1, asMul: 1, burn: 0, stun: 0, mortar: 0 },
       specs: [
@@ -300,7 +300,7 @@
          { id: 'ech5b', name: 'Showstopper', desc: 'Rallying Refrain stuns adjacent enemies for 1s.', ab: { stun: 1 } }],
       ] }),
     blaze: H({ name: 'Flint', glyph: '🔫', role: 'Ranger', color: '#e08a3a',
-      hp: 675, atk: 61, armor: 15, as: 0.95, range: 3, ms: 2.5, mana: 50, m0: 10, crit: 0.1, grow: 1.8,
+      hp: 670, atk: 61, armor: 15, as: 0.95, range: 3, ms: 2.5, mana: 50, m0: 10, crit: 0.1, grow: 1.79,
       mods: { critStack: 0.02, critStackCap: 0.3 },
       abil: 'fan', abName: 'Six-Shot Flurry', abDesc: 'Passive: every crit gives +2% crit chance (up to +30%). Active: fires 6 quick shots at the target, 70% Attack as physical damage each.',
       ab: { shots: 6, dmg: 0.7, ricochet: 0, splash: 0, pen: 0 },
@@ -430,7 +430,7 @@
          { id: 'bar5b', name: 'Last Call', desc: 'Barrel Breaker deals double.', ab: { dmg: 1.5 } }],
       ] }),
     azgul: H({ name: 'Inferno', glyph: '😈', role: 'Fighter', color: '#c8321e',
-      hp: 745, atk: 61, armor: 25, as: 0.8, range: 1, ms: 2.5, mana: 89, m0: 30, mods: { rageDmg: 1 }, grow: 1.34,
+      hp: 750, atk: 62, armor: 25, as: 0.8, range: 1, ms: 2.5, mana: 89, m0: 30, mods: { rageDmg: 1 }, grow: 1.35,
       abil: 'hellfire', abName: 'Brimstone Nova', abDesc: 'Passive: +1% damage per 1% Health missing. Active: spends 10% of his Health to blast enemies within 2 hexes for 120% Attack + 70% Magic, then burns them for 40% Attack per second for 3s.',
       ab: { radius: 2, dmg: 1.2, apdmg: 0.7, burn: 0.4, cost: 0.1, imps: 0 },
       specs: [
@@ -591,7 +591,7 @@
     // them): melees or archers. Cannot move, but can be killed like others. No auto attack. When soldiers attack he
     // charges mana. Ultimate is putting all his units in a frenzy"
     citadel: H({ name: 'Citadel', glyph: '🏰', role: 'Summoner', color: '#c9a26a', fl: ['tower'],
-      hp: 1065, atk: 39, armor: 35, as: 0.5, range: 2, ms: 0, mana: 101, m0: 0, grow: 0.88,
+      hp: 1070, atk: 39, armor: 35, as: 0.5, range: 2, ms: 0, mana: 101, m0: 0, grow: 0.88,
       abil: 'garrison', abName: 'Call to Arms', abDesc: 'Passive (Garrison): cannot move or attack. Every 7s it sends out a soldier (up to 3): a footman (165% Magic as Health, 18% Magic as attack) or an archer (100% Magic as Health, 16% Magic as attack, range 3). Their hits fill its Energy. Active: soldiers heal 30% and frenzy for 5s (+50% attack speed, +25% Attack), and one more marches out (max 5).',
       ab: { every: 7, max: 3, frenzy: 5, fhp: 1.65, fatk: 0.18, ahp: 1.0, aatk: 0.16, vet: 0, shields: 0, champion: 0, last: 0 },
       specs: [
@@ -625,7 +625,7 @@
          { id: 'smo5b', name: 'Fire Brand', desc: 'Burning enemies take 20% more damage from everyone.', ab: { vuln: 0.2 } }],
       ] }),
     tom: H({ name: 'Tom', glyph: '🍲', role: 'Support', color: '#e8d9b0',
-      hp: 785, atk: 40, armor: 23, as: 0.9, range: 2, ms: 2, mana: 39, m0: 15, grow: 0.5,
+      hp: 775, atk: 40, armor: 23, as: 0.9, range: 2, ms: 2, mana: 39, m0: 15, grow: 0.5,
       abil: 'dishes', abName: 'Daily Special', abDesc: 'Serves 2 different dishes to random allies: hot pie (heals 90% Magic), jerky (+25% Attack for 8s), pepper soup (+30% attack speed for 8s) or pudding (a shield of 110% Magic).',
       ab: { dishes: 2, heal: 0.9, atk: 0.25, as: 0.3, shield: 1.1, big: 0, dur: 8, all: 0, double: 0, mana: 0, pan: 0 },
       specs: [
@@ -699,7 +699,7 @@
     // v121 (reviews #209 #210 #211 #212, David: three new heroes, "balance the stats and abilities, these are just suggestions for new champs, do them")
     // Chronos: "A battlefield manipulator who controls the flow of combat and turns back time on damage"
     chronos: H({ name: 'Chronos', glyph: '⏳', role: 'Controller', color: '#4dd0e1',
-      hp: 505, atk: 32, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.5,
+      hp: 510, atk: 32, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.5,
       abil: 'rewind', abName: 'Rewind', abDesc: 'Passive (Decelerate): his attacks slow 5% per hit (up to 5x, 3s). Active: the most hurt ally goes back 2.5s in time: its Health returns to what it was (at least 150% Magic healed) and it ignores crowd control for 2s.',
       ab: { heal: 1.5, back: 2.5, immune: 2, decel: 0.05, decelCap: 5, paradox: 0, stasis: 0, warp: 0, anchor: 0, shock: 0, accel: 0, targets: 1, timestop: 0 },
       specs: [
@@ -2204,7 +2204,7 @@
     I('bloodthirster', 'Sanguine Saber', 'rare', { atk: 12.81, ls: 0.1281 }, '+15 Attack, +15% lifesteal'),
     I('thornmail', 'Bramblemail', 'rare', { armor: 30.72, thorns: 0.2047 }, '+30 Defense, reflects 20% melee damage'),
     I('warmog', 'Trollheart Cuirass', 'rare', { hp: 112.02, regen: 0.0048 }, '+145 Health, 0.48% regen per second'),
-    I('crossbow', 'Repeating Arbalest', 'rare', { asPct: 0.4219 }, '+36% attack speed'),
+    I('crossbow', 'Repeating Arbalest', 'rare', { asPct: 0.4295 }, '+36% attack speed'),
     I('deathcap', 'Stargazer Hat', 'rare', { ap: 63.49 }, '+51 Magic'),
     I('visage', 'Soulmend Mask', 'rare', { armor: 12.82, hp: 94.14, healPower: 0.1583 }, '+17 Defense, +120 Health, +21% healing received'),
     I('bluecrystal', 'Azure Geode', 'rare', { manaRegen: 2.55 }, '+3 Energy per second'),
@@ -2227,7 +2227,7 @@
     I('tabi', 'Ironshod Boots', 'rare', { ms: 0.968, armor: 19.43 }, '+1 move speed, +20 Defense'),
     // epic
     I('guardian', 'Second Dawn Locket', 'epic', { revive: 0.2811, armor: 7.82 }, 'Revives once at 35% Health'),
-    I('titan', 'Mountain Grips', 'epic', { titan: 0.5765, hp: 57.71 }, 'Gains +3 Attack and +3 Defense per hit (max 15 stacks)'),
+    I('titan', 'Mountain Grips', 'epic', { titan: 0.5511, hp: 55.16 }, 'Gains +3 Attack and +3 Defense per hit (max 15 stacks)'),
     I('rabadon', 'Towering Cowl', 'epic', { ap: 112.68 }, '+100 Magic'),
     I('crown', "Conqueror's Circlet", 'epic', { allPct: 0.1903 }, '+19% Health, Attack, Magic, Defense'),
     I('stormbringer', 'Thunderspine', 'epic', { chainEvery: 3, chainTargets: 3.95, chainDmg: 0.7901, asPct: 0.3556 }, '+28% attack speed, every 3rd attack chains to 3 enemies'),
@@ -2252,10 +2252,10 @@
     I('stoneheart', 'Granite Heart', 'rare', { rampArmor: 1.98, rampArmorCap: 29.63 }, '+2 Defense every second (up to +30)'),
     I('soulbinder', 'Spirit Tether', 'rare', { atk: 8.25, killAtk: 8.25, killAtkCap: 49.51 }, '+8 Attack, +8 more when an enemy dies within 3 hexes (up to +49)'),
     I('frenzyblade', 'Rushing Blade', 'rare', { atk: 9.1, stackAs: 0.038, stackAsCap: 10.6 }, '+12 Attack, +5% attack speed per hit (14x)'),
-    I('manaweave', 'Starloom Robe', 'rare', { armor: 9.38, manaRegen: 2.36 }, '+12 Defense, +3 Energy per second'),
+    I('manaweave', 'Starloom Robe', 'rare', { armor: 9.12, manaRegen: 2.29 }, '+12 Defense, +3 Energy per second'),
     I('lightningrod', 'Copper Conductor', 'rare', { asPct: 0.294, chainEvery: 4, chainTargets: 2.56, chainDmg: 0.6391 }, '+23% attack speed, every 4th attack chains'),
     I('lifeline', 'Heartstring Amulet', 'rare', { hp: 132.73, shieldStartPct: 0.1769 }, '+150 Health, starts fights with a 20% shield'),
-    I('crackedlens', 'Cracked Monocle', 'rare', { crit: 0.4667, critStack: 0.02, critStackCap: 0.3426 }, '+31% crit, each crit +2% crit (up to +22%)'),
+    I('crackedlens', 'Cracked Monocle', 'rare', { crit: 0.4762, critStack: 0.02, critStackCap: 0.3496 }, '+31% crit, each crit +2% crit (up to +22%)'),
     I('colossus', 'Behemoth Heart', 'epic', { rampHpPct: 0.0124, rampHpPctCap: 0.495 }, '+1% max Health every second (up to +59%)'),
     I('eclipsecrown', 'Duskfall Diadem', 'epic', { ap: 64.38, apPerAtk: 3.21 }, '+61 Magic, +3 Magic per attack'),
     I('reaper', 'Harvest Scythe', 'epic', { atk: 33.54, reap: 0.1388 }, '+30 Attack, hits execute enemies below 12% Health'),
@@ -2306,20 +2306,20 @@
     N('gloves', 'g_venom', 'Asp Claws', 'rare', { asPct: 0.1036, poisonOnHit: 0.0068 }, '+12% attack speed, attacks poison 0.68% max Health/s'),
     N('boots', 'b_padded', 'Wool-Lined Boots', 'common', { hp: 126.67 }, '+150 Health'),
     N('boots', 'b_treads', "Runner's Treads", 'uncommon', { ms: 0.9047, armor: 10.89, hp: 83.45 }, '+1 move speed, +12 Defense, +91 Health'),
-    N('boots', 'b_greaves', 'Wargreaves', 'rare', { ms: 1.13, asPct: 0.2799 }, '+1 move speed, +25% attack speed'),
+    N('boots', 'b_greaves', 'Wargreaves', 'rare', { ms: 1.15, asPct: 0.2846 }, '+1 move speed, +25% attack speed'),
     N('boots', 'b_shadow', 'Hushsteps', 'rare', { dodge: 0.1831, firstMoveAtk: 0.3666 }, '+15% dodge, attack after moving deals +30%'),
     N('helmet', 'h_iron', 'Iron Sallet', 'common', { armor: 12.24 }, '+12 Defense'),
-    N('helmet', 'h_circlet', "Scholar's Circlet", 'uncommon', { ap: 21.69, manaStart: 21.69 }, '+15 Magic, +15 starting Energy'),
+    N('helmet', 'h_circlet', "Scholar's Circlet", 'uncommon', { ap: 22.17, manaStart: 22.17 }, '+15 Magic, +15 starting Energy'),
     N('armor', 'a_jerkin', 'Hide Jerkin', 'common', { hp: 105.36, dodge: 0.0352 }, '+120 Health, +4% dodge'),
     N('armor', 'a_plate', 'Banneret Plate', 'uncommon', { armor: 17.3, hp: 61.38 }, '+22 Defense, +76 Health'),
     // legendary: one per slot
     N('weapon', 'obsidianblade', 'Duskforged Greatsword', 'legendary', { atk: 35.67, splash: 0.4124, armorPen: 0.2453 }, '+33 Attack, attacks splash 38% to adjacent enemies, ignore 23% Defense'),
-    N('offhand', 'aegis', 'Shield of First Light', 'legendary', { shieldStartPct: 0.4, aura: [{ r: 0.98, stat: 'armor', val: 25.33 }] }, 'Starts fights with a 40% shield, adjacent allies +26 Defense'),
-    N('helmet', 'magicrown', 'Crown of the Conclave', 'legendary', { ap: 46.92, manaStart: 23.04, manaRegen: 1.64 }, '+56 Magic, +27 starting Energy, +2 Energy per second'),
+    N('offhand', 'aegis', 'Shield of First Light', 'legendary', { shieldStartPct: 0.4, aura: [{ r: 1.0003, stat: 'armor', val: 25.85 }] }, 'Starts fights with a 40% shield, adjacent allies +26 Defense'),
+    N('helmet', 'magicrown', 'Crown of the Conclave', 'legendary', { ap: 45.7, manaStart: 22.44, manaRegen: 1.6 }, '+56 Magic, +27 starting Energy, +2 Energy per second'),
     N('armor', 'dragonscale', 'Wyrmhide Mail', 'legendary', { hp: 137.86, armor: 12.17, dmgReduce: 0.0568 }, '+165 Health, +15 Defense, takes 7% less damage'),
     N('gloves', 'furygauntlets', 'Gauntlets of Wrath', 'legendary', { asPct: 0.2524, rageDmg: 0.5049 }, '+26% attack speed, up to +53% damage as Health drops'),
     N('boots', 'windwalkers', 'Galerunners', 'legendary', { ms: 2.04, dodge: 0.2154, asPct: 0.1642 }, '+2 move speed, +21% dodge, +16% attack speed'),
-    N('trinket', 'mountainheart', 'Heart of the Peak', 'legendary', { hpPct: 0.1331, regen: 0.0077, ccResist: 0.1958 }, '+17% max Health, 0.77% regen per second, crowd control 24% shorter'),
+    N('trinket', 'mountainheart', 'Heart of the Peak', 'legendary', { hpPct: 0.1287, regen: 0.0074, ccResist: 0.1893 }, '+17% max Health, 0.74% regen per second, crowd control 24% shorter'),
     // mythic: one per slot, only in late shops
     N('weapon', 'worldsplitter', 'Horizon Cleaver', 'mythic', { atk: 42.45, crit: 0.2174, critDmg: 0.5279, multishot: 0.5279, reap: 0.1035 }, '+42 Attack, +21% crit, +52% crit damage, attacks also hit a 2nd enemy for 52%, execute enemies below 10% Health'),
     N('offhand', 'eternitytome', 'Codex Without End', 'mythic', { ap: 37.33, apPerSec: 3, abilityBurn: 0.0254, manaMaxPct: -0.2 }, '+42 Magic, +3 Magic every second, abilities burn 3% max Health/s and need 20% less Energy'),
@@ -2347,19 +2347,19 @@
     // v30 (review #28): five items unlocked by the account level
     N('trinket', 'honeycomb', 'Honeycomb Charm', 'rare', { hp: 76.68, ap: 7.29, regen: 0.0074 }, '+100 Health, +10 Magic, regenerates 0.74% Health per second'),
     N('armor', 'starcloak', 'Starwoven Cloak', 'rare', { armor: 19.17, dodge: 0.0672 }, '+20 Defense, +7% dodge'),
-    N('offhand', 'tidepearl', 'Tide Pearl', 'epic', { ap: 53.81, manaStart: 23.93, armor: 15.53 }, '+45 Magic, +20 starting Energy, +13 Defense'),
+    N('offhand', 'tidepearl', 'Tide Pearl', 'epic', { ap: 54.86, manaStart: 24.4, armor: 15.83 }, '+45 Magic, +20 starting Energy, +13 Defense'),
     N('boots', 'moonslippers', 'Moonstep Slippers', 'epic', { ms: 1.08, dodge: 0.1594, manaRegen: 2.12 }, '+1 move speed, +15% dodge, +2 Energy per second'),
     N('weapon', 'comethammer', 'Comet Hammer', 'legendary', { atk: 41.92, ap: 36.81, splash: 0.3067 }, '+42 Attack, +37 Magic, attacks splash 30% to adjacent enemies'),
     // Strategy & Gameplan-Altering Items
-    N('offhand', 'voltaic_tether', 'Voltaic Tether', 'rare', { ap: 25, tether: 0.4285 }, '+34 Magic. Tethers to furthest ally: foes crossing the beam take 58% Magic/s and are slowed 50%'),
-    N('armor', 'living_crucible', 'Living Crucible', 'epic', { armor: 31.68, crucibleDeath: 0.9011 }, '+34 Defense. On death, detonates dealing 100% of all damage absorbed during battle split among surviving foes'),
+    N('offhand', 'voltaic_tether', 'Voltaic Tether', 'rare', { ap: 23.72, tether: 0.4066 }, '+34 Magic. Tethers to furthest ally: foes crossing the beam take 58% Magic/s and are slowed 50%'),
+    N('armor', 'living_crucible', 'Living Crucible', 'epic', { armor: 31.1, crucibleDeath: 0.8846 }, '+34 Defense. On death, detonates dealing 100% of all damage absorbed during battle split among surviving foes'),
     N('trinket', 'bounty_monocle', 'Bounty Monocle', 'rare', { atk: 12, bountyMark: 1.0 }, '+12 Attack. Marks highest-threat foe: deals +100% damage to mark, but -30% to others. Slaying mark awards +3 Gold'),
     N('weapon', 'bloodhound_cleaver', 'Bloodhound Cleaver', 'epic', { atk: 25.51, bloodhoundTeleport: 1.02 }, '+26 Attack. Blinks behind any enemy falling below 50% HP, striking with guaranteed Critical damage'),
-    N('trinket', 'glass_prism', "Glass Cannon's Prism", 'legendary', { asPct: 2.14, ap: 161, glassPrism: 2.14 }, '+100% attack speed, +94 Magic. Max HP is locked to 1; adjacent allies intercept all incoming damage for wearer'),
+    N('trinket', 'glass_prism', "Glass Cannon's Prism", 'legendary', { asPct: 2.35, ap: 176.44, glassPrism: 2.35 }, '+100% attack speed, +94 Magic. Max HP is locked to 1; adjacent allies intercept all incoming damage for wearer'),
     N('weapon', 'soul_siphon_scythe', 'Soul Harvester', 'rare', { atk: 18.65, soulHarvestKill: 15.53 }, '+18 Attack. Each takedown permanently grants +15 Max HP and +3 Attack for the rest of combat'),
     N('boots', 'chronostep_boots', 'Warp Spikes', 'epic', { ms: 1.52, dodge: 0.1519, blinkEveryAtk: 4 }, '+2 move speed, +15% dodge. Every 4th attack teleports the wearer to their target, stunning for 1s'),
     N('offhand', 'martyrs_aegis', "Martyr's Aegis", 'epic', { armor: 21.82, hp: 157.05, martyrAbsorb: 0.4362 }, '+24 Defense, +175 Health. Intercepts 48% of all damage taken by adjacent allies into wearer'),
-    N('helmet', 'mirage_mirror', 'Doppelgänger Mask', 'legendary', { ap: 40.81, spawnCloneStart: 1.02 }, '+41 Magic. Combat starts by spawning an exact illusory duplicate with 50% HP and 60% Attack'),
+    N('helmet', 'mirage_mirror', 'Doppelgänger Mask', 'legendary', { ap: 39.81, spawnCloneStart: 0.99 }, '+41 Magic. Combat starts by spawning an exact illusory duplicate with 50% HP and 60% Attack'),
     N('armor', 'chaos_engine', 'Volatile Reactor', 'legendary', { armor: 15.44, ap: 34.75, chaosNovaInterval: 4.64 }, '+18 Defense, +40 Magic. Every 5s releases a cosmic blast: dealing 120% Magic to foes and shielding allies for 20% max HP'),
   );
   // set bonuses count the pieces worn by the SAME hero (Run.heroMods)
@@ -2430,18 +2430,18 @@
   // WHAT: every team-wide Power (called relic in the code, "Power" on screen). 100 of them. Prices: B.CFG.relicCost.
   B.RELICS = [
     R('idol', 'Gilded Effigy', '+3 gold after each won fight.', { gold: 3 }),
-    R('drum', 'Clan Drum', 'All heroes +11% attack speed.', { mods: { asPct: 0.1073 } }),
+    R('drum', 'Clan Drum', 'All heroes +11% attack speed.', { mods: { asPct: 0.1052 } }),
     R('standard', 'Ironclad Standard', 'All heroes +12 Defense.', { mods: { armor: 9.54 } }),
-    R('lens', 'Wisp Lantern', 'All heroes +15% XP.', { mods: { xpPct: 0.1764 } }),
+    R('lens', 'Wisp Lantern', 'All heroes +15% XP.', { mods: { xpPct: 0.1816 } }),
     R('feather', 'Ashen Plume', 'The first hero to die each fight revives at 30% Health.', { fl: 'feather' }),
     R('seal', 'Guild Seal', 'Everything in shops costs 1 less.', { fl: 'seal' }),
     R('dice', 'Weighted Bones', 'First reroll in each shop is free.', { fl: 'dice' }),
-    R('font', 'Moonwell Basin', 'Heroes start fights with +35 Energy.', { mods: { manaStart: 47.97 } }),
+    R('font', 'Moonwell Basin', 'Heroes start fights with +35 Energy.', { mods: { manaStart: 48.89 } }),
     R('bloodstone', 'Heartblood Garnet', 'All heroes +8% lifesteal.', { mods: { ls: 0.0719 } }),
     R('tooth', 'Ogre Molar', 'All heroes +91 Health.', { mods: { hp: 65.76 } }),
     R('wits', 'Whetted Mind', 'All heroes +37 Magic.', { mods: { ap: 37.03 } }),
     R('clover', 'Lucky Sprig', 'All heroes +21% crit chance.', { mods: { crit: 0.2606 } }),
-    R('backpack', "Wayfarer's Satchel", 'Every hero gets +1 item slot.', { mods: { itemSlots: 1.16 } }),
+    R('backpack', "Wayfarer's Satchel", 'Every hero gets +1 item slot.', { mods: { itemSlots: 1.2 } }),
     R('crest', 'Crest of Many', 'Team size limit +1 (4 heroes).', { fl: 'crest' }),
     R('vengeance', 'Wrathful Shade', 'When a hero dies, the others gain +20% Attack.', { fl: 'vengeance' }),
     R('frostsigil', 'Rime Glyph', 'Enemies start every fight slowed by 40% for 4s.', { fl: 'frostsigil' }),
@@ -2469,11 +2469,11 @@
     R('seashell', 'Singing Seashell', 'All heroes +8 Defense and +7% attack speed.', { mods: { armor: 5.64, asPct: 0.0495 } }),
     R('kite', 'Paper Kite', 'All heroes +1 move speed and +5% dodge.', { mods: { ms: 1.14, dodge: 0.0562 } }),
     R('compass', 'Star Compass', 'All heroes +16% crit chance and +35% crit damage.', { mods: { crit: 0.1743, critDmg: 0.3704 } }),
-    R('teapot', 'Warm Teapot', 'All heroes regenerate 0.46% Health per second.', { mods: { regen: 0.0046 } }),
+    R('teapot', 'Warm Teapot', 'All heroes regenerate 0.45% Health per second.', { mods: { regen: 0.0045 } }),
     R('snowglobe', 'Snow Globe', 'All heroes +6 Defense and +42 Health.', { mods: { armor: 4.66, hp: 33.48 } }),
-    R('marbles', 'Marble Pouch', 'All heroes start fights with +31 Energy.', { mods: { manaStart: 44.28 } }),
+    R('marbles', 'Marble Pouch', 'All heroes start fights with +31 Energy.', { mods: { manaStart: 45.44 } }),
     R('fireflies', 'Firefly Jar', 'All heroes +10 Attack and +10 Magic.', { mods: { atk: 8.91, ap: 8.91 } }),
-    R('pinwheel', 'Pinwheel', 'All heroes +7% attack speed and +1 Energy per second.', { mods: { asPct: 0.0532, manaRegen: 0.7592 } }),
+    R('pinwheel', 'Pinwheel', 'All heroes +7% attack speed and +1 Energy per second.', { mods: { asPct: 0.0522, manaRegen: 0.7442 } }),
     R('horseshoe', 'Lucky Horseshoe', 'All heroes +8% dodge and +5% crit chance.', { mods: { dodge: 0.075, crit: 0.0467 } }),
     // v33 (review #40, David: "relics that give bonuses depending on unit formation"): judged from where the heroes stand
     // when the fight starts (front row = the blue row nearest the enemy, back row = the last one); the deploy screen
@@ -2517,7 +2517,7 @@
     R('king', "King's Crown", 'Your highest-level hero is crowned: +40% Health and Attack. When the King falls, the others panic (stunned for 2s).', { fl: 'king' }),
     // -- mana and abilities
     R('echo', 'Echo Chime', "Each hero's first ability in a fight goes off twice. Heroes start fights with no Energy.", { fl: 'echo' }),
-    R('fullmana', 'Overflow Cup', 'Heroes start fights with full Energy, but every ability needs 17% more Energy.', { fl: 'fullmana', mods: { manaMaxPct: 0.9979 } }),
+    R('fullmana', 'Overflow Cup', 'Heroes start fights with full Energy, but every ability needs 17% more Energy.', { fl: 'fullmana', mods: { manaMaxPct: 1.1176 } }),
     R('hush', 'Hush Bell', 'Enemies cannot use abilities for the first 10s of a fight; your heroes cannot for the first 2s.', { fl: 'hush' }),
     R('leyline', 'Ley Line Chalk', 'When a hero uses its ability, your other heroes in the same row gain 30 Energy.', { fl: 'leyline' }),
     // -- stats turned upside down
@@ -2730,7 +2730,7 @@
   B.DIFF = {
     easy: { name: 'Easy', budget: 3.2, elites: 0, mul: 1.085 },   // v61: mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
-    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: 0.938 },   // v61: ~60% (v62: 72% in fights 1-3)
+    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: 0.926 },   // v61: ~60% (v62: 72% in fights 1-3)
     horde: { name: 'Horde', budget: 8.4, elites: 0, pool: 2 },   // v44 (review #54): the Bounty Board's horde challenge
   };
 
@@ -2881,7 +2881,7 @@
   //   pvp  = a multiplier on Health, Attack and Magic in PvP fights only (duels and the final fight, both teams): a healer that is fair in the
   //          PvE can be weak against players and the reverse, and one number cannot fit both, so PvP has its own.
   // <TUNE-BEGIN>
-  B.TUNE = { base: 1.173, growth: 0.711, power: {}, spec: { ash2a: 1.0044, ash2b: 0.9929, ash3a: 0.9606, ash3b: 1.0348, ash4a: 0.9828, ash4b: 1.0037, ash5a: 0.94, ash5b: 1.06, azg2a: 1.0426, azg2b: 0.9452, azg3a: 0.9819, azg3b: 1.0084, azg4a: 0.9408, azg4b: 1.0568, azg5a: 0.9686, azg5b: 1.0245, bar2a: 0.9877, bar2b: 1.0096, bar3a: 1.0157, bar3b: 0.982, bar4a: 1.0288, bar4b: 0.9262, bar5a: 0.98, bar5b: 1.02, bas2a: 1.0245, bas2b: 0.9751, bas3a: 0.9504, bas3b: 1.0418, bas4a: 0.9585, bas4b: 1.0402, bas5a: 0.9699, bas5b: 1.0052, bel2a: 0.9982, bel2b: 0.999, bel3a: 1.1182, bel3b: 0.8878, bel4a: 1.0333, bel4b: 0.9504, blz2a: 0.9814, blz2b: 1.0087, blz3a: 0.9852, blz3b: 1.0112, blz4a: 0.9693, blz4b: 1.0252, blz5a: 0.8897, blz5b: 1.1044, bra2a: 1.0283, bra2b: 0.9707, bra3a: 1.0242, bra3b: 0.974, bra4a: 0.9977, bra4b: 0.9742, bra5a: 0.99, brm2a: 1.147, brm2b: 0.8655, brm3a: 0.9864, brm3b: 1.0049, brm4a: 0.7919, brm4b: 1.2323, brm5a: 1.0358, brm5b: 0.9615, buz2a: 1.0752, buz2b: 0.9276, buz3a: 1.0152, buz3b: 0.9835, buz4a: 1.0174, buz4b: 1.0206, buz5a: 1.03, chr2a: 1.0008, chr2b: 0.9974, chr3a: 1.079, chr3b: 0.9225, chr4a: 1.1105, chr4b: 0.8964, chr5a: 0.8306, chr5b: 1.191, cit2a: 0.9795, cit2b: 0.992, cit3a: 0.9668, cit3b: 1.0284, cit4a: 0.9931, cit4b: 1.0009, cit5a: 0.8431, cit5b: 1.1749, cor2a: 1.0049, cor2b: 0.9918, cor3a: 1.2527, cor3b: 0.7695, cor4a: 0.9356, cor4b: 0.9776, cor5a: 1.01, cor5b: 0.99, dra2a: 0.9943, dra2b: 0.998, dra3a: 0.9561, dra3b: 1.0413, dra4a: 0.997, dra4b: 0.9906, dra5a: 1.1236, dra5b: 0.8836, dsh2a: 0.9358, dsh2b: 1.0601, dsh3a: 0.9236, dsh3b: 1.072, dsh4a: 0.9982, dsh4b: 0.9926, dsh5a: 0.9985, dsh5b: 1.1236, due2a: 0.9666, due2b: 1.0246, due3a: 0.9873, due3b: 1.013, due4a: 0.9921, due4b: 0.9933, due5a: 0.95, due5b: 1.05, ech2a: 1.0277, ech2b: 0.9693, ech3a: 1.0791, ech3b: 0.9245, ech4a: 1.0553, ech4b: 0.935, gar2a: 0.9552, gar2b: 1.0416, gar3a: 0.9605, gar3b: 1.0399, gar4a: 1.0353, gar4b: 0.9646, gar5a: 1.03, gar5b: 0.97, gla2a: 0.8658, gla2b: 1.1049, gla3a: 0.9224, gla3b: 1.0796, gla4a: 0.6646, gla4b: 1.4545, gla5a: 0.87, gla5b: 1.13, gri2a: 0.9103, gri2b: 1.0857, gri3a: 1.131, gri3b: 0.8732, gri4a: 1.04, gri4b: 0.9489, gri5a: 0.94, gri5b: 1.06, grk2a: 1.0183, grk2b: 0.9765, grk3a: 1.0603, grk3b: 0.9374, grk4a: 1.027, grk4b: 1.0057, grk5a: 1.02, har2a: 1.0151, har2b: 0.9801, har3a: 1.0025, har3b: 0.9951, har4a: 1.0607, har4b: 0.9227, har5a: 0.8979, har5b: 1.0417, hip2a: 1.0243, hip2b: 0.9698, hip3a: 0.9238, hip3b: 1.0668, hip4a: 1.0492, hip4b: 0.9485, hip5a: 0.9186, hip5b: 1.1134, imh2a: 1.067, imh2b: 0.9326, imh3a: 0.9762, imh3b: 1.0125, imh4a: 1.1734, imh4b: 0.844, imh5a: 1.06, imh5b: 0.94, kag2a: 1.0518, kag2b: 0.9461, kag3a: 1.0028, kag3b: 0.9939, kag4a: 0.992, kag4b: 0.9539, kag5a: 0.9648, kag5b: 1.032, kes2a: 0.9785, kes2b: 1.0144, kes3a: 1.0286, kes3b: 0.9567, kes4a: 1.0556, kes4b: 0.93, kes5a: 1.1794, kes5b: 0.8388, kit2a: 0.9273, kit2b: 1.0745, kit3a: 1.0304, kit3b: 0.9661, kit4a: 0.972, kit4b: 1.0108, kit5a: 0.935, kit5b: 1.0582, leo2a: 0.9999, leo2b: 0.9979, leo3a: 0.9865, leo3b: 1.0071, leo4a: 0.9829, leo4b: 1.014, leo5a: 0.8836, leo5b: 1.2023, lum2a: 1.106, lum2b: 1.0097, lum3a: 1.0591, lum3b: 0.9421, lum4a: 1.1334, lum4b: 0.8755, lum5a: 0.9206, lum5b: 1.0278, med2a: 0.9157, med2b: 1.0451, med3a: 1.134, med3b: 0.8956, med4a: 1.0283, med4b: 0.9715, med5a: 1.0247, med5b: 0.9583, mir2a: 0.8836, mir2b: 1.0946, mir3a: 0.9678, mir3b: 1.0302, mir4a: 0.984, mir4b: 1.0091, mir5a: 0.95, mir5b: 1.05, mor2a: 0.9615, mor2b: 1.0299, mor3a: 0.7215, mor3b: 1.3618, mor4a: 1.0645, mor4b: 0.9319, mor5a: 0.92, nyx2a: 1.0614, nyx2b: 0.9538, nyx3a: 1.005, nyx3b: 0.985, nyx4a: 1.0581, nyx4b: 0.9397, nyx5a: 1.2262, nyx5b: 0.8052, ony2a: 1.0061, ony2b: 0.9912, ony3a: 0.8665, ony3b: 1.1445, ony4a: 0.9121, ony4b: 1.0888, ony5a: 1.0944, ony5b: 0.9064, pip2a: 1.0555, pip2b: 0.9419, pip3a: 1.0257, pip3b: 0.9705, pip4a: 0.9712, pip4b: 1.0469, pip5a: 0.95, pla2a: 0.9501, pla2b: 1.0581, pla3a: 0.9705, pla3b: 1.0552, pla4a: 1.0048, pla4b: 1.0073, pla5a: 0.9825, pla5b: 1.0133, pri2a: 0.9413, pri2b: 1.0596, pri3a: 0.9286, pri3b: 1.075, pri4a: 1.0205, pri4b: 1.0098, pri5a: 1.09, pri5b: 0.91, pyr2a: 1.021, pyr2b: 1.0625, pyr3a: 0.9336, pyr3b: 1.0663, pyr4a: 0.9904, pyr4b: 0.9946, pyr5a: 0.9157, pyr5b: 1.0966, rex2a: 0.8543, rex2b: 1.1635, rex3a: 1.0354, rex3b: 0.9556, rex4a: 1.0136, rex4b: 0.9758, rex5a: 0.95, rex5b: 1.05, roh2a: 1.0822, roh2b: 0.9198, roh3a: 0.9872, roh3b: 1.0052, roh4a: 0.9482, roh4b: 1.0473, roh5a: 1.1564, roh5b: 0.8593, roo2a: 0.9493, roo2b: 1.0499, roo3a: 0.905, roo3b: 1.0858, roo4a: 0.8475, roo4b: 1.1628, roo5b: 1.1, ser2a: 0.9891, ser2b: 1.0059, ser3a: 1.0584, ser3b: 0.9379, ser4a: 0.861, ser4b: 1.1514, ser5b: 1.03, smo2a: 1.0343, smo2b: 0.9534, smo3a: 1.0143, smo3b: 1.004, smo4a: 1.0997, smo4b: 0.8965, smo5a: 0.95, smo5b: 1.05, spr2a: 0.8564, spr2b: 1.064, spr3a: 0.883, spr3b: 1.1154, spr4a: 0.9462, spr4b: 1.0349, spr5b: 0.95, ste2a: 0.9608, ste2b: 1.0397, ste3a: 0.944, ste3b: 1.0552, ste4a: 1.0461, ste4b: 0.947, ste5a: 1.02, ste5b: 0.98, tem2a: 0.9887, tem2b: 1.0042, tem3a: 0.8503, tem3b: 1.0788, tem4a: 0.8797, tem4b: 1.124, tem5a: 1.15, tem5b: 0.85, thr2a: 1.0146, thr2b: 1.0433, thr3a: 1.03, thr3b: 0.9618, thr4a: 0.9306, thr4b: 1.0597, thr5a: 1.0689, thr5b: 0.9245, tom2a: 1.0798, tom2b: 0.998, tom3a: 0.9005, tom3b: 1.124, tom4a: 0.928, tom4b: 1.0753, tom5a: 1.12, tom5b: 0.88, ves2a: 0.96, ves2b: 1.0327, ves3a: 1.0265, ves3b: 0.9718, ves4a: 0.9859, ves4b: 1.0037, ves5a: 1.0408, ves5b: 0.9309, vex2a: 1.0285, vex2b: 1.0133, vex3a: 1.0501, vex3b: 0.943, vex4a: 0.9454, vex4b: 1.0455, vex5a: 1.0349, vex5b: 0.9602, vey2a: 0.9123, vey2b: 1.0903, vey3a: 0.9524, vey3b: 0.9754, vey4a: 1.3411, vey4b: 0.7205, vey5a: 1.03, vey5b: 0.97, zep2a: 1.0759, zep2b: 1.0096, zep3a: 1.0828, zep3b: 0.9092, zep4a: 1.0053, zep4b: 0.9775, zep5a: 0.97, zep5b: 1.03 }, pvp: { ashwing: 1.009, azgul: 0.692, barley: 1.051, blaze: 0.877, brakk: 0.799, bramble: 1.108, buzzwell: 1.189, citadel: 1.115, coralie: 0.983, deadshot: 0.836, echo: 1.322, gardener: 1.295, glacia: 0.865, grimhook: 1.057, grok: 0.653, harlequin: 0.646, hippolyta: 0.744, imhotep: 0.645, kage: 0.788, kestrel: 1.092, leonidas: 0.776, lumen: 1.384, medic: 1.6, mirage: 1.159, morrow: 1.308, nyx: 0.85, plasma: 1.171, prism: 1.256, pyra: 0.771, rex: 0.785, rohammer: 0.81, rook: 1.122, seraph: 1.137, smolder: 0.933, sprocket: 1.041, stellan: 0.99, tempest: 0.764, tom: 1.063, vesper: 1.15, vex: 0.907, vey: 0.901, zephyr: 0.9 } };
+  B.TUNE = { base: 1.173, growth: 0.711, power: {}, spec: { ash2a: 1.0044, ash2b: 0.9929, ash3a: 0.9233, ash3b: 1.075, ash4a: 0.9828, ash4b: 1.0037, ash5a: 0.94, ash5b: 1.06, azg2a: 1.0426, azg2b: 0.9452, azg3a: 0.9533, azg3b: 1.0378, azg4a: 0.9878, azg4b: 1.004, azg5a: 0.9686, azg5b: 1.0245, bar2a: 0.9877, bar2b: 1.0096, bar3a: 1.0157, bar3b: 0.982, bar4a: 1.0288, bar4b: 0.9262, bar5a: 0.98, bar5b: 1.02, bas2a: 1.0245, bas2b: 0.9751, bas3a: 0.9504, bas3b: 1.0418, bas4a: 0.9585, bas4b: 1.0402, bas5a: 0.9699, bas5b: 1.0052, bel2a: 0.9982, bel2b: 0.999, bel3a: 1.1182, bel3b: 0.8878, bel4a: 1.0333, bel4b: 0.9504, blz2a: 1.0165, blz2b: 0.9726, blz3a: 0.9852, blz3b: 1.0112, blz4a: 0.9693, blz4b: 1.0252, blz5a: 0.8897, blz5b: 1.1044, bra2a: 1.0283, bra2b: 0.9707, bra3a: 1.0242, bra3b: 0.974, bra4a: 0.9977, bra4b: 0.9742, bra5a: 0.99, brm2a: 1.147, brm2b: 0.8655, brm3a: 0.9864, brm3b: 1.0049, brm4a: 0.7919, brm4b: 1.2323, brm5a: 1.0358, brm5b: 0.9615, buz2a: 1.0752, buz2b: 0.9276, buz3a: 1.0152, buz3b: 0.9835, buz4a: 1.0174, buz4b: 1.0206, buz5a: 1.03, chr2a: 1.0008, chr2b: 0.9974, chr3a: 1.079, chr3b: 0.9225, chr4a: 1.1105, chr4b: 0.8964, chr5a: 0.8306, chr5b: 1.191, cit2a: 0.9561, cit2b: 1.0157, cit3a: 0.9668, cit3b: 1.0284, cit4a: 0.9931, cit4b: 1.0009, cit5a: 0.8431, cit5b: 1.1749, cor2a: 1.0049, cor2b: 0.9918, cor3a: 1.2527, cor3b: 0.7695, cor4a: 0.9356, cor4b: 0.9776, cor5a: 1.01, cor5b: 0.99, dra2a: 0.9943, dra2b: 0.998, dra3a: 0.9561, dra3b: 1.0413, dra4a: 0.997, dra4b: 0.9906, dra5a: 1.1236, dra5b: 0.8836, dsh2a: 0.9358, dsh2b: 1.0601, dsh3a: 0.9236, dsh3b: 1.072, dsh4a: 0.9982, dsh4b: 0.9926, dsh5a: 0.9985, dsh5b: 1.1236, due2a: 1.0149, due2b: 0.9734, due3a: 0.9873, due3b: 1.013, due4a: 0.9921, due4b: 0.9933, due5a: 0.95, due5b: 1.05, ech2a: 1.0277, ech2b: 0.9693, ech3a: 1.0791, ech3b: 0.9245, ech4a: 1.0553, ech4b: 0.935, gar2a: 0.9552, gar2b: 1.0416, gar3a: 0.9605, gar3b: 1.0399, gar4a: 1.0353, gar4b: 0.9646, gar5a: 1.03, gar5b: 0.97, gla2a: 0.8658, gla2b: 1.1049, gla3a: 0.9224, gla3b: 1.0796, gla4a: 0.6978, gla4b: 1.3818, gla5a: 0.87, gla5b: 1.13, gri2a: 0.9103, gri2b: 1.0857, gri3a: 1.131, gri3b: 0.8732, gri4a: 0.988, gri4b: 0.9963, gri5a: 0.94, gri5b: 1.06, grk2a: 1.0183, grk2b: 0.9765, grk3a: 1.0603, grk3b: 0.9374, grk4a: 1.027, grk4b: 1.0057, grk5a: 1.02, har2a: 1.0151, har2b: 0.9801, har3a: 0.9708, har3b: 1.0266, har4a: 1.0607, har4b: 0.9227, har5a: 0.8979, har5b: 1.0417, hip2a: 1.0243, hip2b: 0.9698, hip3a: 0.9238, hip3b: 1.0668, hip4a: 1.0492, hip4b: 0.9485, hip5a: 0.9186, hip5b: 1.1134, imh2a: 1.067, imh2b: 0.9326, imh3a: 0.9762, imh3b: 1.0125, imh4a: 1.1734, imh4b: 0.844, imh5a: 1.06, imh5b: 0.94, kag2a: 1.0518, kag2b: 0.9461, kag3a: 1.0028, kag3b: 0.9939, kag4a: 1.0416, kag4b: 0.9062, kag5a: 0.9648, kag5b: 1.032, kes2a: 1.0034, kes2b: 0.9886, kes3a: 1.0286, kes3b: 0.9567, kes4a: 1.0556, kes4b: 0.93, kes5a: 1.1794, kes5b: 0.8388, kit2a: 0.9273, kit2b: 1.0745, kit3a: 0.9847, kit3b: 1.0089, kit4a: 0.972, kit4b: 1.0108, kit5a: 0.935, kit5b: 1.0582, leo2a: 0.9999, leo2b: 0.9979, leo3a: 0.9865, leo3b: 1.0071, leo4a: 0.9829, leo4b: 1.014, leo5a: 0.8836, leo5b: 1.2023, lum2a: 1.0593, lum2b: 1.0523, lum3a: 1.0591, lum3b: 0.9421, lum4a: 1.1334, lum4b: 0.8755, lum5a: 0.9206, lum5b: 1.0278, med2a: 0.9157, med2b: 1.0451, med3a: 1.134, med3b: 0.8956, med4a: 1.0283, med4b: 0.9715, med5a: 1.0247, med5b: 0.9583, mir2a: 0.8836, mir2b: 1.0946, mir3a: 0.9981, mir3b: 0.9979, mir4a: 0.984, mir4b: 1.0091, mir5a: 0.95, mir5b: 1.05, mor2a: 0.9615, mor2b: 1.0299, mor3a: 0.7468, mor3b: 1.314, mor4a: 1.0645, mor4b: 0.9319, mor5a: 0.92, nyx2a: 1.0614, nyx2b: 0.9538, nyx3a: 1.005, nyx3b: 0.985, nyx4a: 1.0581, nyx4b: 0.9397, nyx5a: 1.2262, nyx5b: 0.8052, ony2a: 0.9794, ony2b: 1.0175, ony3a: 0.8665, ony3b: 1.1445, ony4a: 0.9121, ony4b: 1.0888, ony5a: 1.0944, ony5b: 0.9064, pip2a: 1.0555, pip2b: 0.9419, pip3a: 1.0257, pip3b: 0.9705, pip4a: 0.9712, pip4b: 1.0469, pip5a: 0.95, pla2a: 0.9501, pla2b: 1.0581, pla3a: 0.9705, pla3b: 1.0552, pla4a: 1.0048, pla4b: 1.0073, pla5a: 0.9825, pla5b: 1.0133, pri2a: 0.9413, pri2b: 1.0596, pri3a: 0.9286, pri3b: 1.075, pri4a: 1.0205, pri4b: 1.0098, pri5a: 1.09, pri5b: 0.91, pyr2a: 1.021, pyr2b: 1.0625, pyr3a: 0.9336, pyr3b: 1.0663, pyr4a: 0.9904, pyr4b: 0.9946, pyr5a: 0.9157, pyr5b: 1.0966, rex2a: 0.8912, rex2b: 1.1132, rex3a: 1.0858, rex3b: 0.9091, rex4a: 1.0136, rex4b: 0.9758, rex5a: 0.95, rex5b: 1.05, roh2a: 1.0822, roh2b: 0.9198, roh3a: 0.9872, roh3b: 1.0052, roh4a: 0.9482, roh4b: 1.0473, roh5a: 1.1564, roh5b: 0.8593, roo2a: 0.9493, roo2b: 1.0499, roo3a: 0.905, roo3b: 1.0858, roo4a: 0.8475, roo4b: 1.1628, roo5b: 1.1, ser2a: 0.9891, ser2b: 1.0059, ser3a: 1.0189, ser3b: 0.9729, ser4a: 0.861, ser4b: 1.1514, ser5b: 1.03, smo2a: 1.0343, smo2b: 0.9534, smo3a: 1.0143, smo3b: 1.004, smo4a: 1.0997, smo4b: 0.8965, smo5a: 0.95, smo5b: 1.05, spr2a: 0.8564, spr2b: 1.064, spr3a: 0.883, spr3b: 1.1154, spr4a: 0.9063, spr4b: 1.0785, spr5b: 0.95, ste2a: 0.9608, ste2b: 1.0397, ste3a: 0.944, ste3b: 1.0552, ste4a: 1.0461, ste4b: 0.947, ste5a: 1.02, ste5b: 0.98, tem2a: 0.9887, tem2b: 1.0042, tem3a: 0.8503, tem3b: 1.0788, tem4a: 0.8797, tem4b: 1.124, tem5a: 1.15, tem5b: 0.85, thr2a: 1.0146, thr2b: 1.0433, thr3a: 1.03, thr3b: 0.9618, thr4a: 0.9306, thr4b: 1.0597, thr5a: 1.0689, thr5b: 0.9245, tom2a: 1.0798, tom2b: 0.998, tom3a: 0.9005, tom3b: 1.124, tom4a: 0.928, tom4b: 1.0753, tom5a: 1.12, tom5b: 0.88, ves2a: 0.96, ves2b: 1.0327, ves3a: 1.0265, ves3b: 0.9718, ves4a: 0.9859, ves4b: 1.0037, ves5a: 1.0408, ves5b: 0.9309, vex2a: 1.0285, vex2b: 1.0133, vex3a: 1.0501, vex3b: 0.943, vex4a: 0.9454, vex4b: 1.0455, vex5a: 1.0349, vex5b: 0.9602, vey2a: 0.9123, vey2b: 1.0903, vey3a: 0.9524, vey3b: 0.9754, vey4a: 1.3411, vey4b: 0.7205, vey5a: 1.03, vey5b: 0.97, zep2a: 1.1254, zep2b: 0.9631, zep3a: 1.0828, zep3b: 0.9092, zep4a: 1.0053, zep4b: 0.9775, zep5a: 0.97, zep5b: 1.03 }, pvp: { ashwing: 1.009, azgul: 0.692, barley: 1.051, blaze: 0.877, brakk: 0.799, bramble: 1.108, buzzwell: 1.189, citadel: 1.115, coralie: 0.983, deadshot: 0.836, echo: 1.322, gardener: 1.295, glacia: 0.865, grimhook: 1.057, grok: 0.653, harlequin: 0.646, hippolyta: 0.744, imhotep: 0.645, kage: 0.788, kestrel: 1.092, leonidas: 0.776, lumen: 1.384, medic: 1.6, mirage: 1.159, morrow: 1.308, nyx: 0.85, plasma: 1.171, prism: 1.256, pyra: 0.771, rex: 0.785, rohammer: 0.81, rook: 1.122, seraph: 1.137, smolder: 0.933, sprocket: 1.041, stellan: 0.99, tempest: 0.764, tom: 1.063, vesper: 1.15, vex: 0.907, vey: 0.901, zephyr: 0.9 } };
   // <TUNE-END>
   // v44: who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
