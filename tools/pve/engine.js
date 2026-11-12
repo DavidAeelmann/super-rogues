@@ -743,7 +743,7 @@ function playRun(seed, opt = {}) {
     while (run.pending.length) {
       const p = run.pending[0];
       const h = run.heroes.find(x => x.uid === p.uid);
-      const idx = h ? pickBestSpecIdx(run, h, p.lvl) : (Run.rnd(run) < 0.5 ? 0 : 1);
+      const idx = (!opt.randomSpecs && h) ? pickBestSpecIdx(run, h, p.lvl) : (Run.rnd(run) < 0.5 ? 0 : 1);
       Run.chooseSpec(run, idx);
     }
     if (run.phase === 'recruit') { Run.recruit(run, recruitPick(run)); continue; }

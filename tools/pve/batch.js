@@ -9,15 +9,15 @@ if (!isMainThread) {
   applyTune(workerData.tune);
   const keys = Object.keys(B.HEROES), out = [];
   const L = workerData.list, mode = workerData.mode;   // mode 'hero' (every hero starts equally often), 'relic' or 'item' (the id from the list is forced from the start)
-  for (let i = workerData.from; i < workerData.to; i += workerData.step) out.push(playRun(workerData.seed * 100000 + i, mode === 'relic' ? { relic: L[i % L.length] } : mode === 'item' ? { item: L[i % L.length] } : { start: keys[i % keys.length], policy: workerData.policy }));
+  for (let i = workerData.from; i < workerData.to; i += workerData.step) out.push(playRun(workerData.seed * 100000 + i, mode === 'relic' ? { relic: L[i % L.length], randomSpecs: workerData.randomSpecs } : mode === 'item' ? { item: L[i % L.length], randomSpecs: workerData.randomSpecs } : { start: keys[i % keys.length], policy: workerData.policy, randomSpecs: workerData.randomSpecs }));
   parentPost(out);
   function parentPost(o) { parentPort.postMessage(o); }
 } else {
   // runBatch(runs, seed) -> Promise<records[]>
-  const runBatch = (runs, seed = 1, tune = null, mode = 'hero', list = null, policy = 'medium', cores = Math.max(1, os.cpus().length)) => new Promise((resolve, reject) => {
+  const runBatch = (runs, seed = 1, tune = null, mode = 'hero', list = null, policy = 'medium', cores = Math.max(1, os.cpus().length), randomSpecs = false) => new Promise((resolve, reject) => {
     const all = []; let done = 0;
     for (let w = 0; w < cores; w++) {
-      const wk = new Worker(__filename, { workerData: { from: w, to: runs, step: cores, seed, tune, mode, list, policy } });
+      const wk = new Worker(__filename, { workerData: { from: w, to: runs, step: cores, seed, tune, mode, list, policy, randomSpecs } });
       wk.on('message', m => { all.push(...m); if (++done === cores) resolve(all); });
       wk.on('error', reject);
     }
