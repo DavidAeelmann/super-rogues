@@ -198,6 +198,19 @@ function pickBestSpecIdx(run, h, lvl) {
 
 // Smart equipment & item management (handles Smolder Devour, Pack Rat, Minimalist's Vow, Set bonuses)
 function smartEquip(run) {
+  if (run._randomItems) {
+    const cap = h => Run.slots(run, h) - (Run.has(run, 'vow') ? 1 : 0);
+    for (let i = run.bag.length - 1; i >= 0; i--) {
+      const id = run.bag[i], it = ITEM[id];
+      if (!it) continue;
+      const elig = run.heroes.filter(h => h.items.length < cap(h) && !h.items.some(x => ITEM[x] && ITEM[x].type === it.type));
+      if (!elig.length) continue;
+      const h = elig[Math.floor(Run.rnd(run) * elig.length)];
+      h.items.push(id);
+      run.bag.splice(i, 1);
+    }
+    return;
+  }
   // First run standard autoEquip which already respects Minimalist's Vow and itemScore + set bonuses
   Run.autoEquip(run);
 
@@ -515,7 +528,13 @@ function shop(run, stats) {
     // Sell spare junk first if it helps afford shop items
     cleanBagForGold(run);
     for (let guard = 0; guard < 8; guard++) {
-      const b = bestItem(run, run.cur.stock);
+      let b = null;
+      if (run._randomItems) {
+        const aff = run.cur.stock.filter(s => !s.sold && s.cost <= run.gold);
+        if (aff.length) b = aff[Math.floor(Run.rnd(run) * aff.length)];
+      } else {
+        b = bestItem(run, run.cur.stock);
+      }
       if (b) {
         Run.buy(run, b.k);
         smartEquip(run);
@@ -770,6 +789,7 @@ function playRun(seed, opt = {}) {
   rec.lvl = run.heroes.reduce((a, h) => a + h.lvl, 0) / Math.max(1, run.heroes.length);
   rec.relics = run.relics.slice();
   rec.wornItems = [].concat(...run.heroes.map(h => h.items));
+  rec.heroItems = run.heroes.map(h => ({ key: h.key, items: h.items.slice() }));
   rec.items = [].concat(rec.wornItems, run.bag);
   rec.gold = run.gold;
   if (opt.returnRun) rec.run = run;

@@ -1172,6 +1172,9 @@
   const ON_DEF = ['revive', 'stasis', 'cleanseOnce', 'dmgReduce', 'rampArmor', 'rampHpPct', 'titan', 'ccResist', 'onDeathHeal', 'sunfire', 'crucibleDeath', 'martyrAbsorb', 'glassPrism', 'spawnCloneStart', 'chaosNovaInterval', 'tether'];
   // WHAT: how good an item is for a hero (higher is better): stats weighted by the hero's profile, plus a small bonus per rarity.
   function itemScore(key, id) {
+    if (B.ITEM_HERO_SCORE && B.ITEM_HERO_SCORE[key] && B.ITEM_HERO_SCORE[key][id] != null) {
+      return B.ITEM_HERO_SCORE[key][id];
+    }
     const it = B.ITEM[id], m = it.mods || {}, P = heroProfile(key), ap = P.apShare, dm = P.tank ? 1.8 : 1, om = P.tank ? 0.7 : 1;
     const W = { atk: (1.2 * (1 - ap) + 0.1) * om, ap: 1.2 * ap + 0.05, asPct: ((1 - ap) + 0.15) * om, crit: (0.9 * (1 - ap) + 0.05) * om, critDmg: 0.7 * (1 - ap) * om, ls: (0.7 * (1 - ap) + 0.15) * om,
       manaStart: 0.4 + 0.6 * ap, manaRegen: 0.3 + 0.7 * ap, manaOnHit: 0.3 + 0.6 * ap, manaMaxPct: 0.4 + 0.6 * ap,
