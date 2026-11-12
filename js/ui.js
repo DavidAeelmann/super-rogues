@@ -376,7 +376,7 @@
     const lgs = store.get('balance.league', null);
     h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
       <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey"><span class="prog-txt">${prog}</span>${track}</button>
-      <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
+      <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team" style="display:none" hidden aria-hidden="true">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
     animGold();
   }
   // v42 (review #51, David: "more dopamine hits"): sounds (js/sfx.js) with a switch, and a gold counter that counts up or
@@ -482,7 +482,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v1.3</span>
+      <span class="app-ver" aria-label="Game version">v1.4</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -948,7 +948,7 @@
         }
       }
       return '<div class="pm' + (h.bench ? ' benched' : '') + '" data-drop="hero:' + h.uid + '">' +
-        '<span class="por-btn" aria-label="' + esc(d.name) + '">' + img(h.key, 52, 'por') + '<span class="dplv">Lv ' + h.lvl + '</span></span>' +
+        '<button class="por-btn" data-act="hero-peek" data-arg="' + h.key + '" aria-label="' + esc(d.name) + '">' + img(h.key, 52, 'por') + '<span class="dplv">Lv ' + h.lvl + '</span></button>' +
         '<div class="pmb">' +
           '<div class="pmn"><b>' + esc(d.name || h.key) + '</b></div>' +
           '<div class="pmi">' + socks.join('') + '</div>' +
@@ -1818,7 +1818,7 @@
     const sellBagBtn = (run.bag && run.bag.length > 0) ? `<button class="qsell-btn gold-plaque" data-act="quick-sell-bag" title="Sell all unequipped bag items">${pouchSVG} <span>Sell Bag (+${bagVal}g)</span></button>` : '';
 
     const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
-    if (!desk) return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${sellBagBtn}${note}</div>${swapTip}<div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div><div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button data-act="team">${I('bag')} Team</button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
+    if (!desk) return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${sellBagBtn}${note}</div>${swapTip}<div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div><div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
 
     const rerollCoinSVG = `<svg class="btn-coin-sm" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/><circle cx="8" cy="8" r="4.5" fill="#fde047"/></svg>`;
 
@@ -1836,7 +1836,6 @@
           <svg class="ui" viewBox="0 0 24 24"><path d="M4 12 A8 8 0 0 1 18.5 6.5 L21 4 L21 10 L15 10 L17.5 7.5 A6 6 0 0 0 6 12 Z M20 12 A8 8 0 0 1 5.5 17.5 L3 20 L3 14 L9 14 L6.5 16.5 A6 6 0 0 0 18 12 Z" fill="currentColor"/></svg>
           New ${rerollCoinSVG} <span class="price-val">${rc}</span>
         </button>
-        <button data-act="team" class="steel-btn">${I('bag')} Team</button>
         <button class="primary molten-gold-cta" data-act="leave">Continue <span class="cta-arrow">▶</span></button>
       </div>
     </section>`;
