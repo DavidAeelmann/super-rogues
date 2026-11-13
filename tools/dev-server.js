@@ -51,7 +51,7 @@ http.createServer(async (req, res) => {
     const spriteDir = map[heroName] || heroName;
     p = '/art/' + spriteDir + '/sprite.png';
   }
-  if (!/^\/(index\.html|stats\.html|card\.html|style\.css|js\/[a-z0-9-]+\.js|fonts\/[a-z]+\.woff2|art\/[a-z_-]+\/[a-z0-9-]+\.(webp|jpg|png))$/.test(p)) { res.statusCode = 404; return res.end('not found'); }
+  if (!/^\/(index\.html|stats\.html|card\.html|style(-[a-z]+)?\.css|js\/[a-z0-9-]+\.js|fonts\/[a-z]+\.woff2|art\/[a-z_-]+\/[a-z0-9-]+\.(webp|jpg|png))$/.test(p)) { res.statusCode = 404; return res.end('not found'); }
   const f = path.join(ROOT, p);
   if (!fs.existsSync(f)) { res.statusCode = 404; return res.end('not found'); }
   res.setHeader('Content-Type', TYPES[path.extname(f)] || 'application/octet-stream');

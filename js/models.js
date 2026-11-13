@@ -3,13 +3,10 @@
 // Poses: idle (breathing), walk (legs + bob), attack (windup -> strike exactly at the hit tick), cast (arms up + glow),
 // hurt flash, death (tips over and fades). Coordinates: origin at the feet, facing right, S = unit scale in px.
 
-// FILE GUIDE. THE LOOK OF EVERY UNIT, drawn with code (no image files). Two parts: (1) the table M below = one line per hero / monster / boss: its colours and body type; (2) the "rigs" that draw each body type (humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg).
 // To change a unit's colours or gear: edit its line in M. To make a new body type: write a function like beast() and add it to RIGS at the bottom. Hero ART PICTURES (art/ folder) are handled by js/art.js and override these. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
-  // WHAT: the default humanoid: skin, body, trim, legs, bulk (width), head type, weapon. H({...}) overrides what is different.
   const H = (o) => Object.assign({ type: 'humanoid', skin: '#e0b48a', body: '#556', trim: '#aa8', legs: '#333', bulk: 1, head: 'bald', weapon: 'none', h: 1 }, o);
-  // WHAT: ONE LINE PER UNIT KEY (heroes, mobs, bosses, summons). Fields for a humanoid: skin, body, trim, legs, bulk, head (helm, hood, hat, chef, horns, skull...), weapon (sword, staff, bow, club...), cape, hair, orb... Other types: { type: 'beast' | 'golem' | ..., body, trim }.
   const M = {
     // heroes
     bastion: H({ body: '#4d6fb8', trim: '#d9c36a', legs: '#2c3a5c', bulk: 1.3, head: 'helm', weapon: 'shieldmace', pauldrons: '#8fa6d8', cape: '#23407a' }),
@@ -88,10 +85,8 @@
     egg: { type: 'egg', body: '#ffe0b0', trim: '#ff7a3d' },
 
     rohammer: H({ skin: '#c8906a', body: '#8a4a2a', trim: '#e8943a', legs: '#4a3020', bulk: 1.6, head: 'bald', hair: '#2a1a10', weapon: 'club', pauldrons: '#6a5a4a' }),
-    // v62h (reviews #98, #100, #101, #102)
     plasma: { type: 'cannon', body: '#4a5a78', trim: '#5fe0ff' },
     onyx: { type: 'turtle', body: '#3fae8a', trim: '#1f4a3c', shell: '#2d6a52', spikes: '#e8e0c8' },
-    // v121 (reviews #209-#212): Chronos the chronomancer, Belladonna the toxicologist, Kitsune the spirit fox
     chronos: H({ skin: '#e0c4a8', body: '#1f6f7a', trim: '#ffd23f', robe: '#174f58', head: 'hat', hat: '#123c44', hair: '#e8f6f8', weapon: 'staff', orb: '#4dd0e1', cape: '#0e3a42' }),
     bella: H({ skin: '#e8d0c0', body: '#3a5a22', trim: '#c6ff6a', robe: '#2a4418', head: 'hood', hood: '#24361a', eyes: '#c6ff6a', weapon: 'flask', orb: '#9ccc65', hair: '#2a1a2a' }),
     kitsune: H({ skin: '#f2d6c0', body: '#ff7043', trim: '#fff3e0', legs: '#5a2a1a', bulk: 0.85, head: 'ears', hair: '#ff8a50', weapon: 'daggers', sash: '#fff3e0', earCol: '#ff8a50' }),
@@ -118,7 +113,6 @@
   const seedOf = s => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
 
   // ------------------------------------------------------------------ helpers
-  // WHAT: HELPERS for drawing: shade() makes a colour lighter or darker, limb() a thick line, ball() a shaded circle, poly() a shaded polygon, seg() a thin line. Every rig is built from these.
   const TAU = Math.PI * 2;
   // ---- "more HD": every part is drawn cel-shaded: dark ink outline, shaded body, a light rim toward the
   // upper-left light, and a specular glint on round parts. All models go through these helpers.
@@ -127,7 +121,6 @@
     if (col[0] === '#') { const n = parseInt(col.length === 4 ? col.slice(1).split('').map(x => x + x).join('') : col.slice(1, 7), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
     const m = col.match(/[\d.]+/g); return m ? [+m[0], +m[1], +m[2]] : [128, 128, 128];
   }
-  // WHAT: lightens (f > 0) or darkens (f < 0) a colour.
   const SHADES = new Map();   // shade() is called thousands of times a frame with the same colours; the answers are remembered
   function shade(col, f) {
     const key = col + '|' + f, hit = SHADES.get(key); if (hit) return hit;
@@ -138,7 +131,6 @@
   }
   const isColor = col => typeof col === 'string' && (col[0] === '#' || col.startsWith('rgb'));
   function seg(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
-  // WHAT: draws a thick rounded line (an arm, a leg, a staff).
   function limb(c, x1, y1, x2, y2, w, col) {
     c.lineCap = 'round';
     if (w < 2) { c.strokeStyle = col; c.lineWidth = w; seg(c, x1, y1, x2, y2); return; }
@@ -146,7 +138,6 @@
     c.strokeStyle = isColor(col) ? shade(col, -0.12) : col; c.lineWidth = w; seg(c, x1, y1, x2, y2);
     if (isColor(col) && w >= 3) { const o = w * 0.2; c.strokeStyle = shade(col, LIGHT); c.lineWidth = Math.max(1, w * 0.3); seg(c, x1 - o, y1 - o, x2 - o, y2 - o); }
   }
-  // WHAT: draws a shaded sphere (a head, an orb).
   function ball(c, x, y, r, col, line) {
     c.beginPath(); c.arc(x, y, r, 0, TAU);
     if (isColor(col) && r >= 3) {
@@ -158,7 +149,6 @@
     if (isColor(col) && r >= 4) { c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.arc(x - r * 0.38, y - r * 0.42, r * 0.16, 0, TAU); c.fill(); }
     if (isColor(col) && r >= 5) { c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 1.1; c.beginPath(); c.arc(x, y, r * 0.82, Math.PI * 1.08, Math.PI * 1.62); c.stroke(); }   // lit rim
   }
-  // WHAT: draws a shaded polygon (armor plates, wings, flags).
   function poly(c, pts, col, line) {
     c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath();
     if (isColor(col)) {
@@ -183,7 +173,6 @@
   // arm pose: angle 0 = hanging down, positive = forward. Returns the hand position.
   const hand = (sx, sy, a, len) => [sx + Math.sin(a) * len, sy + Math.cos(a) * len];
 
-  // WHAT: how far each arm swings in the current pose (walking, attacking, casting).
   function armAngles(m, p) {
     // [front arm, back arm]
     let f = 0.35 + Math.sin(p.t * 2.2) * 0.05, b = -0.25 - Math.sin(p.t * 2.2) * 0.05;
@@ -221,7 +210,6 @@
   }
 
   // ------------------------------------------------------------------ humanoid
-  // WHAT: HUMANOID RIG. weapon() draws what the hero holds (sword, staff, bow, club...); headgear() the head and hat; arm / leg / joint the limbs; humanoid() puts a whole person together.
   function weapon(c, m, x, y, a, S, p) {
     // phi = direction the arm points (screen angle). Blades follow the arm (a swing arc); staves stay upright;
     // the bow is held vertical in front.
@@ -255,7 +243,6 @@
     c.restore();
   }
   // one drawing per weapon style; the local frame has +x along the weapon, S = the unit scale. A hero picks its style with ws (see WS above).
-  // WHAT: STYLES = the special weapons (holy sword, scimitar, flame staff, ladle, hammer...); weapon() falls back to the plain drawings when a hero has no style.
   const STYLES = {
     holy: (c, m, S, p) => { const g = 0.6 + 0.4 * Math.sin(p.t * 3); c.globalAlpha *= 0.35 * g; limb(c, S * 0.1, 0, S * 0.78, 0, S * 0.14, '#fff3a0'); c.globalAlpha /= 0.35 * g; poly(c, [[S * 0.08, -S * 0.05], [S * 0.72, -S * 0.035], [S * 0.84, 0], [S * 0.72, S * 0.035], [S * 0.08, S * 0.05]], '#f6faff', OUT); limb(c, S * 0.1, 0, S * 0.78, 0, 1.2, '#ffe9a0'); poly(c, [[S * 0.06, -S * 0.16], [S * 0.1, -S * 0.16], [S * 0.1, S * 0.16], [S * 0.06, S * 0.16]], '#e8b84a', OUT); limb(c, -S * 0.1, 0, S * 0.06, 0, S * 0.05, '#6a4a2a'); ball(c, -S * 0.12, 0, S * 0.05, '#ffe066'); },
     scimitar: (c, m, S, p) => { c.fillStyle = '#9fb0c4'; c.beginPath(); c.moveTo(S * 0.05, S * 0.03); c.quadraticCurveTo(S * 0.5, -S * 0.26, S * 0.88, S * 0.08); c.quadraticCurveTo(S * 0.55, -S * 0.04, S * 0.05, -S * 0.04); c.closePath(); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1.2; c.stroke(); c.strokeStyle = m.trim; c.lineWidth = 1.2; c.beginPath(); c.moveTo(S * 0.1, -S * 0.03); c.quadraticCurveTo(S * 0.55, -S * 0.2, S * 0.86, S * 0.07); c.stroke(); limb(c, S * 0.02, -S * 0.1, S * 0.02, S * 0.1, S * 0.05, '#2a3a44'); limb(c, -S * 0.1, 0, S * 0.04, 0, S * 0.05, '#1a2a30'); },
@@ -373,7 +360,6 @@
   };
   for (const k in SIG) if (M[k]) M[k].sig = SIG[k];
   const ease = { outC: x => 1 - Math.pow(1 - x, 3), inC: x => x * x * x, inQ: x => x * x, outBack: x => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); } };
-  // WHAT: a small badge drawn at x, y with radius r: sun, star, cross, gem, flame, anchor, gear, moon, ankh, shell, lambda, hammer, note, bolt, eye.
   function emblem(c, kind, x, y, r, col) {
     c.save(); c.translate(x, y); c.lineJoin = 'round'; c.lineCap = 'round';
     const fillInk = () => { c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 0.9; c.stroke(); };
@@ -394,7 +380,6 @@
     else if (kind === 'eye') { c.beginPath(); c.moveTo(-r, 0); c.quadraticCurveTo(0, -r * 0.9, r, 0); c.quadraticCurveTo(0, r * 0.9, -r, 0); fillInk(); c.beginPath(); c.arc(0, 0, r * 0.35, 0, TAU); c.fillStyle = INK; c.fill(); }
     c.restore();
   }
-  // WHAT: the particles around a unit (its aura): each kind is a few small shapes that loop on the clock, around a body of height S.
   function aura(c, m, S, p) {
     const sg = m.sig, kind = sg && sg.aura; if (!kind) return;
     const col = sg.ac || '#fff', t = p.t, n = kind === 'orbit' || kind === 'bees' ? 3 : 5, sd = seedOf(m._k || 'x');
@@ -421,9 +406,7 @@
     }
     c.restore();
   }
-  // WHAT: a hero's fidget kind from its weapon (what it does with its hands every few seconds when idle).
   const fidgetOf = w => /^(sword|rapier|daggers|axe|club|hook|wrench|scythe|spear)$/.test(w) ? 'twirl' : /^(staff|orb)$/.test(w) ? 'flare' : /^(bow|rifle|gun)$/.test(w) ? 'aim' : w === 'lute' ? 'strum' : /^(mug|flask)$/.test(w) ? 'drink' : /^(tower|shieldmace)$/.test(w) ? 'brace' : 'stretch';
-  // WHAT: draws the hero's details on its body; at = where (back, robe, chest, shoulders, head); A = the body anchors from humanoid().
   // cheap shapes for the small decorations (no gradient per piece: they are a few pixels wide)
   function dot(c, x, y, r, col) { c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); if (r >= 2.5) { c.strokeStyle = INK; c.lineWidth = 0.8; c.stroke(); } }
   function flat(c, pts, col) { c.beginPath(); pts.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(); }
@@ -480,7 +463,6 @@
     }
   }
   // a head with a forehead, brow, nose, lips, chin, jaw and an ear, in light and shade, instead of a plain sphere
-  // WHAT: draws the bare head (skin only) at hx, hy with radius r. Hair, hats and eyes are drawn over it by headgear().
   function face(c, m, hx, hy, r) {
     const sk = m.skin;
     c.beginPath(); c.moveTo(hx - r * 0.95, hy - r * 0.1);
@@ -498,7 +480,6 @@
       c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 1.1; c.lineCap = 'round'; c.beginPath(); c.moveTo(hx - r * 0.5, hy - r * 0.85); c.quadraticCurveTo(hx + r * 0.2, hy - r * 1.0, hx + r * 0.75, hy - r * 0.7); c.stroke();   // lit brow of the skull
     }
   }
-  // WHAT: the head: face, eyes and the head type (helm, hood, hat, chef hat, tiara, horns, skull, boar...). Add a new head type as another "else if (k === ...)".
   function headgear(c, m, hx, hy, r, p) {
     const k = m.head;
     const eyes = (col) => {
@@ -590,7 +571,6 @@
     return [mx - dy / L * bend * L, my + dx / L * bend * L];
   }
   // a limb with one bend (upper and lower part) drawn as ONE shape: no round joints, one outline, a lit edge, like the Prism's facets
-  // WHAT: draws a limb through the points pts (shoulder, elbow, hand) with widths ws, filled with a light-to-dark gradient, outlined once, with a bright edge on the lit side.
   function bent(c, pts, ws, col) {
     const Lp = [], Rp = [];
     pts.forEach(([x, y], i) => {
@@ -619,7 +599,6 @@
     bent(c, [[x, y], [kx, ky], [fx, fy - w * 0.2]], [w, w * 0.8, w * 0.62], col);
     flat(c, [[fx - w * 0.45, fy - w * 0.55], [fx + w * 0.35, fy - w * 0.55], [fx + w * 0.95, fy - w * 0.05], [fx + w * 0.9, fy + w * 0.12], [fx - w * 0.45, fy + w * 0.12]], boot);
   }
-  // WHAT: draws a person: legs, body, cape, arms, head, weapon, in the pose p (idle, walk, attack, cast).
   function humanoid(c, m, S, p) {
     const s = S * m.h, bulk = m.bulk, det = !!p.detail;   // sturdier limbs, bigger head and chest than the first stick-like rig
     // every hero has its own idle tempo, phase and sway, leans back before a blow and lunges into it,
@@ -731,7 +710,6 @@
   }
 
   // ------------------------------------------------------------------ other rigs
-  // WHAT: OTHER RIGS. beast = four legs and a snout (wolves, bears), bomb = round bomber, golem = big stone body, serpent = snake, wraith = floating ghost, turret = Vial's turret, tower = the Citadel, phoenix = Ashwing, egg = Ashwing's egg.
   function beast(c, m, S, p) {
     const s = S * 0.9, run = p.walk != null ? p.walk * TAU : p.t * 1.5, bob = p.walk != null ? Math.abs(Math.sin(run)) * s * 0.05 : 0;
     const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.2 : 0, by = -s * 0.45 - bob;
@@ -841,7 +819,6 @@
   }
   // a tall faceted shard that floats and bobs above its shadow,
   // with three small shards circling it; it flares when it attacks or casts
-  // WHAT: the "crystal" rig (Prism). m.body = the glass, m.trim = the bright edges, m.core = the glow inside.
   function crystal(c, m, S, p) {
     const s = S * 1.05, bob = Math.sin(p.t * 2.2) * s * 0.05, lift = s * 0.22 + bob, fl = Math.max(p.atk != null ? Math.sin(p.atk * Math.PI) : 0, p.cast != null ? Math.sin(p.cast * Math.PI) : 0);
     const cy = -lift - s * 0.62, hw = s * 0.17, hh = s * 0.6;   // centre of the shard, half width, half height
@@ -859,7 +836,6 @@
     }
   }
   // the Plasma Cannon: a stout tripod with a big barrel and a glowing plasma core; it kicks back when it fires and flares when it casts
-  // WHAT: the "cannon" rig (Plasma Cannon). m.body = the metal, m.trim = the plasma glow.
   function cannon(c, m, S, p) {
     const s = S * 1.05, fire = p.atk != null ? Math.sin(Math.min(1, p.atk) * Math.PI) : 0, cast = p.cast != null ? Math.sin(p.cast * Math.PI) : 0, rec = fire * s * 0.12, pulse = 0.5 + 0.5 * Math.sin(p.t * 4);
     for (const x of [-0.42, -0.08, 0.3]) limb(c, x * 0.3 * s, -s * 0.3, x * s, 0, s * 0.07, '#3a4150');
@@ -875,7 +851,6 @@
     dot(c, s * 0.92 + bx, -s * 0.61, s * 0.05, '#ffffff');
   }
   // the Gardener's plants, one look per kind (m.kind): a thorny bush, a pink bloom, a blue lily and a spore mushroom; they sway
-  // WHAT: the "plant" rig (Thornbush, Healing Bloom, Shield Lily, Spore Pod). m.body = the leaves, m.trim = the flower or glow.
   function plant(c, m, S, p) {
     const s = S * 0.95, sw = Math.sin(p.t * 2.4) * s * 0.035, k = m.kind, grow = p.t < 0.4 ? 0.6 + p.t * 1 : 1;
     c.save(); c.scale(grow, grow);
@@ -898,7 +873,6 @@
     }
     c.restore();
   }
-  // WHAT: the list of rigs by name. A unit's "type" in M picks one.
   // ONYX, a spiky turtle (in his shell: only the shell, a little sunk)
   function turtle(c, m, S, p) {
     const s = S * 0.95, step = p.walk != null ? p.walk * TAU : 0, bob = p.walk != null ? Math.abs(Math.sin(step)) * s * 0.03 : Math.sin(p.t * 2) * s * 0.01;
@@ -936,7 +910,6 @@
   const RIGS = { humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg, crystal, cannon, plant, turtle, dragon };
 
   // ------------------------------------------------------------------ public
-  // WHAT: PUBLIC. get(key) = the line of M for a unit (grunt if unknown); draw(...) paints it; portrait(key, px, bust) makes a cached picture for cards.
   function get(key) {
     if (M[key]) return M[key];
     const k = B.heroKey ? B.heroKey(key) : key;
@@ -966,7 +939,6 @@
     c.restore();
   }
   const cache = {};
-  // WHAT: a small picture of a unit (full body or bust) as an image URL, cached.
   function portrait(key, px, bust) {
     const id = key + ':' + px + ':' + (bust ? 1 : 0);
     if (cache[id]) return cache[id];
@@ -978,6 +950,5 @@
     draw(c, key, px * 0.5, bust ? px * 1.05 + S * 0.15 : px * 0.93, S, { t: 0.4, face: 1, still: true });
     return (cache[id] = cv.toDataURL());
   }
-  // WHAT: the public list.
   B.Models = { get, draw, portrait, list: M, shade, limb, ball, poly };
 })(typeof window !== 'undefined' ? window : globalThis);

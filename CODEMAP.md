@@ -18,7 +18,7 @@ data*.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 | File | Responsibility | Key Symbols |
 |---|---|---|
 | `index.html` | Page shell & deferred script load order | `#top`, `#screen`, `#modal`, `#toast` |
-| `style.css` | All styling (latest rule wins) | `.wmap`, `.bench`, `.vs`, `.shop`, `.gstage` |
+| `style.css`, `style-arena.css`, `style-screens.css` | Core layout/components, arena/tactile/desktop styling, and modern screen polish (loaded in order) | `.wmap`, `.bench`, `.vs`, `.shop`, `.gstage` |
 | `stats.html` + `js/stats.js` | Balance dashboard (`/stats.html`) | — |
 | `js/data.js` | Core combat tables, heroes, items, relics, mobs, bosses, events, balance knobs (auto-requires paths/meta in Node) | `B.CFG`, `B.HEROES`, `B.ITEMS`, `B.RELICS`, `B.EVENTS`, `B.DIFF`, `B.TUNE` |
 | `js/data-paths.js` | Boss upgrade paths (`3` per hero) | `B.HERO_PATHS` |

@@ -1,6 +1,5 @@
 // the shared card page (card.html). Reads the card from the link (after #), draws it with the game's own pictures and icons, and offers Play.
 
-// FILE GUIDE. Only card.html loads this. The card itself is B.Card.html (js/card.js). The index of the whole project is CODEMAP.md.
 (function () {
   const B = window.B, main = document.getElementById('cardmain');
   const pic = (k, px) => B.Splash.image(k, px, px, 'bust'), icon = (kind, id, px) => kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px);

@@ -10,12 +10,10 @@
       <div class="bnl">${need.map(h => `<button class="bnc${h.uid === ui.selUid ? ' on' : ''}" data-act="bench-pick" data-arg="${h.uid}" data-bench="${h.uid}" aria-label="${esc(hName(h))}">${img(h.key, 44)}<span class="bnb"><b>${esc(hName(h))}</b><span class="dim small">${esc(HEROES[h.key].role)} · ${HEROES[h.key].range <= 1 ? 'Front row' : 'Back row'}</span></span></button>`).join('')}</div>
       <p class="bnt small">${sel ? 'Now tap a glowing hex on your half.' : 'Drag onto your half of the board, or tap it and then a hex.'}</p></div>`;
   }
-  // WHAT: Fight was pressed with heroes still on the bench: say who, shake the bench.
   function benchNudge(need) {
     sfx('deny'); toast(need.length > 1 ? `Place your ${need.length} new heroes on the board first` : `Drag ${HEROES[need[0].key].name} onto your half of the board first`);
     const b = $('#bench'); if (b) { b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge'); if (b.scrollIntoView) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
   }
-  // WHAT: a benched hero was put on hex h: dust, thud, and the screen again (the bench, the banner and the Fight button change).
   function benchPlaced(uid, h) {
     Run.setPos(U.run, uid, h.c, h.r); ui.selUid = 0;
     const x = U.run.heroes.find(y => y.uid === uid); if (!x || x.bench) { sfx('deny'); render(); return; }
@@ -26,7 +24,6 @@
   }
   // the ribbon over
   // the board says "Drag heroes to reposition" (with a hand); with heroes on the bench it says "Place <name>!".
-  // WHAT: THE DEPLOY SCREEN: the board where you drag your heroes, the formation line, the enemy roster, the Items button and the big Fight button.
   function deployHTML() {
     const gau = U.run.cur && U.run.cur.type === 'gauntlet';
     const f = U.run.cur;
@@ -57,8 +54,6 @@
       <div class="dparty">${U.deployPartyHTML()}</div>
     </section>`;
   }
-  // what a challenge pays
-  // WHAT: text of what a challenge fight pays.
   function winText(w) {
     const out = [];
     if (w.gold) out.push('+' + w.gold + ' gold');
@@ -71,7 +66,6 @@
   // who gets what from the formation relics, from where the heroes stand right now
   // one chip per formation relic with how many heroes it reaches; the chip's
   // tooltip and a tap still give the full "who gets what"
-  // WHAT: the chips of formation powers (who gets what from where the heroes stand).
   function formHTML(W) {
     const got = W ? Sim.formation(W, 0) : [];
     return U.run.relics.filter(id => RELIC[id] && RELIC[id].form).map(id => {
@@ -86,7 +80,6 @@
   // the speed pills, also on the deploy
   // screen (on the sky of the board); the Skip button only in PvE fights
   const speedPills = (skip, cls = '') => `<div class="speed ${cls}">${[1, 2, 4].map(x => `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
-  // WHAT: THE BATTLE SCREEN layout: top bar with speed buttons, the board canvas, the hero strip and the enemy strip. The numbers update live from the loop below.
   function battleHTML() {
     return `<section class="deploy battle">
       <div class="hud"><div id="bhud" class="hud-l"></div>
@@ -96,7 +89,6 @@
         <div class="bph"><b>Enemies</b><span id="ecount" class="dim small"></span></div><div class="estrip" id="estrip"></div></div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div></section>`;
   }
-  // WHAT: battle strips: dmgBy = damage done per hero, ccHTML = status badges (stun, slow...), stripHTML builds the hero cards and updateStrip refreshes their bars every few frames.
   const kfmt = n => n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(Math.round(n));
   // damage per hero, summons counted for their owner
   function dmgBy(W) { const d = {}; for (const u of W.units) { const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side === 0 && o.kind === 'hero') d[o.id] = (d[o.id] || 0) + (u.dmgDone || 0); } return d; }
@@ -140,8 +132,6 @@
     if (ec) ec.textContent = `${left} of ${foes.length} left${summons ? ' · +' + summons + ' summoned' : ''}`;
   }
 
-
-  // WHAT: RESULT SCREEN pieces: eloLine, clock (m:ss), resultHTML (win or lose, stars, rewards, XP, details), celebrate (confetti and sounds).
   function eloLine(r) {
     if (r.pending) return '<p class="dim center">Saving…</p>';
     if (r.error) return `<p class="err center">${esc(r.error)}</p><p class="center"><button data-act="retry-elo">Try again</button></p>`;
@@ -151,7 +141,6 @@
   // a banner
   // with what was fought and how long it took, every reward as a chip, then one card per hero (damage dealt with its
   // share, damage taken, kills, fallen or standing, XP) and the enemy line-up with who went down.
-  // WHAT: THE RESULT SCREEN after a fight or a duel: victory / defeat, stars, gold, XP per hero, prizes, Elo change and the Continue button.
   function resultHTML() {
     const r = ui.result, S = r.stats || {};
     const hs = r.xp.map(x => ({ x, h: U.run.heroes.find(q => q.uid === x.uid), s: S[x.uid] || { dmg: (r.dmg || {})[x.uid] || 0, taken: 0, kills: 0, alive: true } })).filter(o => o.h);
@@ -166,7 +155,6 @@
     if (r.win && !r.duel) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
     if (r.relic && RELIC[r.relic]) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f">${ico('relic', r.relic, 26)}<b>${esc(RELIC[r.relic].name)}</b><em>power</em></span>`);
     if (r.bank) chips.push(`<span class="rw ${r.bank > 0 ? 'rw-pos' : 'rw-neg'}"><i>🏦</i><b>${r.bank > 0 ? '+' : ''}${r.bank}</b><em>${r.bank > 0 ? 'investment' : 'loan paid'}</em></span>`);
-    // what the run relics did after this fight
     if (r.phoenix) chips.push(`<span class="rw rw-prize" style="--tier:#ff7a3d">${ico('relic', 'phoenix', 26)}<b>Phoenix Egg</b><em>hatched, gone</em></span>`);
     if (r.anvil && ITEM[r.anvil.to]) chips.push(`<span class="rw rw-prize" style="--tier:${TIER_COLOR[ITEM[r.anvil.to].tier]}">${ico('item', r.anvil.to, 26)}<b>${esc(ITEM[r.anvil.to].name)}</b><em>anvil upgrade</em></span>`);
     if (r.changeling && HEROES[r.changeling.to]) chips.push(`<span class="rw rw-up">${img(r.changeling.to, 22, 'por sm')}<b>${esc(HEROES[r.changeling.from].name)} → ${esc(HEROES[r.changeling.to].name)}</b><em>changeling</em></span>`);
@@ -363,7 +351,6 @@
   // the rewards play in order. Confetti, the stars one by one, the gold
   // counting up and flying into the top bar, the XP bars filling, then the level ups and the MVP stamp. Every step is
   // written into r.fx, so a re-render mid-way (the Elo answer arriving) keeps what was already shown.
-  // WHAT: the victory / defeat flourish (stars, confetti, coins flying).
   async function celebrate(r) {
     if (r.fx) return;
     const fx = r.fx = {}, J = B.Juice, live = () => ui.result === r && U.screen === 'result';
@@ -378,7 +365,6 @@
   }
 
   // ---------------- gauntlet 
-  // WHAT: THE GAUNTLET. teamRow draws a team (heroes, items, powers) in a row; gateForm the name form at the gate; gauntletHTML the intro, the match card and the end.
   function teamRow(team, relics) {
     // the ghost's items are shown hero by hero (they fight with them, like its relics)
     return `<div class="gteam">${team.map(h => `<div class="gh">${img(h.key, 56)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl}</span>
@@ -386,7 +372,6 @@
       ${relics && relics.length ? `<div class="relics inline">${relics.filter(id => RELIC[id]).map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" title="${esc(RELIC[id].name + ': ' + RELIC[id].desc)}" aria-label="${esc(RELIC[id].name)}"><img class="ico sm" src="${B.Icons.relic(id, 26)}" alt=""></button>`).join('')}</div>` : ''}`;
   }
   // the last day is the FINAL FIGHT against a team that won its own final fight (the tower is gone)
-  // WHAT: the final fight screen: your team, your lives and the button that finds the opponent.
   function gauntletHTML() {
     return `<section class="title gintro2 final"><div class="gcrest">${I('trophy')}</div><h2 class="sc gtitle">The final fight</h2>
       <p class="gsub">Your team meets a team that also reached its final fight. Win and the run is complete.</p>
@@ -396,9 +381,7 @@
   }
   // v90 (, David: "Add the gauntlet again... After pve run win but before xp a button appears enter gauntlet explaining briefly what it is with a cool
   // visual. Then seamless experience as always, beat teams until you lose or crowned champion... Gauntlet wins add +1 LP for floor 1, 2 for 2 etc. No penalty")
-  // WHAT: a duel's name on screen: Final fight, Duel, or Gauntlet · Floor N.
   const duelName = g => !g ? 'Duel' : g.kind === 'final' ? 'Final fight' : g.kind === 'tower' ? 'Gauntlet · Floor ' + ((U.run && U.run.tower && U.run.tower.floor) || 1) : 'Duel';
-  // WHAT: the tower drawing: floors stacked up to the crown; cleared floors lit, the current one glowing.
   function towerArt(T) {
     // v126 (, David: "The gauntlet is bugged. Its increasing a level everytime the champion defends. But it should only increase whenever a new champion
     // is crowned"): the tower had one floor more than the floor you stand on, so losing to the champion drew a floor above the champion. Now it has exactly the
@@ -409,7 +392,6 @@
   }
   // the champion's card (name, team,
   // floors climbed, climbers stopped), loaded once per gate from GET /api/elo?champ=1. Until it arrives (or offline) the plain rule shows.
-  // WHAT: the epic crown of the current Gauntlet champion (ladder rows, the gate card).
   const champMark = () => '<span class="champmark" title="Current Gauntlet champion">👑</span>';
   function champCard() {
     const c = ui.champ;
@@ -420,11 +402,9 @@
   // v123 (, David: "Whenever you finish a gauntlet run, win or lose, have a menu with a card with the champions, items, etc... 1 click share or copy with
   // a link to the game... make this feature dope and hype"): the end of every climb has "Share my team": the brag card (js/card.js) in a sheet with confetti, and
   // Share (the phone's own share menu), WhatsApp and Copy link. The link opens card.html with the same card and a Play button.
-  // WHAT: the card data of the climb that just ended.
   function bragData() { const lg = store.get('balance.league', null); return B.Card.fromRun(U.run, { name: acct.account && acct.name ? acct.name : myName() || 'A hero', league: acct.account ? (lg && lg.league != null ? lg.league : acct.league | 0) : null }); }
   // the card is drawn as a picture and saved
   // on the server once (api/card.js), which gives a short link /c/<id> whose page carries the picture as its preview; Share sends the picture itself too.
-  // WHAT: makes the card picture and the short link once per climb (falls back to the long link when offline).
   function bragPrep() {
     const d = bragData(), key = JSON.stringify(d.h) + d.f + d.w + d.c;
     if (ui.brag && ui.brag.key === key) return ui.brag.p;
@@ -439,7 +419,6 @@
     return `<div class="shead"><b>📣 Your Gauntlet card</b><button data-act="close" aria-label="Close">✕</button></div><div class="bragwrap">${B.Card.html(d, pic, icon)}</div>
       <div class="bragbar"><button class="primary big" data-act="brag-share">📤 Share</button><button class="wa" data-act="brag-wa">💬 WhatsApp</button><button data-act="brag-copy">🔗 Copy link</button></div>`;
   }
-  // WHAT: THE GAUNTLET screen (after a completed run): the gate (enter or skip) and the end of the climb (floor reached, LP won, the crown).
   function towerHTML() {
     const T = U.run.tower || { status: 'gate', floor: 1 };
     if (T.status === 'over') {
@@ -455,7 +434,6 @@
       ${acct.account && !isDefaultName(acct.name) ? '' : `<input id="tname" class="tname" maxlength="16" placeholder="Your name on the ladder" value="${esc(myName())}" aria-label="Your name on the ladder">`}
       <div class="overbar two"><button data-act="tower-skip">Skip</button><button class="primary big cta" data-act="tower-enter" ${ui.towerBusy ? 'disabled' : ''}>${I('trophy')} Enter the Gauntlet</button></div></section>`;
   }
-  // WHAT: applies the server's answer to a Gauntlet floor: LP won, the next opponent, or the end (fell / crowned).
   function towerAnswer(r, res) {
     const T = U.run.tower; if (!T) return;
     if (r.lg) { T.lp = (T.lp | 0) + (r.lg.delta | 0); T.lgLast = r.lg; T.crowns = (T.crowns | 0) + (r.lg.crowns | 0); }
@@ -464,7 +442,6 @@
     else if (r.opponent) { T.floor = r.floor || (T.floor + 1); T.next = r.opponent; }
   }
   // a won duel lets you steal one of three things from the team you beat (a hero, an item, a power)
-  // WHAT: the steal screen: three things to take from the beaten team; a hero asks which of your heroes it replaces when the team is full.
   function stealHTML() {
     const opts = U.run.steal || [], pick = ui.stealPick != null ? opts[ui.stealPick] : null;
     if (pick && pick.kind === 'hero') {
@@ -480,16 +457,13 @@
     };
     return `<section class="stealscreen"><h2 class="sc">Spoils of war</h2><p class="ssub">Take one thing from ${U.run.stealFrom ? esc(U.run.stealFrom) : 'their team'}.</p><div class="stealrows">${opts.map(row).join('')}</div></section>`;
   }
-  // WHAT: the name form of the final fight: asks the ladder name once, then looks for the opponent.
   function gateForm() {
     const named = acct.account && !isDefaultName(acct.name);
     return `<form class="stack" data-form="gauntlet">${named ? `<input type="hidden" name="name" value="${esc(acct.name)}"><p class="small center">You fight as <b>${esc(acct.name)}</b> <span class="dim">(name changes: 👑 Crown Shop)</span></p>`
       : `<input name="name" maxlength="16" placeholder="Your name on the ladder" value="${esc(myName())}" required><p class="small dim center">Pick it well: changing it later costs 👑 ${B.SHOP_ITEM.rename.price}.</p>`}<button class="primary big">Find my opponent</button></form>`;
   }
-  // WHAT: SHOP. stockCard draws one product (hero, item or power with price); shopHTML draws the whole shop.
 
   // ------------------------------------------------------------------ unit info panel
-  // WHAT: the small info panel under the board when you tap a unit or terrain (stats and ability text).
   function infoHTML() {
     const W = U.battle ? U.battle.W : U.preview;
     if (!W || !ui.info) return '';
@@ -506,14 +480,12 @@
   }
 
   // ------------------------------------------------------------------ board mount + input
-  // WHAT: builds the simulation of the current fight (normal or Gauntlet) for the preview or the real battle.
   function worldFor(isPreview) {
     const t = U.run.cur && U.run.cur.type;
     return t === 'gauntlet' ? Run.gauntletWorld(U.run, isPreview, { takeMul: B.PVP_TAKE[Math.max(0, Math.min(B.PVP_TAKE.length - 1, acct.league | 0))] }) : Run.fightWorld(U.run, isPreview);   // every league takes full PvE damage (had Bronze take 20% less)
   }
 
   // the board takes the width AND the height left on screen, on phones (portrait/landscape), tablets and desktops.
-  // WHAT: BOARD SIZE AND INPUT. The board is a canvas sized to the screen (layoutClasses, boardWidth, mountBoard); onDown / onMove / onUp handle drag and tap of heroes (pointer events work for mouse and touch).
   const BOARD_RATIO = 0.703; // board height / width (render.js setup: 10.35 * size + 4 over 14.72 * size)
   const DESK_BOARD_RATIO = 0.589; // desktop glade board height / width (12.65 * size over 21.48 * size)
   function layoutClasses() {
@@ -535,7 +507,6 @@
     const maxW = land ? vw * 0.62 : 1000;
     return Math.floor(Math.min(wrap.clientWidth || vw - 16, byHeight, maxW));
   }
-  // WHAT: creates the board canvas view and its pointer listeners after a screen with a board was drawn.
   let bgView = null, bgPreview = null;
   function bgWorldFor() {
     if (!U.run) return null;
@@ -594,7 +565,6 @@
     cv.addEventListener('pointerleave', () => { if (ui.hoverHex) { ui.hoverHex = null; if (!U.battle) drawPreview(); } cv.style.cursor = ''; });
     cv.addEventListener('pointercancel', () => { ui.drag = null; ui.hoverHex = null; drawPreview(); });
   }
-  // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
   function drawPreview(extra) {
     if (U.view && U.preview && U.screen !== 'battle') {
       Render.draw(U.view, U.preview, performance.now() / 50, Object.assign({
@@ -616,7 +586,6 @@
   const benchSel = () => !!(U.run && ui.selUid && U.run.heroes.some(h => h.uid === ui.selUid && h.bench));
   // dragging a hero from the bench (pointer events on the page: a touch stays with the button it started on). Over the board the hex under
   // the finger lights up; let go there and the hero is placed. A short tap is a pick (ACT 'bench-pick').
-  // WHAT: pointer down / move / up of a drag from the bench.
   function benchDown(e) {
     const el = e.target.closest && e.target.closest('[data-bench]'); if (!el || U.battle || !U.run || U.run.phase !== 'deploy' || !U.view) return;
     const h = U.run.heroes.find(x => x.uid === +el.dataset.bench); if (!h || !h.bench) return;
@@ -655,7 +624,6 @@
   const introOn = () => !store.get('balance.intro', 0) && !(+store.get('balance.starts', 0)) && ((!navigator.webdriver && !/HeadlessChrome/.test(navigator.userAgent)) || !!store.get('balance.introTest', 0));
   const introStage = () => U.run && U.run.phase === 'deploy' && U.run.onb && U.run.onb.stage !== 'done' ? U.run.onb.stage : null;
   const easeOut = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
-  // WHAT: the drawing options of the intro: the hero lifted while it drops, the enemy hidden until the hero moved, then lifted while it walks in.
   function introDraw() {
     const st = introStage(); if (!st || !U.view) return {};
     const now = performance.now(), fast = B.Juice && B.Juice.reduced();
@@ -669,7 +637,6 @@
     const k = fast ? 1 : (now - (ui.introE0 || now)) / 1100;
     return { lift: u => u.side === 1 ? (1 - easeOut(k)) * U.view.h * 0.75 : 0 };
   }
-  // WHAT: the hero touched the ground: dust, thud, then the drag hint.
   function introLanded() {
     ui.introLand = false; if (introStage() !== 'drop') return;
     U.run.onb.stage = 'move'; save();
@@ -677,7 +644,6 @@
     if (h && h.pos && B.Juice && U.view) { const r = U.view.canvas.getBoundingClientRect(), p = Render.hexScreen(U.view, h.pos.c, h.pos.r); B.Juice.dust(r.left + p.x, r.top + p.y + U.view.size * 0.35); }
     render();
   }
-  // WHAT: the hero was moved: the enemy walks in, the hero shouts "!" in a speech bubble, the fight starts.
   function introEnemy() {
     if (introStage() !== 'move') return;
     U.run.onb.stage = 'enter'; ui.introE0 = performance.now(); save();
@@ -700,17 +666,14 @@
     }
     requestAnimationFrame(idle);
   })(0);
-  // WHAT: converts a pointer event into a board hex (c, r).
   function evHex(e, pad = 1.0) { const r = U.view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(U.view, x, y, pad) }; }
   function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
   // a hero is picked up by its whole figure
   // (it stands taller than its hex), and dragging over another hero shows that one moving to the empty spot (they swap on drop)
-  // WHAT: your hero whose drawn figure is under the point (x, y), the nearest one.
   function heroBodyAt(W, x, y) { if (!W || !U.view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead || u.side !== 0 || !u.uid) continue; const p = Render.hexScreen(U.view, u.c, u.r), s = U.view.size;
     if (Math.abs(x - p.x) < s * 0.65 && y > p.y - s * 1.85 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
   function unitBodyAt(W, x, y) { if (!W || !U.view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead) continue; const p = Render.hexScreen(U.view, u.c, u.r), s = U.view.size * (u.boss ? 1.35 : u.elite ? 1.15 : 1);
     if (Math.abs(x - p.x) < s * 0.7 && y > p.y - s * 1.9 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
-  // WHAT: pointer down on the board: pick up a hero (start of a drag) or tap a unit to see its info.
   function onDown(e) {
     if (U.battle && U.battle.W && U.battle.W.over && U.battle.endAt) { U.battle.endAt = performance.now(); return; }
     const { x, y, h: h0 } = evHex(e, 1.25); const W = U.battle ? U.battle.W : U.preview; let h = h0, u = unitAt(W, h);
@@ -751,7 +714,6 @@
   }
   // a hero can't be placed on a tree, boulder, ridge or pond
   function onTerrain(h) { const x = h && (Run.mapOf(U.run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) sfx('deny'); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
-  // WHAT: pointer up on the board: drop the hero on the new hex (rows 4-7 only, not on terrain) or select it; the first move ends the tutorial prompt.
   function onUp(e) {
     if (U.battle) return;
     const { h } = evHex(e, 1.35); const d = ui.drag; ui.drag = null;
@@ -769,7 +731,6 @@
   }
 
   // ------------------------------------------------------------------ battle
-  // WHAT: the Fight! button: builds the real simulation, shows what Smolder ate, switches to the battle screen and starts the loop.
   function startBattle() {
     if (!introStage() && Run.benched(U.run).length) { benchNudge(Run.benched(U.run)); return; }   // never with heroes on the bench
     const gau = U.run.cur && U.run.cur.type === 'gauntlet';
@@ -787,7 +748,6 @@
   }
 
   // the fight waits (b.hold) while big see-through numbers pop over the top of the board, then FIGHT! and it starts. Not in an automated browser (the tests).
-  // WHAT: the 3, 2, 1, FIGHT! countdown at the start of a battle.
   function countdown(b) {
     if (ui.noCountdown) { ui.noCountdown = false; return; }   // the intro fight starts seamlessly
     if (navigator.webdriver) return;
@@ -804,7 +764,6 @@
   // pixel ratio when lower); a smooth fight wins a step back for the next one; and the levels kept by v77-v85 are forgotten (new key).
   const FINE = matchMedia('(pointer: fine)').matches, SLOW_MS = FINE ? 26 : 45, DPR_FLOOR = FINE ? 0.5 : Math.min(1.5, window.devicePixelRatio || 1);
   { const m = +store.get('balance.maxDpr2', 0); if (m >= DPR_FLOOR && m <= 2) Render.maxDpr = m; }
-  // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
   // the fights play 25% faster at every speed (1x, 2x, 4x are 1.25x, 2.5x, 5x real time); the fight itself is the same
   const PACE = 1.25;
   function loop(now) {
@@ -858,7 +817,6 @@
     if (b.endAt && now >= b.endAt) { endBattle(); return; }
     requestAnimationFrame(loop);
   }
-  // WHAT: a fight ended: collects the damage / kills stats, then (normal fight) Run.finishFight and reports a lost run to the server, or (Gauntlet duel) sends the result and Elo.
   // Also reports boss results for the boss Elo.
   async function endBattle() {
     document.body.classList.remove('in-danger');
@@ -912,7 +870,6 @@
     if (U.run.phase === 'over') await reportRunEnd();
   }
   // the run ended (the third life was lost, or the final fight was won): the server gets the end (league points, XP, the team becomes a finalist)
-  // WHAT: tells the server the run is over: 'complete' when the final fight was won, 'fail' when the lives ran out.
   async function reportRunEnd() {
     const R0 = ui.result || {};   // a run completed on the map has no result screen
     R0.pending = true; render();
@@ -927,7 +884,6 @@
     R0.pending = false; save(); render();
   }
   // when the map shows a PvP day, the opponent is looked up (another player's team from about the same day; none yet = a made-up one, )
-  // WHAT: finds the opponent of each duel option on the map (the server first, a random ghost when it has none or does not answer) and shows it.
   function findDuels() {
     for (const o of U.run.opts || []) {
       if (o.type !== 'duel' || o.opp) continue;
@@ -943,7 +899,6 @@
   // v66 (, David: "before every fight, be it pve or pvp, have a short animation, one of those TEAM VS TEAM battle screens ... your team always on the
   // left, with your name on top; then a cool VS grows, then the other team, a shake ... If PvP, include the current score between you"): it plays when a fight's
   // deploy screen opens (PvE, duels, the final fight, event challenges); a tap skips it. each side shows its taunt in a comic bubble and its VS entrance.
-  // WHAT: the VS screen (showVs), the made-up taunt of a ghost that has no player (ghostTaunt), closeVs removes it.
   const ghostTaunt = name => { let h = 0; for (const c of String(name || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 3 ? B.TAUNTS[h % B.TAUNTS.length].text : null; };
   function closeVs() { const v = $('#vs'); if (!v) return; clearTimeout(ui.vsT); v.classList.add('out'); setTimeout(() => v.remove(), 260); }
   function showVs(force) {
@@ -997,7 +952,6 @@
       const s = $('#vsscore'), h = r && r.profile && r.profile.h2h; if (s && h) s.innerHTML = `<b class="win">${h.w}</b><i>–</i><b class="lose">${h.l}</b><em>${h.w + h.l ? 'your duels' : 'first duel'}</em>`;
     }).catch(() => {});
   }
-  // WHAT: the Skip button (Crown Shop perk): plays the whole fight at once.
   function skipBattle() { const b = U.battle; if (!b) return; let n = 0; while (!b.W.over && n++ < 20 * 60 * 30) Sim.step(b.W); b.endAt = performance.now(); }
 
   Object.assign(U, { battleHTML, mountBoard, resultHTML, stealHTML, gauntletHTML, towerHTML, deployHTML, showVs, findDuels, celebrate, reportRunEnd, mountBgBoard, introOn, introStage, drawPreview, teamRow, champMark, benchNudge, startBattle, skipBattle, bragHTML, bragData, bragPrep, towerAnswer, worldFor, infoHTML, layoutClasses, boardWidth, closeVs });

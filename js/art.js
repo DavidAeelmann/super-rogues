@@ -111,7 +111,6 @@
   function reset(key) { if (OFFICIAL[key]) mount(key, OFFICIAL[key], 'official'); else { delete live[key]; changed(key); } }
   function boot() { for (const k of Object.keys(OFFICIAL)) if (B.HEROES && B.HEROES[k]) reset(k); }
 
-  // WHAT: the picture set of a hero if it is loaded, else null (then the code-drawn model is used). sprite() = the same but only when it has an idle animation.
   const get = key => {
     const k = (B.heroKey && B.heroKey(key)) || key;
     const a = live[k] || live[key];
@@ -120,7 +119,6 @@
   function sprite(key) { const a = get(key); return a && a.anims.idle && a.anims.idle.length ? a : null; }
 
   // the splash picture cropped for a card: 'bust' = a square around the face (focus x/y, zoom z), 'full' = the whole figure
-  // WHAT: the splash picture of a hero cropped to w x h for cards (mode "full" or "bust").
   function splash(key, w, h, mode) {
     const a = get(key); if (!a || !a.splash || typeof document === 'undefined') return null;
     const id = key + ':' + a.v + ':' + w + 'x' + h + ':' + mode;
@@ -139,7 +137,6 @@
 
   // which animation and frame a pose shows. Looping animations (idle, walk) cycle; one-shot ones (attack, ability,
   // death) run first to last frame over the action. Each frame is held, then blends into the next during its last 40%.
-  // WHAT: which animation frame to show for a pose and how far along it is.
   function frameOf(a, pose) {
     const A = a.anims;
     let k = 'idle', ph = 0, loop = true;
@@ -167,7 +164,6 @@
   }
 
   // the battle figure: feet on the hex; frames from the sheet, plus motion from code where the sheet has one frame
-  // WHAT: draws a hero from his picture frames in a pose (blending between frames).
   function draw(c, a, x, y, S, pose, tint) {
     const d = a.def, fr = frameOf(a, pose), frames = a.anims[fr.k], axs = a.axs[fr.k] || [];
     const axOf = i => clamp(axs[i] != null ? axs[i] : 0.5, 0, 1);

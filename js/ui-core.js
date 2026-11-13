@@ -2,35 +2,29 @@
 (function () {
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
   const U = B._ui = B._ui || {};
-  // WHAT: I('name') = the SVG of an interface icon (js/uiicons.js). $ = document.querySelector. esc makes a text safe to put in HTML: ALWAYS use it for text that came from a player.
   const I = (n, c) => B.UI ? B.UI.i(n, c) : '';   // the interface icons (js/uiicons.js)
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const hName = h => h ? (h.pathName || (Run.heroNameOf ? Run.heroNameOf(h) : (HEROES[h.key] || {}).name || h.key)) : '';
-  // WHAT: the browser's small memory (localStorage), always safe: store.get(key, default), store.set(key, value), store.del(key). Saved game, name, speed and tutorial flags live here.
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
     del(k) { try { localStorage.removeItem(k); } catch (_) {} },
   };
-  // WHAT: the main state of this file. run = the saved game object (null = none); screen = 'title' | 'run' | 'battle' | 'result'; battle = the fight being played; view = the drawn board; preview = the static board shown while deploying.
   // ui = small screen state that is NOT saved (selected hero, open info, speed, the last result, modal...).
   const SAVE = 'balance.run.v1';
   U.run = store.get(SAVE, null);
   U.screen = 'title';
   U.battle = null; U.view = null; U.preview = null;
   const ui = { startPick: [], gsel: null, selUid: 0, info: null, result: null, speed: store.get('balance.speed', 1), drag: null, modal: null };
-  // WHAT: writes the run to the browser memory. Call it after every change of the run.
   const save = () => { if (U.run) { store.set(SAVE, U.run); if (U.run.freeDeck) store.set('balance.freeDeck', U.run.freeDeck); } };   // the free-pick queues outlive the game
   // player identity for Elo : a random id kept in this browser
-  // WHAT: this browser's anonymous player id (made once). The server only ever knows players by this, never by name or email.
   function pid() {
     let id = store.get('balance.pid', '');
     if (!/^[a-f0-9]{32}$/.test(id)) { const a = new Uint8Array(16); crypto.getRandomValues(a); id = [...a].map(x => x.toString(16).padStart(2, '0')).join(''); store.set('balance.pid', id); }
     return id;
   }
   const myName = () => store.get('balance.name', '') || '';
-  // WHAT: ACCOUNT. acct = what the server told us about this player (crowns, perks, level, league, Elo). setAcct copies the server answer in and shows toasts for new XP; hasPerk = does he own a Crown Shop perk.
   const setElo = (r, quiet) => { if (r && r.elo != null) store.set('balance.elo', r.elo); if (r && r.league != null) store.set('balance.league', { league: r.league, lp: r.lp, streak: r.streak }); setAcct(r, quiet); };
   // the account. Crowns (earned the first time you reach a league each season, and
   // from invited friends), Crown Shop unlocks, the King Tier, profiles and the invite link. The server is the source of
@@ -40,7 +34,6 @@
   const hasPerk = id => B.hasPerk(acct.perks, id);
   const isDefaultName = n => !n || /^Player [a-f0-9]{4}$/.test(n);
   const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account', 'streak', 'bstreak', 'avatar', 'taunt', 'tauntId', 'vsfx', 'title', 'titleId', 'achs'];
-  // WHAT: copies the server's account answer into acct, remembers it, and shows what XP was earned.
   function setAcct(r, quiet) {
     if (!r || typeof r !== 'object') return;
     for (const k of ACCT_KEYS) if (r[k] != null) acct[k] = r[k];
@@ -52,7 +45,6 @@
   // account XP and level. A toast for what was earned; a level up names what it unlocked
   const KIND_NAME = k => ({ taunt: 'voice line' })[k] || k;   // what each kind of level reward is called
   const unlockName = u => u.kind === 'title' ? `"${B.ACH[u.id].title}" title` : u.kind === 'taunt' ? `"${B.TAUNT_ALL.find(t => t.id === u.id).text}"` : u.kind === 'portrait' ? HEROES[u.id].name + ' portrait' : (u.kind === 'hero' ? HEROES[u.id] : u.kind === 'item' ? ITEM[u.id] : RELIC[u.id]).name;
-  // WHAT: the small "+N XP" message when account XP is earned (and "Level up! New hero: ..." when a level unlocks something).
   function xpToast(list) {
     const n = list.reduce((a, g) => a + g.xp, 0), up = list.filter(g => g.up).pop();
     const us = up ? B.UNLOCKS.filter(x => x.lvl === up.level) : [], u = us[0];   // a level can unlock several things
@@ -63,8 +55,6 @@
   // each run with looming rewards. It should be a rewarding dopamine hit and encourage playing again"): the title shows
   // your level, its bar and the next reward; every game keeps the XP it earned (run.xpLog) and the game-over screen fills
   // the bar line by line (level ups burst with confetti) and ends on the next reward waiting for you
-  // what a reward IS, for the hover / tap bubble
-  // WHAT: one or two sentences that explain an unlock (hero, item, power, portrait, voice line, title).
   function unlockInfo(u) {
     if (u.kind === 'hero') { const d = HEROES[u.id]; return `A new hero for your runs: ${d.role}${d.tag ? ', ' + d.tag.toLowerCase() : ''}. Ability, ${d.abName}: ${d.abDesc} Its portrait comes with it.`; }
     if (u.kind === 'item') { const it = ITEM[u.id]; return `A new item that can show up in shops and events (${it.tier}${it.type ? ' ' + it.type : ''}): ${it.desc}.`; }
@@ -77,17 +67,14 @@
   const unlockTip = u => `New ${KIND_NAME(u.kind)}: ${unlockName(u)}. ${unlockInfo(u)}`;
   const unlockPic = (u, px) => u.kind === 'title' ? `<i class="upic" style="--px:${px}px">${B.ACH[u.id].icon}</i>` : u.kind === 'taunt' ? `<i class="upic" style="--px:${px}px">💬</i>` : u.kind === 'portrait' ? `<span class="pfp">${img(u.id, px, 'por')}</span>` : u.kind === 'hero' ? img(u.id, px, 'por') : ico(u.kind, u.id, px);
   // a player's picture is a hero portrait (one of the four free ones, picked from the public code, until they choose one)
-  // WHAT: the portrait a player shows (avKey) and its round frame (avatarHTML), on the profile, the ladder and the top bar.
   const avKey = (key, code) => key && HEROES[key] ? key : B.PORTRAITS_FREE[(parseInt(String(code || '').slice(0, 4), 16) || 0) % B.PORTRAITS_FREE.length];
   const avatarHTML = (key, code, px, cls = '') => `<span class="pfp ${cls}" style="--px:${px}px">${img(avKey(key, code), px, 'por')}</span>`;
 
-  // WHAT: the win streak flame (completed runs in a row) with its number; hot from 2 on, cold at 0.
   const streakOf = () => acct.streak == null ? 1 : acct.streak | 0;
   const flameHTML = (n, cls = '') => `<span class="flame ${n >= 2 ? 'hot' : n <= 0 ? 'cold' : ''} ${cls}" title="Win streak: ${n} run${n === 1 ? '' : 's'} won in a row"><i>🔥</i><b>${n}</b></span>`;
   const nextUnlock = lvl => B.UNLOCKS.find(u => u.lvl > lvl) || null;
   const capFirst = t => String(t).charAt(0).toUpperCase() + String(t).slice(1);
   function logGameXp(r) { if (U.run && r && Array.isArray(r.xp) && r.xp.length) { (U.run.xpLog = U.run.xpLog || []).push(...r.xp.map(g => ({ why: g.why, xp: g.xp | 0, k: g.k || 'first' }))); } }
-  // WHAT: the account level card (level, XP bar, what the next level unlocks).
   function levelCardHTML() {
     const L = B.levelProgress(acct.axp || 0), u = nextUnlock(L.lvl);
     return `<button class="lvcard" data-act="player-tab" aria-label="Account level ${L.lvl}: see the rewards">
@@ -105,7 +92,6 @@
     return XP_ORDER.concat(Object.keys(by).filter(k => !XP_ORDER.includes(k))).filter(k => by[k]).map(k => { const c = by[k];
       c.name = XP_NAME[k] || (c.n === 1 ? c.why[0].replace(/ beaten$/, '').replace(/ won$/, '') : k === 'duel' ? c.n + ' duels' : capFirst(k)); return c; });
   }
-  // WHAT: the list of what earned XP at the end of a game, drawn on the game-over screen; animXp counts it up.
   function xpPanelHTML() {
     const log = U.run.xpLog || [], got = log.reduce((a, g) => a + g.xp, 0), to = acct.axp || 0, from = Math.max(0, to - got);
     const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!U.run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
@@ -150,20 +136,16 @@
     }
     const nx = el.querySelector('.xpnext'); if (nx) { nx.classList.add('loom'); sfx('star'); }
   }
-  // WHAT: asks the server for this player's account (api/player.js, op "me") and stores it.
   async function loadAcct() { try { setAcct(await Net.post('player', { op: 'me', pid: pid() })); } catch (_) {} }
   const refCode = () => store.get('balance.ref', '') || undefined;
   // the King Tier's Royal board (on by default for Kings; they can switch back to the classic stone)
-  // WHAT: the royal board colours are a King Tier perk; this switches the renderer to them when owned.
   function applySkin() { if (B.Render) B.Render.skin = hasPerk('king') && store.get('balance.skin', 'royal') === 'royal' ? 'royal' : null; }
   // a player's name anywhere in the game opens their profile
-  // WHAT: a player name that opens his profile when tapped. crowns draws the crown count.
   const plink = (name, code) => code ? `<button class="plink" data-act="profile" data-arg="${esc(code)}" title="Open profile">${esc(name)}</button>` : esc(name);
   const crowns = n => `<span class="crn">👑 ${n | 0}</span>`;
   // leagues. A shield in the league's colours; pips for Bronze..Platinum, a gem for Diamond, a star
   // for Master.
   let embN = 0;
-  // WHAT: LEAGUES (Bronze to Master). emblem draws the badge of a league; leagueLine shows name + points.
   function emblem(i, px) {
     const l = B.LEAGUES[i] || B.LEAGUES[0], g = 'lg' + (++embN);
     const mark = i >= 5 ? '<path d="M32 18 l4 9 10 1 -7.5 6.5 2.5 10 -9-5.5 -9 5.5 2.5-10 -7.5-6.5 10-1z" fill="#fff" opacity=".92"/>'
@@ -181,21 +163,18 @@
     return `${when}<p class="lgline">${emblem(lg.league, 20)}<span class="${d > 0 ? 'win' : d < 0 ? 'lose' : 'dim'}">${d > 0 ? '+' : ''}${d} league point${Math.abs(d) === 1 ? '' : 's'}</span><span class="dim">· ${leagueName(lg.league)} ${leagueProgress(lg)}</span></p>`;
   }
 
-  // WHAT: the one-line description of each monster ability, for the enemy cards.
   const MOB_ABIL = {
     smash: 'Smash: a heavy blow that stuns its target.', mend: 'Mend: heals the weakest ally.', explode: 'Explodes when next to an enemy.',
     wall: 'Shield Wall: shields nearby allies.', curse: 'Curse: damages, silences and slows.', slam: 'Slam: stuns everything adjacent.',
     imps: 'Summons two imps.', cleave: 'Cleave: hits and stuns everything adjacent.', nova: 'Void Nova: stuns everything within 2 hexes.',
   };
   // every portrait is splash art (bust for small squares, full figure for banners)
-  // WHAT: HERO PICTURES. por(key, px) = the portrait (art from js/splash.js or the code-drawn model from js/models.js); img wraps it in an <img> tag; ico draws an item or power icon.
   const por = (key, px = 44, full) => full ? B.Splash.image(key, px, Math.round(px * 1.3), 'full') : B.Splash.image(key, px, px, 'bust');
   const img = (key, px, cls = 'por') => `<img class="${cls}" src="${por(key, px)}" alt="">`;
   const EMBLEM = '<svg class="emblem" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 9v45M20 56h24M9 17h46"/><path d="M9 17 3 35M9 17l6 18M55 17l-6 18M55 17l6 18"/></g><path d="M1 35a8 6 0 0 0 16 0zM47 35a8 6 0 0 0 16 0z" fill="currentColor"/><circle cx="32" cy="8" r="4" fill="currentColor"/></svg>';
   const ico = (kind, id, px = 36, cls = 'ico') => `<img class="${cls}" src="${kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px)}" alt="">`;
   // readable at a glance. fmt colours game terms and bolds numbers in any description;
   // durations ("1.5s") are italic. It tokenises the RAW text and escapes every piece, so it is XSS-safe.
-  // WHAT: TEXT COLOURS. fmt(text) wraps numbers and key words (damage, heal, stun, burn, mana...) in coloured spans so descriptions are easy to read. KW is the list of words and their colour class (CSS .kw-*).
   const KW = [
     ['kw-atk', 'attack speed|attacks?|physical|damage'], ['kw-ap', 'magic damage|magic|abilities|ability'],
     ['kw-def', 'defense|shields?|invulnerable|untargetable|dodge'], ['kw-hp', 'max health|health|heals?|healing|healed|regenerates?|regen|lifesteal|revives?|resurrect\\w*'],
@@ -205,7 +184,6 @@
   ];
   const KW_RE = new RegExp('([+\\-−]?\\d+(?:[.,]\\d+)?(?:%|x|s\\b)?)|\\b(' + KW.map(k => k[1]).join('|') + ')\\b', 'gi');
   const KW_CLS = w => { for (const [c, re] of KW) if (new RegExp('^(?:' + re + ')$', 'i').test(w)) return c; return ''; };
-  // WHAT: turns a plain description into coloured HTML (see KW above). Use it for any ability / item / power text.
   function fmt(text) {
     const t = String(text == null ? '' : text); let out = '', last = 0, m;
     KW_RE.lastIndex = 0;
@@ -217,7 +195,6 @@
     return out + esc(t.slice(last));
   }
   // stat chips: coloured, with a symbol, instead of "HP 600 · ATK 58 · ..."
-  // WHAT: the row of coloured stat chips (health, attack, armor, speed...) shown on hero cards.
   function chips(d, full) {
     const c = (cls, sym, v, tip) => `<span class="stat ${cls}" title="${tip}"><i>${sym}</i>${v}</span>`;
     return `<span class="stats-row">${c('s-hp', '❤', d.hp, 'Health')}${c('s-atk', '⚔', d.atk, 'Attack: what your hits do, and what attack abilities deal a % of')}${full ? c('s-ap', '✦', d.ap, 'Magic: what magic abilities, burns and heals deal a % of. 100 at Lv 1, +30 per level') : ''}${c('s-arm', '⛨', d.armor, 'Defense: lowers all damage taken, physical and magic')}${c('s-as', '»', d.as, 'Attacks per second')}${c('s-rng', '➶', d.range, 'Range (hexes)')}${d.crit ? c('s-crit', '✸', d.crit, 'Crit chance') : ''}${d.dodge ? c('s-dodge', '↯', d.dodge, 'Dodge') : ''}</span>`;
@@ -229,7 +206,6 @@
   // damage; A = % of AD as magic damage; B = burn per second, % of AP, for 3s; BA = the same with AD; H = heal, % of AP;
   // X = heal, % of own max HP; S = shield, % of own max HP; D = % of the target's max HP per second; Z = a sentence.
   const lvF = d => 1 + 0.15 * ((d.lvl || 1) - 1);
-  // WHAT: HOW ABILITIES SCALE. One entry per ability id: a function that lists the parts of its damage (P = % of attack as physical, M = % of AP as magic, B = burn, H = heal, S = shield...) so the hero card can say "scales with AD / AP".
   // When you add an ability to sim.js you must add its entry here, or the hero card shows nothing (the Chrome test "every hero ability explains how it scales" fails).
   const SCALE = {
     bulwark: ab => [['S', ab.shield, 'on himself'], ab.allyShield && ['Z', `allies within 2 hexes get a shield of ${pct(ab.shield * ab.allyShield)} of his max Health`], ab.burst && ['Z', `adjacent enemies take ${pct(ab.burst)} of the shield as magic damage`]],
@@ -285,7 +261,6 @@
     starfall: ab => [['MX', [ab.dmg, ab.apdmg], `where the star lands, ${ab.radius} hex, after ${Math.max(0.3, ab.delay)}s`], ab.shards && ['Z', `${ab.shards} shards hit random enemies for 50% of it`], ab.veil && ['Z', `allies within 2 hexes get a shield of ${pct(ab.veil)} of their max Health`]],
   };
   // d = { abil, ab, atk, ap, hp, lvl, name } from Run.heroDef or a unit in the fight
-  // WHAT: runs the SCALE entry of a hero and fills in the numbers for his current level.
   function scaleParts(d) {
     const S = SCALE[d.abil]; if (!S) return [];
     const n = x => Math.round(x);
@@ -300,14 +275,12 @@
     });
   }
   const SCALE_ICON = { P: '⚔', M: '✦', MX: '✦', A: '⚔', B: '🔥', BA: '🔥', H: '✚', X: '✚', S: '🛡', D: '🧪', Z: '•' };
-  // WHAT: draws the "How it scales" list under an ability.
   function scalingHTML(d, compact) {
     const parts = scaleParts(d); if (!parts.length) return '';
     const head = compact ? '' : `<div class="scal-h">How it scales <span class="dim">now: ⚔ ${Math.round(d.atk)} Attack · ✦ ${Math.round(d.ap)} Magic</span></div>`;
     return `<div class="scal ${compact ? 'compact' : ''}">${head}<ul>${parts.map(p => `<li class="sk-${p.k}"><i>${SCALE_ICON[p.k]}</i><span>${p.t}</span></li>`).join('')}</ul></div>`;
   }
   // "scales with AD · AP · max HP" under a hero's name (shops, start)
-  // WHAT: the small "scales with AD · AP" label on hero cards.
   function scaleTag(key) {
     const h = HEROES[key], S = SCALE[h.abil]; if (!S) return '';
     const ks = new Set(S(h.ab).filter(Boolean).map(p => p[0])), w = [];
@@ -316,7 +289,6 @@
     if (['S', 'X'].some(k => ks.has(k)) || h.abil === 'mirror') w.push('<span class="kw-hp">max Health</span>');
     return w.length ? `<span class="scaletag">scales with ${w.join(' · ')}</span>` : '';
   }
-  // WHAT: item and power labels: rarity colours, the "Rare weapon" tag, the set line, the order of the doll slots, the map node icons, shop names.
   const TIER_COLOR = {}; for (const r of B.RARITIES) TIER_COLOR[r.id] = r.color;
   // itemization "Legendary weapon" under the name, and the set an item belongs to
   const itemTag = it => `<span class="itag" style="color:${TIER_COLOR[it.tier]}">${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}</span>`;
@@ -346,9 +318,7 @@
   const EV_RAR = { uncommon: 'Uncommon', rare: 'Rare event' };
 
   // ------------------------------------------------------------------ header
-  // WHAT: the top bar (gold, day, Team button, review notice, menu). Called by render and after gold changes.
   // three lives, shown as hearts in the top bar
-  // WHAT: the hearts (lives left) shown in the top bar.
   const heartsHTML = () => U.run && U.run.lives != null ? `<button class="lives ward ${U.run.lives > 0 ? 'on' : 'broken'}" data-act="ward-info" title="${U.run.lives > 0 ? 'Ward: whole. A lost fight breaks it and the day starts over.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${U.run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${U.run.lives > 0 ? 'on' : ''}">${I('shield')}</i></button>` : '';
   function header() {
     const h = $('#top');
@@ -372,7 +342,6 @@
   }
   // sounds (js/sfx.js) with a switch, and a gold counter that counts up or
   // down with a bump and a "+6" whenever the gold changes. After a won fight it waits for the coins to fly in.
-  // WHAT: sound button, sfx plays a named sound (js/sfx.js), shownGold / animGold animate the gold counter.
   const soundBtn = () => `<button class="sndbtn ibtn" data-act="sound" aria-label="Sound ${B.Sfx && B.Sfx.on ? 'on' : 'off'}" title="Sound">${I(B.Sfx && B.Sfx.on ? 'sound' : 'mute')}</button>`;
   const fsBtn = () => document.body.classList.contains('desk') ? `<button class="fsbtn ibtn" data-act="fullscreen" aria-label="Fullscreen" title="Toggle Fullscreen (F11)">${I('expand')}</button>` : '';
   const sfx = (n, a) => { if (B.Sfx) B.Sfx.play(n, a); };
@@ -385,7 +354,6 @@
   }
 
   // ------------------------------------------------------------------ screens
-  // WHAT (the heart of the UI): decides which screen to show from the state (run.phase, screen) and writes its HTML into #screen. Also plays the entrance animation and clears leftovers when the screen changes.
   // Call render after changing the state to redraw. Things that must NOT survive a screen change (open descriptions, selections) are reset right at its top.
   function render() {
     header();
@@ -429,7 +397,6 @@
     U.mountBgBoard();
     U.guide();
   }
-  // WHAT: a short name for "which screen is this" (phase + step + status). render compares it with the previous one to know the screen really changed.
   function screenKey() {
     if (U.screen === 'title' || !U.run) return 'title';
     if (U.screen !== 'run') return U.screen;
@@ -437,7 +404,6 @@
     if (U.run.pending.length && U.run.phase !== 'deploy') return 'level:' + U.run.pending[0].uid + ':' + U.run.pending[0].lvl;
     return U.run.phase + (U.run.phase === 'start' ? ui.startStep || 1 : '') + ':' + U.run.step + ':' + (U.run.g ? U.run.g.round + ':' + U.run.g.status : '') + ':' + (U.run.cur && U.run.cur.pick != null ? 'pick' : '') + (U.run.cur && U.run.cur.done ? 'done' : '');
   }
-  // WHAT: sounds and confetti played when a new screen appears (level up, event result).
   function onEnter(key) {
     if (!B.Juice) return;
     if (key.startsWith('upgrade:')) { sfx('unlock'); const el = $('.upg-header'); if (el) setTimeout(() => B.Juice.confettiAt(el, 70), 150); }
@@ -453,19 +419,16 @@
   // icons. Just a play button. Beneath it put the board with random teams fighting mobs, refreshing when fight is over.
   // Like a trailer. While old run is on ... small white flag beneath continue game button saying give up. A run doesnt
   // count as started unless hero and relic are chosen"): a game still picking its hero and relic shows Play, not Continue
-  // WHAT: the SUPER ROGUES logo.
 
   // ------------------------------------------------------------------ modals
   // when
   // the screen changes, a toast or a sheet left from the screen before goes away (the ones this tap just opened stay)
-  // WHAT: MODALS AND TOAST. When the screen changes, an info bubble (toast) or sheet left over from the screen before is closed, except the ones the very same tap just opened.
   function clearLeftovers() {
     const now = performance.now();
     clearTimeout(xpToast.h);
     if (toast.t && (toast.info || now - toast.t > 350)) { const t = $('#toast'); if (t) t.classList.remove('on'); }   // an info bubble (boss, formation) never outlives its screen
     if (ui.modal && now - (ui.modalT || 0) > 350) closeModal();
   }
-  // WHAT: shows a sheet (popup) with the given HTML. closeModal hides it; toast(msg) shows a bubble at the bottom (info = true for descriptions that must vanish when the screen changes).
   function openModal(html) { ui.modalT = performance.now(); if (U.guide) clearTimeout(U.guide.t); const gt = document.querySelector(".gtip"); if (gt) gt.remove(); const m = $('#modal'); m.innerHTML = `<div class="sheet">${html}</div>`; m.hidden = false; ui.modal = true; }
   function closeModal() { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; if (U.sheetSwipe) { U.sheetSwipe.tracking = false; U.sheetSwipe.sheet = null; U.sheetSwipe.dy = 0; } }
   function toast(msg, info) { toast.info = !!info; toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }

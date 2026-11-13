@@ -2,19 +2,16 @@
 // models.js. Positions come from the sim in flat board pixels (posAt) and are projected here, so movement between
 // hexes stays smooth and a unit lands on its hex exactly when its attack windup starts.
 
-// FILE GUIDE. DRAWING OF THE BOARD AND THE FIGHT on a canvas. It only READS the simulation (W from sim.js) and paints it: nothing here changes a fight.
 // Order: setup (size the canvas) -> helpers to turn hexes into screen pixels -> board tiles and terrain -> units (pose, position, draw) -> draw() the whole frame -> backdrop (sky) and BOSS backdrops
 // -> end banner (VICTORY / DEFEAT) -> battle effects (particles, damage numbers, banners) -> boss HP bar. The index of the whole project is CODEMAP.md.
 // To change how a unit looks: js/models.js (code-drawn) or js/art.js (pictures). To change colours of the board: tileColor and drawBoard. To change a boss background: bossBackdrop.
 (function (G) {
   const B = G.B = G.B || {};
   const Hx = B.Hex;
-  // WHAT: the camera tilt. The board is a flat hex grid squashed vertically by K (0.6) to look 2.5D.
   const K = 0.6; // vertical squash of the board = camera tilt
   const PX_CAP = 1.3e6;   // the most canvas pixels the board draws (see setup)
   const TT = s => s;
 
-  // WHAT: sizes the canvas for a given width and returns the "view" v every draw call needs (size of a hex, offsets, pixel ratio).
   function setup(canvas, cssW) {
     const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk') && canvas && (canvas.id === 'board' || canvas.id === 'bgboard' || canvas.id === 'trailer');
     const size = cssW / (Math.sqrt(3) * (Hx.COLS + (desk ? 5.6 : 0.5)));
@@ -33,7 +30,6 @@
   }
   // stone texture for the tiles (made once, deterministic)
   let gritCanvas = null;
-  // WHAT: a faint noise texture drawn over the board tiles.
   function grit(ctx) {
     if (!gritCanvas && typeof document !== 'undefined') {
       const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
@@ -82,10 +78,8 @@
     manaFull.addColorStop(0, 'rgb(220, 250, 255)'); manaFull.addColorStop(1, 'rgb(60, 220, 255)');
     return (v._barG = { bh, h0, h1, top, mana, manaFull });
   }
-  // WHAT: from flat board pixels to screen pixels (tilt applied). hexScreen(v, c, r) = the screen position of a hex centre.
   const proj = (v, p) => ({ x: (v.padX || 0) + p.x, y: v.top + p.y * K });
   const hexScreen = (v, c, r) => proj(v, Hx.px(c, r, v.size));
-  // WHAT: the six corner points of a hex on screen (s = scale of it).
   function corners(v, c, r, s) {
     const p = Hx.px(c, r, v.size), out = [];
     for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (60 * i - 30); out.push(proj(v, { x: p.x + s * Math.cos(a), y: p.y + s * Math.sin(a) })); }
@@ -115,7 +109,6 @@
     ctx.stroke();
     ctx.restore();
   }
-  // WHAT: which hex is under a screen point (for taps and drags). Returns { c, r } or null.
   function hexAt(v, x, y, pad = 1.0) {
     let best = null, bd = 1e9;
     const thresh = v.size * v.size * (1.1 * pad * pad);
@@ -125,7 +118,6 @@
   // flat position (with attack lunge) of a unit at fractional tick T
   // the lunge winds up a
   // little, strikes on the hit tick and eases back over a few ticks instead of snapping home
-  // WHAT: UNIT POSITIONS AND POSES. flatPos / glide / unitPos work out where a unit is drawn (sliding between hexes, small recoil after a hit); poseOf says which animation it is in.
   const REC = 6;   // recovery ticks after a melee hit
   function flatPos(v, W, u, T) {
     const p = B.Sim.posAt(u, T, v.size), a = u.anim || u.lastAtk;
@@ -140,16 +132,13 @@
     }
     return p;
   }
-  // what the screen shows follows the sim softly: the body glides (a teleport still snaps), it turns around instead
   // of flipping, its legs keep one rhythm across hexes, it flinches when hit, and its health bar leaves a fading trail
-  // WHAT: remembers per-unit drawing state (smoothed position, facing) between frames.
   function look(v, W, u) {
     if (v.lookW !== W) { v.looks = new Map(); v.lookW = W; }
     let d = v.looks.get(u.id); if (!d) v.looks.set(u.id, d = { x: null, y: null, face: null, faceT: null, ph: 0, lastT: null, hp: u.hp, trail: u.hp, hitAt: -1, now: 0 });
     return d;
   }
   const unitPos = (v, W, u, T) => { const d = v.looks && v.lookW === W && v.looks.get(u.id); return d && d.x != null ? { x: d.x, y: d.y } : proj(v, flatPos(v, W, u, T)); };
-  // WHAT: moves the drawn position of a unit smoothly toward where the simulation says it is.
   function glide(v, W, u, T, dt, deploy) {
     const d = look(v, W, u), base = proj(v, B.Sim.posAt(u, T, v.size)), full = proj(v, flatPos(v, W, u, T));
     if (d.bx == null || deploy || Math.hypot(base.x - d.bx, base.y - d.by) > v.size * 2.2) { d.bx = base.x; d.by = base.y; }
@@ -159,8 +148,6 @@
   }
 
   // ------------------------------------------------------------------ board
-  // v27 (owner + ): the King Tier's Royal board skin (B.Render.skin = 'royal'): violet and gold stone
-  // WHAT: BOARD. royal() = the King Tier colour skin is on. tileColor() = the colour of a tile (checker pattern, deploy zone blue, enemy zone red); drawBoard draws all tiles and the deploy line.
   const royal = () => B.Render.skin === 'royal';
   function tileColor(c, r, o, desk) {
     const n = ((c * 7 + r * 13) % 5) / 5;
@@ -184,8 +171,6 @@
     if (o.deploy) return r >= 4 ? `hsl(215,26%,${20 + n * 4}%)` : `hsl(350,22%,${18 + n * 3}%)`;
     return (c + r) % 2 ? `hsl(222,20%,${15 + n * 3}%)` : `hsl(224,22%,${18 + n * 3}%)`;
   }
-  // WHAT: draws the hex tiles (our half blue, theirs red), the slab edge, the deploy line and the selected / drop highlights.
-  // v62b (review: "the web version still lags"): the ~64 tiles (side faces, grit texture, bevels) never change during a fight, so they are
   // painted once into an offscreen canvas and copied each frame; it is repainted only when the skin, deploy mode, drop hex or terrain changes
   function drawBoard(v, o, W) {
     const { ctx, size } = v, tk = (W && W.tk) || {};
@@ -220,7 +205,6 @@
       ctx.restore();
     }
   }
-  // WHAT: paints every tile of the board (side faces, top, grit, bevel) onto v.ctx. Called by drawBoard only when the cached picture is stale.
   function paintTiles(v, o, tk) {
     const { ctx, size, desk } = v, th = desk ? 10 : v.slab;
     // 1. Board Drop Shadow: Render a subtle blurred polygon under the hex grid perimeter
@@ -368,7 +352,6 @@
     }
     if (!desk) sideDecor(v);
   }
-  // WHAT: subtle weathered stone details (fine slate fractures, chisel marks, gold veins/pebbles). Painted into the cached board picture.
   function tileDecor(ctx, v, c, r, o) {
     const { size } = v, p = hexScreen(v, c, r); let sd = (c * 73856093 ^ r * 19349663) >>> 0; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
     const R = royal(), dep = o.deploy;
@@ -397,7 +380,6 @@
     }
     ctx.restore();
   }
-  // WHAT: the front of the slab under the last row: chiselled dark slate stone layers and gold-trimmed rim. Painted into the cached board picture.
   function sideDecor(v) {
     const { ctx, size } = v, th = v.slab, R = royal(); let sd = 97; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
     ctx.save();
@@ -437,7 +419,6 @@
   // "): during a boss
   // fight some hex edges glow in the boss's theme and pulse (magma, storm, swamp, frost, gold); a few flash like lightning
   const BOSS_EDGE = { gorewarden: ['#ff4a1a', 'magma'], packlord: ['#ff6a3a', 'magma'], hollowking: ['#b98cff', 'storm'], mirewitch: ['#9ad94a', 'swamp'], lichqueen: ['#8fe3ff', 'storm'], colossus: ['#ffcf5a', 'magma'] };
-  // WHAT: the glowing hex edges of a boss stage, drawn over the board every frame.
   function bossTiles(v, key, now) {
     const th = BOSS_EDGE[key] || ['#ff5c6e', 'magma'], { ctx, size } = v;
     if (!v.bossEdges || v.bossEdges.key !== key || v.bossEdges.sz !== size || v.bossEdges.px !== v.padX || v.bossEdges.top !== v.top) {
@@ -462,7 +443,6 @@
     ctx.restore();
   }
   // the coach on the deploy board: the hexes a tip talks about pulse in its colour with its icon, and (front-row tip) arrows show where enemies come from
-  // WHAT: draws a coach tip's glowing hexes, icons and arrows over the board.
   // co.plain = only the glow (the free hexes a hero on the bench can go to), no icons
   function drawCoach(v, co, now) {
     const { ctx, size } = v, k = 0.5 + 0.5 * Math.sin(now * 4);
@@ -479,7 +459,6 @@
   }
   // ------------------------------------------------------------------ terrain (): cartoon trees, boulders,
   // ridges (standing things, depth-sorted with the units) and ponds (flat, part of the board)
-  // WHAT: TERRAIN pictures (cartoon trees, boulders, ridges, ponds). drawTerrain draws one terrain hex; units behind a tree make it see-through.
   function drawPond(v, c, r) {
     const { ctx, size } = v, p = hexScreen(v, c, r), t = performance.now() / 1000;
     path(ctx, corners(v, c, r, size * 0.86)); ctx.fillStyle = '#3aa4e0'; ctx.fill();
@@ -494,7 +473,6 @@
     }
   }
   function blob(ctx, pts) { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); }
-  // WHAT: draws one terrain hex (tree, rock, ridge, pond...). fade = see-through because a unit stands right behind it.
   function drawTerrain(v, x, fade) {
     const { ctx, size: s } = v, p = hexScreen(v, x.c, x.r), X = p.x, Y = p.y;
     ctx.save(); ctx.globalAlpha = fade ? 0.5 : 1;
@@ -533,7 +511,6 @@
 
   // ------------------------------------------------------------------ units
   // a hero with a death animation stays on the board while it plays
-  // WHAT: UNITS. drawUnit draws one unit (model or picture, shadow, HP and mana bars, status icons, shield, hit flash). deadTicks = how long its death animation lasts.
   // the white hit flash used a
   // canvas filter (brightness), which makes the browser redraw that figure the slow way; in a big fight someone is always being hit, and it was the main cause
   // of the stutter (tools/perf-battle.mjs: frames over 33 ms fell from ~15 to ~3 in 12 s). The flash is now a quick additive white glow over the body.
@@ -842,7 +819,6 @@
     ctx.restore();
   }
 
-  // WHAT: which animation a unit is in right now (idle, walk, attack windup, cast, hurt, death) with how far along it is.
   function poseOf(W, u, T, d, dt) {
     const s = W.t, pose = { t: T / 20 + u.id * 0.37, face: 1 };
     // facing: toward the target, else toward the enemy side (only when it is clearly to one side, and it turns)
@@ -870,7 +846,6 @@
     if (u.dead) pose.dead = Math.max(0, Math.min(1, (T - u.deathT) / deadTicks(u)));   // T, so the last death plays on in the slow motion after the fight
     void s; return pose;
   }
-  // WHAT: draws one unit: ground ring, the model or art, health / mana bars, status badges, floating numbers anchor.
   function drawUnit(v, W, u, p, T, o, dt) {
     const { ctx, size } = v, s = W.t, d = o.deploy ? null : look(v, W, u);
     const S = size * 1.5 * u.size;   // bigger units
@@ -1038,7 +1013,6 @@
   }
 
   // ------------------------------------------------------------------ frame
-  // WHAT (the main call): draws one whole frame at fractional tick T: backdrop, board, ground zones (fire, poison), rings, units sorted by depth, Prism beams, particles, damage numbers, end banner, boss bar.
   function draw(v, W, T, o = {}) {
     muted = !!o.mute;
     const { ctx, size } = v;
@@ -1395,7 +1369,6 @@
   // each boss
   // tints the sky and adds its own scenery over the usual backdrop: war banners and blood for the Gorewarden, ash and dead trees
   // for the Sovereign, swamp fog and reeds for the Mire Witch, cracks and floating rubble for the Colossus
-  // WHAT: the extra scenery behind a BOSS fight (red banners for the Gorewarden, ash and dead trees for the Ashen Sovereign, swamp fog for the Mirewitch, cracked stone for the Colossus). Edit a boss's look here; add an "else if" for a new boss key.
   function bossBackdrop(g, key, W, H, top, size, rnd) {
     const tint = (c, a) => { g.globalAlpha = a; g.fillStyle = c; g.fillRect(0, 0, W, H); g.globalAlpha = 1; };
     if (key === 'gorewarden') {
@@ -1448,7 +1421,6 @@
     return bgImgLoaded ? bgImg : null;
   }
 
-  // WHAT: draws the HD painted forest glade or volcanic boss arena behind the board (or a fallback gradient while loading).
   function paintWorldGlade(g, v, R, W, H, boss) {
     const img = getBattleBgImg(!!boss);
     if (img) {
@@ -1474,7 +1446,6 @@
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
     return false;
   }
-  // WHAT: subtle drifting golden spores / fireflies across the glade so the painted scene feels alive without vector plants.
   function drawWorldBreath(v, now) {
     const { ctx, size: s, w: W, h: H } = v, R = royal();
     ctx.save();
@@ -1551,7 +1522,6 @@
     v.bd = { R, boss: boss || null, c }; return c;
   }
   // the end of a fight. The last blow plays on in slow motion under a big VICTORY / DEFEAT, with confetti on a win
-  // WHAT: the big VICTORY / DEFEAT banner and slow motion at the end of a fight.
   function drawEnd(v, W, e, S, dt) {
     const { ctx, size } = v, k = Math.min(1, e.k), win = e.win;
     if (!e.parts) {
@@ -1582,12 +1552,10 @@
 
   // ------------------------------------------------------------------ battle effects ()
   // Particles are spawned from the sim's fx events the first time the renderer sees them, so the sim stays pure.
-  // WHAT: BATTLE EFFECTS. Particles (sparks, confetti), floating damage numbers, text and banners. spawnFromFx turns the simulation's fx events (W.fx) into pictures; drawParts and drawCalls paint them.
   const MAXP = 420;
   function fxState(v) { if (!v.fxs) v.fxs = { parts: [], seen: new WeakSet(), landed: new WeakSet(), ab: {}, dead: new Set(), calls: [], shake: 0, last: 0, embers: 0, kb: {}, streak: {}, hitStop: 0, flash: 0 }; return v.fxs; }
   // shockwave rings on the ground,
   // light pillars, streaking sparks, twinkling stars, a soft colour flash over the whole board and an impact burst where every ability projectile lands
-  // WHAT: effect helpers: shock (an expanding ground ring), pillar (a column of light), flash (a brief tint over the board); burst takes shape 'spark' or 'star' too.
   function shock(S, x, y, col, R, o = {}) { if (S.parts.length < MAXP + 60) S.parts.push({ type: 'ring', x, y, R, col, life: o.life || 0.5, t: 0, w: o.w || 3, vx: 0, vy: 0, g: 0, r: 1 }); }
   function burst(S, x, y, n, col, o = {}) {
     for (let i = 0; i < n && S.parts.length < MAXP; i++) {
@@ -1595,8 +1563,6 @@
       S.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: o.g != null ? o.g : 160, life: (o.life || 0.5) * (0.6 + Math.random() * 0.6), t: 0, r: (o.r || 2) * (0.6 + Math.random() * 0.8), col, glow: !!o.glow, shape: o.shape });
     }
   }
-  // WHAT: reads the new visual events of the simulation (hits, heals, rings, bolts, projectiles) and creates particles and numbers for them. Also plays the matching sounds.
-  // what the ability drawings (js/abilfx.js) draw with
   const abilKit = (v, W, T, S) => ({ ctx: v.ctx, v, W, T, S, size: v.size, K, pos: (c, r) => hexScreen(v, c, r), proj: p => proj(v, p), corners: (c, r, s) => corners(v, c, r, s), path: pts => path(v.ctx, pts),
     unitPos: u => unitPos(v, W, u, T), burst: (x, y, n, col, o) => burst(S, x, y, n, col, o), shock: (x, y, col, R, o) => shock(S, x, y, col, R, o) });
   function spawnFromFx(v, W, T, S) {
@@ -1713,7 +1679,6 @@
     }
     S.calls = keep;
   }
-  // WHAT: the boss health bar at the top of the board.
   function bossBar(v, W) {
     const b = W.units.find(u => u.boss && !u.dead && u.side === 1); if (!b) return;
     const { ctx } = v, x = 14, w = v.w - 28, y = 8;
@@ -1726,6 +1691,5 @@
     ctx.textAlign = 'right'; ctx.fillStyle = '#e8b84a'; ctx.fillText(Math.max(0, Math.round(b.hp)) + ' / ' + b.maxHp, x + w, y + 9);
   }
 
-  // WHAT: the public list: setup, draw, hexAt, hexScreen and the skin switch.
   B.Render = { setup, draw, hexAt, hexScreen, skin: null };
 })(typeof window !== 'undefined' ? window : globalThis);

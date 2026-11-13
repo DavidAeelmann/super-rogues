@@ -1,6 +1,5 @@
 // Storage (Neon Postgres in production via DATABASE_URL; in-memory store for tests/dev when global.__BAL_MEM is set).
 //
-// FILE GUIDE. THE DATABASE LAYER. Two symmetric stores: memStore() (in-memory) and pgStore() (Neon Postgres).
 //   SCHEMA defines tables: kv, scores, players, teams (Gauntlet ghosts), ratings, fstats, duels, follows, picks, redeems, phero, cards.
 //   Only public fields ever leave the server (pubPlayer, pubTrophy, pubRating, pubScore). The project index is CODEMAP.md.
 const SCHEMA = [
@@ -78,12 +77,10 @@ const SCHEMA = [
 // public id of a player: never the pid itself (the pid is the player's secret key)
 const codeOf = pid => require('crypto').createHash('sha256').update('pub|' + pid).digest('hex').slice(0, 12);
 
-// WHAT: the ghosts a Gauntlet floor can pick from (lost or champion, enough wins, not already faced, not abandoned).
 function poolOf(M, lo, hi, exclude, staleBefore) {
   const ex = new Set(exclude || []);
   return (M.teams || []).filter(t => !ex.has(t.id) && (t.status === 'lost' || (t.status === 'running' && (t.updated || t.created) < (staleBefore || 0))) && t.wins >= lo && (hi == null || t.wins <= hi));
 }
-// WHAT: the in-memory store used by tests and the local server (data lives in global.__BAL_MEMDATA).
 function memStore() {
   const M = global.__BAL_MEMDATA = global.__BAL_MEMDATA || { kv: {}, scores: [], id: 0 };
   return {
@@ -96,7 +93,7 @@ function memStore() {
     // v27: a name given later only replaces the default one ("Player xxxx"); after that, renaming costs crowns
     async upsertPlayer(pid, name, iph, fallback) { const P = M.players = M.players || {}; if (!P[pid]) P[pid] = { pid, code: codeOf(pid), name: name || fallback, elo: 1000, runs: 0, crowns: 0, best: 0, league: 0, lp: 0, gems: 0, season: 0, sreach: 0, peak_league: 0, last_league: -1, perks: '[]', ref: null, ref_gems: 0, axp: 0, cleared: '[]', pfloor: 0, bosses: '[]', xpv: 0, streak: 1, bstreak: 1, avatar: null, taunt: null, vsfx: null, achs: '[]', title: null, iph, created: Date.now() }; else if (name && P[pid].name === fallback) P[pid].name = name; return Object.assign({}, P[pid]); },
     async setPlayer(pid, f) { for (const x of ['elo', 'runs', 'crowns', 'best', 'league', 'lp', 'season', 'sreach', 'peak_league', 'last_league', 'streak', 'bstreak']) if (f[x] != null) M.players[pid][x] = f[x]; M.players[pid].updated = Date.now(); },
-    async topPlayers(n) { return Object.values(M.players || {}).filter(p => p.runs > 0).sort((a, b) => (b.league | 0) - (a.league | 0) || (b.lp | 0) - (a.lp | 0)).slice(0, n).map(pubPlayer); },   // v64: by league, then league points   // v62 (review #85): only players who finished a first run
+    async topPlayers(n) { return Object.values(M.players || {}).filter(p => p.runs > 0).sort((a, b) => (b.league | 0) - (a.league | 0) || (b.lp | 0) - (a.lp | 0)).slice(0, n).map(pubPlayer); },   // v64: by league, then league points
     async getPlayerByCode(code) { const p = Object.values(M.players || {}).find(x => x.code === code); return p ? Object.assign({}, p) : null; },
     async addGems(pid, n, fromRef) { const p = M.players && M.players[pid]; if (!p) return null; p.gems += n; if (fromRef) p.ref_gems += n; return p.gems; },
     async spend(pid, price, perksOld, perksNew, name) { const p = M.players && M.players[pid]; if (!p || p.gems < price || p.perks !== perksOld) return null; p.gems -= price; p.perks = perksNew; if (name) p.name = name; return p.gems; },
@@ -106,7 +103,6 @@ function memStore() {
     async renameTeams(pid, name) { for (const t of M.teams || []) if (t.pid === pid) t.name = name; },
     async addHeroGames(pid, heroes, win) { const H = M.phero = M.phero || {}; for (const h of heroes) { const x = H[pid + ':' + h] = H[pid + ':' + h] || { hero: h, games: 0, wins: 0 }; x.games++; x.wins += win; } },
     async heroStats(pid) { return Object.entries(M.phero || {}).filter(([k]) => k.startsWith(pid + ':')).map(([, v]) => Object.assign({}, v)); },
-    // v65 (review #132): follow / unfollow a player by public code; the Friends ladder = the players you follow and you
     async follow(pid, code, on) { const F = M.follows = M.follows || [], i = F.findIndex(f => f.pid === pid && f.code === code); if (on && i < 0) F.push({ pid, code, created: Date.now() }); if (!on && i >= 0) F.splice(i, 1); },
     async isFollowing(pid, code) { return (M.follows || []).some(f => f.pid === pid && f.code === code); },
     async followCounts(pid, code) { const F = M.follows || []; return { following: F.filter(f => f.pid === pid).length, followers: F.filter(f => f.code === code).length }; },
@@ -126,7 +122,6 @@ function memStore() {
     async teamsOf(pid) { return (M.teams || []).filter(t => t.pid === pid).map(t => ({ team: t.team, wins: t.wins })); },
     async ghostRecord(pid) { const T = (M.teams || []).filter(t => t.pid === pid); return { w: T.reduce((a, t) => a + (t.def_w || 0), 0), l: T.reduce((a, t) => a + (t.def_l || 0), 0), n: T.length }; },
     async insertTeam(t) { const T = M.teams = M.teams || []; const r = Object.assign({ id: ++M.id, wins: 0, status: 'running', opp: null, def_w: 0, def_l: 0, gelo: 1000, is_bot: !!t.is_bot, created: Date.now() }, t); T.push(r); return r.id; },
-    // v102 (review #188): the hidden ghost Elo. listPool = the ghosts of a floor range (like pickPool, every one, up to limit); poolSample = n random ended ghosts of any floor
     async setGelo(id, v) { const t = (M.teams || []).find(x => x.id === id); if (t) t.gelo = v; },
     async removeOneBotGhost() {
       const idx = (M.teams || []).findIndex(t => t.is_bot);
@@ -137,7 +132,6 @@ function memStore() {
     async getCard(id) { return (M.cards || []).find(c => c.id === id) || null; },
     async countCards(pid, since) { return (M.cards || []).filter(c => c.pid === pid && c.created >= since).length; },
     async listPool(lo, hi, exclude, staleBefore, limit) { return poolOf(M, lo, hi, exclude, staleBefore).slice(-(limit || 200)).map(t => Object.assign({}, t)); },
-    // v106 (review #192): listGhosts = every Gauntlet ghost (fallen climbers and completed runs, or climbs abandoned before staleBefore), any floor
     async listGhosts(exclude, staleBefore, limit) { const ex = new Set(exclude || []); return (M.teams || []).filter(t => !ex.has(t.id) && (t.status === 'lost' || t.status === 'final' || (t.status === 'running' && (t.updated || t.created) < (staleBefore || 0)))).slice(-(limit || 3000)).map(t => Object.assign({}, t)); },
     async poolSample(n, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => ['lost', 'final', 'champion'].includes(t.status) && !ex.has(t.id)).sort(() => Math.random() - 0.5); return pool.slice(0, n).map(t => Object.assign({}, t)); },
     async getTeam(id) { const r = (M.teams || []).find(t => t.id === id); return r ? Object.assign({}, r) : null; },
@@ -146,15 +140,12 @@ function memStore() {
     async maxWins(excludeId, staleBefore) { const w = (M.teams || []).filter(t => t.id !== excludeId && (t.status === 'lost' || t.status === 'champion' || (t.status === 'running' && (t.updated || t.created) < (staleBefore || 0)))).map(t => t.wins); return w.length ? Math.max(...w) : -1; },
     async fixCrowns(pid, crowns) { if (M.players && M.players[pid]) M.players[pid].crowns = crowns; },
     async countTeams(pid, since) { return (M.teams || []).filter(t => t.pid === pid && t.created >= since).length; },
-    // review #24: a ghost whose run ENDED (lost, crowned, or abandoned before staleBefore) with exactly w wins ('eq'), or
     // the lowest record above w ('gt'); anyone's ghost, picked at random
-    // review #27 (PC boy): the champion is ONE team (the top one; getChampion + demoteChampions keep it unique) and every
     // other ended ghost sits in the pool of the floor where it lost (its wins). pickPool = a random ghost with lo..hi wins
     // (hi null = no top); countPool = how many; lost, or abandoned before staleBefore; never a champion.
     async getChampion(excludeId) { const c = (M.teams || []).filter(t => t.status === 'champion' && t.id !== excludeId).sort((a, b) => b.wins - a.wins || (b.updated || b.created) - (a.updated || a.created))[0]; return c ? Object.assign({}, c) : null; },
     async demoteChampions(keepId) { let n = 0; for (const t of M.teams || []) if (t.status === 'champion' && t.id !== keepId) { t.status = 'lost'; n++; } return n; },
     async pickPool(lo, hi, exclude, staleBefore) { const pool = poolOf(M, lo, hi, exclude, staleBefore); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
-    // v63 (review #117): a random PvP-day snapshot of another player from about the same day (wins = the day), and a random team that won its final fight
     async pickSnap(day, pid, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => t.status === 'snap' && t.pid !== pid && !ex.has(t.id) && t.wins >= day - 1 && t.wins <= day + 1); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
     async pickFinal(pid, exclude) { const ex = new Set(exclude || []), pool = (M.teams || []).filter(t => (t.status === 'final' || t.status === 'reached') && t.pid !== pid && !ex.has(t.id)); return pool.length ? Object.assign({}, pool[Math.floor(Math.random() * pool.length)]) : null; },
     async countPool(lo, hi, exclude, staleBefore) { return poolOf(M, lo, hi, exclude, staleBefore).length; },
@@ -177,7 +168,6 @@ function memStore() {
   };
 }
 
-// WHAT: the production store: each function is one SQL query on Neon Postgres.
 function pgStore() {
   const url = process.env.DATABASE_URL || '';
   const isNeon = url.includes('.neon.tech');

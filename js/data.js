@@ -26,7 +26,6 @@
   // abil (id of the function in sim.js), abName, abDesc (the text players read), ab (the numbers the ability function reads), fl (special flags), specs: 4 pairs = the two powers offered at levels 2, 3, 4 and 5 }).
   // A spec has { id, name, desc, mods?, ab?, fl? }: mods = stat bonus, ab = adds to the ability numbers, fl = turns on a special behaviour in sim.js.
   const H = (o) => o;
-  // WHAT: all heroes. The key (bastion, vex, pyra...) is the permanent id; the NAME shown to players is the "name" field (bastion is shown as Aegir) and can be changed freely.
 
   // every hero's role is one of nine: Tank, Fighter, Assassin, Ranger, Mage, Summoner, Healer, Support, Controller (role = what it does in a fight;
   // the class, tank / support / damage, still decides the shops' role balance)
@@ -644,7 +643,6 @@
         [{ id: 'roh5a', name: 'Earthshaker', desc: 'The sweep stuns for 2s.', ab: { stun: 1 } },
          { id: 'roh5b', name: 'Unstoppable', desc: 'Takes 20% less damage and the sweep deals 50% more.', mods: { dmgReduce: 0.2 }, ab: { dmg: 0.75 } }],
       ] }),
-    // v62h (reviews #98, #100, #101, #102, David): a stationary plasma cannon, a duelist, a combat medic and a gardener
     plasma: H({ name: 'Plasma Cannon', glyph: '💥', role: 'Ranger', color: '#5fe0ff', fl: ['closest', 'plasma'],
       hp: 430, atk: 43, armor: 22, as: 0.6, range: 6, ms: 0, mana: 55, m0: 20, grow: 1.12,
       abil: 'tripleshot', abName: 'Triple Shot', abDesc: 'Passive (Overload): never moves; shoots the closest enemy, +12% damage per hex nearer than 5, and shoves it back 1 hex. Active: three shots at the closest enemy, 150% Attack each, each shoving it back 2 hexes.',
@@ -785,9 +783,7 @@
   // B.HERO_PATHS lives in js/data-paths.js (loaded after data.js in browser and auto-required in Node).
 
   // ---------------------------------------------------------------- items (78 first, 120 since see TYPES below)
-  // WHAT: the first generation of items: I(id, name, rarity, mods, description). Below, N(type, ...) is the newer form with an equipment type.
   const I = (id, name, tier, mods, desc) => ({ id, name, tier, mods, desc });
-  // WHAT: every item. mods = the stats it gives. Rarities: common, uncommon, rare, epic, set, legendary, mythic (shop prices in B.CFG.itemCost).
   B.ITEMS = [
     // common
     I('longsword', 'Tempered Blade', 'common', { atk: 15.74 }, '+15 Attack'),
@@ -877,7 +873,6 @@
   // and rarity, like Obsidian Knight"). Every item has a TYPE, which is its equipment slot: a hero wears at most one item
   // of each type (and still up to Run.slots() items in total). And a RARITY, low to high: common, uncommon, rare, epic,
   // set (pieces of a named set: 2 and 3 pieces on the same hero give set bonuses), legendary, mythic.
-  // WHAT: the 7 equipment types (weapon, off-hand, helmet, armor, gloves, boots, trinket). A hero wears one of each type. B.RARITIES gives each rarity its colour.
   B.TYPES = [
     { id: 'weapon', name: 'Weapon' }, { id: 'offhand', name: 'Off-hand' }, { id: 'helmet', name: 'Helmet' }, { id: 'armor', name: 'Armor' },
     { id: 'gloves', name: 'Gloves' }, { id: 'boots', name: 'Boots' }, { id: 'trinket', name: 'Trinket' },
@@ -891,7 +886,6 @@
   ];
   B.RARITY = {}; for (const r of B.RARITIES) B.RARITY[r.id] = r;
   // the first 78 items, sorted into slots (ids never change: saved runs, ghosts and content Elo use them)
-  // WHAT: gives the older items a type.
   const LEGACY_TYPE = {
     weapon: 'longsword dagger rod recurve sling crossbow bloodthirster infinity emberblade frozenhammer executioner giantslayer gunblade shojin frenzyblade berserkeraxe needle lightningrod stormbringer botrk archangel lastwhisper reaper',
     offhand: 'buckler oakshield focus guardplate bluecrystal banner totem zeke mirrorshield morello stoneplate hourglass',
@@ -905,7 +899,6 @@
   // the old commons with two stats are now uncommon
   for (const id of 'gloves cap whetstone amber dagger oakshield candle jerky whistle bandana knuckles'.split(' ')) B.ITEMS.find(i => i.id === id).tier = 'uncommon';
 
-  // WHAT: the item maker used for the newer items: N(type, id, name, rarity, mods, description, setId?). Copy a line to add an item.
   const N = (type, id, name, tier, mods, desc, set) => ({ id, name, type, tier, mods, desc, set });
   B.ITEMS.push(
     // slots that had few items
@@ -973,7 +966,6 @@
     N('armor', 'chaos_engine', 'Volatile Reactor', 'legendary', { armor: 15.44, ap: 34.75, chaosNovaInterval: 4.64 }, '+18 Defense, +40 Magic. Every 5s releases a cosmic blast: dealing 120% Magic to foes and shielding allies for 20% max HP'),
   );
   // set bonuses count the pieces worn by the SAME hero (Run.heroMods)
-  // WHAT: item SETS. Wearing 2 or 3 pieces of a set on one hero gives the bonus. The pieces are the items with that set id.
   B.SETS = {
     obsidian: { name: 'Nightglass Guard', bonus: { 2: { mods: { armor: 25 }, desc: '+25 Defense' }, 3: { mods: { shieldStartPct: 0.2, thorns: 0.25, atkPct: 0.15 }, desc: 'Starts fights with a 20% shield, reflects 25% melee damage, +15% Attack' } } },
     storm: { name: 'Thunderborn', bonus: { 2: { mods: { asPct: 0.2 }, desc: '+20% attack speed' }, 3: { mods: { chainEvery: 3, chainTargets: 3, chainDmg: 0.5 }, desc: 'Every 3rd attack chains to 3 enemies' } } },
@@ -986,7 +978,6 @@
 
   // "): what each hero does, in a
   // few plain words, for the shop and the start; the full ability and its numbers are one tap away (Details)
-  // WHAT: the ONE short line shown under each hero in shops (10 to 38 characters, a test checks it).
   const TAGS = {
     bastion: 'Shields up and pulls enemies to him',
     vex: 'Teleports to the weakest enemy',
@@ -1035,9 +1026,7 @@
   // The key (bastion, thorne...) is only a fixed id used by saves, ghosts and ratings; it is not a name and is never shown (art folders use the current name).
 
   // ---------------------------------------------------------------- relics (100) — team-wide
-  // WHAT: the power (relic) maker: R(id, name, description, { mods | fl: 'flagname', ... }). "mods" = plain stat bonus for every hero; "fl" = a flag that sim.js / run.js reads where the effect happens (search for the flag name there).
   const R = (id, name, desc, o) => Object.assign({ id, name, desc }, o);
-  // WHAT: every team-wide Power (called relic in the code, "Power" on screen). 100 of them. Prices: B.CFG.relicCost.
   B.RELICS = [
     R('idol', 'Gilded Effigy', '+3 gold after each won fight.', { gold: 3 }),
     R('drum', 'Clan Drum', 'All heroes +11% attack speed.', { mods: { asPct: 0.1017 } }),
@@ -1156,8 +1145,6 @@
     R('packrat', "Pack Rat's Sack", 'Every item in your bag (not worn) gives all heroes +3% Health and Attack, up to 10 items.', { fl: 'packrat' }),
     R('vow', "Minimalist's Vow", 'Heroes with a free item slot get +30% Health and Attack (Auto-equip leaves one free).', { fl: 'vow' }),
   ];
-  // what each formation relic gives one hero (n = allies next to it, for the Shieldwall), shown while deploying
-  // WHAT: the text of what each FORMATION power gives a hero, from where he stands (see formation() in sim.js).
   B.FORMATION = {
     shieldwall: n => `+${10 * n} Defense`, lonewolf: () => '+25% attack speed, +10% crit', vanguard: () => 'shield 25% Health',
     rearguard: () => '+20% Attack & Magic', battleline: () => '+15% attack speed & attack', cover: () => '+15% dodge, +15 Defense',
@@ -1165,7 +1152,6 @@
   };
   // a short line for every relic (what it does, in a few words)
   // for shops, the start and the map; the full rule is one tap away (r.desc)
-  // WHAT: a shorter description for each Power, used on small cards. If a Power has none, its full description is used.
   // v98 (, David: "The descriptions of powers are very hard to understand... make it so that anybody with no experience can understand them. Even if
   // it doesnt give all the info. They can click for more info"): every power has a plain line with no game words (no crit, Energy, regen, crowd control);
   // the exact numbers stay in the full rule (r.desc), one tap away (More)
@@ -1274,11 +1260,9 @@
   for (const r of B.RELICS) r.short = SHORT[r.id] || r.desc;
   B.RELIC = {}; for (const r of B.RELICS) B.RELIC[r.id] = r;
   // content Elo only rates what acts in a fight, so these never get a rating
-  // WHAT: items and Powers with no effect in a fight (gold, shop and event tricks). They are left out of the win-rate (Elo) rating.
   B.NONCOMBAT = { item: ['coin', 'charm'], relic: ['idol', 'lens', 'seal', 'dice', 'purse', 'tome', 'treasure', 'bounty', 'ledger', 'deck', 'quill', 'huntmap', 'anvil', 'changeling', 'xmap', 'medal', 'double'] };
 
   // ---------------------------------------------------------------- mobs (stats at fight scale 1)
-  // WHAT: ENEMIES. B.MOBS = the monsters, stats at fight scale 1 (the real strength is these x the fight scale). hp, atk, armor (Defense), as, range, ms, cost (how much of a fight's budget it uses), abil, fl.
   const M = (o) => o;
   B.MOBS = {
     grunt: M({ name: 'Grunt', glyph: '👺', hp: 420, atk: 34, armor: 13, as: 0.8, range: 1, ms: 2, cost: 1 }),
@@ -1297,7 +1281,6 @@
     imp: M({ name: 'Imp', glyph: '😈', hp: 180, atk: 18, armor: 0, as: 1.2, range: 1, ms: 3.5, cost: 0.5 }),
   };
   for (const k in B.MOBS) B.MOBS[k].key = k;
-  // WHAT: the six bosses (floor 1: Gorewarden, Mirewitch Morra, Skorrak the Packlord; floor 2: The Ashen Sovereign, the Iron Colossus, Vaelith the Lich Queen) with their escort monsters. Their special behaviour is in bossPassives in js/sim.js.
   B.BOSSES = {
     gorewarden: { key: 'gorewarden', name: 'Gorewarden', glyph: '👹', boss: 1, hp: 1950, atk: 49, armor: 35, as: 0.65, range: 1, ms: 1.8, mana: 55, abil: 'cleave',
       desc: 'Cleaves everything around it. Calls the horde at half health and enrages at 25%.', escort: ['grunt', 'grunt', 'archer'] },
@@ -1318,9 +1301,7 @@
   };
   // Health and Attack of all six bosses set by tools/tune-bosses.js so every boss of a floor is won about as often (boss 1 ~62%, boss 2 ~57%,
   // the same teams for each; before: 72 / 60 / 19% and 76 / 71 / 76%)
-  // WHAT: which bosses can wait in boss slot 1 (fight 4) and slot 2 (fight 8); one is picked per run (three per slot).
   B.BOSS_SLOTS = [['gorewarden', 'mirewitch', 'packlord'], ['hollowking', 'colossus', 'lichqueen']];
-  // WHAT: the elite modifiers (armored, swift, enraged, giant) an enemy can get on harder fights.
   B.ELITES = [
     { id: 'vampiric', name: 'Vampiric', mods: { ls: 0.3 } },
     { id: 'armored', name: 'Armored', mods: { armor: 50 } },
@@ -1329,14 +1310,12 @@
     { id: 'giant', name: 'Giant', mods: { hpPct: 0.8 } },
   ];
   // pools by fight number for random formations
-  // WHAT: which monsters can appear from which fight number on (the key is the first fight number it applies to).
   B.POOLS = {
     1: ['grunt', 'wolf', 'archer', 'grunt'],
     2: ['grunt', 'wolf', 'archer', 'brute', 'spitter', 'skulker'],
     5: ['grunt', 'archer', 'brute', 'skulker', 'shaman', 'bomber', 'hexer', 'spitter', 'shieldbearer'],
     6: ['archer', 'brute', 'skulker', 'shaman', 'bomber', 'hexer', 'golem', 'summoner', 'shieldbearer', 'knight'],
   };
-  // WHAT: the three fight difficulties offered on the map. budget = how much enemy there is, elites = how many elites, mul = strength multiplier per fight number (tuned by tools/tune-pve.js).
   B.DIFF = {
     easy: { name: 'Easy', budget: 3.2, elites: 0, mul: [1.09, 0.95, 1.19, 0.99, 1.09, 1.13, 1.06, 1.06, 1.09] },   // mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
@@ -1375,7 +1354,6 @@
   // fight a challenge that starts now: { kind: 'solo'|'bandits'|'pack'|'horde'|'mimic'|'hoard', name,
   // win: { gold, item: rarity, relic: 1, xp, boost: { hpPct, atkPct } (the solo hero) } }
   // Events marked dyn build their choices from an offer rolled when the event opens (run.js eventChoices).
-  // WHAT: EVENTS (the ? days). Each: { id, rar (rarity), icon, name, text, choices: [{ label, act, cost?, req?, target?, fight?, mods?, risk? }] }.
   // "act" is a short command read by eventAct in js/run.js (gold:5, xpAll:20, relic, hire:key...). {g10} / {x20} in a label = 10 gold / 20 XP scaled by how far in the run you are. {dyn: true} events build their choices in code (rollOffer / eventChoices).
   B.EVENTS = [
     { id: 'training', rar: 'common', icon: '🎯', name: 'Training Grounds', text: 'Train your heroes for XP.', choices: [
@@ -1496,7 +1474,6 @@
   // who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
   const HEALER_ROLES = ['Healer', 'Paladin', 'Bard', 'Beekeeper', 'Tidecaller'];
-  // WHAT: the hero requirements some event choices have (a tank, a caster, a healer): who qualifies.
   B.EVENT_REQ = {
     melee: { name: 'a melee hero', ok: h => B.HEROES[h.key].range <= 1 },
     ranged: { name: 'a ranged hero', ok: h => B.HEROES[h.key].range >= 2 },

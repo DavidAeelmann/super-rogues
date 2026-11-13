@@ -22,7 +22,7 @@ await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 740, devi
 await send('Page.navigate', { url: `http://localhost:${PORT}/` }); await sleep(1200);
 await ev(`localStorage.clear()`); await send('Page.reload'); await sleep(1200);
 await ev(`__bal.ACT['new-run']()`); await sleep(200);
-await ev(`document.querySelector('[data-act=start-pick]').click(); document.querySelector('[data-act=start-next]').click(); document.querySelector('[data-act=start-relic]').click(); document.querySelector('[data-act=start-go]').click()`); await sleep(300);
+await ev(`document.querySelector('[data-act=start-pick]').click(); document.querySelector('[data-act=start-next]').click()`); await sleep(300);
 await ev(`(() => { const r = __bal.run; while (r.heroes.length < 3) B.Run.addHero(r, Object.keys(B.HEROES).find(k => !r.heroes.some(h => h.key === k))); __bal.render(); })()`); await sleep(200);
 await ev(`document.querySelector('[data-act=choose]').click()`); await sleep(500);
 await ev(`__bal.deployBench(); document.querySelector('[data-act=fight]').click()`); await sleep(700);   // v126: the bench (review #224) first

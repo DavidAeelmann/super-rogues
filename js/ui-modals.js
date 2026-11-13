@@ -10,7 +10,6 @@
   // tiles. Drag an item onto the hero (or onto another hero's tab) to put it on, drag it back to the bag to take it off,
   // or tap it and use the big button. Auto-equip dresses the whole team with the best gear in one tap. Every equip pops:
   // the socket bounces, the item's effect flies onto the hero and the stat it raised counts up.
-  // WHAT: THE ITEMS (GEAR) SCREEN. It is a sheet with the hero doll (7 slots), the bag, Auto-equip (purple button) and drag and drop. gearHTML draws it; gearPut / gearDo change the run.
   const GEAR_PAGE = 10;
   const shortName = n => n.length > 14 ? n.split(' ').slice(-1)[0] : n;
   const gearHero = () => U.run.heroes.find(h => h.uid === ui.gHero) || U.run.heroes[0];
@@ -18,7 +17,6 @@
   const futureSlots = h => SLOT_LV.filter(l => l > h.lvl);
   const maxSlots = h => Run.slots(U.run, h) + futureSlots(h).length;
   const gearStats = h => { const d = Run.heroDef(U.run, h); return { hp: Math.round(d.hp), atk: Math.round(d.atk), ap: Math.round(d.ap) }; };
-  // WHAT: draws the whole Items screen: hero tabs, the doll, the bag page, the selected item's description and the buttons.
   function gearHTML() {
     if (ui.heroInfo && U.run.heroes.some(h => h.uid === ui.heroInfo)) return `<div class="shead"><b>${I('user')} Hero</b><button data-act="close" aria-label="Close">✕</button></div>${heroCardHTML(U.run.heroes.find(h => h.uid === ui.heroInfo))}`;
     const h = gearHero(); if (!h) return '';
@@ -45,7 +43,6 @@
     const pages = Math.max(1, Math.ceil(order.length / GEAR_PAGE)), pg = Math.min(ui.gPage || 0, pages - 1);
     const tiles = order.slice(pg * GEAR_PAGE, (pg + 1) * GEAR_PAGE).map(i => { const id = U.run.bag[i], it = ITEM[id], on = sel && sel.k === 'b' && sel.i === i, fits = Run.canEquip(U.run, h, id);
       return `<button class="gitem ${on ? 'on' : ''} ${fits ? '' : 'nofit'}" style="--tier:${TIER_COLOR[it.tier]}" data-act="gear-pick" data-arg="b:${i}" data-drag="b:${i}" aria-label="${esc(it.name)}">${ico('item', id, 42)}<span>${esc(shortName(it.name))}</span><small class="gitem-stat">${microStat(it)}</small></button>`; }).join('');
-    // what the selected item does, and the one big button
     let det = '';
     if (sel && sel.k === 'b' && U.run.bag[sel.i]) {
       const id = U.run.bag[sel.i], it = ITEM[id], same = h.items.findIndex(x => ITEM[x].type === it.type), full = same < 0 && h.items.length >= sl;
@@ -70,10 +67,8 @@
         <div class="gbgrid">${tiles || `<p class="dim small">Empty</p>`}</div></div>
       <div class="bar gbar"><button class="gauto ${autoOn() ? 'on' : ''}" data-act="gear-auto" ${U.run.bag.length || U.run.heroes.some(h => h.items.length) ? '' : 'disabled'}>${I('bolt')} Auto-equip${autoOn() ? '<i class="gon">ON</i>' : ''}</button><button class="primary" data-act="close">Done</button></div>`;
   }
-  // WHAT: opens or refreshes the Items screen.
   function openGear() { openModal(gearHTML()); ui.modal = 'gear'; const sh = $('#modal .sheet'); if (sh) sh.classList.add('gearsheet'); }
   // put a bag item on hero uid: same type = swap; full = replaces the socket j (or the weakest one); returns the socket it went into
-  // WHAT: moves an item from the bag onto a hero slot (swapping if the type is taken).
   function gearPut(bagIdx, uid, j) {
     const h = U.run.heroes.find(x => x.uid === uid), id = U.run.bag[bagIdx]; if (!h || !id) return -1;
     const same = h.items.findIndex(x => ITEM[x].type === ITEM[id].type);
@@ -94,7 +89,6 @@
   }
   // with Auto on (the default), gear that lands in the
   // bag goes on by itself; a choice by hand in Gear turns Auto off, the purple button turns it on again
-  // WHAT: Auto-equip. While it is on (the default) new items are handed out by Run.autoEquip as soon as they appear; touching gear by hand turns it off until the purple button is pressed.
   const autoOn = () => U.run && U.run.autoGear !== false;
   function autoGear() {
     if (!autoOn() || U.battle || !U.run.bag.length || U.run.phase === 'over' || ui.modal === 'gear') return;
@@ -103,14 +97,11 @@
     clearTimeout(autoGear.h); autoGear.h = setTimeout(() => toast('Auto-equip put on your new gear'), 500);
   }
   function manualGear() { if (autoOn()) { U.run.autoGear = false; toast('Auto-equip is off: you choose. The purple button turns it back on.'); } }
-  // WHAT: runs a manual gear change, turns Auto-equip off, refreshes the screens and plays the effect.
   function gearDo(fn, uid) { manualGear(); const h = U.run.heroes.find(x => x.uid === uid), before = h ? gearStats(h) : null; const r = fn(); ui.gsel = null; ui.gHero = uid; save(); if (ui.modal === 'gear') openGear(); if (U.run && U.run.phase === 'deploy') render(); else U.refreshBehind(); if (r && r.sock >= 0 && before) gearFx(uid, r.sock, r.id, before); }
   // the decisions live in run.js (Run.autoEquip: hero profiles, item scores, best match first)
-  // WHAT: the purple button: Run.autoEquip for the whole team.
   function gearAuto() { return Run.autoEquip(U.run); }
 
   // drag and drop with the pointer (mouse and touch): a ghost follows the finger, drop targets glow
-  // WHAT: drag and drop on the Items screen or Deploy screen with a pointer (mouse and touch): gearDown starts, gearMove shows the ghost and glows drop targets, gearUp drops.
   const gdrag = { on: false };
   function gearDown(e) {
     ui.gNoClick = 0;   // a new touch: an old drop no longer eats taps
@@ -229,7 +220,6 @@
   // the hero card on top of the team sheet
   // a hero's Details from the shop or the start: the picture, what it does in plain words, the whole
   // ability with its numbers, its stats, and every level's two powers
-  // WHAT: the "details" sheet of a hero (stats, ability, all his powers) opened from cards.
   function heroPeekHTML(key) {
     const d = HEROES[key]; if (!d) return '';
     const def = Run.heroDef({ relics: [], heroes: [], bag: [] }, { key, lvl: 1, specs: [], items: [], bonus: {}, uid: 0 });
@@ -244,7 +234,6 @@
       <h3 class="peekh">Powers it can learn <span class="dim">· tap one</span></h3><div class="peekpow v2">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span>${pr.map(sp => `<button class="ppb ${ps && ps.id === sp.id ? 'on' : ''}" data-act="peek-spec" data-arg="${key}:${sp.id}">${esc(sp.name)}</button>`).join('')}</div>`).join('')}</div>
       <p class="ppdesc ${ps ? '' : 'dim'}">${ps ? `<b class="spec">${esc(ps.name)}</b> ${fmt(U.plainAb(ps.desc))}` : 'Each level up you pick one of the two.'}</p>`;
   }
-  // WHAT: a hero card inside sheets.
   function heroCardHTML(h) {
     const d = HEROES[h.key], def = Run.heroDef(U.run, h), specs = h.specs.map(id => Run.specOf(h.key, id)).filter(Boolean);
     return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(hName(h))}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}${h.path != null ? ' · ★ ' + esc(h.pathName) : ''}</span>
@@ -253,10 +242,8 @@
       ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
       ${Object.entries(Run.setCounts(h.items)).filter(([, n]) => n >= 2).map(([sid, n]) => `<div class="small setfull">◆ <b>${esc(B.SETS[sid].name)}</b> ${n}/3 · ${fmt(B.SETS[sid].bonus[2].desc)}${n >= 3 ? ' · ' + fmt(B.SETS[sid].bonus[3].desc) : ''}</div>`).join('')}</div>`;
   }
-  // WHAT: THE LADDER: tabs Player / Ranking / Heroes / Items / Powers. The content tabs (Elo of every piece) are a Crown Shop unlock.
   const LADDER_TABS = [['player', 'Player'], ['players', 'Global'], ['friends', 'Friends']];   // Friends = the players you follow
 
-  // WHAT: the Player tab: your league, level, rewards and the road ahead (roadmapHTML).
   function playerTabHTML(me) {
     const L = B.LEAGUES, R = B.LEAGUE_RULES, cur = me.league | 0, top = L.length - 1, lp = me.lp | 0;
     const paid = me.sreach | 0;
@@ -290,7 +277,6 @@
       <p class="small xpways">Every game: 🎮 +${X.played} for playing · ⚔️ +${X.fight} per fight won · 👹 +${X.boss} per boss beaten · 🏆 +${X.reached} for completing the run · 🤺 +${X.duel} per Gauntlet floor won · 👑 +${X.champion} for the Gauntlet crown. Each level needs a bit more XP than the last.</p>
       <p class="small xpways">Bonus firsts: ⭐ first PvE clear with each hero +${B.ACCOUNT.heroClear} <span class="dim">(${me.cleared | 0}/${Object.keys(HEROES).length})</span> · 👹 each boss beaten the first time +${B.ACCOUNT.boss} <span class="dim">(${me.bosses | 0}/${Object.keys(B.BOSSES).length})</span> · 💎 +${B.ACCOUNT.crownXp} per crown spent${hasPerk('xp2') ? ' · <b class="kw-gold">✨ Double XP on</b>' : ''}</p></div>`;
   }
-  // WHAT: opens the ladder sheet on a tab (loads the ranking from api/elo.js).
   // two tabs, you and the ranking;
   // the ranking is by league, then league points (LP)
   async function openScores(tab) {
@@ -334,7 +320,6 @@
     } catch (err) { if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="err">${esc(err.message)}</p>`); }
   }
   // ---------------- Crown Shop, profiles, invites
-  // WHAT: CROWN SHOP, PROFILES AND INVITES. The shop sells perks for crowns (data.js B.SHOP_ITEM), profileHTML shows a player, the invite link gives crowns when friends join.
   function crownShopHTML() {
     const a = acct, season = a.season || B.seasonOf(Date.now()), days = Math.max(0, Math.ceil((B.seasonEnds(season) - Date.now()) / 864e5)), paid = a.account ? a.sreach | 0 : 0;
     const buyBtn = it => { const conf = ui.confirmBuy === it.id, cant = !a.account || (a.crowns | 0) < it.price;
@@ -365,7 +350,6 @@
   }
   // the Style tab: taunts (your comic bubble on your profile and the VS screen, also when others face your ghost), VS entrances, and
   // the portraits your level has not opened yet. Bought ones get a Show button: you show one taunt and one entrance.
-  // WHAT: the Style tab of the Crown Shop.
   function styleTab(buyBtn) {
     const a = acct, lvl = lvlNow(), own = id => hasPerk(id);
     const show = (kind, id, on) => `<button class="cshow ${on ? 'on' : ''}" data-act="style-set" data-arg="${kind}:${on ? '' : id}">${on ? '✓ Showing' : 'Show'}</button>`;
@@ -386,7 +370,6 @@
   function heroList(rows, what) {
     return rows.length ? `<div class="phl">${rows.map(r => `<span class="phh">${img(r.hero, 34, 'por')}<b>${esc((HEROES[r.hero] || { name: r.hero }).name)}</b><em>${what(r)}</em></span>`).join('')}</div>` : '<p class="small dim">Not enough games yet.</p>';
   }
-  // WHAT: a player profile sheet (league, Elo, titles, best floor, favourite heroes for Kings).
   function profileHTML(p, viewerKing) {
     const L = B.LEAGUES, l = L[p.league] || L[0], top = L.length - 1, R = B.LEAGUE_RULES;
     const since = p.since ? new Date(p.since).toLocaleDateString() : '';
@@ -411,7 +394,6 @@
         ${p.own ? `<div class="row center"><button data-act="shop">👑 Crown Shop · ${acct.crowns | 0}</button></div>` : ''}</div>`;
   }
   // the achievements on a profile: the ones earned lit, the rest dim (the secret ones say so); on your own profile a tap makes one your title
-  // WHAT: the achievements grid of a profile.
   function achsHTML(p) {
     const own = p.achs || [], mine = p.own, cur = mine ? acct.titleId : null;
     const cell = a => { const got = own.includes(a.id), secret = !got && /secret/i.test(a.desc); return `<${mine && got ? 'button data-act="title-set" data-arg="' + (cur === a.id ? '' : a.id) + '"' : 'div'} class="achc ${got ? 'got' : ''} ${cur === a.id ? 'on' : ''}" title="${esc(a.desc)}"><i>${got || !secret ? a.icon : '❔'}</i><b>${esc(got || !secret ? a.title : '???')}</b><small>${esc(secret ? 'A secret' : a.desc)}</small>${cur === a.id ? '<em>✓ Your title</em>' : ''}</${mine && got ? 'button' : 'div'}>`; };
@@ -419,7 +401,6 @@
   }
   const followText = p => `${p.followers | 0} follower${(p.followers | 0) === 1 ? '' : 's'} · following ${p.following | 0}`;
   // the portraits your level has opened (four free, then one more each level); the locked ones say the level they open at
-  // WHAT: the sheet to pick your picture (a hero portrait).
   function avatarPickHTML() {
     const lvl = lvlNow(), cur = avKey(acct.avatar, acct.code), list = B.PORTRAITS_FREE.concat(B.PORTRAIT_UNLOCKS), open = list.filter(k => B.portraitLevel(k) <= lvl || hasPerk('pt_' + k)).length;
     return `<div class="shead"><b>${I('user')} Your picture</b><button data-act="close" aria-label="Close">✕</button></div><p class="small dim">Every account level opens one more hero portrait (or buy one in the Crown Shop, Style). Level ${lvl}: ${open} of ${list.length}.</p>
@@ -457,7 +438,6 @@
   }
   // the basics first, in five short lines for someone who never played this kind of game; the full
   // rules fold under them
-  // WHAT: the How to play text (also the HTML of that sheet). Update it when a rule changes.
   const HOWTO = `<div class="shead"><b>How to play</b><button data-act="close">✕</button></div>
     <ol class="howbasics">
       <li>${I('user')}<span><b>Pick a hero and a power.</b> Two more heroes join you for free after your first days.</span></li>
@@ -486,7 +466,6 @@
       <li><b>👑 Crowns & Profile:</b> Earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles). Tap any player's name to open their profile: league, win streak, trophies, runs completed and your duels against them. Follow players there to see them in the Friends ladder. Your picture is a hero portrait: every account level opens one more.</li>
       <li><b>✨ Account Level:</b> Every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for completing the run, +${B.GAME_XP.duel} per Gauntlet floor won, +${B.GAME_XP.champion} for the Gauntlet crown), plus bonuses the first time you complete a run with each hero (+${B.ACCOUNT.heroClear}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and every level opens rewards: new heroes (two a level up to level 5), items, powers, hero portraits, voice lines and titles (see the road on the title or in Ladder → Player).</li>
     </ol></details>`;
-
 
   Object.assign(U, { autoGear, autoOn, maxSlots, HOWTO, refreshShop, heroPeekHTML, manualGear, gearPut, openGear, gearHero, gearDo, gearAuto, openScores, openProfile, openMyProfile, followText, achsHTML, avatarPickHTML, openShop });
 })();

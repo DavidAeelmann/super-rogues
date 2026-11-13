@@ -84,25 +84,19 @@ ok(picks === 3 && !(await ev(`!!document.querySelector('.stage.six')`)), 'v64 (r
 await click('#top [data-act=menu]'); await sleep(150);
 ok(await ev(`!document.querySelector('[data-act=continue-run]') && !document.querySelector('[data-act=give-up]') && !!document.querySelector('[data-act=new-run]')`), 'v49: a game still picking its hero shows Play on the landing, not Continue');
 await click('[data-act=new-run]'); await sleep(200);
-ok(await ev(`!!document.querySelector('.start .ssteps li.on') && !!document.querySelector('.ssub.tap') && document.querySelector('[data-act=start-next]').disabled && !document.querySelector('[data-act=start-relic]')`), 'v45 step 1: "Tap a hero", Next is off until you pick, no relics yet');
+ok(await ev(`!!document.querySelector('.start .ssteps li.on') && !!document.querySelector('.ssub') && document.querySelector('[data-act=start-next]').disabled && !document.querySelector('[data-act=start-relic]')`), 'start step 1: "Tap a hero", Start is off until you pick');
 const fmtOut = await ev(`__bal.fmt('<b>x</b> deals 20% magic damage and stuns for 1.5s')`);
-ok(/&lt;b&gt;/.test(fmtOut) && /class="num">20%/.test(fmtOut) && /kw-ap/.test(fmtOut) && /kw-cc/.test(fmtOut) && /class="dur">1.5s/.test(fmtOut), 'review #10: descriptions colour terms, bold numbers, italic durations, and stay escaped');
+ok(/&lt;b&gt;/.test(fmtOut) && /class="num">20%/.test(fmtOut) && /kw-ap/.test(fmtOut) && /kw-cc/.test(fmtOut) && /class="dur">1.5s/.test(fmtOut), 'descriptions colour terms, bold numbers, italic durations, and stay escaped');
 await pickHero();
-ok(await ev(`!!document.querySelector('.detail .htag') && !!document.querySelector('.detail [data-act=hero-peek]') && !document.querySelector('.detail .stat') && !document.querySelector('[data-act=start-next]').disabled`), 'v45 step 1: the picked hero shows its ability (no stat table) and Next turns on');
+ok(await ev(`!!document.querySelector('.detail .htag') && !!document.querySelector('.detail [data-act=hero-peek]') && !document.querySelector('.detail .stat') && !document.querySelector('[data-act=start-next]').disabled`), 'start step 1: the picked hero shows its ability (no stat table) and Start turns on');
 await shot('02a-start-hero'); await noHScroll('start hero'); await noVScroll('start hero');
 await ev(`document.querySelectorAll('[data-act=start-pick]')[2].click()`); await sleep(80);
-ok(await ev(`document.querySelectorAll('.hbanner.spot.on').length === 1 && document.querySelectorAll('.hbanner.spot')[2].classList.contains('on') && !document.querySelectorAll('.hbanner.spot')[0].classList.contains('on') && !document.querySelector('.hbanner.focus')`), 'v64 (review #124): tapping another hero moves the light: only the picked one stays lit');
+ok(await ev(`document.querySelectorAll('.hbanner.spot.on').length === 1 && document.querySelectorAll('.hbanner.spot')[2].classList.contains('on') && !document.querySelectorAll('.hbanner.spot')[0].classList.contains('on') && !document.querySelector('.hbanner.focus')`), 'tapping another hero moves the light: only the picked one stays lit');
 await ev(`document.querySelectorAll('[data-act=start-pick]')[2].click()`); await sleep(80);
 ok(await ev(`!document.querySelector('.hbanner.spot.on') && document.querySelector('[data-act=start-next]').disabled`), 'tapping it again puts it back (nothing stays lit)');
 await pickHero();
-await click('[data-act=start-next]'); await sleep(100);
-ok(await ev(`document.querySelectorAll('[data-act=start-relic]').length === 3 && document.querySelector('[data-act=start-go]').disabled && document.querySelectorAll('.srelic .srd').length === 3 && document.querySelectorAll('.ssteps li.done').length === 1`), 'review #22 + v45 step 2: 3 relics with what they do written on them; you need a relic to begin');
-await click('[data-act=start-back]'); await sleep(100);
-ok(await ev(`!!document.querySelector('.hbanner.on') && !document.querySelector('[data-act=start-next]').disabled`), 'v45: Back returns to the heroes and keeps your pick');
-await click('[data-act=start-next]'); await sleep(100);
-await click('[data-act=start-relic]');
 await shot('02-start'); await noHScroll('start'); await noVScroll('start');
-ok(await click('[data-act=start-go]'), 'start the game');
+ok(await click('[data-act=start-next]'), 'start the game');
 await sleep(200);
 ok(await ev(`document.querySelectorAll('[data-act=choose]').length === (__bal.run.relics.includes('quill') ? 3 : 2)`), "first map step shows 2 options (3 with the Pathfinder's Quill)");
 await shot('03-map'); await noHScroll('map'); await noVScroll('map');
@@ -300,7 +294,7 @@ ok(await ev(`Object.keys(B.HEROES).every(k => { const d = B.Run.heroDef({ relics
 if (!REMOTE) {
   await ev('B.CFG.startItems = 0');   // v63: the events below count the items in the bag
   await click('[data-act=new-run]'); await sleep(150);
-  await pickHero(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+  await pickHero(); await click('[data-act=start-next]'); await sleep(150);
   await ev(`(() => { const r = __bal.run; r.recruits = 2; r.gold = 30; r.bag.push('cap', 'bloodthirster'); r.phase = 'map'; r.opts = [{ type: 'event', id: 'smith' }]; B.Run.choose(r, 0); __bal.render(); })()`); await sleep(150);
   ok(await ev(`document.querySelectorAll('[data-act=event]').length === 4 && !document.querySelector('[data-act=event][data-arg="2"]').disabled && !!document.querySelector('[data-act=event][data-arg="2"] .price') && !!document.querySelector('[data-act=event][data-arg="3"] .etag.ereq')`), 'event: 4 choices (one needs a melee hero, tagged), the priced one is available');
   await shot('09-event'); await noHScroll('event'); await noVScroll('event');
@@ -345,7 +339,7 @@ if (!REMOTE) {
   await post({ op: 'snap', pid: 'b'.repeat(32), name: 'Rival', day: 3, team: rival, relics: ['feather'] });
   await post({ op: 'complete', pid: 'b'.repeat(32), name: 'Rival', team: rival, relics: ['feather'], runId: 77, game: { fights: 6 } });
   await click('[data-act=new-run]'); await sleep(150);
-  await pickHero(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+  await pickHero(); await click('[data-act=start-next]'); await sleep(150);
   ok(await ev(`__bal.run.heroes.length === 1 && __bal.run.lives === 1 && document.querySelectorAll('#top .lives.ward.on .hrt').length === 1`), 'v64: one hero at the start; v101 (review #186): the Ward in the top bar');
   await ev(`(() => { const r = __bal.run; r.recruits = 2; while (r.heroes.length < 3) B.Run.addHero(r, Object.keys(B.HEROES).find(k => !r.heroes.some(h => h.key === k)));
     r.heroes.forEach(h => { h.lvl = 5; h.specs = B.HEROES[h.key].specs.map(p => p[0].id); h.items = ['bloodthirster', 'warmog', 'deathcap', 'guardian']; }); r.heroes[0].items = ['obs_blade', 'obs_plate', 'obs_helm', 'mountainheart']; r.bag.push('worldsplitter', 'aegis', 'storm_boots'); r.autoGear = false;
@@ -465,7 +459,7 @@ if (!REMOTE) {
 
 // v50 (review #62): new relics on screen: three paths (Pathfinder's Quill), a free offer (Merchant's Ledger)
 await ev(`__bal.ACT['new-run']()`); await sleep(150);
-await pickHero(); await click('[data-act=start-next]'); await click('[data-act=start-relic]'); await click('[data-act=start-go]'); await sleep(150);
+await pickHero(); await click('[data-act=start-next]'); await sleep(150);
 await ev(`(() => { const r = __bal.run; B.Run.gainRelic(r, 'quill'); B.Run.gainRelic(r, 'ledger'); r.pending = []; r.step -= 1; r.fightNo = 0; B.Run.advance(r); __bal.render(); })()`); await sleep(200);
 ok(await ev(`document.querySelectorAll('.banners.rb3 .banner').length === 3`), "v50: the Pathfinder's Quill shows three paths");
 await shot('27-three-paths'); await noHScroll('three paths'); await noVScroll('three paths');

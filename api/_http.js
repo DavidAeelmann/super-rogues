@@ -1,6 +1,5 @@
 // Shared HTTP helpers for the serverless functions (plain Node req/res, so the local dev server can run them too).
 // 
-// FILE GUIDE. Small helpers every api file uses. send() answers JSON, body() reads the request, sameOrigin() blocks other websites, ipHash() makes an anonymous per-visitor code (the real IP is never stored), clean() makes a text safe. The index of the whole project is CODEMAP.md.
 const crypto = require('crypto');
 
 // Allowed web portals / platforms for CORS (itch.io, crazygames, poki, local dev embeds)
@@ -27,7 +26,6 @@ function isAllowedOrigin(origin, host) {
   }
 }
 
-// WHAT: answers with a JSON object and a status code (no caching), writing CORS headers if req was stored.
 function send(res, code, obj) {
   res.statusCode = code;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -46,7 +44,6 @@ function send(res, code, obj) {
   res.end(JSON.stringify(obj));
 }
 
-// WHAT: reads the JSON the browser sent (max 20000 characters, empty object when it is bad). Also attaches request metadata to res for CORS headers.
 async function body(req, max = 20000, res = null) {
   if (res && req && req.headers) {
     res._reqOrigin = req.headers.origin;
@@ -90,7 +87,6 @@ function sameOrigin(req, res = null) {
 }
 
 const sha = s => crypto.createHash('sha256').update(String(s)).digest('hex');
-// WHAT: a salted hash of the visitor's IP, used only for rate limits.
 function ipHash(req) {
   const ip = String(req.headers['x-real-ip'] || String(req.headers['x-forwarded-for'] || '').split(',')[0] || (req.socket && req.socket.remoteAddress) || '?').trim();
   return sha((process.env.ADMIN_KEY || 'dev') + '|' + ip).slice(0, 24);

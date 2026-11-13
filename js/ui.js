@@ -4,7 +4,6 @@
   const U = B._ui;
   const { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts } = U;
   // ------------------------------------------------------------------ actions
-  // WHAT (the button table): ACT[name] runs when a button with data-act="name" is tapped (one global listener, no inline handlers because of the CSP).
   // To make a new button work: put data-act="my-name" in its HTML and add my-name: (arg, el) => {...} here. arg is the data-arg value. Names with a dash must be quoted.
   const ACT = {
     // Play / Play again: starts a fresh run.
@@ -391,11 +390,9 @@
   // hero pictures finish loading after the first screen: redraw it
   B.Art.onChange(() => { if (U.screen === 'battle' || ui.modal || ui.drag) return; clearTimeout(ui.artH); ui.artH = setTimeout(() => { if (U.screen !== 'battle' && !ui.modal && !ui.drag) render(); }, 80); });
   B.Art.boot();
-  // WHAT: after a change inside a sheet, redraws the top bar and the board behind it.
   function refreshBehind() { header(); if (U.run && U.run.phase === 'deploy' && U.screen !== 'battle') { U.preview = U.worldFor(true); U.drawPreview(); } else if (U.run && U.screen !== 'battle') U.mountBgBoard(); }
 
   // every tap has a sound; these actions have their own (null = the action plays it, it depends on the outcome)
-  // WHAT: which sound each button makes (null = silent).
   const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: null, 'start-go': 'go', choose: 'pick', 'start-pick': 'pick', 'recruit-pick': 'pick', 'over-next': 'pick', 'start-relic': 'pick', 'start-next': 'pick', 'start-back': 'back',
     spec: 'unlock', event: 'pick', 'event-target': 'pick', equip: 'pick', bag: 'pick', unequip: 'back', close: 'back', 'event-back': 'back', sell: 'coin', 'result-ok': 'pick', 'stat-info': null, 'cos-preview': null };
   document.addEventListener('click', e => {
@@ -508,7 +505,6 @@
     } catch (err) { toast(err.message); if (btn) btn.disabled = false; }
   });
   let rz = 0;
-  // WHAT: when the window changes size (rotation, keyboard) the board is made again at the right size.
   function onResize() {
     clearTimeout(rz);
     rz = setTimeout(() => {

@@ -3,7 +3,6 @@
 // (move start/end tick): a unit occupies its destination hex the moment it starts moving, and the tick it lands
 // (m1t) is the same tick its next action (attack windup or cast) starts.
 
-// FILE GUIDE (read this first). This is the BATTLE ENGINE. It knows nothing about shops or the map: give it units and it plays the fight tick by tick (20 ticks = 1 second).
 // Order of the file: random numbers -> create/spawn/start (build a fight) -> formation and start-of-fight power effects -> small helpers (alive, enemies, allies...) ->
 // stats with buffs -> status effects (stun, slow, shield, dot, heal) -> deal() (all damage) and die() -> movement -> targeting and attacks -> summons -> A.* (one function per ability)
 // -> bosses -> Prism / Citadel / Smolder / Tom / Ashwing extras -> act() (what a unit does each tick) -> periodic() -> step() (one tick of the whole world) -> power effects on a clock.
@@ -14,20 +13,16 @@
 (function (G) {
   const B = G.B = G.B || {};
   const Hx = B.Hex;
-  // WHAT: ticks per second. All times in this file are in ticks; sec(2) = 2 seconds = 40 ticks.
   const TPS = 20;
   const sec = s => Math.round(s * TPS);
 
-  // WHAT: a small seeded random number generator. The same seed always gives the same fight.
   function rngOf(seed) {
     let a = seed >>> 0;
     return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   }
 
   // ------------------------------------------------------------------ world
-  // WHAT: BUILDING A FIGHT. W.occ is the board: 0 = empty hex, a unit id = occupied, BLOCK = terrain.
   const BLOCK = -1; // occupancy value of a terrain hex (units have ids > 0)
-  // WHAT: builds the world W from { heroes: [{def, c, r}], enemies: [...], terrain, relics, enemyRelics, seed }. def = the stats object (see heroDef in run.js, mobScaleDef below).
   // Team powers (relics) with an effect in the fight become flags: W.fl for the player side, W.fl1 for the enemy side (a Gauntlet ghost has its own).
   function create(o) {
     const W = {
@@ -53,7 +48,6 @@
     return W;
   }
 
-  // WHAT: creates one unit from a def at hex (c, r) and puts it on the board. Also used for summons.
   function spawn(W, def, side, c, r) {
     if (W.occ[Hx.key(c, r)]) { const f = freeNear(W, c, r); if (!f) return null; c = f.c; r = f.r; }
     const m = def.m || {};
@@ -79,7 +73,6 @@
     return u;
   }
 
-  // WHAT: the moment a fight begins: static auras, start-of-fight effects (dive, factory...) and the powers that act at the start (relicStart). Not run for the deploy preview.
   function start(W) {
     { const c = W.units.filter(u => u.abil === 'rewind'); W.chrono = c.length ? c : null; }   // Chronos on the board (his fields and Rewind memory)
     // auras (static, from starting positions) and start-of-fight effects
@@ -129,14 +122,11 @@
     }
   }
   // the Lodestone's hero: the one with the most max HP still standing
-  // WHAT: the hero with the most max HP still standing (the Lodestone power protects him).
   const lodestar = (W, s) => heroesOf(W, s).sort((a, b) => b.maxHp - a.maxHp)[0];
   // the new relics that act when a fight starts
-  // WHAT: the living heroes of a side. baseRange = a hero's own range without items; nextToTerrain = is the unit touching a tree / rock / pond.
   const heroesOf = (W, s) => W.units.filter(u => !u.dead && u.side === s && u.kind === 'hero');
   const baseRange = u => (B.HEROES[u.key] || u).range;
   const nextToTerrain = (W, u) => Hx.neighbors(u.c, u.r).some(h => W.tk[Hx.key(h.c, h.r)]);
-  // WHAT: team powers (relics) that act at the start of the fight: Bodyguard, Scales, King, Harmony, Gravity Stone, Catapult, Anchor Chain... s = the side, F = its flags.
   function relicStart(W, s, F) {
     const hs = heroesOf(W, s);
     if (!hs.length) return;
@@ -173,10 +163,8 @@
 
   // formation relics, judged from the heroes' hexes (front row = 4 for the player, 3 for a ghost;
   // back row = 7 / 0). Pure: start() applies it, the deploy screen lists it.
-  // WHAT: FORMATION powers reward WHERE your heroes stand (next to each other, alone, front row, back row, one line, next to terrain, the star).
   const FORMATION = ['shieldwall', 'lonewolf', 'vanguard', 'rearguard', 'battleline', 'cover', 'highground', 'center'];
   const FORM_LABEL = { shieldwall: 'SHIELDWALL', lonewolf: 'LONE WOLF', vanguard: 'VANGUARD', rearguard: 'REARGUARD', battleline: 'BATTLE LINE', cover: 'IN COVER', highground: 'HIGH GROUND', center: 'THE STAR' };
-  // WHAT: which heroes get which formation bonus right now. Pure: start() applies it and the deploy screen shows it.
   function formation(W, s) {
     const F = flOf(W, s), out = [];
     if (!FORMATION.some(f => F[f])) return out;
@@ -203,7 +191,6 @@
   }
 
   // ------------------------------------------------------------------ queries
-  // WHAT: QUERIES. alive(u); enemies(W, u) = living units on the other side; allies(W, u) = living units on u's side (including u); targetable = alive and not hidden or guarded.
   const alive = u => u && !u.dead;
   const enemies = (W, u) => W.units.filter(v => !v.dead && v.side !== u.side);
   const allies = (W, u) => W.units.filter(v => !v.dead && v.side === u.side);
@@ -211,8 +198,6 @@
   // Bodyguard Oath
   const guarded = (W, v) => v.kind === 'hero' && (W.fl.bodyguard || W.fl1.bodyguard) && flOf(W, v.side).bodyguard && (B.HEROES[v.key] || v).range > 1
     && W.units.some(a => !a.dead && a.side === v.side && a.kind === 'hero' && (B.HEROES[a.key] || a).range <= 1);
-  // WHAT: the closest empty hex to (c, r), searching outward up to maxR. freeNeighbors = the empty hexes around a hex.
-  // WHAT: the closest empty hex to (c, r), searching outward up to maxR. freeNeighbors = the empty hexes around a hex.
   // Precompute static rings by coordinate key and radius so freeNear performs zero array allocations in combat
   const RINGS_BY_KEY_RAD = (function() {
     const table = [];
@@ -246,7 +231,6 @@
     return null;
   }
   function freeNeighbors(W, c, r) { return Hx.neighbors(c, r).filter(h => !W.occ[Hx.key(h.c, h.r)]); }
-  // WHAT: the enemy standing where the most other enemies are within radius rad (where an area ability should land).
   function bestCluster(W, u, rad) {
     let best = null, bc = -1;
     for (const e of enemies(W, u)) {
@@ -257,11 +241,8 @@
   }
 
   // ------------------------------------------------------------------ stats with buffs
-  // WHAT: STATS WITH BUFFS. buff(u, stat, value, seconds, W) adds a timed bonus (atkPct, asPct, armor, dr, dmgAmp...). Pass 1e9 as the duration for "until the end of the fight".
   function buff(u, s, v, dur, W) { u.buffs.push({ s, v, until: dur >= 1e9 ? 1e12 : (W ? W.t : 0) + dur }); }
-  // WHAT: the sum of the active buffs of one stat on a unit.
   function bsum(W, u, s) { let x = 0; for (const b of u.buffs) if (b.s === s && b.until > W.t) x += b.v; return x; }
-  // WHAT: the CURRENT stat of a unit with buffs applied: atkOf (attack), armorOf (Defense, one stat for physical and magic damage), lsOf (lifesteal), apOf (ability power), asOf (attacks per second), msOf (moves per second). Always read stats through these.
   const atkOf = (W, u) => Math.max(1, u.atk * (1 + bsum(W, u, 'atkPct') + u.bAtkPct) + u.titan * 3 + u.bAtk);
   // Onyx's Living Fortress gives the allies next to him 30% of his Defense
   const shellAura = (W, u) => { let s = 0; if (W.shellAura === undefined) W.shellAura = W.units.some(a => a.fl.has('shellaura')); if (W.shellAura) for (const a of W.units) if (a !== u && !a.dead && a.side === u.side && a.fl.has('shellaura') && Hx.dist(a, u) === 1) s += a.armor * 0.3; return s; };
@@ -271,22 +252,18 @@
   // abilities scale with AD (attack), AP (ability power) or both, ADDED: "95% AP", "60% AD + 30% AP".
   // AP is never a multiplier of attack any more.
   const apOf = u => u.ap || 0;
-  // WHAT: attacks per second right now (base speed with buffs, slows and Berserk).
   function asOf(W, u) {
     let a = u.as * (1 + bsum(W, u, 'asPct') + u.bAsPct + u.focus * (u.ab.focus || 0));
     if (u.st.slowU > W.t) a *= 1 - u.st.slowP * 0.5;
     if (u.kind === 'hero' && flOf(W, u.side).berserk) a *= 2 - Math.max(0, u.hp) / u.maxHp;   // up to twice as fast
-    // v121 (reviews #209-#212): Chronos' Paradox and Accelerando, Kitsune's Spirit Jaunt (faster), Stasis Field and Belladonna's numbing Toxin (slower)
     if (u.paradoxU > W.t) a *= 1 + u.ab.paradox; if (u.jauntU > W.t) a *= 1 + (u.ab.jauntAs || 0);
     if (u.tox && u.tox.until > W.t && u.tox.numb) a *= 1 - Math.min(0.6, u.tox.n * u.tox.numb);
     if (W.chrono) for (const c of W.chrono) if (!c.dead && Hx.dist(c, u) <= 2) { if (c.side === u.side && c.ab.accel) a *= 1 + c.ab.accel; else if (c.side !== u.side && c.ab.stasis) a *= 1 - c.ab.stasis; }
     return Math.min(3.5, Math.max(0.2, a));
   }
-  // WHAT: moves per second right now (slows applied, never below 0.5).
   function msOf(W, u) { let m = u.ms; if (u.st.slowU > W.t) m *= 1 - u.st.slowP; return Math.max(0.5, m); }
 
   // ------------------------------------------------------------------ scheduling & fx
-  // WHAT: SCHEDULING AND EFFECTS. at(W, tick, fn) runs fn at a future tick (a delayed hit, a falling star). fx* functions only add pictures for render.js (numbers, rings, banners); they never change the fight.
   // W.ctx = { ab, by } is the ability being cast right now; every effect made meanwhile (and by the delayed hits it schedules) carries it as f.ab / f.by,
   // so the renderer can draw each ability its own way (js/abilfx.js). The fight never reads it.
   function at(W, t, fn) { W.q.push({ t, fn, ctx: W.ctx }); }
@@ -296,19 +273,15 @@
     if (W.ctx && o.ab === undefined) { o.ab = W.ctx.ab; o.by = W.ctx.by; }
     W.fx.push(o);
   }
-  // WHAT: runs fn with W.ctx set to an ability (passives such as plants, the medic's attack and the Citadel's soldiers tag their effects too).
   function inCtx(W, ab, by, fn) { const was = W.ctx; W.ctx = { ab, by }; try { return fn(); } finally { W.ctx = was; } }
   const castAb = (W, u) => inCtx(W, u.abil, u.id, () => A[u.abil](W, u));
   function fxNum(W, u, v, color, big) { fx(W, { k: 'num', c: u.c, r: u.r, id: u.id, text: String(v), color, big: !!big, t1: W.t + 16 }); }
   function fxRing(W, c, r, rad, color, dur = 8) { fx(W, { k: 'ring', c, r, rad, color, t1: W.t + dur }); }
-  // WHAT: the team power flags of a side: flOf(W, 0) for the player, flOf(W, 1) for the enemy / ghost.
   const flOf = (W, side) => side ? W.fl1 : W.fl;
   function fxText(W, u, text, color) { fx(W, { k: 'text', c: u.c, r: u.r, id: u.id, text, color, t1: W.t + 24 }); }
 
   // ------------------------------------------------------------------ status effects
-  // WHAT: STATUS EFFECTS. ccImmune = cannot be stunned (Juggernaut above half health, bosses...). cc() stuns / silences / roots for seconds, slow() slows, shield() adds a temporary shield, dot() adds damage over time, heal() heals.
   function ccImmune(W, u) { return u.st.ccImmU > W.t || (u.fl.has('juggernaut') && u.hp > u.maxHp * 0.5) || (u.fl.has('stoneskin') && u.shield > 0); }   // Aegir's Stone Skin
-  // WHAT: applies a crowd control (stun, silence, root, freeze...) for s seconds unless the unit is immune or has a one-time cleanse.
   function cc(W, u, kind, s) {
     if (!alive(u) || s <= 0 || u.plant) return;
     if (ccImmune(W, u)) { fxText(W, u, 'IMMUNE', '#fff'); return; }
@@ -316,7 +289,6 @@
     const d = sec(s * (1 - Math.min(0.8, u.m.ccResist || 0)));  // full duration on bosses too
     u.st[kind] = Math.max(u.st[kind] || 0, W.t + d);
   }
-  // WHAT: slows move and attack speed by fraction p for s seconds.
   function slow(W, u, p, s) {
     if (!alive(u) || u.plant || ccImmune(W, u)) return;
     const until = W.t + sec(s);
@@ -324,7 +296,6 @@
   }
   function shield(W, u, amt, s) { if (!alive(u)) return; u.shield = (u.shieldU > W.t ? u.shield : 0) + amt; u.shieldU = Math.max(u.shieldU, W.t + sec(s)); }
   function dot(W, u, k, v, s, src) { if (!alive(u) || u.plant || v <= 0) return; u.dots.push({ k, v, until: W.t + sec(s), src: src ? src.id : 0 }); }
-  // WHAT: heals a unit (healing power and anti-heal applied) and returns the amount really healed.
   function heal(W, u, amt, show) {
     if (!alive(u) || amt <= 0) return 0;
     let m = 1 + (u.m.healPower || 0); if (u.st.antiHealU > W.t) m *= 0.5;
@@ -339,7 +310,6 @@
   }
 
   // ------------------------------------------------------------------ damage
-  // WHAT (the most important function): ALL damage goes through here. src = who hits (or null), tgt = who is hit, raw = base damage, type = phys / magic / true, o = options (ability, dot, atk, canCrit).
   // Steps: crit -> damage amplifiers (power effects, vulnerability) -> armor or magic resist -> damage reduction -> shield absorbs -> HP drops -> lifesteal, on-hit effects, death. Change a damage rule here and it changes for every hero.
   function deal(W, src, tgt, raw, type, o = {}) {
     if (!alive(tgt) || raw <= 0 || tgt.plant) return 0;   // plants cannot be attacked
@@ -452,9 +422,7 @@
     return total;
   }
 
-  // WHAT: how much mana a hit gives (a hook for powers that change it).
   const manaGain = () => 1;   // the Overflow Cup's price is in its mana cost now (data.js)
-  // WHAT: brings a dead unit back with a fraction of its max HP (phoenix egg, Soul Jar, Resurrect, Ashwing).
   function reviveAt(W, u, frac, label) {
     u.dead = false; u.hp = Math.max(1, Math.round(u.maxHp * frac)); u.dots = []; u.st = {}; u.busy = W.t + sec(0.4);
     if (W.occ[Hx.key(u.c, u.r)] && W.occ[Hx.key(u.c, u.r)] !== u.id) { const f = freeNear(W, u.c, u.r); if (!f) { u.dead = true; return false; } u.c = f.c; u.r = f.r; }
@@ -464,7 +432,6 @@
     return true;
   }
 
-  // WHAT: a unit reaches 0 HP. First the "second life" effects (Phase Shift, Undying, Revive, Ashen Plume), then it really dies: death effects, kills counted, Phoenix egg for Ashwing, Gravepact mana, the Resurrect chance.
   function die(W, u, src) {
     if (u.fl.has('shell') && (u.once.shell || 0) < 1 + (u.ab.shells || 0) && !u.suicide) { shellUp(W, u); return; }   // Onyx hides in his shell
     if (u.fl.has('phaseshift') && !u.once.phase) {
@@ -534,7 +501,6 @@
   }
 
   // the new relics that act when a unit falls. K = the side that wanted it to fall
-  // WHAT: team powers that react when a unit dies (Soul Jar, Pyre, Contagion, Grave Caller, Last One...).
   function relicDeath(W, u) {
     const KF = flOf(W, 1 - u.side), OF = flOf(W, u.side), k = Hx.key(u.c, u.r), real = u.kind !== 'summon';
     if (KF.gravestone && real && !W.occ[k] && !W.over) { W.occ[k] = BLOCK; W.tk[k] = 'rock'; W.terrain.push({ c: u.c, r: u.r, k: 'rock', grave: 1 }); }
@@ -569,7 +535,6 @@
   }
 
   // ------------------------------------------------------------------ movement
-  // WHAT: MOVEMENT. place() puts a unit on a hex and records the start and end tick of the walk so render.js can slide it smoothly.
   function place(W, u, c, r, dur) {
     // move u to (c,r); dur in ticks (0 = instant blink). Occupancy changes immediately.
     if (W.occ[Hx.key(u.c, u.r)] === u.id) W.occ[Hx.key(u.c, u.r)] = 0;
@@ -579,7 +544,6 @@
     W.occ[Hx.key(c, r)] = u.id;
     if (dur === 0) { u.fc = c; u.fr = r; }
   }
-  // WHAT: the next hex one step along a shortest path toward a goal, avoiding units and terrain.
   const PATH_N = Hx.COLS * Hx.ROWS;
   const PATH_PREV = new Int16Array(PATH_N);
   const PATH_SEEN = new Uint8Array(PATH_N);
@@ -607,7 +571,6 @@
     let k = goal; while (PATH_PREV[k] !== sk) k = PATH_PREV[k];
     return { c: k % Hx.COLS, r: (k / Hx.COLS) | 0 };
   }
-  // WHAT: walk one step toward a target; returns false if blocked.
   function tryMove(W, u, tgt) {
     if (u.ms <= 0 || u.st.root > W.t) return false;
     if (u.kind === 'hero') {
@@ -629,9 +592,7 @@
     u.busy = u.m1t; u.moved = true;
     return true;
   }
-  // WHAT: teleports a unit to a hex at once (Blink Stone, Catapult, hero blink abilities).
   function blink(W, u, c, r) { fx(W, { k: 'blink', c: u.c, r: u.r, color: u.color || '#fff', t1: W.t + 8 }); place(W, u, c, r, 0); fx(W, { k: 'blink', c, r, color: u.color || '#fff', t1: W.t + 8 }); }
-  // WHAT: a unit with the "dive" flag leaps to the enemy back line at the start of the fight.
   function dive(W, u) {
     const t = enemies(W, u).sort((a, b) => Math.abs(b.r - u.r) - Math.abs(a.r - u.r))[0];
     if (!t) return; const n = freeNeighbors(W, t.c, t.r); if (!n.length) return;
@@ -639,7 +600,6 @@
   }
 
   // ------------------------------------------------------------------ targeting & attacks
-  // WHAT: TARGETING AND ATTACKS. Who a unit attacks: taunts and confusion first, then the nearest enemy (with its own rules per unit type).
   function pickTarget(W, u) {
     if (u.st.confuseU > W.t) {
       let best = null, bd = 99;
@@ -671,7 +631,6 @@
     if (best) u.tgt = best.id;
     return best;
   }
-  // WHAT: begins an attack: a short wind-up, then the hit (or a projectile for ranged units) lands through onHit. Sets when the next attack may start.
   function startAttack(W, u, tgt) {
     const a = asOf(W, u);
     const wt = Math.min(12, Math.max(3, Math.round(TPS * 0.45 / a)));
@@ -687,7 +646,6 @@
       } else onHit(W, u, tgt);
     });
   }
-  // WHAT: an auto-attack lands: damage with crit, on-hit effects of items (burn, poison, chain lightning, splash...), mana gain, lifesteal.
   function onHit(W, u, tgt) {
     if (!alive(tgt)) return;
     let mult = 1;
@@ -741,7 +699,6 @@
     }
     if (m.chainEvery && u.atkN % m.chainEvery === 0) chain(W, u, tgt, m.chainTargets || 2, atk * (m.chainDmg || 0.6), 0, 0, false);
   }
-  // WHAT: chain lightning: jumps from the first target to n more enemies, losing damage each bounce.
   function chain(W, u, first, n, dmg, stun, falloff, isAb) {
     const hit = [first], pts = [[u.c, u.r], [first.c, first.r]];
     let last = first;
@@ -755,7 +712,6 @@
   }
 
   // ------------------------------------------------------------------ summons
-  // WHAT: SUMMONS. Creates a helper unit next to its owner (skeletons, imps, turrets, soldiers).
   function summon(W, owner, def, near) {
     const n = near || owner;
     const f = freeNeighbors(W, n.c, n.r);
@@ -765,7 +721,6 @@
     if (u) { u.busy = W.t + sec(0.3); fxRing(W, h.c, h.r, 0, owner.color || '#fff', 8); }
     return u;
   }
-  // WHAT: the stats object of a monster or boss from B.MOBS / B.BOSSES, scaled by the fight's strength factor (data.js B.CFG.fightScale).
   function mobScaleDef(key, scale, extra) {
     const m = B.MOBS[key] || B.BOSSES[key];
     const d = { key, name: m.name, glyph: m.glyph, kind: m.boss ? 'boss' : 'mob', boss: m.boss || 0,
@@ -777,7 +732,6 @@
     if (extra) Object.assign(d, extra);
     return d;
   }
-  // WHAT: adds an elite modifier (B.ELITES) to a monster def: more HP, damage, speed, or a special trait.
   function applyElite(d, el) {
     d.elite = el.id; d.name = el.name + ' ' + d.name; const m = el.mods;
     if (m.hpPct) d.hp *= 1 + m.hpPct; if (m.atkPct) d.atk *= 1 + m.atkPct; if (m.armor) d.armor += m.armor;
@@ -786,9 +740,7 @@
   }
 
   // ------------------------------------------------------------------ abilities
-  // WHAT: ABILITIES. A.name(W, u) is what a unit does when its mana bar is full. The hero's ability id is "abil" in data.js; "ab" there holds the numbers that tune it.
   const A = {};
-  // WHAT: the ability "Stoneward" of Aegir (Tank). Raises a stone ward: a shield of 33% of his max HP. Taunts enemies within 2 hexes for 2.5s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.bulwark = (W, u) => {
     const ab = u.ab, amt = u.maxHp * ab.shield;
@@ -802,7 +754,6 @@
     fxRing(W, u.c, u.r, ab.radius, '#4f7cff', 10);
     return true;
   };
-  // WHAT: the ability "Veilstrike" of Vex (Assassin). Blinks next to the weakest enemy and strikes for 300% AD physical damage.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.shadowstep = (W, u) => {
     const ab = u.ab;
@@ -822,7 +773,6 @@
     }
     return false;
   };
-  // WHAT: a fireball hitting a hex area (used by Feuer's Cinder Comet): damage in a radius, burn, optional extras (twin, burning ground).
   function fireballAt(W, u, center, mult, patch) {
     const ab = u.ab, c = center.c, r = center.r;
     const tt = Math.max(3, Hx.dist(u, center) * 2);
@@ -837,7 +787,6 @@
       if (patch) W.zones.push({ c, r, rad: ab.radius, until: W.t + sec(ab.patch), dps: 0.16 * apOf(u), side: u.side, src: u.id, color: '#ff7a3d' });
     });
   }
-  // WHAT: the ability "Cinder Comet" of Feuer (Mage). Hurls a comet at the densest enemy group: 95% AP magic damage in 1 hex, and a burn of 14% AP per second for 3s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.fireball = (W, u) => {
     const t = bestCluster(W, u, u.ab.radius); if (!t) return false;
@@ -846,7 +795,6 @@
     if (u.ab.twin) { const o = enemies(W, u).filter(e => Hx.dist(e, t) > u.ab.radius).sort((a, b) => Hx.dist(u, a) - Hx.dist(u, b))[0]; if (o) fireballAt(W, u, { c: o.c, r: o.r }, u.ab.twin, false); }
     return true;
   };
-  // WHAT: the ability "Rime Squall" of Frostbane (Controller). Freezes the densest enemy group for 1.5s with 70% AP magic damage, then slows them by 40% for 2s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.blizzard = (W, u) => {
     const ab = u.ab, t = bestCluster(W, u, ab.radius); if (!t) return false;
@@ -864,7 +812,6 @@
     }
     return true;
   };
-  // WHAT: the ability "Ramming Charge" of Ironhorn (Bruiser). Charges the farthest enemy within 4 hexes: 150% AD physical damage and a 1s stun to adjacent enemies, and gains 30% lifesteal for 4s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.charge = (W, u) => {
     const ab = u.ab;
@@ -893,7 +840,6 @@
     });
     return true;
   };
-  // WHAT: the ability "Dawnmend" of Solace (Healer). Heals the weakest ally for 245% AP and allies next to them for 105% AP.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.radiance = (W, u) => {
     const ab = u.ab;
@@ -910,7 +856,6 @@
     fxRing(W, t.c, t.r, ab.radius, '#ffe066', 10);
     return true;
   };
-  // WHAT: the ability "Volley" of Talon (Ranger). Passive (Focus): each attack gives +3% attack speed (stacks 15x). Active: fires 5 arrows at random enemies, 100% AD physical damage each.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.volley = (W, u) => {
     const ab = u.ab; const es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return false;
@@ -923,7 +868,6 @@
     });
     return true;
   };
-  // WHAT: the ability "Bone Call" of Graveborn (Summoner). Raises 2 skeleton warriors next to Graveborn, each with 300% AP as HP and 30% AP as attack.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.raise = (W, u) => {
     const ab = u.ab;
@@ -938,7 +882,6 @@
     }
     return true;
   };
-  // WHAT: the ability "Arc Cascade" of Tempest (Mage). Lightning bounces between 4 enemies: 90% AP magic damage each (10% less per bounce), stunning each for 0.4s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.chain = (W, u) => {
     const ab = u.ab;
@@ -949,7 +892,6 @@
     if (ab.twice) at(W, W.t + 10, () => { if (!u.dead) { const f = pickTarget(W, u); if (f) chain(W, u, f, ab.bounces, ab.dmg * apOf(u), ab.stun, ab.falloff, true); } });
     return true;
   };
-  // WHAT: the ability "Hook" of Hookjaw (Controller). Hooks the farthest enemy within 5 hexes and drags it next to Hookjaw: 120% AD physical damage and a 1.5s stun.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.hook = (W, u) => {
     const ab = u.ab;
@@ -974,7 +916,6 @@
     }
     return true;
   };
-  // WHAT: the ability "Twinned Veil" of Mirage (Trickster). Creates 2 decoy clones with 40% of her HP, attack and armor, and blinks to the safest hex.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.mirror = (W, u) => {
     const ab = u.ab, k = ab.stat;
@@ -993,7 +934,6 @@
     if (ab.backstab) u.backstab = ab.backstab;
     return true;
   };
-  // WHAT: the ability "Clockwork Turret" of Rivet (Engineer). Builds a turret (range 3, 80% of his AD as attack) next to Rivet. Max 2; at max, repairs them instead.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.turret = (W, u, free) => {
     const ab = u.ab;
@@ -1008,7 +948,6 @@
     return true;
   };
   // --- v5 heroes ()
-  // WHAT: the ability "Crimson Spin" of Ravager (Berserker). Passive (Fury): +2 AD per hit (stacks 25x). Active: spins, hitting every adjacent enemy for 180% AD physical damage and healing 15% of the damage.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.whirl = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
@@ -1019,7 +958,6 @@
     if (ab.spinFury && u.m.stackAtk) for (let i = 0; i < ab.spinFury && (u.sc.sa || 0) < u.m.stackAtkCap; i++) { u.sc.sa = (u.sc.sa || 0) + 1; u.bAtk += u.m.stackAtk; }   // Bloodlust
     heal(W, u, tot * ab.heal, true); return true;
   };
-  // WHAT: the ability "Hallowed Ground" of Radiant (Paladin). Passive: +2 armor and MR every second (up to +40). Active: hallows the ground around her for 4s: enemies on it take 30% AP magic damage per second, allies on it heal 3% of their max HP per second.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.consecrate = (W, u) => {
     const ab = u.ab;
@@ -1029,7 +967,6 @@
     if (ab.shield) shield(W, u, u.maxHp * ab.shield, 4);
     fxRing(W, u.c, u.r, ab.radius, '#f0d27a', 14); return true;
   };
-  // WHAT: the ability "Umbral Edge" of Nyx (Hexblade). Passive: +8 AD whenever an enemy dies within 3 hexes (up to +80). Active: her next 3 attacks deal an extra 100% AD as magic damage and heal her for 20% of it.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.eclipse = (W, u) => {
     u.eclipse = u.ab.hits; fxText(W, u, 'UMBRAL EDGE', '#35c6d6'); u.nextAtk = Math.min(u.nextAtk, W.t + 2);
@@ -1037,7 +974,6 @@
     if (u.ab.pounce) { const t = enemies(W, u).filter(e => targetable(W, e) && Hx.dist(e, u) <= u.ab.pounce).sort((a, b) => a.hp - b.hp)[0]; if (t) { const n = freeNeighbors(W, t.c, t.r).sort((a, b) => Hx.dist(a, u) - Hx.dist(b, u))[0]; if (n && Hx.dist(u, t) > 1) blink(W, u, n.c, n.r); u.tgt = t.id; } }   // Shadow Pounce
     return true;
   };
-  // WHAT: the ability "Rootsnare" of Bramble (Warden). Passive: +1% max HP every second (up to +40%). Active: roots every enemy within 2 hexes for 2s and deals 45% AP magic damage.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.entangle = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
@@ -1048,7 +984,6 @@
     if (ab.briar) for (const a of allies(W, u)) if (a !== u && Hx.dist(a, u) <= 2) shield(W, a, u.maxHp * ab.briar, 4);   // Briar Ward
     return true;
   };
-  // WHAT: the ability "Rallying Refrain" of Lyric (Bard). Passive: every 4s all allies gain +3% attack speed (Crescendo, stacks 10x). Active: allies within 2 hexes heal 90% AP and gain +25% attack for 4s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.anthem = (W, u) => {
     const ab = u.ab;
@@ -1056,7 +991,6 @@
     for (const e of enemies(W, u)) { if (ab.slow && Hx.dist(e, u) <= 2) slow(W, e, ab.slow, 2); if (ab.stun && Hx.dist(e, u) <= 1) cc(W, e, 'stun', ab.stun); }
     fxRing(W, u.c, u.r, ab.radius, '#c77dff', 12); return true;
   };
-  // WHAT: the ability "Six-Shot Flurry" of Flint (Gunslinger). Passive: every crit gives +2% crit chance (up to +30%). Active: fires 6 quick shots at the target, 70% AD physical damage each.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.fan = (W, u) => {
     const ab = u.ab, t = ab.weakest ? (enemies(W, u).filter(e => targetable(W, e) && Hx.dist(u, e) <= u.range + 1).sort((a, b) => a.hp - b.hp)[0] || pickTarget(W, u)) : pickTarget(W, u); if (!t || Hx.dist(u, t) > u.range + 1) return false;   // Bounty Hunter
@@ -1074,7 +1008,6 @@
     u.busy = W.t + 2 * ab.shots + 2; return true;
   };
   // --- v12 heroes ()
-  // WHAT: shoves enemy t up to n hexes away from src (Maelstrom's wave and other knock-backs).
   function push(W, src, t, n) {
     if (t.dead || n <= 0 || t.anchor || t.plant) return;
     let c = t.c, r = t.r, steps = 0;
@@ -1092,15 +1025,12 @@
     }
     if (steps) { place(W, t, c, r, 3 * steps); t.busy = Math.max(t.busy, W.t + 3 * steps); t.anim = null; }
   }
-  // WHAT: the n nearest targetable enemies of a unit.
   const nearestFoes = (W, u, n) => enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => Hx.dist(u, a) - Hx.dist(u, b)).slice(0, n);
-  // WHAT: a delayed projectile from u to enemy e (used by volley-style abilities); fn runs when it lands.
   function shot(W, u, e, delay, color, fn) {
     const tt = W.t + delay + Math.max(2, Math.round(Hx.dist(u, e) * 1.6));
     fx(W, { k: 'proj', from: u.id, fc: u.c, fr: u.r, to: e.id, tc: e.c, tr: e.r, color, t0: W.t + delay, t1: tt });
     at(W, tt, () => { if (alive(e)) fn(e); });
   }
-  // WHAT: the ability "Skyspear Barrage" of Skara (Amazon). Passive: +4% attack speed per hit (10x) and her spear poisons. Active: hurls javelins at 3 enemies, 150% AD physical damage each, poisoning them for 2% of their max HP per second.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.javelin = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return false;
@@ -1113,7 +1043,6 @@
     }
     return true;
   };
-  // WHAT: the ability "Longwatch Round" of Deadeye (Sniper). Passive: +8% damage per hex to the target. Active: aims at the weakest enemy anywhere and fires for 400% AD physical damage, executing it below 15% HP.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.headshot = (W, u) => {
     const ab = u.ab, t = enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0]; if (!t) return false;
@@ -1130,7 +1059,6 @@
     if (ab.camo) u.st.untarg = W.t + sec(ab.camo);
     u.busy = W.t + 12; return true;
   };
-  // WHAT: the ability "Crimson Draught" of Vesper (Vampire). Passive: abilities heal 20% of their damage. Active: drains every enemy within 2 hexes for 70% AD + 40% AP magic damage and heals for all of it.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.bloodfeast = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
@@ -1143,7 +1071,6 @@
     for (let i = 0; i < ab.bats; i++) summon(W, u, { key: 'bat', name: 'Bat', glyph: '🦇', hp: 160 * (1 + 0.15 * (u.lvl - 1)), atk: 22 * (1 + 0.15 * (u.lvl - 1)), armor: 5, as: 1.3, range: 1, ms: 4, m: { ls: 0.3 }, size: 0.7 });
     return true;
   };
-  // WHAT: the ability "Ashveil" of Eclipse (Ninja). Blinds enemies within 1 hex for 1.5s (their attacks miss), vanishes for 1.5s and throws 4 shuriken, 90% AD physical damage each.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.smoke = (W, u) => {
     const ab = u.ab; fxRing(W, u.c, u.r, ab.radius, '#8a8fa0', 16);
@@ -1155,7 +1082,6 @@
     for (let i = 0; i < ab.count; i++) shot(W, u, es[i % es.length], i, '#dfe6ee', t => { deal(W, u, t, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true }); if (ab.poison) dot(W, t, 'poison', ab.poison * t.maxHp * (t.boss ? 0.4 : 1), 3, u); });
     return true;
   };
-  // WHAT: the ability "Howl & Pounce" of Fang (Hound). Passive: regenerates 1% HP per second. Active: allies within 3 hexes gain +20% attack and attack speed for 4s; Fang pounces on the nearest enemy and bites for 150% AD physical damage plus a bleed of 2% max HP per second for 3s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.howl = (W, u) => {
     const ab = u.ab; fxRing(W, u.c, u.r, ab.radius, '#e8c070', 12);
@@ -1172,7 +1098,6 @@
     });
     u.tgt = t.id; return true;
   };
-  // WHAT: the ability "Dreamspiral" of Mesmer (Hypnotist). Hypnotizes the densest enemy group: for 2.5s they attack their own allies, and they take 30% AP magic damage.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.hypnosis = (W, u) => {
     const ab = u.ab, t = bestCluster(W, u, ab.radius); if (!t) return false;
@@ -1185,7 +1110,6 @@
     if (ab.shield) shield(W, u, u.maxHp * ab.shield, 4);
     return true;
   };
-  // WHAT: the ability "Grab Bag" of Jinx (Clown). Pulls a random trick: a pie (150% AD physical damage, stuns 2s), balloons (every ally heals 85% AP), juggling knives (5 knives, 100% AD each), a confetti bomb (40% AD + 20% AP magic damage, slows 50%) or a squirting flower (blinds 3s).
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.trick = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return false;
@@ -1204,7 +1128,6 @@
     if (W.rng() < ab.encore) { const rest = tricks.filter(k => !done.includes(k)); one(rest[Math.floor(W.rng() * rest.length)]); }
     return true;
   };
-  // WHAT: the ability "Barrel Breaker" of Rumble (Brawler). Passive: drunken stagger gives 20% dodge. Active: smashes a barrel on adjacent enemies for 150% AD physical damage, stunning 1s and slowing, then takes a swig healing 15% of his max HP.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.keg = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
@@ -1215,7 +1138,6 @@
     if (ab.liver) { u.st.stun = 0; u.st.slowU = 0; u.st.root = 0; u.st.ccImmU = W.t + sec(ab.liver); }   // Iron Liver
     return true;
   };
-  // WHAT: the ability "Brimstone Nova" of Inferno (Demon). Passive: +1% damage for every 1% HP missing. Active: sacrifices 10% of his current HP to blast every enemy within 2 hexes for 120% AD + 70% AP magic damage, and burns them for 40% AD per second for 3s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.hellfire = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
@@ -1225,7 +1147,6 @@
     for (let i = 0; i < ab.imps; i++) summon(W, u, mobScaleDef('imp', 1 + 0.2 * (u.lvl - 1)));
     return true;
   };
-  // WHAT: the ability "Boulder Toss" of Boulder (Caveman). Passive: thick skull halves crowd control on him. Active: hurls a boulder at the farthest enemy within 5 hexes: 200% AD physical damage and a 1.5s stun, and 100% AD to enemies next to it.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.boulder = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return false;
@@ -1240,7 +1161,6 @@
     if (ab.rockArmor && (u.sc.rock || 0) < 40) { const g = Math.min(ab.rockArmor, 40 - (u.sc.rock || 0)); u.sc.rock = (u.sc.rock || 0) + g; u.bArm += g; }   // Rock Collector
     return true;
   };
-  // WHAT: the ability "Linen of Ages" of Ankh (Mummy). Passive: once per fight, rises again at 30% HP. Active: bandages the 2 nearest enemies: rooted 2s, healing halved, and they decay for 3% of their max HP per second.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.wrap = (W, u) => {
     const ab = u.ab, ts = nearestFoes(W, u, ab.count); if (!ts.length) return false;
@@ -1254,7 +1174,6 @@
     if (ab.shield) shield(W, u, u.maxHp * ab.shield, 4);
     return true;
   };
-  // WHAT: the ability "Phalanx" of Phalanx (Hoplite). Passive: adjacent allies gain +10 armor. Active: raises his shield (allies within 1 hex take 30% less damage for 4s), then thrusts his spear through the 2 nearest enemies for 180% AD physical damage.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.phalanx = (W, u) => {
     const ab = u.ab; fxRing(W, u.c, u.r, ab.radius, '#d9c36a', 12);
@@ -1265,7 +1184,6 @@
     for (const e of ts) { deal(W, u, e, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true }); if (ab.stun) cc(W, e, 'stun', ab.stun); }
     return true;
   };
-  // WHAT: the ability "Steel Minuet" of Rapture (Blade Dancer). Passive: each crit gives +1.5% crit (up to +15%). Active: dances through up to 3 enemies, striking each for 120% AD physical damage.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.waltz = (W, u) => {
     const ab = u.ab, ts = nearestFoes(W, u, ab.hits); if (!ts.length) return false;
@@ -1280,7 +1198,6 @@
     u.busy = W.t + ts.length * 4; if (ab.untarg) at(W, W.t + ts.length * 4, () => { u.st.untarg = W.t + sec(ab.untarg); });
     return true;
   };
-  // WHAT: the ability "Unstable Flasks" of Vial (Alchemist). Throws 3 random flasks: acid (65% AP magic damage, -20 armor), healing (120% AP to the weakest ally), frost (stun 1s) or poison (3% of max HP per second).
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.flask = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return false;
@@ -1303,7 +1220,6 @@
     }
     return true;
   };
-  // WHAT: the ability "Squall Kick" of Kaze (Wind Monk). Kicks the target 2 hexes back for 170% AD physical damage. Anyone it crashes into takes 100% AD and is stunned for 1s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.galekick = (W, u) => {
     const ab = u.ab, ts = enemies(W, u).filter(e => Hx.dist(e, u) <= 1).slice(0, ab.targets); if (!ts.length) return false;
@@ -1319,7 +1235,6 @@
     return true;
   };
   // the three heroes unlocked by the account level
-  // WHAT: the ability "Honey Hive" of Stinger (Beekeeper). Drops a honey hive on the densest enemy group: for 4s the bees sting everyone within 1 hex for 30% AP magic damage per second, and the weakest ally eats honey, healing 120% AP.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.hive = (W, u) => {   // Stinger: a hive of stinging bees (AP damage over time) and honey for the weakest ally
     const ab = u.ab, t = bestCluster(W, u, ab.radius); if (!t) return false;
@@ -1336,7 +1251,6 @@
     if (a) { heal(W, a, ab.honey * apOf(u), true); fxRing(W, a.c, a.r, 0, '#ffe066', 8); }
     return true;
   };
-  // WHAT: the ability "Tidal Wave" of Maelstrom (Tidecaller). A wave crashes over the densest enemy group: 75% AP magic damage within 1 hex, pushes them 1 hex back and slows them 30% for 2s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.wave = (W, u) => {   // Maelstrom: a wave that hits, pushes back and slows a group
     const ab = u.ab, t = bestCluster(W, u, ab.radius); if (!t) return false;
@@ -1354,7 +1268,6 @@
     if (ab.foam) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 1) shield(W, a, a.maxHp * ab.foam, 4);
     return true;
   };
-  // WHAT: the ability "Falling Star" of Astral (Stargazer). Calls a star onto the densest enemy group; 0.8s later it crashes: 120% AD + 60% AP magic damage in 1 hex and a 1.2s stun.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.starfall = (W, u) => {   // Astral: a star that lands after a short delay (AD + AP) and stuns
     const ab = u.ab, t = ab.strongest ? (enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => b.maxHp - a.maxHp)[0] || bestCluster(W, u, ab.radius)) : bestCluster(W, u, ab.radius); if (!t) return false;   // Lucky Star
@@ -1373,36 +1286,26 @@
     return true;
   };
   // --- mob & boss abilities
-  // WHAT: a brute / mob smash: 250% attack physical damage to one adjacent enemy plus a short stun.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.smash = (W, u) => { const t = pickTarget(W, u); if (!t || Hx.dist(u, t) > 1) return false; deal(W, u, t, 2.5 * atkOf(W, u), 'phys', { ability: true }); cc(W, t, 'stun', 0.8); fxRing(W, t.c, t.r, 0, '#f96', 8); return true; };
-  // WHAT: a shaman mob: heals the weakest ally for 25% of its max HP.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.mend = (W, u) => { const t = allies(W, u).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0]; if (!t || t.hp >= t.maxHp) return false; heal(W, t, t.maxHp * 0.25, true); fxRing(W, t.c, t.r, 0, '#6f6', 8); return true; };
-  // WHAT: the bomber mob: blows up next to enemies (250% attack magic damage in 1 hex) and dies.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.explode = (W, u) => { if (u.dead) return true; fxRing(W, u.c, u.r, 1, '#fa0', 12); for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 1) deal(W, u, e, 2.5 * atkOf(W, u), 'magic', { ability: true }); u.m.revive = 0; u.once.revive = 1; u.suicide = true; die(W, u, null); return true; };
-  // WHAT: a shield-bearing mob: shields allies within 2 hexes for 20% of their max HP.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.wall = (W, u) => { for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) shield(W, a, a.maxHp * 0.2, 4); fxRing(W, u.c, u.r, 2, '#ccc', 10); return true; };
-  // WHAT: a cursing mob: magic damage, silences and slows one enemy.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.curse = (W, u) => { const t = pickTarget(W, u); if (!t || Hx.dist(u, t) > u.range) return false; deal(W, u, t, atkOf(W, u), 'magic', { ability: true }); cc(W, t, 'silence', 2); slow(W, t, 0.4, 2); fxRing(W, t.c, t.r, 0, '#b6f', 10); return true; };
-  // WHAT: a slamming mob: 150% attack to every adjacent enemy and stuns them.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.slam = (W, u) => { if (!enemies(W, u).some(e => Hx.dist(e, u) <= 1)) return false; fxRing(W, u.c, u.r, 1, '#aaa', 10); for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 1) { deal(W, u, e, 1.5 * atkOf(W, u), 'phys', { ability: true }); cc(W, e, 'stun', 1); } return true; };
-  // WHAT: a summoner mob: calls 2 imps.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.imps = (W, u) => { for (let i = 0; i < 2; i++) summon(W, u, mobScaleDef('imp', u.scale || 1)); return true; };
-  // WHAT: Gorewarden's Cleave (boss): 200% attack to everyone next to it, with a short stun.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.cleave = (W, u) => { if (!enemies(W, u).some(e => Hx.dist(e, u) <= 1)) return false; fxRing(W, u.c, u.r, 1, '#f44', 12); for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 1) { deal(W, u, e, 2 * atkOf(W, u), 'phys', { ability: true }); cc(W, e, 'stun', 0.8); } return true; };
-  // WHAT: the Ashen Sovereign's Nova (boss): 150% attack magic damage and a stun to everything within 2 hexes.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.nova = (W, u) => { if (!enemies(W, u).some(e => Hx.dist(e, u) <= 2)) return false; fxRing(W, u.c, u.r, 2, '#a4f', 14); for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 2) { deal(W, u, e, 1.5 * atkOf(W, u), 'magic', { ability: true }); cc(W, e, 'stun', 1); } return true; };
 
   // the two new bosses' abilities
-  // WHAT: Mirewitch's poison bog (boss): leaves poison on the ground.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.bog = (W, u) => {
     const t = bestCluster(W, u, 1); if (!t || Hx.dist(u, t) > u.range + 1) return false;
@@ -1416,7 +1319,6 @@
     });
     return true;
   };
-  // WHAT: the Colossus' quake (boss): shakes the ground and stuns.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.quake = (W, u) => {
     const near = enemies(W, u).filter(e => Hx.dist(e, u) <= 2); if (!near.length) return false;
@@ -1425,7 +1327,6 @@
     return true;
   };
   // the third boss of each floor
-  // WHAT: Skorrak's Howl (boss): a wolf joins the fight (never more than 3 at once) and his whole side attacks 20% faster for 4s.
   A.packhowl = (W, u) => {   // was A.howl, which overwrote Fang's own Howl & Pounce (v83-v87)
     const wolves = W.units.filter(x => !x.dead && x.owner === u.id && x.key === 'wolf').length;
     fxRing(W, u.c, u.r, 2, '#ff6a3a', 14); fxText(W, u, 'HOWL!', '#ff6a3a');
@@ -1433,7 +1334,6 @@
     for (const a of W.units) if (!a.dead && a.side === u.side) buff(a, 'asPct', 0.2, sec(4), W);
     return true;
   };
-  // WHAT: Vaelith's Blizzard (boss): ice on the densest group of heroes: 120% attack as magic damage, 40% slow for 3s, and the ground stays frozen 4s.
   A.lichstorm = (W, u) => {   // was A.blizzard, which overwrote Frostbane's Rime Squall (v83-v87)
     const t = bestCluster(W, u, 1); if (!t || Hx.dist(u, t) > u.range + 2) return false;
     const c = t.c, r = t.r; fxRing(W, c, r, 1, '#8fe3ff', 16);
@@ -1441,7 +1341,6 @@
     W.zones.push({ c, r, rad: 1, until: W.t + sec(4), dps: 0.2 * atkOf(W, u), side: u.side, src: u.id, color: '#8fe3ff' });
     return true;
   };
-  // WHAT: the special behaviour of each BOSS that is not a mana ability: Gorewarden calls the horde at half health and enrages at 25%, the Sovereign's phases, the Mirewitch's frog curse and swamp, the Colossus' stone skin.
   function bossPassives(W, u) {
     const f = u.hp / u.maxHp;
     if (u.key === 'mirewitch') {
@@ -1499,7 +1398,6 @@
   // ------------------------------------------------------------------ Prism and Citadel
   // Prism: (v62, it also attacks normally) every 0.25s each beam locks onto the nearest unit in range (a hurt ally, else an enemy), heals or
   // burns it, and the work fills mana. Overcharge doubles the beams and adds more for a few seconds.
-  // WHAT: PRISM. Instead of nothing, its turn: every 0.25 s each beam locks onto the nearest hurt ally (heal) or enemy (burn), the work fills its mana, and between pulses it also attacks the nearest foe.
   function beamAct(W, u) {
     const ab = u.ab, over = u.st.overU > W.t, rays = ab.rays + (over ? ab.extra : 0), R = Math.max(1, u.range);
     const pool = W.units.filter(v => !v.dead && v !== u && targetable(W, v) && Hx.dist(u, v) <= R && (v.side !== u.side || v.hp < v.maxHp * 0.98))
@@ -1522,7 +1420,6 @@
   }
   // Citadel: never moves or attacks; it sends out a soldier every few seconds (footman, archer, by turns), up to a cap;
   // its soldiers' hits fill its mana (onHit); Call to Arms sends every soldier into a frenzy and one more marches out
-  // WHAT: CITADEL. Sends out one soldier (footman or archer by turns, a champion every third with the power). Stats come from the Citadel's AP.
   function soldier(W, u) {
     const ab = u.ab, n = u.sent = (u.sent || 0) + 1, archer = n % 2 === 0, champ = ab.champion && n % 3 === 0, v = (1 + ab.vet) * (champ ? 2 : 1);
     const d = { key: archer ? 'bowman' : 'footman', name: champ ? 'Champion' : archer ? 'Archer' : 'Footman', glyph: archer ? '🏹' : '🛡', color: u.color,
@@ -1532,10 +1429,8 @@
     if (s) { s.garrison = u.id; if (!archer && ab.shields) { s.shield = s.maxHp * ab.shields; s.shieldU = W.t + sec(30); } fxText(W, s, champ ? 'CHAMPION' : 'TO ARMS', '#ffe066'); }
     return s;
   }
-  // WHAT: the most soldiers a Citadel may have out at once, whatever its powers (5).
   const GARRISON_CAP = 5;   // never more than 5 soldiers out at once, not even with Call to Arms
   const garrisonSize = (W, u) => W.units.filter(v => !v.dead && v.garrison === u.id).length;
-  // WHAT: the Citadel's turn: it never moves or attacks, it only sends a new soldier every few seconds while it has fewer than its cap.
   function towerAct(W, u) { inCtx(W, 'garrison', u.id, () => towerAct0(W, u)); }
   function towerAct0(W, u) {
     const ab = u.ab;
@@ -1549,7 +1444,6 @@
   // ------------------------------------------------------------------ Smolder, Tom and Ashwing
   // Smolder: a cone of fire in front of it (the target and the enemies next to the target, up to 'reach' hexes away) that
   // hits and burns. Its Devour (eating an item at the start of a fight) lives in run.js.
-  // WHAT: the ability "Flamethrower" of Smolder (Flamer). Passive (Devour): at the start of every fight it eats one item it holds and keeps the stats for good (not the effect of the item). Active: a cone of fire up to 2 hexes in front of it hits the enemies there for 30% AP magic damage and burns them for 30% AP per second for 4s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.flamethrower = (W, u) => {
     const ab = u.ab, t = pickTarget(W, u); if (!t || Hx.dist(u, t) > ab.reach) return false;
@@ -1565,7 +1459,6 @@
     return true;
   };
   // Tom: serves dishes to random allies, each a different pick of four (heal, attack, attack speed, shield)
-  // WHAT: the ability "Daily Special" of Tom (Cook). Serves 2 dishes to random allies. Each one is a different pick of four: a hot pie that heals 90% AP, spiced jerky (+25% attack for 8s), pepper soup (+30% attack speed for 8s) or a pudding that shields for 110% AP.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.dishes = (W, u) => {
     const ab = u.ab, k = 1 + ab.big, pool = allies(W, u).filter(a => a.kind === 'hero').sort(() => W.rng() - 0.5);
@@ -1588,7 +1481,6 @@
     return true;
   };
   // Ashwing: a wall of fire, a line across the target's row, that burns whoever stands on it
-  // WHAT: the ability "Wall of Fire" of Ashwing (Pyromancer). Passive (Rebirth): once a fight, when it falls it leaves an egg with half its max HP. If the egg lives for 5s the hero is reborn at 60% HP; if the egg is destroyed, the hero is gone. Active: a wall of fire 3 hexes wide on a target up to 3 hexes away burns every enemy on it for 50% AP per second for 4s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.firewall = (W, u) => {
     const ab = u.ab, t = pickTarget(W, u); if (!t || Hx.dist(u, t) > ab.reach) return false;
@@ -1601,9 +1493,7 @@
     return true;
   };
   // ---- ONYX and the EMBER WYRM
-  // WHAT: Onyx's Shell. Passive: shellguard never fires; the shell and the spikes live in die() and deal().
   A.shellguard = () => false;
-  // WHAT: Onyx falls: he hides in his shell (cannot be hurt or targeted, cannot act, still blocks his hex), then bursts out.
   function shellUp(W, u) {
     const ab = u.ab, T = sec(ab.shellT); u.once.shell = (u.once.shell || 0) + 1;
     u.hp = 1; u.dots = []; u.st.invuln = W.t + T; u.st.untarg = W.t + T; u.st.stun = W.t + T; u.shellU = W.t + T;
@@ -1617,7 +1507,6 @@
       fxText(W, u, 'BURST', '#3fae8a'); fxRing(W, u.c, u.r, rad, '#3fae8a', 14);
     });
   }
-  // WHAT: the ability "Skyfire Dive" of the Ember Wyrm. Picks the straight line (6 directions) with the most enemies, flies to its farthest free hex
   // (untouchable in the air), hurts every enemy flown over and leaves burning hexes in his wake. Returns false when no line holds an enemy.
   A.skydive = (W, u) => {
     const ab = u.ab; let best = null, bn = 0;
@@ -1650,7 +1539,6 @@
     return true;
   };
   // ---- v121 (reviews #209 #210 #211 #212, David): Chronos, Belladonna, Kitsune
-  // WHAT: Kitsune's Spirit Jaunt: the blow misses, she dashes to the free hex behind the attacker and attacks faster for a moment.
   function jaunt(W, u, src) {
     const h = freeNeighbors(W, src.c, src.r).sort((a, b) => Hx.dist(b, u) - Hx.dist(a, u))[0];
     fxText(W, u, 'JAUNT', '#ff7043'); if (h) blink(W, u, h.c, h.r);
@@ -1658,15 +1546,12 @@
     if (u.ab.swipe && alive(src)) cc(W, src, 'stun', u.ab.swipe);
     if (u.ab.ninetails) { if (u.maxMana) u.mana = Math.min(u.maxMana, u.mana + 10); if ((u.sc.nt || 0) < 5) { u.sc.nt = (u.sc.nt || 0) + 1; u.crit += u.ab.ninetails; } }
   }
-  // WHAT: Kitsune's Spirit Ward: extra dodge for an ally standing next to her.
   function foxWard(W, t) { if (W.foxes === undefined) W.foxes = W.units.filter(v => v.ab && v.ab.ward); if (!W.foxes.length) return 0; let d = 0; for (const f of W.foxes) if (!f.dead && f !== t && f.side === t.side && Hx.dist(f, t) <= 1) d += f.ab.ward; return d; }
-  // WHAT: Belladonna's Toxin: adds n stacks (up to her cap) to an enemy and refreshes it.
   function addTox(W, s, e, n) {
     if (!alive(e) || e.plant || e.side === s.side) return;
     const x = e.tox && e.tox.until > W.t ? e.tox : (e.tox = { n: 0 });
     x.n = Math.min((s.ab.toxCap || 5), x.n + n); x.until = W.t + sec(s.ab.toxDur || 4); x.src = s.id; x.rate = s.ab.tox * apOf(s); x.anti = s.ab.antiHeal || 0; x.numb = s.ab.numb || 0; x.corrode = s.ab.corrode || 0;
   }
-  // WHAT: Belladonna's Epidemic: every Toxin bursts (35% Magic per stack) and spreads to the enemies next to it. Nothing poisoned = no cast.
   A.epidemic = (W, u) => {
     const ab = u.ab, sick = enemies(W, u).filter(e => e.tox && e.tox.until > W.t && e.tox.n > 0); if (!sick.length) return false;
     const snap = sick.map(e => [e, e.tox.n]);
@@ -1679,7 +1564,6 @@
     }
     fxText(W, u, 'EPIDEMIC', '#9ccc65'); return true;
   };
-  // WHAT: Chronos' Rewind: the most hurt ally (two with Grand Clocktower) gets back the Health it had a moment ago (at least ab.heal x Magic) and ignores crowd control.
   A.rewind = (W, u) => {
     const ab = u.ab, back = Math.round(sec(ab.back) / 5);
     const hurt = allies(W, u).filter(a => !a.plant && !a.egg && a.hp < a.maxHp * 0.9).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, ab.targets || 1);
@@ -1695,7 +1579,6 @@
     }
     return true;
   };
-  // WHAT: Kitsune's Foxfire: spirit flames at the two farthest enemies; each is charmed (it comes at Kitsune).
   A.foxfire = (W, u) => {
     const ab = u.ab, far = enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => Hx.dist(b, u) - Hx.dist(a, u)).slice(0, 2); if (!far.length) return false;
     if (ab.eclipse) { const h = freeNeighbors(W, far[0].c, far[0].r).sort((a, b) => Hx.dist(b, u) - Hx.dist(a, u))[0]; if (h) blink(W, u, h.c, h.r); u.jauntN = (ab.jauntEvery || 3) - 1; }
@@ -1705,7 +1588,6 @@
     return true;
   };
   // the egg Ashwing leaves when it falls: it hatches after a few seconds and the hero rises, unless the egg is destroyed first
-  // WHAT: ASHWING. When it falls (once per fight) it leaves an egg on its hex; eggAct hatches it after a few seconds (the hero returns) unless the egg is destroyed first.
   function layEgg(W, u) {
     u.once.egg = 1;
     const ab = u.ab, d = { key: 'egg', name: 'Phoenix Egg', glyph: '🥚', color: u.color, kind: 'summon', owner: u.id, hp: u.maxHp * ab.eggHp, atk: 0, armor: 15, as: 1, range: 1, ms: 0, size: 0.8, fl: ['egg'] };
@@ -1721,7 +1603,6 @@
       for (const x of enemies(W, hero)) if (Hx.dist(x, hero) <= 2) deal(W, hero, x, hero.ab.burst * apOf(hero), 'magic', { ability: true });
     }
   }
-  // WHAT: the ability "Overcharge" of Prism (Channeler). Passive (Beam): attacks normally, and a beam also locks onto the nearest unit in range: it heals a hurt ally for 20% AP per second or burns an enemy for 32% AP per second, and fills mana as it works. Active: for 4s the beams deal and heal double and split into one more beam.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.overcharge = (W, u) => {
     const ab = u.ab; u.st.overU = W.t + sec(ab.dur); fxText(W, u, 'OVERCHARGE', '#5fe0ff'); fxRing(W, u.c, u.r, 1, '#5fe0ff', 14);
@@ -1729,7 +1610,6 @@
     if (ab.shield) for (const a of allies(W, u)) shield(W, a, a.maxHp * ab.shield, 5);
     return true;
   };
-  // WHAT: the ability "Call to Arms" of Citadel (Fortress). Passive (Garrison): cannot move or attack. Every 7s it sends out a soldier, by turns a footman (165% AP as HP, 18% AP as attack) or an archer (100% AP as HP, 16% AP as attack, range 3), up to 3 at once. Its soldiers' hits fill its mana. Active: every soldier goes into a frenzy for 5s (+50% attack speed, +25% attack) and heals 30%, and one more soldier marches out (never more than 5 soldiers at once).
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.garrison = (W, u) => {
     const ab = u.ab;
@@ -1743,9 +1623,7 @@
   // PLASMA CANNON (, David: "Stationary. Always targets closest enemy unit. Deals more damage the closer target is. Slightly knocks back
   // with auto attacks. Ultimate is three shots in rapid succession that knock even more back"). It never moves (ms 0), re-picks the closest foe
   // for every shot (flag 'closest'), and its damage is multiplied by plasmaMul: +close per hex nearer than 5, never under 55%.
-  // WHAT: the damage multiplier of a plasma shot at distance d (1 hex = much more, 5 hexes = normal, farther = less).
   const plasmaMul = (u, d) => Math.max(0.55, 1 + (u.ab.close || 0) * (5 - d));
-  // WHAT: the ability "Triple Shot" of Plasma Cannon (Artillery). Passive (Overload): never moves, always shoots the closest enemy, hits harder the closer it is (+12% per hex under 5) and shoves it back 1 hex. Active: three plasma shots in a row at the closest enemy, 150% Attack each, each shoving 2 hexes.
   // Returns true when it fired (energy is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.tripleshot = (W, u) => {
     const ab = u.ab; if (!nearestFoes(W, u, 1).length) return false;
@@ -1763,7 +1641,6 @@
   };
   // DUELIST (, David: "Challenges the nearest enemy. Both become unable to target anyone else until one dies"). The two are taunted
   // onto each other for the rest of the fight (pickTarget reads st.tauntU / tauntBy); u.duelWith links them; die() calls duelEnd.
-  // WHAT: ends the duel of a unit that fell (u = the dead one): frees the other and, if the other is the Duelist, pays the victory prize.
   function duelEnd(W, u) {
     const o = W.byId[u.duelWith]; u.duelWith = 0;
     if (!o || o.dead) return;
@@ -1776,7 +1653,6 @@
       if (ab.crowd) for (const a of allies(W, o)) buff(a, 'atkPct', ab.crowd, sec(5), W);   // Crowd Pleaser
     }
   }
-  // WHAT: the Duelist picks the nearest enemy that is not a boss and is not already in a duel; both are locked onto each other, the Duelist gets its edge (Attack, Defense, lifesteal, damage reduction) until it ends.
   function challenge(W, u) {
     const ab = u.ab; if (u.duelWith && W.byId[u.duelWith] && !W.byId[u.duelWith].dead) return false;
     const e = nearestFoes(W, u, 8).find(x => !x.boss && !x.duelWith); if (!e) return false;
@@ -1788,13 +1664,11 @@
     if (ab.strike) { deal(W, u, e, atkOf(W, u) * ab.strike, 'phys', { ability: true }); if (alive(e)) cc(W, e, 'stun', ab.stun); }
     return true;
   }
-  // WHAT: the ability "Challenge" of Duelist. Passive: none. Active: challenges the nearest enemy (not a boss): both can only fight each other until one falls. During the duel the Duelist has +30% Attack, +15 Defense and 10% lifesteal.
   // Returns true when it fired (energy is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.duel = (W, u) => challenge(W, u);
   // COMBAT MEDIC (, David: "Combat medic that autoattack allies to heal them, 2 hex range, ultimate is splash grenade that heals allies and
   // damages enemies. When no ally within autoattack range attack enemies"). medicAct runs before the normal turn: a hurt ally in range gets
   // healed by the attack (Attack x ab.heal, more under 40% Health); with none in range the unit attacks enemies like anyone else.
-  // WHAT: the heal-attack of the Combat Medic. Returns true when it used the turn (healed, or waits for its next attack), false when no hurt ally is in range.
   function medicAct(W, u) { return inCtx(W, 'medicshot', u.id, () => medicAct0(W, u)); }
   function medicAct0(W, u) {
     const ab = u.ab, R = Math.max(1, u.range);
@@ -1819,7 +1693,6 @@
     });
     return true;
   }
-  // WHAT: the ability "Field Grenade" of Combat Medic (Medic). Passive (Triage): its attacks heal hurt allies in range (Attack x 1.1, +60% under 40% Health) instead of hitting; with none hurt in range it attacks enemies. Active: throws a grenade up to 4 hexes away at the spot with the most enemies and hurt allies within 1 hex: enemies take 40% Magic as magic damage, allies heal 50% Magic.
   // Returns true when it fired (energy is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.grenade = (W, u) => {
     const ab = u.ab; let best = null, bs = 0;
@@ -1844,7 +1717,6 @@
   };
   // ROHAMMER (, David: "Large brute man. Does not get energy from autoattack but from taking damage. Large hammer that is very very slow but autoattacks mini stun
   // targets (0.2s). Ultimate sweeps all enemies in front, knocks them back and stuns them 1.0s"). Flag 'brute': no Energy from attacking, ab.gain Energy per 1% of max Health lost.
-  // WHAT: the ability "Hammer Sweep" of Rohammer (Brute). Passive: its very slow hammer blows stun for 0.2s, and it fills its Energy only by taking damage (2 per 1% of max Health). Active: sweeps every enemy within 2 hexes in front of it for 150% Attack as physical damage, knocks them back 2 hexes and stuns them 1s.
   // Returns true when it fired (energy is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.sweep = (W, u) => {
     const ab = u.ab, front = e => (u.side === 0 ? e.r <= u.r : e.r >= u.r), es = enemies(W, u).filter(e => targetable(W, e) && Hx.dist(u, e) <= ab.reach && front(e));
@@ -1858,7 +1730,6 @@
   // poison etc"). A plant is a summon with u.plant = its kind: it sits on a hex (so it blocks movement), nothing can target or damage it (targetable,
   // deal), it lives ab.life seconds (u.expireT, handled in periodic) and does one thing every 1 / ab.pace seconds (plantAct).
   const PLANTS = ['thorn', 'bloom', 'lily', 'spore'], PLANT_NAME = { thorn: 'Thornbush', bloom: 'Healing Bloom', lily: 'Shield Lily', spore: 'Spore Pod' };
-  // WHAT: puts one plant of the next kind on hex h; when the Gardener already has its maximum, the oldest plant wilts.
   function seed(W, u, h) {
     const ab = u.ab, mine = W.units.filter(v => !v.dead && v.plant && v.owner === u.id);
     if (mine.length >= ab.cap) mine.sort((a, b) => a.expireT - b.expireT)[0].expireT = W.t;
@@ -1869,7 +1740,6 @@
     p.pw = { dmg: ab.dmg * apOf(u), heal: ab.heal * apOf(u), shield: ab.shield * apOf(u), poison: ab.poison * apOf(u) };
     fxRing(W, h.c, h.r, 0, '#7ee08e', 8);
   }
-  // WHAT: what a plant does on its turn: Thornbush shoots the nearest enemy, Healing Bloom heals the most hurt ally, Shield Lily shields an unshielded ally, Spore Pod poisons every enemy within 2 hexes.
   function plantAct(W, p) { inCtx(W, 'plant_' + p.plant, p.id, () => plantAct0(W, p)); }
   function plantAct0(W, p) {
     if (W.t < p.nextAtk) return;
@@ -1881,7 +1751,6 @@
     else if (p.plant === 'lily') { const a = mates.filter(x => !(x.shield > 0 && x.shieldU > W.t)).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0]; if (!a) return; p.nextAtk = W.t + per; shield(W, a, p.pw.shield, 4); fxRing(W, a.c, a.r, 0, '#9fd8ff', 8); }
     else if (p.plant === 'spore') { if (!foes.length) return; p.nextAtk = W.t + per; for (const e of foes) dot(W, e, 'poison', p.pw.poison, 3, o); fxRing(W, p.c, p.r, 1, '#9be05a', 8); }
   }
-  // WHAT: the ability "Overgrowth" of Gardener (Gardener). Passive: none. Active: plants 3 plants on free hexes within 3 hexes, the ones closest to the enemy first (they form a wall; nothing can attack them, they block movement and last 9s, at most 4): by turns a Thornbush (shoots, 27% Magic), a Healing Bloom (heals 25% Magic), a Shield Lily (shields 38% Magic) and a Spore Pod (poisons enemies within 2 hexes, 13% Magic per second).
   // Returns true when it fired (energy is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.plant = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => targetable(W, e));
@@ -1894,7 +1763,6 @@
   };
 
   // ------------------------------------------------------------------ per-unit turn
-  // WHAT (important): what ONE unit does on its turn, every tick: boss behaviour, cast the ability if the mana bar is full, hatch the egg, beam / tower special turns, else attack the target in range or walk toward it.
   function act(W, u) {
     if (u.boss) bossPassives(W, u);
     if (W.t < u.busy || u.st.stun > W.t) return;
@@ -1923,7 +1791,6 @@
     else if (!tryMove(W, u, tgt)) { /* blocked: wait a moment */ u.busy = W.t + 2; }
   }
 
-  // WHAT: things that tick every unit every tick: regeneration, mana regeneration, burning and poison (damage over time), ramping bonuses, Prism-like timers.
   function periodic(W, u) {
     if (u.expireT && W.t >= u.expireT) {   // the Gravecaller's risen
       const ow = u.plant && W.byId[u.owner]; if (ow && ow.ab && ow.ab.compost) { for (const a of allies(W, u)) if (a !== u && !a.plant && Hx.dist(a, u) === 1) heal(W, a, a.maxHp * ow.ab.compost, true); fxRing(W, u.c, u.r, 1, '#7ee08e', 8); }   // Compost
@@ -2005,7 +1872,6 @@
   }
 
   // ------------------------------------------------------------------ main step
-  // WHAT (important): ONE tick of the whole world. Order: scheduled events, sudden death damage, thunder, zones (fire/poison on the ground), then periodic() and act() for every unit, then win / loss checks (including eggs and the Phoenix Egg power).
   // Run it in a loop until W.over; W.winner is 0 (player) or 1 (enemy / time ran out).
   function step(W) {
     if (W.over) return;
@@ -2076,10 +1942,8 @@
     else if (W.mode === 'fight' && W.t >= sec(B.CFG.fightCap)) { W.over = true; W.winner = 1; W.timeout = true; }
   }
 
-  // WHAT: plays a whole fight at once (no drawing). Used by the bots, the test suite and the balance tools in tools/.
   function run(W, maxTicks = 20 * 60 * 30) { W.headless = true; while (!W.over && W.t < maxTicks) step(W); return W; }
   // the new relics that act on a clock
-  // WHAT: team powers that act on a clock rather than on an event: Quake Drum, Bramble Crown, Trick Coin, Time Crystal, Jester's Bell.
   function relicTick(W) {
     const any = f => W.fl[f] || W.fl1[f];
     // the quake only stuns the drummer's enemies (it stunned your own heroes too, and cost fights)
@@ -2114,14 +1978,12 @@
   }
 
   // interpolated position (in hex coordinates as fractional pixel, via callback) for rendering at fractional tick T
-  // WHAT: where a unit is drawn at fractional tick T, sliding between its previous and current hex (used by render.js).
   function posAt(u, T, size) {
     const a = B.Hex.px(u.fc, u.fr, size), b = B.Hex.px(u.c, u.r, size);
     let p = u.m1t > u.m0t ? (T - u.m0t) / (u.m1t - u.m0t) : 1; p = Math.max(0, Math.min(1, p));
     return { x: a.x + (b.x - a.x) * p, y: a.y + (b.y - a.y) * p };
   }
 
-  // WHAT: the public list. Other files can only use what is named here (abilities: A is exposed for tests and tools).
   B.Sim = { formation, TPS, sec, create, step, run, spawn, posAt, mobScaleDef, applyElite, rngOf, atkOf, asOf, armorOf, abilities: A, cc };
   if (typeof module !== 'undefined') module.exports = B.Sim;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,9 +1,7 @@
-// v124 (review #216, David: "The link I copy from the run is huge when pasted. Shorten it... Also in the preview or shared message add the image of the card"):
 // the SHARED GAUNTLET CARDS. POST { pid, data, img } stores a card (the data of js/card.js and its picture as a JPEG data URL) under a short id and answers
 // { id, url }. GET /c/<id> (vercel.json rewrites it to ?page=<id>) is the page a link opens: card.html with the preview tags (title, description, the picture)
 // filled in, so WhatsApp and the others show the card. GET ?img=<id> is the picture, GET ?id=<id> the card data (card-page.js draws the card from it).
 //
-// FILE GUIDE. Shared Gauntlet cards (short links + previews). The card itself: js/card.js; the page: card.html + js/card-page.js. The index of the whole project is CODEMAP.md.
 const fs = require('fs'), path = require('path');
 const { send, body, sameOrigin, ipHash, clean } = require('./_http');
 const getStore = require('./_store');
@@ -11,7 +9,6 @@ require('../js/hex.js'); require('../js/data.js');
 const B = globalThis.B;
 const JPG = /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/, ID = /^[a-z0-9]{6,10}$/;
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-// WHAT: the card data kept clean: only known heroes, items and powers, short name.
 function cleanCard(d) {
   if (!d || typeof d !== 'object' || !Array.isArray(d.h)) return null;
   const h = d.h.slice(0, 4).filter(x => Array.isArray(x) && B.HEROES[x[0]]).map(([k, lv, items]) => [k, Math.max(1, Math.min(9, lv | 0)), (Array.isArray(items) ? items : []).filter(id => B.ITEM[id]).slice(0, 6)]);

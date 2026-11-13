@@ -4,7 +4,6 @@
   const U = B._ui;
   const { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts } = U;
   const logoHTML = () => `<h1 class="logo-big" aria-label="Super Rogues">${B.UI ? B.UI.mark('lg') : ''}<span class="wm"><span class="w1">Super</span><span class="w2">${[...'ROGUES'].map((c, k) => `<i style="--k:${k}">${c}</i>`).join('')}</span></span></h1>`;
-  // WHAT: the start page: the logo, the Play / Continue button, the trailer board, the bottom hub dock.
   function titleHTML() {
     const has = U.run && U.run.phase !== 'over' && U.run.phase !== 'start';
     const canShop = (acct.crowns | 0) >= 30; // notification pip if crowns are available to spend
@@ -22,7 +21,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v1.6</span>
+      <span class="app-ver" aria-label="Game version">v1.7</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -75,7 +74,6 @@
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}</div>`;
   }
   // the trailer: three random heroes against a random fight, played with no sound; a new one starts when it ends
-  // WHAT: the TRAILER under the start page: three random heroes fight a random fight with no sound; when it ends a new one starts. trailerWorld builds it, trailerLoop plays it.
   const trailer = { W: null, view: null, cv: null, raf: 0, last: 0, acc: 0, overAt: 0, end: null };
   function trailerWorld() {
     const r = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()) });
@@ -106,20 +104,17 @@
   // v47 (, David: "make every decision understandable in under 2 seconds ... showing consequences instead of
   // mechanics ... hide complexity behind taps"): quick views (start, shops) say what an ability does without the
   // "90% Magic" formulas; the hero card in Team keeps every number
-  // WHAT: plainAb shortens an ability description for small cards (removes the exact % numbers).
   const ABTOK = '\\d+(?:\\.\\d+)?% (?:Attack|Magic)(?: \\+ \\d+(?:\\.\\d+)?% (?:Attack|Magic))?';
   const AB_RX = [[/, each with [^.;]*? as attack/g, ''], [new RegExp(`(heal(?:s|ing)?(?: \\()?)(?: for)? ?${ABTOK} ?`, 'g'), '$1 '],
     [new RegExp(` (?:for|of) ${ABTOK}(?! (?:as |physical|magic|true|damage|\\+))`, 'g'), ''], [new RegExp(`(?:an extra )?${ABTOK} (?:as )?(?=(?:physical|magic|true|damage)\\b)`, 'g'), m => /^an extra/.test(m) ? 'extra ' : ''],
     [new RegExp(ABTOK, 'g'), 'damage'], [/\s+([.,;)])/g, '$1'], [/\(\s+/g, '('], [/\s{2,}/g, ' ']];
   const plainAb = s => AB_RX.reduce((t, [rx, to]) => t.replace(rx, to), String(s || '')).trim();
-  // WHAT: the ability block of a hero card: name, description, how it scales.
   function abilHTML(h, plain) {
     const d = plain ? plainAb(h.abDesc) : String(h.abDesc || '');
     const m = d.match(/^Passive(?: \(([^)]+)\))?:\s*(.*?)\s*Active:\s*(.*)$/);
     if (plain && m) return `<b class="abname">${esc(h.abName)}</b> ${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}`;   // quick view: what it does when it fires
     return `<b class="abname">${esc(h.abName)}</b>` + (m ? `<span class="abl"><i class="abk">Passive</i>${m[1] ? `<b>${esc(m[1])}</b>: ` : ''}${fmt(m[2])}</span><span class="abl"><i class="abk act">Active</i>${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}</span>` : ` ${fmt(d)}`);
   }
-  // WHAT: a hero card (portrait, role, short line, details button) used on the start screen.
   function heroCard(key, extra = '') {
     const h = HEROES[key];
     return `<div class="hcard">
@@ -130,9 +125,7 @@
   // the game starts with 1 hero and 1 relic: pick one of each (3 offered).
   // two short steps instead of one busy screen. Step 1: tap a hero (its ability shows under the three,
   // no stat table), then Next. Step 2: the three relics with what they do written on them, then Start.
-  // WHAT: START SCREENS. Step 1 pick a hero, step 2 pick a starting power, step 3 fight. stepsHTML draws the 1-2-3 header; startHTML draws the current step.
   const stepsHTML = (s, hasRelics = true) => `<ol class="ssteps">${(hasRelics ? ['Hero', 'Power', 'Fight!'] : ['Hero', 'Fight!']).map((t, i) => `<li class="${i + 1 < s ? 'done' : i + 1 === s ? 'on' : ''}"><i>${i + 1 < s ? '✓' : i + 1}</i>${t}</li>`).join('')}</ol>`;
-  // WHAT: the start flow screens (pick your first hero, pick a power).
   // the pointing hand on the start screens is shown for the first two runs a player ever starts
   const startHint = () => (+store.get('balance.starts', 0) || 0) < 2;
   function startHTML() {
@@ -159,7 +152,6 @@
   }
   // only the picked hero is lit;
   // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
-  // WHAT: the stage of heroes under spotlights (sel = the picked one, act = the button action) and the card that says what the picked hero does.
     // Web & itch.io progression: Hero Mastery (Gold frames for winning heroes) and Discovery (??? for unknown heroes)
   const wonHeroKeys = () => { const s = store.get('balance.wonHeroes', []); return Array.isArray(s) ? s : []; };
   const recordHeroWin = key => { if (!key) return; const cur = wonHeroKeys(); if (!cur.includes(key)) store.set('balance.wonHeroes', cur.concat(key)); };
@@ -236,18 +228,13 @@
   // v114 (, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
   // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
   // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
-  // WHAT: four bars of a hero's strengths, each against the best hero of the game.
-  // what the hero is good at (B.HERO_TRAITS, from its kit) and its power curve (from its growth); v116's measured bars are gone
-  // WHAT: the strength chips of a hero card.
   function statBars(h) {
     const tr = (B.HERO_TRAITS && B.HERO_TRAITS[h.key]) || [], g = h.grow || 1;
     const curve = g >= 1.5 ? ['Peaks late', 'late'] : g <= 0.6 ? ['Strong early', 'early'] : null;
     return tr.length || curve ? `<div class="htraits">${tr.filter(k => B.TRAIT[k]).map(k => `<span class="htr c-${B.TRAIT[k][1]}">${B.TRAIT[k][0]}</span>`).join('')}${curve ? `<span class="htr curve ${curve[1]}">${curve[1] === 'late' ? '📈' : '⚡'} ${curve[0]}</span>` : ''}</div>` : '';
   }
-  // WHAT: 'deal' the first time a start step shows (its cards fly in), '' on the redraws after a tap.
   function dealIn(step) { const k = (U.run && U.run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
 
-  // WHAT: the free recruit screen between days: three heroes (one of each class, the ones your team lacks first), pick one and it joins.
   function recruitHTML() {
     const offer = U.run.recruitOffer || [], f = offer.includes(ui.recruitPick) ? ui.recruitPick : null, k = (U.run.recruits || 0) + 1;
     return `<section class="start s1 recruit"><h2 class="sc">A hero joins you!</h2><p class="ssub">Free hero ${k} of ${CFG.freeRecruits}. Your team: ${U.run.heroes.map(h => img(h.key, 26, 'por xs')).join('')}</p>
@@ -255,7 +242,6 @@
       <div class="bar"><button class="primary big" data-act="recruit-go" ${f ? '' : 'disabled'}>${f ? `Recruit ${esc(HEROES[f].name)} ▶` : 'Tap a hero'}</button></div></section>`;
   }
 
-  // WHAT: the "path" sheet: the days of the run as a track (fight, shop/event, boss, last shop, Gauntlet) with where you are.
   function pathHTML() {
     return `<div class="shead"><b>🗺 Your journey</b><button data-act="close">✕</button></div>${U.trackHTML()}
       <ul class="plegend"><li>${I('swords')} Fight</li><li>${I('help')} Shop or event</li><li>${I('skull')} Boss</li><li>${I('cart')} Last shop</li><li>${I('trophy')} Victory</li></ul>`;
@@ -264,6 +250,5 @@
   // climbing a valley at night, from the camp at the bottom to the castle of the final fight at the top. The days behind you are lit gold, your leader stands
   // where you are, today's choices are the fork in the road (the posters), and the days ahead wind up into the dark with their bosses and duel days. The road
   // scrolls inside the screen and opens on today.
-  // WHAT: the road of the map screen (one node per day; today = the posters). ROAD = the sizes in px; layoutMap fits it to the screen and scrolls to today.
   Object.assign(U, { titleHTML, recruitHTML, startHTML, recordTeamWins, startTrailer, plainAb, statBars, abilHTML, homeMenuHTML, markHeroKnown, codexHTML, pathHTML, trailer });
 })();

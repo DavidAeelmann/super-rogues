@@ -33,14 +33,12 @@
     return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}${buyBtn}</div>`;
   }
   // with a full team, a hero bought in the Hero Shop takes the place of one of yours (its level, XP and items; powers picked at random)
-  // WHAT: the sheet that asks which hero steps aside for the hero being bought.
   function swapHTML(key) {
     const d = HEROES[key];
     return `<div class="shead"><b>${img(key, 28, 'por')} ${esc(d.name)} joins</b><button data-act="close" aria-label="Close">✕</button></div>
       <p class="small">Squad is full. Select who steps aside: <b>${esc(d.name)}</b> inherits their level, board spot & equipped items.</p>
       <div class="tgrid">${U.run.heroes.map(h => `<button class="tpick" data-act="buy-swap" data-arg="${h.uid}">${img(h.key, 48)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl} · ${h.items.length} item${h.items.length === 1 ? '' : 's'}</span></button>`).join('')}</div>`;
   }
-  // WHAT: THE SHOP SCREEN (hero, item or power shop): the products, the reroll button, the Leave button.
   function shopHTML() {
     const c = U.run.cur, rc = Run.rerollCost(U.run);
     const note = c.kind === 'heroShop' ? `<span class="lockpill">${U.run.heroes.length >= Run.teamMax(U.run) ? 'Full team: a new hero swaps in' : `Team ${U.run.heroes.length}/${Run.teamMax(U.run)}`}</span>` : '';
@@ -73,8 +71,6 @@
       </div>
     </section>`;
   }
-  // what an event gave, as pictures (items, relics, a hero joining, gold, XP, boosts)
-  // WHAT: the pictures of what an event choice gave (gold, XP, item, power, hero).
   function gainsHTML(G) {
     if (!G || !G.length) return '';
     const one = g => {
@@ -90,14 +86,12 @@
     return `<div class="gains">${G.map(one).join('')}</div>`;
   }
   // "Sharpen: +10 attack to one hero" reads as a bold name and what it does, on two lines
-  // WHAT: formats an event choice label.
   function evLabel(t0) {
     const t = String(t0);
     const m = String(t).match(/^([^:0-9]{2,32}):\s+(.+)$/);
     return m ? `<b class="evn">${esc(m[1])}</b><span class="eve">${fmt(m[2].charAt(0).toUpperCase() + m[2].slice(1))}</span>` : fmt(t);
   }
   // 3 choices with a visible price or risk; some ask you to pick the hero, item or item type they apply to
-  // WHAT: THE EVENT SCREEN: the story text and its choices (greyed out with the reason when you cannot take one), then the result.
   function eventHTML() {
     const e = EVENT[U.run.cur.id], chs = Run.eventChoices(U.run);
     const head = `<section class="event ev-${e.rar || 'common'}">${U.run.cur.done || U.run.cur.pick != null ? '' : `<button class="evskipb" data-act="leave">Skip ${I('arrow')}</button>`}<div class="evmed">${evIcon(e.id)}</div>${EV_RAR[e.rar] ? `<p class="center"><span class="evrar">${EV_RAR[e.rar]}</span></p>` : ''}<h2>${esc(e.name)}</h2><p>${esc(e.text)}</p>`;
@@ -127,7 +121,6 @@
       return `<button class="${cls}" data-act="event" data-arg="${i}" ${c.ok ? '' : 'disabled'}>${pic}<span class="t">${tags.length ? `<span class="etags">${tags.join('')}</span>` : ''}${tag}${evLabel(ch.label)}${c.ok || c.req ? '' : `<span class="why">${esc(c.why)}</span>`}</span>${ch.cost ? `<span class="price">${ch.cost}</span>` : ''}${ch.target ? '<i class="chev" title="You choose">›</i>' : ''}</button>`;
     }).join('')}</div></section>`;
   }
-  // WHAT: THE GAME OVER SCREEN (defeat or end of the Gauntlet): score, XP panel, ladder, Play again.
   function overHTML() {
     const g = U.run.g;
     if (U.run.result === 'gauntlet' && g) {   // a game that ended in the old Gauntlet (saved before v63)
@@ -155,19 +148,15 @@
       ${xpScreenHTML()}
       <div class="overbar xp-footer"><button class="primary big cta again molten-gold-cta xp-again-btn" data-act="new-run"><span class="play-triangle">▶</span> Play again</button></div></section>`;
   }
-  // WHAT: makes the end screen fit the phone: adds .tight, then .tighter, while the page is taller than the screen (many XP lines, many rewards).
   function fitOver() {
     const s = $('.lpscr, .xpscr'); if (!s) return; const vh = window.visualViewport ? window.visualViewport.height : innerHeight;
     for (const c of ['tight', 'tighter']) { if (document.documentElement.scrollHeight <= vh + 1) return; s.classList.add(c); }
     const over = document.documentElement.scrollHeight - vh; if (over <= 1) return;   // still too tall: the meter, the lines and the chest shrink together
-    const parts = [...s.querySelectorAll(':scope > .vmwrap, :scope > .chestzone')], h = parts.reduce((a, e) => a + e.offsetHeight * (+e.style.zoom || 1), 0);
+    const parts = [...s.querySelectorAll(':scope > .vmwrap, :scope > .chestzone, :scope > .lp-modal-wrap, :scope > .xp-modal-wrap')], h = parts.reduce((a, e) => a + e.offsetHeight * (+e.style.zoom || 1), 0);
     if (h) { const z = Math.max(0.5, (h - over - 6) / h); parts.forEach(e => { e.style.zoom = ((+e.style.zoom || 1) * z).toFixed(3); }); }
   }
-  // WHAT: a vertical meter (league or level): the banner on top, the tube, the filling (height in %), a line under it.
   const meterHTML = (id, style, banner, pct, foot) => `<div class="vmeter" id="${id}" style="${style}"><div class="vmban">${banner}</div><div class="vmtube"><i style="height:${pct}%"></i><span class="vmshine"></span></div><small class="vmfoot">${foot}</small></div>`;
-  // WHAT: the league screen (end of a run, screen 1): the league meter on the left, the LP in big, why, the streak and the call to beat other players on the right.
   // the league screen comes after the Gauntlet and adds its LP: the run's change (op complete) and then the tower's floors
-  // WHAT: the run's league change merged with the Gauntlet's (the league and LP after the last floor, the deltas added).
   function lgAll() {
     const lg = U.run.lgEnd, T = U.run.tower; if (!lg || !T || !T.lgLast) return lg;
     const from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) };
@@ -254,7 +243,6 @@
       </div>
     </div>`;
   }
-  // WHAT: the league meter's animation: the LP count up or down; the tube fills or falls; a promotion fills to the top, swaps the banner and fills again; a drop empties, swaps and falls.
   async function animLp() {
     const m = $('#lpmeter'), lg = lgAll(); if (!m || !lg || U.run.lpShown) return;
     U.run.lpShown = true; save();
@@ -298,7 +286,6 @@
     if (horizTxt) horizTxt.textContent = footVal;
     fitOver();
   }
-  // WHAT: the XP screen (end of a run, screen 2): the level meter on the left, the XP gained in big and where it came from on the right, and the reward chest.
   function xpScreenHTML() {
     const log = U.run.xpLog || [], got = log.reduce((a, g) => a + g.xp, 0), to = acct.axp || 0, from = Math.max(0, to - got);
     const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!U.run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
@@ -399,7 +386,6 @@
       </div>
     </div>`;
   }
-  // WHAT: the XP screen's animation: the total counts up, the level tube fills; every level up cheers (LEVEL UP!) and empties the tube; at the end a chest with rewards bursts open.
   async function animXp2() {
     const el = $('#xppanel'); if (!el || U.run.xpShown || !(U.run.xpLog || []).length) return;
     U.run.xpShown = true; save();

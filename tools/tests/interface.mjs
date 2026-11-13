@@ -90,11 +90,9 @@ for (dev of DEVICES.map(d => d)) {
   for (const a of ['howto', 'player-tab', 'my-profile', 'shop', 'scores']) { await act(a); await sleep(250); await audit('menu-' + a); await act('close'); await sleep(100); }
     // a game
     await ev(`document.querySelector('[data-act=new-run]').click()`); await sleep(250); await audit('start-heroes');
-    await ev(`[0, 1, 2].forEach(i => document.querySelectorAll('[data-act=start-pick]')[i].click())`); await sleep(250); await audit('start-hero-picked');
+    await ev(`document.querySelector('[data-act=start-pick]').click()`); await sleep(250); await audit('start-hero-picked');
     const hk = await ev(`__bal.ui.focus || Object.keys(B.HEROES)[0]`); await act('hero-peek', hk); await sleep(250); await audit('start-hero-details'); await act('close'); await sleep(100);
-    await ev(`document.querySelector('[data-act=start-next]').click()`); await sleep(250); await audit('start-power');
-    await ev(`document.querySelectorAll('[data-act=start-relic]')[0].click()`); await sleep(250); await audit('start-power-picked');
-    await ev(`document.querySelector('[data-act=start-go]').click()`); await sleep(350); await audit('map');
+    await ev(`document.querySelector('[data-act=start-next]').click()`); await sleep(350); await audit('map');
     // shops and events
     for (const kind of ['heroShop', 'itemShop', 'relicShop']) { await force(`r.phase = 'map'; r.opts = [{ type: 'shop', kind: '${kind}' }]; B.Run.choose(r, 0)`); await sleep(350); await audit(kind); }
     const evIds = await ev(`Object.keys(B.EVENTS ? Object.fromEntries(B.EVENTS.map(e => [e.id, 1])) : {})`) || [];

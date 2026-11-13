@@ -1,4 +1,3 @@
-// v27 (owner + review #25 by David): the account side of a player. Seasons, Crowns, the Crown Shop, referrals and
 // public profiles. Used by api/elo.js (where leagues move) and api/player.js (shop, profiles, name change).
 // - Seasons are 28 days (B.SEASON). A new season sends everyone back to Bronze; the old league is kept as last_league
 //   and the best one ever as peak_league. A row from before seasons existed (season 0) keeps its league and is paid
@@ -8,7 +7,6 @@
 // - Referral: a new player (no run yet) who arrives with ?ref=<code> is linked to that player for good. Every time the
 //   friend earns crowns by playing, the referrer gets 1% of it (at least 1). Referral crowns do not chain further.
 // 
-// FILE GUIDE. THE ACCOUNT SIDE OF A PLAYER: seasons, crowns, the Crown Shop, referrals (invite links), account XP and level, profiles. Used by api/elo.js (where leagues move) and api/player.js (shop, profile, rename). The index of the whole project is CODEMAP.md.
 require('../js/hex.js'); require('../js/data.js');
 const D = globalThis.B;
 const { codeOf } = require('./_store');
@@ -19,7 +17,6 @@ const isKing = p => !!p && perksOf(p).includes('king');
 const row = p => ({ elo: p.elo, runs: p.runs, crowns: p.crowns, best: p.best, league: p.league | 0, lp: p.lp | 0, season: p.season | 0, sreach: p.sreach | 0, peak_league: p.peak_league | 0, last_league: p.last_league == null ? -1 : p.last_league,
   streak: p.streak == null ? 1 : p.streak | 0, bstreak: p.bstreak == null ? 1 : p.bstreak | 0 });
 
-// WHAT: if a new season (28 days) has started, sends the player back to Bronze and keeps the old league as last_league.
 function rollSeason(p, now) {
   const cur = D.seasonOf(now || Date.now());
   if ((p.season | 0) === cur) return false;
@@ -27,13 +24,11 @@ function rollSeason(p, now) {
   p.season = cur;
   return true;
 }
-// WHAT: gives crowns to a player (and 1% of it to whoever invited him).
 async function grant(st, p, n) {
   const g = await st.addGems(p.pid, n); if (g != null) p.gems = g;
   if (p.ref) await st.addGems(p.ref, Math.max(D.CROWNS.referMin, Math.floor(n * D.CROWNS.referPct)), true);
 }
 // pays every league above sreach up to the current one; returns the crowns paid
-// WHAT: pays the crowns for a league reached for the first time this season.
 async function payLeagues(st, p) {
   const from = p.sreach | 0, to = p.league | 0;
   p.peak_league = Math.max(p.peak_league | 0, to);
@@ -44,13 +39,11 @@ async function payLeagues(st, p) {
   return n;
 }
 // on every call that loads a player: a new season, then anything still unpaid (players from before Crowns)
-// WHAT: brings a player up to date (new season, XP format) before anything else happens.
 async function sync(st, p) {
   if (rollSeason(p)) await st.setPlayer(p.pid, row(p));
   await xpInit(st, p);
   return payLeagues(st, p);
 }
-// WHAT: remembers who invited this player (once).
 async function linkRef(st, p, code) {
   code = String(code || '').toLowerCase();
   if (!/^[a-f0-9]{12}$/.test(code) || p.ref || (p.runs | 0) > 0) return false;
@@ -62,10 +55,8 @@ async function linkRef(st, p, code) {
 // ---- v30 (review #28, PC boy): account XP and level. Firsts: each hero's first PvE clear (reaching the Gauntlet with
 // it), each Gauntlet floor reached for the first time, each boss beaten for the first time, plus XP for crowns spent in
 // the Crown Shop. The Double XP perk doubles every gain (B.ACCOUNT, B.UNLOCKS).
-// v46 (review #57, David): every game also pays XP by how it went (xpGame, B.GAME_XP), and each level costs more
 // (B.levelOf). Every gain in the log has a kind `k` (game, fight, boss, reach, duel, champ, first, crowns) for the screen.
 const listOf = s => { try { const a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch (_) { return []; } };
-// WHAT: ACCOUNT XP. addXp gives account XP and logs why; xpGame (a finished game), xpDuel, xpClear (first clear of each hero), xpFloor, xpBoss and xpSpend award it per event, with a daily cap (allowGameXp).
 async function addXp(st, p, n, why, log, k) {
   if (!(n > 0)) return;
   if (perksOf(p).includes('xp2')) n *= 2;
@@ -82,7 +73,6 @@ async function allowGameXp(st, pid) {
   await st.setKV(k, JSON.stringify({ h: hour, n: n + 1 })); return true;
 }
 const count = (v, max) => Math.max(0, Math.min(max, Math.floor(Number(v)) || 0));
-// WHAT: the XP of one finished game: playing, fights won, bosses beaten, reaching the Gauntlet.
 async function xpGame(st, p, g, log) {
   if (!(await allowGameXp(st, p.pid))) return;
   const X = D.GAME_XP, fights = count(g && g.fights, X.maxFights), bosses = g && g.reached ? 2 : count(g && g.bosses, 1);
@@ -134,22 +124,17 @@ async function xpInit(st, p) {
   if (spent) await xpSpend(st, p, spent, log);
 }
 const levelView = p => { const xp = p.axp | 0, lvl = D.levelOf(xp); return { axp: xp, level: lvl, cleared: listOf(p.cleared).length, pfloor: p.pfloor | 0, bosses: listOf(p.bosses).length }; };
-// WHAT: records the games and wins of each hero for the player (profiles show most played / best win rate to Kings).
 async function heroGames(st, pid, team, win) {
   try { if (team && team.length) await st.addHeroGames(pid, [...new Set(team.map(h => h.key))], win ? 1 : 0); } catch (e) { console.error('phero', e); }
 }
 
-// v109 (review #196, David: "Show current champion in the gauntlet screen, and in the hiscores he has an epic crown"): the current Gauntlet champion as
 // anyone may see it (name, public code, floors held, the team's heroes). null = no champion yet.
 async function champView(st) {
   const c = await st.getChampion(0); if (!c) return null;
   const o = c.pid ? await st.getPlayer(c.pid) : null, team = listOf(c.team).filter(h => h && D.HEROES[h.key]).map(h => ({ key: h.key, lvl: h.lvl | 0 }));
   return { name: (o && o.name) || c.name, code: c.pid ? (o && o.code) || codeOf(c.pid) : null, wins: c.wins | 0, floors: Math.max(2, (c.wins | 0) + 1), stopped: c.def_w | 0, team, avatar: (o && o.avatar) || null };
 }
-// v66 (review #136): the words of the taunt a player picked (null = none)
 const tauntText = p => { const t = p && p.taunt && D.TAUNT_ALL.find(x => x.id === p.taunt); return t ? t.text : null; };
-// what anyone can see on a profile
-// WHAT: the public profile of a player (never his id or visitor hash). kingExtras adds the King-only details; ownView is the player's own wallet and progress.
 function profileView(p) {
   const q = Object.assign({}, p); rollSeason(q);   // shows the new season even before the player comes back
   return { name: q.name, code: q.code || codeOf(q.pid), league: q.league | 0, lp: q.lp | 0, elo: Math.round(q.elo), best: q.best | 0, titles: q.crowns | 0,
@@ -172,7 +157,6 @@ async function ownView(st, p) {
     referred: !!p.ref, seasonEnds: D.seasonEnds(D.seasonOf(Date.now())), account: true, tauntId: p.taunt || null, titleId: p.title || null });
 }
 
-// v73 (reviews #150 #151): the achievements of a finished run: the ones the game saw (by 'run', sent by the browser like every result here) and the account
 // ones checked here (first run, every hero, streaks, leagues). Returns the new ones (shown on the XP screen as new titles).
 async function grantAchs(st, p, sent) {
   const had = listOf(p.achs), heroes = Object.keys(D.HEROES).length, cand = (Array.isArray(sent) ? sent : []).filter(id => D.ACH[id] && D.ACH[id].by === 'run');
@@ -180,7 +164,7 @@ async function grantAchs(st, p, sent) {
   if (listOf(p.cleared).length >= heroes) cand.push('allheroes');
   const s = p.streak == null ? 1 : p.streak | 0; if (s >= 3) cand.push('onfire'); if (s >= 10) cand.push('unstoppable');
   const lg = Math.max(p.league | 0, p.peak_league | 0); if (lg >= 2) cand.push('golden'); if (lg >= 5) cand.push('celestial');
-  const lvl = D.levelOf(p.axp | 0); for (const a of D.ACHIEVEMENTS) if (a.by === 'level' && a.lvl <= lvl) cand.push(a.id);   // v74 (review #152): the level titles
+  const lvl = D.levelOf(p.axp | 0); for (const a of D.ACHIEVEMENTS) if (a.by === 'level' && a.lvl <= lvl) cand.push(a.id);
   const fresh = [...new Set(cand)].filter(id => !had.includes(id)); if (!fresh.length) return [];
   p.achs = JSON.stringify(had.concat(fresh)); await st.setProgress(p.pid, { achs: p.achs });
   return fresh;

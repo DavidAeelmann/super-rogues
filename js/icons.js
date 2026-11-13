@@ -1,7 +1,6 @@
 // Item and relic icons (), drawn in code like the unit models and cached as data: URLs (the CSP allows
 // images from data:). Each item/relic maps to a glyph drawer + accent colour; the frame colour is the item tier.
 
-// FILE GUIDE. ICONS of items and Powers (relics), drawn with code and cached as images. D = the drawers (a sword, a shield, a ring...), IT = which drawer and colour each item uses, RE = the same for Powers. The frame colour is the rarity.
 // To give a new item or Power an icon: add its id to IT or RE with a drawer name from D. Unknown ids get a gem. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
@@ -14,7 +13,6 @@
   function ring(c, x, y, r, w, col) { c.strokeStyle = ink; c.lineWidth = w + 2; c.beginPath(); c.arc(x, y, r, 0, TAU); c.stroke(); c.strokeStyle = col; c.lineWidth = w; c.stroke(); }
 
   // every drawer paints inside a 100x100 box centred on 0,0; a = accent colour
-  // WHAT: the drawers: one small function per glyph (sword, shield, boot, ring, flame...).
   const D = {
     sword: (c, a) => { path(c, [[-6, 30], [6, 30], [6, -34], [0, -44], [-6, -34]], a || steel); line(c, -20, 30, 20, 30, 7, gold); line(c, 0, 32, 0, 44, 7, leather); orb(c, 0, 47, 5, gold); },
     greatsword: (c, a) => { path(c, [[-9, 26], [9, 26], [9, -38], [0, -48], [-9, -38]], a || steel); line(c, -24, 26, 24, 26, 8, gold); line(c, 0, 28, 0, 44, 8, leather); },
@@ -82,11 +80,8 @@
   // the main drawers are drawn again with more parts (fullers, guards, gems, rivets, buckles, folds), bright edge highlights and glows, and the plate
   // blows the glyph up and puts a soft glow of its accent colour behind it, so even at 36 px you can tell a sword from a staff
   const sh = (col, f) => M().shade(col, f);
-  // WHAT: a bright highlight stroke along a bevelled edge.
   const hl = (c, x1, y1, x2, y2, w) => { c.save(); c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = w || 1.8; c.lineCap = 'round'; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); c.restore(); };
-  // WHAT: a soft round glow (magic, gems, flames).
   const glow = (c, x, y, r, col, a) => { c.save(); c.globalAlpha = a == null ? 0.5 : a; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.restore(); };
-  // WHAT: a cut gem (a small faceted stone) at x, y of radius r.
   const gem = (c, x, y, r, col) => {
     path(c, [[x, y - r], [x + r * 0.9, y - r * 0.25], [x + r * 0.55, y + r * 0.85], [x - r * 0.55, y + r * 0.85], [x - r * 0.9, y - r * 0.25]], col);
     c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = 0.9; c.beginPath(); c.moveTo(x - r * 0.9, y - r * 0.25); c.lineTo(x + r * 0.9, y - r * 0.25); c.moveTo(x, y - r); c.lineTo(x - r * 0.3, y - r * 0.25); c.lineTo(x - r * 0.5, y + r * 0.85); c.moveTo(x, y - r); c.lineTo(x + r * 0.3, y - r * 0.25); c.lineTo(x + r * 0.5, y + r * 0.85); c.stroke();
@@ -260,12 +255,9 @@
   // a hood shows a dark face with eyes, a hat has a brim. Gauntlets, claws, wraps and fingerless grips; boots, slippers, greaves and winged boots; mail, jerkin,
   // mantle, hooded cloak, heart-plate; and the trinkets that used a wrong picture (a sash, a bell, a locket, a pouch, an inkwell, a whistle...) get their own.
   // Every glyph is also drawn with a dark outline around its whole shape (see icon()), so it stands out of the plate at 30 px.
-  // WHAT: fills a path built by fn with a lit-to-dark gradient of col and a dark ink edge.
   const fillP = (c, col, fn, lw) => { c.beginPath(); fn(c); c.closePath(); c.fillStyle = lgG(c, -40, -40, 40, 40, col); c.fill(); c.strokeStyle = ink; c.lineWidth = lw || 1.8; c.lineJoin = 'round'; c.stroke(); };
-  // WHAT: a thin line (stitches, folds, creases) without an ink edge.
   const thin = (c, pts, w, col) => { c.save(); c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); c.restore(); };
   const skin = '#e0a882', o_sash = b => sh(b, -0.45);
-  // WHAT: a hand: four fingers and a thumb on a palm, with a cuff. o.kind: glove | gauntlet | claw | wraps | grips (fingerless).
   function hand(c, b, o) {
     const k = o.kind, fcol = k === 'wraps' ? skin : b, F = [[-15, -2, -17, -36, 10.5], [-4, -4, -4, -44, 11], [7, -4, 9, -41, 10.5], [17, 0, 21, -30, 9]], T = [-20, 12, -38, -12, 11];
     // the dark silhouette first, so the fingers and the palm make one shape
@@ -292,7 +284,6 @@
     line(c, -26, 25, 27, 25, 4.4, o.trim || gold); if (k !== 'wraps') orb(c, 0, 25, 3.6, o.trim || gold);
     thin(c, [[-22, 34], [22, 34]], 1.2, sh(cuffCol, -0.4)); thin(c, [[-21, 21], [-21, 41]], 1.6, 'rgba(255,255,255,0.35)');
   }
-  // WHAT: a boot (side view): shaft, toe, heel, sole, a turned-down cuff. o.kind: boot | slipper | greave | wing | lace.
   function boot(c, b, o) {
     const k = o.kind;
     if (k === 'slipper') {
@@ -576,9 +567,7 @@
       line(c, 0, 12, 0, -40, 3, '#d9c08a'); path(c, [[0, -50], [-6, -38], [6, -38]], steel); path(c, [[-6, 6], [6, 6], [4, 18], [-4, 18]], gold);
     },
   });
-  // WHAT: a vertical-ish gradient fill from light to dark of a colour, for glyphs drawn with plain canvas paths.
   function lgG(c, x0, y0, x1, y1, col) { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, sh(col, 0.4)); g.addColorStop(0.5, col); g.addColorStop(1, sh(col, -0.38)); return g; }
-  // WHAT: item id -> [drawer, accent colour].
   const IT = {
     honeycomb: ['amulet', '#ffc21a'], starcloak: ['cloak', '#5a4ab8'], tidepearl: ['gem', '#9ff0ff'], moonslippers: ['boots', '#c9d2ff'], comethammer: ['hammer', '#b8a8ff'],  
     longsword: ['sword'], chainmail: ['armor'], belt: ['belt'], recurve: ['bow'], rod: ['rod'], cloak: ['cloak', '#4a5a6a'], tear: ['drop'], boots: ['boots'], gloves: ['glove'], fang: ['fang'],
@@ -621,9 +610,7 @@
     sling: ['sling'], gunblade: ['sparkblade', '#bfe6ff'], stormbringer: ['boltspear', '#ffe066'], lightningrod: ['conductor', '#d9874a'],
   });
   // the empty slot of each item type shows this glyph, faded
-  // WHAT: the picture of an empty equipment slot by type.
   const SLOT = { weapon: 'sword', offhand: 'shield', helmet: 'helm', armor: 'armor', gloves: 'glove', boots: 'boots', trinket: 'ring' };
-  // WHAT: Power (relic) id -> [drawer, accent colour].
   const RE = {
     beehive: ['lantern', '#ffc21a'], seashell: ['horn', '#ffb3c8'], kite: ['feather', '#ff8a5c'], compass: ['seal', '#b8a8ff'], teapot: ['vial', '#7ee08e'],  
     snowglobe: ['gem', '#dff4ff'], marbles: ['dice', '#6fb6ff'], fireflies: ['lantern', '#e8ff7a'], pinwheel: ['clover', '#ff8ad8'], horseshoe: ['ring', '#c9c9d9'],
@@ -646,7 +633,6 @@
   const tierColor = t => t === 'relic' ? '#e8b84a' : B.RARITY && B.RARITY[t] ? B.RARITY[t].color : '#9aa3b5';
   const cache = {};
   // kind 'item' | 'relic' | 'slot' (an empty equipment slot: id = item type)
-  // WHAT: renders one icon (kind item / relic / slot, id, size) to an image URL, cached.
   function icon(kind, id, px) {
     const key = kind + ':' + id + ':' + px; if (cache[key]) return cache[key];
     if (typeof document === 'undefined') return '';
@@ -699,6 +685,5 @@
     }
     return (cache[key] = cv.toDataURL());
   }
-  // WHAT: the public list: B.Icons.item(id, px), B.Icons.relic(id, px), B.Icons.slot(type, px).
   B.Icons = { item: (id, px = 40) => icon('item', id, px), relic: (id, px = 40) => icon('relic', id, px), slot: (type, px = 40) => icon('slot', type, px), drawers: D, IT, RE, SLOT };
 })(typeof window !== 'undefined' ? window : globalThis);

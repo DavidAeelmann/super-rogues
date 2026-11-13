@@ -1,4 +1,3 @@
-// v27 (owner + review #25 by David): the Crown Shop, player profiles, name change and the content Elo tabs (now an
 // unlock). POST only, and it never creates a player (accounts start in api/elo.js when a first run ends).
 //   {op:'me', pid}                 your wallet, perks, league, season and referral numbers
 //   {op:'profile', pid?, code}     anyone's public profile; King Tier viewers also get most played / best win rate
@@ -14,16 +13,13 @@
 //   {op:'ladder', pid?}            v85: the global top 10, and your place (me + rank) when you are not in it
 //   {op:'redeem', pid, code}       v76: a redeem code (CODES below, server only), once per player
 // 
-// FILE GUIDE. THE ACCOUNT ENDPOINT, POST /api/player { op, pid, ... }: me (wallet and progress), profile (anyone's public profile), buy (Crown Shop), rename, ratings (content Elo, needs the unlock). It never creates a player: accounts start when a first game ends (api/elo.js). The index of the whole project is CODEMAP.md.
 const { send, body, sameOrigin, clean, handleCors } = require('./_http');
 const getStore = require('./_store');
 const P = require('./_player');
 const D = globalThis.B;
-// v76 (review #154, David): redeem codes -> crowns. Kept here only (never in the game files), so nobody sees them;
 // they will be how bought crowns arrive later. Codes are case-insensitive.
 const CODES = { thanks: 1000 };
 
-// WHAT: the request handler for the ops listed above.
 module.exports = async (req, res) => {
   if (handleCors(req, res)) return;
   const st = getStore();
@@ -46,22 +42,21 @@ module.exports = async (req, res) => {
       const v = P.profileView(t), king = P.isKing(p);
       v.own = !!p && p.pid === t.pid;
       if (king) v.more = await P.kingExtras(st, t.pid);
-      v.trophies = await st.trophiesOf(t.pid, 12);   // v64 (review #125): the duels this player won
-      if (p && p.pid !== t.pid) v.h2h = await st.h2h(p.pid, t.pid);   // v64 (review #127): your duels against this player
-      Object.assign(v, await st.followCounts(t.pid, v.code));   // v65 (review #132): followers, following, and whether you follow this player
+      v.trophies = await st.trophiesOf(t.pid, 12);
+      if (p && p.pid !== t.pid) v.h2h = await st.h2h(p.pid, t.pid);
+      Object.assign(v, await st.followCounts(t.pid, v.code));
       v.followed = !!p && p.pid !== t.pid && await st.isFollowing(p.pid, v.code);
       return send(res, 200, { profile: v, viewerKing: king });
     }
-    // v85 (review #163, David: "top players should only show top ten, then if you're not top 10 a ... then you and your place in the global rankings. Friends shows all friends always and you")
     if (b.op === 'ladder') {
       const top = await st.topPlayers(10), rank = p ? await st.rankOf(pid) : null;
       const me = p && rank && rank > 10 ? Object.assign((await st.friendsTop(pid, 1)).find(x => x.code === p.code) || {}, { rank }) : null;
-      return send(res, 200, { top, me, rank, champ: await P.champView(st) });   // v109 (review #196): the champion wears the epic crown
+      return send(res, 200, { top, me, rank, champ: await P.champView(st) });
     }
-    if (b.op === 'friends') return send(res, 200, { top: p ? await st.friendsTop(pid, 1000) : [], champ: await P.champView(st) });   // v85: every friend, always   // v65 (review #132): the players you follow, and you
+    if (b.op === 'friends') return send(res, 200, { top: p ? await st.friendsTop(pid, 1000) : [], champ: await P.champView(st) });   // v85: every friend, always
     if (!p) return send(res, 404, { error: 'Your account starts when your first run ends. Play one first!' });
 
-    if (b.op === 'follow') {   // v65 (review #132): follow / unfollow a player by the public code
+    if (b.op === 'follow') {
       const code = clean(b.code, 16).toLowerCase(), t = /^[a-f0-9]{12}$/.test(code) ? await st.getPlayerByCode(code) : null;
       if (!t) return send(res, 404, { error: 'No player with that id' });
       if (t.pid === p.pid) return send(res, 400, { error: 'That is you' });
@@ -77,21 +72,21 @@ module.exports = async (req, res) => {
       p.gems = left;
       return send(res, 200, Object.assign(await P.ownView(st, p), { redeemed: n }));
     }
-    if (b.op === 'title') {   // v73 (review #150): the achievement shown as your title under your name (null = none)
+    if (b.op === 'title') {
       const t = b.title == null || b.title === '' ? null : String(b.title), own = (() => { try { return JSON.parse(p.achs || '[]'); } catch (_) { return []; } })();
       if (t && (!D.ACH[t] || !own.includes(t))) return send(res, 400, { error: 'Earn that achievement first' });
       await st.setTitle(pid, t); p.title = t;
       return send(res, 200, await P.ownView(st, p));
     }
-    if (b.op === 'style') {   // v66 (review #136): which bought taunt and VS entrance you show (null = none)
-      const own = P.perksOf(p), lvl = D.levelOf(p.axp | 0), lt = v => D.LEVEL_TAUNTS.find(t => t.id === v);   // v74 (review #152): the taunts the level gave are yours too
+    if (b.op === 'style') {
+      const own = P.perksOf(p), lvl = D.levelOf(p.axp | 0), lt = v => D.LEVEL_TAUNTS.find(t => t.id === v);
       const pickOf = (v, kind) => v == null || v === '' ? null : kind === 'taunt' && lt(v) ? (lt(v).lvl <= lvl ? v : undefined) : D.SHOP_ITEM[v] && D.SHOP_ITEM[v].kind === kind && own.includes(v) ? v : undefined;
       const taunt = pickOf(b.taunt, 'taunt'), vsfx = pickOf(b.vsfx, 'vsfx');
       if (taunt === undefined || vsfx === undefined) return send(res, 400, { error: 'Buy it in the Crown Shop first' });
       await st.setStyle(pid, taunt, vsfx); Object.assign(p, { taunt, vsfx });
       return send(res, 200, await P.ownView(st, p));
     }
-    if (b.op === 'avatar') {   // v65 (review #131): your picture is a hero portrait the account level has opened
+    if (b.op === 'avatar') {
       const key = String(b.hero || ''), need = D.portraitLevel(key);
       if (!need) return send(res, 400, { error: 'Unknown portrait' });
       if (need > D.levelOf(p.axp | 0) && !P.perksOf(p).includes('pt_' + key)) return send(res, 400, { error: `That portrait opens at level ${need} (or buy it in the Crown Shop)` });

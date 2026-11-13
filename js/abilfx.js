@@ -2,7 +2,6 @@
 // really be a falling star"). The simulation tags every visual effect with the ability that made it (f.ab = the ability key, f.by = the caster); this file draws each
 // ability its own way: the starfall is a star that falls out of the sky onto the exact hexes it hits, Tom throws small dishes, the roots grow out of the ground...
 
-// FILE GUIDE. js/render.js asks this file for every effect that has f.ab:
 // B.AbilFx.has(f) does this ability draw this kind of effect itself ('ring' = an area, 'proj' = a flying thing, 'bolt' = a line, 'blink', 'cast', 'spawn', 'text')?
 // B.AbilFx.life(f) how many ticks it is drawn for (longer than the event itself when the look needs it)
 // B.AbilFx.run(kit, v, W, T, S, f, phase) phase 'spawn' runs once when the effect is first seen (particles), 'draw' runs every frame (shapes)

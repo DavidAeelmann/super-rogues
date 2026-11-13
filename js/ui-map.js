@@ -54,7 +54,6 @@
         ${U.run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(U.run.nextMod))}</p>` : ''}
         <div class="banners rb${k}">${opts.map(optHTML).join('')}</div></div></div></div>`;
   }
-  // WHAT: fits the road to the screen (the page itself never scrolls) and opens it on today; a redraw on the same day keeps where you scrolled to.
   function layoutMap(keep) {
     const wm = $('#wmap'); if (!wm) return;
     let y = 0; for (let e = wm; e; e = e.offsetParent) y += e.offsetTop;
@@ -80,29 +79,24 @@
     }
     ui.roadAt = wm.dataset.key;
   }
-  // WHAT: the team under the road on phones (portraits with levels, items waiting in the bag, powers); on computers the full party panel sits beside it.
   function mstripHTML() {
     return `<div class="mstrip"><button class="mteam" data-act="team" aria-label="Team">${U.run.heroes.map(h => `<span class="mh">${img(h.key, 40, 'por')}<i>${h.lvl}</i></span>`).join('')}${U.run.bag.length ? `<span class="mbag">${I('bag')}<b>${U.run.bag.length}</b></span>` : ''}</button>
       ${U.run.relics.length ? `<span class="mrel">${U.run.relics.slice(0, 4).map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 28)}</button>`).join('')}${U.run.relics.length > 4 ? `<button class="mmore" data-act="team">+${U.run.relics.length - 4}</button>` : ''}</span>` : ''}</div>`;
   }
-  // WHAT: the little progress track shown above the map.
   function trackHTML() {
     return `<div class="track">${Run.pveSeq(U.run).map((t, i) => `<span class="node ${i < U.run.step ? 'done' : i === U.run.step ? 'cur' : ''} ${t === 'B' ? 'boss' : ''}" title="${t}">${NODE_ICON[t]}</span>`).join('')}</div>`;
   }
-  // WHAT: the list of enemies of a fight as small chips.
   function enemyList(f) {
     const cnt = {};
     for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); cnt[k] = (cnt[k] || 0) + 1; }
     return Object.keys(cnt).map(k => { const key = k.replace('*', ''), m = B.MOBS[key] || B.BOSSES[key]; return `<span class="en ${k.endsWith('*') ? 'elite' : ''}">${img(key, 22, 'por sm')}${esc(m.name)}${cnt[k] > 1 ? ' ×' + cnt[k] : ''}${k.endsWith('*') ? ' [Elite]' : ''}</span>`; }).join(' ');
   }
-  // WHAT: one big option card of the map (a fight, a shop or an event) with its banner, title, body and reward.
   function bannerHTML(i, kind, emblem, title, body, reward) {
     return `<button class="banner b-${kind}" data-act="choose" data-arg="${i}"><span class="rod"></span><span class="emb">${emblem}</span>
       <span class="bt">${title}</span><span class="bd">${body}</span>${reward ? `<span class="rw">${reward}</span>` : ''}</button>`;
   }
   // every option of the map is a small poster
   // with its own scene: the enemies' faces for a fight (skulls = how hard), a fan of mystery cards for a shop, the boss with red rays, the event's picture
-  // WHAT: the poster of one map option: a scene on top, then title, a line of text and the reward.
   function posterHTML(i, kind, scene, title, body, reward, ribbon) {
     const coinPlaqueSVG = `<svg class="rw-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/><circle cx="10" cy="10" r="5.5" fill="#fde047"/></svg>`;
     const formattedReward = reward ? `<span class="rw gold-treasure-plaque">${coinPlaqueSVG}<span>${reward}</span></span>` : '';
@@ -139,8 +133,6 @@
     if (o.type === 'event') { const e = EVENT[o.id]; return posterHTML(i, 'event' + (e.rar === 'rare' ? ' b-rare' : ''), `<span class="rays"></span><span class="evbig">${evIcon(o.id)}</span>`, esc(e.name), `<span class="small">${esc(e.text)}</span>`, '', EV_RAR[e.rar] || ''); }
     return '';
   }
-  // what an event did to the next fight, in words
-  // WHAT: text for a "next fight" modifier bought in an event.
   function modText(M) {
     const pc = v => (v > 0 ? '+' : '') + Math.round(v * 100) + '%', out = [];
     if (M.enemyHp) out.push(`enemies ${pc(M.enemyHp)} Health`);
@@ -153,12 +145,10 @@
     if (M.rewardGold) out.push(`win it for +${M.rewardGold} gold`);
     return out.join(', ');
   }
-  // WHAT: THE MAP SCREEN: the road (mapRoad) with today's options (run.opts built by Run.advance), the team strip under it on phones, the party panel beside it on computers.
   function mapHTML() {
     return `<section class="map road"><div class="mapmain">${mapRoad()}${mstripHTML()}</div><aside class="mapside">${partyHTML()}</aside></section>`;
   }
   // the party under the map (levels, XP, worn items, relics) and the next boss, so each choice is informed
-  // WHAT: deploy powers column and unequipped items bag dock on desktop deploy screen
   function deployLeftHTML() {
     if (!U.run) return '';
     const relics = (U.run.relics || []).filter(id => RELIC[id]).map(id => {
@@ -195,7 +185,6 @@
       '</div>' +
     '</div>';
   }
-  // WHAT: deploy hero slots: only splash arts and equipped items next to each hero, no container box
   function deployPartyHTML() {
     if (!U.run || !U.run.heroes) return '';
     const dsel = ui.dsel;
@@ -224,7 +213,6 @@
     }).join('');
     return '<div class="pgrid">' + heroes + '</div>';
   }
-  // WHAT: the party row (hero portraits with levels and items) shown on the map screen.
   function partyHTML() {
     const heroes = U.run.heroes.map(h => {
       const next = h.lvl < CFG.maxLevel ? CFG.xpLevels[h.lvl + 1] : null, prev = CFG.xpLevels[h.lvl] || 0;
@@ -257,7 +245,6 @@
   // specialization path into a clear branching progression with the current choice highlighted and future nodes
   // subdued"): each power gets up to two playstyle tags read from what it does, and the path is a tree (two branches a
   // level; the ones you took in gold, today's pair glowing, later ones dim) with a fork from the branch you took
-  // WHAT: LEVEL UP. specTags gives each power option small tags (Heal, Summon, ...) read from its description; levelHTML shows the two powers to choose from (js/run.js chooseSpec applies the pick).
   const STYLE = [['Summon', 'ghost', /skeleton|turret|clone|summon|decoy|\bbees?\b|spawn|minion/i], ['Heal', 'heart', /heal|lifesteal|regenerat|revive|rises/i],
     ['Control', 'lock', /stun|root|slow|freez|taunt|blind|pull|push|knock|silence|hypno|charm|fear|longer/i], ['Tank', 'shield', /defense|max health|shield|invulnerab|untargetable|less damage|damage taken/i],
     ['Area', 'swords', /radius|every enemy|all enemies|adjacent|within \d+ hex|group|bounce|chain|splash|nearby|around|more enemies|more targets|\d+ targets/i],
@@ -265,7 +252,6 @@
   // the level-up powers' balance factor
   // (B.TUNE.spec, v88) still applies, silently, like a hero's power factor; the cards show only the power itself
   const specTags = sp => { const t = STYLE.filter(x => x[2].test(sp.desc)).slice(0, 2); return (t.length ? t : [['Upgrade', 'star']]).map(([n, ic]) => `<span class="ptag pt-${n.toLowerCase()}">${I(ic)}${n}</span>`).join(''); };
-  // WHAT: the level-up screen: pick one of two powers for the hero that levelled.
   function levelHTML() {
     const p = U.run.pending[0], h = U.run.heroes.find(x => x.uid === p.uid), d = HEROES[h.key];
     const pair = d.specs[p.lvl - 2];
@@ -343,7 +329,6 @@
   }
 
   // the enemy roster on the deploy screen, grouped, with what each one does (positioning is the decision here)
-  // WHAT: the enemy roster shown while deploying (bosses and elites get a card, plain monsters small chips).
   function foesHTML(gau, f) {
     const groups = [];
     if (gau) for (const h of U.run.g.opp.team) groups.push({ key: h.key, n: 1, name: HEROES[h.key].name + ' Lv ' + h.lvl, what: HEROES[h.key].tag || HEROES[h.key].abName, peek: true });   // a few words, More for the rest
@@ -398,7 +383,6 @@
   // point... Implement some nice visualizations why positioning is important, maybe explaining exploiting terrain, chokepoints, rangers are more fragile, etc.
   // Tips that appear in the first few runs but only once each"): the COACH. On the deploy screen of a player's first runs, one tip at a time, each once
   // (balance.coach = the ids seen): a short line over the board, and the hexes it talks about glow on the board (Render: o.coach) with arrows where enemies come.
-  // WHAT: the positioning tips: when it may show, which hexes glow, the colour and icon on them, the line.
   const hasFrontliner = () => U.run && U.run.heroes && U.run.heroes.some(h => { const d = HEROES[h.key]; return d && (d.role === 'Tank' || d.role === 'Fighter'); });
   const hasBackliner = () => U.run && U.run.heroes && U.run.heroes.some(h => { const d = HEROES[h.key]; return d && (d.range > 1 || d.role === 'Healer'); });
   const enemiesHaveDive = () => {
@@ -426,10 +410,8 @@
     { id: 'c_spread', when: () => enemiesHaveAoE(), hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#ffd23f', icon: '💥', text: 'Area attacks punish grouping! Spread out formations to minimize splash damage.' },
   ];
   const coachRow = r => B.Hex.all().filter(h => h.r === r && !Run.blockedAt(U.run, h.c, h.r));
-  // WHAT: the free hexes on your side or in the middle with two or more blocked neighbours (gaps an enemy has to squeeze through).
   function coachChokes() { const bl = (c, r) => Run.blockedAt(U.run, c, r); return B.Hex.all().filter(h => h.r >= 2 && h.r <= 5 && !bl(h.c, h.r) && B.Hex.neighbors(h.c, h.r).filter(n => bl(n.c, n.r)).length >= 2); }
   const coachSeen = () => { const s = store.get('balance.coach', []); return Array.isArray(s) ? s : []; };
-  // WHAT: the coach tip to show on this deploy screen (null = none): the first runs only, never during the intro or the first fight of the first run (the tutorial bubbles talk there).
   function coachTip() {
     if (!U.run || U.run.phase !== 'deploy' || U.introStage() || (+store.get('balance.starts', 0) || 0) > 6 || Run.benched(U.run).length) return null;
     if ((+store.get('balance.starts', 0) || 0) <= 1 && U.run.step < 1) return null;
@@ -438,7 +420,6 @@
     const seen = coachSeen(), t = COACH.find(x => !seen.includes(x.id) && (!x.when || x.when()));
     ui.coachId = t ? t.id : null; return t || null;
   }
-  // WHAT: what the board draws for the coach tip (glowing hexes, icon, arrows).
   function coachDraw() { const t = coachTip(); return t ? { coach: { hexes: t.hexes(), color: t.color, icon: t.icon, arrows: !!t.arrows } } : {}; }
   function coachDone() { const t = ui.coachId; if (!t) return; const s = coachSeen(); if (!s.includes(t)) store.set('balance.coach', s.concat(t)); ui.coachId = null; }
   function tutMoved() { if (!store.get('balance.tut.moved', false)) store.set('balance.tut.moved', true); const e = document.querySelector('.tutmove'); if (e) e.remove(); }
@@ -459,7 +440,6 @@
   // a screen with several tips shows them one after the other (the next one comes a moment after the last was tapped away). It runs through a player's
   // first run and ends with that run's end screens; TUT_V is its version: raise it when the tips change and everyone sees the new tutorial once.
   // Menu -> Tutorial turns it on again (from the start) or off.
-  // WHAT: the tutorial tips, in the order they come: id, scr ('title' or the run), when it shows, what it points at (a selector), the text.
   // two tips for the bench of ; TUT_V 4 shows players only these new ones.
   const TUT_V = 4;
   const GUIDE = [
@@ -493,7 +473,6 @@
   const guideEnd = () => store.set('balance.guide.v', TUT_V);
   // the explain bubble of anything with data-tip (the rewards in the chest, the level road, the next reward). A mouse shows it while
   // hovering; a tap (or keyboard focus) shows it until the next tap. Fixed over the page like the guide, so nothing moves.
-  // WHAT: shows / hides the data-tip bubble.
   const htip = { el: null, on: null };
   function tipShow(t) {
     tipHide(); const text = t.getAttribute('data-tip'); if (!text) return;
@@ -520,7 +499,6 @@
   document.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); else tipHide(); }, true);
   document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); });
   addEventListener('scroll', () => { if (htip.el && performance.now() - htip.at > 300) tipHide(); }, true); addEventListener('resize', tipHide);
-  // WHAT: after each render, shows the first guide tip that fits this screen and was never seen (or removes the one of a screen that is gone).
   function guide() {
     clearTimeout(guide.t); const old = document.querySelector('.gtip'); if (old) old.remove(); guideDisarm(); if (htip.on && !htip.on.isConnected) tipHide();
     if (!guideOn() || ui.modal || (U.screen !== 'run' && U.screen !== 'title') || (U.screen === 'run' && !U.run)) return;
@@ -552,6 +530,5 @@
   // middle of the run waits on the BENCH (Run.benched) until the player puts it on the board. The bench sits beside the board (above it on phones) with a NEW badge
   // and a bouncing arrow; the banner over the board names who is missing; the free hexes of your half glow; the Fight button is locked (a tap says why and shakes the
   // bench). Drag a hero from the bench onto a hex, or tap it and then tap a hex. Once placed it keeps its hex for the rest of the run.
-  // WHAT: the bench of heroes still to place ('' when there is none).
   Object.assign(U, { upgradeHTML, levelHTML, mapHTML, layoutMap, guide, guideOn, trackHTML, tutMoved, modText, tutSpeedOn, tutMoveOn, coachTip, foesHTML, deployLeftHTML, deployPartyHTML, coachDraw, tutSpeedArm, tutSpeedDisarm, guideEnd, coachDone });
 })();
