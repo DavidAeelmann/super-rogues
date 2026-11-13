@@ -102,34 +102,77 @@
   }
   function updateStrip(W) {
     const el = $('#tstrip'); if (!el) return;
-    if (!el.firstChild) el.innerHTML = stripHTML(W);
-    const dmg = dmgBy(W), top = Math.max(1, ...Object.values(dmg));
-    let topHeal = 1;
+    if (!el.firstChild) { el.innerHTML = stripHTML(W); el._cards = null; }
+    if (!el._cards) {
+      el._cards = Array.from(el.querySelectorAll('.ts'), d => ({
+        el: d, id: d.dataset.id,
+        hps: d.querySelector('.hp s'), hpem: d.querySelector('.hp em'),
+        mps: d.querySelector('.mp s'), dms: d.querySelector('.dm s'),
+        dmb: d.querySelector('.dm .dmb'), tsd: d.querySelector('.tsd'),
+        tsh: d.querySelector('.tsh'), tsst: d.querySelector('.tsst'),
+        dead: null, ready: null, mvp: null, hpw: '', hpt: '', mpw: '', dmw: '', dmbw: '', tsdt: '', tsht: '', st: ''
+      }));
+    }
+    const dmg = dmgBy(W), vals = Object.values(dmg);
+    let top = 1, topHeal = 1;
+    for (let i = 0; i < vals.length; i++) if (vals[i] > top) top = vals[i];
     for (const u of W.units) if (u.side === 0 && (u.healDone || 0) > topHeal) topHeal = u.healDone;
-    for (const d of el.querySelectorAll('.ts')) {
-      const u = W.byId[d.dataset.id]; if (!u) continue;
-      const ready = !u.dead && u.maxMana > 0 && u.mana >= u.maxMana, dd = dmg[u.id] || 0, hh = u.healDone || 0, sh = u.shield > 0 && u.shieldU > W.t ? Math.round(u.shield) : 0;
-      d.classList.toggle('dead', !!u.dead); d.classList.toggle('ready', ready); d.classList.toggle('mvp', dd > 0 && dd >= top);
-      d.querySelector('.hp s').style.width = Math.max(0, 100 * u.hp / u.maxHp) + '%';
-      d.querySelector('.hp em').textContent = u.dead ? 'fallen' : Math.max(0, Math.round(u.hp)) + ' / ' + u.maxHp + (sh ? '  +' + sh + ' shield' : '');
-      d.querySelector('.mp s').style.width = (u.maxMana ? Math.min(100, 100 * u.mana / u.maxMana) : 0) + '%';
-      d.querySelector('.dm s').style.width = 100 * dd / top + '%';
-      const dmb = d.querySelector('.dm .dmb');
-      if (dmb) dmb.style.width = (hh > 0 ? (100 * hh / topHeal) : 0) + '%';
-      d.querySelector('.tsd').textContent = '⚔ ' + kfmt(dd);
-      const tsh = d.querySelector('.tsh');
-      if (tsh) tsh.textContent = hh >= 20 ? ('💚 ' + kfmt(hh)) : '';
-      const st = ccHTML(W, u), sd = d.querySelector('.tsst'); if (sd.innerHTML !== st) sd.innerHTML = st;
+    for (const c of el._cards) {
+      const u = W.byId[c.id]; if (!u) continue;
+      const dead = !!u.dead, ready = !dead && u.maxMana > 0 && u.mana >= u.maxMana, dd = dmg[u.id] || 0, hh = u.healDone || 0, mvp = dd > 0 && dd >= top;
+      const sh = u.shield > 0 && u.shieldU > W.t ? Math.round(u.shield) : 0;
+      if (c.dead !== dead) { c.dead = dead; c.el.classList.toggle('dead', dead); }
+      if (c.ready !== ready) { c.ready = ready; c.el.classList.toggle('ready', ready); }
+      if (c.mvp !== mvp) { c.mvp = mvp; c.el.classList.toggle('mvp', mvp); }
+      const hpw = Math.max(0, 100 * u.hp / u.maxHp) + '%';
+      if (c.hpw !== hpw) { c.hpw = hpw; c.hps.style.width = hpw; }
+      const hpt = dead ? 'fallen' : Math.max(0, Math.round(u.hp)) + ' / ' + u.maxHp + (sh ? '  +' + sh + ' shield' : '');
+      if (c.hpt !== hpt) { c.hpt = hpt; c.hpem.textContent = hpt; }
+      const mpw = (u.maxMana ? Math.min(100, 100 * u.mana / u.maxMana) : 0) + '%';
+      if (c.mpw !== mpw) { c.mpw = mpw; c.mps.style.width = mpw; }
+      const dmw = 100 * dd / top + '%';
+      if (c.dmw !== dmw) { c.dmw = dmw; c.dms.style.width = dmw; }
+      if (c.dmb) {
+        const dmbw = (hh > 0 ? (100 * hh / topHeal) : 0) + '%';
+        if (c.dmbw !== dmbw) { c.dmbw = dmbw; c.dmb.style.width = dmbw; }
+      }
+      const tsdt = '⚔ ' + kfmt(dd);
+      if (c.tsdt !== tsdt) { c.tsdt = tsdt; c.tsd.textContent = tsdt; }
+      if (c.tsh) {
+        const tsht = hh >= 20 ? ('💚 ' + kfmt(hh)) : '';
+        if (c.tsht !== tsht) { c.tsht = tsht; c.tsh.textContent = tsht; }
+      }
+      const st = ccHTML(W, u);
+      if (c.st !== st) { c.st = st; c.tsst.innerHTML = st; }
     }
     const es = $('#estrip'); if (!es) return;
-    const foes = W.units.filter(u => u.side === 1 && u.kind !== 'summon'), summons = W.units.filter(u => u.side === 1 && u.kind === 'summon' && !u.dead).length;
-    for (const u of foes) if (!es.querySelector(`[data-id="${u.id}"]`)) {
-      const c = document.createElement('span'); c.className = 'ec' + (u.boss ? ' boss' : '') + (u.elite ? ' elite' : ''); c.dataset.id = u.id;
-      c.innerHTML = `${img(u.key, u.boss ? 34 : 26, 'por')}<i><s></s></i>`; c.title = u.name; es.appendChild(c);
+    if (!es._byId) es._byId = new Map();
+    let totalFoes = 0, left = 0, summons = 0;
+    for (const u of W.units) {
+      if (u.side !== 1) continue;
+      if (u.kind === 'summon') { if (!u.dead) summons++; continue; }
+      totalFoes++;
+      if (!u.dead) left++;
+      let rec = es._byId.get(u.id);
+      if (!rec) {
+        const c = document.createElement('span');
+        c.className = 'ec' + (u.boss ? ' boss' : '') + (u.elite ? ' elite' : '');
+        c.dataset.id = u.id;
+        c.innerHTML = `${img(u.key, u.boss ? 34 : 26, 'por')}<i><s></s></i>`;
+        c.title = u.name;
+        es.appendChild(c);
+        rec = { el: c, bar: c.querySelector('s'), dead: null, w: '' };
+        es._byId.set(u.id, rec);
+      }
+      const dead = !!u.dead, w = Math.max(0, 100 * u.hp / u.maxHp) + '%';
+      if (rec.dead !== dead) { rec.dead = dead; rec.el.classList.toggle('dead', dead); }
+      if (rec.w !== w) { rec.w = w; rec.bar.style.width = w; }
     }
-    for (const c of es.querySelectorAll('.ec')) { const u = W.byId[c.dataset.id]; if (!u) continue; c.classList.toggle('dead', !!u.dead); c.querySelector('s').style.width = Math.max(0, 100 * u.hp / u.maxHp) + '%'; }
-    const left = foes.filter(u => !u.dead).length, ec = $('#ecount');
-    if (ec) ec.textContent = `${left} of ${foes.length} left${summons ? ' · +' + summons + ' summoned' : ''}`;
+    const ec = $('#ecount');
+    if (ec) {
+      const ect = `${left} of ${totalFoes} left${summons ? ' · +' + summons + ' summoned' : ''}`;
+      if (ec._txt !== ect) { ec._txt = ect; ec.textContent = ect; }
+    }
   }
 
   function eloLine(r) {

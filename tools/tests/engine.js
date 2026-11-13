@@ -1057,8 +1057,8 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
     ok(res.tower && res.win && res.floor === 2 && r.phase === 'tower' && r.tower.wins === 2 && r.tower.status === 'climb' && r.lives === lv && !r.pending.length && r.result === 'clear', 'v90: a floor won keeps the climb going (no XP, no lives, the run stays complete)');
     Run.startDuel(r, Run.randomGhost(r, 8, true), 'tower', 9); W = Run.gauntletWorld(r); W.over = true; W.winner = 1; res = Run.finishDuel(r, W);
     ok(!res.win && r.tower.status === 'over' && r.lives === lv && r.phase === 'tower', 'v90: a floor lost ends the climb and costs nothing'); }
-  // v88 (review #167): no ability is defined twice in sim.js (v83's boss Howl and Blizzard had silently replaced Fang's and Frostbane's own abilities)
-  { const src = require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'js', 'sim.js'), 'utf8'), names = [...src.matchAll(/^\s*A\.(\w+) = /mg)].map(m => m[1]);
+  // v88 (review #167): no ability is defined twice in sim.js / sim-abils.js (v83's boss Howl and Blizzard had silently replaced Fang's and Frostbane's own abilities)
+  { const p = require('path'), fs = require('fs'), src = fs.readFileSync(p.join(__dirname, '..', '..', 'js', 'sim.js'), 'utf8') + '\n' + fs.readFileSync(p.join(__dirname, '..', '..', 'js', 'sim-abils.js'), 'utf8'), names = [...src.matchAll(/^\s*A\.(\w+) = /mg)].map(m => m[1]);
     const dup = names.filter((n, i) => names.indexOf(n) !== i); ok(names.length > 40 && !dup.length, 'v88: every ability name in sim.js is defined once' + (dup.length ? ' (twice: ' + dup.join(', ') + ')' : '')); }
   // v88 (review #167): the level-up powers' balance factor (B.TUNE.spec) and the PvP-only hero factor (B.TUNE.pvp)
   { const sv = B.TUNE.spec, pv = B.TUNE.pvp; B.TUNE.spec = {}; B.TUNE.pvp = {};

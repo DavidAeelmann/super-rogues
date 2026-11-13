@@ -23,8 +23,9 @@ data*.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 | `js/data.js` | Core combat tables, heroes, items, relics, mobs, bosses, events, balance knobs (auto-requires paths/meta in Node) | `B.CFG`, `B.HEROES`, `B.ITEMS`, `B.RELICS`, `B.EVENTS`, `B.DIFF`, `B.TUNE` |
 | `js/data-paths.js` | Boss upgrade paths (`3` per hero) | `B.HERO_PATHS` |
 | `js/data-meta.js` | Leagues, seasons, Crown Shop, achievements, unlocks, terrain maps, hero traits & slug aliases | `B.LEAGUES`, `B.SHOP_ITEM`, `B.ACHIEVEMENTS`, `B.UNLOCKS`, `B.MAPS`, `B.HERO_TRAITS` |
-| `js/hex.js` | 8x8 pointy-top odd-r hex math | `B.Hex` |
-| `js/sim.js` | Deterministic 20 Hz combat engine & abilities | `B.Sim`, `A.<ability>` |
+| `js/hex.js` | 8x8 pointy-top odd-r hex math (`Hx.all()` cached) | `B.Hex` |
+| `js/sim.js` | Deterministic 20 Hz combat engine, buffs, AI targeting & step loop (auto-requires `sim-abils.js` in Node) | `B.Sim`, `B.Sim._k` |
+| `js/sim-abils.js` | Hero, boss, and mob active/passive ability implementations | `A.<ability>` |
 | `js/run.js` | Run state machine (shops, events, XP, auto-equip, placement) | `B.Run`, `autoPlace`, `eventAct`, `autoEquip` |
 | `js/ui-core.js` | Shared UI state (`B._ui`), account/XP/league helpers, formatters, `header`, `render`, modals/toast | `U.run`, `U.screen`, `U.battle`, `SCALE`, `fmt`, `header`, `render` |
 | `js/ui-home.js` | Title screen, trailer, codex, start/recruit hero picks, journey | `titleHTML`, `codexHTML`, `startHTML`, `recruitHTML`, `pathHTML` |
@@ -33,7 +34,8 @@ data*.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 | `js/ui-shop.js` | Shops, events, game over, LP and XP progression screens | `shopHTML`, `eventHTML`, `overHTML`, `lpScreenHTML`, `xpScreenHTML` |
 | `js/ui-modals.js` | Gear/bag drag-drop, hero peek, ladder, Crown Shop, profiles, `HOWTO` | `gearHTML`, `openScores`, `openShop`, `openProfile`, `HOWTO` |
 | `js/ui.js` | Button dispatch table (`ACT`), global input/resize listeners, boot, `__bal` test hook | `ACT`, `ACT_SFX`, `onResize`, `window.__bal` |
-| `js/render.js` | 2.5D board canvas, unit interpolation, boss backdrops, coach hex highlights | `B.Render`, `bossBackdrop`, `drawCoach` |
+| `js/render.js` | 2.5D board canvas, unit interpolation, SpriteManager | `B.Render`, `B.SpriteManager`, `B.Render._ctx` |
+| `js/render-fx.js` | Boss arena backdrops, particles/projectiles/marks VFX, coach hex highlights, end banner | `bossBackdrop`, `drawFx`, `drawBanner`, `drawCoach` |
 | `js/models.js` | Procedural unit silhouettes & poses | `M` |
 | `js/abilfx.js` | Per-ability canvas VFX | `B.AbilFx.SPEC` |
 | `js/art.js`, `js/splash.js` | Official hero art (`art/<name>/`) & cropped/painted splash cards | `OFFICIAL`, `B.Art`, `B.Splash` |
@@ -47,8 +49,8 @@ data*.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 
 ## 2. Quick Recipes
 
-- **Tune PvE difficulty:** Edit `B.CFG.fightScale` / `B.DIFF` in `js/data.js`, check `node tools/pve-odds.js` (targets: easy ~99%, medium ~90%, hard ~60%, bosses ~55%) or run `node tools/tune-pve.js`.
-- **Add a hero:** Copy an entry in `B.HEROES` (`js/data.js`), add its 3 paths in `js/data-paths.js`, add `TAGS` (`js/data.js`) and `B.HERO_TRAITS` (`js/data-meta.js`), add visual in `js/models.js` (`M`), add ability `A.<name>` in `js/sim.js` and `SCALE.<name>` in `js/ui-core.js`, update hero count in `tools/tests/engine.js`.
+- **Tune PvE difficulty:** Edit `B.CFG.fightScale` / `B.DIFF` in `js/data.js`, check `node tools/pve/sim.js` or `node tools/pve/tune.js`.
+- **Add a hero:** Copy an entry in `B.HEROES` (`js/data.js`), add its 3 paths in `js/data-paths.js`, add `TAGS` (`js/data.js`) and `B.HERO_TRAITS` (`js/data-meta.js`), add visual in `js/models.js` (`M`), add ability `A.<name>` in `js/sim-abils.js` and `SCALE.<name>` in `js/ui-core.js`, update hero count in `tools/tests/engine.js`.
 - **Add an item / Power (relic):** Add `N(...)` in `B.ITEMS` or `R(...)` in `js/data.js` + icon in `js/icons.js` (`IT` / `RE`).
 - **Add an event:** Add entry to `B.EVENTS` (`js/data.js`) and any new `act` handler in `eventAct` (`js/run.js`).
 - **Change a button or screen text:** Find `data-act="name"` in `js/ui-*.js` and handler in `ACT` (`js/ui.js`). Note: "relic" in code is "Power" on screen.
@@ -57,7 +59,7 @@ data*.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 
 - `npm run dev` — Local server on `http://localhost:3790` with in-memory DB.
 - `node tools/tests/run-all.js` — Full suite (`engine.js`, `api.js`, `boss-matrix.js`, `sim-run.js`, Chrome `screens.mjs`, `devices.mjs`, `interface.mjs`). Use `--quick` to skip Chrome tests.
-- Balance scripts: `tools/pve-odds.js`, `tools/tune-pve.js`, `tools/hero-odds.js`, `tools/item-odds.js`, `tools/relic-odds.js`, `tools/challenge-odds.js`, `tools/balance/run.js`, `tools/balance/pvp-tune.js`.
+- Balance & PvE scripts: `tools/balance/run.js`, `tools/balance/pvp-tune.js`, `tools/pve/sim.js`, `tools/pve/tune.js`, `tools/boss-matrix.js`, `tools/sim-run.js`.
 
 ## 4. Invariants (Never Break)
 

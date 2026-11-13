@@ -20,8 +20,10 @@
     return out;
   }
   function key(c, r) { return c + r * COLS; }
-  function all() { const o = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) o.push({ c, r }); return o; }
-  function within(c, r, rad) { return all().filter(h => dist(h, { c, r }) <= rad); }
+  const ALL_HEXES = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) ALL_HEXES.push({ c, r });
+  function all() { return ALL_HEXES; }
+  function within(c, r, rad) { return ALL_HEXES.filter(h => dist(h, { c, r }) <= rad); }
   // pixel centre of a hex for a given hex "size" (centre to corner)
   function px(c, r, size) { const w = Math.sqrt(3) * size; return { x: w * (c + 0.5 * (r & 1)) + w / 2, y: size * 1.5 * r + size }; }
   function boardSize(size) { const w = Math.sqrt(3) * size; return { w: w * (COLS + 0.5), h: size * 1.5 * (ROWS - 1) + size * 2 }; }

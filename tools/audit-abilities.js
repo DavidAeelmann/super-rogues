@@ -1,7 +1,7 @@
 // Ability audit (review #49): for every hero, each ab value is read by its ability code (or a helper) and shows in its text; every spec's ab keys, mods and flags are read somewhere. Usage: node tools/audit-abilities.js
 const root = require('path').join(__dirname, '..');
 for (const f of ['hex', 'data', 'sim', 'run']) require(root + '/js/' + f + '.js');
-const fs = require('fs'), sim = fs.readFileSync(root + '/js/sim.js', 'utf8'), run = fs.readFileSync(root + '/js/run.js', 'utf8');
+const fs = require('fs'), sim = fs.readFileSync(root + '/js/sim.js', 'utf8') + '\n' + fs.readFileSync(root + '/js/sim-abils.js', 'utf8'), run = fs.readFileSync(root + '/js/run.js', 'utf8');
 const A = B.Sim.abilities;
 const src = k => (A[k] ? A[k].toString() : '');
 const nums = t => (String(t).match(/\d+(\.\d+)?/g) || []).map(Number);
