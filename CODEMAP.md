@@ -34,7 +34,7 @@ data.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 | `js/render.js` | 2.5D board canvas, unit interpolation, boss backdrops, coach hex highlights | `B.Render`, `bossBackdrop`, `drawCoach` |
 | `js/models.js` | Procedural unit silhouettes & poses | `M` |
 | `js/abilfx.js` | Per-ability canvas VFX | `B.AbilFx.SPEC` |
-| `js/art.js`, `js/artlab.js`, `js/splash.js` | Official webp hero art (`art/<name>/`), Art Lab, splash cards | `OFFICIAL`, `B.Art`, `B.ArtLab`, `B.Splash` |
+| `js/art.js`, `js/artlab.js`, `js/splash.js` | Official webp hero art (`art/<name>/`), Art Lab (lazy-loaded), splash cards | `OFFICIAL`, `B.Art`, `B.ArtLab`, `B.Splash` |
 | `js/icons.js`, `js/uiicons.js` | Procedural item/relic icons & SVG UI icons | `IT`, `RE`, `B.Icons`, `B.UI.i` |
 | `js/juice.js`, `js/sfx.js`, `js/uiAudio.js` | Confetti/floaters & Web Audio synthesized SFX | `B.Juice`, `B.Sfx`, `B.UIAudio` |
 | `js/net.js` | Server JSON client | `B.Net` |

@@ -45,6 +45,43 @@
     }
     return gritCanvas ? ctx.createPattern(gritCanvas, 'repeat') : null;
   }
+  let _shadowDisc = null, _sideDiscs = null;
+  function shadowDisc() {
+    if (_shadowDisc) return _shadowDisc;
+    if (typeof document === 'undefined') return null;
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.7, 'rgba(0,0,0,0.44)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return (_shadowDisc = c);
+  }
+  function sideDisc(hero) {
+    if (!_sideDiscs && typeof document !== 'undefined') {
+      _sideDiscs = ['74,163,255', '255,92,110'].map(rgb => {
+        const c = document.createElement('canvas'); c.width = c.height = 64;
+        const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gr.addColorStop(0, `rgba(${rgb},0.55)`); gr.addColorStop(0.65, `rgba(${rgb},0.28)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+        g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+        return c;
+      });
+    }
+    return _sideDiscs ? _sideDiscs[hero ? 0 : 1] : null;
+  }
+  function barGrads(v, bh) {
+    if (v._barG && v._barG.bh === bh) return v._barG;
+    const { ctx } = v, my = bh + 2.5;
+    const h0 = ctx.createLinearGradient(0, 0, 0, bh);
+    h0.addColorStop(0, '#a3ffba'); h0.addColorStop(0.4, '#5de37e'); h0.addColorStop(1, '#2da84a');
+    const h1 = ctx.createLinearGradient(0, 0, 0, bh);
+    h1.addColorStop(0, '#ffa4b0'); h1.addColorStop(0.4, '#f04a5c'); h1.addColorStop(1, '#bd2435');
+    const top = ctx.createLinearGradient(0, 0, 0, bh * 0.5);
+    top.addColorStop(0, 'rgba(255, 255, 255, 0.45)'); top.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    const mana = ctx.createLinearGradient(0, my, 0, my + 2.8);
+    mana.addColorStop(0, '#85c2ff'); mana.addColorStop(1, '#3b86f7');
+    const manaFull = ctx.createLinearGradient(0, my, 0, my + 2.8);
+    manaFull.addColorStop(0, 'rgb(220, 250, 255)'); manaFull.addColorStop(1, 'rgb(60, 220, 255)');
+    return (v._barG = { bh, h0, h1, top, mana, manaFull });
+  }
   // WHAT: from flat board pixels to screen pixels (tilt applied). hexScreen(v, c, r) = the screen position of a hex centre.
   const proj = (v, p) => ({ x: (v.padX || 0) + p.x, y: v.top + p.y * K });
   const hexScreen = (v, c, r) => proj(v, Hx.px(c, r, v.size));
@@ -403,14 +440,24 @@
   // WHAT: the glowing hex edges of a boss stage, drawn over the board every frame.
   function bossTiles(v, key, now) {
     const th = BOSS_EDGE[key] || ['#ff5c6e', 'magma'], { ctx, size } = v;
-    if (!v.bossEdges || v.bossEdges.key !== key) { const e = []; let sd = 7; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
-      for (let r = 0; r < Hx.ROWS; r++) for (let c = 0; c < Hx.COLS; c++) for (let i = 0; i < 3; i++) if (rnd() < 0.2) e.push({ c, r, i, ph: rnd() * 6.28, sp: 0.6 + rnd() * 1.2 }); v.bossEdges = { key, e }; }
-    ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = th[0];
+    if (!v.bossEdges || v.bossEdges.key !== key || v.bossEdges.sz !== size || v.bossEdges.px !== v.padX || v.bossEdges.top !== v.top) {
+      const e = []; let sd = 7; const rnd = () => ((sd = (sd * 1103515245 + 12345) >>> 0) % 1000) / 1000;
+      for (let r = 0; r < Hx.ROWS; r++) for (let c = 0; c < Hx.COLS; c++) for (let i = 0; i < 3; i++) if (rnd() < 0.2) {
+        const pts = corners(v, c, r, size * 0.96), a = pts[i], b = pts[i + 1], ph = rnd() * 6.28;
+        const mx = (a.x + b.x) / 2 + Math.sin(ph) * size * 0.05, my = (a.y + b.y) / 2 + Math.cos(ph) * size * 0.03;
+        e.push({ ax: a.x, ay: a.y, mx, my, bx: b.x, by: b.y, ph, sp: 0.6 + rnd() * 1.2 });
+      }
+      v.bossEdges = { key, sz: size, px: v.padX, top: v.top, e };
+    }
+    const coreW = Math.max(1.5, size * 0.06), glowW = coreW * 2.8, magma = th[1] === 'magma', storm = th[1] === 'storm';
+    ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = th[0];
     for (const x of v.bossEdges.e) {
-      const pts = corners(v, x.c, x.r, size * 0.96), a = pts[x.i], b = pts[x.i + 1]; let al = 0.35 + 0.35 * Math.sin(now * x.sp * 2 + x.ph);
-      if (th[1] === 'storm') al = Math.sin(now * 9 + x.ph * 7) > 0.97 ? 1 : al * 0.5;
-      ctx.globalAlpha = Math.max(0, al); ctx.strokeStyle = th[0]; ctx.shadowBlur = size * 0.35; ctx.lineWidth = Math.max(1.5, size * 0.06);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); if (th[1] === 'magma') { const mx = (a.x + b.x) / 2 + Math.sin(x.ph) * size * 0.05, my = (a.y + b.y) / 2 + Math.cos(x.ph) * size * 0.03; ctx.lineTo(mx, my); } ctx.lineTo(b.x, b.y); ctx.stroke();
+      let al = 0.35 + 0.35 * Math.sin(now * x.sp * 2 + x.ph);
+      if (storm) al = Math.sin(now * 9 + x.ph * 7) > 0.97 ? 1 : al * 0.5;
+      al = Math.max(0, al);
+      ctx.beginPath(); ctx.moveTo(x.ax, x.ay); if (magma) ctx.lineTo(x.mx, x.my); ctx.lineTo(x.bx, x.by);
+      ctx.globalAlpha = al * 0.28; ctx.lineWidth = glowW; ctx.stroke();
+      ctx.globalAlpha = al; ctx.lineWidth = coreW; ctx.stroke();
     }
     ctx.restore();
   }
@@ -839,8 +886,6 @@
 
     // Dynamic Contact Shadow anchored to hex tile under unit's base
     if (!u.dead) {
-      ctx.save();
-      ctx.translate(p.x, p.y + size * 0.14);
       let shW = size * 1.5 * 0.75;
       let shH = shW * 0.24;
       let shAlpha = spriteImg ? 0.45 : 0.65;
@@ -851,23 +896,20 @@
         shH *= (1 - lev * 0.2);
         shAlpha *= (1 - lev * 0.35);
       }
-      const shG = ctx.createRadialGradient(0, 0, 0, 0, 0, shW * 0.5);
-      shG.addColorStop(0, `rgba(0, 0, 0, ${shAlpha.toFixed(3)})`);
-      shG.addColorStop(0.7, `rgba(0, 0, 0, ${(shAlpha * 0.44).toFixed(3)})`);
-      shG.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = shG;
-      ctx.beginPath();
-      ctx.scale(1, shH / Math.max(1, shW));
-      ctx.arc(0, 0, shW * 0.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      const sdImg = shadowDisc();
+      if (sdImg) {
+        const prevA = ctx.globalAlpha;
+        ctx.globalAlpha = prevA * shAlpha;
+        ctx.drawImage(sdImg, p.x - shW * 0.5, p.y + size * 0.14 - shH * 0.5, shW, shH);
+        ctx.globalAlpha = prevA;
+      }
     }
     // a filled disc in the side's colour under every unit
     const sideC = hero ? '74,163,255' : '255,92,110';
     // a soft glow in the side's colour instead of a hard ring (a thin rim stays for the selected hero and elites)
     if (!u.dead) {
-      const rx = S * 0.55, g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rx); g.addColorStop(0, `rgba(${sideC},0.55)`); g.addColorStop(0.65, `rgba(${sideC},0.28)`); g.addColorStop(1, `rgba(${sideC},0)`);
-      ctx.save(); ctx.translate(p.x, p.y); ctx.scale(1, K * 0.55); ctx.translate(-p.x, -p.y); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      const rx = S * 0.55, ry = rx * K * 0.55, sdImg = sideDisc(hero);
+      if (sdImg) ctx.drawImage(sdImg, p.x - rx, p.y - ry, rx * 2, ry * 2);
     }
     const isSel = !!(o.sel && o.sel === u.uid && hero), isInfo = !!(o.infoId && o.infoId === u.id && !u.dead);
     const rim = isSel ? '#ffd23f' : isInfo ? (hero ? '#ffd23f' : '#ff5c6e') : u.elite ? '#ffcf5a' : `rgba(${sideC},0.75)`;
@@ -908,70 +950,66 @@
     const headTop = p.y - S * (u.boss ? 1.75 : 1.5), bw = Math.max(S * 0.95, size * 1.1), bx = p.x - bw / 2, by = headTop - 11;
     const bh = 8;
     const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, Math.max(0, w), h, r); else ctx.rect(x, y, Math.max(0, w), h); };
+    const bg = barGrads(v, bh);
+    ctx.save();
+    ctx.translate(bx, by);
     // Beveled Unit Health Bars: height 8px, border 1px solid #111, outer gold/dark rim with glossy top half-highlight
-    ctx.fillStyle = '#050711ee'; rr(bx - 2, by - 2, bw + 4, bh + 4, 4); ctx.fill();
-    ctx.strokeStyle = '#111111'; ctx.lineWidth = 1; rr(bx - 2, by - 2, bw + 4, bh + 4, 4); ctx.stroke();
-    ctx.fillStyle = hero ? '#d4af37' : '#7a1428'; rr(bx - 1.2, by - 1.2, bw + 2.4, bh + 2.4, 3); ctx.fill();   // outer metallic gold/ruby rim
-    ctx.fillStyle = '#0a0d18'; rr(bx, by, bw, bh, 2.5); ctx.fill();
+    ctx.fillStyle = '#050711ee'; rr(-2, -2, bw + 4, bh + 4, 4); ctx.fill();
+    ctx.strokeStyle = '#111111'; ctx.lineWidth = 1; rr(-2, -2, bw + 4, bh + 4, 4); ctx.stroke();
+    ctx.fillStyle = hero ? '#d4af37' : '#7a1428'; rr(-1.2, -1.2, bw + 2.4, bh + 2.4, 3); ctx.fill();   // outer metallic gold/ruby rim
+    ctx.fillStyle = '#0a0d18'; rr(0, 0, bw, bh, 2.5); ctx.fill();
     // Ghost bar trail (white damage chip indicator catching down)
     if (d && d.trail > u.hp) {
       ctx.fillStyle = '#ffffff';
-      rr(bx, by, bw * Math.min(1, d.trail / u.maxHp), bh, 2.5);
+      rr(0, 0, bw * Math.min(1, d.trail / u.maxHp), bh, 2.5);
       ctx.fill();
     }
     // High-contrast HP gradient
-    const hg = ctx.createLinearGradient(0, by, 0, by + bh);
-    hg.addColorStop(0, hero ? '#a3ffba' : '#ffa4b0');
-    hg.addColorStop(0.4, hero ? '#5de37e' : '#f04a5c');
-    hg.addColorStop(1, hero ? '#2da84a' : '#bd2435');
     const curW = bw * Math.max(0, u.hp / u.maxHp);
-    ctx.fillStyle = hg; rr(bx, by, curW, bh, 2.5); ctx.fill();
+    ctx.fillStyle = hero ? bg.h0 : bg.h1; rr(0, 0, curW, bh, 2.5); ctx.fill();
     // Glossy top half-highlight
     if (curW > 3) {
-      const topHg = ctx.createLinearGradient(0, by, 0, by + bh * 0.5);
-      topHg.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
-      topHg.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = topHg;
-      rr(bx + 1, by + 0.6, curW - 2, bh * 0.5, 1);
+      ctx.fillStyle = bg.top;
+      rr(1, 0.6, curW - 2, bh * 0.5, 1);
       ctx.fill();
     }
     // Shield overlay
     if (u.shield > 0 && u.shieldU > s) {
       ctx.fillStyle = 'rgba(235, 243, 255, 0.9)';
-      rr(bx, by, Math.min(bw, bw * u.shield / u.maxHp), 2.5, 1);
+      rr(0, 0, Math.min(bw, bw * u.shield / u.maxHp), 2.5, 1);
       ctx.fill();
     }
     // Mana bar with 100% full-mana cyan pulse bloom
     if (u.maxMana > 0) {
       const manaFull = u.mana >= u.maxMana;
-      const my = by + bh + 2.5;
-      ctx.fillStyle = '#050711dd'; rr(bx - 1, my - 1, bw + 2, 4.5, 2); ctx.fill();
-      ctx.fillStyle = '#0e172a'; rr(bx, my, bw, 2.8, 1.5); ctx.fill();
-      const mg = ctx.createLinearGradient(0, my, 0, my + 2.8);
-      if (manaFull) {
-        const pulse = 0.75 + 0.25 * Math.sin((typeof performance !== 'undefined' ? performance.now() : 0) * 0.012);
-        mg.addColorStop(0, `rgba(220, 250, 255, ${pulse})`);
-        mg.addColorStop(1, `rgba(60, 220, 255, ${pulse})`);
-      } else {
-        mg.addColorStop(0, '#85c2ff');
-        mg.addColorStop(1, '#3b86f7');
-      }
-      ctx.fillStyle = mg;
+      const my = bh + 2.5;
+      ctx.fillStyle = '#050711dd'; rr(-1, my - 1, bw + 2, 4.5, 2); ctx.fill();
+      ctx.fillStyle = '#0e172a'; rr(0, my, bw, 2.8, 1.5); ctx.fill();
       const curM = bw * Math.min(1, u.mana / u.maxMana);
-      rr(bx, my, curM, 2.8, 1.5);
-      ctx.fill();
+      if (manaFull) {
+        ctx.globalAlpha = 0.75 + 0.25 * Math.sin((typeof performance !== 'undefined' ? performance.now() : 0) * 0.012);
+        ctx.fillStyle = bg.manaFull;
+        rr(0, my, curM, 2.8, 1.5);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = bg.mana;
+        rr(0, my, curM, 2.8, 1.5);
+        ctx.fill();
+      }
       if (curM > 3) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        rr(bx + 0.5, my + 0.4, curM - 1, 0.8, 0.4);
+        rr(0.5, my + 0.4, curM - 1, 0.8, 0.4);
         ctx.fill();
       }
       if (manaFull) {
         ctx.strokeStyle = '#c6f5ff';
         ctx.lineWidth = 1;
-        rr(bx - 0.5, my - 0.5, bw + 1, 3.8, 2);
+        rr(-0.5, my - 0.5, bw + 1, 3.8, 2);
         ctx.stroke();
       }
     }
+    ctx.restore();
     if (u.lvl > 1 && hero && u.kind === 'hero') { ctx.font = "700 10px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.fillStyle = '#ffcf5a'; ctx.textAlign = 'left'; ctx.fillText(u.lvl, bx + bw + 2, by + 5); }
     // Items above hero heads removed
     // status effects as coloured badges (glyph on a disc) above the bars, one colour per effect
@@ -1267,9 +1305,22 @@
     drawParts(ctx, S, o.deploy ? 0 : dt);
     if (!o.deploy) drawCalls(v, W, T, S, dt);
     if (v.desk) drawWorldBreath(v, now);
-    const vg = ctx.createRadialGradient(v.w / 2, v.h * 0.5, v.w * 0.35, v.w / 2, v.h * 0.5, v.w * 0.85);
     const sd = W.sd > 0 ? Math.min(0.55, 0.25 + W.sd * 0.15) * (0.75 + 0.25 * Math.sin(now * 6)) : 0;
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, sd ? `rgba(200,20,40,${sd})` : royal() ? 'rgba(0,0,0,0.45)' : v.desk ? 'rgba(8,22,12,0.38)' : 'rgba(20,40,120,0.18)'); ctx.fillStyle = vg; ctx.fillRect(-10, -10, v.w + 20, v.h + 20);
+    const vgCol = sd ? `rgba(200,20,40,${sd})` : royal() ? 'rgba(0,0,0,0.45)' : v.desk ? 'rgba(8,22,12,0.38)' : 'rgba(20,40,120,0.18)';
+    let vg;
+    if (!sd) {
+      const vgKey = v.w + ':' + v.h + ':' + vgCol;
+      if (!v._vg || v._vg.key !== vgKey) {
+        const g = ctx.createRadialGradient(v.w / 2, v.h * 0.5, v.w * 0.35, v.w / 2, v.h * 0.5, v.w * 0.85);
+        g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, vgCol);
+        v._vg = { key: vgKey, g };
+      }
+      vg = v._vg.g;
+    } else {
+      vg = ctx.createRadialGradient(v.w / 2, v.h * 0.5, v.w * 0.35, v.w / 2, v.h * 0.5, v.w * 0.85);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, vgCol);
+    }
+    ctx.fillStyle = vg; ctx.fillRect(-10, -10, v.w + 20, v.h + 20);
     if (!o.deploy) bossBar(v, W);
     if (o.end) drawEnd(v, W, o.end, S, dt);
     if (o.swapGhost) { const g = o.swapGhost, p = hexScreen(v, g.c, g.r); ctx.globalAlpha = 0.55; B.Models.draw(ctx, g.key, p.x, p.y, size * 1.3, { t: T / 20, face: 1 }); ctx.globalAlpha = 1;
@@ -1287,39 +1338,40 @@
         const cpY = Math.min(p1.y, p2.y) - 70;
 
         ctx.save();
-        // Layer 1 (Glow): stroke #00ffcc, width 8px, blur 6px, opacity 0.6
-        ctx.strokeStyle = '#00ffcc';
-        ctx.lineWidth = 8;
-        ctx.shadowColor = '#00ffcc';
-        ctx.shadowBlur = 8;
-        ctx.globalAlpha = 0.6;
+        ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y - size * 0.3);
         ctx.quadraticCurveTo(cpX, cpY, p2.x, p2.y - size * 0.3);
+        // Layer 1 (Glow): wide soft translucent strokes instead of expensive shadowBlur
+        ctx.strokeStyle = '#00ffcc';
+        ctx.lineWidth = 14;
+        ctx.globalAlpha = 0.18;
+        ctx.stroke();
+        ctx.lineWidth = 8;
+        ctx.globalAlpha = 0.45;
         ctx.stroke();
 
         // Layer 2 (Core Dashed Trail): stroke #ffffff, width 4px, dash 12 10, animated towards target
-        ctx.shadowBlur = 0;
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 4;
         ctx.globalAlpha = 0.95;
         ctx.setLineDash([12, 10]);
         ctx.lineDashOffset = -now * 44;
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y - size * 0.3);
-        ctx.quadraticCurveTo(cpX, cpY, p2.x, p2.y - size * 0.3);
         ctx.stroke();
 
         // Translucent cyan landing ring at (x2, y2) with upward floating spark particles
         ctx.setLineDash([]);
-        ctx.strokeStyle = '#00e5ff';
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = '#00ffcc';
-        ctx.shadowBlur = 10;
         ctx.fillStyle = 'rgba(0, 229, 255, 0.15)';
         ctx.beginPath();
         ctx.ellipse(p2.x, p2.y, size * 0.6, size * 0.6 * K * 0.6, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = '#00ffcc';
+        ctx.lineWidth = 7;
+        ctx.globalAlpha = 0.25;
+        ctx.stroke();
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 2.5;
+        ctx.globalAlpha = 0.95;
         ctx.stroke();
 
         // Upward floating spark particles at target

@@ -347,7 +347,7 @@
     close: () => { closeModal(); ui.fromCodex = false; ui.gsel = null; ui.heroInfo = 0; if (!U.battle) render(); },
     // Opens the suggestion box.
     suggest: () => U.openSuggest(),
-    'art-lab': arg => { if (ui.modal) closeModal(); B.ArtLab.open(labKit, arg); },
+    'art-lab': async arg => { if (ui.modal) closeModal(); try { await ensureArtLab(); } catch (e) { toast(e.message); return; } B.ArtLab.open(labKit, arg); },
     'draft-del': i => { const d = U.drafts(); d.splice(+i, 1); store.set('balance.drafts', d); U.renderDrafts(); },
     'send-review': (a, el) => U.sendReview(el),
     'sug-refresh': () => U.loadQueue(),
@@ -396,10 +396,27 @@
     skin: k => { store.set('balance.skin', k === 'royal' ? 'royal' : 'classic'); applySkin(); U.refreshShop(); toast(k === 'royal' ? 'Royal board on' : 'Classic board on'); },
     'copy-ref': () => { const i = $('#refLink'); if (!i) return; i.select(); const done = () => toast('Invite link copied'); if (navigator.clipboard) navigator.clipboard.writeText(i.value).then(done, () => { try { document.execCommand('copy'); done(); } catch (_) {} }); else { try { document.execCommand('copy'); done(); } catch (_) {} } },
   };
-  // Art Lab (owner, 2026-09-29): its buttons join the one click listener; it gets the helpers it needs
-  // WHAT: the small toolbox handed to the Art Lab (js/artlab.js).
+  // WHAT: the small toolbox handed to the Art Lab (js/artlab.js), which is loaded on demand.
   const labKit = { $, $$: s => [...document.querySelectorAll(s)], esc, toast, openModal, Net, store, trackBatch: U.trackBatch, ui };
-  Object.assign(ACT, B.ArtLab.actions); B.ArtLab.init(labKit);
+  let artLabP = null, artLabInit = false;
+  function wireArtLab() {
+    if (!B.ArtLab || artLabInit) return;
+    artLabInit = true;
+    Object.assign(ACT, B.ArtLab.actions);
+    B.ArtLab.init(labKit);
+  }
+  function ensureArtLab() {
+    if (B.ArtLab) { wireArtLab(); return Promise.resolve(B.ArtLab); }
+    if (!artLabP) artLabP = new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'js/artlab.js';
+      s.onload = () => { wireArtLab(); res(B.ArtLab); };
+      s.onerror = () => { artLabP = null; rej(new Error('Could not load Art Lab')); };
+      document.head.appendChild(s);
+    });
+    return artLabP;
+  }
+  if (B.ArtLab) wireArtLab();
   // hero pictures (this device's test art or the official art) finish loading after the first screen: redraw it
   B.Art.onChange(() => { if (U.screen === 'battle' || ui.modal || ui.drag) return; clearTimeout(ui.artH); ui.artH = setTimeout(() => { if (U.screen !== 'battle' && !ui.modal && !ui.drag) render(); }, 80); });
   B.Art.boot();
