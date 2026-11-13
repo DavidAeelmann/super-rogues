@@ -156,8 +156,6 @@
     'home-menu': () => { openModal(U.homeMenuHTML()); ui.modal = 'home'; },
     codex: () => { ui.fromCodex = false; openModal(U.codexHTML()); ui.modal = 'codex'; },
     'codex-tab': id => { ui.codexTab = id; openModal(U.codexHTML()); ui.modal = 'codex'; },
-    language: () => { openModal(U.languageHTML()); ui.modal = 'lang'; },
-    'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
     'give-up-yes': () => { if (U.run && U.run.tower) { closeModal(); U.run.tower.status = 'over'; U.run.tower.next = null; U.run.g = null; U.run.cur = null; U.run.phase = 'over'; U.run.overStep = U.run.lpShown ? 2 : 1; save(); U.screen = 'run'; render(); return; }   // leaving the Gauntlet only ends the climb (the run is complete)
       if (U.run && U.run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: U.run.seed, flog: U.run.flog || [], tele: U.run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } U.run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; U.screen = 'title'; render(); },   // giving up ends the win streak

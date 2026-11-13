@@ -92,7 +92,7 @@
   // "Sharpen: +10 attack to one hero" reads as a bold name and what it does, on two lines
   // WHAT: formats an event choice label.
   function evLabel(t0) {
-    const t = B.T ? B.T(String(t0)) : String(t0);   // translated first, then split into the bold name and the rest
+    const t = String(t0);
     const m = String(t).match(/^([^:0-9]{2,32}):\s+(.+)$/);
     return m ? `<b class="evn">${esc(m[1])}</b><span class="eve">${fmt(m[2].charAt(0).toUpperCase() + m[2].slice(1))}</span>` : fmt(t);
   }

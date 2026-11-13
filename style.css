@@ -1736,7 +1736,6 @@ body.desk .logo-big .mark { width: 96px; height: 96px; } body.desk .logo-big .w1
 .mrow { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 6px 12px; text-align: left; background: none !important; border: 0 !important;
   box-shadow: none !important; border-radius: 12px; color: #fff; }
 .mrow:hover { background: #ffffff14 !important; }
-.mrow.on { background: #ffd23f22 !important; }   /* v62h: the language in use */
 .mrow > svg.ui { width: 24px; height: 24px; color: #ffd23f; flex: none; }
 .mrow span { flex: 1; min-width: 0; display: grid; gap: 1px; } .mrow b { font: 600 16px/1.2 var(--fun); } .mrow small { font: 600 12.5px/1.3 'Inter', system-ui, sans-serif; color: #ffffffb3; }
 .mrow .chev { width: 18px; height: 18px; opacity: .6; }
@@ -2092,7 +2091,7 @@ button.danger { background: linear-gradient(180deg, #ff7a7a, var(--c-danger)) !i
   .relicline { margin-top: 4px; } .pm .pmi { min-height: 16px; } .pm .pmi .ico.xs { width: 16px; height: 16px; } .pm .por { width: 32px; height: 32px; }
   .pm .pmn { font-size: 12px; } .party .bph { margin-bottom: 2px; }
 }
-/* v62l (review #108): long names (German) never push a gear button past the screen edge */
+/* Long item/hero names never push a gear button past the screen edge */
 .gsock, .gitem { min-width: 0; overflow: hidden; } .gsock span, .gitem span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ===== v62m (review #109, David: boring run-choice screens): map posters, hero splash cards, medallion rows, event choice icons ===== */

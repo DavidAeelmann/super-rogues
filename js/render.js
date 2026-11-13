@@ -12,7 +12,7 @@
   // WHAT: the camera tilt. The board is a flat hex grid squashed vertically by K (0.6) to look 2.5D.
   const K = 0.6; // vertical squash of the board = camera tilt
   const PX_CAP = 1.3e6;   // the most canvas pixels the board draws (see setup)
-  const TT = s => (B.T ? B.T(s) : s);   // the words drawn on the canvas go through the language dictionary (js/i18n.js)
+  const TT = s => s;
 
   // WHAT: sizes the canvas for a given width and returns the "view" v every draw call needs (size of a hex, offsets, pixel ratio).
   function setup(canvas, cssW) {

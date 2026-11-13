@@ -1,14 +1,13 @@
 // UI audit (review #108, David: "make sure no screen must ever scroll to click on any button"): plays a run in a real (headless) Chrome at phone sizes, taps
 // around (menus, start, map, shops, events, level up, deploy with a hero or an enemy selected, battle, result) and on EVERY state checks that the page does not
 // scroll and every button / link that is on screen is fully inside the screen (nothing hidden below the lower edge).
-// Usage: node tools/tests/interface.mjs [en|pt|de]     (default: en; run-all.js runs en)      Screenshots of every failure go to tools/tests/.output/ia-*.png
+// Usage: node tools/tests/interface.mjs      Screenshots of every failure go to tools/tests/.output/ia-*.png
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.join(HERE, '..', '..'), OUT = path.join(HERE, '.output') + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
-const LANGS = process.argv[2] ? [process.argv[2]] : ['en'];
 const PORT = 3796, CDP = 9436, sleep = ms => new Promise(r => setTimeout(r, ms));
 const server = spawn(process.execPath, [path.join(ROOT, 'tools', 'dev-server.js'), String(PORT)], { stdio: 'ignore' });
 await sleep(700);
@@ -70,11 +69,11 @@ const CONTRAST = `(() => {
   return res;
 })()`;
 const lowC = new Map();
-let dev = '', lang = '';
+let dev = '';
 const audit = async label => {
   checks++; const bad = await ev(AUDIT);
-  for (const c of (await ev(CONTRAST)) || []) { const k = c.sel + ' ' + c.fg + ' on ' + c.bg; if (!lowC.has(k)) lowC.set(k, Object.assign(c, { where: dev + ' ' + lang + ' ' + label })); }
-  if (bad && bad.length) { fails++; console.log(`FAIL ${dev} ${lang} ${label}: ${bad.slice(0, 3).join('; ')}`); await shot(`ia-${dev}-${lang}-${label.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}`); } else oks++;
+  for (const c of (await ev(CONTRAST)) || []) { const k = c.sel + ' ' + c.fg + ' on ' + c.bg; if (!lowC.has(k)) lowC.set(k, Object.assign(c, { where: dev + ' ' + label })); }
+  if (bad && bad.length) { fails++; console.log(`FAIL ${dev} ${label}: ${bad.slice(0, 3).join('; ')}`); await shot(`ia-${dev}-${label.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}`); } else oks++;
 };
 const DEVICES = [{ name: 'phone', w: 390, h: 740 }, { name: 'phone-small', w: 360, h: 640 }];
 const act = (a, arg) => ev(`(() => { __bal.ACT[${JSON.stringify(a)}](${arg === undefined ? '' : JSON.stringify(arg)}); })()`);
@@ -84,12 +83,11 @@ for (dev of DEVICES.map(d => d)) {
   await send('Emulation.setDeviceMetricsOverride', { width: dev.w, height: dev.h, deviceScaleFactor: 2, mobile: true });
   await send('Emulation.setTouchEmulationEnabled', { enabled: true });
   const D = dev; dev = D.name;
-  for (lang of LANGS) {
-    await send('Page.navigate', { url: `http://localhost:${PORT}/` }); await sleep(700);
-    await ev(`localStorage.clear(); localStorage.setItem('balance.lang', '${lang}')`); await send('Page.reload'); await sleep(1200);
-    await audit('title');
-    await act('home-menu'); await sleep(200); await audit('menu');
-    for (const a of ['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'language']) { await act(a); await sleep(250); await audit('menu-' + a); await act('close'); await sleep(100); }
+  await send('Page.navigate', { url: `http://localhost:${PORT}/` }); await sleep(700);
+  await ev('localStorage.clear()'); await send('Page.reload'); await sleep(1200);
+  await audit('title');
+  await act('home-menu'); await sleep(200); await audit('menu');
+  for (const a of ['howto', 'player-tab', 'my-profile', 'shop', 'scores']) { await act(a); await sleep(250); await audit('menu-' + a); await act('close'); await sleep(100); }
     // a game
     await ev(`document.querySelector('[data-act=new-run]').click()`); await sleep(250); await audit('start-heroes');
     await ev(`[0, 1, 2].forEach(i => document.querySelectorAll('[data-act=start-pick]')[i].click())`); await sleep(250); await audit('start-hero-picked');
@@ -146,10 +144,9 @@ for (dev of DEVICES.map(d => d)) {
     await ev(`document.querySelector('[data-act=buy]') && document.querySelector('[data-act=buy]').click()`); await sleep(300); await audit('hero-shop-swap');
     await act('close'); await sleep(100);
     errors.length && console.log('errors so far:', errors.slice(0, 2));
-  }
 }
 if (lowC.size) { fails++; console.log(`FAIL contrast: ${lowC.size} text style(s) below WCAG AA`); for (const c of lowC.values()) console.log(`  LOW ${c.ratio}:1 (needs ${c.need}) ${c.sel} "${c.text}" ${c.fg} on ${c.bg} [${c.where}]`); } else console.log('contrast: every text passes WCAG AA');
-console.log(`interface: ${oks} of ${checks} states fine, ${fails} with a problem (${LANGS.join(',')})${errors.length ? ', JS errors: ' + errors.slice(0, 3).join(' | ') : ''}`);
+console.log(`interface: ${oks} of ${checks} states fine, ${fails} with a problem${errors.length ? ', JS errors: ' + errors.slice(0, 3).join(' | ') : ''}`);
 try { ws.close(); } catch (_) {}
 chrome.kill(); server.kill();
 process.exit(fails || errors.length ? 1 : 0);

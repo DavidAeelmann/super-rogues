@@ -40,7 +40,6 @@ data*.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 | `js/icons.js`, `js/uiicons.js` | Procedural item/relic icons & SVG UI icons | `IT`, `RE`, `B.Icons`, `B.UI.i` |
 | `js/juice.js`, `js/sfx.js`, `js/uiAudio.js` | Confetti/floaters & Web Audio synthesized SFX | `B.Juice`, `B.Sfx`, `B.UIAudio` |
 | `js/net.js` | Server JSON client | `B.Net` |
-| `js/i18n.js`, `js/lang-boot.js`, `js/lang-pt.js`, `js/lang-de.js` | Runtime DOM translation & PT/DE dictionaries | `B.T`, `B.LANG` |
 | `api/elo.js` | Gauntlet/tower, Elo, leagues, content ratings, flog | `nextOpponent`, `cleanTeam`, `leaguePoints` |
 | `api/player.js`, `api/_player.js` | Accounts, Crown Shop, XP, profiles, avatars, follows | `B.SHOP_ITEM`, `payLeagues`, `friendsTop` |
 | `api/stats.js` | Balance dashboard endpoint | — |
@@ -59,7 +58,6 @@ data*.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 - `npm run dev` — Local server on `http://localhost:3790` with in-memory DB.
 - `node tools/tests/run-all.js` — Full suite (`engine.js`, `api.js`, `boss-matrix.js`, `sim-run.js`, Chrome `screens.mjs`, `devices.mjs`, `interface.mjs`). Use `--quick` to skip Chrome tests.
 - Balance scripts: `tools/pve-odds.js`, `tools/tune-pve.js`, `tools/hero-odds.js`, `tools/item-odds.js`, `tools/relic-odds.js`, `tools/challenge-odds.js`, `tools/balance/run.js`, `tools/balance/pvp-tune.js`.
-- `node tools/languages.js` — Lists untranslated data strings in `pt` / `de`.
 
 ## 4. Invariants (Never Break)
 

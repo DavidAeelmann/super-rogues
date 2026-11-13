@@ -2,7 +2,7 @@
 const { spawnSync } = require('child_process'), path = require('path');
 const R = p => path.join(__dirname, '..', '..', p);
 const steps = [['engine', ['tools/tests/engine.js']], ['api', ['tools/tests/api.js']], ['bosses', ['tools/boss-matrix.js', '2']], ['bot runs', ['tools/sim-run.js', '30', '3', '9']]];
-if (!process.argv.includes('--quick')) { steps.push(['chrome', ['tools/tests/screens.mjs']]); steps.push(['devices', ['tools/tests/devices.mjs']]); steps.push(['interface', ['tools/tests/interface.mjs', 'en']]); }
+if (!process.argv.includes('--quick')) { steps.push(['chrome', ['tools/tests/screens.mjs']]); steps.push(['devices', ['tools/tests/devices.mjs']]); steps.push(['interface', ['tools/tests/interface.mjs']]); }
 let bad = 0;
 const run = args => spawnSync(process.execPath, args.map((a, i) => i === 0 ? R(a) : a), { encoding: 'utf8', timeout: 900000 });
 for (const [name, args] of steps) {

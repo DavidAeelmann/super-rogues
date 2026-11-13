@@ -22,7 +22,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v1.5</span>
+      <span class="app-ver" aria-label="Game version">v1.6</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -72,14 +72,7 @@
       ${row('scores', 'trophy', 'Ladder', 'Top players and leagues')}
       <div class="mpair"><button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span></button><button class="mrow sub" data-act="tutorial">${I('help')}<span><b>Tutorial: ${U.guideOn() ? 'On' : 'Off'}</b></span></button></div>
       <div class="msep"></div>
-      ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
-      ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}</div>`;
-  }
-  // the sheet opened by the Language row
-  // WHAT: the language chooser: English, Portuguese, German. Picking one stores it and reloads the page (js/i18n.js).
-  function languageHTML() {
-    const cur = B.i18n ? B.i18n.lang : 'en';
-    return `<div class="shead"><b>Language</b><button data-act="close" aria-label="Close">✕</button></div><div class="mlist">${(B.i18n ? B.i18n.LANGS : [['en', 'English']]).map(([id, name]) => `<button class="mrow${id === cur ? ' on' : ''}" data-act="set-lang" data-arg="${id}"><span data-notr><b>${name}</b>${id === cur ? '<small>✓</small>' : ''}</span></button>`).join('')}</div>`;
+      ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}</div>`;
   }
   // the trailer: three random heroes against a random fight, played with no sound; a new one starts when it ends
   // WHAT: the TRAILER under the start page: three random heroes fight a random fight with no sound; when it ends a new one starts. trailerWorld builds it, trailerLoop plays it.
@@ -118,14 +111,11 @@
   const AB_RX = [[/, each with [^.;]*? as attack/g, ''], [new RegExp(`(heal(?:s|ing)?(?: \\()?)(?: for)? ?${ABTOK} ?`, 'g'), '$1 '],
     [new RegExp(` (?:for|of) ${ABTOK}(?! (?:as |physical|magic|true|damage|\\+))`, 'g'), ''], [new RegExp(`(?:an extra )?${ABTOK} (?:as )?(?=(?:physical|magic|true|damage)\\b)`, 'g'), m => /^an extra/.test(m) ? 'extra ' : ''],
     [new RegExp(ABTOK, 'g'), 'damage'], [/\s+([.,;)])/g, '$1'], [/\(\s+/g, '('], [/\s{2,}/g, ' ']];
-  // the shortening works on English sentences; in another language the full translated text is shown instead
-  const loc = () => B.i18n && B.i18n.lang !== 'en';
-  const plainAb = s => loc() ? String(s || '') : AB_RX.reduce((t, [rx, to]) => t.replace(rx, to), String(s || '')).trim();
+  const plainAb = s => AB_RX.reduce((t, [rx, to]) => t.replace(rx, to), String(s || '')).trim();
   // WHAT: the ability block of a hero card: name, description, how it scales.
   function abilHTML(h, plain) {
-    // in another language the description is translated first and split on that language's "Passive" and "Active" words
-    const d = loc() ? B.T(String(h.abDesc || '')) : plain ? plainAb(h.abDesc) : String(h.abDesc || ''), PW = loc() ? B.T('Passive') : 'Passive', AW = loc() ? B.T('Active') : 'Active';
-    const m = d.match(new RegExp('^' + PW + '(?: \\(([^)]+)\\))?:\\s*(.*?)\\s*' + AW + ':\\s*(.*)$'));
+    const d = plain ? plainAb(h.abDesc) : String(h.abDesc || '');
+    const m = d.match(/^Passive(?: \(([^)]+)\))?:\s*(.*?)\s*Active:\s*(.*)$/);
     if (plain && m) return `<b class="abname">${esc(h.abName)}</b> ${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}`;   // quick view: what it does when it fires
     return `<b class="abname">${esc(h.abName)}</b>` + (m ? `<span class="abl"><i class="abk">Passive</i>${m[1] ? `<b>${esc(m[1])}</b>: ` : ''}${fmt(m[2])}</span><span class="abl"><i class="abk act">Active</i>${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}</span>` : ` ${fmt(d)}`);
   }
@@ -275,5 +265,5 @@
   // where you are, today's choices are the fork in the road (the posters), and the days ahead wind up into the dark with their bosses and duel days. The road
   // scrolls inside the screen and opens on today.
   // WHAT: the road of the map screen (one node per day; today = the posters). ROAD = the sizes in px; layoutMap fits it to the screen and scrolls to today.
-  Object.assign(U, { titleHTML, recruitHTML, startHTML, recordTeamWins, startTrailer, plainAb, statBars, abilHTML, homeMenuHTML, markHeroKnown, codexHTML, languageHTML, pathHTML, trailer });
+  Object.assign(U, { titleHTML, recruitHTML, startHTML, recordTeamWins, startTrailer, plainAb, statBars, abilHTML, homeMenuHTML, markHeroKnown, codexHTML, pathHTML, trailer });
 })();

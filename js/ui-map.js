@@ -464,7 +464,7 @@
   const TUT_V = 4;
   const GUIDE = [
     { id: 't_play', scr: 'title', when: () => true, at: '.title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start your journey.' },
-    { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'Game settings, rules, audio and language.' },
+    { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'Game settings, rules and audio.' },
     { id: 't_hero', when: () => U.run.phase === 'start' && (ui.startStep || 1) === 1, at: '[data-act=start-pick]', text: 'Choose your first hero. Two more join you free as you advance.' },
     { id: 't_power', when: () => U.run.phase === 'start' && ui.startStep === 2, at: '.srelics', text: 'Powers grant permanent passive bonuses to your whole squad.' },
     { id: 't_goal', when: () => U.run.phase === 'map' && U.run.result !== 'clear', at: '.rday', text: 'Your map: one stop each day. Defeat both bosses to conquer the run.' },

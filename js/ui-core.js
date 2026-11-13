@@ -207,7 +207,7 @@
   const KW_CLS = w => { for (const [c, re] of KW) if (new RegExp('^(?:' + re + ')$', 'i').test(w)) return c; return ''; };
   // WHAT: turns a plain description into coloured HTML (see KW above). Use it for any ability / item / power text.
   function fmt(text) {
-    const t = B.T ? B.T(String(text == null ? '' : text)) : String(text == null ? '' : text); let out = '', last = 0, m;   // descriptions are translated here, before they are coloured
+    const t = String(text == null ? '' : text); let out = '', last = 0, m;
     KW_RE.lastIndex = 0;
     while ((m = KW_RE.exec(t))) {
       out += esc(t.slice(last, m.index)); last = m.index + m[0].length;

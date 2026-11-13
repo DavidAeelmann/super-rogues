@@ -43,8 +43,6 @@ const click = sel => ev(`(() => { const e = document.querySelector(${JSON.string
 await send('Runtime.enable'); await send('Page.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 740, deviceScaleFactor: 2, mobile: true });  // review #9: usable height of a phone browser
 await send('Emulation.setTouchEmulationEnabled', { enabled: true });
-if (process.env.LANG_ID) await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('balance.lang', '${process.env.LANG_ID}');` });   // LANG_ID=pt|de: plays the same flow in another language (the checks that read English text then fail; look at the screenshots)
-if (process.env.TRLOG) await send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('balance.trlog', '1'); setInterval(() => { try { const all = new Set(JSON.parse(localStorage.getItem('balance.trall') || '[]')); for (const k of (window.B && B.i18n ? B.i18n.missing : [])) all.add(k); localStorage.setItem('balance.trall', JSON.stringify([...all])); } catch (e) {} }, 250);` });   // TRLOG=1: collects every English text the pages show, for tools/languages.js
 await send('Page.addScriptToEvaluateOnNewDocument', { source: `document.addEventListener('securitypolicyviolation', e => console.error('CSP ' + e.violatedDirective + ' ' + e.blockedURI));` });
 await send('Page.navigate', { url: BASE + '/' });
 await sleep(1200);
@@ -59,27 +57,8 @@ ok(await ev(`!!document.querySelector('#top .lvchip[data-act=player-tab]') && !!
 await sleep(700);
 ok(await ev(`(() => { const c = document.getElementById('trailer'); if (!c || c.width < 200) return false; const d = c.getContext('2d').getImageData(c.width >> 1, c.height >> 1, 1, 1).data; return d[3] > 0; })()`), 'landing: the trailer fight is playing under Play');
 await click('#top [data-act=home-menu]'); await sleep(150);
-ok(await ev(`['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'sound', 'language'].every(a => !!document.querySelector('#modal .mrow[data-act=' + a + ']'))`), 'menu: How to play, level rewards, profile, Crown Shop, ladder, sound and language');
+ok(await ev(`['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'sound'].every(a => !!document.querySelector('#modal .mrow[data-act=' + a + ']'))`), 'menu: How to play, level rewards, profile, Crown Shop, ladder and sound');
 await shot('01b-menu'); await noVScroll('menu');
-// v62h (review #97, David: "In the menu add an option to change language to Portuguese and German"): the Language row, the three languages, Portuguese and German on the real screens
-if (!process.env.LANG_ID) {
-  ok(await ev(`!!document.querySelector('#modal .mrow[data-act=language]')`), 'v62h (#97): the menu has a Language row');
-  await click('#modal [data-act=language]'); await sleep(200);
-  ok(await ev(`['en', 'pt', 'de'].every(id => !!document.querySelector('#modal [data-act=set-lang][data-arg=' + id + ']'))`), 'v62h (#97): English, Português and Deutsch to choose from');
-  for (const [id, word, menuWord] of [['pt', 'Jogar', 'Idioma'], ['de', 'Spielen', 'Sprache']]) {
-    await ev(`localStorage.setItem('balance.lang', '${id}')`); await send('Page.navigate', { url: BASE + '/' }); await sleep(1500);
-    ok(await ev(`document.documentElement.lang === '${id}' && document.body.innerText.includes('${word}') && !!B.LANG['${id}']`), 'v62h (#97): the whole game loads in ' + (id === 'pt' ? 'Portuguese' : 'German') + ' (' + word + ')');
-    await click('#top [data-act=home-menu]'); await sleep(200);
-    ok(await ev(`document.querySelector('#modal').innerText.includes('${menuWord}') && !/How to play|Crown Shop/.test(document.querySelector('#modal').innerText)`), 'v62h (#97): the menu is translated');
-    await noVScroll('menu in ' + id); await noHScroll('menu in ' + id);
-    await shot('01b-menu-' + id);
-    await click('[data-act=close]'); await sleep(100);
-  }
-  await ev(`localStorage.setItem('balance.lang', 'en')`); await send('Page.navigate', { url: BASE + '/' }); await sleep(1500);
-  await click('#top [data-act=home-menu]'); await sleep(200);
-  ok(await ev(`document.documentElement.lang === 'en' && document.querySelector('#modal').innerText.includes('How to play')`), 'v62h (#97): back to English');
-  await click('[data-act=close]'); await sleep(100); await click('#top [data-act=home-menu]'); await sleep(150);
-}
 await click('#modal [data-act=my-profile]'); await sleep(400);
 ok(await ev(`/first game/.test(document.querySelector('#modal').textContent)`), 'profile before the first game: explains when it starts');
 await click('[data-act=close]'); await sleep(100);
@@ -576,7 +555,6 @@ if (!REMOTE) {
   await shot('42-tutorial-tip');
   await ev(`localStorage.setItem('balance.guide.v', '4')`);
 }
-if (process.env.TRLOG) { const all = await ev("localStorage.getItem('balance.trall')"); fs.writeFileSync(OUT + 'trlog.json', all || '[]'); console.log('trlog:', JSON.parse(all || '[]').length, 'texts'); }
 ok(errors.length === 0, 'no JS errors / CSP violations' + (errors.length ? ': ' + errors.slice(0, 5).join(' || ') : ''));
 console.log(`screens: ${oks} ok, ${fails} fail (screens in ${OUT})`);
 try { ws.close(); } catch (_) {}

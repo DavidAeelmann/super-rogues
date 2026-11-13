@@ -44,7 +44,7 @@ for (const d of DEVICES) {
   await send('Emulation.setDeviceMetricsOverride', { width: d.w, height: d.h, deviceScaleFactor: d.dpr, mobile: d.mobile });
   await send('Emulation.setTouchEmulationEnabled', { enabled: d.mobile });
   await send('Page.navigate', { url: `http://localhost:${PORT}/` }); await sleep(900);
-  await ev(`localStorage.clear(); ${process.env.LANG_ID ? "localStorage.setItem('balance.lang', '" + process.env.LANG_ID + "')" : ''}`); await send('Page.reload'); await sleep(900);   // LANG_ID=pt|de: the same checks in another language (texts are longer there)
+  await ev('localStorage.clear()'); await send('Page.reload'); await sleep(900);
   await noHScroll(d.name + ' title'); if (PHONE(d)) await noVScroll(d.name + ' title');
   await ev(`document.querySelector('[data-act=new-run]').click()`); await sleep(200);
   await ev(`[0, 1, 2].forEach(i => document.querySelectorAll('[data-act=start-pick]')[i].click()); document.querySelector('[data-act=start-next]').click(); document.querySelectorAll('[data-act=start-relic]')[0].click(); document.querySelector('[data-act=start-go]').click()`); await sleep(300);

@@ -11,15 +11,14 @@ function safeWrite(filePath, content) {
   }
 }
 
-// Writes the decisions of tools/balance/run.js into the game (review #159). Called by run.js --apply; never on its own.
+// Writes the decisions of tools/balance/run.js into the game. Called by run.js --apply; never on its own.
 //   heroes  -> hp and atk in B.HEROES in js/data.js (actual printed stats, no hidden modifier)
-//   items   -> the numbers of the item (its mods) AND the same numbers in its text, in js/data.js; the translations of that text in
-//              js/lang-pt.js and js/lang-de.js follow (the old English text is their key, the numbers inside the translation change too)
+//   items   -> the numbers of the item (its mods) AND the same numbers in its text, in js/data.js
 //   powers  -> the numbers of its mods (a power without numeric mods is a design decision: reported, not written)
 //   fights  -> B.DIFF.easy.mul / B.DIFF.hard.mul, CFG.fightScale (medium = the non-boss fight numbers, boss = the boss numbers)
 // A number only changes when the text shows it (so the text never lies); rounding keeps numbers players can read (whole numbers, Health by 5).
 const fs = require('fs'), path = require('path');
-const ROOT = path.join(__dirname, '..', '..'), DATA = path.join(ROOT, 'js/data.js'), LANGS = ['js/lang-pt.js', 'js/lang-de.js'].map(f => path.join(ROOT, f));
+const ROOT = path.join(__dirname, '..', '..'), DATA = path.join(ROOT, 'js/data.js');
 const STR = `'(?:[^'\\\\]|\\\\.)*'|"(?:[^"\\\\]|\\\\.)*"`;
 const unq = s => s.slice(1, -1).replace(/\\(.)/g, '$1');
 const quote = s => s.includes("'") ? JSON.stringify(s) : "'" + s.replace(/\\/g, '\\\\') + "'";
@@ -59,20 +58,6 @@ function scale(modsText, desc, f) {
   let text = '', at = 0; for (const t of toks) if (t.to != null) { text += desc.slice(at, t.i) + t.to; at = t.i + t.s.length; } text += desc.slice(at);
   return { mods, text, changed };
 }
-// the translations keyed by an English text: new key, and the same number swaps inside the translated text
-function retranslate(oldText, newText, swaps) {
-  for (const f of LANGS) {
-    if (!fs.existsSync(f)) continue;
-    let s = fs.readFileSync(f, 'utf8');
-    const re = new RegExp('(' + esc(JSON.stringify(oldText)) + ')(\\s*:\\s*)(' + STR + ')');
-    const m = s.match(re); if (!m) continue;
-    const src = unq(m[3]), toks = [...src.matchAll(/\d+(?:[.,]\d+)?/g)].map(t => ({ s: t[0], i: t.index, to: null })).filter(t => !/[0-9.,]/.test(src[t.i - 1] || ''));
-    for (const [a, b] of swaps) { const t = toks.find(x => x.to == null && x.s.replace(',', '.') === a); if (t) t.to = t.s.includes(',') ? b.replace('.', ',') : b; }
-    let tr = '', at = 0; for (const t of toks) if (t.to != null) { tr += src.slice(at, t.i) + t.to; at = t.i + t.s.length; } tr += src.slice(at);
-    s = s.replace(re, JSON.stringify(newText) + '$2' + JSON.stringify(tr));
-    safeWrite(f, s);
-  }
-}
 function apply(dec) {
   let s = fs.readFileSync(DATA, 'utf8'); const L = [];
   // heroes
@@ -106,8 +91,6 @@ function apply(dec) {
     const r = scale(modsText, unq(descLit), row.scale); if (!r) { L.push(`${kind} ${row.name}: x${row.scale} rounds to the same numbers, not changed`); return; }
     const nl = line.replace(modsText, r.mods).replace(descLit, quote(r.text));
     s = s.replace(line, nl);
-    const swaps = r.changed.map(c => { const [, a, b] = c.match(/(-?[\d.]+) -> (-?[\d.]+)/); return [show(Math.abs(+a)), show(Math.abs(+b))]; });
-    retranslate(unq(descLit), r.text, swaps);
     L.push(`${kind} ${row.name}: ${row.dir} x${row.scale}: ${r.changed.join(', ')} ("${unq(descLit)}" -> "${r.text}")`);
   };
   for (const it of dec.item.filter(r => r.sig && r.numeric && r.scale !== 1)) edit('item', it, new RegExp(`^\\s*(?:I\\('${it.id}',|N\\('\\w+', '${it.id}',).*$`, 'm'));
