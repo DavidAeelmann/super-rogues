@@ -1,9 +1,9 @@
 // Art Lab (owner, 2026-09-29: "a part at the bottom where David attaches the pictures and tests how the heroes look").
 // Everything runs in this browser: pick a hero, add a splash picture and a pose sheet, see them on the cards and in a
 // live test fight, keep them on this device, or send them for review (only Claude sees the pictures, never the queue).
-// 
+
 // FILE GUIDE. THE ART LAB screen (menu > Art Lab): pick a hero, attach a splash picture and a pose sheet, see them on the cards and in a live test fight, keep them on this device or send them for review. It talks to js/art.js (the pictures) and js/ui.js (modals, toasts).
-//   Order: state S -> html() builds the sheet -> splashView / sheetView / previews -> load / readFile / cut / applyMap (process a picture) -> newFight / loop (the test fight) -> actions (buttons) -> bulk upload of many heroes at once -> init. The index of the whole project is CODEMAP.md.
+// Order: state S -> html() builds the sheet -> splashView / sheetView / previews -> load / readFile / cut / applyMap (process a picture) -> newFight / loop (the test fight) -> actions (buttons) -> bulk upload of many heroes at once -> init. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   // WHAT: the current state of the lab (selected hero, the picture definition being edited, the cut sheet, tolerance, the test fight).
@@ -78,7 +78,7 @@
     const note = !S.sheet ? '' : S.rows === 1 ? (S.found > 4 ? `One row with ${S.found} figures: the first 4 are idle, walk, attack and ability. For whole animations put each one on its own row.` : `One row: ${S.found} pose${S.found === 1 ? '' : 's'}${S.found < 4 ? ' (the missing ones reuse idle or attack)' : ''}.`)
       : S.cards ? `A sheet of cards: ${S.found} cards in ${S.rows} row${S.rows === 1 ? '' : 's'}; each card is a frame and keeps its place in the row.`
       : `${S.rows} animation${S.rows === 1 ? '' : 's'}, ${frames} frames${S.dropped ? `; ${S.dropped} label${S.dropped === 1 ? '' : 's'} or speck${S.dropped === 1 ? '' : 's'} left out` : ''}.`;
-    // review #45: an animation sheet shows its rows, each with "Use as" (a spin row can be the ability, two rows can
+    // an animation sheet shows its rows, each with "Use as" (a spin row can be the ability, two rows can
     // make one animation, a row can be left out); the summary says what plays
     const R = S.res && S.res.rows.length > 1 ? S.res.rows : null;
     const rowsHTML = R ? `<div class="alanims">${R.map((row, i) => `<div class="alanim"><select class="alrowsel" data-row="${i}" aria-label="Row ${i + 1} is">${[...B.Art.ANIMS, 'none'].map(k => `<option value="${k}" ${S.map[i] === k ? 'selected' : ''}>${k === 'none' ? 'Not used' : NAMES[k]}</option>`).join('')}</select>
@@ -88,7 +88,7 @@
         <div class="alframes">${(P[k] || []).map(u => `<img src="${u}" alt="">`).join('')}</div></div>`).join('')}</div>
 ${sheetFoot(d, note)}`);
   }
-  // review #48 (David: "implement better previews"): every animation plays on its own little stage, with the same
+  // every animation plays on its own little stage, with the same
   // frame timing and blending as the battle
   function previewsHTML(P) {
     const ks = B.Art.ANIMS.filter(k => P[k]);
@@ -181,7 +181,7 @@ ${sheetFoot(d, note)}`);
 
   function open(ui, key) {
     U = ui; S.open = true; S.fight = null;
-    // review #47: no hero is picked for you (art for Stinger went out as "Astral", the first of the list)
+    // no hero is picked for you (art for Stinger went out as "Astral", the first of the list)
     load(key && B.HEROES[key] ? key : S.key && B.HEROES[S.key] ? S.key : null);
     U.openModal(html()); U.ui.modal = 'artlab'; U.$('#modal .sheet').classList.add('wide');
     splashView(); sheetView(); mountBoard();
@@ -260,7 +260,7 @@ ${sheetFoot(d, note)}`);
       btn.disabled = false;
     },
   };
-  // review #50 (David: "upload the splash art only for several heroes at once"): pictures matched to heroes by file name
+  // pictures matched to heroes by file name
   const norm = t => String(t).normalize('NFD').toLowerCase().replace(/[^a-z]/g, '');   // accents come apart in NFD and drop out
   // WHAT: BULK UPLOAD. Guesses which hero a picture file belongs to from its file name (accents ignored).
   function guessHero(file) {

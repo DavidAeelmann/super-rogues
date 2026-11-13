@@ -1,18 +1,18 @@
 // Canvas renderer: 2.5D board (hex grid squashed vertically, stone slab with thickness) and the unit models from
 // models.js. Positions come from the sim in flat board pixels (posAt) and are projected here, so movement between
 // hexes stays smooth and a unit lands on its hex exactly when its attack windup starts.
-// 
+
 // FILE GUIDE. DRAWING OF THE BOARD AND THE FIGHT on a canvas. It only READS the simulation (W from sim.js) and paints it: nothing here changes a fight.
-//   Order: setup (size the canvas) -> helpers to turn hexes into screen pixels -> board tiles and terrain -> units (pose, position, draw) -> draw() the whole frame -> backdrop (sky) and BOSS backdrops
-//   -> end banner (VICTORY / DEFEAT) -> battle effects (particles, damage numbers, banners) -> boss HP bar. The index of the whole project is CODEMAP.md.
-//   To change how a unit looks: js/models.js (code-drawn) or js/art.js (pictures). To change colours of the board: tileColor and drawBoard. To change a boss background: bossBackdrop.
+// Order: setup (size the canvas) -> helpers to turn hexes into screen pixels -> board tiles and terrain -> units (pose, position, draw) -> draw() the whole frame -> backdrop (sky) and BOSS backdrops
+// -> end banner (VICTORY / DEFEAT) -> battle effects (particles, damage numbers, banners) -> boss HP bar. The index of the whole project is CODEMAP.md.
+// To change how a unit looks: js/models.js (code-drawn) or js/art.js (pictures). To change colours of the board: tileColor and drawBoard. To change a boss background: bossBackdrop.
 (function (G) {
   const B = G.B = G.B || {};
   const Hx = B.Hex;
   // WHAT: the camera tilt. The board is a flat hex grid squashed vertically by K (0.6) to look 2.5D.
   const K = 0.6; // vertical squash of the board = camera tilt
-  const PX_CAP = 1.3e6;   // v77 (review #156): the most canvas pixels the board draws (see setup)
-  const TT = s => (B.T ? B.T(s) : s);   // v62h (review #97): the words drawn on the canvas go through the language dictionary (js/i18n.js)
+  const PX_CAP = 1.3e6;   // the most canvas pixels the board draws (see setup)
+  const TT = s => (B.T ? B.T(s) : s);   // the words drawn on the canvas go through the language dictionary (js/i18n.js)
 
   // WHAT: sizes the canvas for a given width and returns the "view" v every draw call needs (size of a hex, offsets, pixel ratio).
   function setup(canvas, cssW) {
@@ -20,18 +20,18 @@
     const size = cssW / (Math.sqrt(3) * (Hx.COLS + (desk ? 5.6 : 0.5)));
     const flat = Hx.boardSize(size), top = size * (desk ? 4.35 : 2.4), slab = size * 0.45, padX = desk ? (cssW - flat.w) / 2 : 0;
     const w = desk ? cssW : flat.w, h = top + flat.h * K + slab + (desk ? size * 1.65 : 4);
-    // v77 (review #156, David: "unplayable on a computer, it lags a lot"): a big screen gets a big board, and its pixels are what a computer without a strong
+    // a big screen gets a big board, and its pixels are what a computer without a strong
     // graphics card pays for every frame. The board keeps at most PX_CAP pixels (a phone at 2x uses about 0.4 million), and maxDpr can go below 1
     // (the battle loop lowers it when frames stay slow); the browser stretches the picture back to its size on screen.
     // Desktop devices get full crisp resolution (capped at 2x DPR) for razor-sharp textures and typography.
     const dpr = desk ? Math.max(1, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1))
-      : Math.max(0.5, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1, Math.sqrt(PX_CAP / Math.max(1, w * h))));   // v62r: the battle loop lowers maxDpr by itself when a computer draws slowly   // v62b: 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
+      : Math.max(0.5, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1, Math.sqrt(PX_CAP / Math.max(1, w * h))));   // v62r: the battle loop lowers maxDpr by itself when a computer draws slowly // v62b: 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return { canvas, ctx, size, w, h, top, slab, padX, flatW: flat.w, flatH: flat.h, desk, dpr, grit: grit(ctx) };
   }
-  // review #8: stone texture for the tiles (made once, deterministic)
+  // stone texture for the tiles (made once, deterministic)
   let gritCanvas = null;
   // WHAT: a faint noise texture drawn over the board tiles.
   function grit(ctx) {
@@ -86,7 +86,7 @@
     return bd <= thresh ? best : null;
   }
   // flat position (with attack lunge) of a unit at fractional tick T
-  // v55 (review #67, David: "Smooth the animations of combat. They are very rickety and jumpy"): the lunge winds up a
+  // the lunge winds up a
   // little, strikes on the hit tick and eases back over a few ticks instead of snapping home
   // WHAT: UNIT POSITIONS AND POSES. flatPos / glide / unitPos work out where a unit is drawn (sliding between hexes, small recoil after a hit); poseOf says which animation it is in.
   const REC = 6;   // recovery ticks after a melee hit
@@ -122,7 +122,7 @@
   }
 
   // ------------------------------------------------------------------ board
-  // v27 (owner + review #25): the King Tier's Royal board skin (B.Render.skin = 'royal'): violet and gold stone
+  // v27 (owner + ): the King Tier's Royal board skin (B.Render.skin = 'royal'): violet and gold stone
   // WHAT: BOARD. royal() = the King Tier colour skin is on. tileColor() = the colour of a tile (checker pattern, deploy zone blue, enemy zone red); drawBoard draws all tiles and the deploy line.
   const royal = () => B.Render.skin === 'royal';
   function tileColor(c, r, o, desk) {
@@ -397,7 +397,7 @@
     ctx.restore();
   }
 
-  // v122 (review #213, David: "Give boss stages subtle animated hex tile borders (e.g., glowing magma cracks or storm lightning on hex borders)"): during a boss
+  // "): during a boss
   // fight some hex edges glow in the boss's theme and pulse (magma, storm, swamp, frost, gold); a few flash like lightning
   const BOSS_EDGE = { gorewarden: ['#ff4a1a', 'magma'], packlord: ['#ff6a3a', 'magma'], hollowking: ['#b98cff', 'storm'], mirewitch: ['#9ad94a', 'swamp'], lichqueen: ['#8fe3ff', 'storm'], colossus: ['#ffcf5a', 'magma'] };
   // WHAT: the glowing hex edges of a boss stage, drawn over the board every frame.
@@ -414,9 +414,9 @@
     }
     ctx.restore();
   }
-  // v118 (review #205): the coach on the deploy board: the hexes a tip talks about pulse in its colour with its icon, and (front-row tip) arrows show where enemies come from
+  // the coach on the deploy board: the hexes a tip talks about pulse in its colour with its icon, and (front-row tip) arrows show where enemies come from
   // WHAT: draws a coach tip's glowing hexes, icons and arrows over the board.
-  // v126 (review #224): co.plain = only the glow (the free hexes a hero on the bench can go to), no icons
+  // co.plain = only the glow (the free hexes a hero on the bench can go to), no icons
   function drawCoach(v, co, now) {
     const { ctx, size } = v, k = 0.5 + 0.5 * Math.sin(now * 4);
     ctx.save();
@@ -430,7 +430,7 @@
         ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(a.x, y, size * 0.1, 0, Math.PI * 2); ctx.fill(); } }
     ctx.restore();
   }
-  // ------------------------------------------------------------------ terrain (review #39): cartoon trees, boulders,
+  // ------------------------------------------------------------------ terrain (): cartoon trees, boulders,
   // ridges (standing things, depth-sorted with the units) and ponds (flat, part of the board)
   // WHAT: TERRAIN pictures (cartoon trees, boulders, ridges, ponds). drawTerrain draws one terrain hex; units behind a tree make it see-through.
   function drawPond(v, c, r) {
@@ -485,9 +485,9 @@
   }
 
   // ------------------------------------------------------------------ units
-  // review #47: a hero with a death animation stays on the board while it plays
+  // a hero with a death animation stays on the board while it plays
   // WHAT: UNITS. drawUnit draws one unit (model or picture, shadow, HP and mana bars, status icons, shield, hit flash). deadTicks = how long its death animation lasts.
-  // v126 (review #222, David: "Users still describe a significant laggy experience, especially on pc web... Regarding battles"): the white hit flash used a
+  // the white hit flash used a
   // canvas filter (brightness), which makes the browser redraw that figure the slow way; in a big fight someone is always being hit, and it was the main cause
   // of the stutter (tools/perf-battle.mjs: frames over 33 ms fell from ~15 to ~3 in 12 s). The flash is now a quick additive white glow over the body.
   const FILTER = false;
@@ -817,8 +817,8 @@
       if (moving) { d.ph += dT * Math.max(1.2, u.ms) / 20; pose.walk = d.ph % 1; }
     } else if (u.m1t > u.m0t && T >= u.m0t && T < u.m1t && u.ms > 0) pose.walk = ((T - u.m0t) / Math.max(1, u.m1t - u.m0t)) % 1;
     const a = u.anim; if (a && a.k === 'atk' && T >= a.t0 && T <= a.t1) pose.atk = (T - a.t0) / Math.max(1, a.t1 - a.t0);
-    else if (a && a.k === 'atk' && T > a.t1 && T < a.t1 + 5) pose.rec = (T - a.t1) / 5;   // v111 (review #198): the follow-through after a blow
-    const cd = B.Art && B.Art.castTicks ? B.Art.castTicks(u.key === 'clone' ? 'mirage' : u.key) : 14;   // review #45: long art animations
+    else if (a && a.k === 'atk' && T > a.t1 && T < a.t1 + 5) pose.rec = (T - a.t1) / 5;   // the follow-through after a blow
+    const cd = B.Art && B.Art.castTicks ? B.Art.castTicks(u.key === 'clone' ? 'mirage' : u.key) : 14;   // long art animations
     if (T - u.castT >= 0 && T - u.castT < cd) pose.cast = (T - u.castT) / cd;
     if (u.dead) pose.dead = Math.max(0, Math.min(1, (T - u.deathT) / deadTicks(u)));   // v42: T, so the last death plays on in the slow motion after the fight
     void s; return pose;
@@ -826,7 +826,7 @@
   // WHAT: draws one unit: ground ring, the model or art, health / mana bars, status badges, floating numbers anchor.
   function drawUnit(v, W, u, p, T, o, dt) {
     const { ctx, size } = v, s = W.t, d = o.deploy ? null : look(v, W, u);
-    const S = size * 1.5 * u.size;   // v58 (review #70, "Improve combat scale"): bigger units
+    const S = size * 1.5 * u.size;   // bigger units
     // v55: a hit makes the body flinch away and flash white for a moment
     if (d) { const now = (d.now += dt || 0.016); if (u.hp < d.hp - 0.5) d.hitAt = now; d.hp = u.hp; d.trail = Math.max(u.hp, d.trail - (d.trail - u.hp) * Math.min(1, (dt || 0.016) * 3.2) - u.maxHp * 0.002); }
     const since = d && d.hitAt >= 0 ? d.now - d.hitAt : 9, flinch = since < 0.18 ? Math.sin(since / 0.18 * Math.PI) * size * 0.08 : 0;
@@ -862,7 +862,7 @@
       ctx.fill();
       ctx.restore();
     }
-    // review #44 (David: "clearer player/enemy distinction"): a filled disc in the side's colour under every unit
+    // a filled disc in the side's colour under every unit
     const sideC = hero ? '74,163,255' : '255,92,110';
     // v55: a soft glow in the side's colour instead of a hard ring (a thin rim stays for the selected hero and elites)
     if (!u.dead) {
@@ -886,7 +886,7 @@
       const bx0 = p.x - (pose.face > 0 ? 1 : -1) * flinch, flash = since < 0.09 && !u.dead && FILTER;
       // v55: squash and stretch from the feet: a pop when the fight starts, a squash on the strike and when hit
       const intro = Math.min(1, T / 8), hitK = since < 0.16 ? Math.sin(since / 0.16 * Math.PI) : 0, strike = pose.atk != null && pose.atk > 0.75 ? Math.sin((pose.atk - 0.75) / 0.25 * Math.PI) : 0;
-      // v70 (review #145, David: "between deployment then 3 2 1 the whole board and figures are getting squished"): the countdown holds the fight at its first frame,
+      // the countdown holds the fight at its first frame,
       // where the start pop is squashed; while it runs (o.still) the units stand tall and the pop plays when FIGHT! lets the fight go
       const selScale = isSel ? 1.08 : isInfo ? 1.06 : 1, selY = isSel ? -S * 0.1 : isInfo ? -S * 0.07 : 0;
       const sy = (o.deploy || o.still ? 1 : 0.6 + 0.4 * (1 - Math.pow(1 - intro, 3))) * (1 - 0.07 * hitK - 0.05 * strike) * selScale;
@@ -974,9 +974,9 @@
     }
     if (u.lvl > 1 && hero && u.kind === 'hero') { ctx.font = "700 10px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.fillStyle = '#ffcf5a'; ctx.textAlign = 'left'; ctx.fillText(u.lvl, bx + bw + 2, by + 5); }
     // Items above hero heads removed
-    // review #44: status effects as coloured badges (glyph on a disc) above the bars, one colour per effect
+    // status effects as coloured badges (glyph on a disc) above the bars, one colour per effect
     const marks = [];
-    // v122 (review #213, "Crowd Control badges: crisp micro-icons over the unit head"): the hard crowd control first (it decides fights), at most three
+    // the hard crowd control first (it decides fights), at most three
     if (u.st.frozenU > s) marks.push(['❄️', '#3fb8e8']);
     else if (u.st.stun > s) marks.push(['💫', '#f5b700']);
     if (u.st.root > s) marks.push(['⛓️', '#a0703a']);
@@ -1028,7 +1028,7 @@
     drawBoard(v, o, W);
     if (boss && !o.deploy) bossTiles(v, boss.key, now);
     if (o.coach) drawCoach(v, o.coach, now);
-    if (o.slots) drawCoach(v, { hexes: o.slots, color: '#ffd23f', plain: true }, now);   // v126 (review #224): where a benched hero can go
+    if (o.slots) drawCoach(v, { hexes: o.slots, color: '#ffd23f', plain: true }, now);   // where a benched hero can go
     if (!W) return;
     for (const z of W.zones) if (z.until > W.t) {
       const owner = z.src && W.byId[z.src], zs = owner && AF && AF.SPEC[owner.abil] && AF.SPEC[owner.abil].zone;
@@ -1110,7 +1110,7 @@
     }
     // ambient embers drifting up
     if (!o.deploy && Math.random() < dt * 6 && S.parts.length < MAXP) S.parts.push({ x: Math.random() * v.w, y: v.h + 4, vx: (Math.random() - 0.5) * 10, vy: -20 - Math.random() * 25, g: 0, life: 4 + Math.random() * 3, t: 0, r: 1 + Math.random() * 1.2, col: Math.random() < 0.5 ? '#ffb347' : '#e8b84a', glow: true });
-    // v97 (review #179): the first-time intro can hide units (o.hide) and draw them lifted above their hex by some pixels (o.lift: dropping in, walking in)
+    // the first-time intro can hide units (o.hide) and draw them lifted above their hex by some pixels (o.lift: dropping in, walking in)
     const us = W.units.filter(u => (!u.dead || T - u.deathT < deadTicks(u)) && !(o.hide && o.hide(u))).map(u => { const p = glide(v, W, u, T, dt, o.deploy), l = o.lift ? o.lift(u) : 0; return { u, p: l ? { x: p.x, y: p.y - l } : p }; });
     // standing terrain joins the depth sort; it turns see-through while a unit stands right behind it
     for (const x of (W.terrain || [])) if (x.k !== 'pond') us.push({ x, p: hexScreen(v, x.c, x.r), fade: x.k !== 'rock' && W.units.some(u => !u.dead && u.r === x.r - 1 && Hx.dist(u, x) === 1) });
@@ -1158,7 +1158,7 @@
         }
       }
     }
-    // v60 (review #72): Prism's beams, a glowing line to each unit it heals (green) or burns (cyan), thicker when overcharged
+    // Prism's beams, a glowing line to each unit it heals (green) or burns (cyan), thicker when overcharged
     for (const u of W.units) if (!u.dead && u.beams && u.beams.length) {
       const a0 = unitPos(v, W, u, T), ax = a0.x, ay = a0.y - size * 0.95;
       for (const b of u.beams) {
@@ -1200,7 +1200,7 @@
       if (f.k === 'num' || f.k === 'text') {
         const u = W.byId[f.id]; const p = u ? unitPos(v, W, u, T) : hexScreen(v, f.c, f.r);
         ctx.globalAlpha = 1 - k * k;
-        // v122 (review #213): crit = twice the size, bold, with a hop; a normal hit small and muted; magic purple; damage over time small ticks (burn orange, poison green)
+        // crit = twice the size, bold, with a hop; a normal hit small and muted; magic purple; damage over time small ticks (burn orange, poison green)
         const nk = f.n || (f.big ? 'crit' : 'hit'), fs = f.k === 'text' ? Math.max(12, Math.round(size * 0.55)) : nk === 'crit' ? Math.max(22, Math.round(size * 1.0)) : nk === 'dot' ? Math.max(10, Math.round(size * 0.38)) : Math.max(12, Math.round(size * (nk === 'magic' ? 0.5 : 0.46)));
         ctx.font = (f.k === 'text' || nk === 'crit' ? '800 ' : nk === 'dot' ? '600 ' : '700 ') + fs + "px 'Fredoka', 'Inter', system-ui, sans-serif";   // v58: numbers big enough to read
         ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
@@ -1338,9 +1338,9 @@
     }
   }
 
-  // ------------------------------------------------------------------ v42 (review #51, David: "looks amateur"): a painted
+  // ------------------------------------------------------------------ a painted
   // sky behind the board instead of a flat gradient (soft light, clouds, two rows of hills), drawn once per board size
-  // v62 (review #90, David: "a slightly different texture in the background for the boss fights, depending on the boss"): each boss
+  // each boss
   // tints the sky and adds its own scenery over the usual backdrop: war banners and blood for the Gorewarden, ash and dead trees
   // for the Sovereign, swamp fog and reeds for the Mire Witch, cracks and floating rubble for the Colossus
   // WHAT: the extra scenery behind a BOSS fight (red banners for the Gorewarden, ash and dead trees for the Ashen Sovereign, swamp fog for the Mirewitch, cracked stone for the Colossus). Edit a boss's look here; add an "else if" for a new boss key.
@@ -1361,7 +1361,7 @@
       g.strokeStyle = '#173a1c'; g.lineWidth = 2; for (let i = 0; i < 28; i++) { const x = rnd() * W, y = top + size * (0.8 + rnd() * 0.5), h = size * (0.5 + rnd() * 0.7); g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (rnd() - 0.5) * 8, y - h * 0.5, x + (rnd() - 0.5) * 14, y - h); g.stroke(); }
       for (let i = 0; i < 6; i++) { const y = top * (0.5 + i * 0.28) + rnd() * 20; const gr = g.createLinearGradient(0, y - size * 0.5, 0, y + size * 0.5); gr.addColorStop(0, 'rgba(190,255,200,0)'); gr.addColorStop(0.5, 'rgba(190,255,200,0.28)'); gr.addColorStop(1, 'rgba(190,255,200,0)'); g.fillStyle = gr; g.fillRect(0, y - size * 0.5, W, size); }
       for (let i = 0; i < 14; i++) { const x = rnd() * W, y = top * 0.4 + rnd() * (H - top * 0.4); const gl = g.createRadialGradient(x, y, 0, x, y, 7); gl.addColorStop(0, 'rgba(180,255,120,0.9)'); gl.addColorStop(1, 'rgba(180,255,120,0)'); g.fillStyle = gl; g.fillRect(x - 7, y - 7, 14, 14); }
-    } else if (key === 'packlord') {   // v83 (review #161): a blood moon over the hills
+    } else if (key === 'packlord') {   // a blood moon over the hills
       tint('#5a2a1a', 0.36);
       g.fillStyle = 'rgba(255,90,60,0.55)'; g.beginPath(); g.arc(W * 0.78, top * 0.4, size * 0.6, 0, Math.PI * 2); g.fill();
       g.fillStyle = '#2a140c'; for (let i = 0; i < 9; i++) { const x = rnd() * W, y = top + size * (0.7 + rnd() * 0.4), h = size * (0.6 + rnd() * 0.8); g.beginPath(); g.moveTo(x - size * 0.3, y); g.lineTo(x, y - h); g.lineTo(x + size * 0.3, y); g.fill(); }
@@ -1462,7 +1462,7 @@
     g.fillStyle = sun; g.fillRect(0, 0, W, H);
     if (R) { for (let i = 0; i < 70; i++) { g.globalAlpha = 0.3 + rnd() * 0.6; g.fillStyle = '#fff'; g.beginPath(); g.arc(rnd() * W, rnd() * top * 1.3, rnd() * 1.3 + 0.3, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1; }
     else {
-      // v113 (review #200): sun rays, clouds with a shaded underside, a few birds
+      // sun rays, clouds with a shaded underside, a few birds
       g.save(); g.translate(W * 0.78, top * 0.25); g.fillStyle = 'rgba(255,250,220,0.18)'; for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6 + 0.1; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(a - 0.06) * W, Math.sin(a - 0.06) * W); g.lineTo(Math.cos(a + 0.06) * W, Math.sin(a + 0.06) * W); g.closePath(); g.fill(); } g.restore();
       g.fillStyle = 'rgba(255,253,235,0.95)'; g.beginPath(); g.arc(W * 0.78, top * 0.25, v.size * 0.32, 0, Math.PI * 2); g.fill();
       for (let i = 0; i < 6; i++) {   // soft clouds: clusters of white puffs
@@ -1479,7 +1479,7 @@
     };
     if (R) { hills(top + v.size * 0.4, v.size * 1.2, '#1d1430', 3); hills(top + v.size * 0.9, v.size * 0.8, '#150f24', 5); }
     else {
-      // v113 (review #200): far snowy peaks, a castle on a far hill, rows of trees along the nearer hills
+      // far snowy peaks, a castle on a far hill, rows of trees along the nearer hills
       for (let i = 0; i < 7; i++) { const x = (i + rnd() * 0.6) / 6.5 * W, base = top + v.size * 0.35, h = v.size * (1.1 + rnd() * 0.9), w = v.size * (1.1 + rnd() * 0.6);
         g.fillStyle = '#b4cfe6'; g.beginPath(); g.moveTo(x - w, base); g.lineTo(x, base - h); g.lineTo(x + w, base); g.closePath(); g.fill();
         g.fillStyle = '#9dbdd8'; g.beginPath(); g.moveTo(x, base - h); g.lineTo(x + w, base); g.lineTo(x + w * 0.2, base); g.closePath(); g.fill();
@@ -1528,12 +1528,12 @@
     drawParts(ctx, e.parts, dt);
   }
 
-  // ------------------------------------------------------------------ battle effects (review #9)
+  // ------------------------------------------------------------------ battle effects ()
   // Particles are spawned from the sim's fx events the first time the renderer sees them, so the sim stays pure.
   // WHAT: BATTLE EFFECTS. Particles (sparks, confetti), floating damage numbers, text and banners. spawnFromFx turns the simulation's fx events (W.fx) into pictures; drawParts and drawCalls paint them.
   const MAXP = 420;
   function fxState(v) { if (!v.fxs) v.fxs = { parts: [], seen: new WeakSet(), landed: new WeakSet(), ab: {}, dead: new Set(), calls: [], shake: 0, last: 0, embers: 0, kb: {}, streak: {}, hitStop: 0, flash: 0 }; return v.fxs; }
-  // v62n (review #110, David: "make the abilities' particles and animations more noticeable and rewarding, a true dopamine hit"): shockwave rings on the ground,
+  // shockwave rings on the ground,
   // light pillars, streaking sparks, twinkling stars, a soft colour flash over the whole board and an impact burst where every ability projectile lands
   // WHAT: effect helpers: shock (an expanding ground ring), pillar (a column of light), flash (a brief tint over the board); burst takes shape 'spark' or 'star' too.
   function shock(S, x, y, col, R, o = {}) { if (S.parts.length < MAXP + 60) S.parts.push({ type: 'ring', x, y, R, col, life: o.life || 0.5, t: 0, w: o.w || 3, vx: 0, vy: 0, g: 0, r: 1 }); }
@@ -1544,7 +1544,7 @@
     }
   }
   // WHAT: reads the new visual events of the simulation (hits, heals, rings, bolts, projectiles) and creates particles and numbers for them. Also plays the matching sounds.
-  // v62p (review #112): what the ability drawings (js/abilfx.js) draw with
+  // what the ability drawings (js/abilfx.js) draw with
   const abilKit = (v, W, T, S) => ({ ctx: v.ctx, v, W, T, S, size: v.size, K, pos: (c, r) => hexScreen(v, c, r), proj: p => proj(v, p), corners: (c, r, s) => corners(v, c, r, s), path: pts => path(v.ctx, pts),
     unitPos: u => unitPos(v, W, u, T), burst: (x, y, n, col, o) => burst(S, x, y, n, col, o), shock: (x, y, col, R, o) => shock(S, x, y, col, R, o) });
   function spawnFromFx(v, W, T, S) {
@@ -1621,7 +1621,7 @@
       S.parts.push({ x: p.x, y: p.y - size * 0.8, vx: 0, vy: -40, g: -10, life: 1.4, t: 0, r: 5, col: '#e8f4ff', glow: true, wisp: true });
       if (u.boss) { S.shake = 10; sfx('boss'); } else sfx('ko');
     }
-    // v42 (review #51): kill streaks. A hero that downs 2+ enemies within 3 seconds gets a big call over its head
+    // kill streaks. A hero that downs 2+ enemies within 3 seconds gets a big call over its head
     for (const u of W.units) if (u.side === 0 && u.kind === 'hero' && (u.kb || 0) > (S.kb[u.id] || 0)) {
       const k = S.kb[u.id] || 0, st = S.streak[u.id] || { n: 0, t: -1e9 }; S.kb[u.id] = u.kb;
       for (let i = k; i < u.kb; i++) { st.n = W.t - st.t <= 60 ? st.n + 1 : 1; st.t = W.t; }

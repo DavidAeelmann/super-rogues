@@ -361,7 +361,7 @@
       "Victory · then the Gauntlet": "Vitória · depois o Gauntlet",
       "A lost run gives no LP": "Uma run perdida não dá LP",
       "Tank": "Tanque",
-      "Fighter": "Lutador",   // v93 (review #174)
+      "Fighter": "Lutador",
       "Support": "Suporte",
       "Stoneward": "Muralha de Pedra",
       "Raises a stone ward: a shield of 33% of his max Health. Taunts enemies within 2 hexes for 2.5s.": "Ergue uma muralha de pedra: um escudo de 33% da Vida máx. Provoca inimigos a até 2 hexes por 2,5s.",

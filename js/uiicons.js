@@ -1,7 +1,7 @@
-// v49 (review #61, David: "Replace emoji icons with a cohesive custom icon set"): the game's own interface icons, one
+// the game's own interface icons, one
 // style for all of them (24x24, round 2.2 strokes in the text colour, a few solid shapes). Drawn here as SVG paths, no
 // font or image files. B.UI.i(name, cls) returns the <svg> markup; the logo mark is B.UI.mark().
-// 
+
 // FILE GUIDE. THE INTERFACE ICONS (menu arrows, trophy, skull, swords...), one SVG path per name in P. I('name') in ui.js calls B.UI.i(name). Add an icon by adding a line to P. mark() is the logo symbol. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
@@ -47,7 +47,7 @@
     ghost: '<path d="M5.5 20.5V11a6.5 6.5 0 0 1 13 0v9.5l-2.2-1.6-2.1 1.6-2.2-1.6-2.1 1.6-2.2-1.6z" fill="currentColor" fill-opacity=".25"/><path d="M5.5 20.5V11a6.5 6.5 0 0 1 13 0v9.5l-2.2-1.6-2.1 1.6-2.2-1.6-2.1 1.6-2.2-1.6z"/><circle cx="9.7" cy="11" r="1.1" fill="currentColor"/><circle cx="14.3" cy="11" r="1.1" fill="currentColor"/>',
   };
   const i = (name, cls) => P[name] ? `<svg class="ui${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${P[name]}</svg>` : '';
-  // the Super Rogues mark: a star badge wearing a rogue's mask (v49, review #60)
+  // the Super Rogues mark: a star badge wearing a rogue's mask (v49, )
   const mark = (cls) => `<svg class="mark${cls ? ' ' + cls : ''}" viewBox="0 0 64 64" aria-hidden="true">
     <path d="M32 3l7.6 15.4 17 2.5-12.3 12 2.9 16.9L32 41.8l-15.2 8 2.9-16.9L7.4 20.9l17-2.5z" fill="#ffd23f" stroke="#1a1f6b" stroke-width="3.5" stroke-linejoin="round"/>
     <path d="M13 27.5c6-3.2 12.5-3 19 1.2 6.5-4.2 13-4.4 19-1.2-1 6.8-5.4 10.3-11 9.8-3.2-.3-5.6-2-8-4.3-2.4 2.3-4.8 4-8 4.3-5.6.5-10-3-11-9.8z" fill="#1a1f6b"/>

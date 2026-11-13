@@ -1,10 +1,10 @@
-// v123 (review #215): the shared card page (card.html). Reads the card from the link (after #), draws it with the game's own pictures and icons, and offers Play.
-//
+// the shared card page (card.html). Reads the card from the link (after #), draws it with the game's own pictures and icons, and offers Play.
+
 // FILE GUIDE. Only card.html loads this. The card itself is B.Card.html (js/card.js). The index of the whole project is CODEMAP.md.
 (function () {
   const B = window.B, main = document.getElementById('cardmain');
   const pic = (k, px) => B.Splash.image(k, px, px, 'bust'), icon = (kind, id, px) => kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px);
-  // v124 (review #216): a short link (/c/<id>) names its card in the page (data-card); the card comes from /api/card. The old long links (#data) still work.
+  // a short link (/c/<id>) names its card in the page (data-card); the card comes from /api/card. The old long links (#data) still work.
   const id = document.body.dataset.card;
   if (id) { fetch('/api/card?id=' + encodeURIComponent(id)).then(r => r.json()).then(r => show(r && r.card)).catch(() => show(null)); } else show(B.Card.decode(location.hash));
   function show(d) {

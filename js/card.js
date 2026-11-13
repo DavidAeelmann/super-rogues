@@ -1,6 +1,6 @@
-// v123 (review #215, David: "Whenever you finish a gauntlet run, win or lose, have a menu with a 'card' with the champions, items, etc. that is an html that you
+// v123 (, David: "Whenever you finish a gauntlet run, win or lose, have a menu with a 'card' with the champions, items, etc. that is an html that you
 // can 1 click share or copy with a link to the game to post on whatsapp, etc. Make this feature dope and hype"): the BRAG CARD.
-//
+
 // FILE GUIDE. The card of a finished Gauntlet climb: the team (pictures, levels, items), the powers, the floor reached or the crown, the player and the league.
 // The same HTML is used by the game (a sheet after the climb, with Share / WhatsApp / Copy link) and by card.html (the page the link opens, with a Play button).
 // The link carries the card itself (base64 JSON after #), so nothing is stored on the server. The index of the whole project is CODEMAP.md.
@@ -36,7 +36,7 @@
       ${pows ? `<div class="sc-pows">${pows}</div>` : ''}
       <div class="sc-cta">Can you beat this team? <b>⚔ Super Rogues</b></div></div>`;
   }
-  // v124 (review #216): the card as a 1200x630 picture (the size link previews use): drawn on a canvas from the same pictures and icons, JPEG.
+  // the card as a 1200x630 picture (the size link previews use): drawn on a canvas from the same pictures and icons, JPEG.
   const load = src => new Promise(r => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
   function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
   // WHAT: draws the card into a JPEG data URL (pic / icon as for html()).

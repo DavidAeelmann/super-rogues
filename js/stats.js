@@ -1,5 +1,5 @@
-// v62 (review #81, David): the hidden balance dashboard (stats.html, not linked from the game). Overall numbers only.
-// 
+// the hidden balance dashboard (stats.html, not linked from the game). Overall numbers only.
+
 // FILE GUIDE. THE HIDDEN BALANCE DASHBOARD page (stats.html). It loads /api/stats (api/stats.js) and draws: the clear rate of every fight of a run, and tables for heroes, PvP heroes, items, powers and bosses with games, win rate and Elo. Overall numbers only, no player data. The index of the whole project is CODEMAP.md.
 (async () => {
   const $ = id => document.getElementById(id);

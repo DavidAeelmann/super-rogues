@@ -1,8 +1,8 @@
-// Item and relic icons (review #8), drawn in code like the unit models and cached as data: URLs (the CSP allows
+// Item and relic icons (), drawn in code like the unit models and cached as data: URLs (the CSP allows
 // images from data:). Each item/relic maps to a glyph drawer + accent colour; the frame colour is the item tier.
-// 
+
 // FILE GUIDE. ICONS of items and Powers (relics), drawn with code and cached as images. D = the drawers (a sword, a shield, a ring...), IT = which drawer and colour each item uses, RE = the same for Powers. The frame colour is the rarity.
-//   To give a new item or Power an icon: add its id to IT or RE with a drawer name from D. Unknown ids get a gem. The index of the whole project is CODEMAP.md.
+// To give a new item or Power an icon: add its id to IT or RE with a drawer name from D. Unknown ids get a gem. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   const TAU = Math.PI * 2;
@@ -78,7 +78,7 @@
     idol: (c, a) => { path(c, [[-22, 40], [22, 40], [16, 20], [-16, 20]], a || gold); path(c, [[-14, 20], [14, 20], [18, -6], [-18, -6]], a || gold); orb(c, 0, -20, 15, a || gold); orb(c, -5, -22, 3, '#c43a3a'); orb(c, 5, -22, 3, '#c43a3a'); },
     wind: (c, a) => { c.strokeStyle = a || '#bfe6ff'; c.lineWidth = 6; c.lineCap = 'round'; for (const [y, w] of [[-18, 34], [2, 42], [22, 28]]) { c.beginPath(); c.moveTo(-40, y); c.lineTo(w - 12, y); c.arc(w - 12, y - 8, 8, Math.PI / 2, -Math.PI, true); c.stroke(); } },
   };
-  // v62h (review #104, David: "Improve the icons for items and powers, they're too low res you can't see what they are supposed to be. Make more detailed and prettier"):
+
   // the main drawers are drawn again with more parts (fullers, guards, gems, rivets, buckles, folds), bright edge highlights and glows, and the plate
   // blows the glyph up and puts a soft glow of its accent colour behind it, so even at 36 px you can tell a sword from a staff
   const sh = (col, f) => M().shade(col, f);
@@ -255,7 +255,7 @@
       line(c, 0, 46, 0, -40, 2.2, sh(b, -0.4)); for (let i = 0; i < 6; i++) { line(c, 0, 30 - i * 12, -14 + i, 22 - i * 12, 1.2, sh(b, -0.3)); line(c, 0, 30 - i * 12, 14 - i, 22 - i * 12, 1.2, sh(b, -0.3)); }
     },
   });
-  // v125 (review #217, David: "Seriously improve item graphics. I cant tell what something is. A glove a robe a hat. Increase the definition of your images to a
+  // v125 (, David: "Seriously improve item graphics. I cant tell what something is. A glove a robe a hat. Increase the definition of your images to a
   // higher quality detail"): every kind of gear gets its own clear shape. A glove is a hand (four fingers and a thumb, a cuff), a robe has sleeves and a sash,
   // a hood shows a dark face with eyes, a hat has a brim. Gauntlets, claws, wraps and fingerless grips; boots, slippers, greaves and winged boots; mail, jerkin,
   // mantle, hooded cloak, heart-plate; and the trinkets that used a wrong picture (a sash, a bell, a locket, a pouch, an inkwell, a whistle...) get their own.
@@ -605,7 +605,7 @@
     bm_cleaver: ['axe', '#8a1f24'], bm_grips: ['glove', '#8a1f24'], bm_pendant: ['amulet', '#c43a3a'],
     rg_hood: ['cloak', '#4a6a3a'], rg_quiver: ['bow', '#4a6a3a'], rg_boots: ['boots', '#4a6a3a'],
   };
-  // v125 (review #217): each item gets the picture of what it is (a robe, a hood, gauntlets, slippers, a bell...), not the nearest shape.
+  // each item gets the picture of what it is (a robe, a hood, gauntlets, slippers, a bell...), not the nearest shape.
   Object.assign(IT, {
     gloves: ['wraps', '#f2ead0'], g_leather: ['glove', '#8a5a3a'], g_gauntlets: ['gauntlet', '#c9d2dc'], g_silk: ['glove', '#b07de0'], g_assassin: ['grips', '#6a1f2a'], g_venom: ['claw', '#5fbf5a'],
     titan: ['gauntlet', '#9a8a7a'], dragonclaw: ['claw', '#3a8a5a'], knuckles: ['knuckles', '#b8bec8'], furygauntlets: ['gauntlet', '#ff7a3d'], ruinhands: ['claw', '#c4303e'], storm_gloves: ['gauntlet', '#8ad0ff'], bm_grips: ['grips', '#a01f2a'],
@@ -632,7 +632,7 @@
     purse: ['purse'], tome: ['book', '#1f2f55'], wind: ['wind'], mark: ['target'], ember: ['flame'], warhorn: ['horn'], ironwill: ['fist', '#9aa0a8'], seed: ['leaf', '#8ac43a'], bounty: ['scroll'], bloodpact: ['drop', '#8a1f24'],
     shieldwall: ['shield', '#4d7fd0'], lonewolf: ['fang', '#9aa0a8'], vanguard: ['horn', '#e8b84a'], rearguard: ['bow', '#4a6a3a'], battleline: ['banner', '#c43a3a'], cover: ['leaf', '#3fa34d'],  // v33
     lastbreath: ['skull'], whetset: ['stone', '#9aa0a8'], battery: ['gem', '#c77dff'], treasure: ['scroll', '#e8c890'], rally: ['banner', '#3a5ac4'],
-    // v50 (review #62)
+
     gravestone: ['skull', '#9aa0a8'], quakedrum: ['drum', '#a0622d'], bramblecrown: ['crown', '#3fa34d'], catapult: ['hammer', '#c48a3a'], gravity: ['stone', '#6a4bd0'], anchor: ['totem', '#4a5a7a'],
     stonefoot: ['idol', '#9aa0a8'], blinkstone: ['gem', '#5fd0ff'], trickcoin: ['coin', '#c9c9d9'], highground: ['banner', '#e8b84a'], center: ['lantern', '#ffd23f'], lodestone: ['stone', '#c43a3a'],
     bodyguard: ['shield', '#3a5ac4'], packhorn: ['horn', '#8a5a2e'], jesterbell: ['hat', '#ff6fb5'], mirrorshield: ['lens', '#bfe6ff'], phoenix: ['flame', '#ff7a3d'], souljar: ['vial', '#9fe8ff'],
@@ -684,11 +684,11 @@
       c.restore();
       if (tier === 'mythic') { c.strokeStyle = '#ffd27a'; c.lineWidth = 1; rr(3.5, 3.5, px - 7, px - 7, r * 0.7); c.stroke(); }
     }
-    c.save(); c.translate(px / 2, px / 2); c.scale(px / 108, px / 108);   // v62h (review #104): the glyph fills the plate
+    c.save(); c.translate(px / 2, px / 2); c.scale(px / 108, px / 108);   // the glyph fills the plate
     if (!slot) glow(c, 0, 0, 52, spec[1] || tierColor(tier), 0.28);
     if (slot) { c.globalAlpha = 0.28; (D[spec[0]] || D.gem)(c, spec[1], spec[2]); c.restore(); }
     else {
-      // v125 (review #217): the glyph is drawn on its own layer, then laid on a dark outline of its whole shape and a soft shadow, so it reads at 30 px
+      // the glyph is drawn on its own layer, then laid on a dark outline of its whole shape and a soft shadow, so it reads at 30 px
       c.restore(); const S = px * dpr, L = document.createElement('canvas'); L.width = L.height = S; const l = L.getContext('2d');
       l.scale(dpr, dpr); l.translate(px / 2, px / 2); l.scale(px / 108, px / 108); (D[spec[0]] || D.gem)(l, spec[1], spec[2]);
       const O = document.createElement('canvas'); O.width = O.height = S; const o = O.getContext('2d'); o.drawImage(L, 0, 0); o.globalCompositeOperation = 'source-in'; o.fillStyle = '#07080c'; o.fillRect(0, 0, S, S);

@@ -2,9 +2,9 @@
 // Every unit is a small rig (humanoid, beast, bomb, golem, serpent, wraith, turret) with its own parts and colours.
 // Poses: idle (breathing), walk (legs + bob), attack (windup -> strike exactly at the hit tick), cast (arms up + glow),
 // hurt flash, death (tips over and fades). Coordinates: origin at the feet, facing right, S = unit scale in px.
-// 
+
 // FILE GUIDE. THE LOOK OF EVERY UNIT, drawn with code (no image files). Two parts: (1) the table M below = one line per hero / monster / boss: its colours and body type; (2) the "rigs" that draw each body type (humanoid, beast, bomb, golem, serpent, wraith, turret, tower, phoenix, egg).
-//   To change a unit's colours or gear: edit its line in M. To make a new body type: write a function like beast() and add it to RIGS at the bottom. Hero ART PICTURES (art/ folder) are handled by js/art.js and override these. The index of the whole project is CODEMAP.md.
+// To change a unit's colours or gear: edit its line in M. To make a new body type: write a function like beast() and add it to RIGS at the bottom. Hero ART PICTURES (art/ folder) are handled by js/art.js and override these. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   // WHAT: the default humanoid: skin, body, trim, legs, bulk (width), head type, weapon. H({...}) overrides what is different.
@@ -16,7 +16,7 @@
     vex: H({ body: '#3b2553', trim: '#a05cff', legs: '#1d1328', bulk: 0.85, head: 'hood', hood: '#2a1a3d', weapon: 'daggers', cape: '#5d2d8f', eyes: '#d9b3ff' }),
     pyra: H({ body: '#b8452a', trim: '#ffb347', robe: '#8e2f1c', head: 'hat', hat: '#5a1d12', weapon: 'staff', orb: '#ff7a3d', hair: '#ff9d3d' }),
     glacia: H({ body: '#9fd8ef', trim: '#ffffff', robe: '#5aa9cc', head: 'tiara', hair: '#e6f7ff', weapon: 'staff', orb: '#bff4ff', skin: '#f0dcd0' }),
-    // v113 (review #200, David: "Remove the custom spritesheet heroes and create for them the art, effects, svgs etc in line with the others"): Ironhorn, Ravager,
+    // Ironhorn, Ravager,
     // Stinger and Eclipse lost their picture sheets in battle and are drawn here after their official art
     brakk: H({ skin: '#c8906a', body: '#6a5a48', trim: '#c9a26a', legs: '#3a3028', bulk: 1.5, head: 'beard', bald: true, hair: '#2a1a12', weapon: 'club', pauldrons: '#9a8258', cape: '#8a1f1a', gloves: '#6a5a48' }),   // Ironhorn: bald, bearded, bronze plate, red cloak, a stone hammer
     lumen: H({ body: '#f2ead0', trim: '#ffcf5a', robe: '#e6dcb8', head: 'halo', hair: '#c9a26a', weapon: 'staff', orb: '#fff3a0' }),
@@ -32,7 +32,7 @@
     bramble: { type: 'golem', body: '#6a5236', trim: '#9fe07a', leaves: '#4f8a2f' },
     echo: H({ body: '#6a3a8a', trim: '#ffcf5a', legs: '#2a1a3a', head: 'hat', hat: '#3a1f55', hair: '#e0b070', weapon: 'lute', cape: '#9a5ac8' }),
     blaze: H({ body: '#8a5a2a', trim: '#e0c07a', legs: '#3a2a1a', head: 'tricorn', hat: '#4a2a14', skin: '#d9a07a', weapon: 'gun', cape: '#5a3a1a' }),
-    // v12 (review #11)
+
     hippolyta: H({ skin: '#c89a70', body: '#8a5a2a', trim: '#e8c070', legs: '#6a4a2a', head: 'bald', hair: '#3a2210', weapon: 'spear', cape: '#c98a3a', pauldrons: '#c9a26a' }),
     deadshot: H({ body: '#4a5a3a', trim: '#8a9a6a', legs: '#2a3a22', head: 'hood', hood: '#3a4a2a', eyes: '#ff5050', weapon: 'rifle', cape: '#34402a' }),
     vesper: H({ skin: '#ece4ee', body: '#1f1426', trim: '#c0284a', legs: '#140a18', head: 'bald', hair: '#101014', collar: '#7a1030', cape: '#5a0f1f', weapon: 'rapier' }),
@@ -48,7 +48,7 @@
     harlequin: H({ skin: '#f5f0ea', body: '#d23a8a', trim: '#1a1a1a', legs: '#2a1a2a', head: 'jester', hat: '#d23a8a', weapon: 'daggers', diamonds: '#1a1a1a' }),
     sprocket: H({ skin: '#d9a07a', body: '#3a7a5a', trim: '#e8c070', legs: '#2a3a2a', head: 'goggles', hair: '#e8e0c0', weapon: 'flask', orb: '#7ee08e', pack: true }),
     zephyr: H({ skin: '#d9a07a', body: '#e8e0c8', trim: '#3aa8a8', legs: '#c8c0a8', head: 'bald', weapon: 'none', sash: '#3aa8a8' }),
-    // v30 (review #28): the heroes unlocked by the account level
+    // the heroes unlocked by the account level
     buzzwell: H({ skin: '#f0c8a8', body: '#efe6d6', trim: '#e8c040', legs: '#e2d8c4', head: 'beehat', hat: '#f2ead8', hair: '#7a4a22', weapon: 'staff', orb: '#ffe066', gloves: '#e8c040', boot: '#6a4a2a' }),   // Stinger: a beekeeper's suit, veiled hat, yellow gloves
     coralie: H({ skin: '#f0d0c0', body: '#2fb8d8', trim: '#fff3c4', robe: '#1a86a8', head: 'tiara', hair: '#1a5a8a', weapon: 'staff', orb: '#9ff0ff' }),
     stellan: H({ skin: '#e0b48a', body: '#3a3a8a', trim: '#ffe066', legs: '#24245a', head: 'hat', hat: '#2a2a6a', hair: '#e8e8ff', weapon: 'orb', orb: '#fff6a0', cape: '#5a4ab8', sparks: true }),
@@ -73,24 +73,24 @@
     hollowking: { type: 'wraith', body: '#2a1f3a', trim: '#a44dff', crown: '#ffcf5a' },
     mirewitch: H({ skin: '#7aa05a', body: '#2f4a2a', trim: '#9ad94a', robe: '#26391f', legs: '#1f2a18', bulk: 1.3, h: 1.15, head: 'hood', hood: '#1f2f18', weapon: 'staff', orb: '#9ad94a', eyes: '#d9ff7a' }),   // v52
     colossus: { type: 'golem', body: '#5a5f6a', trim: '#ffcf5a' },   // v52
-    packlord: { type: 'beast', body: '#4a3628', trim: '#ff6a3a' },   // v83 (review #161)
+    packlord: { type: 'beast', body: '#4a3628', trim: '#ff6a3a' },
     lichqueen: H({ skin: '#cfe9f7', body: '#1f3550', trim: '#8fe3ff', robe: '#16263c', legs: '#12203a', bulk: 1.25, h: 1.2, head: 'tiara', weapon: 'staff', orb: '#8fe3ff', eyes: '#8fe3ff', cape: '#0f1a30' }),   // v83
-    // v60 (review #72): Prism, the Citadel and its soldiers
-    // v62h (review #99): Prism is not a person but a long crystal that hovers
+    // Prism, the Citadel and its soldiers
+    // Prism is not a person but a long crystal that hovers
     prism: { type: 'crystal', body: '#3a9ac0', trim: '#d8fbff', core: '#7dffe0' },
     citadel: { type: 'tower', body: '#a89a86', trim: '#c9a26a', flag: '#4f7cff' },
     footman: H({ skin: '#e0b48a', body: '#6a7a9a', trim: '#c9a26a', legs: '#3a3a42', bulk: 1, head: 'helm', weapon: 'sword', pauldrons: '#8a92a8' }),
     bowman: H({ skin: '#e0b48a', body: '#4a6a3a', trim: '#c9a26a', legs: '#3a3a2a', bulk: 0.9, head: 'hood', hood: '#3a5a2a', weapon: 'bow', quiver: true }),
-    // v62 (review #78): Smolder, Tom the cook, Ashwing and its egg
+    // Smolder, Tom the cook, Ashwing and its egg
     smolder: H({ skin: '#d9a07a', body: '#5a2a22', trim: '#ff7a3d', legs: '#2a1a18', bulk: 1.35, head: 'helm', pauldrons: '#8a3a2a', cape: '#3a1a14', plume: '#ff5a1a', weapon: 'staff', orb: '#ff7a3d' }),
     tom: H({ skin: '#e8b090', body: '#f2eee4', trim: '#c8453a', legs: '#3a3a48', bulk: 1.1, head: 'chef', hat: '#ffffff', weapon: 'club', hair: '#6a4a2a' }),
     ashwing: { type: 'phoenix', body: '#ff8a2a', trim: '#ffd23f', tail: '#ff4a1a' },
     egg: { type: 'egg', body: '#ffe0b0', trim: '#ff7a3d' },
-    // v62i (review #105)
+
     rohammer: H({ skin: '#c8906a', body: '#8a4a2a', trim: '#e8943a', legs: '#4a3020', bulk: 1.6, head: 'bald', hair: '#2a1a10', weapon: 'club', pauldrons: '#6a5a4a' }),
     // v62h (reviews #98, #100, #101, #102)
     plasma: { type: 'cannon', body: '#4a5a78', trim: '#5fe0ff' },
-    onyx: { type: 'turtle', body: '#3fae8a', trim: '#1f4a3c', shell: '#2d6a52', spikes: '#e8e0c8' },   // v104 (review #184)
+    onyx: { type: 'turtle', body: '#3fae8a', trim: '#1f4a3c', shell: '#2d6a52', spikes: '#e8e0c8' },
     // v121 (reviews #209-#212): Chronos the chronomancer, Belladonna the toxicologist, Kitsune the spirit fox
     chronos: H({ skin: '#e0c4a8', body: '#1f6f7a', trim: '#ffd23f', robe: '#174f58', head: 'hat', hat: '#123c44', hair: '#e8f6f8', weapon: 'staff', orb: '#4dd0e1', cape: '#0e3a42' }),
     bella: H({ skin: '#e8d0c0', body: '#3a5a22', trim: '#c6ff6a', robe: '#2a4418', head: 'hood', hood: '#24361a', eyes: '#c6ff6a', weapon: 'flask', orb: '#9ccc65', hair: '#2a1a2a' }),
@@ -108,7 +108,7 @@
     turret: { type: 'turret', body: '#d9a441', trim: '#5a4a2a' },
   };
   M.clone = M.mirage;
-  // v62k (review #107, David: "heads are obvious balls, movements too repetitive and mechanical, weapons all the same"): a weapon style per hero
+  // a weapon style per hero
   // (see STYLES in weapon()); and every model knows its key so that it gets its own idle tempo, phase and posture
   const WS = { chronos: 'ring', bella: 'eyeorb', kitsune: 'curved', seraph: 'holy', nyx: 'scimitar', knight: 'broad', footman: 'broad', skeleton: 'rusty', mirage: 'foil', vesper: 'crimson', duelist: 'duel', vex: 'curved', kage: 'kunai', harlequin: 'jest',
     pyra: 'flame', glacia: 'crystal', lumen: 'sun', tempest: 'bolt', buzzwell: 'hive', coralie: 'shell', shaman: 'skullstaff', summoner: 'candle', mirewitch: 'crook', smolder: 'nozzle', gardener: 'sprout',
@@ -120,7 +120,7 @@
   // ------------------------------------------------------------------ helpers
   // WHAT: HELPERS for drawing: shade() makes a colour lighter or darker, limb() a thick line, ball() a shaded circle, poly() a shaded polygon, seg() a thin line. Every rig is built from these.
   const TAU = Math.PI * 2;
-  // ---- review #8 "more HD": every part is drawn cel-shaded: dark ink outline, shaded body, a light rim toward the
+  // ---- "more HD": every part is drawn cel-shaded: dark ink outline, shaded body, a light rim toward the
   // upper-left light, and a specular glint on round parts. All models go through these helpers.
   const LIGHT = 0.38, INK = 'rgba(12,10,16,0.9)';
   function rgbOf(col) {
@@ -128,7 +128,7 @@
     const m = col.match(/[\d.]+/g); return m ? [+m[0], +m[1], +m[2]] : [128, 128, 128];
   }
   // WHAT: lightens (f > 0) or darkens (f < 0) a colour.
-  const SHADES = new Map();   // v126 (review #222): shade() is called thousands of times a frame with the same colours; the answers are remembered
+  const SHADES = new Map();   // shade() is called thousands of times a frame with the same colours; the answers are remembered
   function shade(col, f) {
     const key = col + '|' + f, hit = SHADES.get(key); if (hit) return hit;
     if (SHADES.size > 4000) SHADES.clear();
@@ -166,7 +166,7 @@
       const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, shade(col, 0.28)); g.addColorStop(0.5, col); g.addColorStop(1, shade(col, -0.32)); c.fillStyle = g;
     } else c.fillStyle = col;
     c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();
-    // v62j (review #106, David: "the prism looks clean, drawn, the rest look like poor cylinders"): bright facet edges on the sides facing the light
+    // bright facet edges on the sides facing the light
     if (isColor(col) && pts.length >= 3) {
       let cx = 0, cy = 0; for (const [x, y] of pts) { cx += x; cy += y; } cx /= pts.length; cy /= pts.length;
       c.save(); c.strokeStyle = 'rgba(255,255,255,0.62)'; c.lineWidth = 1.1; c.lineCap = 'round';
@@ -188,7 +188,7 @@
     // [front arm, back arm]
     let f = 0.35 + Math.sin(p.t * 2.2) * 0.05, b = -0.25 - Math.sin(p.t * 2.2) * 0.05;
     if (p.walk != null) { const s = Math.sin(p.walk * TAU); f = 0.2 - s * 0.45; b = -0.1 + s * 0.45; }
-    // v111 (review #198): the fidget of this hero (p.fid 0..1 while it plays, only when idle)
+    // the fidget of this hero (p.fid 0..1 while it plays, only when idle)
     if (p.fid != null && p.walk == null && p.atk == null && p.cast == null) {
       const e = Math.sin(p.fid * Math.PI), k = p.fidK;
       if (k === 'twirl') f += e * 0.9;
@@ -254,7 +254,7 @@
     else if (w === 'scythe') { limb(c, -S * 0.3, 0, S * 0.65, 0, S * 0.05, '#4a3a2a'); c.fillStyle = '#c8d0da'; c.beginPath(); c.moveTo(S * 0.65, 0); c.quadraticCurveTo(S * 0.55, -S * 0.45, S * 0.15, -S * 0.42); c.quadraticCurveTo(S * 0.45, -S * 0.3, S * 0.6, 0); c.fill(); }
     c.restore();
   }
-  // v62k (review #107): one drawing per weapon style; the local frame has +x along the weapon, S = the unit scale. A hero picks its style with ws (see WS above).
+  // one drawing per weapon style; the local frame has +x along the weapon, S = the unit scale. A hero picks its style with ws (see WS above).
   // WHAT: STYLES = the special weapons (holy sword, scimitar, flame staff, ladle, hammer...); weapon() falls back to the plain drawings when a hero has no style.
   const STYLES = {
     holy: (c, m, S, p) => { const g = 0.6 + 0.4 * Math.sin(p.t * 3); c.globalAlpha *= 0.35 * g; limb(c, S * 0.1, 0, S * 0.78, 0, S * 0.14, '#fff3a0'); c.globalAlpha /= 0.35 * g; poly(c, [[S * 0.08, -S * 0.05], [S * 0.72, -S * 0.035], [S * 0.84, 0], [S * 0.72, S * 0.035], [S * 0.08, S * 0.05]], '#f6faff', OUT); limb(c, S * 0.1, 0, S * 0.78, 0, 1.2, '#ffe9a0'); poly(c, [[S * 0.06, -S * 0.16], [S * 0.1, -S * 0.16], [S * 0.1, S * 0.16], [S * 0.06, S * 0.16]], '#e8b84a', OUT); limb(c, -S * 0.1, 0, S * 0.06, 0, S * 0.05, '#6a4a2a'); ball(c, -S * 0.12, 0, S * 0.05, '#ffe066'); },
@@ -292,8 +292,8 @@
     eyeorb: (c, m, S, p) => { c.globalAlpha *= 0.4; ball(c, S * 0.14, 0, S * 0.16, '#9b5de5'); c.globalAlpha /= 0.4; c.fillStyle = '#f2ead0'; c.beginPath(); c.ellipse(S * 0.14, 0, S * 0.12, S * 0.07, 0, 0, TAU); c.fill(); c.strokeStyle = OUT; c.lineWidth = 1; c.stroke(); ball(c, S * 0.14 + Math.sin(p.t * 1.3) * S * 0.03, 0, S * 0.045, '#c77dff'); ball(c, S * 0.14 + Math.sin(p.t * 1.3) * S * 0.03, 0, S * 0.02, '#111'); },
   };
   function staffPole(c, S, col) { limb(c, -S * 0.35, 0, S * 0.55, 0, S * 0.05, '#6a4a2a'); limb(c, S * 0.46, 0, S * 0.52, 0, S * 0.07, col); }
-  // ------------------------------------------------------------------ v111 (review #198)
-  // v111 (review #198, David: "Improve the detail of heroes svg in battle screen, making each more unique, and add more frames to their animations"):
+  // ------------------------------------------------------------------ 
+
   // SIG = each hero's own details on top of the shared body (an emblem on the chest, a tabard or apron, a torn cape, a scarf that trails, fur, chains,
   // pouches, a feather, an eye patch, a moustache, a scar...), its own proportions (pr: head, legs, shoulders, hunch) and the particles around it
   // (aura: embers, snow, notes, wisps, motes, leaves, bubbles...). The motion gets more in-between frames: blinking, breathing, a fidget of its own every
@@ -342,7 +342,7 @@
     duelist: { feather: '#ffffff', stache: '#3a2a1a', scarf: '#a4262f', em: ['star', '#ffd23f'], pr: { leg: 1.06 } },
     medic: { em: ['cross', '#e0405a'], pouches: '#6a4a3a', aura: 'motes', ac: '#9dff7a' },
     gardener: { aura: 'leaves', ac: '#7ee08e', flower: '#ff7fb8', apron: '#7a5a3a' },
-    // v113 (review #200, David: "improve detail of the battle arena and enemies"): the monsters and bosses get their own details too
+    // the monsters and bosses get their own details too
     grunt: { necklace: '#e8e0c8', pouches: '#5a3a1a', scar: 1, pr: { head: 1.1, hunch: 0.06 } },
     archer: { feather: '#e05555', scarf: '#6a5a32', pr: { leg: 1.04 } },
     brute: { scar: 1, chain: '#6a6a70', paintFace: '#c43a3a', pr: { head: 0.85, hunch: 0.09 } },
@@ -479,7 +479,7 @@
       if (sg.flower) { const fx = hx - r * 0.45, fy = hy - r * 0.95; for (let i = 0; i < 5; i++) { const a = i * TAU / 5 + p.t * 0.5; dot(c, fx + Math.cos(a) * r * 0.16, fy + Math.sin(a) * r * 0.16, r * 0.13, sg.flower); } dot(c, fx, fy, r * 0.1, '#ffe066'); }
     }
   }
-  // v62k (review #107): a head with a forehead, brow, nose, lips, chin, jaw and an ear, in light and shade, instead of a plain sphere
+  // a head with a forehead, brow, nose, lips, chin, jaw and an ear, in light and shade, instead of a plain sphere
   // WHAT: draws the bare head (skin only) at hx, hy with radius r. Hair, hats and eyes are drawn over it by headgear().
   function face(c, m, hx, hy, r) {
     const sk = m.skin;
@@ -529,7 +529,7 @@
       limb(c, hx + r * 0.1, hy, hx + r * 1.05, hy, r * 0.2, '#111');
       if (m.plume) { c.fillStyle = m.plume; c.beginPath(); c.ellipse(hx - r * 0.4, hy - r * 1.2, r * 0.7, r * 0.3, -0.5, 0, TAU); c.fill(); }
     } else if (k === 'hood') {
-      // v62k (review #107): a draped hood with a point at the back, a lit fold and a dark opening, not a ball
+      // a draped hood with a point at the back, a lit fold and a dark opening, not a ball
       { const g = c.createLinearGradient(hx - r, hy - r * 1.5, hx + r, hy + r); g.addColorStop(0, shade(m.hood, 0.3)); g.addColorStop(0.55, m.hood); g.addColorStop(1, shade(m.hood, -0.35));
         c.fillStyle = g; c.beginPath(); c.moveTo(hx + r * 0.95, hy + r * 0.55); c.quadraticCurveTo(hx + r * 1.15, hy - r * 0.5, hx + r * 0.3, hy - r * 1.05); c.quadraticCurveTo(hx - r * 0.6, hy - r * 1.35, hx - r * 1.45, hy - r * 0.9);
         c.quadraticCurveTo(hx - r * 1.2, hy - r * 0.2, hx - r * 1.25, hy + r * 0.6); c.quadraticCurveTo(hx - r * 0.6, hy + r * 1.2, hx + r * 0.1, hy + r * 1.1); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = 1.3; c.stroke();
@@ -570,7 +570,7 @@
     else if (k === 'ears' && m.earCol) { for (const [x0, x1] of [[-0.75, -0.25], [0.15, 0.65]]) { poly(c, [[hx + r * x0, hy - r * 0.6], [hx + r * (x0 + x1) / 2, hy - r * 1.75], [hx + r * x1, hy - r * 0.7]], m.earCol, OUT); poly(c, [[hx + r * (x0 + 0.12), hy - r * 0.7], [hx + r * (x0 + x1) / 2, hy - r * 1.45], [hx + r * (x1 - 0.12), hy - r * 0.75]], '#fff3e0'); } }   // v121: Kitsune's fox ears
     else if (k === 'ears') { flat(c, [[hx - r * 0.6, hy - r * 0.2], [hx - r * 1.6, hy - r * 0.7], [hx - r * 0.7, hy + r * 0.25]], m.skin, OUT); flat(c, [[hx + r * 0.5, hy - r * 0.5], [hx + r * 1.3, hy - r * 1.1], [hx + r * 0.8, hy - r * 0.2]], m.skin, OUT); }
   }
-  // ---- review #12 (David: "generic stickman"): limbs with volume and joints, shaped torso, neck, faces with eyes.
+  // ---- limbs with volume and joints, shaped torso, neck, faces with eyes.
   // tapered segment: a filled, outlined, shaded quad with round caps (upper arm, forearm, thigh, shin)
   function tlimb(c, x1, y1, x2, y2, w1, w2, col) {
     const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
@@ -589,7 +589,7 @@
     const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1;
     return [mx - dy / L * bend * L, my + dx / L * bend * L];
   }
-  // v62j (review #106): a limb with one bend (upper and lower part) drawn as ONE shape: no round joints, one outline, a lit edge, like the Prism's facets
+  // a limb with one bend (upper and lower part) drawn as ONE shape: no round joints, one outline, a lit edge, like the Prism's facets
   // WHAT: draws a limb through the points pts (shoulder, elbow, hand) with widths ws, filled with a light-to-dark gradient, outlined once, with a bright edge on the lit side.
   function bent(c, pts, ws, col) {
     const Lp = [], Rp = [];
@@ -622,10 +622,10 @@
   // WHAT: draws a person: legs, body, cape, arms, head, weapon, in the pose p (idle, walk, attack, cast).
   function humanoid(c, m, S, p) {
     const s = S * m.h, bulk = m.bulk, det = !!p.detail;   // v62j: sturdier limbs, bigger head and chest than the first stick-like rig
-    // v62k (review #107, "movements too repetitive and mechanical"): every hero has its own idle tempo, phase and sway, leans back before a blow and lunges into it,
+    // every hero has its own idle tempo, phase and sway, leans back before a blow and lunges into it,
     // leans into a run and rocks as it walks, tips back to cast, and its head nods a little behind its body
     const sd = seedOf(m._k || 'x'), tempo = 1.5 + (sd % 7) * 0.2, amp = 0.7 + ((sd >> 3) % 5) * 0.18, ph0 = sd % 13;
-    // v111 (review #198): its own fidget every few seconds and a blink (not on still pictures), its own proportions
+    // its own fidget every few seconds and a blink (not on still pictures), its own proportions
     const sg = m.sig || {}, pr = sg.pr || {}, still = !!(p.still || p.detail), idle = p.walk == null && p.atk == null && p.cast == null && !p.dead;
     const fz = ((p.t + ph0 * 0.9) % (6 + (sd % 5))) / 1.3, blink = !still && ((p.t + ph0 * 0.31) % (3 + (sd % 4) * 0.5)) < 0.12;
     p = Object.assign({}, p, { fid: !still && idle && fz < 1 ? fz : null, fidK: fidgetOf(m.weapon), blink });
@@ -739,7 +739,7 @@
       const a = p.walk != null ? Math.sin(run + ph) * 0.5 : 0;
       limb(c, x + lunge, by + s * 0.1, x + lunge + Math.sin(a) * s * 0.35, by + s * 0.1 + Math.cos(a) * s * 0.35, s * 0.09, back ? shade(m.body, -0.35) : shade(m.body, -0.1));
     }
-    { const tw = Math.sin(p.t * (p.walk != null ? 9 : 3)) * s * 0.08;   // v113 (review #200): a bushy tail that swings
+    { const tw = Math.sin(p.t * (p.walk != null ? 9 : 3)) * s * 0.08;   // a bushy tail that swings
       c.beginPath(); c.moveTo(-s * 0.42 + lunge, by - s * 0.08); c.quadraticCurveTo(-s * 0.62 + lunge, by - s * 0.32 + tw, -s * 0.9 + lunge, by - s * 0.36 + tw); c.quadraticCurveTo(-s * 0.66 + lunge, by + s * 0.14 + tw * 0.5, -s * 0.4 + lunge, by + s * 0.1); c.closePath();
       c.fillStyle = shade(m.body, -0.1); c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); dot(c, -s * 0.84 + lunge, by - s * 0.3 + tw, s * 0.05, m.trim); }
     const g = c.createLinearGradient(0, by - s * 0.2, 0, by + s * 0.2); g.addColorStop(0, shade(m.body, 0.25)); g.addColorStop(1, shade(m.body, -0.3));
@@ -839,7 +839,7 @@
     flat(c, [[-s * 0.2, -s * 0.2], [-s * 0.1, -s * 0.4], [0, -s * 0.22], [s * 0.1, -s * 0.44], [s * 0.2, -s * 0.2]], m.trim, OUT);
     c.restore();
   }
-  // v62h (review #99, David: "Prism is not human but a hovering elongated crystal"): a tall faceted shard that floats and bobs above its shadow,
+  // a tall faceted shard that floats and bobs above its shadow,
   // with three small shards circling it; it flares when it attacks or casts
   // WHAT: the "crystal" rig (Prism). m.body = the glass, m.trim = the bright edges, m.core = the glow inside.
   function crystal(c, m, S, p) {
@@ -858,7 +858,7 @@
       flat(c, [[x, y - k * 1.5], [x + k, y], [x, y + k * 1.5], [x - k, y]], d > 0 ? m.trim : shade(m.body, 0.2), OUT);
     }
   }
-  // v62h (review #98): the Plasma Cannon: a stout tripod with a big barrel and a glowing plasma core; it kicks back when it fires and flares when it casts
+  // the Plasma Cannon: a stout tripod with a big barrel and a glowing plasma core; it kicks back when it fires and flares when it casts
   // WHAT: the "cannon" rig (Plasma Cannon). m.body = the metal, m.trim = the plasma glow.
   function cannon(c, m, S, p) {
     const s = S * 1.05, fire = p.atk != null ? Math.sin(Math.min(1, p.atk) * Math.PI) : 0, cast = p.cast != null ? Math.sin(p.cast * Math.PI) : 0, rec = fire * s * 0.12, pulse = 0.5 + 0.5 * Math.sin(p.t * 4);
@@ -874,7 +874,7 @@
     c.globalAlpha *= 0.35 + 0.5 * Math.max(fire, cast); dot(c, s * 0.92 + bx, -s * 0.61, s * (0.1 + 0.16 * Math.max(fire, cast)), m.trim); c.globalAlpha /= 0.35 + 0.5 * Math.max(fire, cast);
     dot(c, s * 0.92 + bx, -s * 0.61, s * 0.05, '#ffffff');
   }
-  // v62h (review #102): the Gardener's plants, one look per kind (m.kind): a thorny bush, a pink bloom, a blue lily and a spore mushroom; they sway
+  // the Gardener's plants, one look per kind (m.kind): a thorny bush, a pink bloom, a blue lily and a spore mushroom; they sway
   // WHAT: the "plant" rig (Thornbush, Healing Bloom, Shield Lily, Spore Pod). m.body = the leaves, m.trim = the flower or glow.
   function plant(c, m, S, p) {
     const s = S * 0.95, sw = Math.sin(p.t * 2.4) * s * 0.035, k = m.kind, grow = p.t < 0.4 ? 0.6 + p.t * 1 : 1;
@@ -899,7 +899,7 @@
     c.restore();
   }
   // WHAT: the list of rigs by name. A unit's "type" in M picks one.
-  // v104 (review #184): ONYX, a spiky turtle (in his shell: only the shell, a little sunk)
+  // ONYX, a spiky turtle (in his shell: only the shell, a little sunk)
   function turtle(c, m, S, p) {
     const s = S * 0.95, step = p.walk != null ? p.walk * TAU : 0, bob = p.walk != null ? Math.abs(Math.sin(step)) * s * 0.03 : Math.sin(p.t * 2) * s * 0.01;
     const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.18 : 0, sy = -s * 0.3 - bob + (p.shell ? s * 0.1 : 0);
@@ -914,7 +914,7 @@
     for (const x of [-0.24, 0, 0.24]) flat(c, [[s * (x - 0.09), sy - s * 0.12], [s * x, sy - s * 0.2], [s * (x + 0.09), sy - s * 0.12], [s * x, sy - s * 0.04]], shade(m.trim, 0.1));
     limb(c, -s * 0.47, sy + s * 0.06, s * 0.47, sy + s * 0.06, s * 0.05, m.trim);
   }
-  // v104 (review #184): the EMBER WYRM, a squat dragon; wings spread and the body lifts while it flies
+  // the EMBER WYRM, a squat dragon; wings spread and the body lifts while it flies
   function dragon(c, m, S, p) {
     const s = S * 1.05, step = p.walk != null ? p.walk * TAU : p.t * 1.2, lift = p.fly ? s * 0.55 : 0, bob = p.walk != null ? Math.abs(Math.sin(step)) * s * 0.04 : Math.sin(p.t * 2) * s * 0.015;
     const lunge = p.atk != null ? Math.sin(p.atk * Math.PI) * s * 0.18 : 0, by = -s * 0.5 - bob - lift, flap = p.fly ? Math.sin(p.t * 22) * 0.5 : Math.sin(p.t * 2) * 0.12;
@@ -949,7 +949,7 @@
     // ground shadow (not flipped, not rotated)
     { const rx = S * 0.44 * (m.bulk || 1) ** 0.5, g = c.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
       c.save(); c.scale(1, 0.34); c.fillStyle = g; c.beginPath(); c.arc(0, 0, rx, 0, TAU); c.fill(); c.restore(); }
-    // v111 (review #198): a turning sigil on the ground while casting
+    // a turning sigil on the ground while casting
     if (pose.cast != null && !pose.dead) { const k = Math.sin(pose.cast * Math.PI), R = S * 0.52; c.save(); c.scale(1, 0.34); c.rotate(pose.t * 1.6); c.globalAlpha *= k * 0.85; c.strokeStyle = tint || m.orb || m.trim || '#fff'; c.lineWidth = 2.4; c.beginPath(); c.arc(0, 0, R, 0, TAU); c.stroke(); c.lineWidth = 1.4; c.beginPath(); c.arc(0, 0, R * 0.78, 0, TAU); c.stroke();
       for (let i = 0; i < 3; i++) { const a = i * TAU / 3; c.beginPath(); c.moveTo(Math.cos(a) * R * 0.78, Math.sin(a) * R * 0.78); c.lineTo(Math.cos(a + TAU / 3) * R * 0.78, Math.sin(a + TAU / 3) * R * 0.78); c.stroke(); } for (let i = 0; i < 8; i++) { const a = i * TAU / 8; seg(c, Math.cos(a) * R * 0.86, Math.sin(a) * R * 0.86, Math.cos(a) * R * 0.96, Math.sin(a) * R * 0.96); } c.restore(); }
     // v111: the death in three beats: the knees buckle, the body falls and bounces once, then it fades

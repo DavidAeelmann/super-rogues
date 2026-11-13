@@ -1,8 +1,8 @@
-// v42 (review #51, David: "more dopamine hits ... captivate the audience"): the little rewards on screen. Confetti,
+// the little rewards on screen. Confetti,
 // coins that fly into the gold counter, numbers that count up, a bump when something changes, a floating "+6".
 // Everything is drawn in a fixed layer above the page (#fx, never catches taps) and removed when it ends. With
 // "reduce motion" switched on in the system, the effects are skipped and only the final numbers show.
-// 
+
 // FILE GUIDE. SMALL REWARD EFFECTS on screen: confetti, coins flying to the gold counter, numbers counting up, a bump when something changes, a floating +6. Everything is drawn in a layer above the page that never catches taps. Turned off when the player asked for reduced motion. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
@@ -34,7 +34,7 @@
       p.animate(frames, { duration: T * 1000, easing: 'linear', delay: Math.random() * 120 }).onfinish = () => p.remove();
     }
   }
-  // v88 (review #168, David: "tiny dust particles when heroes are redeployed"): a puff of dust at a screen point, where a hero lands
+  // a puff of dust at a screen point, where a hero lands
   // WHAT: a small puff of dust (soft round grains rolling out low and fading).
   function dust(x, y, n = 12) {
     if (reduced()) return;

@@ -1,13 +1,13 @@
 // Hero art from pictures (owner, 2026-09-29: an Art Lab where David attaches pictures and tests how the heroes look).
 // A hero can have a splash picture (cards, banners, portraits) and an animation sheet for the battle figure: one row
-// per animation (idle, walk, attack, ability, death), several frames per row (review #43, David: "use the entire
+// per animation (idle, walk, attack, ability, death), several frames per row (, David: "use the entire
 // animation provided, filling in between if not smooth"). Frames play in order and blend into the next one; a single
 // frame gets its motion from code (breathing, hop, lunge, cast pulse). Official art ships in art/<hero>/ and is listed
 // in OFFICIAL; the Art Lab keeps a test version on this device only (localStorage) until it is sent for review.
 // A hero without art keeps the drawn model (models.js) and the painted-in-code splash (splash.js).
-// 
+
 // FILE GUIDE. REAL PICTURES for heroes (instead of the code-drawn models), from the folder art/. OFFICIAL = the pictures shipped with the game. The Art Lab (js/artlab.js) lets a player test his own pictures on this device and send them for review.
-//   A hero can have a splash picture (cards and banners) and an animation sheet for the battle (rows: idle, walk, attack, ability, death). cutSheet / cutCards cut a sheet into frames and remove the background. The index of the whole project is CODEMAP.md.
+// A hero can have a splash picture (cards and banners) and an animation sheet for the battle (rows: idle, walk, attack, ability, death). cutSheet / cutCards cut a sheet into frames and remove the background. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   // WHAT: the animation names: ANIMS (a sheet has one row per animation); POSES = the older one-row sheets. IDLE_FPS = frames per second of the idle loop.
@@ -15,27 +15,27 @@
   const ANIMS = ['idle', 'move', 'attack', 'cast', 'death'];   // an animation sheet: one row per animation
   const IDLE_FPS = 5, MAX_FRAMES = 16;
   // key: { splash: 'art/<folder>/splash.jpg', crop: { x, y, z }, anims: { idle: ['art/<folder>/idle-1.webp', ...], ... },
-  //        axs: { idle: [0.5, ...] }, flip, scale }
-  // v78 (review #155, David): each folder is named after the hero as it is called now (art/<current name>/, see tools/tests/engine.js);
+  // axs: { idle: [0.5, ...] }, flip, scale }
+  // each folder is named after the hero as it is called now (art/<current name>/, see tools/tests/engine.js);
   // the keys below stay the game ids (saved teams, ratings and stats use them)
   const seq = (dir, k, n) => Array.from({ length: n }, (_, i) => `art/${dir}/${k}-${i + 1}.webp`);
   // WHAT: the pictures that ship with the game: for each hero key, where its splash and animation frames are (art/<key>/...). Add a hero's art by adding its entry here and the files in art/.
   const OFFICIAL = {
-    // review #45 (David): Ravager. His sheet had 5 rows: idle 5, walk 8, attack 7, a charge 6 and a
+    // Ravager. His sheet had 5 rows: idle 5, walk 8, attack 7, a charge 6 and a
     // spin 7 frames; his ability (Crimson Spin) plays the charge and then the spin, so every frame is used
-    thorne: { splash: 'art/ravager/splash.jpg', crop: { x: 0.517, y: 0.287, z: 1 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
-    // review #46 (David): Ironhorn. Idle 7, walk 8, attack 7 and ability (Ramming Charge) 6 frames; the lab had glued 3
+    thorne: { splash: 'art/ravager/splash.jpg', crop: { x: 0.517, y: 0.287, z: 1 }, flip: false, scale: 1 },   // drawn in code in battle like every other hero
+    // Ironhorn. Idle 7, walk 8, attack 7 and ability (Ramming Charge) 6 frames; the lab had glued 3
     // attack frames (and 2 ability frames) together through the swoosh arcs, split here and fixed in cutSheet
-    brakk: { splash: 'art/ironhorn/splash.jpg', crop: { x: 0.654, y: 0.329, z: 1.26 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
-    // review #47 (David): Stinger, sent as "Astral" (the lab opened on the first hero of the list). Her sheet had no space
+    brakk: { splash: 'art/ironhorn/splash.jpg', crop: { x: 0.654, y: 0.329, z: 1.26 }, flip: false, scale: 1 },   // drawn in code in battle like every other hero
+    // Stinger, sent as "Astral" (the lab opened on the first hero of the list). Her sheet had no space
     // between the frames; cut by the frame pitch here and in cutSheet. Idle 16, walk 15; the attack is her 5 quick
     // throws (drawn smaller, scaled up); the ability (Honey Hive) is the 7 hive-throw frames then the 12 swarm frames;
     // death 11 frames
-    buzzwell: { splash: 'art/stinger/splash.jpg', crop: { x: 0.538, y: 0.314, z: 1 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
-    // review #48 (David): Eclipse. A sheet of cards (every frame on a pink tile, with a title and row labels): cut per
+    buzzwell: { splash: 'art/stinger/splash.jpg', crop: { x: 0.538, y: 0.314, z: 1 }, flip: false, scale: 1 },   // drawn in code in battle like every other hero
+    // Eclipse. A sheet of cards (every frame on a pink tile, with a title and row labels): cut per
     // card by cutCards, 8 frames in each of idle, walk, attack, ability (the smoke bomb flies, then the flash) and death
-    kage: { splash: 'art/eclipse/splash.jpg', crop: { x: 0.509, y: 0.235, z: 1.2 }, flip: false, scale: 1 },   // v113 (review #200): drawn in code in battle like every other hero
-    // review #59 (PC boy): splash art for 10 heroes (cards, banners and portraits only: their battle figures stay drawn).
+    kage: { splash: 'art/eclipse/splash.jpg', crop: { x: 0.509, y: 0.235, z: 1.2 }, flip: false, scale: 1 },   // drawn in code in battle like every other hero
+    // splash art for 10 heroes (cards, banners and portraits only: their battle figures stay drawn).
     // The crop centres each face for the portrait
     rex: { splash: 'art/fang/splash.jpg', crop: { x: 0.32, y: 0.424, z: 1.1 }, flip: false, scale: 1 },   // Fang
     bramble: { splash: 'art/bramble/splash.jpg', crop: { x: 0.61, y: 0.316, z: 1.1 }, flip: false, scale: 1 },   // Bramble
@@ -47,7 +47,7 @@
     pip: { splash: 'art/jinx/splash.jpg', crop: { x: 0.363, y: 0.321, z: 1.2 }, flip: false, scale: 1 },   // Jinx
     lumen: { splash: 'art/solace/splash.jpg', crop: { x: 0.533, y: 0.342, z: 1.2 }, flip: false, scale: 1 },   // Solace
     bastion: { splash: 'art/aegir/splash.jpg', crop: { x: 0.442, y: 0.336, z: 1.2 }, flip: false, scale: 1 },   // Aegir
-    // review #68 (PC boy): splash art for 12 more heroes (cards, banners, portraits; battle figures stay drawn)
+    // splash art for 12 more heroes (cards, banners, portraits; battle figures stay drawn)
     sprocket: { splash: 'art/vial/splash.jpg', crop: { x: 0.414, y: 0.273, z: 1.15 }, flip: false, scale: 1 },   // Vial
     zephyr: { splash: 'art/kaze/splash.jpg', crop: { x: 0.357, y: 0.231, z: 1.2 }, flip: false, scale: 1 },   // Kaze
     pyra: { splash: 'art/feuer/splash.jpg', crop: { x: 0.441, y: 0.268, z: 1.2 }, flip: false, scale: 1 },   // Feuer
@@ -60,7 +60,7 @@
     nyx: { splash: 'art/nyx/splash.jpg', crop: { x: 0.51, y: 0.21, z: 1.2 }, flip: false, scale: 1 },   // Nyx
     harlequin: { splash: 'art/rapture/splash.jpg', crop: { x: 0.505, y: 0.235, z: 1.2 }, flip: false, scale: 1 },   // Rapture
     deadshot: { splash: 'art/deadeye/splash.jpg', crop: { x: 0.44, y: 0.25, z: 1.2 }, flip: false, scale: 1 },   // Deadeye
-    // v126 (review #218, David: Art Lab batch 159): splash art for 12 more heroes; the crop centres each face for the portrait
+    // splash art for 12 more heroes; the crop centres each face for the portrait
     ashwing: { splash: 'art/ashwing/splash.jpg', crop: { x: 0.38, y: 0.28, z: 1.2 }, flip: false, scale: 1 },   // Ashwing
     bella: { splash: 'art/belladonna/splash.jpg', crop: { x: 0.54, y: 0.23, z: 1.2 }, flip: false, scale: 1 },   // Belladonna
     chronos: { splash: 'art/chronos/splash.jpg', crop: { x: 0.51, y: 0.23, z: 1.2 }, flip: false, scale: 1 },   // Chronos
@@ -154,7 +154,7 @@
     if (mode === 'bust') { sw = Math.min(iw, ih) * 0.55 / clamp(cr.z, 0.3, 4); sh = sw * h / w; }
     else { const r = w / h; sh = Math.min(ih, iw / r); sw = sh * r; }
     sw = Math.min(sw, iw); sh = Math.min(sh, ih);
-    const sx = clamp(cr.x * iw - sw / 2, 0, iw - sw), sy = clamp(cr.y * ih - sh * (mode === 'bust' ? 0.5 : 0.3), 0, ih - sh);   // v79 (review #157): x/y = the centre of the face, which sits in the middle of a bust
+    const sx = clamp(cr.x * iw - sw / 2, 0, iw - sw), sy = clamp(cr.y * ih - sh * (mode === 'bust' ? 0.5 : 0.3), 0, ih - sh);   // x/y = the centre of the face, which sits in the middle of a bust
     const dpr = 3, cv = document.createElement('canvas'); cv.width = w * dpr; cv.height = h * dpr;
     const c = cv.getContext('2d'); c.imageSmoothingQuality = 'high';
     c.drawImage(im, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
@@ -247,7 +247,7 @@
       if (a > 0 && a < 1) { px[i] = clamp((px[i] - (1 - a) * br) / a, 0, 255); px[i + 1] = clamp((px[i + 1] - (1 - a) * bgc) / a, 0, 255); px[i + 2] = clamp((px[i + 2] - (1 - a) * bb) / a, 0, 255); }
       px[i + 3] = Math.round(a * 255); A[j] = a > 0.35 ? 1 : 0;
     }
-    // review #46: the key colour bleeds into the outline (a pink halo on magenta). On pixels near the cut-out, take the
+    // the key colour bleeds into the outline (a pink halo on magenta). On pixels near the cut-out, take the
     // spill off the key's strong channels (magenta: red and blue down to green; green: green down to red/blue)
     const hi = [br, bgc, bb].map(v => v > 128), lo = hi.map(h => !h);
     if (hi.some(Boolean) && lo.some(Boolean)) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -341,7 +341,7 @@
     };
     return { rows: rowsB.map(r => r.map(cut)), found, dropped, pitches, bg: `rgb(${Math.round(br)},${Math.round(bgc)},${Math.round(bb)})` };
   }
-  // review #48 (David): sheets that draw every frame on a card (a tile of one colour on a sheet of another colour, with
+  // sheets that draw every frame on a card (a tile of one colour on a sheet of another colour, with
   // a title and row labels around it). The card colour is the most common colour left once the sheet background is
   // gone; cards are the blocks of that colour, row by row. Each card is keyed on its own colour with its border trimmed,
   // and all the frames of a row keep the same size and place, so the figure moves inside the frame exactly as drawn
@@ -435,7 +435,7 @@
   }
   // what was cut -> the def's animations. Several rows: row 1 idle, 2 walk, 3 attack, 4 ability, 5 death, every frame
   // kept. A single row: the old pose sheet (idle, walk, attack, ability, one frame each).
-  // `map` (review #45) says what each row is ('idle', 'move', 'attack', 'cast', 'death' or 'none'); rows given the same
+  // `map` () says what each row is ('idle', 'move', 'attack', 'cast', 'death' or 'none'); rows given the same
   // animation are joined in order (a charge row + a spin row = one ability)
   function defaultMap(res) { return res.rows.map((_, i) => ANIMS[i] || 'none'); }
   // WHAT: builds a picture definition from a cut sheet and the row-to-animation map.

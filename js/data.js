@@ -1,16 +1,16 @@
 // All game content: heroes (+ specs), items, relics, mobs, bosses, events, economy.
 // "mods" is the shared vocabulary read by run.js (stats) and sim.js (combat hooks). See CLAUDE.md for the full list.
-// 
+
 // FILE GUIDE (read this first). This file is ONLY DATA (tables of numbers and texts). It is the easiest file to change by hand; nothing here runs the game.
-//   Tables, top to bottom:  B.CFG (prices, pacing, difficulty curve)  >  B.HEROES (41 heroes, each with 4 pairs of level-up powers)  >  B.ITEMS (equipment, by rarity and type), B.TYPES, B.RARITIES, B.SETS
-//   >  TAGS (one short line per hero for shop cards)  >  B.RELICS (the team-wide "Powers", 100 of them), B.FORMATION, SHORT (shorter texts)  >  B.MOBS, B.BOSSES, B.ELITES, B.POOLS, B.DIFF (enemies)
-//   >  B.EVENTS (the ? days)  >  B.LEAGUES, seasons, Crown Shop (B.SHOP), account XP (B.ACCOUNT, B.UNLOCKS)  >  terrain maps (B.TERRAIN, B.MAPS).
-//   RECIPES.  Make fights easier or harder: edit B.CFG.fightScale and B.DIFF, then run "node tools/pve-odds.js" to see the win rates (easy ~99%, medium ~90%, hard ~60%, bosses ~55%).
-//             Change a price or the gold rewards: B.CFG.  Change a hero's power: edit his block here, then "node tools/hero-odds.js" shows his win rate against the others (aim 54-60%).
-//             Add a hero: copy a block in B.HEROES, give it a new key, fill the fields (see the guide above B.HEROES), add its TAGS line (10 to 38 characters), a model in js/models.js, and if the ability is new:
-//             A.<ability> in js/sim.js and an entry in SCALE in js/ui.js. Then update the hero count in tools/tests/engine.js.  Add an item or power: add one line to B.ITEMS (N(...)) or B.RELICS (R(...)).
-//             "mods" is the shared vocabulary of stats (atk, hpPct, asPct, crit, armor...); run.js adds them up (heroMods) and sim.js reacts to the special ones. Read the existing items to see which names exist.
-//   Texts you see in the game for heroes, items, powers and events are all in this file. Renaming something here renames it everywhere (ids stay the same, so saves keep working).
+// Tables, top to bottom: B.CFG (prices, pacing, difficulty curve) > B.HEROES (41 heroes, each with 4 pairs of level-up powers) > B.ITEMS (equipment, by rarity and type), B.TYPES, B.RARITIES, B.SETS
+// > TAGS (one short line per hero for shop cards) > B.RELICS (the team-wide "Powers", 100 of them), B.FORMATION, SHORT (shorter texts) > B.MOBS, B.BOSSES, B.ELITES, B.POOLS, B.DIFF (enemies)
+// > B.EVENTS (the ? days) > B.LEAGUES, seasons, Crown Shop (B.SHOP), account XP (B.ACCOUNT, B.UNLOCKS) > terrain maps (B.TERRAIN, B.MAPS).
+// RECIPES. Make fights easier or harder: edit B.CFG.fightScale and B.DIFF, then run "node tools/pve-odds.js" to see the win rates (easy ~99%, medium ~90%, hard ~60%, bosses ~55%).
+// Change a price or the gold rewards: B.CFG. Change a hero's power: edit his block here, then "node tools/hero-odds.js" shows his win rate against the others (aim 54-60%).
+// Add a hero: copy a block in B.HEROES, give it a new key, fill the fields (see the guide above B.HEROES), add its TAGS line (10 to 38 characters), a model in js/models.js, and if the ability is new:
+// A.<ability> in js/sim.js and an entry in SCALE in js/ui.js. Then update the hero count in tools/tests/engine.js. Add an item or power: add one line to B.ITEMS (N(...)) or B.RELICS (R(...)).
+// "mods" is the shared vocabulary of stats (atk, hpPct, asPct, crit, armor...); run.js adds them up (heroMods) and sim.js reacts to the special ones. Read the existing items to see which names exist.
+// Texts you see in the game for heroes, items, powers and events are all in this file. Renaming something here renames it everywhere (ids stay the same, so saves keep working).
 (function (G) {
   const B = G.B = G.B || {};
 
@@ -23,34 +23,34 @@
     gold: { easy: 6, medium: 9, hard: 13, boss: 16 },
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
-    // by fight number (1..8). Review #22: 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
+    // by fight number (1..8). 8 fights, bosses at 4 and 8 keep the strength they had at 3 and 6 (1.3, 2)
     fightScale: [1, 1.63, 1.48, 1.69, 1.69, 1.96, 2.25, 2.47, 2.43],   // tuned by tools/tune-pve.js
-    firstFight: 0.3,  // review #22: the first fight is fought by a single hero: a small enemy budget (v64, review #126: one hero again; 0.3 measured, a gentle first win)
+    firstFight: 0.3,  // the first fight is fought by a single hero: a small enemy budget (v64, one hero again; 0.3 measured, a gentle first win)
     suddenDeath: 45, fightCap: 150,     // seconds
-    suddenDeathRamp: 0.01,              // review #24: sudden death burns every unit for 1%, 2%, 3%... of max HP per second
+    suddenDeathRamp: 0.01,              // sudden death burns every unit for 1%, 2%, 3%... of max HP per second
     // node sequence: F = fight (2 of easy/medium/hard), X = shop or event (2 options), B = boss (no option),
-    // S = final shop choice (2 shops), G = the PvP gauntlet against player ghosts (review #9 removed the Onslaught)
-    // Review #22 (David): the run starts with 1 hero and 1 relic, and each boss gets 1 more fight and 1 more shop/event
-    // v101 (review #183, David: "Final shop is in gauntlet. Pve ends after boss2nd"): G (the victory) comes right after the second boss; the last shop (S)
+    // S = final shop choice (2 shops), G = the PvP gauntlet against player ghosts (removed the Onslaught)
+    // the run starts with 1 hero and 1 relic, and each boss gets 1 more fight and 1 more shop/event
+    // G (the victory) comes right after the second boss; the last shop (S)
     // sits after it and opens when you enter the Gauntlet
     seq: ['F', 'X', 'F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'F', 'X', 'B', 'G', 'S'],
-    // v63 (review #117 / #118, David): 3 lives (a lost fight costs one, the third ends the run); v64 (review #126): the run starts with 1 hero picked from 3 (one of each class),
+    // 3 lives (a lost fight costs one, the third ends the run); the run starts with 1 hero picked from 3 (one of each class),
     // and after each of the first days a free hero joins (picked from 3, the same screen) until the team has 3 (freeRecruits); 1 power and a few common items to start;
     // on the fight days in pvpFights one of the choices is a duel against another player's team that reached about the same day (a win steals a hero, an item or a power);
     // the last day (G) is the final fight against a team that won its own final fight
-    // v96 (review #178, David: "Remove pvp from the pve part, both in the middle and end. The gauntlet is all there is for pvp. You win pve, get a victory screen,
+    // v96 (, David: "Remove pvp from the pve part, both in the middle and end. The gauntlet is all there is for pvp. You win pve, get a victory screen,
     // and then gauntlet"): no duel days (pvpFights empty) and G is no longer a fight: reaching it completes the run (victory screen, then the Gauntlet gate)
-    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 0, startItems: 0, lives: 1, pvpFights: [], ghostPower: 0.76,   // v101 (review #186): lives = the Ward (one)
+    startHeroes: 1, startOffer: 3, freeRecruits: 2, startRelics: 0, startItems: 0, lives: 1, pvpFights: [], ghostPower: 0.76,   // lives = the Ward (one)
   };
 
   // ---------------------------------------------------------------- heroes
   // base stats at level 1. as = attacks/sec, ms = hexes/sec, mana = max mana, m0 = starting mana
   // HERO ENTRY GUIDE. key: H({ name, glyph (emoji), role, color, hp, atk, armor (= Defense: protects against physical AND magic damage, v62h), as (attacks per second), range (hexes), ms (moves per second), mana (cost of the ability), m0 (mana at start), grow (level growth, 0.5 to 1.8),
-  //   abil (id of the function in sim.js), abName, abDesc (the text players read), ab (the numbers the ability function reads), fl (special flags), specs: 4 pairs = the two powers offered at levels 2, 3, 4 and 5 }).
-  //   A spec has { id, name, desc, mods?, ab?, fl? }: mods = stat bonus, ab = adds to the ability numbers, fl = turns on a special behaviour in sim.js.
+  // abil (id of the function in sim.js), abName, abDesc (the text players read), ab (the numbers the ability function reads), fl (special flags), specs: 4 pairs = the two powers offered at levels 2, 3, 4 and 5 }).
+  // A spec has { id, name, desc, mods?, ab?, fl? }: mods = stat bonus, ab = adds to the ability numbers, fl = turns on a special behaviour in sim.js.
   const H = (o) => o;
   // WHAT: all heroes. The key (bastion, vex, pyra...) is the permanent id; the NAME shown to players is the "name" field (bastion is shown as Aegir) and can be changed freely.
-  // v93 (review #174, David: "Standardize those hero descriptions like tidecaller tank etc. Use tank, fighter, ranger, summoner, healer, support, assassin, etc."):
+
   // every hero's role is one of nine: Tank, Fighter, Assassin, Ranger, Mage, Summoner, Healer, Support, Controller (role = what it does in a fight;
   // the class, tank / support / damage, still decides the shops' role balance)
   B.ROLES = ['Tank', 'Fighter', 'Assassin', 'Ranger', 'Mage', 'Summoner', 'Healer', 'Support', 'Controller'];
@@ -223,7 +223,7 @@
         [{ id: 'roo5a', name: 'Overclocked Turrets', desc: 'His turrets attack 50% faster and have 30% more Health.', ab: { asMul: 0.5, hpMul: 0.3 } },
          { id: 'roo5b', name: 'Factory', desc: 'Starts each fight with a turret already built.', fl: ['factory'] }],
       ] }),
-    // ---- v5 (review #2): heroes whose power grows during the fight (passive scaling, from the start or on upgrade)
+    // ---- heroes whose power grows during the fight (passive scaling, from the start or on upgrade)
     thorne: H({ name: 'Ravager', glyph: '🪓', role: 'Fighter', color: '#d4483b',
       hp: 855, atk: 57, armor: 23, as: 0.8, range: 1, ms: 2.5, mana: 70, m0: 20, grow: 1.6,
       mods: { stackAtk: 2, stackAtkCap: 25 },
@@ -314,7 +314,7 @@
         [{ id: 'blz5a', name: 'Sundown Duel', desc: 'Shots deal 50% more and ignore 30% Defense.', ab: { dmg: 0.35, pen: 0.3 } },
          { id: 'blz5b', name: 'Last Bullet', desc: 'The final shot of each Flurry deals triple damage.', ab: { lastShot: 2 } }],
       ] }),
-    // ---- v12 (review #11, David: "many more unique heroes, go wild")
+    // ---- 
     hippolyta: H({ name: 'Skara', glyph: '🔱', role: 'Ranger', color: '#c98a3a',
       hp: 595, atk: 48, armor: 21, as: 1.0, range: 2, ms: 2.5, mana: 92, m0: 10, grow: 0.5,
       mods: { stackAs: 0.04, stackAsCap: 10, poisonOnHit: 0.012 },
@@ -527,7 +527,7 @@
         [{ id: 'zep5a', name: 'Still Center', desc: 'The kick deals double.', ab: { dmg: 1.7 } },
          { id: 'zep5b', name: 'Seven Winds', desc: 'Kicks 2 targets.', ab: { targets: 1 } }],
       ] }),
-    // v30 (review #28, PC boy): three heroes unlocked by the account level (B.UNLOCKS)
+    // three heroes unlocked by the account level (B.UNLOCKS)
     buzzwell: H({ name: 'Stinger', glyph: '🐝', role: 'Mage', color: '#ffc21a',
       hp: 520, atk: 33, armor: 23, as: 0.8, range: 3, ms: 2, mana: 65, m0: 25, grow: 1.09,
       abil: 'hive', abName: 'Honey Hive', abDesc: 'Drops a beehive on the densest enemy group: bees sting everyone within 1 hex for 30% Magic per second for 4s, and the weakest ally heals 120% Magic.',
@@ -570,7 +570,7 @@
         [{ id: 'ste5a', name: 'Supernova', desc: '+60% star damage.', ab: { dmg: 0.72, apdmg: 0.36 } },
          { id: 'ste5b', name: 'Starlight Veil', desc: 'When the star lands, allies within 2 hexes get a shield of 15% of their max Health.', ab: { veil: 0.15 } }],
       ] }),
-    // v60 (review #72, PC boy): "a hero that doesnt autoattack but casts a continuous ray that goes to the nearest target,
+    // "a hero that doesnt autoattack but casts a continuous ray that goes to the nearest target,
     // friend or foe: if friend heal, if foe, deal damage. Option to have more than 1 ray. Gains mana as more damage or
     // healing is dealt; ultimate is supercharging the beams"
     prism: H({ name: 'Prism', glyph: '🔆', role: 'Support', color: '#5fe0ff', fl: ['beam'],
@@ -587,7 +587,7 @@
         [{ id: 'pri5a', name: 'Prismatic Storm', desc: 'Overcharge splits into 2 more beams instead of 1.', ab: { extra: 1 } },
          { id: 'pri5b', name: 'Radiance', desc: 'Overcharge also shields every ally for 15% of their max Health.', ab: { shield: 0.15 } }],
       ] }),
-    // v60 (review #72, PC boy): "a literal tower that cannot move, but sends little soldiers, medieval, to fight (spawns
+    // "a literal tower that cannot move, but sends little soldiers, medieval, to fight (spawns
     // them): melees or archers. Cannot move, but can be killed like others. No auto attack. When soldiers attack he
     // charges mana. Ultimate is putting all his units in a frenzy"
     citadel: H({ name: 'Citadel', glyph: '🏰', role: 'Summoner', color: '#c9a26a', fl: ['tower'],
@@ -604,7 +604,7 @@
         [{ id: 'cit5a', name: 'Champion', desc: 'Every third soldier is a champion with double Health and Attack.', ab: { champion: 1 } },
          { id: 'cit5b', name: 'Last Bastion', desc: 'When the Citadel falls, its soldiers stay in a frenzy until the end.', ab: { last: 1 } }],
       ] }),
-    // v62 (review #78, David): "1) At start of fight consume an item held and permanently gain its stats (including dodge,
+    // "1) At start of fight consume an item held and permanently gain its stats (including dodge,
     // regenerate etc but not including effects). Ability is a flamethrower burning in an arc in front of him dot. A tanky
     // character like a firebat. 2) Tom the cook, utility support whose ability to dispense food randomly gives heroes attack
     // speed, attack, a shield, or health. Possibility to damage enemies later. 3) phoenix hero that when dead leaves an egg,
@@ -652,7 +652,7 @@
         [{ id: 'ash5a', name: 'Rebirth Blast', desc: 'When it hatches, enemies within 2 hexes take 150% Magic as magic damage.', ab: { burst: 1.5 } },
          { id: 'ash5b', name: 'Eternal Flame', desc: 'Is reborn at full Health.', ab: { revive: 0.4 } }],
       ] }),
-    // v62i (review #105, David): Rohammer, a huge brute with a very slow hammer
+    // Rohammer, a huge brute with a very slow hammer
     rohammer: H({ name: 'Rohammer', glyph: '🔨', role: 'Tank', color: '#e8943a', fl: ['brute'],
       hp: 1035, atk: 76, armor: 30, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 0.98,
       abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): slow hammer blows stun for 0.2s; it gains Energy only from damage taken (2 per 1% of max Health). Active: sweeps enemies within 2 hexes in front: 150% Attack, knocked back 2 hexes and stunned 1s.',
@@ -742,7 +742,7 @@
         [{ id: 'kit5a', name: 'Eclipse Dash', desc: 'Foxfire blinks her behind the farthest enemy, and her next hit taken triggers Spirit Jaunt.', ab: { eclipse: 1 } },
          { id: 'kit5b', name: 'Spirit Ward', desc: 'Allies next to Kitsune get +20% dodge.', ab: { ward: 0.2 } }],
       ] }),
-    // v104 (review #184, David: "onyx: tank. shelled creature which when dies the first time retreats into its shell, which is impassable terrain. After 4
+    // v104 (, David: "onyx: tank. shelled creature which when dies the first time retreats into its shell, which is impassable terrain. After 4
     // seconds bursts back out, stunning all adjacent enemies and inflicting damage. Second, also passive ability, is that enemies who attack him with
     // autoattack get damaged x% of his defense"): two passives, no cast (shellguard never fires)
     onyx: H({ name: 'Onyx', glyph: '🐢', role: 'Tank', color: '#3fae8a', fl: ['shell', 'spikes'],
@@ -759,7 +759,7 @@
         [{ id: 'ony5a', name: 'Living Fortress', desc: 'Allies next to him get 30% of his Defense.', fl: ['shellaura'] },
          { id: 'ony5b', name: 'Snapping Jaws', desc: 'His bites deal 60% of his Defense as extra damage.', ab: { biteArmor: 0.6 } }],
       ] }),
-    // v104 (review #184, David: "dragon. Tanky dragon. Active ability: flies in the direction with the most enemies in a straight line, leaving a line of
+    // v104 (, David: "dragon. Tanky dragon. Active ability: flies in the direction with the most enemies in a straight line, leaving a line of
     // fire in his wake, then lands at the end (the farthest hex in that line still in the map). Invulnerable while flying")
     dragon: H({ name: 'Ember Wyrm', glyph: '🐉', role: 'Tank', color: '#e2543a',
       hp: 1570, atk: 76, armor: 34, as: 0.7, range: 1, ms: 2, mana: 98, m0: 35, grow: 0.99,
@@ -2240,7 +2240,7 @@
     I('archangel', 'Staff of Ascent', 'epic', { ap: 32.01, apPerSec: 4 }, '+30 Magic, +4 Magic every second in combat'),
     I('lastwhisper', 'Final Hush', 'epic', { armorPen: 0.4749, atk: 30.93 }, 'Ignore 44% Defense, +28 Attack'),
     I('dragonclaw', 'Wyrmscale Gloves', 'epic', { armor: 15.63, regen: 0.0078 }, '+19 Defense, 0.78% regen per second'),
-    // ---- v5 (review #2): 20 more, several that grow during the fight
+    // ---- 20 more, several that grow during the fight
     I('knuckles', 'Iron Knuckles', 'common', { atk: 6.14, stackAtk: 1.02, stackAtkCap: 15.34 }, '+6 Attack, +1 Attack per hit (15x)'),
     I('warpaint', 'Clan Warpaint', 'common', { rampAtk: 1.07, rampAtkCap: 21.42 }, '+1 Attack every second in combat (up to +20)'),
     I('bandana', "Rogue's Bandana", 'common', { asPct: 0.1563, dodge: 0.0522 }, '+15% attack speed, +5% dodge'),
@@ -2344,7 +2344,7 @@
     N('helmet', 'rg_hood', 'Wildwarden Hood', 'set', { crit: 0.0837, asPct: 0.0837 }, '+8% crit, +8% attack speed', 'ranger'),
     N('offhand', 'rg_quiver', 'Wildwarden Quiver', 'set', { asPct: 0.1629 }, '+16% attack speed', 'ranger'),
     N('boots', 'rg_boots', 'Wildwarden Boots', 'set', { ms: 1.04, dodge: 0.0836 }, '+1 move speed, +8% dodge', 'ranger'),
-    // v30 (review #28): five items unlocked by the account level
+    // five items unlocked by the account level
     N('trinket', 'honeycomb', 'Honeycomb Charm', 'rare', { hp: 76.68, ap: 7.29, regen: 0.0074 }, '+100 Health, +10 Magic, regenerates 0.74% Health per second'),
     N('armor', 'starcloak', 'Starwoven Cloak', 'rare', { armor: 19.17, dodge: 0.0672 }, '+20 Defense, +7% dodge'),
     N('offhand', 'tidepearl', 'Tide Pearl', 'epic', { ap: 54.86, manaStart: 24.4, armor: 15.83 }, '+45 Magic, +20 starting Energy, +13 Defense'),
@@ -2374,7 +2374,7 @@
   for (const sid in B.SETS) { B.SETS[sid].id = sid; B.SETS[sid].pieces = B.ITEMS.filter(i => i.set === sid).map(i => i.id); }
   B.ITEM = {}; for (const it of B.ITEMS) B.ITEM[it.id] = it;
 
-  // v51 (review #63, David: "Heroes in shop simplify description (like throws pies at enemies)"): what each hero does, in a
+  // "): what each hero does, in a
   // few plain words, for the shop and the start; the full ability and its numbers are one tap away (Details)
   // WHAT: the ONE short line shown under each hero in shops (10 to 38 characters, a test checks it).
   const TAGS = {
@@ -2419,9 +2419,9 @@
   TAGS.smolder = 'Eats an item each fight, burns foes'; TAGS.tom = 'Serves dishes that buff or heal allies'; TAGS.ashwing = 'A fire bird that returns from an egg';   // v62
   TAGS.plasma = 'Never moves, shoves foes back'; TAGS.duelist = 'Locks itself and one foe in a duel'; TAGS.medic = 'Heals with its attacks and grenades'; TAGS.gardener = 'Plants that attack, heal and shield'; TAGS.rohammer = 'Slow hammer, rages when hit';    // v62h
   TAGS.chronos = 'Turns back time on a hurt ally'; TAGS.bella = 'Stacks poison, then makes it spread'; TAGS.kitsune = 'Dodges, dashes and charms the back row';   // v121
-  TAGS.onyx = 'A spiky turtle that hides in its shell'; TAGS.dragon = 'Dives through foes, leaving fire';   // v104 (review #184)
+  TAGS.onyx = 'A spiky turtle that hides in its shell'; TAGS.dragon = 'Dives through foes, leaving fire';
   for (const k in TAGS) if (B.HEROES[k]) B.HEROES[k].tag = TAGS[k];
-  // v126 (review #219, David: "Remove all references to previous names of the characters, only the current names count"): a hero has one name, h.name.
+  // a hero has one name, h.name.
   // The key (bastion, thorne...) is only a fixed id used by saves, ghosts and ratings; it is not a name and is never shown (art folders use the current name).
 
   // ---------------------------------------------------------------- relics (100) — team-wide
@@ -2452,7 +2452,7 @@
     R('tome', 'Mossbound Tome', 'All current heroes gain 45 XP now.', { fl: 'tome' }),
     R('wind', 'Tail Gust', 'All heroes +1 move speed and +10% attack speed, and an attack right after moving deals +39%.', { mods: { ms: 0.83, asPct: 0.0832, firstMoveAtk: 0.3237 } }),
     R('mark', 'Quarry Brand', '+31% damage to elites and bosses.', { mods: { eliteDmg: 0.3144 } }),
-    // ---- v5 (review #2)
+    // ---- 
     R('ember', 'Smoldering Coal', "Heroes' attacks burn for 11% Attack per second.", { mods: { burnOnHit: 0.1155 } }),
     R('warhorn', 'Charging Horn', 'Heroes start fights with +30% attack speed for 5s.', { fl: 'warhorn' }),
     R('ironwill', 'Unbending Oath', 'Each hero ignores the first crowd control of every fight and has +58 Health.', { mods: { cleanseOnce: 0.8082, hp: 47.44 } }),
@@ -2464,7 +2464,7 @@
     R('battery', 'Energy Coil', 'Abilities need 15% less Energy.', { mods: { manaMaxPct: -0.15 } }),
     R('treasure', 'Faded Chart', 'Item shops stock 2 more items.', { fl: 'treasure' }),
     R('rally', 'Muster Flag', 'Each hero gives +10 Defense to adjacent allies.', { mods: { aura: [{ r: 1, stat: 'armor', val: 10 }] } }),
-    // v30 (review #28): ten relics unlocked by the account level
+    // ten relics unlocked by the account level
     R('beehive', 'Tiny Beehive', 'All heroes +10 Magic, and their attacks poison for 0.32% max Health per second.', { mods: { ap: 7.14, poisonOnHit: 0.0032 } }),
     R('seashell', 'Singing Seashell', 'All heroes +8 Defense and +7% attack speed.', { mods: { armor: 5.64, asPct: 0.0495 } }),
     R('kite', 'Paper Kite', 'All heroes +1 move speed and +5% dodge.', { mods: { ms: 1.14, dodge: 0.0562 } }),
@@ -2475,7 +2475,7 @@
     R('fireflies', 'Firefly Jar', 'All heroes +10 Attack and +10 Magic.', { mods: { atk: 8.91, ap: 8.91 } }),
     R('pinwheel', 'Pinwheel', 'All heroes +7% attack speed and +1 Energy per second.', { mods: { asPct: 0.0522, manaRegen: 0.7442 } }),
     R('horseshoe', 'Lucky Horseshoe', 'All heroes +8% dodge and +5% crit chance.', { mods: { dodge: 0.075, crit: 0.0467 } }),
-    // v33 (review #40, David: "relics that give bonuses depending on unit formation"): judged from where the heroes stand
+    // judged from where the heroes stand
     // when the fight starts (front row = the blue row nearest the enemy, back row = the last one); the deploy screen
     // shows who gets what while you move them
     R('shieldwall', 'Shieldwall Banner', 'Formation: each hero gets +10 Defense for every ally standing next to it when the fight starts.', { fl: 'shieldwall', form: true }),
@@ -2484,7 +2484,7 @@
     R('rearguard', 'Rearguard Quiver', 'Formation: heroes starting in your back row get +20% Attack and +20% Magic.', { fl: 'rearguard', form: true }),
     R('battleline', 'Battle Line Pennant', 'Formation: if all your heroes start in the same row, they all get +15% attack speed and +15% Attack.', { fl: 'battleline', form: true }),
     R('cover', 'Mossy Totem', 'Formation: heroes starting next to a tree, boulder, ridge or pond get +15% dodge and +15 Defense.', { fl: 'cover', form: true }),
-    // v50 (review #62, David: "50 genuinely inventive relics ... memorable holy shit moments, change how I position or
+    // v50 (, David: "50 genuinely inventive relics ... memorable holy shit moments, change how I position or
     // build my team, interact with the hex board, alter targeting/AI, create new synergies ... Some relics should
     // fundamentally alter the run's economy, route, shops, rewards, hero selection, itemization, or risk/reward ... Every
     // relic needs a clear identity, interesting tradeoff"). Each one is a simple rule with a price; the rule lives in
@@ -2553,10 +2553,10 @@
     rearguard: () => '+20% Attack & Magic', battleline: () => '+15% attack speed & attack', cover: () => '+15% dodge, +15 Defense',
     highground: n => n > 0 ? '+1 range, +20% damage' : '15% less damage', center: n => n > 0 ? 'the Star: +40% Health, Attack & Magic' : '10% less Health',   // v50
   };
-  // v58 (review #70, David: "Simplify the relic descriptions"): a short line for every relic (what it does, in a few words)
+  // a short line for every relic (what it does, in a few words)
   // for shops, the start and the map; the full rule is one tap away (r.desc)
   // WHAT: a shorter description for each Power, used on small cards. If a Power has none, its full description is used.
-  // v98 (review #180, David: "The descriptions of powers are very hard to understand... make it so that anybody with no experience can understand them. Even if
+  // v98 (, David: "The descriptions of powers are very hard to understand... make it so that anybody with no experience can understand them. Even if
   // it doesnt give all the info. They can click for more info"): every power has a plain line with no game words (no crit, Energy, regen, crowd control);
   // the exact numbers stay in the full rule (r.desc), one tap away (More)
   const SHORT = {
@@ -2663,7 +2663,7 @@
   };
   for (const r of B.RELICS) r.short = SHORT[r.id] || r.desc;
   B.RELIC = {}; for (const r of B.RELICS) B.RELIC[r.id] = r;
-  // review #14 (David): content Elo only rates what acts in a fight, so these never get a rating
+  // content Elo only rates what acts in a fight, so these never get a rating
   // WHAT: items and Powers with no effect in a fight (gold, shop and event tricks). They are left out of the win-rate (Elo) rating.
   B.NONCOMBAT = { item: ['coin', 'charm'], relic: ['idol', 'lens', 'seal', 'dice', 'purse', 'tome', 'treasure', 'bounty', 'ledger', 'deck', 'quill', 'huntmap', 'anvil', 'changeling', 'xmap', 'medal', 'double'] };
 
@@ -2693,20 +2693,20 @@
       desc: 'Cleaves everything around it. Calls the horde at half health and enrages at 25%.', escort: ['grunt', 'grunt', 'archer'] },
     hollowking: { key: 'hollowking', name: 'The Ashen Sovereign', glyph: '👑', boss: 2, hp: 2670, atk: 57, armor: 45, as: 0.7, range: 2, ms: 2, mana: 60, abil: 'nova',
       desc: 'Void Nova stuns everything near it. Rends the weakest hero from afar. Splits its court at 66% and 33%.', escort: ['hexer', 'archer'] },
-    // v52 (review #64, David: "Add an additional possibility for each of the bosses (not chosen, is chosen at random at
+    // v52 (, David: "Add an additional possibility for each of the bosses (not chosen, is chosen at random at
     // start of each run) and balance it"): slot 1 is the Gorewarden or the Mirewitch, slot 2 the Ashen Sovereign or the
     // Iron Colossus (run.bosses, drawn in Run.newRun). Their strength is tuned with tools/boss-odds.js
     mirewitch: { key: 'mirewitch', name: 'Mirewitch Morra', glyph: '🧪', boss: 1, slot: 1, hp: 1360, atk: 42, armor: 38, as: 0.7, range: 3, ms: 1.8, mana: 50, abil: 'bog',
       desc: 'Hurls poison bog that stays on the ground. Turns your strongest hero into a frog every 9s. Sinks into the swamp at half health and calls serpents.', escort: ['grunt', 'spitter', 'archer'] },
     colossus: { key: 'colossus', name: 'The Iron Colossus', glyph: '🗿', boss: 2, slot: 2, hp: 4280, atk: 77, armor: 48, as: 0.55, range: 1, ms: 1.5, mana: 70, abil: 'quake',
       desc: 'Stomps the ground and shoves heroes away (into stones, they are stunned). Vents steam every 8s and takes more damage while it does. Calls shield bearers at 60%, melts down at 30%.', escort: ['knight', 'bomber'] },
-    // v83 (review #161, David: "add 1 more boss option per each boss floor and balance them"): a third boss for each floor
+    // a third boss for each floor
     packlord: { key: 'packlord', name: 'Skorrak the Packlord', glyph: '🐺', boss: 1, slot: 1, hp: 1520, atk: 42, armor: 30, as: 0.85, range: 1, ms: 2.6, mana: 55, abil: 'packhowl',
       desc: 'Howls for wolves and drives his pack into a frenzy. Pounces on your weakest backline hero every 9s. At half health the Blood Moon heals him and makes him stronger.', escort: ['wolf', 'wolf', 'archer'] },
     lichqueen: { key: 'lichqueen', name: 'Vaelith the Lich Queen', glyph: '❄️', boss: 2, slot: 2, hp: 2900, atk: 60, armor: 40, as: 0.7, range: 3, ms: 1.8, mana: 60, abil: 'lichstorm',
       desc: 'Calls blizzards that chill and slow a whole group. Freezes your strongest hero every 7s. Raises the dead at 66% and hides in an ice tomb at 33%.', escort: ['hexer', 'knight'] },
   };
-  // v83 (review #161): Health and Attack of all six bosses set by tools/tune-bosses.js so every boss of a floor is won about as often (boss 1 ~62%, boss 2 ~57%,
+  // Health and Attack of all six bosses set by tools/tune-bosses.js so every boss of a floor is won about as often (boss 1 ~62%, boss 2 ~57%,
   // the same teams for each; before: 72 / 60 / 19% and 76 / 71 / 76%)
   // WHAT: which bosses can wait in boss slot 1 (fight 4) and slot 2 (fight 8); one is picked per run (v83: three per slot).
   B.BOSS_SLOTS = [['gorewarden', 'mirewitch', 'packlord'], ['hollowking', 'colossus', 'lichqueen']];
@@ -2731,42 +2731,42 @@
     easy: { name: 'Easy', budget: 3.2, elites: 0, mul: [1.09, 0.95, 1.19, 0.99, 1.09, 1.13, 1.06, 1.06, 1.09] },   // v61: mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
     hard: { name: 'Hard', budget: 5.8, elites: 1, mul: [0.93, 0.76, 0.95, 0.91, 0.93, 1.09, 1.03, 0.99, 0.93] },   // v61: ~60% (v62: 72% in fights 1-3)
-    horde: { name: 'Horde', budget: 8.4, elites: 0, pool: 2 },   // v44 (review #54): the Bounty Board's horde challenge
+    horde: { name: 'Horde', budget: 8.4, elites: 0, pool: 2 },   // the Bounty Board's horde challenge
   };
 
   // ---------------------------------------------------------------- events
-  // v44 (review #54, David: "Redesign the events. They are just not very interesting and rarely worth it. Add more
+  // v44 (, David: "Redesign the events. They are just not very interesting and rarely worth it. Add more
   // diversity, add rewards, extra challenges. Read up online what similar games do"). What the genre does, and what the
   // events do now:
-  //   - Slay the Spire, Darkest Dungeon: every choice is a real trade (a price, a risk or a curse for a big reward);
-  //   - Hades (the Erebus gates), Monster Train (trials): optional CHALLENGE fights that start right away; lose one and
-  //     only that reward is gone (the run goes on), win it for a big reward;
-  //   - TFT augments, Slay the Spire's relic rooms: you see the actual relics and items on offer and pick one;
-  //   - FTL's "blue options": extra choices only a team with the right hero can take (a melee hero, a ranged hero, a
-  //     caster, a healer, a hero at Lv 3); everyone sees them, so players learn they exist;
-  //   - rarity: common, uncommon and rare events (rare ones pay a lot); an event is not offered twice in a run;
-  //   - rewards grow with the run: {gN} = N gold, {xN} = N XP, times 1 + 5% for each fight after the first.
-  // v45 (review #55, David: "The new events are way too op. The fight bounties, gold gain, xp gain, etc is just way
+  // - Slay the Spire, Darkest Dungeon: every choice is a real trade (a price, a risk or a curse for a big reward);
+  // - Hades (the Erebus gates), Monster Train (trials): optional CHALLENGE fights that start right away; lose one and
+  // only that reward is gone (the run goes on), win it for a big reward;
+  // - TFT augments, Slay the Spire's relic rooms: you see the actual relics and items on offer and pick one;
+  // - FTL's "blue options": extra choices only a team with the right hero can take (a melee hero, a ranged hero, a
+  // caster, a healer, a hero at Lv 3); everyone sees them, so players learn they exist;
+  // - rarity: common, uncommon and rare events (rare ones pay a lot); an event is not offered twice in a run;
+  // - rewards grow with the run: {gN} = N gold, {xN} = N XP, times 1 + 5% for each fight after the first.
+  // v45 (, David: "The new events are way too op. The fight bounties, gold gain, xp gain, etc is just way
   // too much. I like the hero specific unlocked choices though"): every reward is smaller (about the size of the old
   // v43 events, some below), growth is +5% per fight (was +15%), challenges pay one prize and no gold on top, and bets
   // are close to fair. Measured with tools/sim-run.js: a bot that prefers events now does about as well as one that
   // prefers shops. The hero-specific choices stay, a little better than the plain ones.
   // A choice can have:
-  //   act     what it does (run.js eventAct): xpAll:n, xpHero:n, hpAll:p, hpHero:p, buffHero / buffAll (+mods), gold:n,
-  //           item:any|common|rare|epic, typeItem:rarity, mystery, sellFull, upgradeItem, gambleItem, gamble:bet:odds:win,
-  //           relic, relicPick:id, relicBlood:p[:id], relicItem, respec, hire:key, join:key, take:itemId, setPiece,
-  //           tradeSet, invest:back, loan:now:later, levelAll, levelHero, transmute, potion, mimic, fight, none
-  //   cost    gold paid up front              target  'hero' | 'item' | 'type': the player picks what it applies to
-  //   next    a modifier for the NEXT fight: enemyHp / enemyAtk (+-%), manaStart, regen, atkPct (your heroes),
-  //           goldPct, reward ('legendary' item if you win it), rewardGold
-  //   req     'melee' | 'ranged' | 'caster' | 'healer' | 'lvl3': only a team with such a hero can take it (a hero target
-  //           is then one of those heroes)
-  //   risk    a short warning shown in red         minRarity (item targets)
-  //   fight   a challenge that starts now: { kind: 'solo'|'bandits'|'pack'|'horde'|'mimic'|'hoard', name,
-  //           win: { gold, item: rarity, relic: 1, xp, boost: { hpPct, atkPct } (the solo hero) } }
+  // act what it does (run.js eventAct): xpAll:n, xpHero:n, hpAll:p, hpHero:p, buffHero / buffAll (+mods), gold:n,
+  // item:any|common|rare|epic, typeItem:rarity, mystery, sellFull, upgradeItem, gambleItem, gamble:bet:odds:win,
+  // relic, relicPick:id, relicBlood:p[:id], relicItem, respec, hire:key, join:key, take:itemId, setPiece,
+  // tradeSet, invest:back, loan:now:later, levelAll, levelHero, transmute, potion, mimic, fight, none
+  // cost gold paid up front target 'hero' | 'item' | 'type': the player picks what it applies to
+  // next a modifier for the NEXT fight: enemyHp / enemyAtk (+-%), manaStart, regen, atkPct (your heroes),
+  // goldPct, reward ('legendary' item if you win it), rewardGold
+  // req 'melee' | 'ranged' | 'caster' | 'healer' | 'lvl3': only a team with such a hero can take it (a hero target
+  // is then one of those heroes)
+  // risk a short warning shown in red minRarity (item targets)
+  // fight a challenge that starts now: { kind: 'solo'|'bandits'|'pack'|'horde'|'mimic'|'hoard', name,
+  // win: { gold, item: rarity, relic: 1, xp, boost: { hpPct, atkPct } (the solo hero) } }
   // Events marked dyn build their choices from an offer rolled when the event opens (run.js eventChoices).
   // WHAT: EVENTS (the ? days). Each: { id, rar (rarity), icon, name, text, choices: [{ label, act, cost?, req?, target?, fight?, mods?, risk? }] }.
-  //   "act" is a short command read by eventAct in js/run.js (gold:5, xpAll:20, relic, hire:key...). {g10} / {x20} in a label = 10 gold / 20 XP scaled by how far in the run you are. {dyn: true} events build their choices in code (rollOffer / eventChoices).
+  // "act" is a short command read by eventAct in js/run.js (gold:5, xpAll:20, relic, hire:key...). {g10} / {x20} in a label = 10 gold / 20 XP scaled by how far in the run you are. {dyn: true} events build their choices in code (rollOffer / eventChoices).
   B.EVENTS = [
     { id: 'training', rar: 'common', icon: '🎯', name: 'Training Grounds', text: 'Train your heroes for XP.', choices: [
       { label: 'Drill everyone: +{x15} XP to all heroes', act: 'xpAll:{x15}' },
@@ -2849,7 +2849,7 @@
   ];
   B.EVENT = {}; for (const e of B.EVENTS) B.EVENT[e.id] = e;
   B.EVENT_RARITY = { common: 1, uncommon: 0.7, rare: 0.3 };
-  // v62 (review #93, David): "There are supports, damage and tanks. While you don't have one of one class, the hero shop always
+  // "There are supports, damage and tanks. While you don't have one of one class, the hero shop always
   // offers one." Every hero belongs to one of three classes: tanks soak damage, supports heal / buff / control, the rest deal damage.
   B.CLASSES = ['tank', 'support', 'damage'];
   B.CLASS_OF = {};
@@ -2872,14 +2872,14 @@
     return HERO_ALIAS[clean] || (B.HEROES && B.HEROES[clean] ? clean : (HERO_ALIAS[x] || x));
   };
   B.heroClass = key => B.CLASS_OF[B.heroKey(key)] || B.CLASS_OF[key] || 'damage';
-  // v62o (review #111, David: simulate thousands of PvE runs and balance by the results): the PvE balance tuner (tools/pve/tune.js) rewrites this block.
+  // the PvE balance tuner (tools/pve/tune.js) rewrites this block.
   // power = a multiplier on a hero's Health, Attack and Magic (1 = as designed); the tuner nudges it until every hero clears the PvE about as often as the others.
-  // v88 (review #167, David: "some build paths are comically bad. Please make it an actual choice between two in the level ups"; tools/balance/pvp.js):
-  //   spec = a multiplier on Health, Attack and Magic that a level-up power adds while the hero has it. The two powers of a pair move in opposite
-  //          directions (the weaker one up, the stronger one down), so the pair becomes a real choice and the hero's average strength stays put.
-  //          v89 (review #170): applied silently (the cards show only the power itself), like power.
-  //   pvp  = a multiplier on Health, Attack and Magic in PvP fights only (duels and the final fight, both teams): a healer that is fair in the
-  //          PvE can be weak against players and the reverse, and one number cannot fit both, so PvP has its own.
+
+  // spec = a multiplier on Health, Attack and Magic that a level-up power adds while the hero has it. The two powers of a pair move in opposite
+  // directions (the weaker one up, the stronger one down), so the pair becomes a real choice and the hero's average strength stays put.
+  // applied silently (the cards show only the power itself), like power.
+  // pvp = a multiplier on Health, Attack and Magic in PvP fights only (duels and the final fight, both teams): a healer that is fair in the
+  // PvE can be weak against players and the reverse, and one number cannot fit both, so PvP has its own.
   // <TUNE-BEGIN>
   B.TUNE = { base: 1.173, growth: 0.711, power: {}, spec: { ash2a: 1.0111, ash2b: 0.9838, ash3a: 0.9528, ash3b: 1.0406, ash4a: 0.9828, ash4b: 1.0037, ash5a: 0.94, ash5b: 1.06, azg2a: 1.0359, azg2b: 0.9498, azg3a: 0.9533, azg3b: 1.0378, azg4a: 0.9878, azg4b: 1.004, azg5a: 0.9686, azg5b: 1.0245, bar2a: 0.9676, bar2b: 1.0282, bar3a: 1.0415, bar3b: 0.9571, bar4a: 0.9896, bar4b: 0.9615, bar5a: 0.98, bar5b: 1.02, bas2a: 1.0245, bas2b: 0.9751, bas3a: 0.9504, bas3b: 1.0418, bas4a: 0.9585, bas4b: 1.0402, bas5a: 0.9699, bas5b: 1.0052, bel2a: 0.9906, bel2b: 1.0035, bel3a: 1.1079, bel3b: 0.8941, bel4a: 1.0333, bel4b: 0.9504, blz2a: 0.9884, blz2b: 0.9995, blz3a: 0.9773, blz3b: 1.0148, blz4a: 0.9693, blz4b: 1.0252, blz5a: 0.8897, blz5b: 1.1044, bra2a: 1.0536, bra2b: 0.9468, bra3a: 1.0242, bra3b: 0.974, bra4a: 0.9977, bra4b: 0.9742, bra5a: 0.99, brm2a: 1.1719, brm2b: 0.8467, brm3a: 0.9864, brm3b: 1.0049, brm4a: 0.7523, brm4b: 1.2939, brm5a: 1.0358, brm5b: 0.9615, buz2a: 1.0752, buz2b: 0.9276, buz3a: 1.0428, buz3b: 0.9568, buz4a: 1.0174, buz4b: 1.0206, buz5a: 1.03, chr2a: 1.0008, chr2b: 0.9974, chr3a: 1.079, chr3b: 0.9225, chr4a: 1.1105, chr4b: 0.8964, chr5a: 0.8306, chr5b: 1.191, cit2a: 0.9786, cit2b: 0.9892, cit3a: 0.9374, cit3b: 1.0597, cit4a: 1.0333, cit4b: 0.9604, cit5a: 0.8431, cit5b: 1.1749, cor2a: 1.0049, cor2b: 0.9918, cor3a: 1.2896, cor3b: 0.7469, cor4a: 0.9726, cor4b: 0.939, cor5a: 1.01, cor5b: 0.99, dra2a: 0.9834, dra2b: 1.0079, dra3a: 0.9561, dra3b: 1.0413, dra4a: 0.957, dra4b: 1.0254, dra5a: 1.1236, dra5b: 0.8836, dsh2a: 0.9649, dsh2b: 1.0257, dsh3a: 0.9916, dsh3b: 0.9958, dsh4a: 0.9982, dsh4b: 0.9926, dsh5a: 0.9985, dsh5b: 1.1236, due2a: 1.0149, due2b: 0.9734, due3a: 0.9873, due3b: 1.013, due4a: 0.9921, due4b: 0.9933, due5a: 0.95, due5b: 1.05, ech2a: 1.0277, ech2b: 0.9693, ech3a: 1.1076, ech3b: 0.9001, ech4a: 1.0553, ech4b: 0.935, gar2a: 0.9485, gar2b: 1.0477, gar3a: 0.9605, gar3b: 1.0399, gar4a: 1.0353, gar4b: 0.9646, gar5a: 1.03, gar5b: 0.97, gla2a: 0.8828, gla2b: 1.0832, gla3a: 0.9224, gla3b: 1.0796, gla4a: 0.6978, gla4b: 1.3818, gla5a: 0.87, gla5b: 1.13, gri2a: 0.9103, gri2b: 1.0857, gri3a: 1.0951, gri3b: 0.9009, gri4a: 1.0374, gri4b: 0.9465, gri5a: 0.94, gri5b: 1.06, grk2a: 1.0183, grk2b: 0.9765, grk3a: 1.0184, grk3b: 0.9744, grk4a: 1.0783, grk4b: 0.9554, grk5a: 1.02, har2a: 1.0151, har2b: 0.9801, har3a: 1.006, har3b: 0.9894, har4a: 1.0607, har4b: 0.9227, har5a: 0.8979, har5b: 1.0417, hip2a: 1.0543, hip2b: 0.9414, hip3a: 0.9238, hip3b: 1.0668, hip4a: 1.0492, hip4b: 0.9485, hip5a: 0.9186, hip5b: 1.1134, imh2a: 1.0896, imh2b: 0.9128, imh3a: 0.9837, imh3b: 1.0034, imh4a: 1.1734, imh4b: 0.844, imh5a: 1.06, imh5b: 0.94, kag2a: 1.0518, kag2b: 0.9461, kag3a: 1.015, kag3b: 0.9781, kag4a: 1.0416, kag4b: 0.9062, kag5a: 0.9648, kag5b: 1.032, kes2a: 1.0034, kes2b: 0.9886, kes3a: 1.0286, kes3b: 0.9567, kes4a: 1.0556, kes4b: 0.93, kes5a: 1.1794, kes5b: 0.8388, kit2a: 0.9273, kit2b: 1.0745, kit3a: 0.9847, kit3b: 1.0089, kit4a: 0.972, kit4b: 1.0108, kit5a: 0.935, kit5b: 1.0582, leo2a: 1.0238, leo2b: 0.974, leo3a: 0.9798, leo3b: 1.0125, leo4a: 0.9829, leo4b: 1.014, leo5a: 0.8836, leo5b: 1.2023, lum2a: 1.087, lum2b: 1.0248, lum3a: 1.0591, lum3b: 0.9421, lum4a: 1.121, lum4b: 0.8823, lum5a: 0.9206, lum5b: 1.0278, med2a: 0.8881, med2b: 1.0766, med3a: 1.1674, med3b: 0.8679, med4a: 1.0283, med4b: 0.9715, med5a: 1.0247, med5b: 0.9583, mir2a: 0.9278, mir2b: 1.0399, mir3a: 0.9605, mir3b: 1.0355, mir4a: 0.9906, mir4b: 0.9983, mir5a: 0.95, mir5b: 1.05, mor2a: 0.9615, mor2b: 1.0299, mor3a: 0.7153, mor3b: 1.3695, mor4a: 1.0645, mor4b: 0.9319, mor5a: 0.92, nyx2a: 1.0614, nyx2b: 0.9538, nyx3a: 1.005, nyx3b: 0.985, nyx4a: 1.0581, nyx4b: 0.9397, nyx5a: 1.2262, nyx5b: 0.8052, ony2a: 0.9794, ony2b: 1.0175, ony3a: 0.8665, ony3b: 1.1445, ony4a: 0.8796, ony4b: 1.1276, ony5a: 1.0944, ony5b: 0.9064, pip2a: 1.0555, pip2b: 0.9419, pip3a: 1.0639, pip3b: 0.9344, pip4a: 1.0148, pip4b: 0.9999, pip5a: 0.95, pla2a: 0.9501, pla2b: 1.0581, pla3a: 1.0177, pla3b: 1.0039, pla4a: 1.0048, pla4b: 1.0073, pla5a: 0.9825, pla5b: 1.0133, pri2a: 0.966, pri2b: 1.0318, pri3a: 0.954, pri3b: 1.0456, pri4a: 0.9791, pri4b: 1.0508, pri5a: 1.09, pri5b: 0.91, pyr2a: 0.9926, pyr2b: 1.0921, pyr3a: 0.9336, pyr3b: 1.0663, pyr4a: 0.9409, pyr4b: 1.0443, pyr5a: 0.9157, pyr5b: 1.0966, rex2a: 0.8466, rex2b: 1.1689, rex3a: 1.0542, rex3b: 0.9335, rex4a: 1.0136, rex4b: 0.9758, rex5a: 0.95, rex5b: 1.05, roh2a: 1.1012, roh2b: 0.9037, roh3a: 0.9591, roh3b: 1.0338, roh4a: 0.9482, roh4b: 1.0473, roh5a: 1.1564, roh5b: 0.8593, roo2a: 0.9434, roo2b: 1.0548, roo3a: 0.905, roo3b: 1.0858, roo4a: 0.8087, roo4b: 1.216, roo5b: 1.1, ser2a: 0.989, ser2b: 1.0054, ser3a: 1.0483, ser3b: 0.9448, ser4a: 0.8589, ser4b: 1.1485, ser5b: 1.03, smo2a: 1.0343, smo2b: 0.9534, smo3a: 1.0143, smo3b: 1.004, smo4a: 1.0997, smo4b: 0.8965, smo5a: 0.95, smo5b: 1.05, spr2a: 0.8786, spr2b: 1.0365, spr3a: 0.8806, spr3b: 1.117, spr4a: 0.861, spr4b: 1.1324, spr5b: 0.95, ste2a: 0.9732, ste2b: 1.0236, ste3a: 0.9747, ste3b: 1.0209, ste4a: 1.0461, ste4b: 0.947, ste5a: 1.02, ste5b: 0.98, tem2a: 0.9887, tem2b: 1.0042, tem3a: 0.8813, tem3b: 1.0395, tem4a: 0.9159, tem4b: 1.0777, tem5a: 1.15, tem5b: 0.85, thr2a: 1.0429, thr2b: 1.0142, thr3a: 1.03, thr3b: 0.9618, thr4a: 0.9306, thr4b: 1.0597, thr5a: 1.0689, thr5b: 0.9245, tom2a: 1.0604, tom2b: 1.0159, tom3a: 0.9005, tom3b: 1.124, tom4a: 0.928, tom4b: 1.0753, tom5a: 1.12, tom5b: 0.88, ves2a: 1.0015, ves2b: 0.9881, ves3a: 1.0265, ves3b: 0.9718, ves4a: 0.9859, ves4b: 1.0037, ves5a: 1.0408, ves5b: 0.9309, vex2a: 1.0324, vex2b: 1.0061, vex3a: 1.0099, vex3b: 0.9791, vex4a: 0.9927, vex4b: 0.9932, vex5a: 1.0349, vex5b: 0.9602, vey2a: 0.9287, vey2b: 1.0707, vey3a: 0.9524, vey3b: 0.9754, vey4a: 1.3372, vey4b: 0.7208, vey5a: 1.03, vey5b: 0.97, zep2a: 1.0444, zep2b: 1.0347, zep3a: 1.0828, zep3b: 0.9092, zep4a: 1.0053, zep4b: 0.9775, zep5a: 0.97, zep5b: 1.03 }, pvp: { ashwing: 1.009, azgul: 0.692, barley: 1.051, blaze: 0.877, brakk: 0.799, bramble: 1.108, buzzwell: 1.189, citadel: 1.115, coralie: 0.983, deadshot: 0.836, echo: 1.322, gardener: 1.295, glacia: 0.865, grimhook: 1.057, grok: 0.653, harlequin: 0.646, hippolyta: 0.744, imhotep: 0.645, kage: 0.788, kestrel: 1.092, leonidas: 0.776, lumen: 1.384, medic: 1.6, mirage: 1.159, morrow: 1.308, nyx: 0.85, plasma: 1.171, prism: 1.256, pyra: 0.771, rex: 0.785, rohammer: 0.81, rook: 1.122, seraph: 1.137, smolder: 0.933, sprocket: 1.041, stellan: 0.99, tempest: 0.764, tom: 1.063, vesper: 1.15, vex: 0.907, vey: 0.901, zephyr: 0.9 } };
   // <TUNE-END>
@@ -2895,8 +2895,8 @@
     lvl3: { name: 'a hero at Lv 3', ok: h => h.lvl >= 3 },
   };
 
-  // ---------------------------------------------------------------- leagues (review #21, David)
-  // Everyone starts in Bronze. v64 (review #125, David: "remove all elos, a lol style system where you go up and down leagues at the end of each run"):
+  // ---------------------------------------------------------------- leagues (, David)
+  // Everyone starts in Bronze. 
   // each league has 100 league points (LP); the end of every run moves them (B.runLp): 100 LP = the next league, below 0 = the league below
   // (you land on demoteTo LP). Bronze has a floor at 0, Master has no ceiling.
   // WHAT: LEAGUES from Bronze to Master and how points move (B.LEAGUE_RULES). Seasons last B.SEASON.days days.
@@ -2909,47 +2909,47 @@
     { id: 'celestial', name: 'Master', color: '#9a4dff', hi: '#f3dcff' },
   ];
   B.LEAGUE_RULES = { step: 100, demoteTo: 75, duelWin: 0, pveLoss: 0 };   // duelWin / pveLoss: only the old Gauntlet ops (old tabs) still read them
-  // v64 (review #125): a completed run is a victory of a kind by the lives left: Perfect (no fight lost), Gold, Bronze
+  // a completed run is a victory of a kind by the lives left: Perfect (no fight lost), Gold, Bronze
   // WHAT: the three kinds of victory (by lives left). v65: only a name and a medal (league points come from PvP fights).
-  // v101 (review #186): one Ward: Perfect with the Ward whole, Gold with it broken
+  // one Ward: Perfect with the Ward whole, Gold with it broken
   B.VICTORY = [
     { lives: 1, id: 'perfect', name: 'Perfect', icon: '💎', color: '#7ee8ff' },
     { lives: 0, id: 'gold', name: 'Gold', icon: '🥇', color: '#ffd23f' },
   ];
-  // v101 (review #186, David: "Losing a life in pve doesn't let you progress. It refresh the choices of the day (except bosses) and you must beat that day.
+  // and you must beat that day.
   // Make it only one life and give it a flavorful name"): the Ward, a guardian charm. The first lost fight breaks it and the day starts over; a fight lost
   // with the Ward already broken ends the run
   B.WARD = { name: 'Ward', icon: '🛡' };
   B.victoryOf = lives => B.VICTORY.find(v => v.lives === (lives | 0)) || B.VICTORY[B.VICTORY.length - 1];
-  // v65 (review #129, David: "only pvp fights should count to increase league LP. Bronze cannot lose LP"; review #133: "+1 LP for each streak"): league points
+  // league points
   // come only from PvP fights. Each duel won +10, the final fight won +20, each PvP fight lost (a duel or a try at the final) -8, and a completed run adds
   // its win streak (+1 LP per run in the streak). PvE fights move no LP (they give XP). In Bronze a run never takes LP away.
   // WHAT: what each PvP result is worth in league points (B.LP) and the parts of one run's LP (B.lpParts, also the "why" line of the end screen).
-  //   g = { done (final fight won), duels (PvP-day duels won), lost (PvP fights lost), streak (the win streak after this run) }. Used by api/elo.js.
+  // g = { done (final fight won), duels (PvP-day duels won), lost (PvP fights lost), streak (the win streak after this run) }. Used by api/elo.js.
   B.LP = { duel: 10, final: 20, loss: 8, streak: 1 };
-  // v84 (review #162, David: "it should be harder to climb in higher leagues because the pool of opponents is always the same... without changing match-up
+  // v84 (, David: "it should be harder to climb in higher leagues because the pool of opponents is always the same... without changing match-up
   // logic or giving different lp depending on the elo or league of opponents"). Every league faces the same pool, so a win is worth the same everywhere
   // and the climb was as easy at the top as at the bottom. Now the league you are IN scales your LP: higher leagues pay less for a win (gain) and charge
   // more for a loss (loss). That raises the win rate you need just to hold your place: with 2 duels and the final fight a run, about 22% in Bronze,
   // 30% Silver, 37.5% Gold (as before, x1), 46% Platinum, 53% Diamond, 60% Master. Each player settles where their real win rate stops paying.
   B.LP_LEAGUE = { gain: [1.25, 1.1, 1, 0.85, 0.75, 0.65], loss: [0.6, 0.8, 1, 1.2, 1.4, 1.6] };
   // WHAT: the league multipliers of a league index: { gain, loss }.
-  // v90 (review #171): a Gauntlet floor won pays its number in LP (floor 1: +1, floor 2: +2...); a loss in the Gauntlet costs nothing
+  // a Gauntlet floor won pays its number in LP (floor 1: +1, floor 2: +2...); a loss in the Gauntlet costs nothing
   B.towerLp = floor => Math.max(1, Math.min(50, floor | 0));
   B.lpMul = league => { const i = Math.max(0, Math.min(B.LEAGUES.length - 1, league | 0)); return { gain: B.LP_LEAGUE.gain[i], loss: B.LP_LEAGUE.loss[i] }; };
-  // v94 (review #175, David: "give bronze players 20 lp for finishing pve, silver 10, gold above zero, and adjust lp gain loss depending on pvp fight league
+  // v94 (, David: "give bronze players 20 lp for finishing pve, silver 10, gold above zero, and adjust lp gain loss depending on pvp fight league
   // discrepancy. Gold beating bronze gives less to gold, bronze loses less. Goal is for bronze to climb even losing pvp"):
-  //   LP_PVE = LP for reaching the final fight (the PvE part finished), by your league: Bronze 20, Silver 10, Gold and up 0.
-  //   LP_GAP = per league between you and the PvP opponent: a win against a lower league pays 25% less per league (a higher one 25% more), a loss
-  //   against a higher league costs 25% less per league (a lower one 25% more); between x0.25 and x2. A made-up opponent counts as your league.
+  // LP_PVE = LP for reaching the final fight (the PvE part finished), by your league: Bronze 20, Silver 10, Gold and up 0.
+  // LP_GAP = per league between you and the PvP opponent: a win against a lower league pays 25% less per league (a higher one 25% more), a loss
+  // against a higher league costs 25% less per league (a lower one 25% more); between x0.25 and x2. A made-up opponent counts as your league.
   B.LP_PVE = [20, 10, 0, 0, 0, 0];
   // v95 (reviews #176 #177, David, not announced in the game): in PvP your own heroes (never your ghost) take less damage while you are low on the ladder:
-  // Bronze x0.5, Silver x0.75 (the Bronze PvE help of review #53 was dropped in v126, review #223)
-  B.PVP_TAKE = [1, 1, 1, 1, 1, 1];   // v101 (review #187, David: "Turn off all gauntlet pvp protection for bronze and silver"): off
+  // Bronze x0.5, Silver x0.75 (the Bronze PvE help of was dropped in v126, )
+  B.PVP_TAKE = [1, 1, 1, 1, 1, 1];   // off
   B.LP_GAP = 0.25;
   // WHAT: the factor of one PvP fight's LP: win or loss, opponent's league minus yours (null = same league).
   B.lpGap = (win, d) => Math.max(0.25, Math.min(2, 1 + B.LP_GAP * (win ? 1 : -1) * (d == null ? 0 : Math.max(-4, Math.min(4, d | 0)))));
-  // v119 (review #206, David: "At celestial, get 0 LP from pve win"): in the top league (Master, review #207) a completed run pays nothing (no run, PvE or
+  // in the top league (Master, ) a completed run pays nothing (no run, PvE or
   // streak LP): only the Gauntlet floors (and a lost run's cost) move your LP there.
   B.lpTop = league => (league | 0) >= B.LEAGUES.length - 1;
   B.lpParts = (g, league) => {
@@ -2957,7 +2957,7 @@
     const M = B.lpMul(league), sc = (n, base) => Math.round(n * base * (base < 0 ? M.loss : M.gain));
     const duels = Math.max(0, Math.min(4, g.duels | 0)), lost = Math.max(0, Math.min(6, g.lost | 0)), streak = g.done ? Math.max(0, Math.min(50, g.streak | 0)) : 0, out = [];
     const pve = g.done || g.pve ? B.LP_PVE[Math.max(0, Math.min(B.LP_PVE.length - 1, league | 0))] : 0;
-    if (g.failed && B.lpFail(league)) out.push({ id: 'fail', n: 1, lp: -B.lpFail(league) });   // v107 (review #194)
+    if (g.failed && B.lpFail(league)) out.push({ id: 'fail', n: 1, lp: -B.lpFail(league) });
     if (pve) out.push({ id: 'pve', n: 1, lp: pve });
     // v94: with the list of PvP fights ([won, opponent's league, final]) each fight is scored with its league gap; without it, by the counts as before
     const P = Array.isArray(g.pvp) ? g.pvp.slice(0, 12).filter(x => Array.isArray(x)) : null;
@@ -2977,7 +2977,7 @@
     if (streak) out.push({ id: 'streak', n: streak, lp: sc(streak, B.LP.streak) });
     return out;
   };
-  // v107 (review #194, David: "Losing pve loses you 0 in bronze, 5 lp in silver, 10 in gold, etc increasing 5 per league"): a lost run (the Ward broken twice)
+  // a lost run (the Ward broken twice)
   B.lpFail = league => 5 * Math.max(0, league | 0);
   B.runLp = (g, league) => { const s = B.lpParts(g, league).reduce((a, x) => a + x.lp, 0); return (league | 0) === 0 ? Math.max(0, s) : s; };
 
@@ -2997,11 +2997,11 @@
     { id: 'rename', icon: '✎', name: 'Name change', price: 10, desc: 'Pick a new name. Your ghosts take it too. Pay each time you change it.', use: true },
     { id: 'king', icon: '👑', name: 'King Tier', price: 300, king: true, desc: "The Royal board skin, only for Kings. Deeper profiles, yours and everyone else's: most played heroes, best win rate heroes, and the record of their ghosts. A crown next to your name." },
   ];
-  // v30 (review #28): two more perks
+  // two more perks
   B.SHOP.splice(2, 0,
     { id: 'xp2', icon: '✨', name: 'Double XP', price: 50, desc: 'Every account XP you earn counts twice, so you level up and unlock new heroes, items and powers faster.' },
     { id: 'skip', icon: '⏭', name: 'Skip fights', price: 100, desc: 'Unlocks the ⏭ button in battle: a fight ends at once with the same result it would have had.' });
-  // v66 (review #136, David: "add to the crown store, besides portraits for the battle screens/user, pvp animations or taunts your profile says in a comic
+  // v66 (, David: "add to the crown store, besides portraits for the battle screens/user, pvp animations or taunts your profile says in a comic
   // bubble (be it as a ghost or a player)"): cosmetics. A taunt is what your profile says in a comic bubble, also on the VS screen before a fight (yours, and
   // a ghost's when other players face your team); a VS entrance is how your team bursts in on that screen; any portrait still locked by your level can be
   // bought. You own many, you show one taunt and one entrance (op 'style').
@@ -3011,7 +3011,7 @@
     { id: 'tn_crown', text: 'Bow before the crown!', price: 30 }, { id: 'tn_ghost', text: 'Boo! Even my ghost beats you.', price: 30 },
     { id: 'tn_gg', text: 'GG. Well played, whoever wins.', price: 10 }, { id: 'tn_legend', text: 'They will write songs about this.', price: 40 },
   ];
-  // v74 (review #152, David: "make some voice lines and titles drop from xp in chests as you level, sprinkle in, not all champions in a row"): taunts the account
+  // taunts the account
   // level gives (never sold); B.TAUNT_ALL = every taunt (the Crown Shop ones and these)
   B.LEVEL_TAUNTS = [
     { id: 'lt_hi', text: 'Hi! Mind if I win?', lvl: 3 }, { id: 'lt_warm', text: 'Just warming up.', lvl: 6 },
@@ -3056,7 +3056,7 @@
     { id: 'unstoppable', title: 'Unstoppable', icon: '☄', desc: 'Reach a win streak of 10.', by: 'server' },
     { id: 'golden', title: 'Golden', icon: '🥇', desc: 'Reach the Gold league.', by: 'server' },
     { id: 'celestial', title: 'Grand Master', icon: '🌌', desc: 'Reach the Master league.', by: 'server' },
-    // v74 (review #152): titles the account level gives, dropping from the level chests between the heroes
+    // titles the account level gives, dropping from the level chests between the heroes
     { id: 'lv_squire', title: 'Squire', icon: '🪖', desc: 'Reach account level 4.', by: 'level', lvl: 4 },
     { id: 'lv_adventurer', title: 'Adventurer', icon: '🧭', desc: 'Reach account level 8.', by: 'level', lvl: 8 },
     { id: 'lv_veteran', title: 'Veteran', icon: '🎖', desc: 'Reach account level 12.', by: 'level', lvl: 12 },
@@ -3068,39 +3068,39 @@
     { id: 'lv_eternal', title: 'The Eternal', icon: '♾', desc: 'Reach account level 43.', by: 'level', lvl: 43 },
   ];
   B.ACH = Object.fromEntries(B.ACHIEVEMENTS.map(a => [a.id, a]));
-  // v30 (review #28, PC boy): account level. 10 XP per level; XP comes from firsts (each hero's first PvE clear, each
+  // account level. 10 XP per level; XP comes from firsts (each hero's first PvE clear, each
   // Gauntlet floor reached for the first time, each boss beaten for the first time) and from crowns spent in the shop.
   // Every level from 2 to 19 unlocks one new hero, item or relic (locked ones never show up in a run before that).
-  // v46 (review #57, David: "Bring the player xp progression to the forefront of the game. Scale the xp per level and
+  // v46 (, David: "Bring the player xp progression to the forefront of the game. Scale the xp per level and
   // add some exp after each run depending how it went, and visually show progress after each run with looming rewards"):
   // each level costs more (level L -> L+1 = base + step x (L-1): 80, 100, 120...), every game pays XP by how far it went
   // (B.GAME_XP, at most perHour games an hour count), and the firsts stay as bonuses, x10 to match the new numbers.
   // Players from before keep their level (api/_player.js xpInit converts their XP once).
   // WHAT: ACCOUNT LEVEL. XP needed per level (B.ACCOUNT), XP for each thing done in a game (B.GAME_XP), and B.UNLOCKS = which hero / item / power each level unlocks.
-  // v88 (review #168, David: "ppl level too fast"): about 40% less XP for the same game (the level costs stay, so nobody loses a level): a first run now
+  // about 40% less XP for the same game (the level costs stay, so nobody loses a level): a first run now
   // gives about one level instead of three, and each level's chest feels earned
   B.ACCOUNT = { base: 80, step: 20, heroClear: 6, floor: 30, boss: 18, crownXp: 2 };
   B.GAME_XP = { played: 6, fight: 5, boss: 15, reached: 18, duel: 12, champion: 30, perHour: 12, maxFights: 14 };
-  // v63 (review #120, David: "restrict the initial pool of champions to 20, and make the xp progression unlock all the rest with the first levels"): a new player has the 20 heroes of
+  // a new player has the 20 heroes of
   // START_HEROES; the other 26 come two per level from level 2 to 14, in the order of HERO_UNLOCKS (a mix of damage, support and tank); items and powers keep their own levels
-  // v99 (review #181, David: "More heroes are unlocked at the start. Then 2 per level until all unlocked at level 5"): 38 heroes from the start, the last 8 two a
+  // 38 heroes from the start, the last 8 two a
   // level from level 2 to 5
   B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta',
     'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist',
-    'onyx', 'dragon', 'chronos', 'bella', 'kitsune'];   // v121: the three new heroes are open from the start too   // v104 (review #184): the two new heroes are open from the start
-  // v74 (review #152): one a level from level 2 to 27; v99 (review #181): two a level from 2 to 5
+    'onyx', 'dragon', 'chronos', 'bella', 'kitsune'];   // v121: the three new heroes are open from the start too // the two new heroes are open from the start
+  // one a level from level 2 to 27; two a level from 2 to 5
   B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage'];
-  // v65 (review #131, David: "add hero portraits for profile in xp rewards"): your picture (profile, ladder, the top bar) is a hero portrait. Four are free;
+  // your picture (profile, ladder, the top bar) is a hero portrait. Four are free;
   // every level from 2 on unlocks one more (the starting heroes first, then the ones the levels unlock), so every level has a reward up to level 43
-  // v88 (review #168, David: "too many rewards in current chest... everything must add value or go"): a hero the levels unlock brings its own portrait
+  // a hero the levels unlock brings its own portrait
   // (one reward, not two), and the other starting heroes' portraits are the rewards of levels 28 to 43, after the last hero. So a chest holds one main
   // thing (a hero, or a portrait), sometimes an item or power, rarely a title or voice line besides.
   B.PORTRAITS_FREE = ['bastion', 'lumen', 'pyra', 'kestrel'];
   B.PORTRAITS_LATE = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k));   // the levels after the last hero (v91: 22..37)
   B.PORTRAIT_UNLOCKS = B.HERO_UNLOCKS.concat(B.PORTRAITS_LATE);
-  for (const k of B.PORTRAIT_UNLOCKS) { const it = { id: 'pt_' + k, kind: 'portrait', hero: k, icon: '🖼', name: (B.HEROES[k] || {}).name + ' portrait', price: B.PORTRAIT_PRICE, desc: 'Use this portrait before your level opens it.' }; B.COSMETICS.push(it); B.SHOP_ITEM[it.id] = it; }   // v66 (review #136)
-  // v91 (review #172, David: "Early chests give two heroes per level"): the first 12 heroes come two a level (levels 2 to 7), the other 14 one a level (8 to 21)
-  B.EARLY_PAIRS = 4;   // v99 (review #181): every unlocked hero comes two a level (2 to 5); the items and powers then one a level from 6, the portraits after them
+  for (const k of B.PORTRAIT_UNLOCKS) { const it = { id: 'pt_' + k, kind: 'portrait', hero: k, icon: '🖼', name: (B.HEROES[k] || {}).name + ' portrait', price: B.PORTRAIT_PRICE, desc: 'Use this portrait before your level opens it.' }; B.COSMETICS.push(it); B.SHOP_ITEM[it.id] = it; }
+  // the first 12 heroes come two a level (levels 2 to 7), the other 14 one a level (8 to 21)
+  B.EARLY_PAIRS = 4;   // every unlocked hero comes two a level (2 to 5); the items and powers then one a level from 6, the portraits after them
   // WHAT: the account level that unlocks the i-th hero of B.HERO_UNLOCKS.
   B.heroUnlockLevel = i => i < 2 * B.EARLY_PAIRS ? 2 + Math.floor(i / 2) : 2 + B.EARLY_PAIRS + (i - 2 * B.EARLY_PAIRS);
   // v91: the items and powers the levels unlock come one a level after the two-hero levels (8 to 22), so an early chest holds its two heroes and little else
@@ -3109,7 +3109,7 @@
     [7, 'item', 'starcloak'], [8, 'relic', 'compass'], [9, 'relic', 'teapot'], [11, 'item', 'tidepearl'],
     [12, 'relic', 'snowglobe'], [13, 'relic', 'marbles'], [14, 'item', 'moonslippers'], [16, 'relic', 'fireflies'],
     [17, 'item', 'comethammer'], [18, 'relic', 'pinwheel'], [19, 'relic', 'horseshoe'],
-  ].map(([lvl, kind, id], i) => ({ lvl: 2 + B.EARLY_PAIRS + i, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: B.heroUnlockLevel(i), kind: 'hero', id })))   // v74 (review #152): one hero a level; v91 (review #172): two a level at first
+  ].map(([lvl, kind, id], i) => ({ lvl: 2 + B.EARLY_PAIRS + i, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: B.heroUnlockLevel(i), kind: 'hero', id })))   // one hero a level; two a level at first
     .concat(B.LEVEL_TAUNTS.map(t => ({ lvl: t.lvl, kind: 'taunt', id: t.id }))).concat(B.ACHIEVEMENTS.filter(a => a.by === 'level').map(a => ({ lvl: a.lvl, kind: 'title', id: a.id })))
     .concat(B.PORTRAITS_LATE.map((id, i) => ({ lvl: B.heroUnlockLevel(B.HERO_UNLOCKS.length - 1) + 1 + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);   // v88: a new hero's portrait comes with the hero
   // WHAT: the account level a hero's portrait opens at (1 = free from the start, 0 = no such portrait).
@@ -3122,7 +3122,7 @@
   B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl && ['hero', 'item', 'relic'].includes(u.kind)).map(u => u.id);   // v65: portraits are pictures, they never lock a hero
   B.hasPerk = (perks, id) => (perks || []).includes(id);
 
-  // ---------------------------------------------------------------- terrain (review #39, David)
+  // ---------------------------------------------------------------- terrain (, David)
   // "Add some interesting features to the hex map so the fights aren't all the same ... an impassable ridge, a tree ...
   // a preset rotation that never puts an obstruction on the starting hero/enemy deployment; make those hexes
   // undeployable". Every terrain hex blocks movement and deployment (ranged attacks and spells still fly over it); a
@@ -3157,7 +3157,7 @@
   B.MAP_ROTATION = ['oaks', 'ridge', 'boulders', 'pond', 'forest', 'choke', 'cross'];
 
   if (typeof module !== 'undefined') module.exports = B;
-  // v117 (review #204, David: "Revise those too they are not real... Come up with a useful system or remove entirely"): the measured bars (v116) are gone. A hero
+  // the measured bars are gone. A hero
   // card says what the hero is GOOD AT with 2 or 3 strengths read from its kit (TRAIT = the words and colours, HERO_TRAITS = each hero's), plus its power curve
   // from its growth (grow, set by tools/hero-odds.js from early and late win rates): 1.5 or more = "Peaks late", 0.6 or less = "Strong early".
   B.TRAIT = {

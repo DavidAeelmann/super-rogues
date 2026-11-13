@@ -1,8 +1,8 @@
-// Splash art (review #12, David: "create HD art (splash art) at least for the out of combat parts").
+// Splash art (, David: "create HD art (splash art) at least for the out of combat parts").
 // A painted-look card for every unit, made in code (a hero with a picture uses it instead, see art.js): a hero pose
 // drawn with the detailed model, a coloured light behind it, god rays, bokeh, mist, a rim light on the silhouette and
 // a glow in the hero's colour. The battle keeps the same model at a lower detail, so both stay aligned.
-// 
+
 // FILE GUIDE. SPLASH CARDS made in code for heroes without a picture: a painted-look card (a pose of the model, a coloured light, rays, bokeh, mist). B.Splash.image(key, w, h, mode) returns an image URL, cached. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
@@ -57,7 +57,7 @@
     let S, fy;
     if (m.type === 'humanoid') { const tall = m.h || 1; S = (mode === 'bust' ? h * 0.9 : h * 0.54) / tall; fy = mode === 'bust' ? h * 1.5 : h * 0.97; }
     else if (m.type === 'wraith') { S = mode === 'bust' ? h * 0.72 : h * 0.52; fy = mode === 'bust' ? h * 1.2 : h * 0.95; }
-    else if (m.type === 'turtle') { S = mode === 'bust' ? h * 0.8 : h * 0.6; fy = mode === 'bust' ? h * 0.8 : h * 0.62; }   // v126 (review #220): the low, wide turtle sits up in the frame, above the name
+    else if (m.type === 'turtle') { S = mode === 'bust' ? h * 0.8 : h * 0.6; fy = mode === 'bust' ? h * 0.8 : h * 0.62; }   // the low, wide turtle sits up in the frame, above the name
     else if (m.type === 'turret' || m.type === 'bomb' || m.type === 'serpent') { S = mode === 'bust' ? h * 0.95 : h * 0.8; fy = h * 0.95; }
     else { S = mode === 'bust' ? h * 0.8 : h * 0.62; fy = mode === 'bust' ? h * 1.05 : h * 0.95; }
     B.Models.draw(lc, key === 'clone' ? 'mirage' : key, w * 0.5, fy, S, poseOf(key), light);

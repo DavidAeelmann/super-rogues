@@ -1,5 +1,5 @@
 // Tiny JSON client for /api, supporting same-origin or configured remote game backend (for itch.io, CrazyGames, etc.).
-// 
+
 // FILE GUIDE. THE ONLY WAY the browser talks to the server: B.Net.post('elo', {...}) and get(). The server files are in api/. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};

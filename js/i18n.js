@@ -1,16 +1,16 @@
-// LANGUAGES (review #97, David: "In the menu add an option to change language to Portuguese and German"). The game is written in English;
+// LANGUAGES (, David: "In the menu add an option to change language to Portuguese and German"). The game is written in English;
 // another language is a dictionary file (js/lang-pt.js, js/lang-de.js) that maps English text to the translation. Nothing in the game code
 // is duplicated: this file watches the page and swaps every piece of text it has a translation for, and anything without one stays English.
-//
+
 // FILE GUIDE. HOW IT WORKS: js/lang-boot.js (a tiny script in <head>) reads the chosen language from localStorage and writes a <script> tag for
-//   js/lang-<id>.js, which fills B.LANG[id] = { x: {...}, p: [...], h: {...} }. This file then:
-//   B.T(text)       translates one string: exact entry in x, else a pattern in p ("Day {0} of {1}"), else the text itself. Used by fmt() in ui.js
-//                   for every description, and by render.js for the words drawn on the canvas.
-//   the observer    translates every text node and every title / aria-label / placeholder that appears on the page (menus, buttons, headings), and
-//                   whole bullets of rich text through the h table (key = the element's innerHTML).
-//   B.i18n.set(id)  stores the choice and reloads the page; B.i18n.LANGS is the list for the menu.
-//   To add a language: copy js/lang-pt.js, translate the right-hand sides, add it to LANGS here and in js/lang-boot.js.
-//   To find what is still untranslated: open the game with localStorage 'balance.trlog' = '1' (or run tools/languages.js): B.i18n.missing lists it.
+// js/lang-<id>.js, which fills B.LANG[id] = { x: {...}, p: [...], h: {...} }. This file then:
+// B.T(text) translates one string: exact entry in x, else a pattern in p ("Day {0} of {1}"), else the text itself. Used by fmt() in ui.js
+// for every description, and by render.js for the words drawn on the canvas.
+// the observer translates every text node and every title / aria-label / placeholder that appears on the page (menus, buttons, headings), and
+// whole bullets of rich text through the h table (key = the element's innerHTML).
+// B.i18n.set(id) stores the choice and reloads the page; B.i18n.LANGS is the list for the menu.
+// To add a language: copy js/lang-pt.js, translate the right-hand sides, add it to LANGS here and in js/lang-boot.js.
+// To find what is still untranslated: open the game with localStorage 'balance.trlog' = '1' (or run tools/languages.js): B.i18n.missing lists it.
 (function (G) {
   const B = G.B = G.B || {};
   const LANGS = [['en', 'English'], ['pt', 'Português'], ['de', 'Deutsch']];

@@ -1,8 +1,8 @@
 // Hex grid 8x8, pointy-top, "odd-r" offset (odd rows shifted right). Row 0 is the TOP (enemy side).
 // Works in the browser (window.B) and in Node (require sets globalThis.B).
-// 
+
 // FILE GUIDE. THE HEX GRID MATH, used by everything. Board = 8 columns x 8 rows, "odd-r" layout (odd rows shifted right). Row 0 is the TOP = the enemy side; rows 4 to 7 are the player's half.
-//   A hex is { c, r } (column, row). dist() = number of steps between two hexes, neighbors() = the (up to 6) hexes around one, within() = all hexes within a radius, px() = the centre of a hex in pixels. The index of the whole project is CODEMAP.md.
+// A hex is { c, r } (column, row). dist() = number of steps between two hexes, neighbors() = the (up to 6) hexes around one, within() = all hexes within a radius, px() = the centre of a hex in pixels. The index of the whole project is CODEMAP.md.
 (function (G) {
   const B = G.B = G.B || {};
   const COLS = 8, ROWS = 8;
@@ -30,7 +30,7 @@
   function px(c, r, size) { const w = Math.sqrt(3) * size; return { x: w * (c + 0.5 * (r & 1)) + w / 2, y: size * 1.5 * r + size }; }
   function boardSize(size) { const w = Math.sqrt(3) * size; return { w: w * (COLS + 0.5), h: size * 1.5 * (ROWS - 1) + size * 2 }; }
 
-  // WHAT (v104): the hexes in a straight line from (c, r) in direction d (0..5), up to the edge of the board (the Dragon's flight).
+  // WHAT: the hexes in a straight line from (c, r) in direction d (0..5), up to the edge of the board (the Dragon's flight).
   function ray(c, r, d) { const [x, y, z] = toCube(c, r), D = DIRS[d], out = []; for (let k = 1; k < 20; k++) { const [nc, nr] = fromCube(x + D[0] * k, y + D[1] * k, z + D[2] * k); if (!inside(nc, nr)) break; out.push({ c: nc, r: nr }); } return out; }
   B.Hex = { COLS, ROWS, dist, inside, neighbors, key, all, within, px, boardSize, ray };
   if (typeof module !== 'undefined') module.exports = B.Hex;

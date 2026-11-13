@@ -1,14 +1,14 @@
-// Ability effects (review #112, David: "a custom animation for each ability that makes sense, no duplicates; the radius must match the effect; a falling star should
+// Ability effects (, David: "a custom animation for each ability that makes sense, no duplicates; the radius must match the effect; a falling star should
 // really be a falling star"). The simulation tags every visual effect with the ability that made it (f.ab = the ability key, f.by = the caster); this file draws each
 // ability its own way: the starfall is a star that falls out of the sky onto the exact hexes it hits, Tom throws small dishes, the roots grow out of the ground...
-//
+
 // FILE GUIDE. js/render.js asks this file for every effect that has f.ab:
-//   B.AbilFx.has(f)    does this ability draw this kind of effect itself ('ring' = an area, 'proj' = a flying thing, 'bolt' = a line, 'blink', 'cast', 'spawn', 'text')?
-//   B.AbilFx.life(f)   how many ticks it is drawn for (longer than the event itself when the look needs it)
-//   B.AbilFx.run(kit, v, W, T, S, f, phase)   phase 'spawn' runs once when the effect is first seen (particles), 'draw' runs every frame (shapes)
+// B.AbilFx.has(f) does this ability draw this kind of effect itself ('ring' = an area, 'proj' = a flying thing, 'bolt' = a line, 'blink', 'cast', 'spawn', 'text')?
+// B.AbilFx.life(f) how many ticks it is drawn for (longer than the event itself when the look needs it)
+// B.AbilFx.run(kit, v, W, T, S, f, phase) phase 'spawn' runs once when the effect is first seen (particles), 'draw' runs every frame (shapes)
 // An ability is an entry of SPEC: { ring: {...}, proj: {...}, ... } where each kind has { life, top, spawn(g, f), draw(g, f, a, k) }.
-//   g = the drawing kit (ctx, size, hex helpers, particles), a = age in ticks, k = 0..1 over the event's own length. Everything uses stable pseudo-randomness (no flicker).
-//   AREAS are drawn on the real hexes of the radius (Hx.within), never as a circle, so what you see is exactly where the ability works.
+// g = the drawing kit (ctx, size, hex helpers, particles), a = age in ticks, k = 0..1 over the event's own length. Everything uses stable pseudo-randomness (no flicker).
+// AREAS are drawn on the real hexes of the radius (Hx.within), never as a circle, so what you see is exactly where the ability works.
 // To add an effect for a new ability: add its key (the ability key in sim.js A.xxx) to SPEC below and look at a neighbour for the pattern; check it with: node tools/fxlab.mjs yourkey
 (function (G) {
   const B = G.B = G.B || {};

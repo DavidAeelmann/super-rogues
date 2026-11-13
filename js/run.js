@@ -1,12 +1,12 @@
 // Run state machine (pure data, no DOM): map of nodes, fights, shops, events, XP/levels, items, relics.
 // The whole run is one JSON-able object, saved to localStorage by the UI after every change.
-// 
+
 // FILE GUIDE (read this first). This file is the RULES of one game ("run"), with no screen code. js/ui.js draws it, js/sim.js plays the fights.
-//   Where things are, top to bottom: random numbers -> new run / heroes -> hero stats (heroMods, heroDef) -> XP -> terrain maps -> where heroes stand ->
-//   building and finishing a fight -> the Gauntlet (PvP) -> the map of days (advance, choose) -> shops -> items -> events -> challenge fights -> Auto-equip.
-//   The numbers you will want to change (prices, costs, difficulty) are NOT here: they live in js/data.js (B.CFG, B.DIFF, B.POOLS). The index of the whole project is CODEMAP.md.
-//   A "run" is one plain object (heroes, bag, relics = "Powers", gold, step, phase...). Everything here reads it or changes it; nothing here draws.
-//   The functions the other files may call are listed at the very bottom, in B.Run = { ... }.
+// Where things are, top to bottom: random numbers -> new run / heroes -> hero stats (heroMods, heroDef) -> XP -> terrain maps -> where heroes stand ->
+// building and finishing a fight -> the Gauntlet (PvP) -> the map of days (advance, choose) -> shops -> items -> events -> challenge fights -> Auto-equip.
+// The numbers you will want to change (prices, costs, difficulty) are NOT here: they live in js/data.js (B.CFG, B.DIFF, B.POOLS). The index of the whole project is CODEMAP.md.
+// A "run" is one plain object (heroes, bag, relics = "Powers", gold, step, phase...). Everything here reads it or changes it; nothing here draws.
+// The functions the other files may call are listed at the very bottom, in B.Run = { ... }.
 (function (G) {
   const B = G.B = G.B || {};
   const C = B.CFG, Hx = B.Hex;
@@ -18,9 +18,9 @@
     run.rs = (run.rs + 0x6D2B79F5) | 0; let t = run.rs;
     t = Math.imul(t ^ t >>> 15, 1 | t); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296;
   }
-  // WHAT: one random item of a list.  pick(run, [a, b, c]) -> a, b or c.
+  // WHAT: one random item of a list. pick(run, [a, b, c]) -> a, b or c.
   const pick = (run, arr) => arr[Math.floor(rnd(run) * arr.length)];
-  // v30 (review #28, PC boy): content still locked by the player's account level (run.locked, given at newRun) never
+  // content still locked by the player's account level (run.locked, given at newRun) never
   // shows up in that player's runs: start offer, shops, events, rewards
   // WHAT: is this hero / item / power unlocked for this player? (account level unlocks live in B.UNLOCKS, data.js)
   const isOpen = (run, id) => !(run.locked && run.locked.length && run.locked.includes(id));
@@ -28,9 +28,9 @@
   const heroKeysOf = run => Object.keys(B.HEROES).filter(k => isOpen(run, k));
   const itemsOf = run => B.ITEMS.filter(i => isOpen(run, i.id));
   const relicsOf = run => B.RELICS.filter(r => isOpen(run, r.id) && r.id !== 'solo');   // v63: the Lone Crown needs a team of one, and the run now starts with three heroes: it is no longer offered
-  // WHAT: n DIFFERENT random items of a list (no repeats).  pickN(run, list, 3).
+  // WHAT: n DIFFERENT random items of a list (no repeats). pickN(run, list, 3).
   function pickN(run, arr, n) { const a = arr.slice(), o = []; while (a.length && o.length < n) o.push(a.splice(Math.floor(rnd(run) * a.length), 1)[0]); return o; }
-  // WHAT: a random key from { key: weight } where a bigger weight is likelier.  wpick(run, { common: 0.5, rare: 0.1 }).
+  // WHAT: a random key from { key: weight } where a bigger weight is likelier. wpick(run, { common: 0.5, rare: 0.1 }).
   function wpick(run, weights) { let s = 0; for (const k in weights) s += weights[k]; let x = rnd(run) * s; for (const k in weights) { x -= weights[k]; if (x <= 0) return k; } return Object.keys(weights)[0]; }
 
   // ------------------------------------------------------------------ run
@@ -52,13 +52,13 @@
         h.items = keep;
       }
     }
-    // v5 (review #22): the sequence and the fight scale live in the run; runs started before keep the old 13 steps
+    // the sequence and the fight scale live in the run; runs started before keep the old 13 steps
     if (run.v === 4) { run.v = 5; run.seq = ['F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'B', 'S', 'G']; run.fightScale = [1, 0.9, 1.1, 1.3, 1.5, 1.75, 2]; }
     if (run.v === 5) {
-      if (run.lives == null) run.lives = 3;   // v63 (review #117): runs saved before lives got the full three (v101: turned into the Ward below)
-      if (!run.wardV) { run.wardV = 1; run.lives = run.lives >= 3 ? 1 : 0; }   // v101 (review #186): three lives become the Ward (whole only if no fight was lost)
+      if (run.lives == null) run.lives = 3;   // runs saved before lives got the full three (v101: turned into the Ward below)
+      if (!run.wardV) { run.wardV = 1; run.lives = run.lives >= 3 ? 1 : 0; }   // three lives become the Ward (whole only if no fight was lost)
       if (run.g && run.g.teamId != null && run.phase !== 'over') { run.phase = 'gauntlet'; run.cur = null; run.g = { status: 'intro', history: [] }; }   // the old tower is gone: the run goes to the final fight
-      // v96 (review #178): no PvP inside the run. A saved run waiting for (or deploying for) the final fight is complete; duel options leave the map
+      // no PvP inside the run. A saved run waiting for (or deploying for) the final fight is complete; duel options leave the map
       if (run.phase === 'gauntlet' || (run.phase === 'deploy' && run.cur && run.cur.type === 'gauntlet' && run.g && run.g.kind === 'final')) completeRun(run);
       if (run.phase === 'map' && (run.opts || []).some(o => o.type === 'duel')) run.opts = run.opts.filter(o => o.type !== 'duel');
     }
@@ -71,24 +71,24 @@
     const run = { v: 5, seed: seed >>> 0, rs: seed | 0, gold: C.startGold, heroes: [], bag: [], relics: [], nuid: 0,
       step: -1, fightNo: 0, phase: 'start', opts: [], cur: null, pending: [], curse: 0, log: [], won: 0, lost: 0, score: 0, startOffer: [],
       seq: C.seq.slice(), fightScale: C.fightScale.slice(), locked: ((opts && opts.locked) || []).slice() };
-    run.freeDeck = JSON.parse(JSON.stringify((opts && opts.deck) || {}));   // v100 (review #182): the free-pick queues, carried from game to game by ui.js
-    // v63 (review #118): heroes offered by class (v64, review #126: one of each class, the player picks one); v100: drawn from the free-pick queues
+    run.freeDeck = JSON.parse(JSON.stringify((opts && opts.deck) || {}));   // the free-pick queues, carried from game to game by ui.js
+    // heroes offered by class (v64, one of each class, the player picks one); v100: drawn from the free-pick queues
     run.startOffer = [].concat(...B.CLASSES.map(cl => { const o = []; for (let i = 0; i < C.startOffer / B.CLASSES.length; i++) { const k = drawFree(run, cl, new Set(o)); if (k) o.push(k); } return o; }));
     run.relicOffer = C.startRelics ? pickN(run, relicsOf(run).map(r => r.id), C.startRelics) : [];
     run.lives = C.lives; run.wardV = 1;
-    run.bosses = B.BOSS_SLOTS.map(s => pick(run, s));   // v52 (review #64): which boss waits in each slot this game
+    run.bosses = B.BOSS_SLOTS.map(s => pick(run, s));   // which boss waits in each slot this game
     return run;
   }
   // WHAT: puts a new level 1 hero on the team and places him on the board. A hero is { uid, key, lvl, xp, specs, items, bonus, pos }.
-  //   key = the id in B.HEROES; specs = the powers picked at level-ups; bonus = permanent extras from events, potions and Smolder's Devour.
-  // v126 (review #224): bench = the hero joins in the middle of the run and waits beside the board until the player places it (see benched)
+  // key = the id in B.HEROES; specs = the powers picked at level-ups; bonus = permanent extras from events, potions and Smolder's Devour.
+  // bench = the hero joins in the middle of the run and waits beside the board until the player places it (see benched)
   function addHero(run, key, bench) {
     const k = (B.heroKey && B.heroKey(key)) || key;
     const h = { uid: ++run.nuid, key: k, lvl: 1, xp: 0, specs: [], items: [], bonus: {}, pos: null };
     run.heroes.push(h); if (bench) h.bench = true; else autoPlace(run, h); return h;
   }
   // WHAT: finishes the start screen: adds the chosen heroes and the chosen starting power, then moves to the first day.
-  // v81 (review #159): the balance evidence (tools/balance). run.tele counts what the run was OFFERED and what it TOOK, by 'kind:id' (hero, item, relic,
+  // the balance evidence (tools/balance). run.tele counts what the run was OFFERED and what it TOOK, by 'kind:id' (hero, item, relic,
   // event = 'event:<id>#<choice>' or '#skip'); the server adds them up at the end of the run with its result (table picks), which gives the pick rate and
   // the win rate of the runs that picked each thing. Nothing here changes the game.
   // WHAT: counts things offered (seen) and taken (took) in run.tele.
@@ -98,11 +98,11 @@
     seen(run, 'hero', run.startOffer); seen(run, 'relic', run.relicOffer); for (const k of keys.slice(0, C.maxTeam)) took(run, 'hero', k); took(run, 'relic', relic);
     for (const k of keys.slice(0, C.maxTeam)) addHero(run, k);
     if (relic && B.RELIC[relic]) gainRelic(run, relic);
-    for (let i = 0; i < (C.startItems || 0); i++) run.bag.push(randomItem(run, 'common'));   // v63 (review #118): a few common items to start with
+    for (let i = 0; i < (C.startItems || 0); i++) run.bag.push(randomItem(run, 'common'));   // a few common items to start with
     autoEquip(run);
     run.phase = 'map'; advance(run);
   }
-  // v97 (review #179, David: "The very first time you press play, and choose a hero, cut to the battlefield and that hero drops in. Then after he is moved,
+  // v97 (, David: "The very first time you press play, and choose a hero, cut to the battlefield and that hero drops in. Then after he is moved,
   // per indicated, an enemy weak unit comes in from the other side, the hero gets an exclamation mark in a speech bubble, and fight starts seamlessly"):
   // WHAT: turns day 1 of the very first run into the intro fight: one Grunt, no map; ui.js plays the drop, the move and the enemy's entrance (run.onb).
   function startIntro(run) {
@@ -138,9 +138,9 @@
   }
   // WHAT: finds a hero power ("spec") by its id, e.g. specOf('pyra', 'pyr2a').
   function specOf(key, id) { for (const pair of B.HEROES[key].specs) for (const s of pair) if (s.id === id) return s; return null; }
-  // WHAT (v88, review #167): the balance factor of a level-up power on Health, Attack and Magic (B.TUNE.spec, 1 = none).
+  // WHAT (v88, ): the balance factor of a level-up power on Health, Attack and Magic (B.TUNE.spec, 1 = none).
   const specTune = id => (B.TUNE && B.TUNE.spec && B.TUNE.spec[id]) || 1;
-  // WHAT (v88): the PvP-only factor of a hero (B.TUNE.pvp): scales a fighting unit made by heroDef.
+  // WHAT: the PvP-only factor of a hero (B.TUNE.pvp): scales a fighting unit made by heroDef.
   function pvpDef(d, key) { const pk = B.heroKey ? B.heroKey(key) : key; const f = (B.TUNE && B.TUNE.pvp && (B.TUNE.pvp[pk] || B.TUNE.pvp[key])) || 1; if (f !== 1) { d.hp *= f; d.atk *= f; d.ap *= f; } return d; }
   // WHAT: ALL the extra stats a hero has right now, summed: his own mods, picked powers, worn items, set bonuses, team powers (relics), permanent bonus, run-based bonuses.
   function heroMods(run, h) {
@@ -157,7 +157,7 @@
     addMods(m, relicStats(run, h));
     return m;
   }
-  // v50 (review #62): relics whose bonus depends on the run (how many heroes, relics, wins, bag items, worn items)
+  // relics whose bonus depends on the run (how many heroes, relics, wins, bag items, worn items)
   // WHAT: does the run own this power (relic)? has(run, 'snowball').
   const has = (run, id) => (run.relics || []).includes(id);
   const lone = run => has(run, 'solo') && (run.heroes || []).length === 1;
@@ -168,7 +168,7 @@
     if (has(run, 'cabinet')) p += 0.03 * run.relics.length;
     if (has(run, 'snowball')) p += 0.04 * (run.snow || 0);
     if (has(run, 'packrat')) p += 0.03 * Math.min(10, (run.bag || []).length);
-    if (has(run, 'vow') && h.items.length < slots(run, h)) p += 0.3;   // v61 (review #73): a free slot (it was 'one item or none', free for everyone below Lv 3), +30% (was +50%)
+    if (has(run, 'vow') && h.items.length < slots(run, h)) p += 0.3;   // a free slot (it was 'one item or none', free for everyone below Lv 3), +30% (was +50%)
     return p ? { atkPct: p, hpPct: p } : null;
   }
   // WHAT: how many items a hero can wear: 1 at level 1-2, +1 per level from 3, +1 with the Adventurer's Pack, +2 for a lone hero with Lone Wolf.
@@ -178,10 +178,10 @@
   // Returns a plain object; sim.js never reads the run itself.
   function heroDef(run, h) {
     const b = B.HEROES[h.key], m = heroMods(run, h), L = h.lvl - 1, all = m.allPct || 0;
-    // v61 (review #73): each hero grows at its own pace per level (b.grow, 1 = +15% HP and attack and +30 AP per level),
+    // each hero grows at its own pace per level (b.grow, 1 = +15% HP and attack and +30 AP per level),
     // so heroes that were strong early and fell off late (or the reverse) stay in line through the whole run
     const pk = B.heroKey ? B.heroKey(h.key) : h.key; let g = (b.grow || 1) * ((B.TUNE && B.TUNE.growth) || 1), tp = ((B.TUNE && B.TUNE.base) || 1);
-    for (const id of h.specs) tp *= specTune(id);   // v88 (review #167): the level-up powers' own balance factor; v62q (review #113): g also takes the global growth (what a level gives: Health, Attack, Magic and so the ability numbers)
+    for (const id of h.specs) tp *= specTune(id);   // the level-up powers' own balance factor; g also takes the global growth (what a level gives: Health, Attack, Magic and so the ability numbers)
     const ab = Object.assign({}, b.ab), fl = (b.fl || []).slice();
     let heroName = b.name;
     if (h.path != null && B.HERO_PATHS && B.HERO_PATHS[h.key] && B.HERO_PATHS[h.key][h.path]) {
@@ -200,7 +200,7 @@
       kind: 'hero', uid: h.uid, key: h.key, name: heroName, glyph: b.glyph, color: b.color, lvl: h.lvl,
       hp: isGlassPrism ? 1 : (b.hp + (m.hp || 0)) * (1 + 0.15 * g * L) * (1 + (m.hpPct || 0) + all) * tp,
       atk: (b.atk + (m.atk || 0)) * (1 + 0.15 * g * L) * (1 + (m.atkPct || 0) + all) * tp,
-      ap: (100 + 30 * g * L + (m.ap || 0)) * (1 + all) * tp,   // review #26: AP 100 at Lv 1, +30 per level (it now scales abilities on its own)
+      ap: (100 + 30 * g * L + (m.ap || 0)) * (1 + all) * tp,   // AP 100 at Lv 1, +30 per level (it now scales abilities on its own)
       armor: (b.armor + 4 * L + (m.armor || 0)) * (1 + all),
       as: b.as * Math.max(0.3, 1 + (m.asPct || 0)), range: Math.max(1, b.range + (m.range || 0)), ms: b.ms + (m.ms || 0),
       crit: (b.crit || 0) + (m.crit || 0), critDmg: 1.5 + (m.critDmg || 0), ls: (b.ls || 0) + (m.ls || 0),
@@ -243,7 +243,7 @@
     return (B.HEROES[h.key] || {}).name || h.key;
   }
 
-  // ------------------------------------------------------------------ terrain maps (review #39, David)
+  // ------------------------------------------------------------------ terrain maps (, David)
   // Fight 1 = Open Meadow, bosses = Standing Stones, every other fight and Gauntlet floor = the next map of
   // B.MAP_ROTATION (its start depends on the run's seed; the two fights offered on a step get different maps). A map
   // is only used if none of its terrain sits on a hero's current hex or an enemy's starting hex; otherwise the next
@@ -284,7 +284,7 @@
     const cols = [3, 4, 2, 5, 1, 6, 0, 7];
     for (const r of rows) for (const c of cols) if (!taken.has(Hx.key(c, r))) { h.pos = { c, r }; return; }
   }
-  // v126 (review #224, David: "Make it so when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time. Fight doesnt
+  // v126 (, David: "Make it so when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time. Fight doesnt
   // start until you do, include plenty of indicators for that. But after first deployment the hex persists until changed until end of run"): a hero that joins in the
   // middle of a run (free recruit, Hero Shop, event, stolen) waits on the BENCH (h.bench, no hex) until the player puts it on the board; the deploy screen keeps the
   // fight locked until then (js/ui.js benchHTML). Once placed it keeps its hex for the rest of the run (unless the player moves it or terrain covers it).
@@ -302,7 +302,7 @@
     const h = run.heroes.find(x => x.uid === uid); if (!h) return;
     const other = run.heroes.find(x => x !== h && x.pos && x.pos.c === c && x.pos.r === r);
     if (other) other.pos = h.pos ? { c: h.pos.c, r: h.pos.r } : null;
-    h.pos = { c, r }; delete h.bench;   // v126 (review #224): placed once, it keeps this hex
+    h.pos = { c, r }; delete h.bench;   // placed once, it keeps this hex
     if (other && !other.pos) autoPlace(run, other);
   }
 
@@ -315,7 +315,7 @@
   // WHAT (important): builds one fight to offer on the map: which enemies (bosses and escorts, or a budget of monsters, plus elites), where they stand, their strength scale, the gold prize and the map.
   // To change how hard fights are, edit B.CFG.fightScale and B.DIFF in data.js (and run tools/pve-odds.js to see the win rates); this function only combines them.
   function makeFight(run, diff, fightNo, nth, o) {
-    // v61 (review #73): each difficulty has its own strength on top of the fight's scale (B.DIFF[diff].mul)
+    // each difficulty has its own strength on top of the fight's scale (B.DIFF[diff].mul)
     const fs = run.fightScale || C.fightScale, scale = fs[Math.min(fightNo, fs.length - 1)] * ((o && o.scaleMul) || 1) * diffMul(diff, fightNo);
     const enemies = [];
     if (o && o.keys) { for (const k of o.keys) enemies.push({ key: k }); for (const e of pickN(run, enemies, o.elites || 0)) e.elite = pick(run, B.ELITES).id; }
@@ -330,7 +330,7 @@
       const nElite = d.elites + (fightNo > bossFight(run, 1) && diff !== 'easy' && diff !== 'horde' ? 1 : 0) + ((o && o.elites) || 0);
       for (const e of pickN(run, enemies, nElite)) e.elite = pick(run, B.ELITES).id;
     }
-    // review #39: the map (fight 1 open, bosses at the Standing Stones), clear of the heroes and of the boss
+    // the map (fight 1 open, bosses at the Standing Stones), clear of the heroes and of the boss
     const avoid = heroHexes(run); for (const e of enemies) if (e.c != null) avoid.add(Hx.key(e.c, e.r));
     const map = fightNo <= 1 && diff !== 'boss' ? 'meadow' : diff === 'boss' ? pickMap(['stones'], avoid) : pickMap(rotation(run, fightNo * 3 + (DIFF_I[diff] || 0)), avoid);
     // formation: melee in front (rows 2-3), ranged behind (rows 0-1); never on terrain
@@ -362,7 +362,7 @@
     });
   }
   // preview = the static board shown while deploying (no rng used, no start-of-fight effects)
-  // v62 (review #78, David): Smolder eats an item it holds at the start of every fight and keeps its stats for good (the
+  // Smolder eats an item it holds at the start of every fight and keeps its stats for good (the
   // numbers, not the item's effect). The first item it holds goes first; Second Helping eats two, Rich Fuel gives 50% more.
   const DEVOUR = ['hp', 'atk', 'ap', 'armor', 'hpPct', 'atkPct', 'asPct', 'crit', 'critDmg', 'ls', 'dodge', 'regen', 'manaRegen', 'manaStart'];
   // WHAT: Smolder's passive. Called when a fight really starts (not for the preview): each Smolder eats the first item he wears and keeps its numbers in his permanent bonus.
@@ -392,7 +392,7 @@
       enemies: enemyDefs(run, f),
     });
   }
-  // the hero side of a next-fight modifier (review #17)
+  // the hero side of a next-fight modifier ()
   // WHAT: applies a "next fight" modifier bought in an event (attack %, starting mana, regeneration) to a hero.
   function withMod(d, M) {
     if (!M) return d;
@@ -411,7 +411,7 @@
   }
   // WHAT (important): everything that happens when a fight ends: record it for the dashboard, give XP, pay gold, run power effects, then go to the next day or end the run on a loss.
   // Returns a "res" object the result screen reads (win, gold, xp, prize...). A lost normal fight ends the whole run; a lost challenge does not.
-  // WHAT: v62 (review #94, David: "a fun indicator when you lose, like so close! or you were wrecked!, depending how narrow the loss was").
+  // WHAT: .
   // left = the share (0 to 1) of the enemies' total max HP still standing when the fight was lost. Returns the line the defeat screen shows.
   function lossTag(left, timeout) {
     if (timeout) return left < 0.35 ? 'Time ran out. SO close!' : 'Time ran out!';
@@ -424,9 +424,9 @@
   function finishFight(run, W) {
     const f = run.cur, win = W.winner === 0;
     const res = { win, gold: 0, xp: [], boss: f.diff === 'boss', timeout: !!W.timeout };
-    // review #14: the team as it fought (before level ups), sent to api/elo.js to rate its heroes, items and relics
+    // the team as it fought (before level ups), sent to api/elo.js to rate its heroes, items and relics
     run.lastFight = { team: teamSnapshot(run), relics: run.relics.slice() };
-    if (!f.challenge && !f.solo) (run.flog = run.flog || []).push([f.fightNo, f.diff, win ? 1 : 0]);   // v62 (review #81): for the balance dashboard
+    if (!f.challenge && !f.solo) (run.flog = run.flog || []).push([f.fightNo, f.diff, win ? 1 : 0]);   // for the balance dashboard
     for (const u of W.units) {
       if (u.kind !== 'hero' || !u.uid) continue;
       const h = run.heroes.find(x => x.uid === u.uid); if (!h) continue;
@@ -437,14 +437,14 @@
     if (win) {
       const M = f.mod || {};
       res.gold = Math.round((goldAfterWin(run, f.gold) + (run.relics.includes('bounty') ? Math.min(6, W.kills) : 0)) * (1 + (M.goldPct || 0))) + (M.rewardGold || 0);
-      // v50 (review #62): Double or Nothing (a fallen hero = no gold) and the Snowball (grows with every fight nobody fell in)
+      // Double or Nothing (a fallen hero = no gold) and the Snowball (grows with every fight nobody fell in)
       const fell = W.units.some(u => u.kind === 'hero' && u.side === 0 && u.dead);
       if (has(run, 'double')) { res.gold = fell ? 0 : res.gold * 2; res.double = fell ? 'lost' : 'won'; }
       if (has(run, 'snowball')) { run.snow = fell ? 0 : (run.snow || 0) + 1; res.snow = run.snow; }
       run.gold += res.gold; run.won++;
       relicsAfterWin(run, res);
       if (M.reward) { const id = randomItem(run, M.reward); run.bag.push(id); res.prize = id; }
-      // v44 (review #54): the Moneylender's investments and loans settle on the next won fight
+      // the Moneylender's investments and loans settle on the next won fight
       if (run.bank && run.bank.length) { res.bank = run.bank.reduce((a, x) => a + x, 0); run.gold = Math.max(0, run.gold + res.bank); run.bank = []; }
     }
     else run.lost++;
@@ -492,7 +492,7 @@
   }
   // ------------------------------------------------------------------ PvP days and the final fight (v63, reviews #117 #118 #119)
   // WHAT: the three heroes offered on the free recruit screen: one of each class, the classes the team lacks first (never a hero already in the team).
-  // v100 (review #182, David: "Force diversity in which heros appear in the free picks. All available heroes must appear before the list resets, and then it
+  // v100 (, David: "Force diversity in which heros appear in the free picks. All available heroes must appear before the list resets, and then it
   // is in a new order"): each class keeps a queue of its available heroes in a shuffled order (run.freeDeck, saved across games by ui.js). A free pick
   // (the start and the free recruits) shows the next heroes of each queue; a hero you already have is skipped and stays first in line. When a queue has
   // nothing left to show, every available hero of that class is added again in a new order.
@@ -514,13 +514,13 @@
   function recruit(run, key) {
     if (run.phase !== 'recruit' || !(run.recruitOffer || []).includes(key)) return 'Pick one of the offered heroes';
     seen(run, 'hero', run.recruitOffer); took(run, 'hero', key);
-    addHero(run, key, true); run.recruits = (run.recruits || 0) + 1; run.recruitOffer = null;   // v126 (review #224): onto the bench
+    addHero(run, key, true); run.recruits = (run.recruits || 0) + 1; run.recruitOffer = null;   // onto the bench
     advance(run); return null;
   }
-  // v64 (review #127, David: "hero shops may still exist swapping in with an existing team hero, upgrades are random, items kept"): with a full team a bought hero takes
+  // with a full team a bought hero takes
   // the place of one of yours: it starts at that hero's level and XP, picks its powers at random for those levels and wears the same items
   // WHAT: swaps hero oldUid for a new hero key (same level, XP, place and items; random powers). Returns the new hero.
-  // v126 (review #224): bench = the newcomer waits on the bench (see benched) instead of taking the old hero's hex
+  // bench = the newcomer waits on the bench (see benched) instead of taking the old hero's hex
   function swapIn(run, oldUid, key, bench) {
     const old = run.heroes.find(h => h.uid === oldUid); if (!old) return null;
     const specs = B.HEROES[key].specs.slice(0, old.lvl - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id);
@@ -546,7 +546,7 @@
     return r < 0.75 ? { text: 'Much weaker', tone: 'easy' } : r < 0.92 ? { text: 'Weaker', tone: 'easy' } : r <= 1.08 ? { text: 'Even', tone: 'even' } : r <= 1.3 ? { text: 'Stronger', tone: 'hard' } : { text: 'Much stronger', tone: 'hard' };
   }
   const GHOST_NAMES = ['Mira', 'Tobias', 'Ayla', 'Kenji', 'Rosa', 'Dmitri', 'Nia', 'Bruno', 'Sakura', 'Omar', 'Elsa', 'Felix', 'Zara', 'Hugo', 'Lena', 'Tariq', 'Ines', 'Marco', 'Yuki', 'Olga'];
-  // WHAT (review #119: "the initial ghost population can be randomly generated until players are available"): a made-up player team for a day of the run, so a duel or the final fight always has an opponent. One hero per class, powers picked at random, items and powers growing with the day.
+  // WHAT ("the initial ghost population can be randomly generated until players are available"): a made-up player team for a day of the run, so a duel or the final fight always has an opponent. One hero per class, powers picked at random, items and powers growing with the day.
   function randomGhost(run, day, final) {
     const lvl = final ? 5 : Math.max(1, Math.min(5, 1 + Math.floor(day / 2))), nItems = final ? 3 : Math.min(3, Math.floor((day + 1) / 3)), nRel = final ? 3 : Math.floor(day / 3);
     const w = tierWeights(Object.assign({}, run, { fightNo: final ? 8 : day })), all = Object.keys(B.HEROES), team = [];
@@ -574,7 +574,7 @@
     const g = run.g, f = run.cur, final = g.kind === 'final', win = W.winner === 0;
     const res = { win, duel: true, final, gold: 0, xp: [], timeout: !!W.timeout, boss: false };
     run.lastFight = { team: teamSnapshot(run), relics: run.relics.slice() };
-    // v90 (review #171): a Gauntlet floor, after the run: no XP, lives or spoils (the run is already complete); the server's answer says what comes next
+    // a Gauntlet floor, after the run: no XP, lives or spoils (the run is already complete); the server's answer says what comes next
     if (g.kind === 'tower') {
       const T = run.tower || (run.tower = { status: 'climb', floor: 1, lp: 0 });
       res.tower = true; res.floor = T.floor;
@@ -592,7 +592,7 @@
       res.xp.push({ uid: h.uid, name: B.HEROES[h.key].name, gained: h.xp - xp0, from: before, to: h.lvl });
     }
     if (W.used && W.used.phoenix) { run.relics = run.relics.filter(id => id !== 'phoenix'); res.phoenix = true; }
-    // v94 (review #175): every PvP fight with the opponent's league (null for a made-up team), so the league points can weigh the gap
+    // every PvP fight with the opponent's league (null for a made-up team), so the league points can weigh the gap
     (run.pvpLog = run.pvpLog || []).push([win ? 1 : 0, g.opp && g.opp.league != null && !g.opp.random ? g.opp.league | 0 : null, final ? 1 : 0]);
     fightAchs(run, W, win, false, false);
     if (win && g.opp && ghostPower(g.opp) >= 1.3 * powerOf(run, run.heroes)) ach(run, 'giant');
@@ -604,7 +604,7 @@
       else { run.steal = stealOptions(run, g.opp); run.stealFrom = g.opp.name; run.phase = 'steal'; }
       return res;
     }
-    run.lost++; run.lives--; res.lives = run.lives; run.pvpLost = (run.pvpLost || 0) + 1;   // v65 (review #129): league points count the PvP fights lost
+    run.lost++; run.lives--; res.lives = run.lives; run.pvpLost = (run.pvpLost || 0) + 1;   // league points count the PvP fights lost
     if (run.lives <= 0) { run.phase = 'over'; run.result = 'defeat'; }
     else if (final) { run.phase = 'gauntlet'; run.g = { status: 'intro', history: [] }; }   // another finalist waits
     else { run.g = null; advance(run); }
@@ -633,7 +633,7 @@
       const full = run.heroes.length >= teamMax(run), old = full ? run.heroes.find(h => h.uid === replaceUid) : null;
       if (full && !old) return 'Pick the hero it replaces';
       if (old) { run.bag.push(...old.items); run.heroes = run.heroes.filter(h => h !== old); run.pending = run.pending.filter(p => p.uid !== old.uid); }
-      const x = o.hero, h = { uid: ++run.nuid, key: x.key, lvl: x.lvl, xp: C.xpLevels[x.lvl] || 0, specs: x.specs.slice(), items: [], bonus: Object.assign({}, x.bonus), pos: null, bench: true };   // v126 (review #224): onto the bench
+      const x = o.hero, h = { uid: ++run.nuid, key: x.key, lvl: x.lvl, xp: C.xpLevels[x.lvl] || 0, specs: x.specs.slice(), items: [], bonus: Object.assign({}, x.bonus), pos: null, bench: true };   // onto the bench
       run.heroes.push(h); run.bag.push(...x.items); ach(run, 'pickpocket');
     } else if (o.kind === 'item') run.bag.push(o.id);
     else gainRelic(run, o.id);
@@ -642,7 +642,7 @@
 
 
 
-  // v50 (review #62): the Heirloom Anvil (a worn item goes up a rarity) and the Changeling Mask (the lowest-level hero
+  // the Heirloom Anvil (a worn item goes up a rarity) and the Changeling Mask (the lowest-level hero
   // turns into another hero of the same level, keeping its items; its powers are rolled again)
   // WHAT: powers that act after every won fight: the Heirloom Anvil upgrades a worn item, the Changeling Mask turns the lowest hero into another hero.
   function relicsAfterWin(run, res) {
@@ -664,11 +664,11 @@
   }
 
   // ------------------------------------------------------------------ PvP gauntlet (reviews #3 #4): matchmaking + Elo live in api/elo.js
-  // v62 (review #75): the Snowball and Pack Rat bonuses depend on the run (wins, bag), which a ghost does not carry, so they
+  // the Snowball and Pack Rat bonuses depend on the run (wins, bag), which a ghost does not carry, so they
   // are written into the heroes' bonus; the ghost then fights with what its player really had
   // WHAT: a copy of the team as plain data, used (1) to send the team to the server as a Gauntlet ghost and (2) to rate heroes. Run-based power bonuses are baked in so the ghost keeps them.
   function teamSnapshot(run) {
-    const temp = run.heroes.filter(h => h.bench);   // v126 (review #224): a hero still on the bench gets a hex for the ghost only
+    const temp = run.heroes.filter(h => h.bench);   // a hero still on the bench gets a hex for the ghost only
     for (const h of run.heroes) if (!h.pos && !h.bench) autoPlace(run, h);
     for (const h of temp) { delete h.bench; autoPlace(run, h); }
     try { return snapTeam(run); } finally { for (const h of temp) { h.bench = true; h.pos = null; } }
@@ -689,10 +689,10 @@
     placeAll(run, preview);
     return B.Sim.create({
       terrain: terrainOf(run),
-      // review #15: the ghost fights with its own relics too (stat relics via heroDef, team effects via enemyRelics)
+      // the ghost fights with its own relics too (stat relics via heroDef, team effects via enemyRelics)
       mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: 7, relics: run.relics, enemyRelics: o.relics || [], takeMul: o2 && o2.takeMul,   // v95 (reviews #176 #177): see B.PVP_TAKE
      
-      heroes: run.heroes.filter(h => !h.bench).map(h => ({ def: pvpDef(heroDef(run, h), h.key), c: h.pos.c, r: h.pos.r })),   // v126: the bench is off the board   // v88: pvpDef = the PvP-only balance (B.TUNE.pvp)
+      heroes: run.heroes.filter(h => !h.bench).map(h => ({ def: pvpDef(heroDef(run, h), h.key), c: h.pos.c, r: h.pos.r })),   // v126: the bench is off the board // v88: pvpDef = the PvP-only balance (B.TUNE.pvp)
       // their formation, mirrored so it faces ours: rows 4..7 -> 3..0
       enemies: o.team.map(h => { const d = pvpDef(heroDef(ghost, h), h.key); d.uid = 0; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
     });
@@ -702,12 +702,12 @@
   function gauntletUpdate(run, r) {
     const g = run.g;
     if (g.eloStart == null) g.eloStart = r.elo - (r.delta || 0) - (r.reach || 0);
-    // review #14: reaching the gauntlet is itself a win against a 1000 rated opponent
+    // reaching the gauntlet is itself a win against a 1000 rated opponent
     if (r.reach != null && !g.history.length) g.history.push({ name: 'Reached the Gauntlet', elo: 1000, win: true, delta: r.reach, reach: true });
     if (r.peak != null) g.peak = r.peak;
-    if (r.lg) { g.lgGain = (g.lgGain || 0) + r.lg.delta; g.lgNow = r.lg; g.lgPromoted = g.lgPromoted || r.lg.promoted; }  // review #21
+    if (r.lg) { g.lgGain = (g.lgGain || 0) + r.lg.delta; g.lgNow = r.lg; g.lgPromoted = g.lgPromoted || r.lg.promoted; }
     g.elo = r.elo; g.teamId = r.teamId; g.wins = r.wins || 0;
-    if (r.fallback) g.history.push({ name: 'Gauntlet Champion (fallback)', elo: 1000, win: true, delta: 0, fallback: true });   // v62 (review #84): nobody was there yet
+    if (r.fallback) g.history.push({ name: 'Gauntlet Champion (fallback)', elo: 1000, win: true, delta: 0, fallback: true });   // nobody was there yet
     if (r.delta != null && g.opp) g.history.push({ name: g.opp.name, code: g.opp.code || null, elo: g.opp.elo, win: !!r.win, delta: r.delta, key: g.opp.team && g.opp.team[0] && g.opp.team[0].key, ghost: r.ghost || null });
     if (r.opponent) { g.opp = r.opponent; g.round = r.round; g.status = 'match'; run.cur = { type: 'gauntlet' }; g.map = gauntletMap(run, g.opp, g.round); }
     if (r.over) { g.status = r.champion ? 'champion' : 'lost'; g.opp = null; run.cur = null; run.phase = 'over'; run.result = 'gauntlet'; }
@@ -722,53 +722,53 @@
   function bossFight(run, n) { let f = 0, b = 0; for (const t of seqOf(run)) { if (t === 'F' || t === 'B') f++; if (t === 'B' && ++b === n) return f; } return f; }
   // WHAT (important): moves to the next day and builds what the map offers: two fights (easy / medium / hard), a boss, two shops or events, the last shop, or the start of the Gauntlet.
   function advance(run, redo) {
-    // v64 (review #126): after each of the first days, while the team is short, a free hero joins: the recruit screen comes before the next day
+    // after each of the first days, while the team is short, a free hero joins: the recruit screen comes before the next day
     if (!redo && run.phase !== 'recruit' && run.step >= 0 && (run.recruits || 0) < (C.freeRecruits || 0) && run.heroes.length < C.maxTeam) {
       run.phase = 'recruit'; run.recruitOffer = recruitOffer(run); run.cur = null; run.opts = []; return;
     }
     run.step++;
     const t = seqOf(run)[run.step];
     run.phase = 'map'; run.opts = [];
-    if (t === undefined && run.tower) { run.phase = 'tower'; run.tower.status = 'ready'; return; }   // v101 (review #183): the Gauntlet shop is done: the climb starts
+    if (t === undefined && run.tower) { run.phase = 'tower'; run.tower.status = 'ready'; return; }   // the Gauntlet shop is done: the climb starts
     if (t === 'F' || t === 'B') {
       const n = run.fightNo + 1;
       if (t === 'B') run.opts = [makeFight(run, 'boss', n, seqOf(run).slice(0, run.step + 1).filter(x => x === 'B').length)];
       else {
         const ORD = ['easy', 'medium', 'hard'], k = has(run, 'quill') ? 3 : 2, pvp = (C.pvpFights || []).includes(n);
-        // v63 (review #117): on a PvP day one of the choices is a duel against another player's team (the others are PvE fights)
+        // on a PvP day one of the choices is a duel against another player's team (the others are PvE fights)
         const ds = pvp ? (has(run, 'huntmap') ? ['medium'] : pickN(run, ORD, k - 1)) : has(run, 'huntmap') && k < 3 ? pickN(run, ['easy', 'medium'], 1).concat('hard') : pickN(run, ORD, k);
         run.opts = ds.sort((a, b) => ORD.indexOf(a) - ORD.indexOf(b)).map(d => makeFight(run, d, n));
         if (pvp) run.opts.push({ type: 'duel', fightNo: n, opp: null });
       }
     } else if (t === 'X') {
       const w = { heroShop: 0.25, itemShop: 0.3, relicShop: 0.2, event: has(run, 'xmap') ? 0.6 : 0.3 };
-      if (has(run, 'solo')) delete w.heroShop;   // v64 (review #127): with a full team the Hero Shop swaps a hero in
-      if ((run.recruits || 0) < (C.freeRecruits || 0)) delete w.heroShop;   // v73 (review #149, David: "no hero shops until 3rd hero is picked"): the free recruits come first
-      // review #22: with a single hero the hero shop is always one of the two options
+      if (has(run, 'solo')) delete w.heroShop;   // with a full team the Hero Shop swaps a hero in
+      if ((run.recruits || 0) < (C.freeRecruits || 0)) delete w.heroShop;   // the free recruits come first
+      // with a single hero the hero shop is always one of the two options
       const a = run.heroes.length === 1 && w.heroShop ? 'heroShop' : wpick(run, w); delete w[a]; const b = wpick(run, w); delete w[b];
       const ks = [a, b]; if (has(run, 'quill') && Object.keys(w).length) ks.push(wpick(run, w));
       run.opts = ks.map(k => k === 'event' ? { type: 'event', id: pickEvent(run) } : { type: 'shop', kind: k });
     } else if (t === 'S') {
       run.opts = pickN(run, ['heroShop', 'itemShop', 'relicShop'].filter(k => k !== 'heroShop' || !has(run, 'solo')), has(run, 'quill') ? 3 : 2).map(k => ({ type: 'shop', kind: k, final: true }));
     } else if (t === 'G') {
-      completeRun(run);   // v96 (review #178): the last day is the victory (the Gauntlet comes after it)
+      completeRun(run);   // the last day is the victory (the Gauntlet comes after it)
     }
   }
-  // WHAT (v96, review #178): the PvE part is won: the run is complete (victory screen, then the Gauntlet gate in ui.js); the team as it is now is the one sent to the server.
+  // WHAT (v96, ): the PvE part is won: the run is complete (victory screen, then the Gauntlet gate in ui.js); the team as it is now is the one sent to the server.
   function completeRun(run) {
     run.reachedFinal = true; run.guideFinal = true; run.cur = null; run.g = null; run.opts = [];
     if (Array.isArray(run.heroes) && run.heroes.length) run.lastFight = { team: teamSnapshot(run), relics: (run.relics || []).slice() };
     (run.log = run.log || []).push('Completed the run'); run.phase = 'over'; run.result = 'clear';
   }
-  // WHAT (v101, review #186): the day lost is played again: a fight day gets new choices, a boss day the same boss, an event day new options.
+  // WHAT (v101, ): the day lost is played again: a fight day gets new choices, a boss day the same boss, an event day new options.
   function redoDay(run, f) {
     if (!f.challenge && f.fightNo) run.fightNo = f.fightNo - 1;
     run.step--; run.phase = 'map'; advance(run, true);
     run.log.push('The Ward broke: day ' + (run.step + 1) + ' again');
   }
-  // WHAT (v101): the days of the PvE part (up to the victory G), for the road and the day counter; the last shop after G opens in the Gauntlet.
+  // WHAT: the days of the PvE part (up to the victory G), for the road and the day counter; the last shop after G opens in the Gauntlet.
   const pveSeq = run => { const s = seqOf(run), g = s.indexOf('G'); return g >= 0 ? s.slice(0, g + 1) : s; };
-  // v44 (review #54): common events come up more than uncommon and rare ones, and an event is offered once per run
+  // common events come up more than uncommon and rare ones, and an event is offered once per run
   // WHAT: picks an event for a day: common ones likelier, none repeated in the same run.
   function pickEvent(run) {
     const seen = run.evSeen = run.evSeen || [], w = {};
@@ -783,7 +783,7 @@
     run.cur = o; run.opts = [];
     if (o.type === 'fight') {
       run.fightNo = o.fightNo;
-      // review #17: modifiers bought in events apply to the next fight (run.curse = the old altar, kept for saved runs)
+      // modifiers bought in events apply to the next fight (run.curse = the old altar, kept for saved runs)
       const mod = Object.assign({}, run.nextMod || {});
       if (run.curse) { mod.enemyHp = (mod.enemyHp || 0) + run.curse; run.curse = 0; }
       run.nextMod = null; if (Object.keys(mod).length) o.mod = mod;
@@ -809,7 +809,7 @@
   // WHAT: the final stock of a shop (even number of products, power effects like Ledger or Treasure Map applied).
   function stockFor(run, kind) {
     const st = stockBase(run, kind), up = has(run, 'xmap') ? 1 : 0;
-    if (st.length > 1 && st.length % 2) st.pop();   // v51 (review #63, David: "Shops never should have uneven number of things")
+    if (st.length > 1 && st.length % 2) st.pop();
     if (up) for (const s of st) s.price += up;
     if (has(run, 'ledger') && st.length) { const free = Math.floor(rnd(run) * st.length); st.forEach((s, i) => { s.price = i === free ? 0 : s.price + 2; if (i === free) s.free = true; }); }   // v50
     return st;
@@ -817,14 +817,14 @@
   // WHAT: the raw stock: 4 heroes you do not own, 4 items (6 with the Faded Chart), or 4 powers you do not own, with their prices.
   function stockBase(run, kind) {
     if (kind === 'heroShop') {
-      // v62 (review #93): a class (tank / support / damage) the team does not have yet is always on offer: one hero of each missing class first, then random heroes
+      // a class (tank / support / damage) the team does not have yet is always on offer: one hero of each missing class first, then random heroes
       const have = new Set(run.heroes.map(h => h.key)), mine = new Set(run.heroes.map(h => B.heroClass(h.key))), pool = heroKeysOf(run).filter(k => !have.has(k)), must = [];
       for (const cl of B.CLASSES) if (!mine.has(cl)) { const cand = pool.filter(k => B.heroClass(k) === cl); if (cand.length) must.push(pick(run, cand)); }
       const keys = must.concat(pickN(run, pool.filter(k => !must.includes(k)), Math.max(0, 4 - must.length)));
       if (keys.length > 1 && keys.length % 2) { const drop = keys.filter(k => !must.includes(k)).pop(); if (drop) keys.splice(keys.indexOf(drop), 1); }   // shops always show an even number of products
       return pickN(run, keys, keys.length).map(k => ({ kind: 'hero', id: k, price: Math.max(1, C.heroCost - seal(run)) }));
     }
-    // v58 (review #70, "Reduce shop products from six to four choices"): 4 items (6 with the Faded Chart)
+    // 4 items (6 with the Faded Chart)
     if (kind === 'itemShop') return Array.from({ length: (run.relics.includes('treasure') ? 6 : 4) - (has(run, 'anvil') ? 2 : 0) }, () => { const id = randomItem(run); return { kind: 'item', id, price: Math.max(1, C.itemCost[B.ITEM[id].tier] - seal(run)) }; });
     return pickN(run, relicsOf(run).filter(r => !run.relics.includes(r.id)).map(r => r.id), 4).map(id => ({ kind: 'relic', id, price: Math.max(1, C.relicCost - seal(run)) + (has(run, 'cabinet') ? 3 : 0) }));
   }
@@ -840,7 +840,7 @@
     if (has(run, 'deck')) run.cur.stock = run.cur.stock.slice(0, Math.max(2, n - 2));   // v51: two at a time, so it stays even
     return true;
   }
-  // v92 (review #173, David: "Heroes in hero shop are the level of your lowest hero (skills chosen randomly)"): a hero bought into a free slot starts at the level of
+  // "): a hero bought into a free slot starts at the level of
   // your lowest hero, with its level-up powers picked at random (a hero that takes a full team's place keeps that hero's level, as before)
   // WHAT: the level a hero bought in the Hero Shop starts at: your lowest hero's (1 with no hero).
   function shopHeroLevel(run) { return run.heroes.length ? Math.min(...run.heroes.map(h => h.lvl)) : 1; }
@@ -848,9 +848,9 @@
   function buy(run, i, replaceUid) {
     const s = run.cur.stock[i]; if (!s || s.sold || run.gold < s.price) return 'Not enough gold';
     if (s.kind === 'hero') {
-      if (run.heroes.length < teamMax(run)) { const lv = shopHeroLevel(run), h = addHero(run, s.id, true); if (lv > 1) { h.lvl = lv; h.xp = C.xpLevels[lv]; h.specs = B.HEROES[s.id].specs.slice(0, lv - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id); } }   // v92 (review #173)
-      else if (!run.heroes.some(h => h.uid === replaceUid)) return 'Pick the hero it replaces';   // v64 (review #127): a full team swaps
-      else swapIn(run, replaceUid, s.id, true);   // v126 (review #224): a bought hero waits on the bench
+      if (run.heroes.length < teamMax(run)) { const lv = shopHeroLevel(run), h = addHero(run, s.id, true); if (lv > 1) { h.lvl = lv; h.xp = C.xpLevels[lv]; h.specs = B.HEROES[s.id].specs.slice(0, lv - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id); } }
+      else if (!run.heroes.some(h => h.uid === replaceUid)) return 'Pick the hero it replaces';   // a full team swaps
+      else swapIn(run, replaceUid, s.id, true);   // a bought hero waits on the bench
     }
     else if (s.kind === 'item') run.bag.push(s.id);
     else gainRelic(run, s.id);
@@ -890,15 +890,15 @@
   // WHAT: sells bag item bagIdx for gold.
   function sell(run, bagIdx) { const id = run.bag[bagIdx]; if (!id) return; run.gold += sellValue(id); run.bag.splice(bagIdx, 1); }
 
-  // ------------------------------------------------------------------ events (review #17: 3 real choices each)
+  // ------------------------------------------------------------------ events (3 real choices each)
   // WHAT: EVENTS. An event is data in B.EVENTS (data.js): a text and 3-4 choices. Each choice has an "act" string ("gold:5", "xpAll:20", "relic"...). This section turns choices into results.
   // To add a NEW kind of result: add a branch in eventAct below and use its name as the "act" of a choice in data.js. RAR_UP = the rarity one step above.
   const RAR_UP = { common: 'uncommon', uncommon: 'rare', rare: 'epic', epic: 'legendary', set: 'legendary', legendary: 'mythic' };
   const RAR_ORDER = ['common', 'uncommon', 'rare', 'epic', 'set', 'legendary', 'mythic'];
   // WHAT: a new open event object, with its rolled offer (heroes, items or powers some events show).
   function makeEvent(run, id) { return { type: 'event', id, done: null, offer: rollOffer(run, id) }; }
-  // v44 (review #54): rewards grow with the run. {gN} / {xN} in a label or act = N gold / N XP x (1 + 5% per fight after the first)
-  // (v45, review #55 "the new events are way too op": was +15% per fight, and every number went down)
+  // rewards grow with the run. {gN} / {xN} in a label or act = N gold / N XP x (1 + 5% per fight after the first)
+  // (v45, "the new events are way too op": was +15% per fight, and every number went down)
   // WHAT: event rewards grow +5% per fight. {g10} in a label or act means "10 gold, scaled"; {x20} means "20 XP, scaled". tok() fills them in, resolve() does it for a choice.
   const evScale = run => 1 + 0.05 * Math.max(0, (run.fightNo || 1) - 1);
   const tok = (run, t) => String(t).replace(/\{([gx])(\d+)\}/g, (m, k, n) => String(Math.round(+n * evScale(run))));
@@ -934,7 +934,7 @@
   }
   // the concrete choices of the open event (dynamic events build theirs from the offer)
   // WHAT: the real list of choices of the open event, with numbers filled in and costs, for the UI to draw.
-  // v65 (review #128, David: "hero shops dont allow replacing, say team is full"): with a full team, a hero an event offers takes the place of one of yours
+  // with a full team, a hero an event offers takes the place of one of yours
   // (like the Hero Shop): the choice asks which hero steps aside
   function eventChoices(run) {
     const full = run.heroes.length >= teamMax(run);
@@ -947,7 +947,7 @@
     const o = cur.offer;
     if (cur.id === 'mercs') return o.heroes.map(k => ({ label: `Hire ${B.HEROES[k].name}, ${B.HEROES[k].role.toLowerCase()}: ${B.HEROES[k].abName}`, act: 'hire:' + k, cost: 6, hero: k }))
       .concat([resolve(run, { label: 'Spar with them: +{x10} XP to all heroes', act: 'xpAll:{x10}' })]);
-    // v44 (review #54): the actual relics and items on offer, to pick from
+    // the actual relics and items on offer, to pick from
     if (cur.id === 'altar') {
       const r = o.relics || [], R = id => B.RELIC[id].name + ': ' + B.RELIC[id].desc, out = [];
       if (r[0]) out.push({ label: `Take ${R(r[0])} The next fight: enemies +30% Health`, act: 'relicPick:' + r[0], relic: r[0], next: { enemyHp: 0.3 }, risk: 'Enemies +30% Health next fight' });
@@ -1107,12 +1107,12 @@
   function modsText(m) {
     return Object.keys(m).map(k => { const d = MOD_NAME[k] || [k, 0]; return d[1] < 0 ? d[0] : (m[k] > 0 ? '+' : '') + (d[1] ? Math.round(m[k] * 100) + '%' : m[k]) + ' ' + d[0]; }).join(', ');
   }
-  // v44 (review #54): a challenge fight from an event starts right away. Its enemies depend on the kind; it does not count
+  // a challenge fight from an event starts right away. Its enemies depend on the kind; it does not count
   // as a step of the day (the event is the step) and a loss does not end the run.
   // how strong each challenge is (enemy scale = the fight's own scale x this; the guardian uses the next boss's scale).
   // Tuned with tools/challenge-odds.js for a real risk (random teams, won after fights 3/5/7): bandits ~85%, mimic ~70%,
   // horde ~65%, pack ~60%, duel ~55%, the hoard's guardian ~60% (it only shows up from fight 2 on).
-  // v62 (review #88, David: the elite bounty boards were rarely completable): after the fight scale went up in v61 these
+  // after the fight scale went up in v61 these
   // were far too hard (pack 21-35%, horde 15-41%), retuned with tools/challenge-odds.js (_team.js teams): ~85% bandits, ~70% mimic,
   // ~65% pack and horde, ~55% duel, ~65% hoard; the first fights get an extra ease (`early`) because the team is still tiny
   // WHAT: CHALLENGE fights (started by events like the Bounty Board). CH = how strong each kind is; they were tuned with tools/challenge-odds.js, so re-run it after changing fight scale.
@@ -1145,7 +1145,7 @@
     if (w.boost && solo) { for (const k in w.boost) solo.bonus[k] = (solo.bonus[k] || 0) + w.boost[k]; res.boost = { key: solo.key, text: modsText(w.boost) }; }
   }
 
-  // ------------------------------------------------------------------ v57 (review #69, David: "Improve the auto equip feature.
+  // ------------------------------------------------------------------ v57 (, David: "Improve the auto equip feature.
   // The idea is good but execution terrible. Design some algorithm that makes decent decisions always. AP on an AD hero no
   // go"): every hero gets a profile from what its ability and powers scale with (AP share, tank or not, ranged or not);
   // every item gets a score for each hero from its stats weighted by that profile (an AP item is worth almost nothing to

@@ -1,18 +1,18 @@
 // UI: DOM screens + battle loop. No inline handlers (CSP): every button has data-act, handled by one listener.
-// 
+
 // FILE GUIDE (read this first). This file draws EVERY screen and reacts to every tap. The rules live in run.js, the fights in sim.js, the drawing of the board in render.js.
-//   How it works: one function render() looks at the state of the game (run.phase, which screen) and writes the HTML of ONE screen into #screen by calling a *HTML() function
-//   (titleHTML, startHTML, mapHTML, deployHTML, battleHTML, resultHTML, shopHTML, eventHTML, gauntletHTML, overHTML...). Buttons never have code inside: each one has data-act="name"
-//   and one listener at the bottom calls ACT[name]. So to change what a button does: find its data-act in the HTML, then the same name in the ACT = { ... } table near the end.
-//   To change a TEXT you see on screen: search for it in this file (or in data.js for names of heroes, items, powers and events).
-//   Rule of the game owner: no screen may need scrolling at 390 x 740 and 360 x 640, and no text may be cut off (the Chrome tests check it: tools/tests/screens.mjs).
-//   Sections, top to bottom: tiny helpers (store, esc, icons) -> account / XP / league -> text helpers (fmt colours keywords, ability scaling) -> header and render() ->
-//   title + start -> map -> level up -> deploy + battle -> result -> Gauntlet -> shop -> event -> game over -> board input -> battle loop -> modals + toast -> gear (items) screen ->
-//   suggestion box -> ladder and profiles -> crown shop -> how to play -> review notice -> ACT table -> boot. The index of the whole project is CODEMAP.md.
+// How it works: one function render() looks at the state of the game (run.phase, which screen) and writes the HTML of ONE screen into #screen by calling a *HTML() function
+// (titleHTML, startHTML, mapHTML, deployHTML, battleHTML, resultHTML, shopHTML, eventHTML, gauntletHTML, overHTML...). Buttons never have code inside: each one has data-act="name"
+// and one listener at the bottom calls ACT[name]. So to change what a button does: find its data-act in the HTML, then the same name in the ACT = { ... } table near the end.
+// To change a TEXT you see on screen: search for it in this file (or in data.js for names of heroes, items, powers and events).
+// Rule of the game owner: no screen may need scrolling at 390 x 740 and 360 x 640, and no text may be cut off (the Chrome tests check it: tools/tests/screens.mjs).
+// Sections, top to bottom: tiny helpers (store, esc, icons) -> account / XP / league -> text helpers (fmt colours keywords, ability scaling) -> header and render() ->
+// title + start -> map -> level up -> deploy + battle -> result -> Gauntlet -> shop -> event -> game over -> board input -> battle loop -> modals + toast -> gear (items) screen ->
+// suggestion box -> ladder and profiles -> crown shop -> how to play -> review notice -> ACT table -> boot. The index of the whole project is CODEMAP.md.
 (function () {
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
   // WHAT: I('name') = the SVG of an interface icon (js/uiicons.js). $ = document.querySelector. esc() makes a text safe to put in HTML: ALWAYS use it for text that came from a player.
-  const I = (n, c) => B.UI ? B.UI.i(n, c) : '';   // v49 (review #61): the interface icons (js/uiicons.js)
+  const I = (n, c) => B.UI ? B.UI.i(n, c) : '';   // the interface icons (js/uiicons.js)
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const hName = h => h ? (h.pathName || (Run.heroNameOf ? Run.heroNameOf(h) : (HEROES[h.key] || {}).name || h.key)) : '';
@@ -30,7 +30,7 @@
   let battle = null, view = null, preview = null;
   const ui = { startPick: [], gsel: null, selUid: 0, info: null, result: null, speed: store.get('balance.speed', 1), drag: null, modal: null };
   // WHAT: writes the run to the browser memory. Call it after every change of the run.
-  const save = () => { if (run) { store.set(SAVE, run); if (run.freeDeck) store.set('balance.freeDeck', run.freeDeck); } };   // v100 (review #182): the free-pick queues outlive the game
+  const save = () => { if (run) { store.set(SAVE, run); if (run.freeDeck) store.set('balance.freeDeck', run.freeDeck); } };   // the free-pick queues outlive the game
   // player identity for Elo (reviews #3 #4): a random id kept in this browser
   // WHAT: this browser's anonymous player id (made once). The server only ever knows players by this, never by name or email.
   function pid() {
@@ -41,7 +41,7 @@
   const myName = () => store.get('balance.name', '') || '';
   // WHAT: ACCOUNT. acct = what the server told us about this player (crowns, perks, level, league, Elo). setAcct() copies the server answer in and shows toasts for new XP; hasPerk() = does he own a Crown Shop perk.
   const setElo = (r, quiet) => { if (r && r.elo != null) store.set('balance.elo', r.elo); if (r && r.league != null) store.set('balance.league', { league: r.league, lp: r.lp, streak: r.streak }); setAcct(r, quiet); };
-  // v27 (owner + review #25 by David): the account. Crowns (earned the first time you reach a league each season, and
+  // v27 (owner + by David): the account. Crowns (earned the first time you reach a league each season, and
   // from invited friends), Crown Shop unlocks, the King Tier, profiles and the invite link. The server is the source of
   // truth (api/player.js); this cache only decides what to show before it answers.
   const ACCT = 'balance.acct';
@@ -58,7 +58,7 @@
     if (Array.isArray(r.xp) && r.xp.length && !quiet) xpToast(r.xp);
     applySkin();
   }
-  // v30 (review #28, PC boy): account XP and level. A toast for what was earned; a level up names what it unlocked
+  // account XP and level. A toast for what was earned; a level up names what it unlocked
   const KIND_NAME = k => ({ taunt: 'voice line' })[k] || k;   // v74: what each kind of level reward is called
   const unlockName = u => u.kind === 'title' ? `"${B.ACH[u.id].title}" title` : u.kind === 'taunt' ? `"${B.TAUNT_ALL.find(t => t.id === u.id).text}"` : u.kind === 'portrait' ? HEROES[u.id].name + ' portrait' : (u.kind === 'hero' ? HEROES[u.id] : u.kind === 'item' ? ITEM[u.id] : RELIC[u.id]).name;
   // WHAT: the small "+N XP" message when account XP is earned (and "Level up! New hero: ..." when a level unlocks something).
@@ -68,11 +68,11 @@
     clearTimeout(xpToast.h); xpToast.h = setTimeout(() => toast(`✨ +${n} XP` + (list.length === 1 ? ` (${list[0].why})` : '') + (up ? ` · Level ${up.level}!${u ? ` New ${KIND_NAME(u.kind)}: ${unlockName(u)}${us.length > 1 ? ` (+${us.length - 1} more)` : ''}` : ''}` : '')), 700);
   }
   const lvlNow = () => B.levelOf(acct.axp || 0);
-  // v46 (review #57, David: "Bring the player xp progression to the forefront of the game ... visually show progress after
+  // v46 (, David: "Bring the player xp progression to the forefront of the game ... visually show progress after
   // each run with looming rewards. It should be a rewarding dopamine hit and encourage playing again"): the title shows
   // your level, its bar and the next reward; every game keeps the XP it earned (run.xpLog) and the game-over screen fills
   // the bar line by line (level ups burst with confetti) and ends on the next reward waiting for you
-  // v82 (review #160, David: "hovering over the chest rewards should explain what they are"): what a reward IS, for the hover / tap bubble
+  // what a reward IS, for the hover / tap bubble
   // WHAT: one or two sentences that explain an unlock (hero, item, power, portrait, voice line, title).
   function unlockInfo(u) {
     if (u.kind === 'hero') { const d = HEROES[u.id]; return `A new hero for your runs: ${d.role}${d.tag ? ', ' + d.tag.toLowerCase() : ''}. Ability, ${d.abName}: ${d.abDesc} Its portrait comes with it.`; }
@@ -85,11 +85,11 @@
   }
   const unlockTip = u => `New ${KIND_NAME(u.kind)}: ${unlockName(u)}. ${unlockInfo(u)}`;
   const unlockPic = (u, px) => u.kind === 'title' ? `<i class="upic" style="--px:${px}px">${B.ACH[u.id].icon}</i>` : u.kind === 'taunt' ? `<i class="upic" style="--px:${px}px">💬</i>` : u.kind === 'portrait' ? `<span class="pfp">${img(u.id, px, 'por')}</span>` : u.kind === 'hero' ? img(u.id, px, 'por') : ico(u.kind, u.id, px);
-  // v65 (review #131): a player's picture is a hero portrait (one of the four free ones, picked from the public code, until they choose one)
+  // a player's picture is a hero portrait (one of the four free ones, picked from the public code, until they choose one)
   // WHAT: the portrait a player shows (avKey) and its round frame (avatarHTML), on the profile, the ladder and the top bar.
   const avKey = (key, code) => key && HEROES[key] ? key : B.PORTRAITS_FREE[(parseInt(String(code || '').slice(0, 4), 16) || 0) % B.PORTRAITS_FREE.length];
   const avatarHTML = (key, code, px, cls = '') => `<span class="pfp ${cls}" style="--px:${px}px">${img(avKey(key, code), px, 'por')}</span>`;
-  // v65 (review #133, David: "add big streak marker. Starts at 1. Visually goes to zero when you lose a run. Visually increase when you win consecutive runs"):
+
   // WHAT: the win streak flame (completed runs in a row) with its number; hot from 2 on, cold at 0.
   const streakOf = () => acct.streak == null ? 1 : acct.streak | 0;
   const flameHTML = (n, cls = '') => `<span class="flame ${n >= 2 ? 'hot' : n <= 0 ? 'cold' : ''} ${cls}" title="Win streak: ${n} run${n === 1 ? '' : 's'} won in a row"><i>🔥</i><b>${n}</b></span>`;
@@ -169,7 +169,7 @@
   // WHAT: a player name that opens his profile when tapped. crowns() draws the crown count.
   const plink = (name, code) => code ? `<button class="plink" data-act="profile" data-arg="${esc(code)}" title="Open profile">${esc(name)}</button>` : esc(name);
   const crowns = n => `<span class="crn">👑 ${n | 0}</span>`;
-  // review #21 (David): leagues. A shield in the league's colours; pips for Bronze..Platinum, a gem for Diamond, a star
+  // leagues. A shield in the league's colours; pips for Bronze..Platinum, a gem for Diamond, a star
   // for Master.
   let embN = 0;
   // WHAT: LEAGUES (Bronze to Master). emblem() draws the badge of a league; leagueLine shows name + points.
@@ -196,13 +196,13 @@
     wall: 'Shield Wall: shields nearby allies.', curse: 'Curse: damages, silences and slows.', slam: 'Slam: stuns everything adjacent.',
     imps: 'Summons two imps.', cleave: 'Cleave: hits and stuns everything adjacent.', nova: 'Void Nova: stuns everything within 2 hexes.',
   };
-  // review #12: every portrait is splash art (bust for small squares, full figure for banners)
+  // every portrait is splash art (bust for small squares, full figure for banners)
   // WHAT: HERO PICTURES. por(key, px) = the portrait (art from js/splash.js or the code-drawn model from js/models.js); img() wraps it in an <img> tag; ico() draws an item or power icon.
   const por = (key, px = 44, full) => full ? B.Splash.image(key, px, Math.round(px * 1.3), 'full') : B.Splash.image(key, px, px, 'bust');
   const img = (key, px, cls = 'por') => `<img class="${cls}" src="${por(key, px)}" alt="">`;
   const EMBLEM = '<svg class="emblem" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 9v45M20 56h24M9 17h46"/><path d="M9 17 3 35M9 17l6 18M55 17l-6 18M55 17l6 18"/></g><path d="M1 35a8 6 0 0 0 16 0zM47 35a8 6 0 0 0 16 0z" fill="currentColor"/><circle cx="32" cy="8" r="4" fill="currentColor"/></svg>';
   const ico = (kind, id, px = 36, cls = 'ico') => `<img class="${cls}" src="${kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px)}" alt="">`;
-  // review #10 (David): readable at a glance. fmt() colours game terms and bolds numbers in any description;
+  // readable at a glance. fmt() colours game terms and bolds numbers in any description;
   // durations ("1.5s") are italic. It tokenises the RAW text and escapes every piece, so it is XSS-safe.
   // WHAT: TEXT COLOURS. fmt(text) wraps numbers and key words (damage, heal, stun, burn, mana...) in coloured spans so descriptions are easy to read. KW is the list of words and their colour class (CSS .kw-*).
   const KW = [
@@ -216,7 +216,7 @@
   const KW_CLS = w => { for (const [c, re] of KW) if (new RegExp('^(?:' + re + ')$', 'i').test(w)) return c; return ''; };
   // WHAT: turns a plain description into coloured HTML (see KW above). Use it for any ability / item / power text.
   function fmt(text) {
-    const t = B.T ? B.T(String(text == null ? '' : text)) : String(text == null ? '' : text); let out = '', last = 0, m;   // v62h (review #97): descriptions are translated here, before they are coloured
+    const t = B.T ? B.T(String(text == null ? '' : text)) : String(text == null ? '' : text); let out = '', last = 0, m;   // descriptions are translated here, before they are coloured
     KW_RE.lastIndex = 0;
     while ((m = KW_RE.exec(t))) {
       out += esc(t.slice(last, m.index)); last = m.index + m[0].length;
@@ -232,7 +232,7 @@
     return `<span class="stats-row">${c('s-hp', '❤', d.hp, 'Health')}${c('s-atk', '⚔', d.atk, 'Attack: what your hits do, and what attack abilities deal a % of')}${full ? c('s-ap', '✦', d.ap, 'Magic: what magic abilities, burns and heals deal a % of. 100 at Lv 1, +30 per level') : ''}${c('s-arm', '⛨', d.armor, 'Defense: lowers all damage taken, physical and magic')}${c('s-as', '»', d.as, 'Attacks per second')}${c('s-rng', '➶', d.range, 'Range (hexes)')}${d.crit ? c('s-crit', '✸', d.crit, 'Crit chance') : ''}${d.dodge ? c('s-dodge', '↯', d.dodge, 'Dodge') : ''}</span>`;
   }
   const pct = x => Math.round(x * 100) + '%';
-  // review #19 (David: "not clear how hero abilities scale with AP, attack etc.") and review #26 (David: "abilities
+  // and (David: "abilities
   // should clearly scale with AD or AP or both, AP not a multiplier"): how every ability is computed in js/sim.js, part
   // by part. P = % of AD (attack) as physical damage; M = % of AP as magic damage; MX = [% of AD, % of AP] added, as magic
   // damage; A = % of AD as magic damage; B = burn per second, % of AP, for 3s; BA = the same with AD; H = heal, % of AP;
@@ -350,25 +350,25 @@
   const NODE_ICON = { F: I('swords'), X: I('help'), B: I('skull'), S: I('cart'), G: I('trophy') };  // v29: friendlier icons; v49: the icon set
   const SHOP_NAME = { heroShop: 'Hero Shop', itemShop: 'Item Shop', relicShop: 'Power Shop' };
   const SHOP_DESC = { heroShop: 'Hire heroes & expand your squad.', itemShop: 'Equip weapons, armor & trinkets.', relicShop: 'Team-wide powers & artifacts.' };
-  // v42 (review #51): each event has its own picture (map card and a big medallion on the event screen; icon in data.js)
+  // each event has its own picture (map card and a big medallion on the event screen; icon in data.js)
   const evIcon = id => (EVENT[id] && EVENT[id].icon) || '❓';
   const EV_RAR = { uncommon: 'Uncommon', rare: 'Rare event' };
 
   // ------------------------------------------------------------------ header
   // WHAT: the top bar (gold, day, Team button, review notice, menu). Called by render() and after gold changes.
-  // v63 (review #117): three lives, shown as hearts in the top bar
+  // three lives, shown as hearts in the top bar
   // WHAT: the hearts (lives left) shown in the top bar.
   const heartsHTML = () => run && run.lives != null ? `<button class="lives ward ${run.lives > 0 ? 'on' : 'broken'}" data-act="ward-info" title="${run.lives > 0 ? 'Ward: whole. A lost fight breaks it and the day starts over.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${run.lives > 0 ? 'on' : ''}">${I('shield')}</i></button>` : '';
   function header() {
     const h = $('#top');
     if (!run || screen === 'title') {
-      // v49 (review #60): the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
+      // the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
       // the ladder, suggestions, and the menu sheet with the rest)
       const L = B.levelProgress(acct.axp || 0);
       h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchip-label">LP</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
-    if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // v65 (review #129): the end screens show only the run's results
+    if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // the end screens show only the run's results
     const stepN = Math.max(0, run.step);
     const g = run.g, seq = Run.pveSeq(run);
     const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + seq.length;
@@ -379,7 +379,7 @@
       <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team" style="display:none" hidden aria-hidden="true">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
     animGold();
   }
-  // v42 (review #51, David: "more dopamine hits"): sounds (js/sfx.js) with a switch, and a gold counter that counts up or
+  // sounds (js/sfx.js) with a switch, and a gold counter that counts up or
   // down with a bump and a "+6" whenever the gold changes. After a won fight it waits for the coins to fly in.
   // WHAT: sound button, sfx() plays a named sound (js/sfx.js), shownGold / animGold animate the gold counter.
   const soundBtn = () => `<button class="sndbtn ibtn" data-act="sound" aria-label="Sound ${B.Sfx && B.Sfx.on ? 'on' : 'off'}" title="Sound">${I(B.Sfx && B.Sfx.on ? 'sound' : 'mute')}</button>`;
@@ -426,17 +426,17 @@
     if (screen === 'result' && ui.result && !ui.result.fx) celebrate(ui.result);
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'gauntlet' && !run.xpShown) animXp();   // the old Gauntlet end (saves from before v63)
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear') { recordTeamWins(run.heroes); }
-    if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.endAsked && !run.lgEnd && !run.xpErr) { run.endAsked = true; save(); setTimeout(reportRunEnd, 0); }   // v96 (review #178): a run completed on the map (no last fight)
+    if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.endAsked && !run.lgEnd && !run.xpErr) { run.endAsked = true; save(); setTimeout(reportRunEnd, 0); }   // a run completed on the map (no last fight)
     if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.tower && !run.vicCheered) { run.vicCheered = true; save(); sfx('win'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('.vicart', 90), 250); }
     if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'ready' && !ui.towerBusy) setTimeout(() => ACT['tower-enter'](), 0);   // v101: back from the Gauntlet shop
-    if (run && screen === 'run' && run.phase === 'over') fitOver();   // v70 (review #144): the big end screens shrink a step when the page would scroll
+    if (run && screen === 'run' && run.phase === 'over') fitOver();   // the big end screens shrink a step when the page would scroll
     if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !run.lpShown) animLp();
-    if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'over' && !run.tower.cheered) { run.tower.cheered = true; save(); sfx(run.tower.champion ? 'unlock' : run.tower.wins ? 'levelup' : 'back'); if (run.tower.wins && B.Juice) setTimeout(() => B.Juice.confettiAt('.towerart .tcrown', run.tower.champion ? 110 : 40), 450); }   // v90: the end of the climb cheers   // v68 (review #140)
-    if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && run.overStep === 2 && !run.xpShown) animXp2();   // v68 (review #141)
+    if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'over' && !run.tower.cheered) { run.tower.cheered = true; save(); sfx(run.tower.champion ? 'unlock' : run.tower.wins ? 'levelup' : 'back'); if (run.tower.wins && B.Juice) setTimeout(() => B.Juice.confettiAt('.towerart .tcrown', run.tower.champion ? 110 : 40), 450); }   // v90: the end of the climb cheers // 
+    if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && run.overStep === 2 && !run.xpShown) animXp2();
     if (screen === 'title' || !run) startTrailer();
     autoGear();
     mountBgBoard();
-    guide();   // v80 (review #158)
+    guide();
   }
   // WHAT: a short name for "which screen is this" (phase + step + status). render() compares it with the previous one to know the screen really changed.
   function screenKey() {
@@ -454,11 +454,11 @@
     else if (key.startsWith('event:') && key.endsWith('done')) { const g = $('.gains'); if (g) { sfx('unlock'); B.Juice.confettiAt(g, 40); } else sfx('back'); }
   }
 
-  // v45 (review #56, David: "We are losing new players without experience ... make the intro screen and the selection to
+  // v45 (, David: "We are losing new players without experience ... make the intro screen and the selection to
   // start the run and select hero and relic more simple and intuitive ... call it game instead of run ... remove the
   // portraits from the start menu. Dont call it a roguelike"): the title says what you do in three steps and has one big
   // Play button; a run is called a "game" everywhere a player reads it
-  // v49 (review #60, David: "New game identity: Super Rogues ... Super simple landing page, put most stuff into the bar or
+  // v49 (, David: "New game identity: Super Rogues ... Super simple landing page, put most stuff into the bar or
   // icons. Just a play button. Beneath it put the board with random teams fighting mobs, refreshing when fight is over.
   // Like a trailer. While old run is on ... small white flag beneath continue game button saying give up. A run doesnt
   // count as started unless hero and relic are chosen"): a game still picking its hero and relic shows Play, not Continue
@@ -536,7 +536,7 @@
       ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
       ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}</div>`;
   }
-  // v62h (review #97, David: "In the menu add an option to change language to Portuguese and German"): the sheet opened by the Language row
+  // the sheet opened by the Language row
   // WHAT: the language chooser: English, Portuguese, German. Picking one stores it and reloads the page (js/i18n.js).
   function languageHTML() {
     const cur = B.i18n ? B.i18n.lang : 'en';
@@ -569,9 +569,9 @@
   }
   function startTrailer() { if (!trailer.raf && document.getElementById('trailer')) trailer.raf = requestAnimationFrame(trailerLoop); }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) startTrailer(); });
-  // review #44 (David: "Name → short effect → small scaling note"): the ability name, then its passive and its active
+  // the ability name, then its passive and its active
   // part on their own lines (same words, easier to scan); the scaling note stays small under it
-  // v47 (review #58, David: "make every decision understandable in under 2 seconds ... showing consequences instead of
+  // v47 (, David: "make every decision understandable in under 2 seconds ... showing consequences instead of
   // mechanics ... hide complexity behind taps"): quick views (start, shops) say what an ability does without the
   // "90% Magic" formulas; the hero card in Team keeps every number
   // WHAT: plainAb() shortens an ability description for small cards (removes the exact % numbers).
@@ -579,12 +579,12 @@
   const AB_RX = [[/, each with [^.;]*? as attack/g, ''], [new RegExp(`(heal(?:s|ing)?(?: \\()?)(?: for)? ?${ABTOK} ?`, 'g'), '$1 '],
     [new RegExp(` (?:for|of) ${ABTOK}(?! (?:as |physical|magic|true|damage|\\+))`, 'g'), ''], [new RegExp(`(?:an extra )?${ABTOK} (?:as )?(?=(?:physical|magic|true|damage)\\b)`, 'g'), m => /^an extra/.test(m) ? 'extra ' : ''],
     [new RegExp(ABTOK, 'g'), 'damage'], [/\s+([.,;)])/g, '$1'], [/\(\s+/g, '('], [/\s{2,}/g, ' ']];
-  // v62h (review #97): the shortening works on English sentences; in another language the full translated text is shown instead
+  // the shortening works on English sentences; in another language the full translated text is shown instead
   const loc = () => B.i18n && B.i18n.lang !== 'en';
   const plainAb = s => loc() ? String(s || '') : AB_RX.reduce((t, [rx, to]) => t.replace(rx, to), String(s || '')).trim();
   // WHAT: the ability block of a hero card: name, description, how it scales.
   function abilHTML(h, plain) {
-    // v62h (review #97): in another language the description is translated first and split on that language's "Passive" and "Active" words
+    // in another language the description is translated first and split on that language's "Passive" and "Active" words
     const d = loc() ? B.T(String(h.abDesc || '')) : plain ? plainAb(h.abDesc) : String(h.abDesc || ''), PW = loc() ? B.T('Passive') : 'Passive', AW = loc() ? B.T('Active') : 'Active';
     const m = d.match(new RegExp('^' + PW + '(?: \\(([^)]+)\\))?:\\s*(.*?)\\s*' + AW + ':\\s*(.*)$'));
     if (plain && m) return `<b class="abname">${esc(h.abName)}</b> ${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}`;   // quick view: what it does when it fires
@@ -598,13 +598,13 @@
       ${chips({ hp: h.hp, atk: h.atk, armor: h.armor, as: h.as, range: h.range })}
       <div class="abil">${abilHTML(h)}</div>${scaleTag(key)}${extra}</div>`;
   }
-  // review #22 (David): the game starts with 1 hero and 1 relic: pick one of each (3 offered).
-  // v45 (review #56): two short steps instead of one busy screen. Step 1: tap a hero (its ability shows under the three,
+  // the game starts with 1 hero and 1 relic: pick one of each (3 offered).
+  // two short steps instead of one busy screen. Step 1: tap a hero (its ability shows under the three,
   // no stat table), then Next. Step 2: the three relics with what they do written on them, then Start.
   // WHAT: START SCREENS. Step 1 pick a hero, step 2 pick a starting power, step 3 fight. stepsHTML draws the 1-2-3 header; startHTML draws the current step.
   const stepsHTML = (s, hasRelics = true) => `<ol class="ssteps">${(hasRelics ? ['Hero', 'Power', 'Fight!'] : ['Hero', 'Fight!']).map((t, i) => `<li class="${i + 1 < s ? 'done' : i + 1 === s ? 'on' : ''}"><i>${i + 1 < s ? '✓' : i + 1}</i>${t}</li>`).join('')}</ol>`;
   // WHAT: the start flow screens (pick your first hero, pick a power).
-  // v62q (review #114): the pointing hand on the start screens is shown for the first two runs a player ever starts
+  // the pointing hand on the start screens is shown for the first two runs a player ever starts
   const startHint = () => (+store.get('balance.starts', 0) || 0) < 2;
   function startHTML() {
     const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
@@ -628,7 +628,7 @@
       ${(run.locked || []).length ? `${desk ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : `<p class="sub locknote">🔒 ${run.locked.length} more hero${run.locked.length === 1 ? '' : 'es'} unlock as you play</p>`}` : ''}
       <div class="bar sbar"><button class="primary big ${desk ? 'hero-cta-btn ' + (n === CFG.startHeroes ? 'ready selected' : 'slot-unselected') : (n === CFG.startHeroes ? 'ready' : '')}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${desk ? btnLabel : (n === CFG.startHeroes ? (relics.length && !introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero')}</button></div></section>`;
   }
-  // v64 (review #124, David: "hero selection highlights are a bit wonky and persist after you choose another or deselect"): only the picked hero is lit;
+  // only the picked hero is lit;
   // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
   // WHAT: the stage of heroes under spotlights (sel = the picked one, act = the button action) and the card that says what the picked hero does.
     // Web & itch.io progression: Hero Mastery (Gold frames for winning heroes) and Discovery (??? for unknown heroes)
@@ -704,11 +704,11 @@
         <button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button>
       </div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
   }
-  // v114 (review #201, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
+  // v114 (, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
   // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
   // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
   // WHAT: four bars of a hero's strengths, each against the best hero of the game.
-  // v117 (review #204): what the hero is good at (B.HERO_TRAITS, from its kit) and its power curve (from its growth); v116's measured bars are gone
+  // what the hero is good at (B.HERO_TRAITS, from its kit) and its power curve (from its growth); v116's measured bars are gone
   // WHAT: the strength chips of a hero card.
   function statBars(h) {
     const tr = (B.HERO_TRAITS && B.HERO_TRAITS[h.key]) || [], g = h.grow || 1;
@@ -717,7 +717,7 @@
   }
   // WHAT: 'deal' the first time a start step shows (its cards fly in), '' on the redraws after a tap.
   function dealIn(step) { const k = (run && run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
-  // v64 (review #126, David: "hero select at start is 1 out of 3. After each day, add 1 more hero select free, same style screen, until 3")
+
   // WHAT: the free recruit screen between days: three heroes (one of each class, the ones your team lacks first), pick one and it joins.
   function recruitHTML() {
     const offer = run.recruitOffer || [], f = offer.includes(ui.recruitPick) ? ui.recruitPick : null, k = (run.recruits || 0) + 1;
@@ -731,7 +731,7 @@
     return `<div class="shead"><b>🗺 Your journey</b><button data-act="close">✕</button></div>${trackHTML()}
       <ul class="plegend"><li>${I('swords')} Fight</li><li>${I('help')} Shop or event</li><li>${I('skull')} Boss</li><li>${I('cart')} Last shop</li><li>${I('trophy')} Victory</li></ul>`;
   }
-  // v64 (review #123): a trail of the whole run on top of the map. v65 (review #130, David: "the map is horrible. Make it vertical and cool"): the run is a road
+  // a trail of the whole run on top of the map. the run is a road
   // climbing a valley at night, from the camp at the bottom to the castle of the final fight at the top. The days behind you are lit gold, your leader stands
   // where you are, today's choices are the fork in the road (the posters), and the days ahead wind up into the dark with their bosses and duel days. The road
   // scrolls inside the screen and opens on today.
@@ -770,7 +770,7 @@
       const left = x > 55, label = st === 'done' ? '' : `<span class="rl ${left ? 'lft' : 'rgt'}" style="--room:${left ? x : 100 - x}"><b>Day ${d.i + 1}</b> ${what(d)}</span>`;
       return `<span class="rn ${d.kind} ${st} ${far ? 'far' : ''}" style="left:${x}%;top:${y}px" title="Day ${d.i + 1}">${d.kind === 'final' ? '<span class="castle" aria-hidden="true"></span>' : ''}<span class="ri">${st === 'done' ? '✓' : icon(d)}</span>${label}</span>`;
     }).join('');
-    const t = seq[step], title = run.result === 'clear' ? '🏰 Gauntlet shop: gear up for the climb' : t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';   // v101 (review #183)
+    const t = seq[step], title = run.result === 'clear' ? '🏰 Gauntlet shop: gear up for the climb' : t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';
     const leader = run.heroes[0];
     const ribbonTailL = `<svg class="ribbon-tail tail-l" viewBox="0 0 20 36" aria-hidden="true"><polygon points="20,0 20,36 0,28 10,18 0,8" fill="#d48817"/><polygon points="20,0 20,36 12,18" fill="#9a6b13" opacity="0.65"/></svg>`;
     const ribbonTailR = `<svg class="ribbon-tail tail-r" viewBox="0 0 20 36" aria-hidden="true"><polygon points="0,0 0,36 20,28 10,18 20,8" fill="#d48817"/><polygon points="0,0 0,36 8,18" fill="#734f0a" opacity="0.65"/></svg>`;
@@ -797,11 +797,11 @@
     const over = document.documentElement.scrollHeight - vh; if (over > 0) wm.style.height = Math.max(240, wm.clientHeight - Math.ceil(over)) + 'px';   // the paddings below it
     if (keep && keep.key === wm.dataset.key) { wm.scrollTop = keep.top; return; }
     wm.scrollTop = Math.max(0, +wm.dataset.today - Math.round(wm.clientHeight * (document.body.classList.contains('desk') ? 0.12 : 0.16)));
-    // v67 (review #139, David: "show player move in map between days"): a new day, the leader hops along the road from where it stood to today's spot
+    // a new day, the leader hops along the road from where it stood to today's spot
     const [seed, step] = wm.dataset.key.split(':').map(Number), tok = wm.querySelector('.rtok');
     if (tok && step > 0 && ui.roadAt === seed + ':' + (step - 1) && !(B.Juice && B.Juice.reduced())) {
       const [fx, fy] = tok.dataset.from.split(',').map(Number), [tx, ty] = tok.dataset.to.split(',').map(Number);
-      // v69 (review #142, David: "make the walking up the map slower and the screen follows along with the character until reaching the point it is now")
+
       const end = wm.scrollTop, MS = 2200, cam = y => Math.max(0, Math.min(wm.scrollHeight - wm.clientHeight, y - wm.clientHeight * 0.62));
       const s0 = Math.max(end, cam(fy)); wm.scrollTop = s0;
       tok.style.left = fx + '%'; tok.style.top = fy + 'px'; tok.classList.add('walk'); void tok.offsetWidth;
@@ -833,7 +833,7 @@
     return `<button class="banner b-${kind}" data-act="choose" data-arg="${i}"><span class="rod"></span><span class="emb">${emblem}</span>
       <span class="bt">${title}</span><span class="bd">${body}</span>${reward ? `<span class="rw">${reward}</span>` : ''}</button>`;
   }
-  // v62m (review #109, David: "the run choice screens are boring, just a generic card with an icon"): every option of the map is a small poster
+  // every option of the map is a small poster
   // with its own scene: the enemies' faces for a fight (skulls = how hard), a fan of mystery cards for a shop, the boss with red rays, the event's picture
   // WHAT: the poster of one map option: a scene on top, then title, a line of text and the reward.
   function posterHTML(i, kind, scene, title, body, reward, ribbon) {
@@ -863,7 +863,7 @@
       return posterHTML(i, 'shop', scene, SHOP_NAME[o.kind], `<span class="small">${SHOP_DESC[o.kind]}</span>`, '', o.final ? 'Last' : '');
     }
     if (o.type === 'duel') {
-      // v63 (review #117): another player's team that reached about the same day; its power next to yours tells how risky the duel is
+      // another player's team that reached about the same day; its power next to yours tells how risky the duel is
       if (!o.opp) return `<button class="banner v2 b-duel wait" disabled><span class="scene"><span class="rays"></span><span class="evbig">${I('ghost')}</span></span><span class="bt">Duel</span><span class="bd"><span class="small">Looking for an opponent…</span></span></button>`;
       const mine = Run.powerOf(run, run.heroes), th = Run.ghostPower(o.opp), lab = Run.powerLabel(mine, th);
       const faces = `<span class="mobs m3">${o.opp.team.slice(0, 3).map(h => `<span class="mob">${img(h.key, 64, 'por')}</span>`).join('')}</span>`;
@@ -872,7 +872,7 @@
     if (o.type === 'event') { const e = EVENT[o.id]; return posterHTML(i, 'event' + (e.rar === 'rare' ? ' b-rare' : ''), `<span class="rays"></span><span class="evbig">${evIcon(o.id)}</span>`, esc(e.name), `<span class="small">${esc(e.text)}</span>`, '', EV_RAR[e.rar] || ''); }
     return '';
   }
-  // review #17: what an event did to the next fight, in words
+  // what an event did to the next fight, in words
   // WHAT: text for a "next fight" modifier bought in an event.
   function modText(M) {
     const pc = v => (v > 0 ? '+' : '') + Math.round(v * 100) + '%', out = [];
@@ -890,7 +890,7 @@
   function mapHTML() {
     return `<section class="map road"><div class="mapmain">${mapRoad()}${mstripHTML()}</div><aside class="mapside">${partyHTML()}</aside></section>`;
   }
-  // review #18: the party under the map (levels, XP, worn items, relics) and the next boss, so each choice is informed
+  // the party under the map (levels, XP, worn items, relics) and the next boss, so each choice is informed
   // WHAT: deploy powers column and unequipped items bag dock on desktop deploy screen
   function deployLeftHTML() {
     if (!run) return '';
@@ -986,7 +986,7 @@
       <div class="pgrid">${heroes}</div>${run.relics.length ? `<div class="relicline"><b>POWERS</b><div class="relic-row">${run.relics.map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 28)}</button>`).join('')}</div></div>` : ''}${boss}</div>`;
   }
 
-  // v49 (review #61, David: "On level-up, make choices feel impactful with concise effects/playstyle tags and transform the
+  // v49 (, David: "On level-up, make choices feel impactful with concise effects/playstyle tags and transform the
   // specialization path into a clear branching progression with the current choice highlighted and future nodes
   // subdued"): each power gets up to two playstyle tags read from what it does, and the path is a tree (two branches a
   // level; the ones you took in gold, today's pair glowing, later ones dim) with a fork from the branch you took
@@ -995,14 +995,14 @@
     ['Control', 'lock', /stun|root|slow|freez|taunt|blind|pull|push|knock|silence|hypno|charm|fear|longer/i], ['Tank', 'shield', /defense|max health|shield|invulnerab|untargetable|less damage|damage taken/i],
     ['Area', 'swords', /radius|every enemy|all enemies|adjacent|within \d+ hex|group|bounce|chain|splash|nearby|around|more enemies|more targets|\d+ targets/i],
     ['Speed', 'bolt', /attack speed|move speed|faster|sooner|dodge|blink|dash|energy|cooldown|twice|range/i], ['Damage', 'sword', /damage|crit|execut|burn|poison|bleed|\battack\b|\bmagic\b|strike|kill|double|\d+% more|more (?:knives|flasks|shots|arrows)/i]];
-  // v89 (review #170, David: "remove those weird minus or plus effects in level up choices, keep it simple"): the level-up powers' balance factor
+  // the level-up powers' balance factor
   // (B.TUNE.spec, v88) still applies, silently, like a hero's power factor; the cards show only the power itself
   const specTags = sp => { const t = STYLE.filter(x => x[2].test(sp.desc)).slice(0, 2); return (t.length ? t : [['Upgrade', 'star']]).map(([n, ic]) => `<span class="ptag pt-${n.toLowerCase()}">${I(ic)}${n}</span>`).join(''); };
   // WHAT: the level-up screen: pick one of two powers for the hero that levelled.
   function levelHTML() {
     const p = run.pending[0], h = run.heroes.find(x => x.uid === p.uid), d = HEROES[h.key];
     const pair = d.specs[p.lvl - 2];
-    // review #18: a big splash, what the level gives, the two choices as big cards and the whole specialization path
+    // a big splash, what the level gives, the two choices as big cards and the whole specialization path
     const side = k => { const id = h.specs[k]; return id == null ? -1 : d.specs[k].findIndex(sp => sp.id === id); };
     const path = d.specs.map((pr, k) => {
       const lv = k + 2, st = lv === p.lvl ? 'now' : lv < p.lvl ? 'done' : 'later', from = k ? side(k - 1) : -2;
@@ -1075,7 +1075,7 @@
     </section>`;
   }
 
-  // review #18: the enemy roster on the deploy screen, grouped, with what each one does (positioning is the decision here)
+  // the enemy roster on the deploy screen, grouped, with what each one does (positioning is the decision here)
   // WHAT: the enemy roster shown while deploying (bosses and elites get a card, plain monsters small chips).
   function foesHTML(gau, f) {
     const groups = [];
@@ -1089,7 +1089,7 @@
         by[k].n++;
       }
     }
-    // v52 (review #64, David: "Pre battle screen highlight only the enemies with abilities, the rest is smaller"): enemies
+    // enemies
     // that do something special get a card with what they do; the plain ones are small chips under them
     const big = groups.filter(g => g.what), small = groups.filter(g => !g.what);
     const nm = g => `${esc(g.name)}${g.n > 1 ? ' ×' + g.n : ''}`;
@@ -1110,7 +1110,7 @@
       </div>`).join('')}</div>` : ''}
       ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" data-foe="${g.key}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">◆</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
   }
-  // v62 (review #83, PC boy): a mini tutorial. 1) the first game: an animated "Try moving your hero" over the board on every deploy
+  // a mini tutorial. 1) the first game: an animated "Try moving your hero" over the board on every deploy
   // screen until a hero is moved (balance.tut.moved); the game it first showed in (balance.tut.run) is the only one it nags in.
   // 2) once that is done, a flashing "speed up" hint under the speed buttons in battle until the player taps anywhere in a
   // battle (balance.tut.speedDismissed). Players who had already played before this existed (they saw the deploy tip 3 times)
@@ -1127,7 +1127,7 @@
     return first === run.seed;
   }
   const tutSpeedOn = () => { tutVeteran(); return !!store.get('balance.tut.moved', false) && !store.get('balance.tut.speedDismissed', false); };
-  // v118 (review #205, David: "Improve the tutorial with more content. Specifically in hero positioning for battle, people dont understand the value or the
+  // v118 (, David: "Improve the tutorial with more content. Specifically in hero positioning for battle, people dont understand the value or the
   // point... Implement some nice visualizations why positioning is important, maybe explaining exploiting terrain, chokepoints, rangers are more fragile, etc.
   // Tips that appear in the first few runs but only once each"): the COACH. On the deploy screen of a player's first runs, one tip at a time, each once
   // (balance.coach = the ids seen): a short line over the board, and the hexes it talks about glow on the board (Render: o.coach) with arrows where enemies come.
@@ -1181,7 +1181,7 @@
     tutSpeedDisarm.h = () => { store.set('balance.tut.speedDismissed', true); const e = document.querySelector('.tutspeed'); if (e) e.remove(); tutSpeedDisarm(); };
     document.addEventListener('pointerdown', tutSpeedDisarm.h, true);
   }
-  // v80 (review #158, David: "update the first run tutorial to the new structure with helpful and visible tips that are non obstructive"): the guide.
+  // the guide.
   // One small bubble at a time points at the thing it explains (the road, the lives, a duel, the bag, the shop...). It never blocks: taps go
   // through it, the first tap anywhere after it showed puts it away for good (balance.guide = the ids seen), and a screen change takes it off.
   // v87: everyone gets it until a run reaches the final fight (see guideOn); the deploy and battle hints above stay as they were.
@@ -1193,7 +1193,7 @@
   // first run and ends with that run's end screens; TUT_V is its version: raise it when the tips change and everyone sees the new tutorial once.
   // Menu -> Tutorial turns it on again (from the start) or off.
   // WHAT: the tutorial tips, in the order they come: id, scr ('title' or the run), when it shows, what it points at (a selector), the text.
-  // v126 (review #225, David: "Change the tutorial accordingly"): two tips for the bench of review #224 (t_bench, t_keep); TUT_V 4 shows players only these new ones.
+  // two tips for the bench of ; TUT_V 4 shows players only these new ones.
   const TUT_V = 4;
   const GUIDE = [
     { id: 't_play', scr: 'title', when: () => true, at: '.title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start your journey.' },
@@ -1224,7 +1224,7 @@
   const guideSeen = () => { const s = store.get('balance.guide3', []); return Array.isArray(s) ? s : []; };
   const guideOn = () => !navigator.webdriver && (store.get('balance.guide.v', 0) | 0) < TUT_V;
   const guideEnd = () => store.set('balance.guide.v', TUT_V);
-  // v82 (review #160): the explain bubble of anything with data-tip (the rewards in the chest, the level road, the next reward). A mouse shows it while
+  // the explain bubble of anything with data-tip (the rewards in the chest, the level road, the next reward). A mouse shows it while
   // hovering; a tap (or keyboard focus) shows it until the next tap. Fixed over the page like the guide, so nothing moves.
   // WHAT: shows / hides the data-tip bubble.
   const htip = { el: null, on: null };
@@ -1280,7 +1280,7 @@
     }, 650);
   }
   function guideDisarm() { if (guideDisarm.h) { document.removeEventListener('pointerdown', guideDisarm.h, true); guideDisarm.h = null; } }
-  // v126 (review #224, David: "Make it so when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time. Fight doesnt
+  // v126 (, David: "Make it so when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time. Fight doesnt
   // start until you do, include plenty of indicators for that. But after first deployment the hex persists until changed until end of run"): a hero that joined in the
   // middle of the run waits on the BENCH (Run.benched) until the player puts it on the board. The bench sits beside the board (above it on phones) with a NEW badge
   // and a bouncing arrow; the banner over the board names who is missing; the free hexes of your half glow; the Fight button is locked (a tap says why and shakes the
@@ -1307,14 +1307,14 @@
     const left = Run.benched(run).length;
     render(); toast(left ? (left > 1 ? `${left} more heroes to place` : 'One more hero to place') : 'Everyone is on the board. Fight when ready!');
   }
-  // v126b (review #226, David: "Instead of deploy your units say something suggestive like position or reposition or you can move your units"): the ribbon over
+  // the ribbon over
   // the board says "Drag heroes to reposition" (with a hand); with heroes on the bench it says "Place <name>!".
   // WHAT: THE DEPLOY SCREEN: the board where you drag your heroes, the formation line, the enemy roster, the Items button and the big Fight button.
   function deployHTML() {
     const gau = run.cur && run.cur.type === 'gauntlet';
     const f = run.cur;
     const map = Run.mapOf(run), need = Run.benched(run);
-    if (introStage()) return `<section class="deploy intro"><div class="boardwrap"><canvas id="board"></canvas>${introStage() === 'move' ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Drag your hero to move it ⇉</div>' : ''}</div></section>`;   // v97 (review #179): only the battlefield
+    if (introStage()) return `<section class="deploy intro"><div class="boardwrap"><canvas id="board"></canvas>${introStage() === 'move' ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Drag your hero to move it ⇉</div>' : ''}</div></section>`;   // only the battlefield
     const depbanContent = need.length
       ? (need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`)
       : 'Drag heroes to reposition';
@@ -1351,8 +1351,8 @@
     if (w.xp) out.push('+' + w.xp + ' XP');
     return out.join(', ');
   }
-  // review #40 (David): who gets what from the formation relics, from where the heroes stand right now
-  // v42 (review #51, "cut needless text"): one chip per formation relic with how many heroes it reaches; the chip's
+  // who gets what from the formation relics, from where the heroes stand right now
+  // one chip per formation relic with how many heroes it reaches; the chip's
   // tooltip and a tap still give the full "who gets what"
   // WHAT: the chips of formation powers (who gets what from where the heroes stand).
   function formHTML(W) {
@@ -1363,10 +1363,10 @@
       return `<button class="fr ${who.length ? 'got' : 'none'}" data-act="form-info" data-arg="${esc(full)}" title="${esc(full)}" aria-label="${esc(r.name)}">${ico('relic', id, 22)}<span>${who.length ? '✓' : '✗'}</span></button>`;
     }).join('');
   }
-  // review #18 (David: "another pass of the ui and battle ui ... pretty, functional, visible, engaging"): under the
+  // under the
   // board, a card per hero (HP and shield in numbers, mana bar named after the ability that glows when READY, status
   // badges, live damage with the leader crowned) and the enemy roster with its own HP bars and a count of who is left.
-  // v71 (review #146, David: "allow changing combat speed setting during deployment"; review #147: "skip fight only skips pve, never pvp"): the speed pills, also on the deploy
+  // the speed pills, also on the deploy
   // screen (on the sky of the board); the Skip button only in PvE fights
   const speedPills = (skip, cls = '') => `<div class="speed ${cls}">${[1, 2, 4].map(x => `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
   // WHAT: THE BATTLE SCREEN layout: top bar with speed buttons, the board canvas, the hero strip and the enemy strip. The numbers update live from the loop below.
@@ -1431,7 +1431,7 @@
     return '';
   }
   const clock = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-  // review #25 (David #34: "redesign the after battle screen to be more intuitive, pretty and more info"): a banner
+  // a banner
   // with what was fought and how long it took, every reward as a chip, then one card per hero (damage dealt with its
   // share, damage taken, kills, fallen or standing, XP) and the enemy line-up with who went down.
   // WHAT: THE RESULT SCREEN after a fight or a duel: victory / defeat, stars, gold, XP per hero, prizes, Elo change and the Continue button.
@@ -1449,7 +1449,7 @@
     if (r.win && !r.duel) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
     if (r.relic && RELIC[r.relic]) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f">${ico('relic', r.relic, 26)}<b>${esc(RELIC[r.relic].name)}</b><em>power</em></span>`);
     if (r.bank) chips.push(`<span class="rw ${r.bank > 0 ? 'rw-pos' : 'rw-neg'}"><i>🏦</i><b>${r.bank > 0 ? '+' : ''}${r.bank}</b><em>${r.bank > 0 ? 'investment' : 'loan paid'}</em></span>`);
-    // v50 (review #62): what the run relics did after this fight
+    // what the run relics did after this fight
     if (r.phoenix) chips.push(`<span class="rw rw-prize" style="--tier:#ff7a3d">${ico('relic', 'phoenix', 26)}<b>Phoenix Egg</b><em>hatched, gone</em></span>`);
     if (r.anvil && ITEM[r.anvil.to]) chips.push(`<span class="rw rw-prize" style="--tier:${TIER_COLOR[ITEM[r.anvil.to].tier]}">${ico('item', r.anvil.to, 26)}<b>${esc(ITEM[r.anvil.to].name)}</b><em>anvil upgrade</em></span>`);
     if (r.changeling && HEROES[r.changeling.to]) chips.push(`<span class="rw rw-up">${img(r.changeling.to, 22, 'por sm')}<b>${esc(HEROES[r.changeling.from].name)} → ${esc(HEROES[r.changeling.to].name)}</b><em>changeling</em></span>`);
@@ -1462,7 +1462,7 @@
     if (xp) chips.push(`<span class="rw rw-xp"><i>✨</i><b>+${xp}</b><em>XP</em></span>`);
     if (ups) chips.push(`<span class="rw rw-up"><i>▲</i><b>${ups}</b><em>level up${ups > 1 ? 's' : ''}</em></span>`);
     if (r.boss && r.win) chips.push(`<span class="rw rw-up" style="--tier:#ffd23f">★ <b>Boss Upgrade</b><em>choose a path</em></span>`);
-    if (r.trophy) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f"><i>🏆</i><b>${esc(r.trophy.name)}</b><em>trophy · +${r.trophy.crowns || 1} 👑</em></span>`);   // v64 (review #125)
+    if (r.trophy) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f"><i>🏆</i><b>${esc(r.trophy.name)}</b><em>trophy · +${r.trophy.crowns || 1} 👑</em></span>`);
     if (r.lg) chips.push(`<span class="rw ${r.lg.delta > 0 ? 'rw-pos' : r.lg.delta < 0 ? 'rw-neg' : ''}">${emblem(r.lg.league, 20)}<b>${r.lg.delta > 0 ? '+' : ''}${r.lg.delta}</b><em>LP · ${leagueName(r.lg.league)} ${leagueProgress(r.lg)}</em></span>`);
     if (r.lg && r.lg.crowns) chips.push(`<span class="rw rw-crown"><i>👑</i><b>+${r.lg.crowns}</b><em>crowns</em></span>`);
     const promo = r.lg && r.lg.promoted ? `<div class="promo" style="--lc:${B.LEAGUES[r.lg.league].color}">${emblem(r.lg.league, 40)}<b>Promoted to ${leagueName(r.lg.league)}!</b>${r.lg.crowns ? `<span class="crn">+${r.lg.crowns} 👑</span>` : ''}</div>` : '';
@@ -1643,7 +1643,7 @@
     </section>`;
   }
 
-  // v42 (review #51, David: "more dopamine hits"): the rewards play in order. Confetti, the stars one by one, the gold
+  // the rewards play in order. Confetti, the stars one by one, the gold
   // counting up and flying into the top bar, the XP bars filling, then the level ups and the MVP stamp. Every step is
   // written into r.fx, so a re-render mid-way (the Elo answer arriving) keeps what was already shown.
   // WHAT: the victory / defeat flourish (stars, confetti, coins flying).
@@ -1663,12 +1663,12 @@
   // ---------------- gauntlet (reviews #3 #4 by David)
   // WHAT: THE GAUNTLET. teamRow draws a team (heroes, items, powers) in a row; gateForm the name form at the gate; gauntletHTML the intro, the match card and the end.
   function teamRow(team, relics) {
-    // review #15: the ghost's items are shown hero by hero (they fight with them, like its relics)
+    // the ghost's items are shown hero by hero (they fight with them, like its relics)
     return `<div class="gteam">${team.map(h => `<div class="gh">${img(h.key, 56)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl}</span>
       <span class="gitems">${h.items.filter(id => ITEM[id]).map(id => `<img class="ico xs" src="${B.Icons.item(id, 22)}" title="${esc(ITEM[id].name + ': ' + ITEM[id].desc)}" alt="${esc(ITEM[id].name)}">`).join('') || '<i>no items</i>'}</span></div>`).join('')}</div>
       ${relics && relics.length ? `<div class="relics inline">${relics.filter(id => RELIC[id]).map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" title="${esc(RELIC[id].name + ': ' + RELIC[id].desc)}" aria-label="${esc(RELIC[id].name)}"><img class="ico sm" src="${B.Icons.relic(id, 26)}" alt=""></button>`).join('')}</div>` : ''}`;
   }
-  // v63 (review #117): the last day is the FINAL FIGHT against a team that won its own final fight (the tower is gone)
+  // the last day is the FINAL FIGHT against a team that won its own final fight (the tower is gone)
   // WHAT: the final fight screen: your team, your lives and the button that finds the opponent.
   function gauntletHTML() {
     return `<section class="title gintro2 final"><div class="gcrest">${I('trophy')}</div><h2 class="sc gtitle">The final fight</h2>
@@ -1677,20 +1677,20 @@
       ${teamRow(Run.teamSnapshot(run), run.relics)}
       ${gateForm()}</section>`;
   }
-  // v90 (review #171, David: "Add the gauntlet again... After pve run win but before xp a button appears enter gauntlet explaining briefly what it is with a cool
+  // v90 (, David: "Add the gauntlet again... After pve run win but before xp a button appears enter gauntlet explaining briefly what it is with a cool
   // visual. Then seamless experience as always, beat teams until you lose or crowned champion... Gauntlet wins add +1 LP for floor 1, 2 for 2 etc. No penalty")
   // WHAT: a duel's name on screen: Final fight, Duel, or Gauntlet · Floor N.
   const duelName = g => !g ? 'Duel' : g.kind === 'final' ? 'Final fight' : g.kind === 'tower' ? 'Gauntlet · Floor ' + ((run && run.tower && run.tower.floor) || 1) : 'Duel';
   // WHAT: the tower drawing: floors stacked up to the crown; cleared floors lit, the current one glowing.
   function towerArt(T) {
-    // v126 (review #221, David: "The gauntlet is bugged. Its increasing a level everytime the champion defends. But it should only increase whenever a new champion
+    // v126 (, David: "The gauntlet is bugged. Its increasing a level everytime the champion defends. But it should only increase whenever a new champion
     // is crowned"): the tower had one floor more than the floor you stand on, so losing to the champion drew a floor above the champion. Now it has exactly the
     // server's floors (the top one = the champion); a crowned climb ends at its own floor, under the crown. Before the height is known (the gate) it draws 3.
     const top = T.champion ? Math.max(1, T.wins | 0) : Math.max(T.peak ? 2 : 3, T.peak || 0, T.floor || 1), shown = Math.min(top, 7), from = Math.max(1, Math.min((T.floor || 1) - 2, top - shown + 1));
     let fl = ''; for (let k = from + shown - 1; k >= from; k--) fl += `<span class="tfl ${k < (T.floor || 1) || (T.status === 'over' && T.champion && k <= T.wins) ? 'done' : k === (T.floor || 1) && T.status !== 'over' ? 'cur' : k === (T.floor || 1) && !T.champion ? 'fell' : ''}" style="--k:${k - from}"><b>${k}</b></span>`;
     return `<div class="towerart ${T.champion ? 'crowned' : ''}" aria-hidden="true"><span class="tcrown">👑</span><div class="tfloors">${fl}</div><span class="tdoor"></span><span class="tglow"></span></div>`;
   }
-  // v109 (review #196, David: "Show current champion in the gauntlet screen, and in the hiscores he has an epic crown"): the champion's card (name, team,
+  // the champion's card (name, team,
   // floors climbed, climbers stopped), loaded once per gate from GET /api/elo?champ=1. Until it arrives (or offline) the plain rule shows.
   // WHAT: the epic crown of the current Gauntlet champion (ladder rows, the gate card).
   const champMark = () => '<span class="champmark" title="Current Gauntlet champion">👑</span>';
@@ -1700,12 +1700,12 @@
     if (!c) return '<li>👑 Beat the top floor and you are the champion</li>';
     return `<li class="champcard">${champMark()}<span class="cc"><small>Current champion</small><b>${esc(c.name)}</b><small>${c.wins} floor${c.wins === 1 ? '' : 's'} climbed · ${c.stopped} stopped</small></span><span class="ccteam">${c.team.slice(0, 6).map(h => img(h.key, 40, 'por')).join('')}</span></li>`;
   }
-  // v123 (review #215, David: "Whenever you finish a gauntlet run, win or lose, have a menu with a card with the champions, items, etc... 1 click share or copy with
+  // v123 (, David: "Whenever you finish a gauntlet run, win or lose, have a menu with a card with the champions, items, etc... 1 click share or copy with
   // a link to the game... make this feature dope and hype"): the end of every climb has "Share my team": the brag card (js/card.js) in a sheet with confetti, and
   // Share (the phone's own share menu), WhatsApp and Copy link. The link opens card.html with the same card and a Play button.
   // WHAT: the card data of the climb that just ended.
   function bragData() { const lg = store.get('balance.league', null); return B.Card.fromRun(run, { name: acct.account && acct.name ? acct.name : myName() || 'A hero', league: acct.account ? (lg && lg.league != null ? lg.league : acct.league | 0) : null }); }
-  // v124 (review #216, David: "The link is huge when pasted. Shorten it... add the image of the card to the preview"): the card is drawn as a picture and saved
+  // the card is drawn as a picture and saved
   // on the server once (api/card.js), which gives a short link /c/<id> whose page carries the picture as its preview; Share sends the picture itself too.
   // WHAT: makes the card picture and the short link once per climb (falls back to the long link when offline).
   function bragPrep() {
@@ -1742,11 +1742,11 @@
   function towerAnswer(r, res) {
     const T = run.tower; if (!T) return;
     if (r.lg) { T.lp = (T.lp | 0) + (r.lg.delta | 0); T.lgLast = r.lg; T.crowns = (T.crowns | 0) + (r.lg.crowns | 0); }
-    if (r.peak != null) T.peak = r.peak;   // v126 (review #221): the tower's real height (it grows only when someone is crowned)
+    if (r.peak != null) T.peak = r.peak;   // the tower's real height (it grows only when someone is crowned)
     if (r.over) { T.status = 'over'; T.champion = !!r.champion; if (r.wins != null) T.wins = r.wins | 0; T.next = null; if (res) res.champion = !!r.champion; }
     else if (r.opponent) { T.floor = r.floor || (T.floor + 1); T.next = r.opponent; }
   }
-  // v63 (review #118): a won duel lets you steal one of three things from the team you beat (a hero, an item, a power)
+  // a won duel lets you steal one of three things from the team you beat (a hero, an item, a power)
   // WHAT: the steal screen: three things to take from the beaten team; a hero asks which of your heroes it replaces when the team is full.
   function stealHTML() {
     const opts = run.steal || [], pick = ui.stealPick != null ? opts[ui.stealPick] : null;
@@ -1779,7 +1779,7 @@
     const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
     const dis = s.sold || run.gold < s.price;
     let body = '';
-    // v62m (review #109): heroes are splash cards (the full art, class and range on it), items and powers are rows with a glowing medallion
+    // heroes are splash cards (the full art, class and range on it), items and powers are rows with a glowing medallion
     if (s.kind === 'hero') {
       const h = HEROES[s.id];
       body = `<div class="art" style="--hc:${h.color}"><img class="splash" src="${por(s.id, 112, true)}" alt=""><span class="rolechip">${esc(h.role)}</span>${run.heroes.length < Run.teamMax(run) && Run.shopHeroLevel(run) > 1 ? `<span class="shoplv" title="Joins at the level of your lowest hero, with random powers">Lv ${Run.shopHeroLevel(run)}</span>` : ''}<button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')}</button><span class="rngchip">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span></div><div class="meta"><div class="ctitle">${esc(h.name)}</div><p class="htag">${esc(h.tag || h.abName)}</p></div>`;
@@ -1799,7 +1799,7 @@
       : `<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button>`;
     return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}${buyBtn}</div>`;
   }
-  // v64 (review #127): with a full team, a hero bought in the Hero Shop takes the place of one of yours (its level, XP and items; powers picked at random)
+  // with a full team, a hero bought in the Hero Shop takes the place of one of yours (its level, XP and items; powers picked at random)
   // WHAT: the sheet that asks which hero steps aside for the hero being bought.
   function swapHTML(key) {
     const d = HEROES[key];
@@ -1811,7 +1811,7 @@
   function shopHTML() {
     const c = run.cur, rc = Run.rerollCost(run);
     const note = c.kind === 'heroShop' ? `<span class="lockpill">${run.heroes.length >= Run.teamMax(run) ? 'Full team: a new hero swaps in' : `Team ${run.heroes.length}/${Run.teamMax(run)}`}</span>` : '';
-    // v118 (review #205, David: "In first hero shop visited put bubble saying when team is full, buying hero replaces an existing one of the same level"): once
+    // once
     const swapTip = c.kind === 'heroShop' && !store.get('balance.hint.hswap', 0) ? `<div class="coach shopcoach" style="--cc:#ffd23f"><span class="ci">🔄</span><span class="ct">Full squad: buying a hero replaces a teammate, keeping their level, position & equipped gear.</span><button class="cok" data-act="hswap-ok">Got it</button></div>` : '';
     const bagVal = (run.bag || []).reduce((sum, id) => sum + (Run.sellValue ? Run.sellValue(id) : (ITEM[id] ? Math.round(ITEM[id].cost * 0.5) : 0)), 0);
     const pouchSVG = `<svg class="pouch-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6 C7 4, 10 2, 12 2 C14 2, 17 4, 17 6 C15 7, 9 7, 7 6 Z" fill="#92400e"/><path d="M5 8 C3 12, 3 19, 6 21 C9 22.5, 15 22.5, 18 21 C21 19, 21 12, 19 8 C16 9, 8 9, 5 8 Z" fill="#b45309" stroke="#78350f" stroke-width="1.2"/><ellipse cx="12" cy="15" rx="4" ry="4.5" fill="#d97706" opacity="0.6"/><text x="12" y="17.5" font-size="7" font-weight="900" fill="#fef3c7" text-anchor="middle">$</text></svg>`;
@@ -1856,14 +1856,14 @@
     };
     return `<div class="gains">${G.map(one).join('')}</div>`;
   }
-  // v47 (review #58): "Sharpen: +10 attack to one hero" reads as a bold name and what it does, on two lines
+  // "Sharpen: +10 attack to one hero" reads as a bold name and what it does, on two lines
   // WHAT: formats an event choice label.
   function evLabel(t0) {
-    const t = B.T ? B.T(String(t0)) : String(t0);   // v62h (review #97): translated first, then split into the bold name and the rest
+    const t = B.T ? B.T(String(t0)) : String(t0);   // translated first, then split into the bold name and the rest
     const m = String(t).match(/^([^:0-9]{2,32}):\s+(.+)$/);
     return m ? `<b class="evn">${esc(m[1])}</b><span class="eve">${fmt(m[2].charAt(0).toUpperCase() + m[2].slice(1))}</span>` : fmt(t);
   }
-  // review #17: 3 choices with a visible price or risk; some ask you to pick the hero, item or item type they apply to
+  // 3 choices with a visible price or risk; some ask you to pick the hero, item or item type they apply to
   // WHAT: THE EVENT SCREEN: the story text and its choices (greyed out with the reason when you cannot take one), then the result.
   function eventHTML() {
     const e = EVENT[run.cur.id], chs = Run.eventChoices(run);
@@ -1880,12 +1880,12 @@
         <h3>${pickCh.target === 'hero' ? 'Choose a hero' : pickCh.target === 'type' ? 'Choose an item type' : 'Choose an item'}</h3><div class="tgrid">${grid}</div></div>
         <div class="bar"><button data-act="event-back">Back</button></div></section>`;
     }
-    // v62m (review #109): each choice has a round picture of what it does (a hero, an item or power, or an icon for gold, XP, a fight, a gamble...)
+    // each choice has a round picture of what it does (a hero, an item or power, or an icon for gold, XP, a fight, a gamble...)
     const EACT = { gold: '🪙', xpAll: '✨', xpHero: '✨', item: '🎁', fight: '⚔️', buffHero: '💪', buffAll: '💪', upgradeItem: '⚒️', invest: '🏦', gamble: '🎲', gambleItem: '🎲', transmute: '🔮', respec: '🔁', relicItem: '💎', relic: '💎', potion: '🧪', mimic: '📦', loan: '💸', hpHero: '❤️', hpAll: '❤️', none: '🚪' };
     return head + `<div class="stack evchoices">${chs.map((ch, i) => {
       const c = Run.canChoose(run, ch), pic = ch.hero ? img(ch.hero, 40) : ch.item ? ico('item', ch.item, 40) : ch.relic ? ico('relic', ch.relic, 40) : `<span class="ci">${EACT[String(ch.act || '').split(':')[0]] || '❔'}</span>`;
       const tag = ch.item ? `<span class="itag" style="color:${TIER_COLOR[ITEM[ch.item].tier]}">${B.RARITY[ITEM[ch.item].tier].name} ${B.TYPE[ITEM[ch.item].type].name.toLowerCase()}</span>` : '';
-      // v44 (review #54): a challenge, a choice only some heroes unlock (FTL's blue options), a risk
+      // a challenge, a choice only some heroes unlock (FTL's blue options), a risk
       const tags = [], rq = ch.req && B.EVENT_REQ[ch.req], who = rq ? Run.reqHeroes(run, ch.req) : [];
       if (ch.fight) tags.push(`<span class="etag efight">${I('swords')} Challenge · fight now</span>`);
       if (rq) tags.push(who.length ? `<span class="etag ereq">${img(who[0].key, 18, 'por xs')}${esc(HEROES[who[0].key].name)} unlocks this</span>` : `<span class="etag ereq no">${I('lock')} Needs ${esc(rq.name)}</span>`);
@@ -1903,7 +1903,7 @@
         <p class="gline"><b class="score sm">${g.wins}</b> duel${g.wins === 1 ? '' : 's'} won</p>${xpPanelHTML()}
         <div class="stack againrow"><button class="primary big cta again" data-act="new-run">▶ Play again</button><button data-act="scores" aria-label="Ladder">🏆</button></div></section>`;
     }
-    // v64 (review #125): a completed run is a Perfect, Gold or Bronze victory by the lives left
+    // a completed run is a Perfect, Gold or Bronze victory by the lives left
     // v68 (reviews #140 #141, David): two screens with the big button in the same place at the bottom, for one finger. Screen 1 = the league: a meter in the
     // league's colours with its banner on top, filling (or falling) to where you are, and the LP gained or lost in big on the right; Next. Screen 2 = the XP:
     // the same kind of meter for the account level; a level up cheers and a chest bursts open with the level's rewards (no level up = the chest stays shaded);
@@ -1912,7 +1912,7 @@
     const brokenShieldSVG = `<svg class="broken-ward-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 L28 7 V16 C28 23 22 28 16 30 C10 28 4 23 4 16 V7 Z" fill="#451a1a" stroke="#ef4444" stroke-width="2"/><path d="M16 2 L13 11 L18 16 L12 21 L16 30" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round"/></svg>`;
     const head = won ? `<h2 class="sc ovh">${V.icon} ${V.name} victory!</h2><p class="ovsub">${run.lives >= CFG.lives ? 'No fight lost' : 'Your Ward broke on the way'}</p>`
       : `<div class="lp-head-block"><div class="lp-title-row">${brokenShieldSVG} <h2 class="lp-modal-title">The Ward is <span class="crimson-text">Broken</span></h2></div></div>`;
-    // v96 (review #178, David: "You win pve, get a victory screen, and then gauntlet"): the victory screen of a completed run, before the Gauntlet gate
+    // the victory screen of a completed run, before the Gauntlet gate
     if (won && !run.tower) return `<section class="title vicscr">${head}<div class="vicart" aria-hidden="true">${V.icon}</div>
         <p class="vicline">PvE complete · ${run.won} fight${run.won === 1 ? '' : 's'} won</p>${teamRow(Run.teamSnapshot(run), run.relics)}
         <div class="overbar"><button class="primary big cta" data-act="victory-next" ${run.xpWait ? 'disabled' : ''}>Next ${I('arrow')}</button></div></section>`;
@@ -1933,7 +1933,7 @@
   // WHAT: a vertical meter (league or level): the banner on top, the tube, the filling (height in %), a line under it.
   const meterHTML = (id, style, banner, pct, foot) => `<div class="vmeter" id="${id}" style="${style}"><div class="vmban">${banner}</div><div class="vmtube"><i style="height:${pct}%"></i><span class="vmshine"></span></div><small class="vmfoot">${foot}</small></div>`;
   // WHAT: the league screen (end of a run, screen 1): the league meter on the left, the LP in big, why, the streak and the call to beat other players on the right.
-  // v91 (review #172): the league screen comes after the Gauntlet and adds its LP: the run's change (op complete) and then the tower's floors
+  // the league screen comes after the Gauntlet and adds its LP: the run's change (op complete) and then the tower's floors
   // WHAT: the run's league change merged with the Gauntlet's (the league and LP after the last floor, the deltas added).
   function lgAll() {
     const lg = run.lgEnd, T = run.tower; if (!lg || !T || !T.lgLast) return lg;
@@ -2069,7 +2069,7 @@
   function xpScreenHTML() {
     const log = run.xpLog || [], got = log.reduce((a, g) => a + g.xp, 0), to = acct.axp || 0, from = Math.max(0, to - got);
     const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
-    const ups = B.UNLOCKS.filter(x => x.lvl > A.lvl && x.lvl <= Z.lvl), na = (run.newAchs || []).map(id => B.ACH[id]).filter(Boolean), n = ups.length + na.length;   // v73 (review #150): new titles come out of the chest too
+    const ups = B.UNLOCKS.filter(x => x.lvl > A.lvl && x.lvl <= Z.lvl), na = (run.newAchs || []).map(id => B.ACH[id]).filter(Boolean), n = ups.length + na.length;   // new titles come out of the chest too
     const note = run.xpWait ? 'Counting your XP…' : run.xpErr ? 'Your XP could not be saved (no connection).' : '';
     const pct = Math.round(100 * S.into / S.need);
 
@@ -2208,7 +2208,7 @@
     if (typeof ui.info === 'string') { const T = B.TERRAIN[ui.info]; return T ? `<div class="hrow"><span class="ticon">${T.icon}</span><b>${T.name}</b><span class="dim small">terrain</span><button class="info-close" data-act="info-close" aria-label="Close details">✕</button></div><div class="small">${esc(T.desc)}</div>` : ''; }
     const u = W.byId[ui.info]; if (!u) return '';
     const hd = HEROES[u.key];
-    // v62l (review #108, David: "clicking on a hero shows their info, which displaced the fight button below the lower edge"): the card is short and fixed in size (name, stats and the ability's NAME, or
+    // the card is short and fixed in size (name, stats and the ability's NAME, or
     // one sentence for monsters) and the heroes' full text is one tap away on Details; on the deploy screen it takes the place of the enemies list
     const first = s => String(s || '').split(/(?<=[.!?])\s/)[0];
     const abil = hd ? `<b class="abname">${esc(hd.abName)}</b> <button class="linkbtn" data-act="hero-peek" data-arg="${u.key}">Details</button>` : u.boss ? fmt(first(B.BOSSES[u.key].desc)) : u.abil ? fmt(MOB_ABIL[u.abil] || '') : u.fl.has('dive') ? 'Leaps to your back line at the start.' : u.kind === 'summon' ? 'Summoned unit.' : 'No special ability.';
@@ -2221,9 +2221,9 @@
   // WHAT: builds the simulation of the current fight (normal or Gauntlet) for the preview or the real battle.
   function worldFor(preview) {
     const t = run.cur && run.cur.type;
-    return t === 'gauntlet' ? Run.gauntletWorld(run, preview, { takeMul: B.PVP_TAKE[Math.max(0, Math.min(B.PVP_TAKE.length - 1, acct.league | 0))] }) : Run.fightWorld(run, preview);   // v126 (review #223, David: "Drop the 20% PVE protection for bronze"): every league takes full PvE damage (review #53 had Bronze take 20% less)
+    return t === 'gauntlet' ? Run.gauntletWorld(run, preview, { takeMul: B.PVP_TAKE[Math.max(0, Math.min(B.PVP_TAKE.length - 1, acct.league | 0))] }) : Run.fightWorld(run, preview);   // every league takes full PvE damage (had Bronze take 20% less)
   }
-  // review #13 (David: "randomly adjusted to 75% of my screen ... adapt to the screen size and device"):
+
   // the board takes the width AND the height left on screen, on phones (portrait/landscape), tablets and desktops.
   // WHAT: BOARD SIZE AND INPUT. The board is a canvas sized to the screen (layoutClasses, boardWidth, mountBoard); onDown / onMove / onUp handle drag and tap of heroes (pointer events work for mouse and touch).
   const BOARD_RATIO = 0.703; // board height / width (render.js setup: 10.35 * size + 4 over 14.72 * size)
@@ -2232,13 +2232,13 @@
     const vw = window.innerWidth, vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     document.body.classList.toggle('landscape', vw > vh * 1.25 && vh < 600);
     document.body.classList.toggle('wide', vw >= 760 && !document.body.classList.contains('landscape'));
-    document.body.classList.toggle('side', document.body.classList.contains('wide') && vw >= vh * 1.1);  // review #18: panel beside the board
+    document.body.classList.toggle('side', document.body.classList.contains('wide') && vw >= vh * 1.1);  // panel beside the board
     document.body.classList.toggle('desk', (document.body.classList.contains('side') && vw >= 960 && vh >= 500) || (vw >= 1024 && vh >= 540));  // v29: a full-screen stage on computers
   }
   function boardWidth(wrap) {
     const vw = window.innerWidth, vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const land = document.body.classList.contains('landscape');
-    // review #18: on tablets/desktops the deploy and battle screens put their panel in a column beside the board
+    // on tablets/desktops the deploy and battle screens put their panel in a column beside the board
     // v29 (owner: "on PC the framing is horrible"): the board takes all the height the screen has, the panel sits beside it
     if (document.body.classList.contains('desk')) return Math.floor(Math.max(480, Math.min(vw - 64, (vh - 165) / DESK_BOARD_RATIO, 1320)));
     if (document.body.classList.contains('side')) return Math.floor(Math.max(300, Math.min(Math.min(vw, 1180) - 36 - 356, (vh - 64 - 8) / BOARD_RATIO, 1000)));
@@ -2319,14 +2319,14 @@
       }, introDraw(), coachDraw(), benchDraw(), extra || {}));
     }
   }
-  // v126 (review #224): while a hero waits on the bench, the free hexes of your half glow (where it can go)
+  // while a hero waits on the bench, the free hexes of your half glow (where it can go)
   function benchDraw() {
     if (!run || run.phase !== 'deploy' || introStage() || !Run.benched(run).length) return {};
     const taken = new Set(run.heroes.filter(h => h.pos && !h.bench).map(h => h.pos.c + ',' + h.pos.r));
     return { slots: B.Hex.all().filter(h => h.r >= 4 && !Run.blockedAt(run, h.c, h.r) && !taken.has(h.c + ',' + h.r)) };
   }
   const benchSel = () => !!(run && ui.selUid && run.heroes.some(h => h.uid === ui.selUid && h.bench));
-  // v126 (review #224): dragging a hero from the bench (pointer events on the page: a touch stays with the button it started on). Over the board the hex under
+  // dragging a hero from the bench (pointer events on the page: a touch stays with the button it started on). Over the board the hex under
   // the finger lights up; let go there and the hero is placed. A short tap is a pick (ACT 'bench-pick').
   // WHAT: pointer down / move / up of a drag from the bench.
   function benchDown(e) {
@@ -2359,7 +2359,7 @@
   document.addEventListener('pointermove', benchMove, { passive: false });
   document.addEventListener('pointerup', benchUp);
   document.addEventListener('pointercancel', benchUp);
-  // ---- v97 (review #179, David: "The very first time you press play, and choose a hero, cut to the battlefield and that hero drops in. Then after he is
+  // ---- v97 (, David: "The very first time you press play, and choose a hero, cut to the battlefield and that hero drops in. Then after he is
   // moved, per indicated, an enemy weak unit comes in from the other side, the hero gets an exclamation mark in a speech bubble, and fight starts
   // seamlessly. Thats the first fight"). run.onb.stage: 'drop' (the hero falls onto the board) -> 'move' (the hint; the enemy is hidden) -> 'enter'
   // (the Grunt walks in from the top, the hero shouts "!") -> the battle starts by itself, with no countdown and no VS screen.
@@ -2415,7 +2415,7 @@
   // WHAT: converts a pointer event into a board hex (c, r).
   function evHex(e, pad = 1.0) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y, pad) }; }
   function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
-  // v118 (review #205, "drag and drop heroes in hex grid, simple, and if dropped on another hero they swap places"): a hero is picked up by its whole figure
+  // a hero is picked up by its whole figure
   // (it stands taller than its hex), and dragging over another hero shows that one moving to the empty spot (they swap on drop)
   // WHAT: your hero whose drawn figure is under the point (x, y), the nearest one.
   function heroBodyAt(W, x, y) { if (!W || !view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead || u.side !== 0 || !u.uid) continue; const p = Render.hexScreen(view, u.c, u.r), s = view.size;
@@ -2461,17 +2461,17 @@
       swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null
     });
   }
-  // review #39: a hero can't be placed on a tree, boulder, ridge or pond
+  // a hero can't be placed on a tree, boulder, ridge or pond
   function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) sfx('deny'); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
   // WHAT: pointer up on the board: drop the hero on the new hex (rows 4-7 only, not on terrain) or select it; the first move ends the tutorial prompt.
   function onUp(e) {
     if (battle) return;
     const { h } = evHex(e, 1.35); const d = ui.drag; ui.drag = null;
-    // v88 (review #168): a hero set down raises a puff of dust and a soft thud where it lands
+    // a hero set down raises a puff of dust and a soft thud where it lands
     const landed = () => { sfx('place'); try { if (navigator.vibrate) navigator.vibrate(20); } catch (_) {} if (!B.Juice) return; const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); };
     if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(run, d.uid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); } }
     else if (d) { ui.selUid = ui.selUid === d.uid ? 0 : d.uid; if (ui.selUid) { sfx('tap'); if (B.UIAudio) B.UIAudio.pop(); } }
-    else if (ui.selUid && h && h.r >= 4 && benchSel()) { if (!onTerrain(h)) benchPlaced(ui.selUid, h); return; }   // v126 (review #224): a picked bench hero goes here
+    else if (ui.selUid && h && h.r >= 4 && benchSel()) { if (!onTerrain(h)) benchPlaced(ui.selUid, h); return; }   // a picked bench hero goes here
     else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); }
     preview = worldFor(true);
     const fl = $('#formline'); if (fl) fl.innerHTML = formHTML(preview);
@@ -2483,9 +2483,9 @@
   // ------------------------------------------------------------------ battle
   // WHAT: the Fight! button: builds the real simulation, shows what Smolder ate, switches to the battle screen and starts the loop.
   function startBattle() {
-    if (!introStage() && Run.benched(run).length) { benchNudge(Run.benched(run)); return; }   // v126 (review #224): never with heroes on the bench
+    if (!introStage() && Run.benched(run).length) { benchNudge(Run.benched(run)); return; }   // never with heroes on the bench
     const gau = run.cur && run.cur.type === 'gauntlet';
-    if (gau && run.g && run.g.kind === 'final') run.guideFinal = true;   // v87 (review #166): the guide ends after this run
+    if (gau && run.g && run.g.kind === 'final') run.guideFinal = true;   // the guide ends after this run
     const W = worldFor(false);
     save();
     const ate = (run.devoured || []).map(x => x.msg).join(' ');   // v62: Smolder's meal
@@ -2497,7 +2497,7 @@
     countdown(battle);
     requestAnimationFrame(loop);
   }
-  // v69 (review #143, David: "after click start fight, short epic countdown hovers over, 3, 2, 1, fight! Then vanishes as fight starts. Should not obstruct view"):
+
   // the fight waits (b.hold) while big see-through numbers pop over the top of the board, then FIGHT! and it starts. Not in an automated browser (the tests).
   // WHAT: the 3, 2, 1, FIGHT! countdown at the start of a battle.
   function countdown(b) {
@@ -2510,25 +2510,25 @@
   }
   const DPR_STEPS = [1.5, 1, 0.8, 0.65, 0.5];
   // a computer (mouse) also counts 30 fps as slow; a phone not (iPhones in Low Power Mode draw 30 frames a second on purpose)
-  // v86 (review #164, David: "sometimes the battle pixels get grainy all of a sudden, especially at the start of a fight, even on phone"): the start of a
+  // the start of a
   // fight (the countdown, the first frames) and a phone's 30 fps jitter counted as a slow device, the picture dropped a step and the drop was kept for
   // good. Now: no measuring during the countdown and the first 1.5s; a phone counts only frames under ~22 fps and never goes under 1.5x (its own
   // pixel ratio when lower); a smooth fight wins a step back for the next one; and the levels kept by v77-v85 are forgotten (new key).
   const FINE = matchMedia('(pointer: fine)').matches, SLOW_MS = FINE ? 26 : 45, DPR_FLOOR = FINE ? 0.5 : Math.min(1.5, window.devicePixelRatio || 1);
   { const m = +store.get('balance.maxDpr2', 0); if (m >= DPR_FLOOR && m <= 2) Render.maxDpr = m; }
   // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
-  // v89 (review #170): the fights play 25% faster at every speed (1x, 2x, 4x are 1.25x, 2.5x, 5x real time); the fight itself is the same
+  // the fights play 25% faster at every speed (1x, 2x, 4x are 1.25x, 2.5x, 5x real time); the fight itself is the same
   const PACE = 1.25;
   function loop(now) {
     const b = battle; if (!b) return;
     if (now - b.last < 12) { requestAnimationFrame(loop); return; }   // v62b: a 120 / 144 Hz screen draws about 60 frames a second, not 144 (the time is not lost, the next frame adds it)
-    // v89 (review #170, David: "fights are a bit slow on mobile"): a slow phone frame (up to 250 ms) no longer loses game time (the cap was 100 ms)
+    // a slow phone frame (up to 250 ms) no longer loses game time (the cap was 100 ms)
     const dt = Math.min(250, now - b.last); b.last = now;
     // v62r: a computer that draws slowly (no graphics acceleration, weak integrated GPU) gets a smaller canvas by itself: frames slower than ~30 fps for about 1.5 s
     // drop the pixel ratio one step (2 -> 1.5 -> 1); the picture keeps its size on screen, just a little softer
     if (!b.t0) b.t0 = now; const warm = now < Math.max(b.hold || 0, b.t0) + 1500;   // the countdown and the first 1.5s are not measured
     if (!warm && !document.hidden) { b.slow = Math.max(0, Math.min(60, (b.slow || 0) + (dt > SLOW_MS ? 1 : -1))); b.frames = (b.frames || 0) + 1; if (dt <= 20) b.fast = (b.fast || 0) + 1; }
-    // v77 (review #156): the steps go on below 1 (a computer without graphics acceleration), and the level found is kept for the next visits
+    // the steps go on below 1 (a computer without graphics acceleration), and the level found is kept for the next visits
     if (b.slow >= 30 && view && view.dpr > DPR_FLOOR + 0.01 && !document.hidden) { const nx = DPR_STEPS.find(x => x < view.dpr - 0.01 && x >= DPR_FLOOR - 0.01); if (nx) { b.slow = 0; b.dropped = true; Render.maxDpr = nx; store.set('balance.maxDpr2', nx); view = Render.setup(view.canvas, view.w); } }
     const TICK = 1000 / Sim.TPS;
     if (!b.W.over && !(b.hold && now < b.hold)) {
@@ -2541,11 +2541,11 @@
       }
       if (b.acc > TICK * 3) b.acc = TICK * 3; // Discard excessive backlog if frame dropped severely
     }
-    // v42 (review #51): the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)
+    // the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)
     if (b.W.over && !b.overAt) { b.overAt = now; b.end = { win: b.W.winner === 0, k: 0 }; if (!b.endAt) b.endAt = now + 1800; sfx(b.end.win ? 'win' : 'lose'); }
     const T = b.W.over ? b.W.t + (now - b.overAt) / TICK * 0.3 : b.W.t + b.acc / TICK;
     if (b.end) b.end.k = (now - b.overAt) / 1600;
-    if (view) Render.draw(view, b.W, T, Object.assign({ infoId: ui.info, hoverHex: ui.hoverHex }, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {}));   // v70 (review #145): standing tall during the countdown
+    if (view) Render.draw(view, b.W, T, Object.assign({ infoId: ui.info, hoverHex: ui.hoverHex }, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {}));   // standing tall during the countdown
     const hud = $('#bhud');
     if (hud) {
       const secs = Math.floor(b.W.t / Sim.TPS);
@@ -2575,23 +2575,23 @@
   async function endBattle() {
     document.body.classList.remove('in-danger');
     tutSpeedDisarm();
-    { const b = battle; if (b && !b.dropped && (b.frames | 0) >= 120 && b.fast / b.frames >= 0.9 && Render.maxDpr && Render.maxDpr < 2) { const up = [0.5, 0.65, 0.8, 1, 1.5, 2].find(x => x > Render.maxDpr + 0.01); Render.maxDpr = up; store.set('balance.maxDpr2', up); } }   // v86 (review #164): a smooth fight wins a step back
+    { const b = battle; if (b && !b.dropped && (b.frames | 0) >= 120 && b.fast / b.frames >= 0.9 && Render.maxDpr && Render.maxDpr < 2) { const up = [0.5, 0.65, 0.8, 1, 1.5, 2].find(x => x > Render.maxDpr + 0.01); Render.maxDpr = up; store.set('balance.maxDpr2', up); } }   // a smooth fight wins a step back
     const b = battle; battle = null; const W = b.W;
-    // review #25: per hero (its summons count for it): damage dealt and taken, kills, standing at the end
+    // per hero (its summons count for it): damage dealt and taken, kills, standing at the end
     const stats = {}, dmg = {};
     for (const u of W.units) {
       const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side !== 0 || !o.uid) continue;
       const st = stats[o.uid] = stats[o.uid] || { dmg: 0, taken: 0, kills: 0, heal: 0, alive: false };
-      st.dmg += u.dmgDone || 0; st.kills += u.kb || 0; st.heal += u.healDone || 0;   // v123 (review #214): healing done (its summons and plants count for it)
+      st.dmg += u.dmgDone || 0; st.kills += u.kb || 0; st.heal += u.healDone || 0;   // healing done (its summons and plants count for it)
       if (o === u) { st.taken += u.dmgTaken || 0; st.alive = !u.dead; }
     }
     for (const k in stats) dmg[k] = stats[k].dmg;
     const foes = W.units.filter(u => u.side === 1 && u.kind !== 'summon').map(u => ({ key: u.key, dead: !!u.dead, boss: !!u.boss, elite: !!u.elite }));
     const hs = W.units.filter(u => u.side === 0 && u.kind === 'hero'), hpLeft = hs.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, hs.reduce((a, u) => a + u.maxHp, 0));
     const stars = W.winner === 0 ? 1 + (hs.every(u => !u.dead) ? 1 : 0) + (hs.every(u => !u.dead) && hpLeft >= 0.6 ? 1 : 0) : 0;
-    const fu = W.units.filter(u => u.side === 1 && u.kind !== 'summon'), left = fu.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, fu.reduce((a, u) => a + u.maxHp, 0));   // v62 (review #94): how much of the enemy was left
+    const fu = W.units.filter(u => u.side === 1 && u.kind !== 'summon'), left = fu.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, fu.reduce((a, u) => a + u.maxHp, 0));   // how much of the enemy was left
     const extra = { stats, dmg, foes, time: W.t / Sim.TPS, stars, left };
-    if (b.gau && run.g.kind === 'tower') {   // v90 (review #171): a Gauntlet floor
+    if (b.gau && run.g.kind === 'tower') {   // a Gauntlet floor
       const opp = run.g.opp, res = Run.finishDuel(run, W), req = { op: 'towerResult', pid: pid(), ref: refCode(), teamId: run.tower.teamId, win: res.win, oppName: opp.name, team: run.lastFight.team, relics: run.lastFight.relics };
       ui.result = Object.assign(res, extra, { fightName: 'Gauntlet · Floor ' + res.floor, opp, pending: true, req }); screen = 'result';
       save(); render(); window.scrollTo(0, 0);
@@ -2616,14 +2616,14 @@
     const fightName = run.cur && run.cur.challenge ? 'Challenge · ' + run.cur.challenge.name : run.cur && run.cur.diff && B.DIFF[run.cur.diff] ? `${B.DIFF[run.cur.diff].name} fight · #${run.cur.fightNo}` : 'Fight';
     ui.result = Object.assign(Run.finishFight(run, W), extra, { fightName, bossName: bossKey ? B.BOSSES[bossKey].name : null }); screen = 'result';
     if (ui.result.win && (ui.result.gold || ui.result.bank)) ui.goldHold = run.gold - (ui.result.gold || 0) - (ui.result.bank || 0);   // the top bar waits for the coins to fly in
-    if (bossKey) {  // review #20: the boss's own Elo (never the player's); v27: shown with the Content Elo unlock
+    if (bossKey) {  // the boss's own Elo (never the player's); v27: shown with the Content Elo unlock
       const res = ui.result;
       Net.post('elo', { op: 'boss', pid: pid(), ref: refCode(), boss: bossKey, win: res.win }).then(r => { setAcct(r); logGameXp(r); if (r.boss) { res.bossElo = r.boss; if (ui.result === res && screen === 'result') render(); } }).catch(() => {});
     }
     save(); render(); window.scrollTo(0, 0);
     if (run.phase === 'over') await reportRunEnd();
   }
-  // v63 (review #117): the run ended (the third life was lost, or the final fight was won): the server gets the end (league points, XP, the team becomes a finalist)
+  // the run ended (the third life was lost, or the final fight was won): the server gets the end (league points, XP, the team becomes a finalist)
   // WHAT: tells the server the run is over: 'complete' when the final fight was won, 'fail' when the lives ran out.
   async function reportRunEnd() {
     const R0 = ui.result || {};   // v96: a run completed on the map has no result screen
@@ -2638,7 +2638,7 @@
     run.xpWait = false;
     R0.pending = false; save(); render();
   }
-  // v63 (review #117): when the map shows a PvP day, the opponent is looked up (another player's team from about the same day; none yet = a made-up one, review #119)
+  // when the map shows a PvP day, the opponent is looked up (another player's team from about the same day; none yet = a made-up one, )
   // WHAT: finds the opponent of each duel option on the map (the server first, a random ghost when it has none or does not answer) and shows it.
   function findDuels() {
     for (const o of run.opts || []) {
@@ -2652,9 +2652,9 @@
       });
     }
   }
-  // v66 (review #135, David: "before every fight, be it pve or pvp, have a short animation, one of those TEAM VS TEAM battle screens ... your team always on the
+  // v66 (, David: "before every fight, be it pve or pvp, have a short animation, one of those TEAM VS TEAM battle screens ... your team always on the
   // left, with your name on top; then a cool VS grows, then the other team, a shake ... If PvP, include the current score between you"): it plays when a fight's
-  // deploy screen opens (PvE, duels, the final fight, event challenges); a tap skips it. Review #136: each side shows its taunt in a comic bubble and its VS entrance.
+  // deploy screen opens (PvE, duels, the final fight, event challenges); a tap skips it. each side shows its taunt in a comic bubble and its VS entrance.
   // WHAT: the VS screen (showVs), the made-up taunt of a ghost that has no player (ghostTaunt), closeVs removes it.
   const ghostTaunt = name => { let h = 0; for (const c of String(name || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 3 ? B.TAUNTS[h % B.TAUNTS.length].text : null; };
   function closeVs() { const v = $('#vs'); if (!v) return; clearTimeout(ui.vsT); v.classList.add('out'); setTimeout(() => v.remove(), 260); }
@@ -2675,7 +2675,7 @@
       name = bk ? esc(B.BOSSES[bk].name) : f.challenge ? 'Challenge' : esc((B.DIFF[f.diff] || { name: 'Monster' }).name + ' fight');
       tag = bk ? `${I('skull')} Boss` : `Day ${Math.max(0, run.step) + 1}`;
     }
-    // v122 (review #213, David: "When entering fight 4 or 8, darken the screen for 1 second, play a low rumble, and display the boss card"): a boss day opens with
+    // a boss day opens with
     // its own splash: the screen goes dark, a low rumble, then the boss card (picture, name, which boss of the run, what it does)
     { const bk = !duel && (f.enemies || []).map(e => e.key).find(k => B.BOSSES[k]);
       if (bk) { const bo = B.BOSSES[bk], nm = String(bo.name), seq = Run.pveSeq(run), n = seq.slice(0, Math.max(0, run.step) + 1).filter(x => x === 'B').length || 1;
@@ -2689,7 +2689,7 @@
     const parts = (fxId, n) => { const v = fxId && B.VSFX.find(x => x.id === fxId); return v ? `<span class="vsfx ${v.id}">${Array.from({ length: n }, (_, i) => `<i style="--i:${i}">${v.icon}</i>`).join('')}</span>` : ''; };
     const bubble = t => t ? `<span class="vsbub">${esc(t)}</span>` : '';
     const el = document.createElement('div'); el.id = 'vs'; el.className = 'vs' + (B.Juice && B.Juice.reduced() ? ' calm' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${me} versus ${name}. Tap to skip`);
-    // v67 (review #137, David: "improve player part of vs screen. Badge and colors based on current league"): a player's side takes the colours of their league,
+    // a player's side takes the colours of their league,
     // with its badge, LP, account level and win streak (yours always; a duel rival's too when it is a real player)
     const lgs = store.get('balance.league', null), myLg = acct.account ? (lgs && lgs.league != null ? lgs.league : acct.league | 0) : null;
     const lgStyle = i => { const l = B.LEAGUES[i] || B.LEAGUES[0]; return `--lc:${l.color};--lh:${l.hi}`; };
@@ -2713,7 +2713,7 @@
   function skipBattle() { const b = battle; if (!b) return; let n = 0; while (!b.W.over && n++ < 20 * 60 * 30) Sim.step(b.W); b.endAt = performance.now(); }
 
   // ------------------------------------------------------------------ modals
-  // v52 (review #64, David: "Make sure menus and messages disappear between menu switches, nothing stays over"): when
+  // when
   // the screen changes, a toast or a sheet left from the screen before goes away (the ones this tap just opened stay)
   // WHAT: MODALS AND TOAST. When the screen changes, an info bubble (toast) or sheet left over from the screen before is closed, except the ones the very same tap just opened.
   function clearLeftovers() {
@@ -2727,7 +2727,7 @@
   function closeModal() { if (ui.modal === 'artlab' && B.ArtLab) B.ArtLab.closed(); const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; clearInterval(ui.sugTimer); if (typeof sheetSwipe !== 'undefined') { sheetSwipe.tracking = false; sheetSwipe.sheet = null; sheetSwipe.dy = 0; } }
   function toast(msg, info) { toast.info = !!info; toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }
 
-  // v54 (review #66, David: "Equipping items ... is still difficult and unintuitive. Theres so many tiny slots. Cant you
+  // v54 (, David: "Equipping items ... is still difficult and unintuitive. Theres so many tiny slots. Cant you
   // think of a cooler inventory system that a 14yo kid will understand? Intuitive drag drop, easy, satisfying, any child
   // could do it, dopamine power fantasy"): the Gear screen. One hero at a time, big: its art, its main stats and a few big
   // gear sockets (as many as it can wear; the next ones show the level that opens them). The bag below holds big item
@@ -2816,7 +2816,7 @@
     if (art && id && ITEM[id]) B.Juice.floater(art, ITEM[id].desc.split(',')[0], 'up');
     for (const k of ['hp', 'atk', 'ap']) if (after[k] !== before[k]) { const el = $(`#modal .gstats [data-st=${k}] b`); if (el) { B.Juice.countUp(el, before[k], after[k], 500); B.Juice.bump(el.parentElement); } }
   }
-  // v58 (review #70, "Make Auto-equip the default gear experience"): with Auto on (the default), gear that lands in the
+  // with Auto on (the default), gear that lands in the
   // bag goes on by itself; a choice by hand in Gear turns Auto off, the purple button turns it on again
   // WHAT: Auto-equip. While it is on (the default) new items are handed out by Run.autoEquip as soon as they appear; touching gear by hand turns it off until the purple button is pressed.
   const autoOn = () => run && run.autoGear !== false;
@@ -2829,7 +2829,7 @@
   function manualGear() { if (autoOn()) { run.autoGear = false; toast('Auto-equip is off: you choose. The purple button turns it back on.'); } }
   // WHAT: runs a manual gear change, turns Auto-equip off, refreshes the screens and plays the effect.
   function gearDo(fn, uid) { manualGear(); const h = run.heroes.find(x => x.uid === uid), before = h ? gearStats(h) : null; const r = fn(); ui.gsel = null; ui.gHero = uid; save(); if (ui.modal === 'gear') openGear(); if (run && run.phase === 'deploy') render(); else refreshBehind(); if (r && r.sock >= 0 && before) gearFx(uid, r.sock, r.id, before); }
-  // v57 (review #69): the decisions live in run.js (Run.autoEquip: hero profiles, item scores, best match first)
+  // the decisions live in run.js (Run.autoEquip: hero profiles, item scores, best match first)
   // WHAT: the purple button: Run.autoEquip for the whole team.
   function gearAuto() { return Run.autoEquip(run); }
 
@@ -2950,14 +2950,14 @@
   // a drag ends with a click on what was under the finger: that click is not a tap
   document.addEventListener('click', e => { if (ui.gNoClick && performance.now() - ui.gNoClick < 250 && e.target.closest('#modal, [data-drag]')) { e.stopPropagation(); e.preventDefault(); ui.gNoClick = 0; } }, true);
 
-  // review #19 (David: "include ability to read hero ability in item screen"): the hero card on top of the team sheet
-  // v51 (review #63): a hero's Details from the shop or the start: the picture, what it does in plain words, the whole
+  // the hero card on top of the team sheet
+  // a hero's Details from the shop or the start: the picture, what it does in plain words, the whole
   // ability with its numbers, its stats, and every level's two powers
   // WHAT: the "details" sheet of a hero (stats, ability, all his powers) opened from cards.
   function heroPeekHTML(key) {
     const d = HEROES[key]; if (!d) return '';
     const def = Run.heroDef({ relics: [], heroes: [], bag: [] }, { key, lvl: 1, specs: [], items: [], bonus: {}, uid: 0 });
-    // v120 (review #208, David: "Nas descrições detalhadas tenta sempre garantir que cabe tudo no ecrã do smart phone. Se tens que fazer scroll está demasiado
+    // v120 (, David: "Nas descrições detalhadas tenta sempre garantir que cabe tudo no ecrã do smart phone. Se tens que fazer scroll está demasiado
     // longo/complexo"): the sheet fits a phone screen: a smaller picture with the strength chips, the scaling in one compact list, and the 8 powers as 4 rows of
     // two buttons; the one you tap is explained in a single line under them
     const ps = ui.peekSpec && ui.peekSpec.key === key ? d.specs.flat().find(s => s.id === ui.peekSpec.id) : null;
@@ -3058,10 +3058,10 @@
     } catch (e) { toast(e.message); }
     btn.disabled = false;
   }
-  // review #14 (David): a tab per kind of content with its own Elo, to balance heroes, items and relics
+  // a tab per kind of content with its own Elo, to balance heroes, items and relics
   // WHAT: THE LADDER: tabs Player / Ranking / Heroes / Items / Powers. The content tabs (Elo of every piece) are a Crown Shop unlock.
-  const LADDER_TABS = [['player', 'Player'], ['players', 'Global'], ['friends', 'Friends']];   // v65 (review #132): Friends = the players you follow
-  // review #21 (David: "a player tab with scrolling banners for the leagues and the path between tiers")
+  const LADDER_TABS = [['player', 'Player'], ['players', 'Global'], ['friends', 'Friends']];   // Friends = the players you follow
+
   // WHAT: the Player tab: your league, level, rewards and the road ahead (roadmapHTML).
   function playerTabHTML(me) {
     const L = B.LEAGUES, R = B.LEAGUE_RULES, cur = me.league | 0, top = L.length - 1, lp = me.lp | 0;
@@ -3084,7 +3084,7 @@
       <p class="small dim">League points (LP): a completed run +${B.LP.final}, plus +${B.LP_PVE[0]} in Bronze and +${B.LP_PVE[1]} in Silver, plus its 🔥 win streak (+${B.LP.streak} LP per run in the streak); then each Gauntlet floor won pays its number (floor 3 = +3). In Master a completed run pays no LP: only Gauntlet floors do. A lost run costs 5 LP per league above Bronze (Silver 5, Gold 10...); a fall in the Gauntlet costs nothing. The higher the league, the harder the climb: wins pay ×${B.LP_LEAGUE.gain[0]} in Bronze down to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Master, losses cost ×${B.LP_LEAGUE.loss[0]} up to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}. ${R.step} LP move you up a league; below 0 you drop to the league under (at ${R.demoteTo} LP). Master has no ceiling. The first time you reach a league in a season you earn the crowns on its banner. A season lasts ${B.SEASON.days} days; then everyone starts again from Bronze (your best league stays on your profile).</p>
     </div>`;
   }
-  // review #28 (PC boy): the account level and the road of rewards (one new hero, item or relic per level)
+  // the account level and the road of rewards (one new hero, item or relic per level)
   function roadmapHTML(me) {
     const xp = me.axp | 0, L = B.levelProgress(xp), lvl = L.lvl, per = L.need, inLv = L.into, max = B.UNLOCKS[B.UNLOCKS.length - 1].lvl, X = B.GAME_XP;
     const pic = u => unlockPic(u, 44);
@@ -3097,8 +3097,8 @@
       <p class="small xpways">Bonus firsts: ⭐ first PvE clear with each hero +${B.ACCOUNT.heroClear} <span class="dim">(${me.cleared | 0}/${Object.keys(HEROES).length})</span> · 👹 each boss beaten the first time +${B.ACCOUNT.boss} <span class="dim">(${me.bosses | 0}/${Object.keys(B.BOSSES).length})</span> · 💎 +${B.ACCOUNT.crownXp} per crown spent${hasPerk('xp2') ? ' · <b class="kw-gold">✨ Double XP on</b>' : ''}</p></div>`;
   }
   // WHAT: opens the ladder sheet on a tab (loads the ranking from api/elo.js).
-  // v64 (review #122, David: "remove the elo by champion, item and relic thing in the ladder, it already exists in the balancing lab"): two tabs, you and the ranking;
-  // review #125: the ranking is by league, then league points (LP)
+  // two tabs, you and the ranking;
+  // the ranking is by league, then league points (LP)
   async function openScores(tab) {
     tab = ui.ladderTab = LADDER_TABS.some(t => t[0] === tab) ? tab : LADDER_TABS.some(t => t[0] === ui.ladderTab) ? ui.ladderTab : 'players';
     const head = `<div class="shead"><b>${I('trophy')} Ladder</b><button data-act="close">✕</button></div>
@@ -3124,7 +3124,7 @@
         return;
       }
       // v65 (reviews #132 #134): Global or Friends (the players you follow, and you); every row has the win streak now and the best one
-      // v85 (review #163): Global = the top 10, then '…' and your own row with your place when you are not in it; Friends = all of them and you
+      // Global = the top 10, then '…' and your own row with your place when you are not in it; Friends = all of them and you
       let e = null;
       try {
         e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.post('player', { op: 'ladder', pid: pid() });
@@ -3139,7 +3139,7 @@
         ${eRows ? `<table class="tbl"><tr><th>#</th><th>Name</th><th>LP</th><th title="Win streak">🔥</th><th>Best</th><th title="Best Gauntlet floor reached">🏰</th></tr>${eRows}</table>` : ''}${!eRows || (tab === 'friends' && e.top.length <= 1) ? none : ''}`);
     } catch (err) { if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="err">${esc(err.message)}</p>`); }
   }
-  // ---------------- v27 (owner + review #25 by David): Crown Shop, profiles, invites
+  // ---------------- v27 (owner + by David): Crown Shop, profiles, invites
   // WHAT: CROWN SHOP, PROFILES AND INVITES. The shop sells perks for crowns (data.js B.SHOP_ITEM), profileHTML shows a player, the invite link gives crowns when friends join.
   function crownShopHTML() {
     const a = acct, season = a.season || B.seasonOf(Date.now()), days = Math.max(0, Math.ceil((B.seasonEnds(season) - Date.now()) / 864e5)), paid = a.account ? a.sreach | 0 : 0;
@@ -3169,7 +3169,7 @@
       <div class="invite"><p class="small">A friend who starts playing from your link is yours for good: every time they earn crowns by playing, you get ${Math.round(B.CROWNS.referPct * 100)}% of it (at least ${B.CROWNS.referMin} crown).</p>
         ${link ? `<div class="row"><input id="refLink" readonly value="${esc(link)}"><button data-act="copy-ref">Copy</button></div><p class="small dim">${a.refs | 0} friend${(a.refs | 0) === 1 ? '' : 's'} joined · they earned you 👑 ${a.refCrowns | 0}</p>` : '<p class="small dim">Your invite link appears after your first run.</p>'}</div>` : ''}`;
   }
-  // v66 (review #136): the Style tab: taunts (your comic bubble on your profile and the VS screen, also when others face your ghost), VS entrances, and
+  // the Style tab: taunts (your comic bubble on your profile and the VS screen, also when others face your ghost), VS entrances, and
   // the portraits your level has not opened yet. Bought ones get a Show button: you show one taunt and one entrance.
   // WHAT: the Style tab of the Crown Shop.
   function styleTab(buyBtn) {
@@ -3177,7 +3177,7 @@
     const show = (kind, id, on) => `<button class="cshow ${on ? 'on' : ''}" data-act="style-set" data-arg="${kind}:${on ? '' : id}">${on ? '✓ Showing' : 'Show'}</button>`;
     const row = (it, on, body) => `<div class="perk cos ${own(it.id) ? 'own' : ''}"><span class="pi" data-act="cos-preview" data-arg="${it.id}" title="Tap to preview">${it.icon}</span><div class="pb" data-act="cos-preview" data-arg="${it.id}">${body}</div>${own(it.id) ? show(it.kind, it.id, on) : buyBtn(it)}</div>`;
     const taunts = B.COSMETICS.filter(x => x.kind === 'taunt').map(it => row(it, a.tauntId === it.id, `<span class="tbub">${esc(it.text)}</span>`)).join('')
-      + B.LEVEL_TAUNTS.map(t => `<div class="perk cos ${t.lvl <= lvl ? 'own' : ''}"><span class="pi" data-act="cos-preview" data-arg="${t.id}">🎁</span><div class="pb" data-act="cos-preview" data-arg="${t.id}"><span class="tbub">${esc(t.text)}</span></div>${t.lvl <= lvl ? show('taunt', t.id, a.tauntId === t.id) : `<span class="owned dim">🔒 Lv ${t.lvl}</span>`}</div>`).join('');   // v74 (review #152): the voice lines your level gives
+      + B.LEVEL_TAUNTS.map(t => `<div class="perk cos ${t.lvl <= lvl ? 'own' : ''}"><span class="pi" data-act="cos-preview" data-arg="${t.id}">🎁</span><div class="pb" data-act="cos-preview" data-arg="${t.id}"><span class="tbub">${esc(t.text)}</span></div>${t.lvl <= lvl ? show('taunt', t.id, a.tauntId === t.id) : `<span class="owned dim">🔒 Lv ${t.lvl}</span>`}</div>`).join('');   // the voice lines your level gives
     const fx = B.COSMETICS.filter(x => x.kind === 'vsfx').map(it => row(it, a.vsfx === it.id, `<b>${esc(it.name)}</b><p class="small">${esc(it.desc)}</p>`)).join('');
     const pors = B.PORTRAIT_UNLOCKS.filter(k => B.portraitLevel(k) > lvl).map(k => { const it = B.SHOP_ITEM['pt_' + k]; return `<div class="cpor">${avatarHTML(k, '', 54)}<span>${esc(HEROES[k].name)}</span>${own(it.id) ? '<i>✓ Yours</i>' : buyBtn(it)}</div>`; }).join('');
     return `<h3>💬 Taunts</h3><p class="small dim">Your profile says it in a comic bubble, and so does your team on the VS screen before a fight, also when other players face your ghost.</p>${taunts}
@@ -3224,7 +3224,7 @@
     return `<div class="pachs"><div class="pmh">🏅 Achievements <span class="dim">${own.length}/${B.ACHIEVEMENTS.length}</span>${mine ? ' <span class="dim small">· tap one you earned to show it as your title</span>' : ''}</div><div class="achgrid">${B.ACHIEVEMENTS.map(cell).join('')}</div></div>`;
   }
   const followText = p => `${p.followers | 0} follower${(p.followers | 0) === 1 ? '' : 's'} · following ${p.following | 0}`;
-  // v65 (review #131): the portraits your level has opened (four free, then one more each level); the locked ones say the level they open at
+  // the portraits your level has opened (four free, then one more each level); the locked ones say the level they open at
   // WHAT: the sheet to pick your picture (a hero portrait).
   function avatarPickHTML() {
     const lvl = lvlNow(), cur = avKey(acct.avatar, acct.code), list = B.PORTRAITS_FREE.concat(B.PORTRAIT_UNLOCKS), open = list.filter(k => B.portraitLevel(k) <= lvl || hasPerk('pt_' + k)).length;
@@ -3261,7 +3261,7 @@
       <div class="klock"><span class="hi">👤</span><b>Your profile starts with your first game</b><p class="small">When a game ends, your league, trophies and completed runs show up here, and anyone can open your profile by tapping your name.</p>
       <button class="primary" data-act="new-run">▶ Play</button></div>`);
   }
-  // v45 (review #56): the basics first, in five short lines for someone who never played this kind of game; the full
+  // the basics first, in five short lines for someone who never played this kind of game; the full
   // rules fold under them
   // WHAT: the How to play text (also the HTML of that sheet). Update it when a rule changes.
   const HOWTO = `<div class="shead"><b>How to play</b><button data-act="close">✕</button></div>
@@ -3306,7 +3306,7 @@
     const el = $('#notice'); if (!el) return;
     const p = store.get(PEND, null);
     let cls = '', html = '';
-    // v62h (review #103, David: "Remove the banner with the suggestions in progress. Remove the lightbulb icon. Keep it all hidden in the other menu items"):
+
     // no more "#12 in progress" / "your changes are live" pills and no lightbulb; the status of a batch is in the menu's suggestion box. Only the plain "New version" pill stays.
     if (nt.update) {
       cls = 'info'; html = '🔄 New version: tap to reload<span class="nx" data-act="notice-x" aria-label="Dismiss">✕</span>';
@@ -3380,23 +3380,23 @@
       if (v) { sfx('go'); toast(`⚡ VS entrance: ${v.name}`, true); const m = $('#modal .sheet'); if (m && B.Juice) B.Juice.confettiAt(m, 24); return; }
     },
     howto: () => openModal(HOWTO),
-    // v80 (review #158): the guide tips come back (even on an account with many runs)
+    // the guide tips come back (even on an account with many runs)
     'guide-again': () => { store.set('balance.guide3', []); store.set('balance.guide.v', 0); closeModal(); toast('The tutorial will show again as you play'); render(); },
-    // v103 (review #190): Menu -> Tutorial: on = from the start again, off = no more tips
+    // Menu -> Tutorial: on = from the start again, off = no more tips
     tutorial: () => { if (guideOn()) { guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); toast('Tutorial on: the tips show again as you play'); } openModal(homeMenuHTML()); ui.modal = 'home'; },
     // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
     'start-pick': k => { markHeroKnown(k); ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); if (ui.startPick[0] === k && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 26); },
-    // v64 (review #126): the free recruit between days
+    // the free recruit between days
     'recruit-pick': k => { markHeroKnown(k); ui.recruitPick = ui.recruitPick === k ? null : k; render(); },
     'recruit-go': () => { if (!ui.recruitPick) return; const err = Run.recruit(run, ui.recruitPick); if (err) { toast(err); return; } ui.recruitPick = null; sfx('levelup'); save(); render(); window.scrollTo(0, 0); },
-    'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (introOn() && (run.relicOffer || []).length) { ui.startRelic = run.relicOffer[0]; ACT['start-go'](); return; }   // v97 (review #179): straight to the battlefield
+    'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (introOn() && (run.relicOffer || []).length) { ui.startRelic = run.relicOffer[0]; ACT['start-go'](); return; }   // straight to the battlefield
       if ((run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
     'start-back': () => { ui.startStep = 1; render(); },
     'coach-ok': () => { coachDone(); sfx('tap'); render(); },
     'hswap-ok': () => { store.set('balance.hint.hswap', 1); render(); },
     'start-relic': id => { const was = ui.startRelic; ui.focusRelic = id; ui.startRelic = id; render(); if (was !== id && B.Juice) B.Juice.confettiAt('.start .srelic.ped.on .orb', 30); },
     'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((run.relicOffer || []).length && !ui.startRelic)) return; const intro = introOn(); store.set('balance.starts', (+store.get('balance.starts', 0) || 0) + 1); Run.pickStart(run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1;
-      if (intro) { store.set('balance.intro', 1); Run.startIntro(run); ui.introT0 = 0; }   // v97 (review #179): the first fight is the intro
+      if (intro) { store.set('balance.intro', 1); Run.startIntro(run); ui.introT0 = 0; }   // the first fight is the intro
       save(); render(); },
     // A map option was tapped: opens that fight, shop or event (Run.choose).
     choose: i => { Run.choose(run, +i); ui.info = null; save(); render(); window.scrollTo(0, 0); },
@@ -3423,8 +3423,8 @@
       }
     },
     // The big Fight! button on the deploy screen.
-    fight: () => { const need = run ? Run.benched(run) : []; if (need.length && !introStage()) { benchNudge(need); return; } sfx('go'); coachDone(); startBattle(); },   // v126 (review #224): locked until the bench is empty
-    // v126 (review #224): a tap on a hero of the bench picks it (then a tap on a hex places it); a drag is handled by the bench listeners (benchDown)
+    fight: () => { const need = run ? Run.benched(run) : []; if (need.length && !introStage()) { benchNudge(need); return; } sfx('go'); coachDone(); startBattle(); },   // locked until the bench is empty
+    // a tap on a hero of the bench picks it (then a tap on a hex places it); a drag is handled by the bench listeners (benchDown)
     'bench-pick': uid => { if (performance.now() - (ui.bdragAt || 0) < 400) return; uid = +uid; ui.selUid = ui.selUid === uid ? 0 : uid; render(); },
     // Battle speed 1x / 2x / 4x (unlocked for all players). skip plays the fight at once (perk).
     speed: s => { ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
@@ -3443,7 +3443,7 @@
     'info-close': () => { ui.info = null; render(); },
     // Continue on the result screen: next day, the Gauntlet or the game-over screen.
     'result-ok': () => { if (run && run.phase === 'tower' && run.tower && run.tower.status === 'climb' && run.tower.next) { const o = run.tower.next; run.tower.next = null; Run.startDuel(run, o, 'tower', 9); save(); }
-      if (run && run.phase === 'over' && run.result === 'clear' && !run.tower) { ui.champ = undefined; run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); }   // v91 (review #172): the Gauntlet comes before the league screen
+      if (run && run.phase === 'over' && run.result === 'clear' && !run.tower) { ui.champ = undefined; run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); }   // the Gauntlet comes before the league screen
       ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
     'tower-skip': () => { run.tower = Object.assign(run.tower || {}, { status: 'skipped' }); run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
     brag: () => { openModal(bragHTML()); ui.modal = 'brag'; sfx('unlock'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('#modal .scard', bragData().c ? 120 : 60), 120); bragPrep(); },
@@ -3466,9 +3466,9 @@
     'tower-enter': async () => {
       if (ui.towerBusy) return;
       const ni0 = $('#tname'); if (ni0 && !ni0.value.trim()) { toast('Pick your name for the ladder first.'); ni0.focus(); return; }
-      // v101 (review #183): the last shop is the Gauntlet's: entering opens it once, leaving it starts the climb (status 'ready')
+      // the last shop is the Gauntlet's: entering opens it once, leaving it starts the climb (status 'ready')
       if (run.tower && !run.tower.shopped && Run.seqOf(run)[run.step + 1] === 'S') { if (ni0) store.set('balance.name', ni0.value.trim().slice(0, 16)); run.tower.shopped = true; Run.advance(run); save(); render(); window.scrollTo(0, 0); return; }
-      // v96 (review #178): with no final fight, the Gauntlet gate is where a new player picks the name shown on the ladder
+      // with no final fight, the Gauntlet gate is where a new player picks the name shown on the ladder
       const ni = $('#tname'), enteredName = ni ? ni.value.trim().slice(0, 16) : '';
       const name = enteredName || myName() || (acct.account && !isDefaultName(acct.name) ? acct.name : '');
       if (ni && !name) { toast('Pick your name for the ladder first.'); ni.focus(); return; }
@@ -3481,7 +3481,7 @@
       run.tower = { status: 'climb', teamId: r.teamId, floor: 1, wins: 0, lp: 0, peak: r.peak || 1, history: [] };
       Run.startDuel(run, opp, 'tower', 9); ui.info = null; save(); render(); window.scrollTo(0, 0);
     },
-    'victory-next': () => { if (!run || run.result !== 'clear' || run.xpWait) return; run.tower = run.tower || { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); render(); window.scrollTo(0, 0); },   // v96 (review #178)
+    'victory-next': () => { if (!run || run.result !== 'clear' || run.xpWait) return; run.tower = run.tower || { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); render(); window.scrollTo(0, 0); },
     'over-next': () => { if (run.result === 'clear' && !run.tower) { run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; run.lpShown = true; save(); render(); window.scrollTo(0, 0); return; }
       run.overStep = 2; run.lpShown = true; save(); render(); window.scrollTo(0, 0); },
     'retry-elo': () => { const r0 = ui.result; if (r0 && r0.req) { r0.pending = true; render(); Net.post('elo', r0.req).then(r => { setElo(r); logGameXp(r); if (r0.tower) towerAnswer(r, r0); Object.assign(r0, { trophy: r.trophy || null, pending: false, error: null }); save(); render(); }).catch(e => { Object.assign(r0, { pending: false, error: e.message }); render(); }); } else if (run && run.phase === 'over') { reportRunEnd(); } },
@@ -3489,12 +3489,12 @@
     steal: i => { const o = run.steal && run.steal[+i]; if (!o) return; if (o.kind === 'hero' && run.heroes.length >= Run.teamMax(run)) { ui.stealPick = +i; render(); return; } const err = Run.steal(run, +i); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },
     'steal-swap': uid => { const err = Run.steal(run, ui.stealPick, +uid); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },
     'steal-back': () => { ui.stealPick = null; render(); },
-    // v42 (review #51): a bought card flies into the Team button with a coin sound and gets a SOLD stamp; a reroll deals
+    // a bought card flies into the Team button with a coin sound and gets a SOLD stamp; a reroll deals
     // the new cards in with a shuffle
     // Buy product i in a shop. reroll refreshes the stock.
     buy: i => {
       const s0 = run.cur && run.cur.stock[+i];
-      if (s0 && s0.kind === 'hero' && !s0.sold && run.gold >= s0.price && run.heroes.length >= Run.teamMax(run)) { ui.swapBuy = +i; openModal(swapHTML(s0.id)); ui.modal = 'swap'; return; }   // v64 (review #127)
+      if (s0 && s0.kind === 'hero' && !s0.sold && run.gold >= s0.price && run.heroes.length >= Run.teamMax(run)) { ui.swapBuy = +i; openModal(swapHTML(s0.id)); ui.modal = 'swap'; return; }
       const card = $(`.card.stock[data-i="${+i}"]`), pic = card && card.querySelector('.ico.big, .por.big');
       const err = Run.buy(run, +i);
       if (err) { toast(err); sfx('deny'); if (B.Juice) B.Juice.bump(card, 'shake'); return; }
@@ -3507,7 +3507,7 @@
     sound: () => { if (!B.Sfx) return; B.Sfx.toggle(); for (const b of document.querySelectorAll('.sndbtn')) { b.innerHTML = I(B.Sfx.on ? 'sound' : 'mute'); b.setAttribute('aria-label', 'Sound ' + (B.Sfx.on ? 'on' : 'off')); } if (ui.modal === 'home') { openModal(homeMenuHTML()); ui.modal = 'home'; } },
     // Opens the menu sheet; give-up asks, give-up-yes ends the game (and reports the fights it played).
     'shop-tab': id => { ui.shopTab = id; refreshShop(); },
-    // v76 (review #154): the redeem code box under the wallet
+    // the redeem code box under the wallet
     'redeem-open': () => { ui.redeemOpen = true; refreshShop(); const i = $('form[data-form=redeem] input'); if (i) i.focus(); },
     'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
     codex: () => { ui.fromCodex = false; openModal(codexHTML()); ui.modal = 'codex'; },
@@ -3516,7 +3516,7 @@
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
     'give-up-yes': () => { if (run && run.tower) { closeModal(); run.tower.status = 'over'; run.tower.next = null; run.g = null; run.cur = null; run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); screen = 'run'; render(); return; }   // v90: leaving the Gauntlet only ends the climb (the run is complete)
-      if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], tele: run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // v65 (review #133): giving up ends the win streak
+      if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], tele: run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // giving up ends the win streak
     // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.
     'form-info': t => toast(t, true),
     'hero-peek': k => { if (HEROES[k]) { ui.fromCodex = ui.modal === 'codex'; ui.peekSpec = null; openModal(heroPeekHTML(k)); ui.modal = 'peek'; } },
@@ -3717,26 +3717,26 @@
     shop: () => openShop(),
     profile: code => openProfile(code),
     'my-profile': () => openMyProfile(),
-    // v65 (review #132): follow / unfollow from a profile
+    // follow / unfollow from a profile
     follow: async code => {
       if (!acct.account) { toast('Your account starts when your first run ends. Play one first!'); return; }
       const b = $('[data-act=follow]'), on = !(b && b.classList.contains('on'));
       try { const r = await Net.post('player', { op: 'follow', pid: pid(), code, on }); const b2 = $('[data-act=follow]'); if (b2) { b2.classList.toggle('on', r.followed); b2.classList.toggle('primary', !r.followed); b2.textContent = r.followed ? '✓ Following' : '+ Follow'; } const c = $('#pfcount'); if (c) c.textContent = followText(r); sfx(r.followed ? 'coin' : 'back'); }
       catch (e) { toast(e.message); }
     },
-    // v73 (review #150): show an earned achievement as your title (tap it again to hide it)
-    // v73 (review #150): the achievements of the profile you are looking at, in their own sheet (the profile stays short)
+    // show an earned achievement as your title (tap it again to hide it)
+    // the achievements of the profile you are looking at, in their own sheet (the profile stays short)
     'achs-open': () => { const p = ui.lastProfile; if (!p) return; openModal(`<div class="shead"><b>🏅 ${esc(p.name)}</b><button data-act="profile" data-arg="${esc(p.code)}" aria-label="Back">✕</button></div>${achsHTML(p)}`); ui.modal = 'achs'; },
     'title-set': async id => {
       try { const r = await Net.post('player', { op: 'title', pid: pid(), title: id || null }); acct.title = r.title || null; acct.titleId = r.titleId || null; setAcct(r); sfx('coin'); toast(r.title ? `Your title: ${r.title}` : 'No title shown'); if (ui.modal === 'achs' && ui.lastProfile) { ui.lastProfile.title = r.title || null; ACT['achs-open'](); } } catch (e) { toast(e.message); }
     },
-    // v66 (review #136): show a bought taunt or VS entrance (an empty id = none)
+    // show a bought taunt or VS entrance (an empty id = none)
     'style-set': async arg => {
       const [kind, id] = String(arg).split(':'), taunt = kind === 'taunt' ? id || null : acct.tauntId || null, vsfx = kind === 'vsfx' ? id || null : acct.vsfx || null;
       try { const r = await Net.post('player', { op: 'style', pid: pid(), taunt, vsfx }); acct.tauntId = r.tauntId || null; acct.taunt = r.taunt || null; acct.vsfx = r.vsfx || null; setAcct(r); sfx('coin'); } catch (e) { toast(e.message); }
       if (ui.modal === 'shop') refreshShop();
     },
-    // v65 (review #131): pick your picture
+    // pick your picture
     'avatar-pick': () => { openModal(avatarPickHTML()); ui.modal = 'avatar'; },
     'avatar-set': async key => {
       try { const r = await Net.post('player', { op: 'avatar', pid: pid(), hero: key }); setAcct(r); sfx('coin'); header(); if (ui.modal === 'avatar') { openModal(avatarPickHTML()); ui.modal = 'avatar'; } toast(`${HEROES[key].name} is your picture`); }
@@ -3874,8 +3874,8 @@
         const r = await Net.post('player', { op: 'rename', pid: pid(), name }); setAcct(r); toast(`You are now ${r.name}`); refreshShop();
       } else if (kind === 'gauntlet') {
         const name = f.name.value.trim(); if (!acct.account || isDefaultName(acct.name)) store.set('balance.name', name);
-        // v63: the final opponent is a team that won its own final fight; none yet (or no connection) = a made-up one (review #119)
-        // v75 (review #153): the first ask also leaves your team in the final pool
+        // v63: the final opponent is a team that won its own final fight; none yet (or no connection) = a made-up one ()
+        // the first ask also leaves your team in the final pool
         let opp = null; try { const r = await Net.post('elo', Object.assign({ op: 'final', pid: pid(), ref: refCode(), name, faced: run.faced || [] }, run.finalSaved ? {} : { team: Run.teamSnapshot(run), relics: run.relics })); run.finalSaved = true; save(); setElo(r, true); opp = r.opponent || null; } catch (_) { opp = null; }
         Run.startDuel(run, opp || Run.randomGhost(run, 8, true), 'final', run.fightNo + 1); ui.info = null; save(); render(); window.scrollTo(0, 0);
       }
