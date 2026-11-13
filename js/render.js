@@ -619,7 +619,7 @@
 
   function getUnitSprite(u) {
     if (!u) return null;
-    const heroId = u.heroId || u.key || '';
+    const heroId = (typeof u.heroId === 'string' && u.heroId) || u.key || '';
     let img = SpriteManager.get(heroId);
     if (!img && B.heroKey) {
       const canon = B.heroKey(heroId);
