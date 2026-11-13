@@ -1478,7 +1478,7 @@
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
     const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';
     const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
-    const nextCta = !run ? 'Continue' : (run.pendingUpgrade) ? 'Upgrade Hero! ★' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils!' : run.phase === 'recruit' ? 'Recruit Hero! +' : run.phase === 'over' ? 'See Results →' : 'Proceed';
+    const nextCta = !run ? 'Continue' : run.phase === 'over' ? 'See Results →' : (run.pendingUpgrade) ? 'Upgrade Hero! ★' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils!' : run.phase === 'recruit' ? 'Recruit Hero! +' : 'Proceed';
 
     if (!desk) {
       return `<section class="result v2 ${ui.rmore ? 'more' : ''}">
@@ -2963,7 +2963,7 @@
     const ps = ui.peekSpec && ui.peekSpec.key === key ? d.specs.flat().find(s => s.id === ui.peekSpec.id) : null;
     const backBtn = ui.fromCodex ? `<button class="chip" data-act="codex" aria-label="Back to Heroes">← Heroes</button>` : '';
     return `<div class="shead">${backBtn}<b>${esc(d.name)}</b><span class="grow"></span><button data-act="close" aria-label="Close">✕</button></div>
-      <div class="peek"><img class="peekart" src="${por(key, 110, true)}" alt=""><div class="peekt"><span class="role">${esc(d.role)} · ${d.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span><p class="htag big">${esc(d.tag || '')}</p>${statBars(d)}</div></div>
+      <div class="peek"><img class="peekart" src="${por(key, 110, true)}" alt=""><div class="peekt"><span class="role">${esc(d.role)} · ${d.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span><p class="htag big">${esc(d.tag || '')}</p>${statBars(d)}<div class="small dim" style="margin-top:4px">🛡 <b>${Math.round(def.armor || 0)}</b> Defense · ✦ <b>${Math.round(def.ap || 100)}</b> Magic</div></div></div>
       <div class="abil peekab">${abilHTML(d)}</div>${scalingHTML(def, true)}
       <h3 class="peekh">Powers it can learn <span class="dim">· tap one</span></h3><div class="peekpow v2">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span>${pr.map(sp => `<button class="ppb ${ps && ps.id === sp.id ? 'on' : ''}" data-act="peek-spec" data-arg="${key}:${sp.id}">${esc(sp.name)}</button>`).join('')}</div>`).join('')}</div>
       <p class="ppdesc ${ps ? '' : 'dim'}">${ps ? `<b class="spec">${esc(ps.name)}</b> ${fmt(plainAb(ps.desc))}` : 'Each level up you pick one of the two.'}</p>`;
