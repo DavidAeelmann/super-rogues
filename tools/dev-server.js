@@ -1,5 +1,5 @@
 // Local server: static files + /api/* with in-memory storage (no database needed).
-// Usage: node tools/dev-server.js [port=3790]   Owner key for the review form: "dev-key".
+// Usage: node tools/dev-server.js [port=3790]
 global.__BAL_MEM = true;
 process.env.ADMIN_KEY = process.env.ADMIN_KEY || 'dev-key';
 const http = require('http'), fs = require('fs'), path = require('path');
@@ -15,16 +15,9 @@ http.createServer(async (req, res) => {
       res.setHeader(h.key, h.value);
     }
   }
-  // dev-only: play Claude's part in tests (mark a batch reviewed and "ship" it). Never deployed: not under api/.
-  if (u.pathname === '/__dev/resolve') {
-    const M = global.__BAL_MEMDATA, b = +u.searchParams.get('batch'), now = Date.now();
-    if (M) { M.sug.filter(s => !b || s.batch === b).forEach((s, i) => { s.status = i === 0 && u.searchParams.has('decline1') ? 'declined' : 'done'; s.reply = 'Done in test'; s.updated = now; }); M.kv.lastRun = String(now); }
-    res.setHeader('Content-Type', 'application/json'); return res.end('{"ok":true}');
-  }
-  // dev-only: give a test player crowns (v27 Crown Shop tests)
+  // dev-only: give a test player crowns (Crown Shop tests)
   if (u.pathname === '/__dev/grant') { const P = global.__BAL_MEMDATA && global.__BAL_MEMDATA.players, p = P && P[u.searchParams.get('pid')]; if (p) p.gems += +u.searchParams.get('n') || 0; res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify({ ok: !!p })); }
-  if (u.pathname === '/__dev/ship') { if (global.__BAL_MEMDATA) global.__BAL_MEMDATA.kv.lastRun = String(Date.now()); return res.end('{"ok":true}'); }
-  if (/^\/c\/[a-z0-9]+$/.test(u.pathname)) { req.url = '/api/card?page=' + u.pathname.slice(3); try { await require(path.join(ROOT, 'api', 'card.js'))(req, res); } catch (e) { res.statusCode = 500; res.end(String(e)); } return; }   // v124: like vercel.json's rewrite
+  if (/^\/c\/[a-z0-9]+$/.test(u.pathname)) { req.url = '/api/card?page=' + u.pathname.slice(3); try { await require(path.join(ROOT, 'api', 'card.js'))(req, res); } catch (e) { res.statusCode = 500; res.end(String(e)); } return; }
   if (u.pathname.startsWith('/api/')) {
     const name = u.pathname.slice(5).replace(/[^a-z]/g, '');
     const f = path.join(ROOT, 'api', name + '.js');

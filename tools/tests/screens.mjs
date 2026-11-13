@@ -1,6 +1,6 @@
 // Plays a whole run in a real (headless) Chrome at phone size, clicking the real buttons.
 // Checks: no JS errors, no CSP violations, no horizontal scroll, smooth movement (fractional positions mid-move),
-// suggestion list + 'Send for review' button + leaderboard. Screenshots go to tools/tests/.output/.
+// and leaderboard. Screenshots go to tools/tests/.output/.
 // Usage: node tools/tests/screens.mjs [baseUrl]   (without baseUrl it starts tools/dev-server.js)
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -54,13 +54,12 @@ const noHScroll = async where => ok(await ev('document.documentElement.scrollWid
 const noVScroll = async where => { const r = await ev(`(() => { const m = document.querySelector('#modal:not([hidden]) .sheet'); return m ? [m.scrollHeight, m.clientHeight] : [document.documentElement.scrollHeight, window.innerHeight]; })()`); ok(r[0] <= r[1] + 2, `fits without scrolling: ${where} (${r[0]}px of ${r[1]}px)`); };
 ok(await ev(`!!document.querySelector('.title h1.logo-big') && document.title === 'Super Rogues'`), 'v49 (review #60): the landing says Super Rogues');
 await shot('01-title'); await noHScroll('title'); await noVScroll('title');
-// v27 (owner + review #25): the start menu has the Crown Shop and your profile; the suggestion box stays only at the top
-// v49 (review #60): the landing is the logo, Play and a live trailer; your level, crowns, the ladder, suggestions and the menu sit in the top bar
-ok(await ev(`!!document.querySelector('#top .lvchip[data-act=player-tab]') && !!document.querySelector('#top [data-act=shop].crownchip') && !!document.querySelector('#top [data-act=scores]') && !!document.querySelector('#top [data-act=home-menu]') && document.querySelectorAll('#top [data-act=suggest]').length === 0 && !document.querySelector('.sugg') && document.querySelectorAll('#screen button').length === 1 && !!document.querySelector('#screen [data-act=new-run]') && !document.querySelector('.live')`), 'v49 landing: only the Play button on the page; level, crowns, ladder and the menu in the top bar (v62h, review #103: no lightbulb, suggestions only in the menu)');
+// landing: Play button, level/crowns/ladder/menu in top bar
+ok(await ev(`!!document.querySelector('#top .lvchip[data-act=player-tab]') && !!document.querySelector('#top [data-act=shop].crownchip') && !!document.querySelector('#top [data-act=scores]') && !!document.querySelector('#top [data-act=home-menu]') && document.querySelectorAll('#screen button').length === 1 && !!document.querySelector('#screen [data-act=new-run]') && !document.querySelector('.live')`), 'landing: only the Play button on the page; level, crowns, ladder and menu in the top bar');
 await sleep(700);
-ok(await ev(`(() => { const c = document.getElementById('trailer'); if (!c || c.width < 200) return false; const d = c.getContext('2d').getImageData(c.width >> 1, c.height >> 1, 1, 1).data; return d[3] > 0; })()`), 'v49 landing: the trailer fight is playing under Play');
+ok(await ev(`(() => { const c = document.getElementById('trailer'); if (!c || c.width < 200) return false; const d = c.getContext('2d').getImageData(c.width >> 1, c.height >> 1, 1, 1).data; return d[3] > 0; })()`), 'landing: the trailer fight is playing under Play');
 await click('#top [data-act=home-menu]'); await sleep(150);
-ok(await ev(`['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'art-lab', 'sound', 'suggest'].every(a => !!document.querySelector('#modal .mrow[data-act=' + a + ']'))`), 'v49 menu: How to play, level rewards, profile, Crown Shop, ladder, Art Lab, sound and suggestions, one tap each');
+ok(await ev(`['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'sound', 'language'].every(a => !!document.querySelector('#modal .mrow[data-act=' + a + ']'))`), 'menu: How to play, level rewards, profile, Crown Shop, ladder, sound and language');
 await shot('01b-menu'); await noVScroll('menu');
 // v62h (review #97, David: "In the menu add an option to change language to Portuguese and German"): the Language row, the three languages, Portuguese and German on the real screens
 if (!process.env.LANG_ID) {
@@ -311,7 +310,7 @@ if (fin.phase === 'over' && !REMOTE) {
   ok(await ev(`!!document.querySelector('#xpmeter .vmtube i') && document.querySelectorAll('.vmwrap.xp .xplines li').length >= 1 && /^\\+[1-9]/.test(document.querySelector('#xpbig').textContent) && !!document.querySelector('#chest') && (document.querySelector('#chest').classList.contains('open') ? document.querySelectorAll('#chest .lootit').length >= 1 : document.querySelector('#chest').classList.contains('shut'))`), 'v68 (review #141): the XP screen: the level meter, the XP in big, a chest that opened with the rewards (or stays shaded)' + (await ev(`JSON.stringify({ r: __bal.run.result, t: __bal.run.tower && __bal.run.tower.status, ph: __bal.run.phase, st: __bal.run.overStep, li: document.querySelectorAll('.vmwrap.xp .xplines li').length, big: (document.querySelector('#xpbig') || {}).textContent, chest: (document.querySelector('#chest') || {}).className, loot: document.querySelectorAll('#chest .lootit').length })`)));
   ok(Math.abs(y1 - await ev(`document.querySelector('.overbar [data-act=new-run]').getBoundingClientRect().top`)) < 2, 'v68 (review #141): Play again sits where Next was (one finger)');
   await shot('11b-over-xp'); await noVScroll('game over, XP counted');
-  ok(await ev(`(() => { const t = document.querySelector('#top'); return t.scrollWidth <= t.clientWidth + 1 && [...t.children].every(c => c.getBoundingClientRect().right <= window.innerWidth + 1); })()`), 'review #51: the top bar fits the phone with the league chip, gold, day, Team, suggest and menu');
+  ok(await ev(`(() => { const t = document.querySelector('#top'); return t.scrollWidth <= t.clientWidth + 1 && [...t.children].every(c => c.getBoundingClientRect().right <= window.innerWidth + 1); })()`), 'top bar fits the phone with the league chip, gold, day, Team, and menu');
 }
 
 // ---- review #19: every hero ability has a scaling explanation with real numbers
@@ -483,132 +482,6 @@ if (!REMOTE) {
   await ev(`document.querySelectorAll('#modal .avpick:not(.locked)')[2].click()`); for (let i = 0; i < 30 && !(await ev(`__bal.acct.avatar === B.PORTRAITS_FREE[2]`)); i++) await sleep(100);
   ok(await ev(`__bal.acct.avatar === B.PORTRAITS_FREE[2] && !!document.querySelector('#modal .avpick.on')`), '...a tap makes it your picture');
   await click('[data-act=close]');
-}
-
-// suggestion box: write several changes into the list, then ONE button sends them all for review
-if (REMOTE) {
-  await ev(`__bal.ACT.suggest()`); await sleep(1800);
-  ok(await ev(`!!document.querySelector('#sugStatus .review') && !!document.querySelector('form[data-form=draft]') && !!document.querySelector('[data-act=send-review]')`), 'live suggestion box loads with reviewer status');
-  await shot('12-suggest-live'); await click('[data-act=close]');
-} else {
-  await ev(`__bal.ACT.suggest()`); await sleep(600);
-  const addNote = t => ev(`(() => { const f = document.querySelector('form[data-form=draft]'); f.text.value = ${JSON.stringify(t)}; f.querySelector('button').click(); })()`);
-  await addNote('Please add a hero that <b>reflects</b> spells'); await addNote('Make the ghosts smarter'); await addNote('Feuer burn lasts 1s longer');
-  await sleep(150);
-  ok(await ev(`document.querySelectorAll('#drafts li').length === 3 && document.querySelector('[data-act=send-review]').textContent.includes('Send 3 changes')`), 'three notes wait in the list before sending');
-  await ev(`document.querySelectorAll('[data-act=draft-del]')[2].click()`);
-  ok(await ev(`document.querySelectorAll('#drafts li').length === 2`), 'a note can be removed from the list');
-  ok(await ev(`(async () => { const r = await fetch('/api/suggest').then(r => r.json()); return r.list.length === 0; })()`), 'nothing is sent until the button is pressed');
-  await ev(`document.querySelector('#sugName').value = 'Tester'`);
-  await shot('12-suggest-list'); await noHScroll('suggest sheet');
-  await click('[data-act=send-review]'); await sleep(900);
-  ok(await ev(`(() => { const b = document.querySelector('#sugQueue .batch'); return !!b && b.querySelectorAll('.sug').length === 2 && b.textContent.includes('Tester') && b.innerHTML.includes('&lt;b&gt;reflects'); })()`), 'the 2 changes arrive as one review, text escaped');
-  ok(await ev(`document.querySelectorAll('#drafts li').length === 0`), 'list is cleared after sending');
-  await shot('13-suggest-sent');
-  await click('[data-act=close]');
-
-  // the page waits for that review, then says "ready, press F5"; after F5 it shows what shipped
-  const batch = await ev(`JSON.parse(localStorage.getItem('balance.pending')).batch`);
-  // v62h (review #103, David): no "in progress" banner any more; only the plain "New version" pill when something shipped
-  ok(await ev(`document.querySelector('#notice').hidden`), 'no review banner while a batch waits (the box in the menu shows the status)');
-  await ev(`fetch('/__dev/resolve?batch=${batch}')`); await ev(`__bal.poll()`); await sleep(300);
-  ok(await ev(`(() => { const n = document.querySelector('#notice'); return !n.hidden && /New version/.test(n.textContent) && /reload/.test(n.textContent); })()`), 'when Claude finishes, the plain "New version: tap to reload" pill shows');
-  await shot('15-notice-ready');
-  await click('#notice'); await sleep(1800);
-  ok(await ev(`document.querySelector('#notice').hidden`), 'after reloading no banner is left');
-  ok(await ev(`__bal.run && __bal.run.phase === 'over'`), 'the run survives the reload');
-  // somebody else's update ships while this page is open
-  await ev(`__bal.poll()`); await sleep(200); await ev(`fetch('/__dev/ship')`); await sleep(50); await ev(`__bal.poll()`); await sleep(300);
-  ok(await ev(`/New version/.test(document.querySelector('#notice').textContent)`), 'other players get "New version: tap to reload"');
-}
-
-// ---- Art Lab (owner, 2026-09-29): attach a splash and a pose sheet, see them on the cards and in a test fight
-if (!REMOTE) {
-  const pic = async (file, js) => { const u = await ev(js); fs.writeFileSync(OUT + file, Buffer.from(u.split(',')[1], 'base64')); return OUT + file; };
-  const sheet = await pic('art-sheet.png', `(() => { const c = document.createElement('canvas'); c.width = 880; c.height = 280; const x = c.getContext('2d'); x.fillStyle = '#ff00ff'; x.fillRect(0, 0, 880, 280);
-    ['#2a6', '#26a', '#a62', '#aa2'].forEach((col, i) => { x.fillStyle = col; x.fillRect(50 + i * 210, 80, 90, 170); x.beginPath(); x.arc(95 + i * 210, 60, 34, 0, 7); x.fill(); if (i === 2) x.fillRect(140 + i * 210, 120, 60, 16); });
-    return c.toDataURL('image/png'); })()`);
-  const splashPic = await pic('art-splash.png', `(() => { const c = document.createElement('canvas'); c.width = 900; c.height = 600; const x = c.getContext('2d'); const g = x.createLinearGradient(0, 0, 900, 600); g.addColorStop(0, '#f84'); g.addColorStop(1, '#48f'); x.fillStyle = g; x.fillRect(0, 0, 900, 600);
-    x.fillStyle = '#fde'; x.beginPath(); x.arc(450, 200, 90, 0, 7); x.fill(); x.fillStyle = '#333'; x.fillRect(360, 300, 180, 300); return c.toDataURL('image/png'); })()`);
-  const setFile = async (sel, file) => { const d = await send('DOM.getDocument', { depth: 0 }); const n = await send('DOM.querySelector', { nodeId: d.result.root.nodeId, selector: sel }); await send('DOM.setFileInputFiles', { nodeId: n.result.nodeId, files: [file] }); };
-  // review #47: the lab starts with no hero picked, so art can't go to the wrong hero by accident
-  await ev(`__bal.ACT['art-lab']()`); await sleep(400);
-  ok(await ev(`document.querySelector('#alHero').value === '' && /Choose the hero first/.test(document.querySelector('#alSplashView').textContent) && !B.ArtLab.state.fight`), 'Art Lab: no hero is picked for you');
-  await click('[data-act=close]'); await sleep(200);
-  await ev(`__bal.ACT['art-lab']('rook')`); await sleep(400);
-  ok(await ev(`!!document.querySelector('.artlab') && document.querySelector('#alHero').value === 'rook' && !!document.querySelector('#alBoard')`), 'Art Lab opens on the chosen hero, with a test board');
-  await setFile('#alSheet', sheet); await sleep(900);
-  ok(await ev(`document.querySelectorAll('.alframes img').length === 4 && /One row: 4 poses/.test(document.querySelector('#alSheetView').textContent)`), 'a one-row sheet is cut into 4 poses (the detached bit joins its figure)');
-  ok(await ev(`!!B.Art.sprite('rook') && B.Art.sprite('rook').anims.cast[0].naturalWidth > 0`), 'the poses are live on the board right away');
-  const tpx = await ev(`(() => { const im = B.Art.sprite('rook').anims.idle[0], c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext('2d'); x.drawImage(im, 0, 0); const d = x.getImageData(0, 0, 3, 3).data; return [d[3], x.getImageData(im.naturalWidth >> 1, im.naturalHeight - 5, 1, 1).data[3]]; })()`);
-  ok(tpx[0] === 0 && tpx[1] === 255, 'the flat background turns transparent, the figure stays solid');
-  await sleep(900);
-  ok(await ev(`B.ArtLab.state.fight && B.ArtLab.state.fight.W.t > 5`), 'the test fight runs');
-  // review #43 (David): an animation sheet, a labelled row per animation with several frames; every frame is used
-  const anim = await pic('art-anim.png', `(() => { const c = document.createElement('canvas'); c.width = 1100; c.height = 760; const x = c.getContext('2d'); x.fillStyle = '#ff00ff'; x.fillRect(0, 0, 1100, 760);
-    const rows = [['IDLE', 5], ['WALK', 6], ['ATTACK', 4], ['SPIN', 3]];
-    rows.forEach(([label, n], r) => { x.fillStyle = '#fff'; x.font = 'bold 22px sans-serif'; x.fillText(label, 10, 60 + r * 185);
-      for (let i = 0; i < n; i++) { const X = 150 + i * 150, Y = 20 + r * 185; x.fillStyle = 'hsl(' + (r * 90) + ',60%,45%)'; x.fillRect(X, Y + 40, 60, 110 - (i % 2) * 8); x.beginPath(); x.arc(X + 30, Y + 22, 22, 0, 7); x.fill(); x.fillRect(X + 60, Y + 60 + i * 6, 30, 12);
-        if (r === 2 && i === 1) { x.strokeStyle = '#ff9fd2'; x.lineWidth = 9; x.beginPath(); x.arc(X + 110, Y + 90, 95, -2.2, -0.5); x.stroke(); } } });  // a swoosh that reaches the next frame (review #46)
-    return c.toDataURL('image/png'); })()`);
-  await setFile('#alSheet', anim); await sleep(1200);
-  ok(await ev(`(() => { const a = B.Art.sprite('rook'); return !!a && a.anims.idle.length === 5 && a.anims.move.length === 6 && a.anims.attack.length === 4 && a.anims.cast.length === 3 && !a.anims.death; })()`), 'an animation sheet: 4 rows = idle 5, walk 6, attack 4, ability 3 frames, all kept (two attack frames glued by a swoosh are cut apart)');
-  ok(await ev(`/4 animations, 18 frames; 4 labels or specks left out/.test(document.querySelector('#alSheetView').textContent) && document.querySelectorAll('.alframes img').length === 18`), 'the row labels are left out and every frame is shown');
-  // review #45: each row can be told what it is; two rows can make one animation (a charge + a spin = the ability)
-  await ev(`(() => { const s = document.querySelectorAll('.alrowsel'); s[3].value = 'attack'; s[3].dispatchEvent(new Event('change', { bubbles: true })); })()`); await sleep(500);
-  ok(await ev(`(() => { const a = B.Art.sprite('rook'); return document.querySelectorAll('.alrowsel').length === 4 && a.anims.attack.length === 7 && !a.anims.cast && /Attack<.b> 7/.test(document.querySelector('#alSheetView').innerHTML); })()`), 'Art Lab: a row can be set to another animation, rows of the same animation are joined');
-  await ev(`(() => { const s = document.querySelectorAll('.alrowsel'); s[3].value = 'cast'; s[3].dispatchEvent(new Event('change', { bubbles: true })); })()`); await sleep(500);
-  ok(await ev(`(() => { const a = B.Art.sprite('rook'), f = t => B.Art.frameOf(a, { t }); const s = new Set(); for (let t = 0; t < 1; t += 0.05) s.add(f(t).i); const m = B.Art.frameOf(a, { walk: 0.55 }), at = B.Art.frameOf(a, { atk: 0.99 }), mid = [0.05, 0.15, 0.25].map(t => f(t).blend); return s.size === 5 && m.k === 'move' && at.k === 'attack' && at.i >= 2 && mid.some(b => b > 0) && mid.some(b => b === 0); })()`), 'idle cycles through all its frames, walk and attack play theirs, frames hold then blend into the next');
-  // review #47: frames packed with no space between them (each row one long strip) are cut by their pitch
-  const packed = await pic('art-packed.png', `(() => { const c = document.createElement('canvas'); c.width = 900; c.height = 430; const x = c.getContext('2d'); x.fillStyle = '#ff00ff'; x.fillRect(0, 0, 900, 430);
-    [[9, 60], [7, 75]].forEach(([n, p], r) => { for (let i = 0; i < n; i++) { const X = 20 + i * p, Y = 20 + r * 210; x.fillStyle = 'hsl(' + (40 + r * 150) + ',60%,45%)'; x.beginPath(); x.arc(X + p / 2, Y + 28, 26, 0, 7); x.fill(); x.fillRect(X + 6, Y + 50, p - 10, 90); x.fillRect(X + 2, Y + 140, 14, 40); x.fillRect(X + p - 16, Y + 140, 14, 40); x.fillRect(X + p - 8, Y + 70, 10, 10); } });
-    return c.toDataURL('image/png'); })()`);
-  await setFile('#alSheet', packed); await sleep(1200);
-  ok(await ev(`(() => { const a = B.Art.sprite('rook'); return !!a && a.anims.idle.length === 9 && a.anims.move.length === 7; })()`), 'a sheet with no space between the frames: 9 and 7 frames found by their pitch');
-  await setFile('#alSheet', anim); await sleep(1200);
-  // review #48: animated previews, one little stage per animation
-  ok(await ev(`(() => { const cs = [...document.querySelectorAll('#alSheetView canvas.alprev')]; return cs.length === 4 && cs.every(c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 16) if (d[i]) return true; return false; }); })()`), 'Art Lab: every animation plays in its own preview');
-  // review #48: a sheet of cards (a pink tile per frame on a dark sheet, a title, row labels, one card hidden by a flash)
-  const cardsheet = await pic('art-cards.png', `(() => { const c = document.createElement('canvas'); c.width = 760; c.height = 560; const x = c.getContext('2d'); x.fillStyle = '#23242b'; x.fillRect(0, 0, 760, 560);
-    x.fillStyle = '#000'; x.fillRect(10, 8, 740, 34); x.fillStyle = '#fff'; x.font = 'bold 22px sans-serif'; x.fillText('HERO SPRITESHEET', 20, 33);
-    [['Idle', 6], ['Walk', 6], ['Attack', 5]].forEach(([label, n], r) => { const Y = 70 + r * 160; x.fillStyle = '#fff'; x.font = '16px sans-serif'; x.fillText(label, 14, Y - 6);
-      for (let i = 0; i < n; i++) { const X = 14 + i * 120; x.fillStyle = '#b04c90'; x.fillRect(X, Y, 110, 140); x.fillStyle = '#f067ad'; x.fillRect(X + 3, Y + 3, 104, 134);
-        if (r === 2 && i === 4) { const g = x.createRadialGradient(X + 55, Y + 70, 5, X + 55, Y + 70, 90); g.addColorStop(0, '#fff'); g.addColorStop(1, '#9cf'); x.fillStyle = g; x.fillRect(X + 3, Y + 3, 104, 134); continue; }
-        x.fillStyle = '#3a2a4a'; x.beginPath(); x.arc(X + 50 + i * 2, Y + 30 + (r === 1 ? i % 2 * 4 : 0), 14, 0, 7); x.fill(); x.fillRect(X + 38 + i * 2, Y + 44, 24, 60); x.fillRect(X + 38, Y + 104, 9, 26); x.fillRect(X + 55, Y + 104, 9, 26); } });
-    return c.toDataURL('image/png'); })()`);
-  await setFile('#alSheet', cardsheet); await sleep(1400);
-  ok(await ev(`(() => { const a = B.Art.sprite('rook'); return !!a && a.anims.idle.length === 6 && a.anims.move.length === 6 && a.anims.attack.length === 5 && a.anims.idle.every(i => i.naturalWidth === a.anims.idle[0].naturalWidth && i.naturalHeight === a.anims.idle[0].naturalHeight) && /cards/.test(document.querySelector('#alSheetView').textContent); })()`), 'a sheet of cards: every card is a frame (the flash card too), the frames of a row keep one size and place');
-  await setFile('#alSheet', anim); await sleep(1200);
-  await ev(`B.ArtLab.state.fight = null`); await sleep(900);
-  ok(await ev(`B.ArtLab.state.fight && B.ArtLab.state.fight.W.t > 5`), 'the test fight runs with the animated hero');
-  await setFile('#alSplash', splashPic); await sleep(900);
-  ok(await ev(`document.querySelectorAll('.alcards img').length === 3 && [...document.querySelectorAll('.alcards img')].every(i => i.src.startsWith('data:image/jpeg'))`), 'the splash shows as list portrait, card and banner');
-  const before = await ev(`document.querySelectorAll('.alcards img')[1].src.length`);
-  await ev(`(() => { const r = document.querySelector('#alCz'); r.value = 200; r.dispatchEvent(new Event('input', { bubbles: true })); })()`); await sleep(200);
-  ok(await ev(`document.querySelectorAll('.alcards img')[1].src.length !== ${before} && !!document.querySelector('#alCz')`), 'the zoom slider reframes the card and stays in place');
-  await noHScroll('art lab');
-  await shot('16-art-lab');
-  await click('[data-act=al-keep]'); await sleep(200);
-  ok(await ev(`JSON.parse(localStorage.getItem('balance.artlab')).rook.anims.idle.length === 5`), '"Use in my game" keeps it on this device');
-  await ev(`document.querySelector('#alName').value = 'David'; document.querySelector('#alNote').value = 'Rivet with my art'`);
-  await click('[data-act=al-send]'); await sleep(900);
-  ok(await ev(`/Sent! Review #[0-9]+/.test(document.querySelector('#toast').textContent)`), 'the pictures are sent for review with a note');
-  // review #50: splash art for several heroes at once, matched by file name (or picked in the list)
-  const sp = await ev(`(() => { const c = document.createElement('canvas'); c.width = 600; c.height = 400; const x = c.getContext('2d'); x.fillStyle = '#48c'; x.fillRect(0, 0, 600, 400); x.fillStyle = '#fc8'; x.beginPath(); x.arc(300, 120, 60, 0, 7); x.fill(); return c.toDataURL('image/png'); })()`);
-  for (const f of ['feuer.png', 'Frostbane_splash.png', 'mystery.png']) fs.writeFileSync(OUT + f, Buffer.from(sp.split(',')[1], 'base64'));
-  { const d = await send('DOM.getDocument', { depth: 0 }); const n = await send('DOM.querySelector', { nodeId: d.result.root.nodeId, selector: '#alBulk' }); await send('DOM.setFileInputFiles', { nodeId: n.result.nodeId, files: ['feuer.png', 'Frostbane_splash.png', 'mystery.png'].map(f => OUT + f) }); }
-  await sleep(1200);
-  ok(await ev(`(() => { const s = [...document.querySelectorAll('.albsel')]; return s.length === 3 && s.filter(x => x.value).length === 2 && s.some(x => x.value === 'pyra') && s.some(x => x.value === 'glacia'); })()`), 'Art Lab: several splashes at once, matched to heroes by file name');
-  await ev(`(() => { const s = [...document.querySelectorAll('.albsel')].find(x => !x.value); s.value = 'lumen'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`); await sleep(200);
-  await click('[data-act=al-bulk-keep]'); await sleep(300);
-  ok(await ev(`(() => { const L = JSON.parse(localStorage.getItem('balance.artlab')); return ['pyra', 'glacia', 'lumen'].every(k => L[k] && L[k].splash && L[k].splash.startsWith('data:image/jpeg')) && !!L.rook.anims; })()`), '"Use all in my game" keeps every matched splash (and the art already kept for others)');
-  await click('[data-act=al-bulk-send]'); await sleep(900);
-  ok(await ev(`/Sent! Review #[0-9]+: splash art for 3 heroes/.test(document.querySelector('#toast').textContent) && !document.querySelector('.albrow')`), 'the splashes go for review in one send');
-  await ev(`(() => { const L = JSON.parse(localStorage.getItem('balance.artlab')); for (const k of ['pyra', 'glacia', 'lumen']) delete L[k]; localStorage.setItem('balance.artlab', JSON.stringify(L)); ['pyra', 'glacia', 'lumen'].forEach(k => B.Art.reset(k)); })()`);
-  await click('[data-act=close]'); await sleep(300);
-  ok(await ev(`!!B.Art.sprite('rook') && (window.__keptSplash = B.Splash.image('rook', 44, 44, 'bust')).startsWith('data:image/jpeg')`), 'after closing the lab the kept art is used across the game');
-  await ev(`__bal.ACT['art-lab']('rook')`); await sleep(300); await click('[data-act=al-drop]'); await sleep(200); await click('[data-act=close]'); await sleep(200);
-  ok(await ev(`!B.Art.sprite('rook') && !JSON.parse(localStorage.getItem('balance.artlab') || '{}').rook && B.Splash.image('rook', 44, 44, 'bust') !== window.__keptSplash`), '"Remove from my game" brings back the art of the game (v126: Rivet has an official splash now)');
 }
 
 // v50 (review #62): new relics on screen: three paths (Pathfinder's Quill), a free offer (Merchant's Ledger)

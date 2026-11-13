@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1c2690">
-<meta name="description" content="Super Rogues: pick heroes, place them on the board and watch them fight. Built live from player suggestions.">
+<meta name="description" content="Super Rogues: pick heroes, place them on the board and watch them fight.">
 <title>Super Rogues</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 3l7.6 15.4 17 2.5-12.3 12 2.9 16.9L32 41.8l-15.2 8 2.9-16.9L7.4 20.9l17-2.5z' fill='%23ffd23f' stroke='%231a1f6b' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M13 27.5c6-3.2 12.5-3 19 1.2 6.5-4.2 13-4.4 19-1.2-1 6.8-5.4 10.3-11 9.8-3.2-.3-5.6-2-8-4.3-2.4 2.3-4.8 4-8 4.3-5.6.5-10-3-11-9.8z' fill='%231a1f6b'/%3E%3C/svg%3E">
 <link rel="preload" href="fonts/fredoka.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
-<!-- The scripts load in this order (defer keeps it): hex (grid math) > data (all content) > sim (fights) > run (rules) > models, icons, art, splash (pictures) > render (board drawing)
-     > net (server calls) > sfx, juice (sound and effects) > uiicons > ui (the screens and buttons, starts the game; artlab loads on demand). All of them hang their functions on one global object B.
-     The index of the whole project is CODEMAP.md. The hidden balance dashboard is a separate page: stats.html. -->
+<!-- Script load order (defer preserves order): hex > data, data-paths, data-meta > sim > run > models, icons, art, splash > render > net > sfx, juice > uiicons > ui-*.js > ui.js. Index: CODEMAP.md. -->
 <script src="js/lang-boot.js"></script>
 <script src="js/hex.js" defer></script>
 <script src="js/data.js" defer></script>
+<script src="js/data-paths.js" defer></script>
+<script src="js/data-meta.js" defer></script>
 <script src="js/item-scores.js" defer></script>
 <script src="js/i18n.js" defer></script>
 <script src="js/sim.js" defer></script>
@@ -42,7 +42,7 @@
 </head>
 <body>
 <div id="app">
-  <div id="stick"><header id="top"></header><button id="notice" type="button" hidden></button></div>
+  <div id="stick"><header id="top"></header></div>
   <main id="screen"></main>
 </div>
 <div id="modal" hidden></div>

@@ -1,46 +1,36 @@
-// Storage. Suggestions arrive in BATCHES: a player writes several changes, then presses "Send for review".
-// Production: Neon Postgres (DATABASE_URL, set by the Vercel integration). Local dev and tests: in-memory
-// (tools/dev-server.js sets global.__BAL_MEM = true). Both expose the same functions.
-// 
-// FILE GUIDE. THE DATABASE LAYER. Two stores with the SAME functions: memStore() keeps everything in memory (local server and tests), pgStore() uses the Neon Postgres database (production). The functions are listed once in each, in the same order.
-//   SCHEMA (just below) is the list of "create table if not exists" statements run at start-up; add a table or column there. Tables: suggestions, scores, players, teams (Gauntlet ghosts), ratings (Elo of heroes, items, powers, bosses and PvP heroes), fstats (fights played / won per day), kv (small keys), art.
-//   To add a new thing to save: add its table to SCHEMA, add the functions to BOTH stores, and call them from api/*.js. Only public fields ever leave the server (pub, pubPlayer, pubRating...). The index of the whole project is CODEMAP.md.
+// Storage (Neon Postgres in production via DATABASE_URL; in-memory store for tests/dev when global.__BAL_MEM is set).
+//
+// FILE GUIDE. THE DATABASE LAYER. Two symmetric stores: memStore() (in-memory) and pgStore() (Neon Postgres).
+//   SCHEMA defines tables: kv, scores, players, teams (Gauntlet ghosts), ratings, fstats, duels, follows, picks, redeems, phero, cards.
+//   Only public fields ever leave the server (pubPlayer, pubTrophy, pubRating, pubScore). The project index is CODEMAP.md.
 const SCHEMA = [
-  `create table if not exists suggestions (id bigserial primary key, name text not null default '', text text not null,
-     iph text not null, status text not null default 'new', reply text, created bigint not null, updated bigint)`,
-  `create index if not exists suggestions_status on suggestions(status)`,
   `create table if not exists kv (k text primary key, v text not null)`,
   `create table if not exists scores (id bigserial primary key, name text not null, score int not null, wave int not null,
      heroes text not null, iph text not null, created bigint not null)`,
   `create index if not exists scores_score on scores(score desc)`,
-  `alter table suggestions add column if not exists batch bigint`,
-  `create sequence if not exists batch_seq`,
-  // v6 (reviews #3 #4): Elo per player + every team that entered the PvP gauntlet (its record is the matchmaking ladder)
+  // Elo per player + every team that entered the PvP gauntlet (its record is the matchmaking ladder)
   `create table if not exists players (pid text primary key, name text not null, elo real not null default 1000, runs int not null default 0,
      crowns int not null default 0, best int not null default 0, iph text, created bigint not null, updated bigint)`,
   `create table if not exists teams (id bigserial primary key, pid text not null, name text not null, elo_at real not null, team text not null,
      relics text not null, wins int not null default 0, status text not null default 'running', opp bigint, created bigint not null, updated bigint)`,
   `create index if not exists teams_pick on teams(status, wins)`,
-  // v25 (review #23): the ghosts a gauntlet run already faced (JSON array of team ids), so it does not meet them twice
+  // ghosts a gauntlet run already faced (JSON array of team ids)
   `alter table teams add column if not exists faced text not null default '[]'`,
-  // v18 (review #16): a ghost keeps its own Elo (elo_at moves with every duel it defends) and a defense record
+  // a ghost keeps its own Elo (elo_at moves with every duel it defends) and a defense record
   `alter table teams add column if not exists def_w int not null default 0`,
   `alter table teams add column if not exists def_l int not null default 0`,
-  // v102 (review #188): a hidden Elo per Gauntlet ghost, from simulated fights against other ghosts (api/_ghostelo.js)
+  // hidden Elo per Gauntlet ghost, from simulated fights against other ghosts (api/_ghostelo.js)
   `alter table teams add column if not exists gelo real not null default 1000`,
   `alter table teams add column if not exists is_bot boolean not null default false`,
-  // v23 (review #21): player leagues (index into B.LEAGUES) and league points inside the league
+  // player leagues (index into B.LEAGUES) and league points inside the league
   `alter table players add column if not exists league int not null default 0`,
   `alter table players add column if not exists lp int not null default 0`,
-  // v15 (review #14): an Elo for every hero, item and relic, apart from the players (balance data)
+  // an Elo for every hero, item and relic, apart from the players (balance data)
   `create table if not exists ratings (kind text not null, id text not null, elo real not null default 1000, games int not null default 0,
      wins int not null default 0, updated bigint, primary key (kind, id))`,
-  // v62 (review #81, David): how many times each fight of a run (number + difficulty, bosses = 'boss') was played and won, all players together
+  // how many times each fight of a run (number + difficulty, bosses = 'boss') was played and won
   `create table if not exists fstats (n int not null, diff text not null, played int not null default 0, won int not null default 0, primary key (n, diff))`,
-  // v27 (owner): Crowns. players.gems = the Crown balance (the old column `crowns` keeps counting champion titles);
-  // season / sreach = the season the row is in and the best league reached (and paid) in it; peak_league = best ever,
-  // last_league = where the last season ended; perks = JSON array of Crown Shop unlocks; ref = the pid of the player
-  // who referred this one, ref_gems = crowns earned from referrals; code = public id (profiles and invite links)
+  // Crowns: players.gems = Crown balance; season/sreach/peak_league/last_league/perks/ref/ref_gems/code
   `alter table players add column if not exists gems int not null default 0`,
   `alter table players add column if not exists season int not null default 0`,
   `alter table players add column if not exists sreach int not null default 0`,
@@ -54,41 +44,35 @@ const SCHEMA = [
   `create unique index if not exists players_code on players(code)`,
   `create index if not exists players_ref on players(ref)`,
   `create index if not exists teams_pid on teams(pid)`,
-  // v64 (reviews #125 #127): every duel a player fought (PvP day or final fight): trophies are the won ones, and two players' rows give their head-to-head record
+  // every duel a player fought (PvP day or final fight): trophies and head-to-head record
   `create table if not exists duels (id bigserial primary key, pid text not null, opp_pid text, opp_name text not null, opp_code text, final int not null default 0,
      win int not null default 0, created bigint not null)`,
   `create index if not exists duels_pid on duels(pid)`,
-  // v65 (reviews #131 #132 #133 #134): the win streak (completed runs in a row; a new player starts at 1) and the best one, the hero portrait a player picked,
-  // and who follows whom (by the public code of the player followed) for the Friends ladder
+  // win streak, best streak, portrait, and follows for the Friends ladder
   `alter table players add column if not exists streak int not null default 1`,
   `alter table players add column if not exists bstreak int not null default 1`,
   `alter table players add column if not exists avatar text`,
   `create table if not exists follows (pid text not null, code text not null, created bigint not null, primary key (pid, code))`,
-  // v81 (review #159): the balance evidence. k = 'kind:id' (hero, item, relic, event:<id>#<choice>); offered / picked = times seen / taken over all runs;
-  // pruns / pwins = runs that took it at least once / of those, runs completed (tools/balance reads it)
+  // balance evidence: offered / picked / pruns / pwins per hero, item, relic, or event choice
   `create table if not exists picks (k text primary key, offered int not null default 0, picked int not null default 0, pruns int not null default 0, pwins int not null default 0)`,
-  // v76 (review #154): the redeem codes each player already used (one time each)
+  // redeem codes each player already used (one time each)
   `create table if not exists redeems (pid text not null, code text not null, created bigint not null, primary key (pid, code))`,
   `create index if not exists follows_code on follows(code)`,
-  // v66 (review #136): the taunt (comic bubble) and the VS entrance a player shows, picked among the ones bought in the Crown Shop
+  // taunt (comic bubble) and VS entrance shown on profile/VS screens
   `alter table players add column if not exists taunt text`,
   `alter table players add column if not exists vsfx text`,
-  // v73 (reviews #150 #151): the achievements a player has (JSON array of ids) and the one shown as a title under the name
+  // achievements earned (JSON array of ids) and selected title
   `alter table players add column if not exists achs text not null default '[]'`,
   `alter table players add column if not exists title text`,
-  // v30 (review #28): account XP (axp), the heroes that cleared PvE (cleared, JSON), the highest gauntlet floor ever
-  // reached (pfloor), bosses beaten (bosses, JSON), xpv = 1 once the XP of older players was counted from their teams
+  // account XP (axp), cleared heroes, highest gauntlet floor, beaten bosses, xpv migration flag
   `alter table players add column if not exists axp int not null default 0`,
   `alter table players add column if not exists cleared text not null default '[]'`,
   `alter table players add column if not exists pfloor int not null default 0`,
   `alter table players add column if not exists bosses text not null default '[]'`,
   `alter table players add column if not exists xpv int not null default 0`,
-  // v27: games and wins of each hero per player (King Tier profiles: most played, best win rate)
+  // games and wins of each hero per player (King Tier profiles)
   `create table if not exists phero (pid text not null, hero text not null, games int not null default 0, wins int not null default 0, primary key (pid, hero))`,
-  // Art Lab (owner, 2026-09-29): pictures sent with a review (splash + battle poses as data: URLs). Never served back.
-  `create table if not exists art (id bigserial primary key, batch bigint not null, hero text not null, splash text, poses text not null,
-     meta text not null, iph text not null, created bigint not null)`,
-  // v124 (review #216): shared Gauntlet cards: a short id, the card data and its picture (JPEG data URL) for link previews
+  // shared Gauntlet cards: a short id, the card data and its image (JPEG data URL) for link previews
   `create table if not exists cards (id text primary key, pid text not null, data text not null, img text not null, iph text, created bigint not null)`,
 ];
 // public id of a player: never the pid itself (the pid is the player's secret key)
@@ -101,21 +85,8 @@ function poolOf(M, lo, hi, exclude, staleBefore) {
 }
 // WHAT: the in-memory store used by tests and the local server (data lives in global.__BAL_MEMDATA).
 function memStore() {
-  const M = global.__BAL_MEMDATA = global.__BAL_MEMDATA || { sug: [], kv: {}, scores: [], id: 0 };
+  const M = global.__BAL_MEMDATA = global.__BAL_MEMDATA || { kv: {}, scores: [], id: 0 };
   return {
-    async addBatch(b) {
-      const batch = M.batch = (M.batch || 0) + 1, ids = [];
-      for (const text of b.items) { const r = { id: ++M.id, batch, name: b.name, text, iph: b.iph, created: b.created, status: 'new', reply: null, updated: null }; M.sug.push(r); ids.push(r.id); }
-      return { batch, ids };
-    },
-    async countBatches(iph, since) { return new Set(M.sug.filter(s => s.iph === iph && s.created >= since).map(s => s.batch)).size; },
-    async countItems(iph, since) { return M.sug.filter(s => s.iph === iph && s.created >= since).length; },
-    async countNew() { return M.sug.filter(s => s.status === 'new').length; },
-    async addArt(a) { (M.art = M.art || []).push(Object.assign({ id: (M.art.length || 0) + 1 }, a)); },
-    async countArt(iph, since) { return (M.art || []).filter(a => (iph == null || a.iph === iph) && a.created >= since).length; },
-    async getBatch(b) { return M.sug.filter(s => s.batch === b).sort((x, y) => x.id - y.id).map(pub); },
-    async countAhead(b) { return new Set(M.sug.filter(s => s.batch < b && (s.status === 'new' || s.status === 'doing')).map(s => s.batch)).size; },
-    async listSuggestions(n) { return M.sug.slice().sort((a, b) => b.id - a.id).slice(0, n).map(pub); },
     async getKV(k) { return M.kv[k] ?? null; },
     async setKV(k, v) { M.kv[k] = v; },
     async addScore(s) { M.scores.push(Object.assign({ id: ++M.id }, s)); },
@@ -241,26 +212,13 @@ function pgStore() {
     };
   }
   return {
-    async addBatch(b) {
-      const batch = Number((await q("select nextval('batch_seq') b"))[0].b), ids = [];
-      for (const text of b.items) ids.push(Number((await q('insert into suggestions (batch, name, text, iph, created) values ($1,$2,$3,$4,$5) returning id', [batch, b.name, text, b.iph, b.created]))[0].id));
-      return { batch, ids };
-    },
-    async countBatches(iph, since) { return Number((await q('select count(distinct batch)::int n from suggestions where iph=$1 and created>=$2', [iph, since]))[0].n); },
-    async countItems(iph, since) { return Number((await q('select count(*)::int n from suggestions where iph=$1 and created>=$2', [iph, since]))[0].n); },
-    async countNew() { return Number((await q("select count(*)::int n from suggestions where status='new'"))[0].n); },
-    async addArt(a) { await q('insert into art (batch, hero, splash, poses, meta, iph, created) values ($1,$2,$3,$4,$5,$6,$7)', [a.batch, a.hero, a.splash, a.poses, a.meta, a.iph, a.created]); },
-    async countArt(iph, since) { return Number((await q(iph == null ? 'select count(*)::int n from art where created>=$1' : 'select count(*)::int n from art where iph=$2 and created>=$1', iph == null ? [since] : [since, iph]))[0].n); },
-    async getBatch(b) { return (await q('select id, batch, name, text, status, reply, created, updated from suggestions where batch=$1 order by id', [b])).map(pub); },
-    async countAhead(b) { return Number((await q("select count(distinct batch)::int n from suggestions where batch<$1 and status in ('new','doing')", [b]))[0].n); },
-    async listSuggestions(n) { return (await q('select id, batch, name, text, status, reply, created, updated from suggestions order by id desc limit $1', [n])).map(pub); },
     async getKV(k) { const r = await q('select v from kv where k=$1', [k]); return r.length ? r[0].v : null; },
     async setKV(k, v) { await q('insert into kv (k, v) values ($1,$2) on conflict (k) do update set v=excluded.v', [k, v]); },
     async addScore(s) { await q('insert into scores (name, score, wave, heroes, iph, created) values ($1,$2,$3,$4,$5,$6)', [s.name, s.score, s.wave, s.heroes, s.iph, s.created]); },
     async countScores(iph, since) { return Number((await q('select count(*)::int n from scores where iph=$1 and created>=$2', [iph, since]))[0].n); },
     async topScores(n) { return (await q('select id, name, score, wave, heroes, created from scores order by score desc, created asc limit $1', [n])).map(pubScore); },
     async getPlayer(pid) { const r = await q('select * from players where pid=$1', [pid]); return r.length ? num(r[0]) : null; },
-    // v27: a name given later only replaces the default one ("Player xxxx"); after that, renaming costs crowns
+    // A name given later only replaces the default one ("Player xxxx"); after that, renaming costs crowns
     async upsertPlayer(pid, name, iph, fallback) {
       const r = name
         ? await q('insert into players (pid, name, iph, created, code) values ($1,$2,$3,$4,$6) on conflict (pid) do update set name = case when players.name = $5 then excluded.name else players.name end returning *', [pid, name, iph, Date.now(), fallback, codeOf(pid)])
@@ -269,7 +227,7 @@ function pgStore() {
     },
     // never the Crown balance (only addGems / spend move it, atomically) nor perks, name or ref
     async setPlayer(pid, f) { await q('update players set elo=$2, runs=$3, crowns=$4, best=$5, updated=$6, league=$7, lp=$8, season=$9, sreach=$10, peak_league=$11, last_league=$12, streak=coalesce($13, streak), bstreak=coalesce($14, bstreak) where pid=$1', [pid, f.elo, f.runs, f.crowns, f.best, Date.now(), f.league | 0, f.lp | 0, f.season | 0, f.sreach | 0, f.peak_league | 0, f.last_league == null ? -1 : f.last_league, f.streak == null ? null : f.streak | 0, f.bstreak == null ? null : f.bstreak | 0]); },
-    async topPlayers(n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar, title from players where runs > 0 order by league desc, lp desc limit $1', [n])).map(pubPlayer); },   // v64: by league, then league points   // v62 (review #85)
+    async topPlayers(n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar, title from players where runs > 0 order by league desc, lp desc limit $1', [n])).map(pubPlayer); },
     async getPlayerByCode(code) { const r = await q('select * from players where code=$1', [code]); return r.length ? num(r[0]) : null; },
     async addGems(pid, n, fromRef) { const r = await q(`update players set gems = gems + $2${fromRef ? ', ref_gems = ref_gems + $2' : ''} where pid=$1 returning gems`, [pid, n]); return r.length ? Number(r[0].gems) : null; },
     async spend(pid, price, perksOld, perksNew, name) {
@@ -289,21 +247,21 @@ function pgStore() {
     async follow(pid, code, on) { if (on) await q('insert into follows (pid, code, created) values ($1,$2,$3) on conflict do nothing', [pid, code, Date.now()]); else await q('delete from follows where pid=$1 and code=$2', [pid, code]); },
     async isFollowing(pid, code) { return (await q('select 1 from follows where pid=$1 and code=$2', [pid, code])).length > 0; },
     async followCounts(pid, code) { const r = await q('select (select count(*)::int from follows where pid=$1) a, (select count(*)::int from follows where code=$2) b', [pid, code]); return { following: Number(r[0].a), followers: Number(r[0].b) }; },
-    // v85 (review #163): your place in the global ranking = 1 + the players above you (higher league, or the same league and more LP)
+    // Place in the global ranking = 1 + players above (higher league, or same league and more LP)
     async rankOf(pid) { const r = await q('select 1 + (select count(*)::int from players o where o.runs > 0 and o.pid <> p.pid and (o.league > p.league or (o.league = p.league and o.lp > p.lp))) as rank from players p where p.pid = $1 and p.runs > 0', [pid]); return r.length ? Number(r[0].rank) : null; },
     async friendsTop(pid, n) { return (await q('select pid, code, name, elo, runs, crowns, best, league, lp, perks, streak, bstreak, avatar, title from players where pid=$1 or code in (select code from follows where pid=$1) order by league desc, lp desc limit $2', [pid, n])).map(pubPlayer); },
     async setAvatar(pid, key) { await q('update players set avatar=$2 where pid=$1', [pid, key]); },
     async setTitle(pid, t) { await q('update players set title=$2 where pid=$1', [pid, t]); },
     async addPicks(rows) { if (!rows.length) return; await q(`insert into picks (k, offered, picked, pruns, pwins) select k, o, p, (p > 0)::int, (p > 0 and w)::int from unnest($1::text[], $2::int[], $3::int[], $4::bool[]) as u(k, o, p, w)
       on conflict (k) do update set offered = picks.offered + excluded.offered, picked = picks.picked + excluded.picked, pruns = picks.pruns + excluded.pruns, pwins = picks.pwins + excluded.pwins`, [rows.map(r => r.k), rows.map(r => r.o), rows.map(r => r.p), rows.map(r => !!r.w)]); },
-    // v76 (review #154): one use per player, atomic: the crowns only come when the row is new
+    // One use per player, atomic: the crowns only come when the row is new
     async redeem(pid, code, n) { const r = await q('with ins as (insert into redeems (pid, code, created) values ($1,$2,$4) on conflict do nothing returning pid) update players set gems = gems + $3 where pid in (select pid from ins) returning gems', [pid, code, n, Date.now()]); return r.length ? Number(r[0].gems) : null; },
     async setStyle(pid, taunt, vsfx) { await q('update players set taunt=$2, vsfx=$3 where pid=$1', [pid, taunt, vsfx]); },
     async addDuel(d) { await q('insert into duels (pid, opp_pid, opp_name, opp_code, final, win, created) values ($1,$2,$3,$4,$5,$6,$7)', [d.pid, d.opp_pid || null, d.opp_name, d.opp_code || null, d.final ? 1 : 0, d.win ? 1 : 0, Date.now()]); },
     async trophiesOf(pid, n) { const c = await q('select count(*)::int n from duels where pid=$1 and win=1', [pid]); const r = await q('select * from duels where pid=$1 and win=1 order by id desc limit $2', [pid, n]); return { n: Number(c[0].n), list: r.map(pubTrophy) }; },
     async h2h(a, b) { const r = await q('select coalesce(sum(case when (pid=$1 and win=1) or (pid=$2 and win=0) then 1 else 0 end),0)::int w, coalesce(sum(case when (pid=$1 and win=0) or (pid=$2 and win=1) then 1 else 0 end),0)::int l from duels where (pid=$1 and opp_pid=$2) or (pid=$2 and opp_pid=$1)', [a, b]); return { w: Number(r[0].w), l: Number(r[0].l) }; },
     async addXp(pid, n) { const r = await q('update players set axp = axp + $2 where pid=$1 returning axp', [pid, n]); return r.length ? Number(r[0].axp) : null; },
-    // v46: moves xpv from one version to the next only once, even when two calls race
+    // Moves xpv forward once, even when two calls race
     async xpvStep(pid, from, to) { const r = await q('update players set xpv=$3 where pid=$1 and xpv=$2 returning pid', [pid, from, to]); return r.length > 0; },
     async setProgress(pid, f) {
       const cols = ['cleared', 'pfloor', 'bosses', 'xpv', 'achs'].filter(k => f[k] != null); if (!cols.length) return;
@@ -394,16 +352,13 @@ function pgStore() {
   };
 }
 
-// only public fields ever leave the server (never iph)
-// WHAT: the public shape of a suggestion (never the visitor hash). pubPlayer / pubRating / pubScore do the same for players, ratings and scores.
-function pub(s) { return { id: Number(s.id), batch: Number(s.batch || s.id), name: s.name, text: s.text, status: s.status, reply: s.reply || null, created: Number(s.created), updated: s.updated ? Number(s.updated) : null }; }
-// Neon returns bigint/real columns as strings: normalise numbers
-// WHAT: Postgres returns big numbers as text; this turns the known number columns back into numbers.
+// Public DTO helpers (never expose iph): pubPlayer, pubTrophy, pubRating, pubScore.
+// Postgres returns bigint/real columns as strings: normalise known numeric columns
 function num(r) { for (const k of ['id', 'elo', 'runs', 'crowns', 'best', 'elo_at', 'wins', 'opp', 'def_w', 'def_l', 'gelo', 'league', 'lp', 'created', 'updated', 'gems', 'season', 'sreach', 'peak_league', 'last_league', 'ref_gems', 'axp', 'pfloor', 'xpv', 'streak', 'bstreak']) if (r[k] != null) r[k] = Number(r[k]); return r; }
-// v27: `titles` = champion titles (column crowns); `code` = public id for the profile; `king` = owns the King Tier
+// `titles` = champion titles (column crowns); `code` = public profile id; `king` = owns the King Tier
 function pubPlayer(p) { return { name: p.name, code: p.code || codeOf(p.pid), elo: Math.round(Number(p.elo)), runs: Number(p.runs), titles: Number(p.crowns), best: Number(p.best), league: Number(p.league) || 0, lp: Number(p.lp) || 0, king: /"king"/.test(p.perks || ''),
-  streak: p.streak == null ? 1 : Number(p.streak), bstreak: p.bstreak == null ? 1 : Number(p.bstreak), avatar: p.avatar || null, title: p.title && globalThis.B && B.ACH && B.ACH[p.title] ? B.ACH[p.title].title : null }; }   // v65: win streak, best streak, portrait; v73: title
-// v64: a trophy = a won duel: who was beaten (their public code when it was a real player), when, and whether it was the final fight
+  streak: p.streak == null ? 1 : Number(p.streak), bstreak: p.bstreak == null ? 1 : Number(p.bstreak), avatar: p.avatar || null, title: p.title && globalThis.B && B.ACH && B.ACH[p.title] ? B.ACH[p.title].title : null }; }
+// A trophy = a won duel: opponent name, public code when real player, and whether it was the final fight
 function pubTrophy(d) { return { name: d.opp_name, code: d.opp_code || null, final: !!Number(d.final), at: Number(d.created) }; }
 function pubRating(r) { return { kind: r.kind, id: r.id, elo: Math.round(Number(r.elo)), games: Number(r.games), wins: Number(r.wins) }; }
 function pubScore(s) { return { name: s.name, score: Number(s.score), wave: Number(s.wave), heroes: String(s.heroes || '').split(',').filter(Boolean), created: Number(s.created) }; }

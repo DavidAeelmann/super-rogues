@@ -1,6 +1,5 @@
-// LANGUAGES (, David: "In the menu add an option to change language to Portuguese and German"). The game is written in English;
-// another language is a dictionary file (js/lang-pt.js, js/lang-de.js) that maps English text to the translation. Nothing in the game code
-// is duplicated: this file watches the page and swaps every piece of text it has a translation for, and anything without one stays English.
+// LANGUAGES: the game is written in English; another language is a dictionary file (js/lang-pt.js, js/lang-de.js) that maps English
+// text to the translation. This file watches the page and swaps every piece of text it has a translation for; anything without one stays English.
 
 // FILE GUIDE. HOW IT WORKS: js/lang-boot.js (a tiny script in <head>) reads the chosen language from localStorage and writes a <script> tag for
 // js/lang-<id>.js, which fills B.LANG[id] = { x: {...}, p: [...], h: {...} }. This file then:
@@ -44,7 +43,7 @@
 
   // ---- the page watcher
   const ATTRS = ['title', 'aria-label', 'placeholder', 'alt'];
-  const SKIP = 'SCRIPT,STYLE,TEXTAREA,INPUT,CANVAS,svg,#fx,[data-notr],#sugQueue,#sugDrafts,.usr';   // what players typed is never translated
+  const SKIP = 'SCRIPT,STYLE,TEXTAREA,INPUT,CANVAS,svg,#fx,[data-notr],.usr';   // what players typed is never translated
   const seen = new WeakMap();   // text node -> the English text it was made from (so a language switch or a re-render never translates twice)
   function textNode(n) {
     const v = n.nodeValue, was = seen.get(n);

@@ -1,10 +1,10 @@
 # CODEMAP: Super Rogues Index
 
 Web app (plain HTML/CSS/JS, no framework) + Vercel serverless API (`api/`) backed by Neon Postgres.
-All client modules attach to global `B` (`B.HEROES`, `B.Run`, `B.Sim`, `B.Render`, `B._ui`, ...).
+All client modules attach to global `B` (`B.HEROES`, `B.HERO_PATHS`, `B.Run`, `B.Sim`, `B.Render`, `B._ui`, ...).
 
 ```
-data.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
+data*.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
                          |                      |
                          v                      v
                 ui-*.js + ui.js (DOM) <--- render.js + models.js (canvas)
@@ -20,7 +20,9 @@ data.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 | `index.html` | Page shell & deferred script load order | `#top`, `#screen`, `#modal`, `#toast` |
 | `style.css` | All styling (latest rule wins) | `.wmap`, `.bench`, `.vs`, `.shop`, `.gstage` |
 | `stats.html` + `js/stats.js` | Balance dashboard (`/stats.html`) | — |
-| `js/data.js` | All game tables & balance knobs | `B.CFG`, `B.HEROES`, `B.ITEMS`, `B.RELICS`, `B.EVENTS`, `B.DIFF`, `B.TUNE` |
+| `js/data.js` | Core combat tables, heroes, items, relics, mobs, bosses, events, balance knobs (auto-requires paths/meta in Node) | `B.CFG`, `B.HEROES`, `B.ITEMS`, `B.RELICS`, `B.EVENTS`, `B.DIFF`, `B.TUNE` |
+| `js/data-paths.js` | Boss upgrade paths (`3` per hero) | `B.HERO_PATHS` |
+| `js/data-meta.js` | Leagues, seasons, Crown Shop, achievements, unlocks, terrain maps, hero traits & slug aliases | `B.LEAGUES`, `B.SHOP_ITEM`, `B.ACHIEVEMENTS`, `B.UNLOCKS`, `B.MAPS`, `B.HERO_TRAITS` |
 | `js/hex.js` | 8x8 pointy-top odd-r hex math | `B.Hex` |
 | `js/sim.js` | Deterministic 20 Hz combat engine & abilities | `B.Sim`, `A.<ability>` |
 | `js/run.js` | Run state machine (shops, events, XP, auto-equip, placement) | `B.Run`, `autoPlace`, `eventAct`, `autoEquip` |
@@ -29,26 +31,26 @@ data.js (tables) -> run.js (run rules) -> sim.js (20 Hz battle engine)
 | `js/ui-map.js` | Vertical road map, party, level-up/upgrade screens, coach & guide tips | `mapRoad`, `layoutMap`, `mapHTML`, `levelHTML`, `upgradeHTML`, `COACH`, `GUIDE` |
 | `js/ui-battle.js` | Deploy, bench drag, board canvas/input, battle loop, result, Gauntlet & VS | `deployHTML`, `battleHTML`, `resultHTML`, `gauntletHTML`, `towerHTML`, `showVs`, `loop` |
 | `js/ui-shop.js` | Shops, events, game over, LP and XP progression screens | `shopHTML`, `eventHTML`, `overHTML`, `lpScreenHTML`, `xpScreenHTML` |
-| `js/ui-modals.js` | Gear/bag drag-drop, hero peek, suggestions, ladder, Crown Shop, profiles, `HOWTO`, notice poll | `gearHTML`, `openSuggest`, `openScores`, `openShop`, `openProfile`, `bootNotice` |
+| `js/ui-modals.js` | Gear/bag drag-drop, hero peek, ladder, Crown Shop, profiles, `HOWTO` | `gearHTML`, `openScores`, `openShop`, `openProfile`, `HOWTO` |
 | `js/ui.js` | Button dispatch table (`ACT`), global input/resize listeners, boot, `__bal` test hook | `ACT`, `ACT_SFX`, `onResize`, `window.__bal` |
 | `js/render.js` | 2.5D board canvas, unit interpolation, boss backdrops, coach hex highlights | `B.Render`, `bossBackdrop`, `drawCoach` |
 | `js/models.js` | Procedural unit silhouettes & poses | `M` |
 | `js/abilfx.js` | Per-ability canvas VFX | `B.AbilFx.SPEC` |
-| `js/art.js`, `js/artlab.js`, `js/splash.js` | Official webp hero art (`art/<name>/`), Art Lab (lazy-loaded), splash cards | `OFFICIAL`, `B.Art`, `B.ArtLab`, `B.Splash` |
+| `js/art.js`, `js/splash.js` | Official hero art (`art/<name>/`) & cropped/painted splash cards | `OFFICIAL`, `B.Art`, `B.Splash` |
 | `js/icons.js`, `js/uiicons.js` | Procedural item/relic icons & SVG UI icons | `IT`, `RE`, `B.Icons`, `B.UI.i` |
 | `js/juice.js`, `js/sfx.js`, `js/uiAudio.js` | Confetti/floaters & Web Audio synthesized SFX | `B.Juice`, `B.Sfx`, `B.UIAudio` |
 | `js/net.js` | Server JSON client | `B.Net` |
 | `js/i18n.js`, `js/lang-boot.js`, `js/lang-pt.js`, `js/lang-de.js` | Runtime DOM translation & PT/DE dictionaries | `B.T`, `B.LANG` |
 | `api/elo.js` | Gauntlet/tower, Elo, leagues, content ratings, flog | `nextOpponent`, `cleanTeam`, `leaguePoints` |
 | `api/player.js`, `api/_player.js` | Accounts, Crown Shop, XP, profiles, avatars, follows | `B.SHOP_ITEM`, `payLeagues`, `friendsTop` |
-| `api/suggest.js`, `api/stats.js` | Suggestion queue & balance dashboard endpoints | — |
+| `api/stats.js` | Balance dashboard endpoint | — |
 | `api/_store.js`, `api/_http.js` | Postgres (Neon) / in-memory dev store & HTTP helpers | `pickFinal`, `trophiesOf`, `h2h` |
 
 ## 2. Quick Recipes
 
 - **Tune PvE difficulty:** Edit `B.CFG.fightScale` / `B.DIFF` in `js/data.js`, check `node tools/pve-odds.js` (targets: easy ~99%, medium ~90%, hard ~60%, bosses ~55%) or run `node tools/tune-pve.js`.
-- **Add a hero:** Copy an entry in `B.HEROES` (`js/data.js`), add `TAGS`, add visual in `js/models.js` (`M`), add ability `A.<name>` in `js/sim.js` and `SCALE.<name>` in `js/ui-core.js`, update hero count in `tools/tests/engine.js`.
-- **Add an item / Power (relic):** Add `N(...)` in `B.ITEMS` or `R(...)` in `B.RELICS` (`js/data.js`) + icon in `js/icons.js` (`IT` / `RE`).
+- **Add a hero:** Copy an entry in `B.HEROES` (`js/data.js`), add its 3 paths in `js/data-paths.js`, add `TAGS` (`js/data.js`) and `B.HERO_TRAITS` (`js/data-meta.js`), add visual in `js/models.js` (`M`), add ability `A.<name>` in `js/sim.js` and `SCALE.<name>` in `js/ui-core.js`, update hero count in `tools/tests/engine.js`.
+- **Add an item / Power (relic):** Add `N(...)` in `B.ITEMS` or `R(...)` in `js/data.js` + icon in `js/icons.js` (`IT` / `RE`).
 - **Add an event:** Add entry to `B.EVENTS` (`js/data.js`) and any new `act` handler in `eventAct` (`js/run.js`).
 - **Change a button or screen text:** Find `data-act="name"` in `js/ui-*.js` and handler in `ACT` (`js/ui.js`). Note: "relic" in code is "Power" on screen.
 

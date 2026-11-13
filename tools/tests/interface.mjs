@@ -89,7 +89,7 @@ for (dev of DEVICES.map(d => d)) {
     await ev(`localStorage.clear(); localStorage.setItem('balance.lang', '${lang}')`); await send('Page.reload'); await sleep(1200);
     await audit('title');
     await act('home-menu'); await sleep(200); await audit('menu');
-    for (const a of ['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'art-lab', 'language', 'suggest']) { await act(a); await sleep(250); await audit('menu-' + a); await act('close'); await sleep(100); }
+    for (const a of ['howto', 'player-tab', 'my-profile', 'shop', 'scores', 'language']) { await act(a); await sleep(250); await audit('menu-' + a); await act('close'); await sleep(100); }
     // a game
     await ev(`document.querySelector('[data-act=new-run]').click()`); await sleep(250); await audit('start-heroes');
     await ev(`[0, 1, 2].forEach(i => document.querySelectorAll('[data-act=start-pick]')[i].click())`); await sleep(250); await audit('start-hero-picked');

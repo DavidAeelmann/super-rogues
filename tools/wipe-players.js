@@ -1,10 +1,10 @@
-// Review #121 (David: "Wipe all player stats and progression so far so we can try out this new system"), run on 2026-10-09 with the owner's go.
+// Wipes player progression/leaderboard stats while keeping balance evidence.
 // Saves a full copy first (backups/wipe-<date>.json) and checks it, then:
 //   - players: every account keeps its id, name, friend code, referral and follows, and starts again from zero: Elo, runs, league, LP, account XP,
 //     crowns, gems, perks, streaks, achievements, title, voice line, portrait, cleared heroes, bosses, Gauntlet floor
 //   - deleted: Gauntlet ghosts (teams), duel history (duels), per-hero records (phero), redeemed codes (redeems, so the codes work again), the
 //     XP-per-hour counters (kv gxp:)
-//   - kept: the balance evidence (ratings, fstats, picks, the kv guards of the fight stats), suggestions, art.
+//   - kept: the balance evidence (ratings, fstats, picks, the kv guards of the fight stats).
 // Usage: node tools/wipe-players.js --dry   (only counts)   |   node tools/wipe-players.js --yes
 const { q } = require('./_env');
 const fs = require('fs'), path = require('path');

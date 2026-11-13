@@ -1,4 +1,4 @@
-// UI Modals: gear/bag drag-drop, hero details, suggestions, ladder, Crown Shop, profiles, review notice.
+// UI Modals: gear/bag drag-drop, hero details, ladder, Crown Shop, profiles.
 (function () {
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
   const U = B._ui;
@@ -253,88 +253,6 @@
       ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
       ${Object.entries(Run.setCounts(h.items)).filter(([, n]) => n >= 2).map(([sid, n]) => `<div class="small setfull">◆ <b>${esc(B.SETS[sid].name)}</b> ${n}/3 · ${fmt(B.SETS[sid].bonus[2].desc)}${n >= 3 ? ' · ' + fmt(B.SETS[sid].bonus[3].desc) : ''}</div>`).join('')}</div>`;
   }
-  // WHAT: SUGGESTION BOX. "Send for review" lets anyone propose changes; they go to api/suggest.js and the owner's assistant reads them. ago = "5 min ago".
-  function ago(ms, now) { const s = Math.max(0, Math.round((now - ms) / 1000)); return s < 60 ? s + 's ago' : s < 3600 ? Math.round(s / 60) + ' min ago' : Math.round(s / 3600) + ' h ago'; }
-  // Suggestions: the player writes changes into a local list (up to 10), then presses "Send for review".
-  // That sends the whole list as one batch and wakes Claude (tools/watcher.js) right away.
-  // WHAT: the list of drafted changes kept in the browser before sending (max 10).
-  const MAX_DRAFTS = 10;
-  const drafts = () => store.get('balance.drafts', []);
-  // WHAT: the status line of the review (queued, in progress, done) and queueHTML the list of suggestions with their replies.
-  function statusHTML(r, list) {
-    if (!r) return '';
-    const working = (list || []).some(s => s.status === 'doing');
-    const online = working || (r.seen && r.now - r.seen < 3 * 60e3);
-    const main = r.paused ? '⏸ Reviews are paused by the owner. Your list waits in the queue.'
-      : working ? '🛠 Claude is reviewing a list right now. Yours goes next.'
-      : online ? '🟢 Reviewer online. Claude starts as soon as you press <b>Send for review</b>.'
-      : '⚪ Reviewer offline right now. Your list waits in the queue and is reviewed when it is back.';
-    return `<div class="review ${online && !r.paused ? 'on' : ''}">${main}${r.lastRun ? ` <span class="dim">Last update shipped ${ago(r.lastRun, r.now)}.</span>` : ''}</div>`;
-  }
-  const STATUS = { new: 'queued', doing: 'in progress', held: "awaiting owner's OK", done: 'done ✓', declined: 'declined' };
-  function queueHTML(list) {
-    if (!list.length) return '<p class="dim small">Nothing yet. Be the first!</p>';
-    const groups = [], by = {};
-    for (const s of list) { if (!by[s.batch]) { by[s.batch] = []; groups.push(s.batch); } by[s.batch].push(s); }
-    return groups.map(b => {
-      const items = by[b].sort((x, y) => x.id - y.id), f = items[0];
-      const st = items.some(x => x.status === 'doing') ? 'doing' : items.some(x => x.status === 'new') ? 'new' : items.some(x => x.status === 'held') ? 'held' : 'done';
-      return `<div class="batch"><div class="row"><b>Review #${b}</b><span class="dim small">${esc(f.name || 'anonymous')} · ${new Date(f.created).toLocaleDateString()} · ${items.length} change${items.length > 1 ? 's' : ''}</span><span class="st ${st}">${STATUS[st]}</span></div>
-        ${items.map(s => `<div class="sug ${s.status}"><div class="row"><span class="dim small">#${s.id}</span><span class="st">${STATUS[s.status] || esc(s.status)}</span></div><div class="txt">${esc(s.text)}</div>${s.reply ? `<div class="reply">🤖 ${esc(s.reply)}</div>` : ''}</div>`).join('')}</div>`;
-    }).join('');
-  }
-  function draftsHTML() {
-    const d = drafts();
-    return d.length ? `<ol class="drafts">${d.map((t, i) => `<li><span>${esc(t)}</span><button class="chip" data-act="draft-del" data-arg="${i}" aria-label="Remove">✕</button></li>`).join('')}</ol>`
-      : '<p class="dim small">Your list is empty.</p>';
-  }
-  function renderDrafts() {
-    const el = $('#drafts'); if (el) el.innerHTML = draftsHTML();
-    const n = drafts().length, btn = $('[data-act=send-review]');
-    if (btn) btn.textContent = n ? `Send ${n} change${n > 1 ? 's' : ''} for review` : 'Send for review';
-    const add = $('form[data-form=draft] button'); if (add) add.disabled = n >= MAX_DRAFTS;
-  }
-  // WHAT: the frame of the suggestion sheet (text box, drafts, queue). openSuggest opens it, sendReview sends the drafts, loadQueue refreshes the queue.
-  function suggestShell() {
-    return `<div class="shead"><b>${I('bulb')} Suggest changes</b><span class="grow"></span><button class="chip" data-act="sug-refresh">↻ Refresh</button><button data-act="close">✕</button></div>
-      <div id="sugStatus"></div>
-      <p class="small">Write each change and tap <b>Add</b>. Got 5 ideas? Add all 5, then tap <b>Send for review</b>. Claude reviews the whole list and ships it. When the new version is live, a small notice at the top offers to reload the game.</p>
-      <form data-form="draft" class="stack">
-        <textarea name="text" maxlength="1500" rows="3" placeholder="A bug, a rebalance, a new hero, item or power, a UI change, a full restructure... One change per note. Any language is fine."></textarea>
-        <button>+ Add to my list</button>
-      </form>
-      <h3>My list</h3><div id="drafts">${draftsHTML()}</div>
-      <div class="row"><input id="sugName" maxlength="24" placeholder="Your name (optional)" value="${esc(store.get('balance.name', ''))}"><button class="primary" data-act="send-review">Send for review</button></div>
-      <p class="small">Made hero art? <a href="#" data-act="art-lab">Try it in the 🎨 Art Lab</a> and send the pictures from there.</p>
-      <p class="dim small">Everything sent is public. Claude implements what fits the game, replies to each change, and declines anything harmful or unrelated to the game.</p>
-      <h3>Queue</h3><div id="sugQueue"><p class="dim">Loading…</p></div>`;
-  }
-  async function loadQueue() {
-    try {
-      const d = await Net.get('suggest');
-      if (ui.modal !== 'suggest') return;
-      $('#sugStatus').innerHTML = statusHTML(d.review, d.list); $('#sugQueue').innerHTML = queueHTML(d.list);
-    } catch (e) { const q = $('#sugQueue'); if (q && ui.modal === 'suggest') q.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
-  }
-  function openSuggest() {
-    openModal(suggestShell()); ui.modal = 'suggest'; renderDrafts(); loadQueue();
-    clearInterval(ui.sugTimer); ui.sugTimer = setInterval(() => { if (ui.modal === 'suggest') loadQueue(); else clearInterval(ui.sugTimer); }, 20000);
-  }
-  // WHAT: sends the drafted changes (and Art Lab pictures) to the server as one review batch.
-  async function sendReview(btn) {
-    const ta = $('form[data-form=draft] textarea'), extra = ta ? ta.value.trim() : '';
-    const items = drafts().concat(extra ? [extra] : []).slice(0, MAX_DRAFTS);
-    if (!items.length) { toast('Add at least one change first'); return; }
-    const name = (($('#sugName') || {}).value || '').trim(); store.set('balance.name', name);
-    btn.disabled = true;
-    try {
-      const r = await Net.post('suggest', { items, name });
-      store.set('balance.drafts', []); if (ta) ta.value = '';
-      renderDrafts(); toast(`Sent! Review #${r.batch} (${items.length} change${items.length > 1 ? 's' : ''}) is in the queue.`); trackBatch(r.batch); loadQueue();
-    } catch (e) { toast(e.message); }
-    btn.disabled = false;
-  }
-  // a tab per kind of content with its own Elo, to balance heroes, items and relics
   // WHAT: THE LADDER: tabs Player / Ranking / Heroes / Items / Powers. The content tabs (Elo of every piece) are a Crown Shop unlock.
   const LADDER_TABS = [['player', 'Player'], ['players', 'Global'], ['friends', 'Friends']];   // Friends = the players you follow
 
@@ -570,70 +488,5 @@
     </ol></details>`;
 
 
-  // ------------------------------------------------------------------ review notice (top bar)
-  // After "Send for review" the page follows that batch: queued -> Claude working -> READY ("press F5"). Claude marks
-  // items done only AFTER the update is deployed, so "all items answered" means the new version is already live.
-  // Everyone else gets a softer "the game was just updated" when a new update ships while the page is open.
-  // WHAT: THE REVIEW NOTICE at the top: after you send changes it shows "waiting / in progress / new version, tap to reload". nt = its state, poll asks api/suggest.js every few seconds while something is pending.
-  const PEND = 'balance.pending';
-  const nt = { lastRun: null, latest: 0, update: false, timer: 0 };
-  // WHAT: draws the review notice in the top bar.
-  function renderNotice() {
-    const el = $('#notice'); if (!el) return;
-    const p = store.get(PEND, null);
-    let cls = '', html = '';
-
-    // no more "#12 in progress" / "your changes are live" pills and no lightbulb; the status of a batch is in the menu's suggestion box. Only the plain "New version" pill stays.
-    if (nt.update) {
-      cls = 'info'; html = '🔄 New version: tap to reload<span class="nx" data-act="notice-x" aria-label="Dismiss">✕</span>';
-    }
-    el.className = cls; el.innerHTML = html; el.hidden = !html;
-  }
-  function trackBatch(batch) { store.set(PEND, { batch, state: 'waiting', sentAt: Date.now() }); nt.update = false; renderNotice(); schedulePoll(1500); }
-  // WHAT: asks the server for the review status and whether a new version of the game was published.
-  async function poll() {
-    const p = store.get(PEND, null);
-    try {
-      if (p && p.state === 'waiting') {
-        const d = await Net.get('suggest?batch=' + p.batch);
-        const items = d.items || [];
-        if (!items.length) { store.del(PEND); }
-        else if (items.every(i => i.status === 'done' || i.status === 'declined')) {
-          Object.assign(p, { state: 'ready', done: items.filter(i => i.status === 'done').length, declined: items.filter(i => i.status === 'declined').length, readyAt: Date.now() });
-          store.set(PEND, p); nt.lastRun = d.review.lastRun; nt.update = true;
-        } else {
-          Object.assign(p, { ahead: d.ahead, working: items.some(i => i.status === 'doing'), held: !items.some(i => i.status === 'doing' || i.status === 'new') && items.some(i => i.status === 'held'), offline: !(d.review.seen && d.review.now - d.review.seen < 3 * 60e3) });
-          store.set(PEND, p);
-        }
-        if (nt.lastRun == null) nt.lastRun = d.review.lastRun;
-        nt.latest = d.review.lastRun;
-      } else {
-        const d = await Net.get('suggest?lite=1');
-        nt.latest = d.review.lastRun;
-        if (nt.lastRun == null) nt.lastRun = d.review.lastRun;
-        else if (d.review.lastRun > nt.lastRun) nt.update = true;
-      }
-    } catch (_) { /* offline: try again later */ }
-    renderNotice(); schedulePoll();
-  }
-  function schedulePoll(ms) {
-    clearTimeout(nt.timer);
-    const p = store.get(PEND, null);
-    nt.timer = setTimeout(() => { if (document.hidden) schedulePoll(); else poll(); }, ms || (p && p.state === 'waiting' ? 8000 : 45000));
-  }
-  function bootNotice() {
-    const p = store.get(PEND, null);
-    // loaded after the review was ready = the player already pressed F5: show what shipped, once
-    if (p && p.state === 'ready') { p.state = 'shown'; store.set(PEND, p); }
-    renderNotice(); poll();
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) schedulePoll(500); });
-  }
-  $('#notice').addEventListener('click', e => {
-    if (e.target.closest('[data-act=notice-x]')) { e.stopPropagation(); const p = store.get(PEND, null); if (p && p.state !== 'waiting') store.del(PEND); nt.update = false; nt.lastRun = Math.max(nt.lastRun || 0, nt.latest); renderNotice(); return; }
-    const p = store.get(PEND, null);
-    if ((p && p.state === 'ready' && p.done > 0) || (!p && nt.update)) { location.reload(); return; }
-    openSuggest();
-  });
-
-  Object.assign(U, { autoGear, autoOn, maxSlots, HOWTO, refreshShop, heroPeekHTML, manualGear, gearPut, openGear, gearHero, gearDo, gearAuto, openSuggest, drafts, renderDrafts, sendReview, loadQueue, openScores, openShop, openProfile, openMyProfile, followText, achsHTML, avatarPickHTML, trackBatch, MAX_DRAFTS, bootNotice, poll });
+  Object.assign(U, { autoGear, autoOn, maxSlots, HOWTO, refreshShop, heroPeekHTML, manualGear, gearPut, openGear, gearHero, gearDo, gearAuto, openScores, openProfile, openMyProfile, followText, achsHTML, avatarPickHTML, openShop });
 })();

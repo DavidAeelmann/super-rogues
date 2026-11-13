@@ -1,49 +1,25 @@
-// Elo + PvP gauntlet (reviews #3 and #4 by David).
-// - No hearts: losing any fight ends the run                                                          op 'fail'
-//   Review #24: the player's Elo moves ONLY in gauntlet duels (a lost run / reaching the gauntlet used to count too)
-// - Review #14: every hero, item and relic has its own Elo (table ratings, apart from the players), for balancing.
-//   Only pieces that acted in that fight are rated (see usedIn). A lost run / reaching the gauntlet rates the pieces of
-//   that fight against 1000; a duel rates each side's pieces against the other side's pieces of the same kind.
-//   GET ?ratings=1 lists them.
-// - Review #16: a duel counts for the GHOST too: the ghost team has its own Elo (teams.elo_at, K 32, shown on its card)
-//   and a defense record (def_w / def_l); review #24: its player's Elo does not move for it. Review #20: every BOSS has its own Elo too (ratings kind 'boss', K 16), op 'boss': it rises when the boss
-//   beats a player and falls when it loses, against that player's Elo; the player's own Elo never moves for it.
-//   Review #21: leagues (B.LEAGUES): +1 league point per duel won, -2 per run lost before the gauntlet; 10 points move
-//   the player up one league, never down; Master has no ceiling. Answers carry league, lp and `lg` (the change).
-//   Answers carry `peak` = the most duels any finished ghost won: the height of the gauntlet tower.
-// - v27 (owner + review #25): seasons and Crowns (api/_player.js). Every call rolls the player into the current season;
-//   a promotion pays crowns the first time a league is reached in a season (`lg.crowns`). A new player's first call can
-//   carry `ref` (a friend's invite code). Every run end and duel counts a game for each hero (King Tier profiles).
-//   The name is set once (the default "Player xxxx" is replaced by the first name given); changing it later is a
-//   Crown Shop purchase (api/player.js). The content ratings (GET ?ratings=1) moved behind the Content Elo unlock.
-// - After the last shop the player's team is stored as a GHOST and enters the gauntlet: round k is against the ghost of
-//   another run whose own gauntlet ended with k wins (or the closest above). Review #10: only player ghosts, no bots.
-//   Other players' ghosts first; if there are none yet, ghosts of your own older runs. Each match is a 1v1 Elo game against that team's rating
-//   at the time it was stored. A loss ends the run; if nobody ever went further, the player is crowned champion.
-//   ops 'enter' and 'result'. GET: Elo ladder.
-// Fights run in the player's browser (like the rest of the game), so results are trusted: this is a demo.
-// 
-// FILE GUIDE. THE MAIN GAME SERVER FILE: the Gauntlet (PvP against ghosts), Elo, leagues, and the balance data (ratings of heroes, items, powers, bosses; fights played per day). One endpoint, POST /api/elo { op, pid, ... }; ops: hello, boss, fail, flog, enter, result. GET returns the public ranking.
-//   Order: constants -> usedIn (which pieces acted in a fight) -> cleanFlog / logFights (count each run once) -> rateContent (Elo of pieces) -> cleanTeam (never trust a team sent by a browser) -> leaguePoints -> nextOpponent (who you meet on each floor) -> the handler (module.exports = async (req, res)).
-//   The ghosts: after the last shop your team is stored as a "ghost" (table teams); each duel you win takes you up a floor, a loss leaves your ghost on that floor for later players. The index of the whole project is CODEMAP.md.
+// Elo, PvP Gauntlet, leagues, and balance rating telemetry.
+// - No hearts: losing a fight ends the run (op 'fail'). Player Elo moves only in Gauntlet duels.
+// - Every hero, item, relic, and boss has its own rating (table `ratings`, kind hero/item/relic/boss).
+// - Duels also update the defending ghost's hidden/public Elo and def_w/def_l (without moving its owner's Elo).
+// - Seasons, Crowns, and profiles live in api/_player.js; Ghost Elo lives in api/_ghostelo.js.
+// - Ghost snapshots are stored after the final shop (`enter` / `result`). GET returns the public ranking.
+// - Fights run in the player's browser, so results are trusted and sanitized via cleanTeam().
 const { send, body, sameOrigin, ipHash, clean, handleCors } = require('./_http');
 const getStore = require('./_store');
 const P = require('./_player');
-const GE = require('./_ghostelo');   // v102 (review #188): the ghosts' hidden Elo
+const GE = require('./_ghostelo');
 require('../js/hex.js'); require('../js/data.js');
 const D = globalThis.B;
 
-// WHAT: Elo constants. K = how much a duel moves a player's Elo (32). KC = the smaller step for heroes, items and powers (16). PVE = the starting rating of everything (1000).
 const K = 32, PVE = 1000;
 const expect = (r, o) => 1 / (1 + Math.pow(10, (o - r) / 400));
 const eloAfter = (r, o, score) => r + K * (score - expect(r, o));
 
-// ---- content Elo (review #14)
-const KC = 16;          // content plays far more games than a player: a smaller step keeps the numbers steady
-const RATED_PER_HOUR = 40;  // rated fights per IP per hour, so nobody can flood the balance data
-// the pieces that acted in a fight: fielded heroes, their equipped items and the team's relics, minus anything with
-// no combat effect (B.NONCOMBAT), Hero's Crest without a 4th hero and Adventurer's Pack when no hero uses the extra slot
-// WHAT: which heroes, items and powers took part in a fight (items and powers with no combat effect are left out), for the Elo of pieces.
+// Content Elo (K=16: content plays far more games than an individual player)
+const KC = 16;
+const RATED_PER_HOUR = 40;
+// Return only combat-relevant heroes, equipped items, and team relics (excluding B.NONCOMBAT)
 function usedIn(team, relics) {
   const out = new Map(), add = (kind, id) => out.set(kind + ':' + id, { kind, id });
   for (const h of team) { add('hero', h.key); for (const id of h.items) if (!D.NONCOMBAT.item.includes(id)) add('item', id); }
@@ -55,9 +31,7 @@ function usedIn(team, relics) {
   }
   return [...out.values()];
 }
-// v62 (review #81): the fights of a finished run, [fight number, difficulty, won], checked and capped
 const DIFFS = ['easy', 'medium', 'hard', 'boss'];
-// WHAT: checks the list of fights a finished run reports ([fight number, difficulty, won]) and keeps only valid ones.
 function cleanFlog(x) {
   if (!Array.isArray(x)) return [];
   const seen = new Set(), out = [];
@@ -69,10 +43,7 @@ function cleanFlog(x) {
   }
   return out;
 }
-// v62 (review #82: "make sure runs are being measured correctly"): a run is counted ONCE (a key per player + run, so a retry or a
-// give-up after a defeat does not double it) and has its own hourly allowance, apart from the rated fights
-// WHAT: counts the fights of a finished run in the dashboard table, ONCE per run (key = player + run id) and with an hourly limit per visitor.
-// v81 (review #159): the offers and picks of a finished run (js/run.js run.tele), once per run, only real ids, small numbers
+// Count fight telemetry and offer/pick stats once per run (deduplicated per player + runId)
 const evIds = () => logPicks.ev || (logPicks.ev = new Set((D.EVENTS || []).map(e => e.id)));
 function realPick(k) {
   const i = k.indexOf(':'), kind = k.slice(0, i), rest = k.slice(i + 1);

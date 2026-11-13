@@ -345,12 +345,6 @@
     },
     // Closes the open sheet.
     close: () => { closeModal(); ui.fromCodex = false; ui.gsel = null; ui.heroInfo = 0; if (!U.battle) render(); },
-    // Opens the suggestion box.
-    suggest: () => U.openSuggest(),
-    'art-lab': async arg => { if (ui.modal) closeModal(); try { await ensureArtLab(); } catch (e) { toast(e.message); return; } B.ArtLab.open(labKit, arg); },
-    'draft-del': i => { const d = U.drafts(); d.splice(+i, 1); store.set('balance.drafts', d); U.renderDrafts(); },
-    'send-review': (a, el) => U.sendReview(el),
-    'sug-refresh': () => U.loadQueue(),
     // Opens the ladder.
     scores: () => U.openScores(),
     'player-tab': () => U.openScores('player'),
@@ -396,28 +390,7 @@
     skin: k => { store.set('balance.skin', k === 'royal' ? 'royal' : 'classic'); applySkin(); U.refreshShop(); toast(k === 'royal' ? 'Royal board on' : 'Classic board on'); },
     'copy-ref': () => { const i = $('#refLink'); if (!i) return; i.select(); const done = () => toast('Invite link copied'); if (navigator.clipboard) navigator.clipboard.writeText(i.value).then(done, () => { try { document.execCommand('copy'); done(); } catch (_) {} }); else { try { document.execCommand('copy'); done(); } catch (_) {} } },
   };
-  // WHAT: the small toolbox handed to the Art Lab (js/artlab.js), which is loaded on demand.
-  const labKit = { $, $$: s => [...document.querySelectorAll(s)], esc, toast, openModal, Net, store, trackBatch: U.trackBatch, ui };
-  let artLabP = null, artLabInit = false;
-  function wireArtLab() {
-    if (!B.ArtLab || artLabInit) return;
-    artLabInit = true;
-    Object.assign(ACT, B.ArtLab.actions);
-    B.ArtLab.init(labKit);
-  }
-  function ensureArtLab() {
-    if (B.ArtLab) { wireArtLab(); return Promise.resolve(B.ArtLab); }
-    if (!artLabP) artLabP = new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'js/artlab.js';
-      s.onload = () => { wireArtLab(); res(B.ArtLab); };
-      s.onerror = () => { artLabP = null; rej(new Error('Could not load Art Lab')); };
-      document.head.appendChild(s);
-    });
-    return artLabP;
-  }
-  if (B.ArtLab) wireArtLab();
-  // hero pictures (this device's test art or the official art) finish loading after the first screen: redraw it
+  // hero pictures finish loading after the first screen: redraw it
   B.Art.onChange(() => { if (U.screen === 'battle' || ui.modal || ui.drag) return; clearTimeout(ui.artH); ui.artH = setTimeout(() => { if (U.screen !== 'battle' && !ui.modal && !ui.drag) render(); }, 80); });
   B.Art.boot();
   // WHAT: after a change inside a sheet, redraws the top bar and the board behind it.
@@ -428,7 +401,6 @@
   const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: null, 'start-go': 'go', choose: 'pick', 'start-pick': 'pick', 'recruit-pick': 'pick', 'over-next': 'pick', 'start-relic': 'pick', 'start-next': 'pick', 'start-back': 'back',
     spec: 'unlock', event: 'pick', 'event-target': 'pick', equip: 'pick', bag: 'pick', unequip: 'back', close: 'back', 'event-back': 'back', sell: 'coin', 'result-ok': 'pick', 'stat-info': null, 'cos-preview': null };
   document.addEventListener('click', e => {
-    if (e.target.closest('#notice')) return;
     const foeEl = !e.target.closest('[data-act]') && e.target.closest('[data-foe]');
     if (foeEl) {
       const W = U.battle ? U.battle.W : U.preview, key = foeEl.dataset.foe;
@@ -511,7 +483,7 @@
   document.addEventListener('pointerup', endSwipe, { passive: true });
   document.addEventListener('pointercancel', endSwipe, { passive: true });
   document.addEventListener('input', e => {
-    if (e.target.id === 'sugName' || e.target.id === 'tname') {
+    if (e.target.id === 'tname') {
       const val = e.target.value.trim();
       if (val) store.set('balance.name', val.slice(0, 16));
     }
@@ -520,12 +492,7 @@
     const f = e.target.closest('form[data-form]'); if (!f) return; e.preventDefault();
     const kind = f.dataset.form, btn = f.querySelector('button'); if (btn) btn.disabled = true;
     try {
-      if (kind === 'draft') {
-        const t = f.text.value.trim(); if (btn) btn.disabled = false;
-        if (t.length < 5) { toast('Write at least a few words'); return; }
-        const d = U.drafts(); if (d.length >= U.MAX_DRAFTS) { toast('Up to ' + U.MAX_DRAFTS + ' changes per review'); return; }
-        d.push(t); store.set('balance.drafts', d); f.text.value = ''; U.renderDrafts(); f.text.focus();
-      } else if (kind === 'redeem') {
+      if (kind === 'redeem') {
         const code = f.code.value.trim();
         if (!code) { toast('Type a code'); if (btn) btn.disabled = false; return; }
         const r = await Net.post('player', { op: 'redeem', pid: pid(), code }); setAcct(r); ui.redeemOpen = false; sfx('coin'); toast(`+${r.redeemed} 👑 crowns!`); U.refreshShop();
@@ -623,7 +590,7 @@
 
   // ------------------------------------------------------------------ boot
   Object.assign(U, { ACT, sheetSwipe, refreshBehind });
-  // BOOT: everything above only defined things; from here the game starts: update an old save, read an invite link, load the account, draw the title screen, start the review notice polling.
+  // BOOT: migrate old save, read invite link, load account, draw title screen.
   U.run = Run.migrate(U.run);
   // an invite link (?ref=<code>) is kept until this browser's first run creates the account, then sent with it
   try {
@@ -636,7 +603,6 @@
   U.screen = 'title';
   U.layoutClasses();
   render();
-  U.bootNotice();
   // test hook (headless Chrome tests drive the game through this)
-  window.__bal = { deployBench: () => { if (!U.run) return 0; const n = Run.benched(U.run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(U.run, h); } if (n.length) { save(); render(); } return n.length; }, showVs: U.showVs, closeVs: U.closeVs, get ui() { return ui; }, get run() { return U.run; }, get battle() { return U.battle; }, get acct() { return acct; }, get result() { return ui.result; }, get screen() { return U.screen; }, set screen(s) { U.screen = s; }, loadAcct, ACT, render, skipBattle: U.skipBattle, poll: U.poll, fmt, scaleParts, hexScreen: (c, r) => { const b = U.view.canvas.getBoundingClientRect(), p = Render.hexScreen(U.view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
+  window.__bal = { deployBench: () => { if (!U.run) return 0; const n = Run.benched(U.run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(U.run, h); } if (n.length) { save(); render(); } return n.length; }, showVs: U.showVs, closeVs: U.closeVs, get ui() { return ui; }, get run() { return U.run; }, get battle() { return U.battle; }, get acct() { return acct; }, get result() { return ui.result; }, get screen() { return U.screen; }, set screen(s) { U.screen = s; }, loadAcct, ACT, render, skipBattle: U.skipBattle, fmt, scaleParts, hexScreen: (c, r) => { const b = U.view.canvas.getBoundingClientRect(), p = Render.hexScreen(U.view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
 })();
