@@ -21,7 +21,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v1.8</span>
+      <span class="app-ver" aria-label="Game version">v1.9</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -119,7 +119,7 @@
     const h = HEROES[key];
     return `<div class="hcard">
       <div class="hrow">${img(key, 48)}<b>${esc(h.name)}</b><span class="role">${h.role}</span></div>
-      ${chips({ hp: h.hp, atk: h.atk, armor: h.armor, as: h.as, range: h.range })}
+      ${chips({ hp: h.hp, atk: h.atk, ap: h.ap, armor: h.armor, as: h.as, range: h.range })}
       <div class="abil">${abilHTML(h)}</div>${scaleTag(key)}${extra}</div>`;
   }
   // the game starts with 1 hero and 1 relic: pick one of each (3 offered).
@@ -230,7 +230,7 @@
   // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
   function statBars(h) {
     const tr = (B.HERO_TRAITS && B.HERO_TRAITS[h.key]) || [], g = h.grow || 1;
-    const curve = g >= 1.5 ? ['Peaks late', 'late'] : g <= 0.6 ? ['Strong early', 'early'] : null;
+    const curve = g >= 1.1 ? ['Peaks late', 'late'] : g <= 0.9 ? ['Strong early', 'early'] : null;
     return tr.length || curve ? `<div class="htraits">${tr.filter(k => B.TRAIT[k]).map(k => `<span class="htr c-${B.TRAIT[k][1]}">${B.TRAIT[k][0]}</span>`).join('')}${curve ? `<span class="htr curve ${curve[1]}">${curve[1] === 'late' ? '📈' : '⚡'} ${curve[0]}</span>` : ''}</div>` : '';
   }
   function dealIn(step) { const k = (U.run && U.run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }

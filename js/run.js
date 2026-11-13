@@ -119,7 +119,6 @@
     return out;
   }
   function specOf(key, id) { for (const pair of B.HEROES[key].specs) for (const s of pair) if (s.id === id) return s; return null; }
-  const specTune = id => (B.TUNE && B.TUNE.spec && B.TUNE.spec[id]) || 1;
   function pvpDef(d, key) { const pk = B.heroKey ? B.heroKey(key) : key; const f = (B.TUNE && B.TUNE.pvp && (B.TUNE.pvp[pk] || B.TUNE.pvp[key])) || 1; if (f !== 1) { d.hp *= f; d.atk *= f; d.ap *= f; } return d; }
   function heroMods(run, h) {
     const m = {};
@@ -148,14 +147,13 @@
     return p ? { atkPct: p, hpPct: p } : null;
   }
   function slots(run, h) { return C.baseSlots + Math.max(0, h.lvl - 2) + (run.relics.includes('backpack') ? 1 : 0) + (lone(run) ? 2 : 0); }
-  // Level growth is here: every level adds +15% hp and attack and +30 AP, times the hero's own "grow" number (data.js). To make every hero stronger, change this formula or B.HEROES.
+  // Level growth is here: every level adds +15% hp and attack and +20% Magic, times the hero's own "grow" tier (0.85, 1 or 1.15 in data.js), plus role-based Defense growth.
   // Returns a plain object; sim.js never reads the run itself.
   function heroDef(run, h) {
     const b = B.HEROES[h.key], m = heroMods(run, h), L = h.lvl - 1, all = m.allPct || 0;
-    // each hero grows at its own pace per level (b.grow, 1 = +15% HP and attack and +30 AP per level),
-    // so heroes that were strong early and fell off late (or the reverse) stay in line through the whole run
-    const pk = B.heroKey ? B.heroKey(h.key) : h.key; let g = (b.grow || 1) * ((B.TUNE && B.TUNE.growth) || 1), tp = ((B.TUNE && B.TUNE.base) || 1);
-    for (const id of h.specs) tp *= specTune(id);   // the level-up powers' own balance factor; g also takes the global growth (what a level gives: Health, Attack, Magic and so the ability numbers)
+    const pk = B.heroKey ? B.heroKey(h.key) : h.key;
+    const g = b.grow || 1, tp = (B.TUNE && B.TUNE.power && (B.TUNE.power[pk] || B.TUNE.power[h.key])) || 1;
+    const defGrow = (B.ROLE_DEF_GROW && B.ROLE_DEF_GROW[b.role]) || 4;
     const ab = Object.assign({}, b.ab), fl = (b.fl || []).slice();
     let heroName = b.name;
     if (h.path != null && B.HERO_PATHS && B.HERO_PATHS[h.key] && B.HERO_PATHS[h.key][h.path]) {
@@ -174,8 +172,8 @@
       kind: 'hero', uid: h.uid, key: h.key, name: heroName, glyph: b.glyph, color: b.color, lvl: h.lvl,
       hp: isGlassPrism ? 1 : (b.hp + (m.hp || 0)) * (1 + 0.15 * g * L) * (1 + (m.hpPct || 0) + all) * tp,
       atk: (b.atk + (m.atk || 0)) * (1 + 0.15 * g * L) * (1 + (m.atkPct || 0) + all) * tp,
-      ap: (100 + 30 * g * L + (m.ap || 0)) * (1 + all) * tp,   // AP 100 at Lv 1, +30 per level (it now scales abilities on its own)
-      armor: (b.armor + 4 * L + (m.armor || 0)) * (1 + all),
+      ap: ((b.ap || 100) * (1 + 0.2 * g * L) + (m.ap || 0)) * (1 + all) * tp,
+      armor: (b.armor + defGrow * L + (m.armor || 0)) * (1 + all),
       as: b.as * Math.max(0.3, 1 + (m.asPct || 0)), range: Math.max(1, b.range + (m.range || 0)), ms: b.ms + (m.ms || 0),
       crit: (b.crit || 0) + (m.crit || 0), critDmg: 1.5 + (m.critDmg || 0), ls: (b.ls || 0) + (m.ls || 0),
       dodge: has(run, 'giant') ? 0 : (b.dodge || 0) + (m.dodge || 0), mana: Math.max(20, Math.round((b.mana + (m.manaMax || 0)) * (1 + (m.manaMaxPct || 0)))), m0: b.m0,
@@ -1138,7 +1136,7 @@
     };
   }
 
-  B.Run = { benched, pveSeq, startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, specTune, pvpDef, gainXp, chooseSpec, upgradeHero, heroNameOf, autoPlace, setPos, makeFight, fightWorld,
+  B.Run = { benched, pveSeq, startIntro, completeRun, shopHeroLevel, mapOf, blockedAt, gauntletMap, newRun, pickStart, heroDef, heroMods, slots, specOf, pvpDef, gainXp, chooseSpec, upgradeHero, heroNameOf, autoPlace, setPos, makeFight, fightWorld,
     finishFight, advance, choose, reroll, rerollCost, buy, leave, equip, unequip, sell, sellValue,
     eventAct, teamMax, addHero, gainRelic, rnd, migrate, teamSnapshot, devour, lossTag, stockFor, gauntletWorld, gauntletUpdate, recruitOffer, recruit, swapIn, powerOf, ghostPower, powerLabel, randomGhost, startDuel, finishDuel, stealOptions, steal, endAchs, ach, canEquip, setCounts, setBonuses, seqOf, bossFight,
     eventChoices, eventTargets, canChoose, itemRefs, upgradedOf, reqHeroes, evScale, pickEvent, startChallenge, CH, bossOf, autoEquip, evalAutoEquip, itemScore, heroProfile, randomItem };

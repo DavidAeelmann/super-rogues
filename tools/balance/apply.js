@@ -12,11 +12,11 @@ function safeWrite(filePath, content) {
 }
 
 // Writes the decisions of tools/balance/run.js into the game. Called by run.js --apply; never on its own.
-//   heroes  -> hp and atk in B.HEROES in js/data.js (actual printed stats, no hidden modifier)
-//   items   -> the numbers of the item (its mods) AND the same numbers in its text, in js/data.js
-//   powers  -> the numbers of its mods (a power without numeric mods is a design decision: reported, not written)
+//   heroes  -> hp, atk and ap in B.HEROES in js/data.js (actual printed stats, no hidden modifier; grow stays in { 0.85, 1, 1.15 })
+//   items   -> the numbers of the item (its mods) AND the exact same numbers in its text, in js/data.js
+//   powers  -> the numbers of its mods AND the exact same numbers in its text (a power without numeric mods is a design decision: reported, not written)
 //   fights  -> B.DIFF.easy.mul / B.DIFF.hard.mul, CFG.fightScale (medium = the non-boss fight numbers, boss = the boss numbers)
-// A number only changes when the text shows it (so the text never lies); rounding keeps numbers players can read (whole numbers, Health by 5).
+// A number only changes when the text shows it (so the text never lies); rounding keeps numbers players can read (whole numbers, Health by 5), and internal mods always equal the displayed value.
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..', '..'), DATA = path.join(ROOT, 'js/data.js');
 const STR = `'(?:[^'\\\\]|\\\\.)*'|"(?:[^"\\\\]|\\\\.)*"`;
@@ -26,14 +26,14 @@ const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // how a stat value shows in a text: fractions as percent (0.15 -> "15"), the rest as is
 const isFrac = v => Math.abs(v) < 1 && v !== 0;
 const show = v => isFrac(v) ? String(+(v * 100).toFixed(2)) : String(v);
-// Fine stat calculation for internal game balance
-const fineVal = (v, nv) => isFrac(v) ? +(nv.toFixed(4)) : +(nv.toFixed(2));
-// Clean player-facing display rounding
-const roundDisplay = (v, nv) => isFrac(v) ? (Math.abs(v) < 0.01 ? +(nv.toFixed(4)) : Math.round(nv * 100) / 100) : Math.abs(v) >= 100 ? Math.round(nv / 5) * 5 : Math.round(nv);
-// a stat is scaled only when MORE of it is STRONGER: a positive bonus. Penalties (negative numbers, e.g. "-5% max Health"), counters and
-// timers ("every 3rd attack", cooldowns, durations) and caps work the other way or are design choices: they stay
-const SCALABLE = (key, v) => v > 0 && !/Every|Cd$|cd$|Cost|Dur$|dur$|Secs?$|Time|Delay|Count$|Max$|Hexes|range|Range|Stacks?$/.test(key);
-// scales the numbers of a flat mods literal "{ atk: 15, hp: 60 }" and the same numbers in the text; returns null when nothing could change.
+// Clean WYSIWYG rounding used for BOTH internal mods and player-facing text (never let mods drift from desc)
+const roundClean = (v, nv) => isFrac(v) ? (Math.abs(v) < 0.01 ? +(nv.toFixed(4)) : Math.round(nv * 100) / 100) : Math.abs(v) >= 100 ? Math.round(nv / 5) * 5 : Math.round(nv);
+const snapGrow = g => g >= 1.075 ? 1.15 : g <= 0.925 ? 0.85 : 1;
+// a stat is scaled only when MORE of it is STRONGER: a positive bonus. Penalties (negative numbers, e.g. "-5% max Health"), counters,
+// timers, discrete counts ("+1 move speed", "+1 item slot", "3 targets") and boolean flags work the other way or are design choices: they stay
+const NON_SCALABLE_RE = /Every|Cd$|cd$|Cost|Dur$|dur$|Secs?$|Time|Delay|Count$|Max$|Hexes|range|Range|Stacks?$|^ms$|^itemSlots$|^cleanseOnce$|^stasis$|^antiHeal$|^titan$|^chainTargets$|^chaosNovaInterval$|^spawnCloneStart$|^bloodhoundTeleport$|^glassPrism$|^radius$|^reach$|^shots$|^knives$|^rays$|^width$|^bounces$|^flames$|^dishes$|^targets$|^max$|^cap$/i;
+const SCALABLE = (key, v) => v > 0 && !NON_SCALABLE_RE.test(key);
+// scales the numbers of a flat mods literal "{ atk: 15, hp: 60 }" and the exact same numbers in the text; returns null when nothing could change.
 function scale(modsText, desc, f) {
   let changed = [], mods = modsText;
   const toks = [...desc.matchAll(/\d+(?:\.\d+)?/g)].map(t => ({ s: t[0], i: t.index, used: false, to: null }))
@@ -41,18 +41,13 @@ function scale(modsText, desc, f) {
   const all = [...modsText.matchAll(/(\w+):\s*(-?[\d.]+)/g)];
   for (const m of all) {
     const v = +m[2]; if (!isFinite(v) || !SCALABLE(m[1], v)) continue;
-    const rawNv = fineVal(v, v * f);
-    const displayNv = roundDisplay(v, v * f);
-    if (rawNv === v || rawNv <= 0) continue;
+    const cleanNv = roundClean(v, v * f);
+    if (cleanNv === v || cleanNv <= 0) continue;
     const same = all.filter(x => +x[2] === v), mine = same.indexOf(m), free = toks.filter(t => (t.s === show(v) || Math.abs(+t.s - (isFrac(v) ? v * 100 : v)) < 0.05) && (!t.used || t.shared === v));
-    if (!free.length || same.some(x => !SCALABLE(x[1], v))) {
-      mods = mods.replace(new RegExp('\\b' + m[1] + ':\\s*' + esc(m[2]) + '(?![0-9.])'), m[1] + ': ' + rawNv);
-      changed.push(`${m[1]} ${v} -> ${rawNv}`);
-      continue;
-    }
-    const tok = free[Math.min(mine, free.length - 1)]; tok.used = true; tok.shared = v; tok.to = show(displayNv);
-    mods = mods.replace(new RegExp('\\b' + m[1] + ':\\s*' + esc(m[2]) + '(?![0-9.])'), m[1] + ': ' + rawNv);
-    changed.push(`${m[1]} ${v} -> ${rawNv} (text: ${tok.to})`);
+    if (!free.length || same.some(x => !SCALABLE(x[1], v))) continue; // never change a number unless its card text also updates to match
+    const tok = free[Math.min(mine, free.length - 1)]; tok.used = true; tok.shared = v; tok.to = show(cleanNv);
+    mods = mods.replace(new RegExp('\\b' + m[1] + ':\\s*' + esc(m[2]) + '(?![0-9.])'), m[1] + ': ' + cleanNv);
+    changed.push(`${m[1]} ${v} -> ${cleanNv} (text: ${tok.to})`);
   }
   if (!changed.length) return null;
   let text = '', at = 0; for (const t of toks) if (t.to != null) { text += desc.slice(at, t.i) + t.to; at = t.i + t.s.length; } text += desc.slice(at);
@@ -60,24 +55,24 @@ function scale(modsText, desc, f) {
 }
 function apply(dec) {
   let s = fs.readFileSync(DATA, 'utf8'); const L = [];
-  // heroes
-  // heroes: apply directly to starting hp, atk and growth in B.HEROES (no hidden modifier)
+  // heroes: apply directly to starting hp (nearest 5), atk (integer), ap (nearest 5) in B.HEROES; grow stays in { 0.85, 1, 1.15 }
   for (const h of dec.hero.filter(r => r.sig)) {
-    const heroRe = new RegExp('(\\b' + h.id + ':\\s*H\\(\\{[\\s\\S]*?\\bhp:\\s*)(\\d+)(,\\s*atk:\\s*)(\\d+)([\\s\\S]*?\\bgrow:\\s*)([\\d.]+)');
+    const heroRe = new RegExp('(\\b' + h.id + ':\\s*H\\(\\{[\\s\\S]*?\\bhp:\\s*)(\\d+)(,\\s*atk:\\s*)(\\d+)(,\\s*ap:\\s*)(\\d+)([\\s\\S]*?\\bgrow:\\s*)([\\d.]+)');
     const m = s.match(heroRe);
     if (m) {
-      const curHp = +m[2], curAtk = +m[4], curGrow = +m[6];
+      const curHp = +m[2], curAtk = +m[4], curAp = +m[6], curGrow = +m[8];
       let newHp = h.nextHp != null ? h.nextHp : curHp;
       let newAtk = h.nextAtk != null ? h.nextAtk : curAtk;
-      let newGrow = h.nextGrow != null ? h.nextGrow : curGrow;
+      let newAp = h.nextAp != null ? h.nextAp : curAp;
+      let newGrow = snapGrow(h.nextGrow != null ? h.nextGrow : curGrow);
       if (h.nextHp == null && h.knob) {
         const step = h.next / h.knob;
         newHp = Math.round(curHp * step / 5) * 5;
         newAtk = Math.max(1, Math.round(curAtk * step));
-        newGrow = +(curGrow * (1 + (step - 1) * 0.5)).toFixed(2);
+        newAp = Math.max(40, Math.round(curAp * step / 5) * 5);
       }
-      s = s.replace(heroRe, `$1${newHp}$3${newAtk}$5${newGrow}`);
-      L.push(`hero ${h.name} (${h.id}): stats adjusted hp ${curHp}->${newHp}, atk ${curAtk}->${newAtk}, grow ${curGrow}->${newGrow} (${h.dir}, start rate ${(100 * (h.sim?.p || h.rate)).toFixed(1)}%, z ${(h.comb?.z || h.z || 0).toFixed(1)})`);
+      s = s.replace(heroRe, `$1${newHp}$3${newAtk}$5${newAp}$7${newGrow}`);
+      L.push(`hero ${h.name} (${h.id}): stats adjusted hp ${curHp}->${newHp}, atk ${curAtk}->${newAtk}, ap ${curAp}->${newAp}, grow ${curGrow}->${newGrow} (${h.dir}, start rate ${(100 * (h.sim?.p || h.rate)).toFixed(1)}%, z ${(h.comb?.z || h.z || 0).toFixed(1)})`);
     }
   }
   // items and powers: their line, its mods literal and its text
@@ -112,4 +107,4 @@ function apply(dec) {
   safeWrite(DATA, s);
   return { summary: L.length ? L.map(x => '- ' + x).join('\n') : '- nothing passed the evidence rule' };
 }
-module.exports = { apply, scale };
+module.exports = { apply, scale, roundClean, snapGrow };

@@ -799,13 +799,10 @@ function playRun(seed, opt = {}) {
 function applyTune(t) {
   if (!t) return;
   if (t.power) B.TUNE.power = Object.assign({}, t.power);
-  if (t.spec) B.TUNE.spec = Object.assign({}, t.spec);
   if (t.pvp) B.TUNE.pvp = Object.assign({}, t.pvp);
   if (t.fightScale) C.fightScale = t.fightScale.slice();
-  if (t.growth != null) B.TUNE.growth = t.growth;
   if (t.ghostPower != null) C.ghostPower = t.ghostPower;
   if (t.firstFight != null) C.firstFight = t.firstFight;
-  if (t.base != null) B.TUNE.base = t.base;
   if (t.easyMul != null) B.DIFF.easy.mul = t.easyMul;
   if (t.hardMul != null) B.DIFF.hard.mul = t.hardMul;
 }

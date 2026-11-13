@@ -1,7 +1,7 @@
 // Engine + run logic checks (Node, no browser). Usage: node tools/tests/engine.js
 require('../../js/hex.js'); require('../../js/data.js'); require('../../js/sim.js'); require('../../js/run.js');
 const { Run, Sim, Hex, HEROES, ITEMS, RELICS, CFG } = B;
-B.TUNE.power = {}; B.TUNE.base = 1; B.TUNE.growth = 1; B.CFG.startItems = 0; B.CFG.freeRecruits = 0;   // v63/v64: the starting common items and the free recruits have their own tests at the end   // v62o: the checks below use the designed hero numbers; the balance tuner's power factors (B.TUNE) are for the real game
+B.TUNE.power = {}; B.CFG.startItems = 0; B.CFG.freeRecruits = 0;   // v63/v64: the starting common items and the free recruits have their own tests at the end
 let fails = 0, oks = 0;
 const ok = (c, msg) => { if (c) oks++; else { fails++; console.log('FAIL ' + msg); } };
 const finite = W => W.units.every(u => Number.isFinite(u.hp) && Number.isFinite(u.mana) && Number.isFinite(u.atk));
@@ -1060,17 +1060,20 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   // v88 (review #167): no ability is defined twice in sim.js / sim-abils.js (v83's boss Howl and Blizzard had silently replaced Fang's and Frostbane's own abilities)
   { const p = require('path'), fs = require('fs'), src = fs.readFileSync(p.join(__dirname, '..', '..', 'js', 'sim.js'), 'utf8') + '\n' + fs.readFileSync(p.join(__dirname, '..', '..', 'js', 'sim-abils.js'), 'utf8'), names = [...src.matchAll(/^\s*A\.(\w+) = /mg)].map(m => m[1]);
     const dup = names.filter((n, i) => names.indexOf(n) !== i); ok(names.length > 40 && !dup.length, 'v88: every ability name in sim.js is defined once' + (dup.length ? ' (twice: ' + dup.join(', ') + ')' : '')); }
-  // v88 (review #167): the level-up powers' balance factor (B.TUNE.spec) and the PvP-only hero factor (B.TUNE.pvp)
-  { const sv = B.TUNE.spec, pv = B.TUNE.pvp; B.TUNE.spec = {}; B.TUNE.pvp = {};
-    const r = Run.newRun(91); Run.pickStart(r, ['bastion'], null); const h = r.heroes[0]; h.lvl = 2; h.specs = ['bas2b'];
-    const d0 = Run.heroDef(r, h); B.TUNE.spec = { bas2b: 1.1 }; const d1 = Run.heroDef(r, h);
-    ok(Math.abs(d1.hp / d0.hp - 1.1) < 1e-9 && Math.abs(d1.atk / d0.atk - 1.1) < 1e-9 && Math.abs(d1.ap / d0.ap - 1.1) < 1e-9, 'v88 (review #167): a level-up power\'s factor scales Health, Attack and Magic');
-    B.TUNE.spec = {}; Run.startDuel(r, Run.randomGhost(r, 8, true), 'final', 9); const g0 = Run.gauntletWorld(r, true).units.find(u => u.side === 0 && u.kind === 'hero').hp;
+  // v88 / v1.9: WYSIWYG hero stats (role-based Magic, role-based Defense growth, clean grow tiers, no hidden spec multipliers) and PvP-only hero factor (B.TUNE.pvp)
+  { const pv = B.TUNE.pvp; B.TUNE.pvp = {};
+    const r = Run.newRun(91); Run.pickStart(r, ['bastion'], null); const h = r.heroes[0];
+    const dLv1 = Run.heroDef(r, h);
+    ok(dLv1.hp === B.HEROES.bastion.hp && dLv1.atk === B.HEROES.bastion.atk && dLv1.ap === B.HEROES.bastion.ap && dLv1.armor === B.HEROES.bastion.armor, 'v1.9: Lv 1 hero combat stats equal printed base stats (WYSIWYG)');
+    h.lvl = 2; const d0 = Run.heroDef(r, h); h.specs = ['bas2b']; const d1 = Run.heroDef(r, h);
+    ok(d1.hp === d0.hp && d1.atk === d0.atk && d1.ap === d0.ap && d1.armor === B.HEROES.bastion.armor + B.ROLE_DEF_GROW.Tank, 'v1.9: specs never silently alter base stats, and Tank Defense grows by +8/lvl');
+    ok(Object.values(B.HEROES).every(x => [0.85, 1, 1.15].includes(x.grow) && x.ap >= 50 && x.ap <= 130 && x.armor >= 10 && x.armor <= 60), 'v1.9: every hero has a clean grow tier (0.85, 1, 1.15), role-authentic Magic (55-120) and widened Defense (10-60)');
+    Run.startDuel(r, Run.randomGhost(r, 8, true), 'final', 9); const g0 = Run.gauntletWorld(r, true).units.find(u => u.side === 0 && u.kind === 'hero').hp;
     B.TUNE.pvp = { bastion: 0.8 }; const g1 = Run.gauntletWorld(r, true).units.find(u => u.side === 0 && u.kind === 'hero').hp; const f0 = Run.fightWorld ? Run.heroDef(r, h).hp : 0;
     ok(Math.abs(g1 / g0 - 0.8) < 0.005 && Math.abs(f0 - d0.hp) < 1e-6, 'v88: the PvP factor counts in duels only (' + (g1 / g0).toFixed(3) + ')');
-    B.TUNE.spec = sv; B.TUNE.pvp = pv;
-    const vals = Object.values(sv || {}).concat(Object.values(pv || {})); ok(vals.every(x => x >= 0.5 && x <= 1.6), 'v88: the tuned factors stay in a sane range');
-    ok(Object.keys(sv || {}).every(id => Object.values(B.HEROES).some(x => x.specs.some(p => p.some(s => s.id === id)))) && Object.keys(pv || {}).every(k => B.HEROES[k]), 'v88: every tuned power and hero exists'); }
+    B.TUNE.pvp = pv;
+    const vals = Object.values(pv || {}); ok(vals.every(x => x >= 0.5 && x <= 1.6), 'v88: the tuned factors stay in a sane range');
+    ok(!B.TUNE.base && !B.TUNE.growth && !B.TUNE.spec && Object.keys(pv || {}).every(k => B.HEROES[k]), 'v1.9: B.TUNE.base, growth and spec are gone; every PvP-tuned hero exists'); }
   // v78 (review #155): every art folder carries the hero's current name, and every picture art.js lists is there
   { const fs = require('fs'), path = require('path'), root = path.join(__dirname, '..', '..'), slug = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const src = fs.readFileSync(path.join(root, 'js', 'art.js'), 'utf8'), names = new Set(Object.values(B.HEROES).map(h => slug(h.name)));

@@ -100,7 +100,7 @@ function job(w) {
   });
 }
 if (!isMainThread) {
-  if (workerData.tune) { if (workerData.tune.power) B.TUNE.power = workerData.tune.power; if (workerData.tune.spec) B.TUNE.spec = workerData.tune.spec; if (workerData.tune.pvp) B.TUNE.pvp = workerData.tune.pvp; }
+  if (workerData.tune) { if (workerData.tune.power) B.TUNE.power = workerData.tune.power; if (workerData.tune.pvp) B.TUNE.pvp = workerData.tune.pvp; }
   parentPort.postMessage(job(workerData));
   return;
 }
