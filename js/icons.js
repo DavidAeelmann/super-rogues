@@ -580,7 +580,7 @@
   function lgG(c, x0, y0, x1, y1, col) { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, sh(col, 0.4)); g.addColorStop(0.5, col); g.addColorStop(1, sh(col, -0.38)); return g; }
   // WHAT: item id -> [drawer, accent colour].
   const IT = {
-    honeycomb: ['amulet', '#ffc21a'], starcloak: ['cloak', '#5a4ab8'], tidepearl: ['gem', '#9ff0ff'], moonslippers: ['boots', '#c9d2ff'], comethammer: ['hammer', '#b8a8ff'],  // v30
+    honeycomb: ['amulet', '#ffc21a'], starcloak: ['cloak', '#5a4ab8'], tidepearl: ['gem', '#9ff0ff'], moonslippers: ['boots', '#c9d2ff'], comethammer: ['hammer', '#b8a8ff'],  
     longsword: ['sword'], chainmail: ['armor'], belt: ['belt'], recurve: ['bow'], rod: ['rod'], cloak: ['cloak', '#4a5a6a'], tear: ['drop'], boots: ['boots'], gloves: ['glove'], fang: ['fang'],
     buckler: ['shield', '#8a6a3a'], cap: ['helm', leather], whetstone: ['stone'], coin: ['coin'], charm: ['amulet', '#c77dff'], amber: ['ring', '#e8a040'], dagger: ['dagger'], moss: ['leaf'], sling: ['stone', '#a09080'], focus: ['gem', '#5fa8ff'],
     bloodthirster: ['sword', '#e05555'], thornmail: ['armor', '#6a8a4a'], warmog: ['heart'], crossbow: ['crossbow'], deathcap: ['hat'], visage: ['mask', '#bfe6ff'], bluecrystal: ['gem'], infinity: ['sword', '#ffe066'], guardplate: ['shield'],
@@ -625,12 +625,12 @@
   const SLOT = { weapon: 'sword', offhand: 'shield', helmet: 'helm', armor: 'armor', gloves: 'glove', boots: 'boots', trinket: 'ring' };
   // WHAT: Power (relic) id -> [drawer, accent colour].
   const RE = {
-    beehive: ['lantern', '#ffc21a'], seashell: ['horn', '#ffb3c8'], kite: ['feather', '#ff8a5c'], compass: ['seal', '#b8a8ff'], teapot: ['vial', '#7ee08e'],  // v30
+    beehive: ['lantern', '#ffc21a'], seashell: ['horn', '#ffb3c8'], kite: ['feather', '#ff8a5c'], compass: ['seal', '#b8a8ff'], teapot: ['vial', '#7ee08e'],  
     snowglobe: ['gem', '#dff4ff'], marbles: ['dice', '#6fb6ff'], fireflies: ['lantern', '#e8ff7a'], pinwheel: ['clover', '#ff8ad8'], horseshoe: ['ring', '#c9c9d9'],
     idol: ['idol'], drum: ['drum'], standard: ['banner', '#6a6f7a'], lens: ['lantern'], feather: ['feather'], seal: ['seal'], dice: ['dice'], font: ['drop', '#5fa8ff'], bloodstone: ['gem', '#c43a3a'], tooth: ['fang'],
     wits: ['eye'], clover: ['clover'], backpack: ['backpack'], crest: ['crest'], vengeance: ['skull', '#e05555'], frostsigil: ['snowflake'], thunder: ['bolt'], spring: ['drop', '#5fd47a'], firststrike: ['shield', '#e8b84a'],
     purse: ['purse'], tome: ['book', '#1f2f55'], wind: ['wind'], mark: ['target'], ember: ['flame'], warhorn: ['horn'], ironwill: ['fist', '#9aa0a8'], seed: ['leaf', '#8ac43a'], bounty: ['scroll'], bloodpact: ['drop', '#8a1f24'],
-    shieldwall: ['shield', '#4d7fd0'], lonewolf: ['fang', '#9aa0a8'], vanguard: ['horn', '#e8b84a'], rearguard: ['bow', '#4a6a3a'], battleline: ['banner', '#c43a3a'], cover: ['leaf', '#3fa34d'],  // v33
+    shieldwall: ['shield', '#4d7fd0'], lonewolf: ['fang', '#9aa0a8'], vanguard: ['horn', '#e8b84a'], rearguard: ['bow', '#4a6a3a'], battleline: ['banner', '#c43a3a'], cover: ['leaf', '#3fa34d'],  
     lastbreath: ['skull'], whetset: ['stone', '#9aa0a8'], battery: ['gem', '#c77dff'], treasure: ['scroll', '#e8c890'], rally: ['banner', '#3a5ac4'],
 
     gravestone: ['skull', '#9aa0a8'], quakedrum: ['drum', '#a0622d'], bramblecrown: ['crown', '#3fa34d'], catapult: ['hammer', '#c48a3a'], gravity: ['stone', '#6a4bd0'], anchor: ['totem', '#4a5a7a'],
@@ -652,7 +652,7 @@
     if (typeof document === 'undefined') return '';
     const slot = kind === 'slot';
     const spec = slot ? [SLOT[id] || 'gem', '#8a90a0'] : (kind === 'item' ? IT : RE)[id] || ['gem'], tier = kind === 'item' ? (B.ITEM[id] || {}).tier || 'common' : 'relic';
-    const cv = document.createElement('canvas'), dpr = 4; cv.width = cv.height = px * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr);   // v62h: 4x so the glyph stays crisp on a phone
+    const cv = document.createElement('canvas'), dpr = 4; cv.width = cv.height = px * dpr; const c = cv.getContext('2d'); c.scale(dpr, dpr);   // 4x so the glyph stays crisp on a phone
     // frame: tactical dark glass plate + glowing rarity rim with rich bevel depth
     const f = slot ? '#3a4050' : tierColor(tier), r = px * 0.18, hi = !slot && (tier === 'legendary' || tier === 'mythic' || tier === 'set');
     const rr = (x, y, w, h, q) => { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, q) : c.rect(x, y, w, h); };

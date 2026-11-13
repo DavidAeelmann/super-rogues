@@ -75,13 +75,13 @@
     const sh = (m.shieldStart || 0) + (m.shieldStartPct || 0) * u.maxHp;
     if (sh > 0) { u.shield = sh; u.shieldU = W.t + sec(8); }
     W.units.push(u); W.byId[u.id] = u; W.occ[Hx.key(c, r)] = u.id;
-    if (W.ctx && def.kind === 'summon') fx(W, { k: 'spawn', c, r, id: u.id, color: def.color || '#fff', t1: W.t + 14 });   // v62p: something appears (a skeleton, a turret, a plant...)
+    if (W.ctx && def.kind === 'summon') fx(W, { k: 'spawn', c, r, id: u.id, color: def.color || '#fff', t1: W.t + 14 });   // something appears (a skeleton, a turret, a plant...)
     return u;
   }
 
   // WHAT: the moment a fight begins: static auras, start-of-fight effects (dive, factory...) and the powers that act at the start (relicStart). Not run for the deploy preview.
   function start(W) {
-    { const c = W.units.filter(u => u.abil === 'rewind'); W.chrono = c.length ? c : null; }   // v121: Chronos on the board (his fields and Rewind memory)
+    { const c = W.units.filter(u => u.abil === 'rewind'); W.chrono = c.length ? c : null; }   // Chronos on the board (his fields and Rewind memory)
     // auras (static, from starting positions) and start-of-fight effects
     for (const u of W.units) {
       for (const a of (u.m.aura || [])) for (const v of allies(W, u)) {
@@ -102,7 +102,7 @@
     for (const u of W.units) {
       if (u.fl.has('dive')) dive(W, u);
       if (u.fl.has('factory')) A.turret(W, u, true);
-      if (u.fl.has('tower')) { soldier(W, u); u.nextSpawn = W.t + sec(u.ab.every); }   // v60: the Citadel opens with a soldier
+      if (u.fl.has('tower')) { soldier(W, u); u.nextSpawn = W.t + sec(u.ab.every); }   // the Citadel opens with a soldier
       if (u.fl.has('prison')) {
         const t = enemies(W, u).sort((a, b) => b.maxHp - a.maxHp)[0];
         if (t) { cc(W, t, 'stun', 3); t.st.frozenU = W.t + sec(3); fxRing(W, t.c, t.r, 0, '#8ef', 12); }
@@ -128,7 +128,7 @@
       relicStart(W, s, F);
     }
   }
-  // v50: the Lodestone's hero: the one with the most max HP still standing
+  // the Lodestone's hero: the one with the most max HP still standing
   // WHAT: the hero with the most max HP still standing (the Lodestone power protects him).
   const lodestar = (W, s) => heroesOf(W, s).sort((a, b) => b.maxHp - a.maxHp)[0];
   // the new relics that act when a fight starts
@@ -190,10 +190,10 @@
       if (F.rearguard && u.r === back) out.push({ u, fl: 'rearguard' });
       if (F.battleline && line) out.push({ u, fl: 'battleline' });
       if (F.cover && W.tk && Hx.neighbors(u.c, u.r).some(h => W.tk[Hx.key(h.c, h.r)])) out.push({ u, fl: 'cover' });
-      // v50: back row +1 range and more damage, front row a little less (n = 1 / -1; v61: +25% / -5%)
+      // back row +1 range and more damage, front row a little less (n = 1 / -1; +25% / -5%)
       if (F.highground && (u.r === back || u.r === front)) out.push({ u, fl: 'highground', n: u.r === back ? 1 : -1 });
     }
-    // v50: the hero closest to the middle of your side is the Star (n = 1), the others pay for it (n = -1)
+    // the hero closest to the middle of your side is the Star (n = 1), the others pay for it (n = -1)
     if (F.center && team.length) {
       const mid = u => Math.abs(u.c - 3.5) + Math.abs(u.r - (s ? 1.5 : 5.5)) * 1.2;
       const star = team.slice().sort((a, b) => mid(a) - mid(b))[0];
@@ -207,7 +207,7 @@
   const alive = u => u && !u.dead;
   const enemies = (W, u) => W.units.filter(v => !v.dead && v.side !== u.side);
   const allies = (W, u) => W.units.filter(v => !v.dead && v.side === u.side);
-  const targetable = (W, v) => !v.dead && !v.plant && !(v.st.untarg > W.t) && !guarded(W, v);   // v62h: nothing can aim at a plant
+  const targetable = (W, v) => !v.dead && !v.plant && !(v.st.untarg > W.t) && !guarded(W, v);   // nothing can aim at a plant
   // Bodyguard Oath
   const guarded = (W, v) => v.kind === 'hero' && (W.fl.bodyguard || W.fl1.bodyguard) && flOf(W, v.side).bodyguard && (B.HEROES[v.key] || v).range > 1
     && W.units.some(a => !a.dead && a.side === v.side && a.kind === 'hero' && (B.HEROES[a.key] || a).range <= 1);
@@ -261,13 +261,13 @@
   function buff(u, s, v, dur, W) { u.buffs.push({ s, v, until: dur >= 1e9 ? 1e12 : (W ? W.t : 0) + dur }); }
   // WHAT: the sum of the active buffs of one stat on a unit.
   function bsum(W, u, s) { let x = 0; for (const b of u.buffs) if (b.s === s && b.until > W.t) x += b.v; return x; }
-  // WHAT: the CURRENT stat of a unit with buffs applied: atkOf (attack), armorOf (Defense, v62h: one stat for physical and magic damage), lsOf (lifesteal), apOf (ability power), asOf (attacks per second), msOf (moves per second). Always read stats through these.
+  // WHAT: the CURRENT stat of a unit with buffs applied: atkOf (attack), armorOf (Defense, one stat for physical and magic damage), lsOf (lifesteal), apOf (ability power), asOf (attacks per second), msOf (moves per second). Always read stats through these.
   const atkOf = (W, u) => Math.max(1, u.atk * (1 + bsum(W, u, 'atkPct') + u.bAtkPct) + u.titan * 3 + u.bAtk);
-  // v104: Onyx's Living Fortress gives the allies next to him 30% of his Defense
+  // Onyx's Living Fortress gives the allies next to him 30% of his Defense
   const shellAura = (W, u) => { let s = 0; if (W.shellAura === undefined) W.shellAura = W.units.some(a => a.fl.has('shellaura')); if (W.shellAura) for (const a of W.units) if (a !== u && !a.dead && a.side === u.side && a.fl.has('shellaura') && Hx.dist(a, u) === 1) s += a.armor * 0.3; return s; };
-  const armorOf = (W, u) => u.armor - toxArm(W, u) + bsum(W, u, 'armor') + u.titan * 3 + u.bArm + shellAura(W, u) + (u.ab && u.ab.walls ? u.ab.walls * garrisonSize(W, u) : 0);   // v105: the Citadel's Stone Walls
+  const armorOf = (W, u) => u.armor - toxArm(W, u) + bsum(W, u, 'armor') + u.titan * 3 + u.bArm + shellAura(W, u) + (u.ab && u.ab.walls ? u.ab.walls * garrisonSize(W, u) : 0);   // the Citadel's Stone Walls
   const lsOf = (W, u) => u.ls + bsum(W, u, 'ls');
-  const toxArm = (W, u) => u.tox && u.tox.until > W.t && u.tox.corrode ? u.tox.n * u.tox.corrode : 0;   // v121: Belladonna's Corrosive Acid
+  const toxArm = (W, u) => u.tox && u.tox.until > W.t && u.tox.corrode ? u.tox.n * u.tox.corrode : 0;   // Belladonna's Corrosive Acid
   // abilities scale with AD (attack), AP (ability power) or both, ADDED: "95% AP", "60% AD + 30% AP".
   // AP is never a multiplier of attack any more.
   const apOf = u => u.ap || 0;
@@ -275,7 +275,7 @@
   function asOf(W, u) {
     let a = u.as * (1 + bsum(W, u, 'asPct') + u.bAsPct + u.focus * (u.ab.focus || 0));
     if (u.st.slowU > W.t) a *= 1 - u.st.slowP * 0.5;
-    if (u.kind === 'hero' && flOf(W, u.side).berserk) a *= 2 - Math.max(0, u.hp) / u.maxHp;   // v50: up to twice as fast
+    if (u.kind === 'hero' && flOf(W, u.side).berserk) a *= 2 - Math.max(0, u.hp) / u.maxHp;   // up to twice as fast
     // v121 (reviews #209-#212): Chronos' Paradox and Accelerando, Kitsune's Spirit Jaunt (faster), Stasis Field and Belladonna's numbing Toxin (slower)
     if (u.paradoxU > W.t) a *= 1 + u.ab.paradox; if (u.jauntU > W.t) a *= 1 + (u.ab.jauntAs || 0);
     if (u.tox && u.tox.until > W.t && u.tox.numb) a *= 1 - Math.min(0.6, u.tox.n * u.tox.numb);
@@ -307,7 +307,7 @@
 
   // ------------------------------------------------------------------ status effects
   // WHAT: STATUS EFFECTS. ccImmune = cannot be stunned (Juggernaut above half health, bosses...). cc() stuns / silences / roots for seconds, slow() slows, shield() adds a temporary shield, dot() adds damage over time, heal() heals.
-  function ccImmune(W, u) { return u.st.ccImmU > W.t || (u.fl.has('juggernaut') && u.hp > u.maxHp * 0.5) || (u.fl.has('stoneskin') && u.shield > 0); }   // v105: Aegir's Stone Skin
+  function ccImmune(W, u) { return u.st.ccImmU > W.t || (u.fl.has('juggernaut') && u.hp > u.maxHp * 0.5) || (u.fl.has('stoneskin') && u.shield > 0); }   // Aegir's Stone Skin
   // WHAT: applies a crowd control (stun, silence, root, freeze...) for s seconds unless the unit is immune or has a one-time cleanse.
   function cc(W, u, kind, s) {
     if (!alive(u) || s <= 0 || u.plant) return;
@@ -328,9 +328,9 @@
   function heal(W, u, amt, show) {
     if (!alive(u) || amt <= 0) return 0;
     let m = 1 + (u.m.healPower || 0); if (u.st.antiHealU > W.t) m *= 0.5;
-    if (u.tox && u.tox.until > W.t) m *= 1 - Math.min(0.8, u.tox.n * u.tox.anti);   // v121: Belladonna's Toxin
+    if (u.tox && u.tox.until > W.t) m *= 1 - Math.min(0.8, u.tox.n * u.tox.anti);   // Belladonna's Toxin
     const before = u.hp; u.hp = Math.min(u.maxHp, u.hp + amt * m);
-    if (u.kind === 'hero' && W.fl && flOf(W, u.side).berserk) u.hp = Math.min(u.hp, Math.max(before, u.maxHp * 0.5));   // v50
+    if (u.kind === 'hero' && W.fl && flOf(W, u.side).berserk) u.hp = Math.min(u.hp, Math.max(before, u.maxHp * 0.5));   
     const got = Math.round(u.hp - before);
     // who healed: the caster of the ability running now (W.ctx.by), or the one named by the caller
     if (got > 0) { const by = W.healBy || (W.ctx && W.ctx.by); const h = by ? W.byId[by] : null; if (h) h.healDone = (h.healDone || 0) + got; }
@@ -344,16 +344,16 @@
   function deal(W, src, tgt, raw, type, o = {}) {
     if (!alive(tgt) || raw <= 0 || tgt.plant) return 0;   // plants cannot be attacked
     if (tgt.st.invuln > W.t) { if (!o.dot) fxText(W, tgt, 'IMMUNE', '#fff'); return 0; }
-    // v50: the Mirror Shard sends the first ability that hits each hero back to its caster
+    // the Mirror Shard sends the first ability that hits each hero back to its caster
     if (o.ability && src && !o.mirrored && alive(src) && src.side !== tgt.side && tgt.kind === 'hero' && !tgt.once.mirror && flOf(W, tgt.side).mirrorshield) {
       tgt.once.mirror = 1; fxText(W, tgt, 'REFLECTED', '#bfe6ff'); fx(W, { k: 'bolt', pts: [[tgt.c, tgt.r], [src.c, src.r]], color: '#bfe6ff', t1: W.t + 6 });
       return deal(W, tgt, src, raw, type, { ability: true, mirrored: true }) && 0;
     }
-    const lucky = v => v && v.kind === 'hero' && flOf(W, v.side).loaded;   // v50: the Two-Faced Coin rolls twice
-    if (o.atk && src && tgt.ab && tgt.ab.jauntEvery && !(tgt.st.stun > W.t)) { tgt.jauntN = (tgt.jauntN || 0) + 1; if (tgt.jauntN >= tgt.ab.jauntEvery) { tgt.jauntN = 0; jaunt(W, tgt, src); return 0; } }   // v121: Kitsune
-    if (o.atk && src && tgt.ab && tgt.ab.miasma && src.side !== tgt.side) addTox(W, tgt, src, tgt.ab.miasma);   // v121: Belladonna's Noxious Miasma
+    const lucky = v => v && v.kind === 'hero' && flOf(W, v.side).loaded;   // the Two-Faced Coin rolls twice
+    if (o.atk && src && tgt.ab && tgt.ab.jauntEvery && !(tgt.st.stun > W.t)) { tgt.jauntN = (tgt.jauntN || 0) + 1; if (tgt.jauntN >= tgt.ab.jauntEvery) { tgt.jauntN = 0; jaunt(W, tgt, src); return 0; } }   // Kitsune
+    if (o.atk && src && tgt.ab && tgt.ab.miasma && src.side !== tgt.side) addTox(W, tgt, src, tgt.ab.miasma);   // Belladonna's Noxious Miasma
     const dodge = tgt.dodge + foxWard(W, tgt);
-    if (o.atk && dodge > 0 && (W.rng() < dodge || (lucky(tgt) && W.rng() < dodge))) { fxText(W, tgt, 'miss', '#ccc'); if (tgt.ab && tgt.ab.dodgeMana && tgt.maxMana) tgt.mana = Math.min(tgt.maxMana, tgt.mana + tgt.ab.dodgeMana); return 0; }   // v105: Brawler's Luck
+    if (o.atk && dodge > 0 && (W.rng() < dodge || (lucky(tgt) && W.rng() < dodge))) { fxText(W, tgt, 'miss', '#ccc'); if (tgt.ab && tgt.ab.dodgeMana && tgt.maxMana) tgt.mana = Math.min(tgt.maxMana, tgt.mana + tgt.ab.dodgeMana); return 0; }   // Brawler's Luck
     if (o.atk && src && src.st.blindU > W.t) { fxText(W, tgt, 'blind', '#ccc'); return 0; }
     let dmg = raw, crit = false;
     if (src && (o.atk || o.canCrit) && (o.forceCrit || W.rng() < src.crit || (lucky(src) && W.rng() < src.crit))) {
@@ -374,7 +374,7 @@
       }
     }
     if (tgt.st.vulnU > W.t) amp += tgt.st.vulnP;
-    if (src && src.st.tauntU > W.t) { const tb = W.byId[src.st.tauntBy]; if (tb && tb.ab && tb.ab.weaken) amp -= tb.ab.weaken; }   // v105: Aegir's Humbling Taunt
+    if (src && src.st.tauntU > W.t) { const tb = W.byId[src.st.tauntBy]; if (tb && tb.ab && tb.ab.weaken) amp -= tb.ab.weaken; }   // Aegir's Humbling Taunt
     if (tgt.st.shatterU > W.t) amp += tgt.st.shatterP;
     if (src && src.m && src.m.bountyMark) {
       const foes = enemies(W, src);
@@ -405,15 +405,15 @@
     else if (type === 'magic') dmg *= 100 / (100 + Math.max(0, armorOf(W, tgt)));   // Defense protects against magic too
     dmg *= 1 - Math.min(0.8, (tgt.m.dmgReduce || 0) + bsum(W, tgt, 'dr'));
     if (tgt.side === 0 && W.tm0 !== 1 && !(type === 'true' && raw >= tgt.hp + tgt.shield)) dmg *= W.tm0;
-    if (tgt.anchor && tgt.c === tgt.anchor.c && tgt.r === tgt.anchor.r) dmg *= 0.75;   // v50: the Anchor Chain
-    if (tgt.kind === 'hero' && flOf(W, tgt.side).lodestone && lodestar(W, tgt.side) === tgt) dmg *= 0.95;   // v50: the Lodestone
+    if (tgt.anchor && tgt.c === tgt.anchor.c && tgt.r === tgt.anchor.r) dmg *= 0.75;   // the Anchor Chain
+    if (tgt.kind === 'hero' && flOf(W, tgt.side).lodestone && lodestar(W, tgt.side) === tgt) dmg *= 0.95;   // the Lodestone
     // the Brotherhood Chain also lowers the damage; a gravestone shelters the heroes next to it
     if (tgt.kind === 'hero' && flOf(W, tgt.side).bond) dmg *= 0.9;
     if (tgt.kind === 'hero' && flOf(W, tgt.side).gravestone && W.terrain.some(t => t.grave && Hx.dist(t, tgt) === 1)) dmg *= 0.8;
     dmg = Math.max(1, Math.round(dmg));
     let abs = 0;
     if (tgt.shield > 0 && tgt.shieldU > W.t) { abs = Math.min(tgt.shield, dmg); tgt.shield -= abs; dmg -= abs; }
-    // v50: the Brotherhood Chain shares what gets through among every hero still standing
+    // the Brotherhood Chain shares what gets through among every hero still standing
     if (dmg > 0 && tgt.kind === 'hero' && flOf(W, tgt.side).bond) {
       const mates = W.units.filter(v => !v.dead && v !== tgt && v.side === tgt.side && v.kind === 'hero');
       if (mates.length) {
@@ -422,7 +422,7 @@
       }
     }
     tgt.hp -= dmg; tgt.hitT = W.t;
-    if (tgt.fl.has('mirswap') && !tgt.once.swap && tgt.hp > 0 && tgt.hp < tgt.maxHp * 0.4) {   // v105: Mirage's Switcheroo
+    if (tgt.fl.has('mirswap') && !tgt.once.swap && tgt.hp > 0 && tgt.hp < tgt.maxHp * 0.4) {   // Mirage's Switcheroo
       const cl = W.units.find(v => !v.dead && v.owner === tgt.id && v.key === 'clone');
       if (cl) { tgt.once.swap = 1; const a = { c: tgt.c, r: tgt.r }, b = { c: cl.c, r: cl.r }; for (const [v, h] of [[tgt, b], [cl, a]]) { v.c = v.fc = h.c; v.r = v.fr = h.r; v.m0t = v.m1t = W.t; W.occ[Hx.key(h.c, h.r)] = v.id; } fxText(W, tgt, 'SWITCH', '#ff6fb5'); for (const e of enemies(W, tgt)) if (e.tgt === tgt.id) e.tgt = cl.id; }
     }
@@ -439,7 +439,7 @@
       if (o.ability && src.m.omni) { W.healBy = src.id; heal(W, src, total * src.m.omni); W.healBy = 0; }
       if (o.ability && src.m.abilityBurn && !o.dot) dot(W, tgt, 'burn', src.m.abilityBurn * tgt.maxHp, 3, src);
       if (o.atk && !o.noThorns && tgt.m.thorns && Hx.dist(src, tgt) <= 1) deal(W, tgt, src, total * tgt.m.thorns, 'magic', { noThorns: true });
-      if (o.atk && !o.noThorns && tgt.fl.has('spikes') && tgt.ab.spike && alive(tgt)) deal(W, tgt, src, armorOf(W, tgt) * tgt.ab.spike, 'phys', { noThorns: true });   // v104: Onyx's Spiked Shell
+      if (o.atk && !o.noThorns && tgt.fl.has('spikes') && tgt.ab.spike && alive(tgt)) deal(W, tgt, src, armorOf(W, tgt) * tgt.ab.spike, 'phys', { noThorns: true });   // Onyx's Spiked Shell
     }
     if (tgt.fl.has('brute') && tgt.maxMana > 0) tgt.mana = Math.min(tgt.maxMana, tgt.mana + total / tgt.maxHp * 100 * (tgt.ab.gain || 2));   // Rohammer fills its Energy only from damage taken
     else if (tgt.maxMana > 0 && !o.dot) tgt.mana = Math.min(tgt.maxMana, tgt.mana + 3 * manaGain(W, tgt));
@@ -453,7 +453,7 @@
   }
 
   // WHAT: how much mana a hit gives (a hook for powers that change it).
-  const manaGain = () => 1;   // v50: the Overflow Cup's price is in its mana cost now (data.js)
+  const manaGain = () => 1;   // the Overflow Cup's price is in its mana cost now (data.js)
   // WHAT: brings a dead unit back with a fraction of its max HP (phoenix egg, Soul Jar, Resurrect, Ashwing).
   function reviveAt(W, u, frac, label) {
     u.dead = false; u.hp = Math.max(1, Math.round(u.maxHp * frac)); u.dots = []; u.st = {}; u.busy = W.t + sec(0.4);
@@ -472,7 +472,7 @@
     }
     if (u.fl.has('undying') && !u.once.undying) { u.once.undying = 1; u.hp = 1; u.st.invuln = W.t + sec(2); fxText(W, u, 'UNDYING', '#f44'); return; }
     if (u.m.revive && !u.once.revive) { u.once.revive = 1; u.hp = Math.round(u.maxHp * u.m.revive); u.dots = []; fxText(W, u, 'REVIVE', '#ffe066'); return; }
-    if (u.tox && u.tox.until > W.t) { const s = W.byId[u.tox.src]; if (s && s.ab && s.ab.spore) { W.zones.push({ c: u.c, r: u.r, rad: 0, until: W.t + sec(4), dps: s.ab.spore * apOf(s), side: s.side, src: s.id, color: '#7cb342' }); fxRing(W, u.c, u.r, 0, '#7cb342', 10); } }   // v121: Spore Burst
+    if (u.tox && u.tox.until > W.t) { const s = W.byId[u.tox.src]; if (s && s.ab && s.ab.spore) { W.zones.push({ c: u.c, r: u.r, rad: 0, until: W.t + sec(4), dps: s.ab.spore * apOf(s), side: s.side, src: s.id, color: '#7cb342' }); fxRing(W, u.c, u.r, 0, '#7cb342', 10); } }   // Spore Burst
     const fk = u.side ? 'feather1' : 'feather';
     if (u.kind === 'hero' && flOf(W, u.side).feather && !W.once[fk]) { W.once[fk] = 1; u.hp = Math.round(u.maxHp * 0.3); u.dots = []; fxText(W, u, 'ASHEN PLUME', '#ff7a3d'); return; }
     u.dead = true; u.hp = 0; u.deathT = W.t; u.anim = null;
@@ -510,7 +510,7 @@
     for (const v of W.units) {
       if (v.dead) continue;
       if (v.fl.has('gravepact') && v.side !== u.side && Hx.dist(v, u) <= 3) v.mana = Math.min(v.maxMana, v.mana + 15);
-      if (v.ab && v.ab.feast && v.side !== u.side && Hx.dist(v, u) <= 2) v.mana = Math.min(v.maxMana, v.mana + v.ab.feast);   // v105: Vesper's Feast
+      if (v.ab && v.ab.feast && v.side !== u.side && Hx.dist(v, u) <= 2) v.mana = Math.min(v.maxMana, v.mana + v.ab.feast);   // Vesper's Feast
       if (v.fl.has('soulharvest')) heal(W, v, v.maxHp * 0.05);
       if (v.m.killAtk && v.side !== u.side && Hx.dist(v, u) <= 3 && (v.sc.ka || 0) < v.m.killAtkCap) { const g = Math.min(v.m.killAtk, v.m.killAtkCap - (v.sc.ka || 0)); v.sc.ka = (v.sc.ka || 0) + g; v.bAtk += g; }
     }
@@ -522,8 +522,8 @@
       const lum = allies(W, u).find(a => a.fl.has('resurrect') && !a.once.res);
       if (lum) { lum.once.res = 1; at(W, W.t + sec(1), () => { if (u.dead && !W.over) reviveAt(W, u, 0.5, 'RESURRECTED'); }); }
     }
-    if (u.ab && u.ab.ashFall && u.kind === 'hero') fireballAt(W, u, { c: u.c, r: u.r }, u.ab.ashFall, false);   // v105: Feuer's Last Flare
-    if (src && alive(src) && src.fl.has('vanish') && !(src.vanishT > W.t)) { src.vanishT = W.t + sec(1); at(W, W.t + 2, () => {   // v105: Vex's Vanishing Act
+    if (u.ab && u.ab.ashFall && u.kind === 'hero') fireballAt(W, u, { c: u.c, r: u.r }, u.ab.ashFall, false);   // Feuer's Last Flare
+    if (src && alive(src) && src.fl.has('vanish') && !(src.vanishT > W.t)) { src.vanishT = W.t + sec(1); at(W, W.t + 2, () => {   // Vex's Vanishing Act
       if (!alive(src) || W.over) return; const t = enemies(W, src).filter(e => targetable(W, e)).sort((a, b) => a.hp - b.hp)[0]; if (!t) return;
       const n = freeNeighbors(W, t.c, t.r).sort((a, b) => Hx.dist(a, src) - Hx.dist(b, src))[0]; if (Hx.dist(src, t) > 1 && n) blink(W, src, n.c, n.r);
       if (Hx.dist(src, t) <= 1) { deal(W, src, t, atkOf(W, src), 'phys', { ability: true, canCrit: true }); fxText(W, src, 'VANISH', '#a05cff'); } }); }
@@ -675,7 +675,7 @@
   function startAttack(W, u, tgt) {
     const a = asOf(W, u);
     const wt = Math.min(12, Math.max(3, Math.round(TPS * 0.45 / a)));
-    u.anim = u.lastAtk = { k: 'atk', t0: W.t, t1: W.t + wt, tid: tgt.id, ranged: u.range > 1 };   // v55: lastAtk = the render's recovery
+    u.anim = u.lastAtk = { k: 'atk', t0: W.t, t1: W.t + wt, tid: tgt.id, ranged: u.range > 1 };   // lastAtk = the render's recovery
     u.busy = W.t + wt; u.nextAtk = W.t + Math.max(wt + 1, Math.round(TPS / a)); u.tgt = tgt.id;
     at(W, W.t + wt, () => {
       if (u.dead || u.st.stun > W.t) return;
@@ -696,14 +696,14 @@
     u.moved = false;
     if (u.fl.has('sniper')) mult *= 1 + 0.08 * Hx.dist(u, tgt);
     if (u.fl.has('plasma')) mult *= plasmaMul(u, Hx.dist(u, tgt));
-    if (u.blindHits > 0) { u.blindHits--; cc(W, tgt, 'blindU', 1); }   // v105: Eclipse's Smoke Trail
-    if (u.ab && u.ab.paradox && tgt.st.slowU > W.t) u.paradoxU = W.t + sec(1.5);   // v121: Chronos' Paradox
-    if (u.ab && u.ab.decel) { const n = Math.min(u.ab.decelCap || 5, (tgt.st.decelU > W.t ? tgt.decelN || 0 : 0) + 1); tgt.decelN = n; tgt.st.decelU = W.t + sec(3); slow(W, tgt, n * u.ab.decel, 3); }   // v121: Decelerate
-    if (u.ab && u.ab.tox) addTox(W, u, tgt, 1);   // v121: Belladonna's Virulence
-    if (u.ab && u.ab.kindle) u.kindleN = Math.min(15, (u.kindleN || 0) + 1);   // v105: Feuer's Kindling
-    if (u.ab && u.ab.lance && (tgt.st.frozenU > W.t || tgt.st.slowU > W.t)) mult *= 1 + u.ab.lance;   // v105: Frostbane's Ice Lance
-    if (u.ab && u.ab.splitFull && u.focus >= (u.ab.focusCap || 15)) { const o = enemies(W, u).filter(e => e !== tgt && Hx.dist(e, u) <= u.range + 1).sort((a, b) => Hx.dist(a, tgt) - Hx.dist(b, tgt))[0]; if (o) deal(W, u, o, atkOf(W, u) * u.ab.splitFull, 'phys', { canCrit: true }); }   // v105: Talon's Split Nock
-    const atk = atkOf(W, u) + (u.ab && u.ab.biteArmor ? u.ab.biteArmor * armorOf(W, u) : 0);   // v104: Onyx's Snapping Jaws
+    if (u.blindHits > 0) { u.blindHits--; cc(W, tgt, 'blindU', 1); }   // Eclipse's Smoke Trail
+    if (u.ab && u.ab.paradox && tgt.st.slowU > W.t) u.paradoxU = W.t + sec(1.5);   // Chronos' Paradox
+    if (u.ab && u.ab.decel) { const n = Math.min(u.ab.decelCap || 5, (tgt.st.decelU > W.t ? tgt.decelN || 0 : 0) + 1); tgt.decelN = n; tgt.st.decelU = W.t + sec(3); slow(W, tgt, n * u.ab.decel, 3); }   // Decelerate
+    if (u.ab && u.ab.tox) addTox(W, u, tgt, 1);   // Belladonna's Virulence
+    if (u.ab && u.ab.kindle) u.kindleN = Math.min(15, (u.kindleN || 0) + 1);   // Feuer's Kindling
+    if (u.ab && u.ab.lance && (tgt.st.frozenU > W.t || tgt.st.slowU > W.t)) mult *= 1 + u.ab.lance;   // Frostbane's Ice Lance
+    if (u.ab && u.ab.splitFull && u.focus >= (u.ab.focusCap || 15)) { const o = enemies(W, u).filter(e => e !== tgt && Hx.dist(e, u) <= u.range + 1).sort((a, b) => Hx.dist(a, tgt) - Hx.dist(b, tgt))[0]; if (o) deal(W, u, o, atkOf(W, u) * u.ab.splitFull, 'phys', { canCrit: true }); }   // Talon's Split Nock
+    const atk = atkOf(W, u) + (u.ab && u.ab.biteArmor ? u.ab.biteArmor * armorOf(W, u) : 0);   // Onyx's Snapping Jaws
     const dealt = deal(W, u, tgt, atk * mult, 'phys', { atk: true });
     u.atkN++;
     if (u.m && u.m.blinkEveryAtk && u.atkN % u.m.blinkEveryAtk === 0 && alive(tgt)) {
@@ -714,7 +714,7 @@
         fxText(W, u, 'WARP STRIKE', '#00ffcc');
       }
     }
-    if (u.garrison && dealt > 0) { const t = W.byId[u.garrison]; if (t && !t.dead && t.maxMana) t.mana = Math.min(t.maxMana, t.mana + 5); }   // v60: Citadel
+    if (u.garrison && dealt > 0) { const t = W.byId[u.garrison]; if (t && !t.dead && t.maxMana) t.mana = Math.min(t.maxMana, t.mana + 5); }   // Citadel
     if (!u.dead) {
       if (!u.fl.has('brute')) u.mana = Math.min(u.maxMana, u.mana + (10 + (u.m.manaOnHit || 0)) * manaGain(W, u)); if (u.ab.focus) u.focus = Math.min(u.ab.focusCap || 15, u.focus + 1); if (u.m.titan) u.titan = Math.min(15, u.titan + 0.5);
       if (u.m.stackAtk && (u.sc.sa || 0) < u.m.stackAtkCap) { u.sc.sa = (u.sc.sa || 0) + 1; u.bAtk += u.m.stackAtk; }
@@ -724,8 +724,8 @@
     if (u.eclipse > 0 && alive(tgt)) { u.eclipse--; const x = deal(W, u, tgt, atk * u.ab.bonus, 'magic', { ability: true }); heal(W, u, x * u.ab.heal); }
     if (u.m.reap && alive(tgt) && tgt.hp < tgt.maxHp * u.m.reap) { fxText(W, tgt, 'REAPED', '#aaa'); deal(W, u, tgt, tgt.hp + tgt.shield + 1, 'true', {}); }
     if (dealt <= 0) return;
-    if (u.fl.has('brute') && alive(tgt)) cc(W, tgt, 'stun', u.ab.tap);   // v62i: every slow hammer blow stuns for a blink
-    if (u.fl.has('plasma') && u.ab.knock && alive(tgt)) push(W, u, tgt, u.ab.knock);   // v62h: the slug shoves it back
+    if (u.fl.has('brute') && alive(tgt)) cc(W, tgt, 'stun', u.ab.tap);   // every slow hammer blow stuns for a blink
+    if (u.fl.has('plasma') && u.ab.knock && alive(tgt)) push(W, u, tgt, u.ab.knock);   // the slug shoves it back
     const m = u.m;
     if (m.burnOnHit) dot(W, tgt, 'burn', m.burnOnHit * atk, 3, u);
     if (m.poisonOnHit) dot(W, tgt, 'poison', m.poisonOnHit * tgt.maxHp * (tgt.boss ? 0.4 : 1), 3, u);
@@ -814,7 +814,7 @@
       deal(W, u, t, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true, forceCrit: u.fl.has('ambush') });
       if (alive(t) && ab.execute && t.hp < t.maxHp * ab.execute) { fxText(W, t, 'EXECUTE', '#f44'); deal(W, u, t, t.hp + t.shield + 1, 'true', {}); }
       if (alive(t) && ab.mark) { t.st.vulnU = W.t + sec(5); t.st.vulnP = Math.max(t.st.vulnP || 0, ab.mark); }
-      if (alive(t) && ab.hamstring) slow(W, t, ab.hamstring, 3);   // v105
+      if (alive(t) && ab.hamstring) slow(W, t, ab.hamstring, 3);   
       if (ab.twin) { const o = enemies(W, u).filter(e => e !== t && Hx.dist(e, t) <= 2)[0]; if (o) deal(W, u, o, ab.dmg * ab.twin * atkOf(W, u), 'phys', { ability: true }); }
       if (ab.untarg) u.st.untarg = W.t + sec(ab.untarg);
       u.tgt = t.id; u.nextAtk = W.t + 4;
@@ -841,7 +841,7 @@
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.fireball = (W, u) => {
     const t = bestCluster(W, u, u.ab.radius); if (!t) return false;
-    const kin = u.ab.kindle ? 1 + u.ab.kindle * (u.kindleN || 0) : 1; u.kindleN = 0;   // v105: Feuer's Kindling
+    const kin = u.ab.kindle ? 1 + u.ab.kindle * (u.kindleN || 0) : 1; u.kindleN = 0;   // Feuer's Kindling
     fireballAt(W, u, { c: t.c, r: t.r }, kin, u.ab.patch > 0);
     if (u.ab.twin) { const o = enemies(W, u).filter(e => Hx.dist(e, t) > u.ab.radius).sort((a, b) => Hx.dist(u, a) - Hx.dist(u, b))[0]; if (o) fireballAt(W, u, { c: o.c, r: o.r }, u.ab.twin, false); }
     return true;
@@ -868,7 +868,7 @@
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.charge = (W, u) => {
     const ab = u.ab;
-    const cands = enemies(W, u).filter(e => Hx.dist(u, e) <= ab.reach).sort((a, b) => ab.scent ? a.hp / a.maxHp - b.hp / b.maxHp : Hx.dist(u, b) - Hx.dist(u, a));   // v105: Bloodscent
+    const cands = enemies(W, u).filter(e => Hx.dist(u, e) <= ab.reach).sort((a, b) => ab.scent ? a.hp / a.maxHp - b.hp / b.maxHp : Hx.dist(u, b) - Hx.dist(u, a));   // Bloodscent
     let dest = null;
     for (const t of cands) {
       const n = freeNeighbors(W, t.c, t.r).sort((a, b) => Hx.dist(a, u) - Hx.dist(b, u));
@@ -889,7 +889,7 @@
       }
       buff(u, 'ls', ab.lsBuff, sec(4), W);
       if (ab.frenzy) buff(u, 'asPct', ab.frenzy, sec(4), W);
-      if (ab.warcry) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) buff(a, 'asPct', ab.warcry, sec(4), W);   // v105: Ironhorn's War Cry
+      if (ab.warcry) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) buff(a, 'asPct', ab.warcry, sec(4), W);   // Ironhorn's War Cry
     });
     return true;
   };
@@ -900,8 +900,8 @@
     const pool = allies(W, u); const heroes = pool.filter(a => a.kind !== 'summon');
     const t = (heroes.length ? heroes : pool).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
     if (!t) return false;
-    heal(W, t, ab.heal * apOf(u) * (ab.desperate && t.hp < t.maxHp * 0.3 ? 1 + ab.desperate : 1), true);   // v105: Answered Prayer
-    if (ab.ward) buff(t, 'dr', ab.ward, sec(3), W);   // v105: Sanctuary
+    heal(W, t, ab.heal * apOf(u) * (ab.desperate && t.hp < t.maxHp * 0.3 ? 1 + ab.desperate : 1), true);   // Answered Prayer
+    if (ab.ward) buff(t, 'dr', ab.ward, sec(3), W);   // Sanctuary
     for (const a of pool) if (a !== t && Hx.dist(a, t) <= ab.radius) heal(W, a, ab.splash * apOf(u), true);
     if (ab.shield) shield(W, t, t.maxHp * ab.shield, 4);
     if (ab.regen) dot(W, t, 'regen', t.maxHp * ab.regen, 5, u);
@@ -914,7 +914,7 @@
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.volley = (W, u) => {
     const ab = u.ab; const es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return false;
-    const weak = es.slice().sort((a, b) => a.hp - b.hp);   // v105: Talon's Eagle Eye
+    const weak = es.slice().sort((a, b) => a.hp - b.hp);   // Talon's Eagle Eye
     const list = ab.all ? es : Array.from({ length: ab.count }, (_, i) => ab.aimWeak ? weak[i % Math.min(3, weak.length)] : es[Math.floor(W.rng() * es.length)]);
     list.forEach((e, i) => {
       const tt = 3 + Math.round(Hx.dist(u, e) * 1.5) + i;
@@ -963,7 +963,7 @@
       }
       deal(W, u, t, ab.dmg * atkOf(W, u), 'phys', { ability: true });
       cc(W, t, 'stun', ab.stun);
-      if (ab.hookShield) shield(W, u, u.maxHp * ab.hookShield, 4);   // v105: Hookjaw's Reel In
+      if (ab.hookShield) shield(W, u, u.maxHp * ab.hookShield, 4);   // Hookjaw's Reel In
       if (ab.vuln) { t.st.vulnU = W.t + sec(4); t.st.vulnP = Math.max(t.st.vulnP || 0, ab.vuln); }
     }
     if (ab.whirl) at(W, W.t + 6, () => { if (u.dead) return; fxRing(W, u.c, u.r, 1, '#2fb3a0', 8); for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 1) { deal(W, u, e, atkOf(W, u), 'phys', { ability: true }); slow(W, e, 0.3, 2); } });
@@ -1013,10 +1013,10 @@
   A.whirl = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
     fxRing(W, u.c, u.r, ab.radius, '#d4483b', 10); let tot = 0;
-    const fm = 1 + (ab.furySpin || 0) * (u.sc.sa || 0);   // v105: Fury Unleashed
+    const fm = 1 + (ab.furySpin || 0) * (u.sc.sa || 0);   // Fury Unleashed
     for (const e of es) tot += deal(W, u, e, ab.dmg * atkOf(W, u) * fm, 'phys', { ability: true, canCrit: true });
-    if (ab.spinMana) u.mana = Math.min(u.maxMana, u.mana + ab.spinMana * es.length);   // v105: Spin to Win (after the cast pays)
-    if (ab.spinFury && u.m.stackAtk) for (let i = 0; i < ab.spinFury && (u.sc.sa || 0) < u.m.stackAtkCap; i++) { u.sc.sa = (u.sc.sa || 0) + 1; u.bAtk += u.m.stackAtk; }   // v105: Bloodlust
+    if (ab.spinMana) u.mana = Math.min(u.maxMana, u.mana + ab.spinMana * es.length);   // Spin to Win (after the cast pays)
+    if (ab.spinFury && u.m.stackAtk) for (let i = 0; i < ab.spinFury && (u.sc.sa || 0) < u.m.stackAtkCap; i++) { u.sc.sa = (u.sc.sa || 0) + 1; u.bAtk += u.m.stackAtk; }   // Bloodlust
     heal(W, u, tot * ab.heal, true); return true;
   };
   // WHAT: the ability "Hallowed Ground" of Radiant (Paladin). Passive: +2 armor and MR every second (up to +40). Active: hallows the ground around her for 4s: enemies on it take 30% AP magic damage per second, allies on it heal 3% of their max HP per second.
@@ -1024,8 +1024,8 @@
   A.consecrate = (W, u) => {
     const ab = u.ab;
     W.zones.push({ c: u.c, r: u.r, rad: ab.radius, until: W.t + sec(ab.dur), dps: ab.dps * apOf(u), heal: ab.heal, side: u.side, src: u.id, color: '#f0d27a', follow: ab.follow ? u.id : 0 });
-    if (ab.judge) for (const e of enemies(W, u)) if (Hx.dist(e, u) <= ab.radius) { e.st.vulnU = W.t + sec(ab.dur); e.st.vulnP = Math.max(e.st.vulnP || 0, ab.judge); }   // v105: Judgement
-    if (ab.martyr) for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) buff(a, 'dr', ab.martyr, sec(ab.dur), W);   // v105: Martyr
+    if (ab.judge) for (const e of enemies(W, u)) if (Hx.dist(e, u) <= ab.radius) { e.st.vulnU = W.t + sec(ab.dur); e.st.vulnP = Math.max(e.st.vulnP || 0, ab.judge); }   // Judgement
+    if (ab.martyr) for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) buff(a, 'dr', ab.martyr, sec(ab.dur), W);   // Martyr
     if (ab.shield) shield(W, u, u.maxHp * ab.shield, 4);
     fxRing(W, u.c, u.r, ab.radius, '#f0d27a', 14); return true;
   };
@@ -1033,8 +1033,8 @@
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.eclipse = (W, u) => {
     u.eclipse = u.ab.hits; fxText(W, u, 'UMBRAL EDGE', '#35c6d6'); u.nextAtk = Math.min(u.nextAtk, W.t + 2);
-    if (u.ab.veil) u.st.untarg = W.t + sec(u.ab.veil);   // v105: Eclipse Veil
-    if (u.ab.pounce) { const t = enemies(W, u).filter(e => targetable(W, e) && Hx.dist(e, u) <= u.ab.pounce).sort((a, b) => a.hp - b.hp)[0]; if (t) { const n = freeNeighbors(W, t.c, t.r).sort((a, b) => Hx.dist(a, u) - Hx.dist(b, u))[0]; if (n && Hx.dist(u, t) > 1) blink(W, u, n.c, n.r); u.tgt = t.id; } }   // v105: Shadow Pounce
+    if (u.ab.veil) u.st.untarg = W.t + sec(u.ab.veil);   // Eclipse Veil
+    if (u.ab.pounce) { const t = enemies(W, u).filter(e => targetable(W, e) && Hx.dist(e, u) <= u.ab.pounce).sort((a, b) => a.hp - b.hp)[0]; if (t) { const n = freeNeighbors(W, t.c, t.r).sort((a, b) => Hx.dist(a, u) - Hx.dist(b, u))[0]; if (n && Hx.dist(u, t) > 1) blink(W, u, n.c, n.r); u.tgt = t.id; } }   // Shadow Pounce
     return true;
   };
   // WHAT: the ability "Rootsnare" of Bramble (Warden). Passive: +1% max HP every second (up to +40%). Active: roots every enemy within 2 hexes for 2s and deals 45% AP magic damage.
@@ -1042,30 +1042,30 @@
   A.entangle = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
     fxRing(W, u.c, u.r, ab.radius, '#6a9a3a', 14);
-    for (const e of es) { deal(W, u, e, ab.dmg * apOf(u), 'magic', { ability: true }); cc(W, e, 'root', ab.root); if (ab.snare) dot(W, e, 'poison', ab.snare * e.maxHp * (e.boss ? 0.4 : 1), ab.root, u); }   // v105: Thorn Snare
+    for (const e of es) { deal(W, u, e, ab.dmg * apOf(u), 'magic', { ability: true }); cc(W, e, 'root', ab.root); if (ab.snare) dot(W, e, 'poison', ab.snare * e.maxHp * (e.boss ? 0.4 : 1), ab.root, u); }   // Thorn Snare
     if (ab.shield) shield(W, u, u.maxHp * ab.shield, 4);
-    if (ab.sap) heal(W, u, u.maxHp * ab.sap * es.length, true);   // v105: Sap Drain
-    if (ab.briar) for (const a of allies(W, u)) if (a !== u && Hx.dist(a, u) <= 2) shield(W, a, u.maxHp * ab.briar, 4);   // v105: Briar Ward
+    if (ab.sap) heal(W, u, u.maxHp * ab.sap * es.length, true);   // Sap Drain
+    if (ab.briar) for (const a of allies(W, u)) if (a !== u && Hx.dist(a, u) <= 2) shield(W, a, u.maxHp * ab.briar, 4);   // Briar Ward
     return true;
   };
   // WHAT: the ability "Rallying Refrain" of Lyric (Bard). Passive: every 4s all allies gain +3% attack speed (Crescendo, stacks 10x). Active: allies within 2 hexes heal 90% AP and gain +25% attack for 4s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.anthem = (W, u) => {
     const ab = u.ab;
-    for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) { heal(W, a, ab.heal * apOf(u), true); buff(a, 'atkPct', ab.atk, sec(4), W); if (ab.tempoAs) buff(a, 'asPct', ab.tempoAs, sec(4), W); }   // v105: Encore
+    for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) { heal(W, a, ab.heal * apOf(u), true); buff(a, 'atkPct', ab.atk, sec(4), W); if (ab.tempoAs) buff(a, 'asPct', ab.tempoAs, sec(4), W); }   // Encore
     for (const e of enemies(W, u)) { if (ab.slow && Hx.dist(e, u) <= 2) slow(W, e, ab.slow, 2); if (ab.stun && Hx.dist(e, u) <= 1) cc(W, e, 'stun', ab.stun); }
     fxRing(W, u.c, u.r, ab.radius, '#c77dff', 12); return true;
   };
   // WHAT: the ability "Six-Shot Flurry" of Flint (Gunslinger). Passive: every crit gives +2% crit chance (up to +30%). Active: fires 6 quick shots at the target, 70% AD physical damage each.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.fan = (W, u) => {
-    const ab = u.ab, t = ab.weakest ? (enemies(W, u).filter(e => targetable(W, e) && Hx.dist(u, e) <= u.range + 1).sort((a, b) => a.hp - b.hp)[0] || pickTarget(W, u)) : pickTarget(W, u); if (!t || Hx.dist(u, t) > u.range + 1) return false;   // v105: Bounty Hunter
+    const ab = u.ab, t = ab.weakest ? (enemies(W, u).filter(e => targetable(W, e) && Hx.dist(u, e) <= u.range + 1).sort((a, b) => a.hp - b.hp)[0] || pickTarget(W, u)) : pickTarget(W, u); if (!t || Hx.dist(u, t) > u.range + 1) return false;   // Bounty Hunter
     for (let i = 0; i < ab.shots; i++) {
       const tt = W.t + 2 + i * 2;
       fx(W, { k: 'proj', from: u.id, fc: u.c, fr: u.r, to: t.id, tc: t.c, tr: t.r, color: '#ffd28a', t0: tt - 2, t1: tt });
       at(W, tt, () => {
         if (!alive(t)) return;
-        const fin = (ab.finisher && t.hp < t.maxHp * 0.5 ? 1 + ab.finisher : 1) * (ab.lastShot && i === ab.shots - 1 ? 1 + ab.lastShot : 1);   // v105: Dead or Alive, Last Bullet
+        const fin = (ab.finisher && t.hp < t.maxHp * 0.5 ? 1 + ab.finisher : 1) * (ab.lastShot && i === ab.shots - 1 ? 1 + ab.lastShot : 1);   // Dead or Alive, Last Bullet
         deal(W, u, t, ab.dmg * atkOf(W, u) * fin, 'phys', { ability: true, canCrit: true, pen: ab.pen });
         if (ab.splash) for (const e of enemies(W, u)) if (e !== t && Hx.dist(e, t) <= 1) deal(W, u, e, ab.splash * ab.dmg * atkOf(W, u), 'phys', {});
         if (ab.ricochet) { const o = enemies(W, u).filter(e => e !== t).sort((a, b) => Hx.dist(a, t) - Hx.dist(b, t))[0]; if (o) deal(W, u, o, ab.ricochet * ab.dmg * atkOf(W, u), 'phys', {}); }
@@ -1105,9 +1105,9 @@
   A.javelin = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return false;
     for (let i = 0; i < ab.count; i++) {
-      const strong = ab.queen && i === 0 ? es.slice().sort((a, b) => b.maxHp - a.maxHp)[0] : null;   // v105: Queen's Spear
+      const strong = ab.queen && i === 0 ? es.slice().sort((a, b) => b.maxHp - a.maxHp)[0] : null;   // Queen's Spear
       const e = strong || (i < es.length ? es.sort((a, b) => Hx.dist(u, a) - Hx.dist(u, b))[i] : es[Math.floor(W.rng() * es.length)]);
-      if (ab.dance && u.m.stackAs) for (let k = 0; k < ab.dance && (u.sc.ss || 0) < u.m.stackAsCap; k++) { u.sc.ss = (u.sc.ss || 0) + 1; u.bAsPct += u.m.stackAs; }   // v105: Javelin Dance
+      if (ab.dance && u.m.stackAs) for (let k = 0; k < ab.dance && (u.sc.ss || 0) < u.m.stackAsCap; k++) { u.sc.ss = (u.sc.ss || 0) + 1; u.bAsPct += u.m.stackAs; }   // Javelin Dance
       const qm = strong ? 2 : 1;
       shot(W, u, e, i * 2, '#e8c070', t => { deal(W, u, t, ab.dmg * atkOf(W, u) * qm, 'phys', { ability: true, canCrit: true }); if (ab.markJav && alive(t)) { t.st.vulnU = W.t + sec(4); t.st.vulnP = Math.max(t.st.vulnP || 0, ab.markJav); } dot(W, t, 'poison', ab.poison * t.maxHp * (t.boss ? 0.4 : 1), 4, u); if (ab.root) cc(W, t, 'root', ab.root); });
     }
@@ -1123,8 +1123,8 @@
       fx(W, { k: 'proj', from: u.id, fc: u.c, fr: u.r, to: t.id, tc: t.c, tr: t.r, color: '#fff2a0', size: 1.5, t1: W.t + 3 });
       deal(W, u, t, ab.dmg * atkOf(W, u) * (1 + 0.08 * Hx.dist(u, t)), 'phys', { ability: true, canCrit: true, pen: ab.pen || 0 });
       if (alive(t) && t.hp < t.maxHp * ab.exec) { fxText(W, t, 'LONGWATCH', '#ff4040'); deal(W, u, t, t.hp + t.shield + 1, 'true', {}); }
-      if (alive(t) && ab.spot) { t.st.vulnU = W.t + sec(5); t.st.vulnP = Math.max(t.st.vulnP || 0, ab.spot); }   // v105: Spotter
-      if (!alive(t) && ab.chainKill && !u.once['ck' + W.t]) { u.once['ck' + W.t] = 1; const n = enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0]; if (n) { fx(W, { k: 'proj', from: u.id, fc: u.c, fr: u.r, to: n.id, tc: n.c, tr: n.r, color: '#fff2a0', size: 1.5, t1: W.t + 3 }); deal(W, u, n, ab.dmg * atkOf(W, u) * (1 + 0.08 * Hx.dist(u, n)), 'phys', { ability: true, canCrit: true, pen: ab.pen || 0 }); if (alive(n) && n.hp < n.maxHp * ab.exec) deal(W, u, n, n.hp + n.shield + 1, 'true', {}); } }   // v105: Next in Line
+      if (alive(t) && ab.spot) { t.st.vulnU = W.t + sec(5); t.st.vulnP = Math.max(t.st.vulnP || 0, ab.spot); }   // Spotter
+      if (!alive(t) && ab.chainKill && !u.once['ck' + W.t]) { u.once['ck' + W.t] = 1; const n = enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0]; if (n) { fx(W, { k: 'proj', from: u.id, fc: u.c, fr: u.r, to: n.id, tc: n.c, tr: n.r, color: '#fff2a0', size: 1.5, t1: W.t + 3 }); deal(W, u, n, ab.dmg * atkOf(W, u) * (1 + 0.08 * Hx.dist(u, n)), 'phys', { ability: true, canCrit: true, pen: ab.pen || 0 }); if (alive(n) && n.hp < n.maxHp * ab.exec) deal(W, u, n, n.hp + n.shield + 1, 'true', {}); } }   // Next in Line
       if (alive(t) && ab.stun) cc(W, t, 'stun', ab.stun);
     });
     if (ab.camo) u.st.untarg = W.t + sec(ab.camo);
@@ -1135,8 +1135,8 @@
   A.bloodfeast = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
     fxRing(W, u.c, u.r, ab.radius, '#b0203a', 14); let tot = 0;
-    const moon = ab.moon && u.hp < u.maxHp * 0.5 ? 1 + ab.moon : 1;   // v105: Blood Moon
-    if (ab.mist) u.st.untarg = W.t + sec(ab.mist);   // v105: Mist Form
+    const moon = ab.moon && u.hp < u.maxHp * 0.5 ? 1 + ab.moon : 1;   // Blood Moon
+    if (ab.mist) u.st.untarg = W.t + sec(ab.mist);   // Mist Form
     for (const e of es) { tot += deal(W, u, e, (ab.dmg * atkOf(W, u) + ab.apdmg * apOf(u)) * moon, 'magic', { ability: true }); if (ab.bleed) dot(W, e, 'poison', ab.bleed * e.maxHp * (e.boss ? 0.4 : 1), 3, u); fx(W, { k: 'bolt', pts: [[e.c, e.r], [u.c, u.r]], color: '#d0304a', t1: W.t + 8 }); }
     heal(W, u, tot, true);
     if (ab.share) for (const a of allies(W, u)) if (a !== u && Hx.dist(a, u) <= 2) heal(W, a, tot * ab.share, true);
@@ -1149,8 +1149,8 @@
     const ab = u.ab; fxRing(W, u.c, u.r, ab.radius, '#8a8fa0', 16);
     for (const e of enemies(W, u)) if (Hx.dist(e, u) <= ab.radius) cc(W, e, 'blindU', ab.blind);
     u.st.untarg = W.t + sec(1.5); if (ab.heal) heal(W, u, u.maxHp * ab.heal, true); if (ab.backstab) u.backstab = ab.backstab;
-    if (ab.blindHits) u.blindHits = ab.blindHits;   // v105: Smoke Trail
-    if (ab.twice && !u.smoke2) { u.smoke2 = 1; at(W, W.t + sec(2), () => { if (alive(u) && !W.over) A.smoke(W, u); u.smoke2 = 0; }); }   // v105: Second Smoke
+    if (ab.blindHits) u.blindHits = ab.blindHits;   // Smoke Trail
+    if (ab.twice && !u.smoke2) { u.smoke2 = 1; at(W, W.t + sec(2), () => { if (alive(u) && !W.over) A.smoke(W, u); u.smoke2 = 0; }); }   // Second Smoke
     const es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return true;
     for (let i = 0; i < ab.count; i++) shot(W, u, es[i % es.length], i, '#dfe6ee', t => { deal(W, u, t, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true }); if (ab.poison) dot(W, t, 'poison', ab.poison * t.maxHp * (t.boss ? 0.4 : 1), 3, u); });
     return true;
@@ -1159,7 +1159,7 @@
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.howl = (W, u) => {
     const ab = u.ab; fxRing(W, u.c, u.r, ab.radius, '#e8c070', 12);
-    for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) { buff(a, 'atkPct', ab.buff, sec(4), W); buff(a, 'asPct', ab.buff, sec(4), W); if (ab.howlHeal) heal(W, a, a.maxHp * ab.howlHeal, true); }   // v105: Loyal
+    for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) { buff(a, 'atkPct', ab.buff, sec(4), W); buff(a, 'asPct', ab.buff, sec(4), W); if (ab.howlHeal) heal(W, a, a.maxHp * ab.howlHeal, true); }   // Loyal
     if (ab.taunt) for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 1) { e.st.tauntU = W.t + sec(ab.taunt); e.st.tauntBy = u.id; }
     const es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return true;
     const t = ab.reach ? (es.filter(e => Hx.dist(u, e) <= ab.reach).sort((a, b) => Hx.dist(u, b) - Hx.dist(u, a))[0] || es[0]) : es.sort((a, b) => Hx.dist(u, a) - Hx.dist(u, b))[0];
@@ -1167,7 +1167,7 @@
     at(W, W.t + 4, () => {
       if (u.dead) return;
       const bite = ab.cleave ? enemies(W, u).filter(e => Hx.dist(e, u) <= 1) : [t];
-      for (const e of bite) if (alive(e)) { deal(W, u, e, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true }); if (ab.lockjaw) slow(W, e, ab.lockjaw, 3);   // v105: Lockjaw
+      for (const e of bite) if (alive(e)) { deal(W, u, e, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true }); if (ab.lockjaw) slow(W, e, ab.lockjaw, 3);   // Lockjaw
  dot(W, e, 'poison', ab.bleed * e.maxHp * (e.boss ? 0.4 : 1), 3, u); if (ab.stun) cc(W, e, 'stun', ab.stun); }
     });
     u.tgt = t.id; return true;
@@ -1179,7 +1179,7 @@
     fxRing(W, t.c, t.r, ab.radius, '#9a6aff', 16);
     for (const e of enemies(W, u)) if (Hx.dist(e, t) <= ab.radius) {
       deal(W, u, e, ab.dmg * apOf(u), 'magic', { ability: true });
-      cc(W, e, 'confuseU', ab.dur); e.anim = null; if (ab.dreamSlow) slow(W, e, ab.dreamSlow, ab.dur + 2);   // v105: Lingering Dream
+      cc(W, e, 'confuseU', ab.dur); e.anim = null; if (ab.dreamSlow) slow(W, e, ab.dreamSlow, ab.dur + 2);   // Lingering Dream
       if (e.st.confuseU > W.t) { fxText(W, e, 'CONFUSED', '#c9a2ff'); if (ab.amp) buff(e, 'dmgAmp', ab.amp, sec(ab.dur), W); if (ab.dot) dot(W, e, 'poison', ab.dot * e.maxHp * (e.boss ? 0.4 : 1), ab.dur, u); }
     }
     if (ab.shield) shield(W, u, u.maxHp * ab.shield, 4);
@@ -1193,14 +1193,14 @@
     const one = k => {
       const t = pickTarget(W, u) || es[0];
       if (k === 'pie') shot(W, u, t, 0, '#fff6e0', e => { deal(W, u, e, 1.5 * atkOf(W, u), 'phys', { ability: true }); cc(W, e, 'stun', ab.pie); fxText(W, e, 'PIE!', '#fff');
-        if (ab.pieBounce) { const o = enemies(W, u).filter(x => x !== e).sort((a, b) => Hx.dist(a, e) - Hx.dist(b, e))[0]; if (o) shot(W, u, o, 0, '#fff6e0', x => { deal(W, u, x, 1.5 * atkOf(W, u), 'phys', { ability: true }); cc(W, x, 'stun', ab.pie); }); } });   // v105: Slapstick
+        if (ab.pieBounce) { const o = enemies(W, u).filter(x => x !== e).sort((a, b) => Hx.dist(a, e) - Hx.dist(b, e))[0]; if (o) shot(W, u, o, 0, '#fff6e0', x => { deal(W, u, x, 1.5 * atkOf(W, u), 'phys', { ability: true }); cc(W, x, 'stun', ab.pie); }); } });   // Slapstick
       else if (k === 'balloons') { for (const a of allies(W, u)) heal(W, a, ab.heal * apOf(u), true); fxRing(W, u.c, u.r, 3, '#ff8ab8', 14); }
       else if (k === 'knives') for (let i = 0; i < ab.knives; i++) shot(W, u, es[Math.floor(W.rng() * es.length)], i, '#dfe6ee', e => deal(W, u, e, atkOf(W, u), 'phys', { ability: true, canCrit: true }));
       else if (k === 'confetti') { fxRing(W, t.c, t.r, 2, '#ffe066', 14); for (const e of enemies(W, u)) if (Hx.dist(e, t) <= 2) { deal(W, u, e, 0.4 * atkOf(W, u) + 0.2 * apOf(u), 'magic', { ability: true }); slow(W, e, 0.5, 3); if (ab.silence) cc(W, e, 'silence', ab.silence); } }
       else { cc(W, t, 'blindU', 3); fxText(W, t, 'SQUIRT!', '#9fd8ff'); }
       fxText(W, u, k.toUpperCase() + '!', '#ff8ab8');
     };
-    const k1 = ab.rig ? (allies(W, u).some(a => a.hp < a.maxHp * 0.5) ? 'balloons' : 'pie') : tricks[Math.floor(W.rng() * tricks.length)]; one(k1); done.push(k1);   // v105: Rigged Deck
+    const k1 = ab.rig ? (allies(W, u).some(a => a.hp < a.maxHp * 0.5) ? 'balloons' : 'pie') : tricks[Math.floor(W.rng() * tricks.length)]; one(k1); done.push(k1);   // Rigged Deck
     if (W.rng() < ab.encore) { const rest = tricks.filter(k => !done.includes(k)); one(rest[Math.floor(W.rng() * rest.length)]); }
     return true;
   };
@@ -1211,15 +1211,15 @@
     fxRing(W, u.c, u.r, ab.radius, '#b8792a', 12);
     for (const e of es) { deal(W, u, e, ab.dmg * atkOf(W, u), 'phys', { ability: true }); cc(W, e, 'stun', ab.stun); slow(W, e, 0.3, ab.stun + 2); if (ab.burn) dot(W, e, 'burn', ab.burn * atkOf(W, u), 3, u); }
     heal(W, u, u.maxHp * ab.heal, true); fxText(W, u, '*hic*', '#ffe066');
-    if (ab.swigAs) buff(u, 'asPct', ab.swigAs, sec(4), W);   // v105: Liquid Courage
-    if (ab.liver) { u.st.stun = 0; u.st.slowU = 0; u.st.root = 0; u.st.ccImmU = W.t + sec(ab.liver); }   // v105: Iron Liver
+    if (ab.swigAs) buff(u, 'asPct', ab.swigAs, sec(4), W);   // Liquid Courage
+    if (ab.liver) { u.st.stun = 0; u.st.slowU = 0; u.st.root = 0; u.st.ccImmU = W.t + sec(ab.liver); }   // Iron Liver
     return true;
   };
   // WHAT: the ability "Brimstone Nova" of Inferno (Demon). Passive: +1% damage for every 1% HP missing. Active: sacrifices 10% of his current HP to blast every enemy within 2 hexes for 120% AD + 70% AP magic damage, and burns them for 40% AD per second for 3s.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.hellfire = (W, u) => {
     const ab = u.ab, es = enemies(W, u).filter(e => Hx.dist(e, u) <= ab.radius); if (!es.length) return false;
-    if (ab.cost > 0) { const paid = u.hp * ab.cost; u.hp = Math.max(1, u.hp - paid); if (ab.pact) for (const a of allies(W, u)) if (a !== u && Hx.dist(a, u) <= 2) heal(W, a, paid * ab.pact, true); }   // v105: Infernal Pact
+    if (ab.cost > 0) { const paid = u.hp * ab.cost; u.hp = Math.max(1, u.hp - paid); if (ab.pact) for (const a of allies(W, u)) if (a !== u && Hx.dist(a, u) <= 2) heal(W, a, paid * ab.pact, true); }   // Infernal Pact
     fxRing(W, u.c, u.r, ab.radius, '#ff4a1a', 16);
     for (const e of es) { deal(W, u, e, ab.dmg * atkOf(W, u) + ab.apdmg * apOf(u), 'magic', { ability: true }); dot(W, e, 'burn', ab.burn * atkOf(W, u), 3, u); }
     for (let i = 0; i < ab.imps; i++) summon(W, u, mobScaleDef('imp', 1 + 0.2 * (u.lvl - 1)));
@@ -1234,10 +1234,10 @@
     at(W, W.t + 10, () => {
       if (!alive(t)) return; fxRing(W, t.c, t.r, ab.radius, '#a08a6a', 12);
       deal(W, u, t, ab.dmg * atkOf(W, u), 'phys', { ability: true }); cc(W, t, 'stun', ab.stun); if (ab.fireRock) dot(W, t, 'burn', ab.fireRock * atkOf(W, u), 3, u);
-      for (const e of enemies(W, u)) if (e !== t && Hx.dist(e, t) <= ab.radius) { deal(W, u, e, atkOf(W, u), 'phys', { ability: true }); if (ab.splashStun) cc(W, e, 'stun', ab.stun * ab.splashStun); if (ab.fireRock) dot(W, e, 'burn', ab.fireRock * atkOf(W, u), 3, u); if (ab.quake && alive(e)) push(W, t, e, ab.quake); }   // v105: Big Rock, Fire Rock, Earthquake
+      for (const e of enemies(W, u)) if (e !== t && Hx.dist(e, t) <= ab.radius) { deal(W, u, e, atkOf(W, u), 'phys', { ability: true }); if (ab.splashStun) cc(W, e, 'stun', ab.stun * ab.splashStun); if (ab.fireRock) dot(W, e, 'burn', ab.fireRock * atkOf(W, u), 3, u); if (ab.quake && alive(e)) push(W, t, e, ab.quake); }   // Big Rock, Fire Rock, Earthquake
     });
     if (ab.frenzy) buff(u, 'asPct', ab.frenzy, sec(4), W);
-    if (ab.rockArmor && (u.sc.rock || 0) < 40) { const g = Math.min(ab.rockArmor, 40 - (u.sc.rock || 0)); u.sc.rock = (u.sc.rock || 0) + g; u.bArm += g; }   // v105: Rock Collector
+    if (ab.rockArmor && (u.sc.rock || 0) < 40) { const g = Math.min(ab.rockArmor, 40 - (u.sc.rock || 0)); u.sc.rock = (u.sc.rock || 0) + g; u.bArm += g; }   // Rock Collector
     return true;
   };
   // WHAT: the ability "Linen of Ages" of Ankh (Mummy). Passive: once per fight, rises again at 30% HP. Active: bandages the 2 nearest enemies: rooted 2s, healing halved, and they decay for 3% of their max HP per second.
@@ -1247,7 +1247,7 @@
     for (const e of ts) {
       fx(W, { k: 'bolt', pts: [[u.c, u.r], [e.c, e.r]], color: '#e8dcb0', t1: W.t + 8 });
       cc(W, e, 'root', ab.root); e.st.antiHealU = Math.max(e.st.antiHealU || 0, W.t + sec(ab.root + 2));
-      if (ab.mummify) cc(W, e, 'silence', ab.root); if (ab.wrapBlind) cc(W, e, 'blindU', ab.wrapBlind);   // v105: Mummify, Tomb Dust
+      if (ab.mummify) cc(W, e, 'silence', ab.root); if (ab.wrapBlind) cc(W, e, 'blindU', ab.wrapBlind);   // Mummify, Tomb Dust
       dot(W, e, 'poison', ab.decay * e.maxHp * (e.boss ? 0.4 : 1), 3, u);
       if (ab.vuln) { e.st.vulnU = W.t + sec(4); e.st.vulnP = Math.max(e.st.vulnP || 0, ab.vuln); }
     }
@@ -1258,8 +1258,8 @@
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.phalanx = (W, u) => {
     const ab = u.ab; fxRing(W, u.c, u.r, ab.radius, '#d9c36a', 12);
-    for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) { buff(a, 'dr', ab.dr, sec(4), W); if (ab.sparta) dot(W, a, 'regen', a.maxHp * ab.sparta, 4, u); }   // v105: Hold the Line
-    if (ab.bash) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) cc(W, e, 'stun', ab.bash);   // v105: Shield Bash
+    for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) { buff(a, 'dr', ab.dr, sec(4), W); if (ab.sparta) dot(W, a, 'regen', a.maxHp * ab.sparta, 4, u); }   // Hold the Line
+    if (ab.bash) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) cc(W, e, 'stun', ab.bash);   // Shield Bash
     if (ab.taunt) for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 2) { e.st.tauntU = W.t + sec(ab.taunt); e.st.tauntBy = u.id; }
     const ts = ab.hits >= 9 ? enemies(W, u).filter(e => Hx.dist(e, u) <= 2) : nearestFoes(W, u, ab.hits).filter(e => Hx.dist(e, u) <= u.range + 1 + (ab.reachUp || 0));
     for (const e of ts) { deal(W, u, e, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true }); if (ab.stun) cc(W, e, 'stun', ab.stun); }
@@ -1273,9 +1273,9 @@
     ts.forEach((e, i) => at(W, W.t + i * 4, () => {
       if (u.dead || !alive(e)) return;
       if (Hx.dist(u, e) > 1) { const n = freeNeighbors(W, e.c, e.r).sort((a, b) => Hx.dist(a, u) - Hx.dist(b, u))[0]; if (n) blink(W, u, n.c, n.r); }
-      deal(W, u, e, ab.dmg * atkOf(W, u) * (ab.curtain && i === ts.length - 1 ? 1 + ab.curtain : 1), 'phys', { ability: true, canCrit: true }); if (ab.silence) cc(W, e, 'silence', ab.silence);   // v105: Grand Finale
-      if (ab.waltzCrit && u.m.critStack && (u.sc.cs || 0) < u.m.critStackCap) { const g = Math.min(u.m.critStack, u.m.critStackCap - (u.sc.cs || 0)); u.sc.cs = (u.sc.cs || 0) + g; u.crit += g; }   // v105: Cutting Remarks
-      if (ab.returnHome && i === ts.length - 1 && !W.occ[Hx.key(home.c, home.r)]) at(W, W.t + 3, () => { if (alive(u) && !W.occ[Hx.key(home.c, home.r)]) blink(W, u, home.c, home.r); });   // v105: Curtain Call
+      deal(W, u, e, ab.dmg * atkOf(W, u) * (ab.curtain && i === ts.length - 1 ? 1 + ab.curtain : 1), 'phys', { ability: true, canCrit: true }); if (ab.silence) cc(W, e, 'silence', ab.silence);   // Grand Finale
+      if (ab.waltzCrit && u.m.critStack && (u.sc.cs || 0) < u.m.critStackCap) { const g = Math.min(u.m.critStack, u.m.critStackCap - (u.sc.cs || 0)); u.sc.cs = (u.sc.cs || 0) + g; u.crit += g; }   // Cutting Remarks
+      if (ab.returnHome && i === ts.length - 1 && !W.occ[Hx.key(home.c, home.r)]) at(W, W.t + 3, () => { if (alive(u) && !W.occ[Hx.key(home.c, home.r)]) blink(W, u, home.c, home.r); });   // Curtain Call
     }));
     u.busy = W.t + ts.length * 4; if (ab.untarg) at(W, W.t + ts.length * 4, () => { u.st.untarg = W.t + sec(ab.untarg); });
     return true;
@@ -1286,7 +1286,7 @@
     const ab = u.ab, es = enemies(W, u).filter(e => targetable(W, e)); if (!es.length) return false;
     const kinds = ['acid', 'heal', 'frost', 'poison'];
     for (let i = 0; i < ab.count; i++) {
-      const k = ab.smart ? (allies(W, u).some(a => a.hp < a.maxHp * 0.6) ? 'heal' : 'acid') : kinds[Math.floor(W.rng() * kinds.length)];   // v105: Philosopher's Stone
+      const k = ab.smart ? (allies(W, u).some(a => a.hp < a.maxHp * 0.6) ? 'heal' : 'acid') : kinds[Math.floor(W.rng() * kinds.length)];   // Philosopher's Stone
       // the healing flask goes to the weakest hero (like every other heal), and Catalyst refunds mana for it too
       if (k === 'heal') { const pool = allies(W, u), hs = pool.filter(x => x.kind !== 'summon'), a = (hs.length ? hs : pool).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0]; if (a) { heal(W, a, ab.heal * apOf(u), true); fxRing(W, a.c, a.r, 0, '#7ee08e', 8); } if (ab.mana) u.mana = Math.min(u.maxMana, u.mana + ab.mana); continue; }
       const col = k === 'acid' ? '#b8e040' : k === 'frost' ? '#9fe8ff' : '#7ac83a';
@@ -1294,7 +1294,7 @@
         const hit = enemies(W, u).filter(e => Hx.dist(e, t) <= ab.radius);
         fxRing(W, t.c, t.r, ab.radius, col, 8);
         for (const e of hit) {
-          if (k === 'acid') { deal(W, u, e, ab.acid * apOf(u), 'magic', { ability: true }); buff(e, 'armor', -20 - (ab.acidArmor || 0), sec(5), W); }   // v105: Potent Acid
+          if (k === 'acid') { deal(W, u, e, ab.acid * apOf(u), 'magic', { ability: true }); buff(e, 'armor', -20 - (ab.acidArmor || 0), sec(5), W); }   // Potent Acid
           else if (k === 'frost') { cc(W, e, 'stun', 1); e.st.frozenU = e.st.stun; }
           else dot(W, e, 'poison', 0.03 * e.maxHp * (e.boss ? 0.4 : 1), 3, u);
         }
@@ -1311,9 +1311,9 @@
       fxRing(W, t.c, t.r, 0, '#bff4ff', 10);
       deal(W, u, t, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true }); if (ab.stun) cc(W, t, 'stun', ab.stun);
       if (alive(t)) push(W, u, t, ab.push);
-      if (alive(t) && ab.kickSlow) slow(W, t, ab.kickSlow, 2.5);   // v105: Eye of the Storm
+      if (alive(t) && ab.kickSlow) slow(W, t, ab.kickSlow, 2.5);   // Eye of the Storm
     }
-    if (ab.refund) at(W, W.t + 1, () => { if (alive(u)) u.mana = Math.min(u.maxMana, u.mana + u.maxMana * ab.refund); });   // v105: Second Wind
+    if (ab.refund) at(W, W.t + 1, () => { if (alive(u)) u.mana = Math.min(u.maxMana, u.mana + u.maxMana * ab.refund); });   // Second Wind
     if (ab.splash) for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 1 && !ts.includes(e)) deal(W, u, e, ab.splash * atkOf(W, u), 'phys', { ability: true });
     if (ab.tailwind) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) buff(a, 'asPct', ab.tailwind, sec(3), W);
     return true;
@@ -1327,10 +1327,10 @@
       W.zones.push({ c: h.c, r: h.r, rad: ab.radius, until: W.t + sec(ab.dur), dps: ab.dps * apOf(u), side: u.side, src: u.id, color: '#ffc21a' });
       fxRing(W, h.c, h.r, ab.radius, '#ffc21a', 14);
       if (ab.slow) for (const e of enemies(W, u)) if (Hx.dist(e, h) <= ab.radius) slow(W, e, ab.slow, ab.dur);
-      if (ab.keeper) for (const a of allies(W, u)) if (Hx.dist(a, h) <= ab.radius + 1) buff(a, 'asPct', ab.keeper, sec(ab.dur), W);   // v105: Beekeeper
+      if (ab.keeper) for (const a of allies(W, u)) if (Hx.dist(a, h) <= ab.radius + 1) buff(a, 'asPct', ab.keeper, sec(ab.dur), W);   // Beekeeper
     };
     drop(t);
-    if (ab.guardHive) { W.zones.push({ c: u.c, r: u.r, rad: 1, until: W.t + sec(ab.dur), dps: ab.dps * apOf(u) * ab.guardHive, side: u.side, src: u.id, color: '#ffc21a', follow: u.id }); fxRing(W, u.c, u.r, 1, '#ffc21a', 10); }   // v105: Queen's Guard
+    if (ab.guardHive) { W.zones.push({ c: u.c, r: u.r, rad: 1, until: W.t + sec(ab.dur), dps: ab.dps * apOf(u) * ab.guardHive, side: u.side, src: u.id, color: '#ffc21a', follow: u.id }); fxRing(W, u.c, u.r, 1, '#ffc21a', 10); }   // Queen's Guard
     if (ab.twin) { const o = enemies(W, u).filter(e => Hx.dist(e, t) > ab.radius * 2).sort((a, b) => Hx.dist(u, a) - Hx.dist(u, b))[0]; if (o) drop(o); }
     const pool = allies(W, u), heroes = pool.filter(a => a.kind !== 'summon'), a = (heroes.length ? heroes : pool).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
     if (a) { heal(W, a, ab.honey * apOf(u), true); fxRing(W, a.c, a.r, 0, '#ffe066', 8); }
@@ -1344,7 +1344,7 @@
       fxRing(W, t.c, t.r, ab.radius, '#2fb8d8', 14);
       for (const e of enemies(W, u)) if (Hx.dist(e, t) <= ab.radius) {
         deal(W, u, e, mult * ab.dmg * apOf(u), 'magic', { ability: true });
-        if (ab.soak) buff(e, 'armor', -ab.soak, sec(4), W);   // v105: Drowning Depths
+        if (ab.soak) buff(e, 'armor', -ab.soak, sec(4), W);   // Drowning Depths
         if (ab.slow) slow(W, e, ab.slow, 2); if (ab.stun) cc(W, e, 'stun', ab.stun);
         if (alive(e) && ab.push) push(W, u, e, ab.push);
       }
@@ -1357,8 +1357,8 @@
   // WHAT: the ability "Falling Star" of Astral (Stargazer). Calls a star onto the densest enemy group; 0.8s later it crashes: 120% AD + 60% AP magic damage in 1 hex and a 1.2s stun.
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.starfall = (W, u) => {   // Astral: a star that lands after a short delay (AD + AP) and stuns
-    const ab = u.ab, t = ab.strongest ? (enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => b.maxHp - a.maxHp)[0] || bestCluster(W, u, ab.radius)) : bestCluster(W, u, ab.radius); if (!t) return false;   // v105: Lucky Star
-    const c = t.c, r = t.r, delay = Math.max(0.3, ab.delay), cm = ab.constel ? 1 + Math.min(4, u.starN || 0) * ab.constel : 1; u.starN = (u.starN || 0) + 1;   // v105: Constellation
+    const ab = u.ab, t = ab.strongest ? (enemies(W, u).filter(e => targetable(W, e)).sort((a, b) => b.maxHp - a.maxHp)[0] || bestCluster(W, u, ab.radius)) : bestCluster(W, u, ab.radius); if (!t) return false;   // Lucky Star
+    const c = t.c, r = t.r, delay = Math.max(0.3, ab.delay), cm = ab.constel ? 1 + Math.min(4, u.starN || 0) * ab.constel : 1; u.starN = (u.starN || 0) + 1;   // Constellation
     fxRing(W, c, r, ab.radius, '#b8a8ff', sec(delay));
     { const land = W.t + sec(delay); fx(W, { k: 'bolt', pts: [[c, r - 3], [c, r]], color: '#fff6a0', t0: Math.max(W.t, land - 10), t1: land }); }   // the star is seen FALLING before it hits
     if (ab.blessing) for (const a of allies(W, u)) if (Hx.dist(a, u) <= 2) buff(a, 'atkPct', ab.blessing, sec(4), W);
@@ -1434,7 +1434,7 @@
     return true;
   };
   // WHAT: Vaelith's Blizzard (boss): ice on the densest group of heroes: 120% attack as magic damage, 40% slow for 3s, and the ground stays frozen 4s.
-  A.lichstorm = (W, u) => {   // v88: was A.blizzard, which overwrote Frostbane's Rime Squall (v83-v87)
+  A.lichstorm = (W, u) => {   // was A.blizzard, which overwrote Frostbane's Rime Squall (v83-v87)
     const t = bestCluster(W, u, 1); if (!t || Hx.dist(u, t) > u.range + 2) return false;
     const c = t.c, r = t.r; fxRing(W, c, r, 1, '#8fe3ff', 16);
     for (const e of enemies(W, u)) if (Hx.dist(e, { c, r }) <= 1) { deal(W, u, e, 1.2 * atkOf(W, u), 'magic', { ability: true }); slow(W, e, 0.4, 3); }
@@ -1561,7 +1561,7 @@
       if (ab.vuln) { e.st.vulnU = Math.max(e.st.vulnU || 0, W.t + sec(ab.dur)); e.st.vulnP = Math.max(e.st.vulnP || 0, ab.vuln); }
     }
     if (ab.heal && es.length) heal(W, u, u.maxHp * ab.heal * es.length, true);
-    if (ab.fuel && es.length) at(W, W.t + 1, () => { if (alive(u)) u.mana = Math.min(u.maxMana, u.mana + ab.fuel * es.length); });   // v105: Fuel Tank
+    if (ab.fuel && es.length) at(W, W.t + 1, () => { if (alive(u)) u.mana = Math.min(u.maxMana, u.mana + ab.fuel * es.length); });   // Fuel Tank
     return true;
   };
   // Tom: serves dishes to random allies, each a different pick of four (heal, attack, attack speed, shield)
@@ -1579,11 +1579,11 @@
     for (let i = 0; i < n && pool.length; i++) {
       const a = pool[i % pool.length], kind = Math.floor(W.rng() * 4);
       serve(a, kind); if (ab.double) serve(a, (kind + 1 + Math.floor(W.rng() * 3)) % 4);
-      if (ab.cleanse) { a.st.stun = 0; a.st.root = 0; a.st.slowU = 0; a.st.frozenU = 0; }   // v105: Comfort Food
+      if (ab.cleanse) { a.st.stun = 0; a.st.root = 0; a.st.slowU = 0; a.st.frozenU = 0; }   // Comfort Food
       if (ab.mana) a.mana = Math.min(a.maxMana, a.mana + ab.mana);
       fxRing(W, a.c, a.r, 0, '#ffe066', 8);
     }
-    if (ab.self && alive(u)) { serve(u, Math.floor(W.rng() * 4)); if (ab.cleanse) { u.st.stun = 0; u.st.root = 0; u.st.slowU = 0; } }   // v105: Taste Test
+    if (ab.self && alive(u)) { serve(u, Math.floor(W.rng() * 4)); if (ab.cleanse) { u.st.stun = 0; u.st.root = 0; u.st.slowU = 0; } }   // Taste Test
     if (ab.pan) { const t = pickTarget(W, u); if (t) { deal(W, u, t, ab.pan * apOf(u), 'magic', { ability: true }); cc(W, t, 'stun', 1); fxText(W, t, 'PAN!', '#e8d9b0'); } }
     return true;
   };
@@ -1725,7 +1725,7 @@
   // Returns true when it fired (mana is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.overcharge = (W, u) => {
     const ab = u.ab; u.st.overU = W.t + sec(ab.dur); fxText(W, u, 'OVERCHARGE', '#5fe0ff'); fxRing(W, u.c, u.r, 1, '#5fe0ff', 14);
-    if (ab.flare) for (const b of u.beams || []) { const e = W.byId[b.id]; if (!b.heal && alive(e) && e.side !== u.side) cc(W, e, 'blindU', ab.flare); }   // v105: Lens Flare
+    if (ab.flare) for (const b of u.beams || []) { const e = W.byId[b.id]; if (!b.heal && alive(e) && e.side !== u.side) cc(W, e, 'blindU', ab.flare); }   // Lens Flare
     if (ab.shield) for (const a of allies(W, u)) shield(W, a, a.maxHp * ab.shield, 5);
     return true;
   };
@@ -1739,7 +1739,7 @@
     return true;
   };
 
-  // ------------------------------------------------------------------ v62h: four new heroes
+  // ------------------------------------------------------------------ four new heroes
   // PLASMA CANNON (, David: "Stationary. Always targets closest enemy unit. Deals more damage the closer target is. Slightly knocks back
   // with auto attacks. Ultimate is three shots in rapid succession that knock even more back"). It never moves (ms 0), re-picks the closest foe
   // for every shot (flag 'closest'), and its damage is multiplied by plasmaMul: +close per hex nearer than 5, never under 55%.
@@ -1749,8 +1749,8 @@
   // Returns true when it fired (energy is then spent) and false when it had nothing to do (no target), so the unit keeps attacking instead. Numbers come from u.ab = the "ab" table of the hero in data.js.
   A.tripleshot = (W, u) => {
     const ab = u.ab; if (!nearestFoes(W, u, 1).length) return false;
-    const n = ab.shots + (ab.pointBlank && enemies(W, u).some(e => Hx.dist(e, u) === 1) ? ab.pointBlank : 0);   // v105: Point Blank
-    if (ab.overclock) at(W, W.t + 3 * n, () => { if (alive(u)) buff(u, 'asPct', ab.overclock, sec(3), W); });   // v105: Overclock
+    const n = ab.shots + (ab.pointBlank && enemies(W, u).some(e => Hx.dist(e, u) === 1) ? ab.pointBlank : 0);   // Point Blank
+    if (ab.overclock) at(W, W.t + 3 * n, () => { if (alive(u)) buff(u, 'asPct', ab.overclock, sec(3), W); });   // Overclock
     for (let i = 0; i < n; i++) at(W, W.t + 1 + i * 3, () => {
       if (u.dead || u.st.stun > W.t) return;
       const e = nearestFoes(W, u, 1)[0]; if (!e) return;
@@ -1773,7 +1773,7 @@
       if (ab.winHeal) heal(W, o, o.maxHp * ab.winHeal, true);
       if (ab.winMana) o.mana = Math.min(o.maxMana, o.mana + o.maxMana * ab.winMana);
       if (ab.rematch) at(W, W.t + 4, () => { if (!o.dead && !W.over) challenge(W, o); });
-      if (ab.crowd) for (const a of allies(W, o)) buff(a, 'atkPct', ab.crowd, sec(5), W);   // v105: Crowd Pleaser
+      if (ab.crowd) for (const a of allies(W, o)) buff(a, 'atkPct', ab.crowd, sec(5), W);   // Crowd Pleaser
     }
   }
   // WHAT: the Duelist picks the nearest enemy that is not a boss and is not already in a duel; both are locked onto each other, the Duelist gets its edge (Attack, Defense, lifesteal, damage reduction) until it ends.
@@ -1812,8 +1812,8 @@
         if (!alive(hurt)) return;
         heal(W, hurt, atkOf(W, u) * ab.heal * (hurt.hp < hurt.maxHp * 0.4 ? 1 + ab.triage : 1), true);
         if (ab.stim) buff(hurt, 'asPct', ab.stim, 3, W);
-        if (ab.surgeon) { hurt.st.stun = 0; hurt.st.root = 0; hurt.st.slowU = 0; hurt.st.frozenU = 0; }   // v105: Field Surgeon
-        if (ab.adren && hurt.hp < hurt.maxHp * 0.4) shield(W, hurt, hurt.maxHp * ab.adren, 4);   // v105: Adrenaline
+        if (ab.surgeon) { hurt.st.stun = 0; hurt.st.root = 0; hurt.st.slowU = 0; hurt.st.frozenU = 0; }   // Field Surgeon
+        if (ab.adren && hurt.hp < hurt.maxHp * 0.4) shield(W, hurt, hurt.maxHp * ab.adren, 4);   // Adrenaline
         if (!u.dead) u.mana = Math.min(u.maxMana, u.mana + 6 * manaGain(W, u));   // a heal fills the bar slower than a hit (6, not 10)
       });
     });
@@ -1850,8 +1850,8 @@
     const ab = u.ab, front = e => (u.side === 0 ? e.r <= u.r : e.r >= u.r), es = enemies(W, u).filter(e => targetable(W, e) && Hx.dist(u, e) <= ab.reach && front(e));
     if (!es.length) return false;
     fxRing(W, u.c, u.r, ab.reach, '#ffb347', 12);
-    for (const e of es) { deal(W, u, e, atkOf(W, u) * ab.dmg, 'phys', { ability: true }); if (alive(e)) { push(W, u, e, ab.push); cc(W, e, 'stun', ab.stun); if (ab.crack) slow(W, e, ab.crack, ab.stun + 3); } }   // v105: Earthbreaker
-    if (ab.sweepHeal) heal(W, u, u.maxHp * ab.sweepHeal * es.length, true);   // v105: Pain Into Power
+    for (const e of es) { deal(W, u, e, atkOf(W, u) * ab.dmg, 'phys', { ability: true }); if (alive(e)) { push(W, u, e, ab.push); cc(W, e, 'stun', ab.stun); if (ab.crack) slow(W, e, ab.crack, ab.stun + 3); } }   // Earthbreaker
+    if (ab.sweepHeal) heal(W, u, u.maxHp * ab.sweepHeal * es.length, true);   // Pain Into Power
     return true;
   };
   // GARDENER (, David: "Gardener. Ultimate is planting plants which cannot be attacked. Plants block movement and either attack heal shield
@@ -1911,11 +1911,11 @@
       }
       u.castFail = W.t + 10;
     }
-    if (u.egg) { eggAct(W, u); return; }                  // v62: Ashwing's egg
-    if (u.plant) { plantAct(W, u); return; }              // v62h: the Gardener's plants
-    if (u.fl.has('beam')) { beamAct(W, u); return; }      // v60: Prism
-    if (u.fl.has('tower')) { towerAct(W, u); return; }    // v60: Citadel
-    if (u.fl.has('medic') && medicAct(W, u)) return;      // v62h: the Combat Medic heals with its attacks
+    if (u.egg) { eggAct(W, u); return; }                  // Ashwing's egg
+    if (u.plant) { plantAct(W, u); return; }              // the Gardener's plants
+    if (u.fl.has('beam')) { beamAct(W, u); return; }      // Prism
+    if (u.fl.has('tower')) { towerAct(W, u); return; }    // Citadel
+    if (u.fl.has('medic') && medicAct(W, u)) return;      // the Combat Medic heals with its attacks
     const tgt = pickTarget(W, u);
     if (!tgt) return;
     if (u.abil === 'explode' && Hx.dist(u, tgt) <= 1) { A.explode(W, u); return; }
@@ -1925,22 +1925,22 @@
 
   // WHAT: things that tick every unit every tick: regeneration, mana regeneration, burning and poison (damage over time), ramping bonuses, Prism-like timers.
   function periodic(W, u) {
-    if (u.expireT && W.t >= u.expireT) {   // v50: the Gravecaller's risen
-      const ow = u.plant && W.byId[u.owner]; if (ow && ow.ab && ow.ab.compost) { for (const a of allies(W, u)) if (a !== u && !a.plant && Hx.dist(a, u) === 1) heal(W, a, a.maxHp * ow.ab.compost, true); fxRing(W, u.c, u.r, 1, '#7ee08e', 8); }   // v105: Compost
+    if (u.expireT && W.t >= u.expireT) {   // the Gravecaller's risen
+      const ow = u.plant && W.byId[u.owner]; if (ow && ow.ab && ow.ab.compost) { for (const a of allies(W, u)) if (a !== u && !a.plant && Hx.dist(a, u) === 1) heal(W, a, a.maxHp * ow.ab.compost, true); fxRing(W, u.c, u.r, 1, '#7ee08e', 8); }   // Compost
       u.suicide = 1; die(W, u, null); return;
     }
-    if (u.plant && W.t % 10 === 0) { const ow = W.byId[u.owner]; if (ow && ow.ab && ow.ab.network) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) slow(W, e, ow.ab.network, 0.6); }   // v105: Root Network
+    if (u.plant && W.t % 10 === 0) { const ow = W.byId[u.owner]; if (ow && ow.ab && ow.ab.network) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) slow(W, e, ow.ab.network, 0.6); }   // Root Network
     const m = u.m;
-    if (u.ab && u.ab.repulse && W.t % sec(u.ab.repulse) === 0) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) push(W, u, e, 2);   // v105: Plasma's Repulsor
-    if (u.ab && u.ab.aura && W.t % 10 === 0 && !(u.flyU > W.t)) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) deal(W, u, e, u.ab.aura * apOf(u) * 0.5, 'magic', { dot: true });   // v104: the Wyrm's Smoldering Scales
+    if (u.ab && u.ab.repulse && W.t % sec(u.ab.repulse) === 0) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) push(W, u, e, 2);   // Plasma's Repulsor
+    if (u.ab && u.ab.aura && W.t % 10 === 0 && !(u.flyU > W.t)) for (const e of enemies(W, u)) if (Hx.dist(e, u) === 1) deal(W, u, e, u.ab.aura * apOf(u) * 0.5, 'magic', { dot: true });   // the Wyrm's Smoldering Scales
     if (m.regen) { W.healBy = u.id; heal(W, u, u.maxHp * m.regen / TPS); W.healBy = 0; }
-    if (W.chrono && W.t % 5 === 0) { (u.hpHist = u.hpHist || []).push(u.hp); if (u.hpHist.length > 16) u.hpHist.shift(); }   // v121: Rewind remembers the last seconds
-    if (u.ab && !u.once.start && (u.ab.timestop || u.ab.pandemic)) {   // v121: Time Stop and Pandemic, when the fight starts
+    if (W.chrono && W.t % 5 === 0) { (u.hpHist = u.hpHist || []).push(u.hp); if (u.hpHist.length > 16) u.hpHist.shift(); }   // Rewind remembers the last seconds
+    if (u.ab && !u.once.start && (u.ab.timestop || u.ab.pandemic)) {   // Time Stop and Pandemic, when the fight starts
       u.once.start = 1; const es = enemies(W, u);
       if (u.ab.timestop) { for (const e of es) cc(W, e, 'stun', u.ab.timestop); fxText(W, u, 'TIME STOP', '#4dd0e1'); }
       if (u.ab.pandemic) for (const e of es.slice().sort(() => W.rng() - 0.5).slice(0, 2)) addTox(W, u, e, u.ab.pandemic);
     }
-    if (u.tox && W.t % 10 === 0) { const x = u.tox; if (x.until < W.t) u.tox = null; else { const s = W.byId[x.src], d = deal(W, s && !s.dead ? s : null, u, x.n * x.rate * 0.5, 'magic', { dot: true }); if (s && !s.dead && s.ab.leech && d > 0) heal(W, s, d * s.ab.leech); if (u.dead) return; } }   // v121: Toxin
+    if (u.tox && W.t % 10 === 0) { const x = u.tox; if (x.until < W.t) u.tox = null; else { const s = W.byId[x.src], d = deal(W, s && !s.dead ? s : null, u, x.n * x.rate * 0.5, 'magic', { dot: true }); if (s && !s.dead && s.ab.leech && d > 0) heal(W, s, d * s.ab.leech); if (u.dead) return; } }   // Toxin
     if (m.manaRegen && u.maxMana) u.mana = Math.min(u.maxMana, u.mana + m.manaRegen / TPS);
     if (W.t % 10 === 0) {
       for (const d of u.dots) if (d.until >= W.t) {
@@ -2047,7 +2047,7 @@
     relicTick(W);
     if (W.zones.length && W.t % 10 === 0) {
       W.zones = W.zones.filter(z => z.until > W.t);
-      for (const z of W.zones) if (z.follow) { const f = W.byId[z.follow]; if (f && !f.dead) { z.c = f.c; z.r = f.r; } }   // v105: Radiant's Pilgrimage
+      for (const z of W.zones) if (z.follow) { const f = W.byId[z.follow]; if (f && !f.dead) { z.c = f.c; z.r = f.r; } }   // Radiant's Pilgrimage
       for (const z of W.zones) for (const e of W.units) if (!e.dead && Hx.dist(e, z) <= z.rad) { if (e.side !== z.side) deal(W, W.byId[z.src] || null, e, z.dps * 0.5, 'magic', { dot: true }); else if (z.heal) { W.healBy = z.src; heal(W, e, e.maxHp * z.heal * 0.5); W.healBy = 0; } }
     }
     const list = W.units.filter(u => !u.dead);
@@ -2055,7 +2055,7 @@
     for (const u of list) if (!u.dead) act(W, u);
     if (W.t % 40 === 0) { W.fx = W.fx.filter(f => f.t1 > W.t - 20); if (W.units.length > 120) W.units = W.units.filter(u => !u.dead || W.t - u.deathT < 40 || u.kind === 'hero'); }
     // end conditions
-    let heroes = W.units.some(u => !u.dead && u.side === 0 && (u.kind === 'hero' || u.egg));   // v62: a pending egg is a hero still in the fight
+    let heroes = W.units.some(u => !u.dead && u.side === 0 && (u.kind === 'hero' || u.egg));   // a pending egg is a hero still in the fight
     // the Phoenix Egg: the whole team rises once, and the egg is used up (run.js takes it away)
     if (!heroes && W.fl.phoenix && !W.once.phoenix) {
       W.once.phoenix = 1; W.used = Object.assign(W.used || {}, { phoenix: 1 });
@@ -2063,7 +2063,7 @@
       fx(W, { k: 'banner', text: 'The Phoenix Egg hatches!', t1: W.t + 50 });
       heroes = W.units.some(u => !u.dead && u.side === 0 && u.kind === 'hero');
     }
-    let foes = W.units.some(u => !u.dead && u.side === 1 && !u.plant);   // v62h: plants do not count
+    let foes = W.units.some(u => !u.dead && u.side === 1 && !u.plant);   // plants do not count
     // a ghost that had the Phoenix Egg gets it too: its whole team rises once
     if (!foes && W.fl1.phoenix && !W.once.phoenix1) {
       W.once.phoenix1 = 1;

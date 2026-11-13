@@ -1,3377 +1,21 @@
-// UI: DOM screens + battle loop. No inline handlers (CSP): every button has data-act, handled by one listener.
-
-// FILE GUIDE (read this first). This file draws EVERY screen and reacts to every tap. The rules live in run.js, the fights in sim.js, the drawing of the board in render.js.
-// How it works: one function render() looks at the state of the game (run.phase, which screen) and writes the HTML of ONE screen into #screen by calling a *HTML() function
-// (titleHTML, startHTML, mapHTML, deployHTML, battleHTML, resultHTML, shopHTML, eventHTML, gauntletHTML, overHTML...). Buttons never have code inside: each one has data-act="name"
-// and one listener at the bottom calls ACT[name]. So to change what a button does: find its data-act in the HTML, then the same name in the ACT = { ... } table near the end.
-// To change a TEXT you see on screen: search for it in this file (or in data.js for names of heroes, items, powers and events).
-// Rule of the game owner: no screen may need scrolling at 390 x 740 and 360 x 640, and no text may be cut off (the Chrome tests check it: tools/tests/screens.mjs).
-// Sections, top to bottom: tiny helpers (store, esc, icons) -> account / XP / league -> text helpers (fmt colours keywords, ability scaling) -> header and render() ->
-// title + start -> map -> level up -> deploy + battle -> result -> Gauntlet -> shop -> event -> game over -> board input -> battle loop -> modals + toast -> gear (items) screen ->
-// suggestion box -> ladder and profiles -> crown shop -> how to play -> review notice -> ACT table -> boot. The index of the whole project is CODEMAP.md.
+// UI Entry: action table (ACT), global input/resize listeners, boot and __bal test hook.
 (function () {
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
-  // WHAT: I('name') = the SVG of an interface icon (js/uiicons.js). $ = document.querySelector. esc() makes a text safe to put in HTML: ALWAYS use it for text that came from a player.
-  const I = (n, c) => B.UI ? B.UI.i(n, c) : '';   // the interface icons (js/uiicons.js)
-  const $ = s => document.querySelector(s);
-  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const hName = h => h ? (h.pathName || (Run.heroNameOf ? Run.heroNameOf(h) : (HEROES[h.key] || {}).name || h.key)) : '';
-  // WHAT: the browser's small memory (localStorage), always safe: store.get(key, default), store.set(key, value), store.del(key). Saved game, name, speed and tutorial flags live here.
-  const store = {
-    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
-    del(k) { try { localStorage.removeItem(k); } catch (_) {} },
-  };
-  // WHAT: the main state of this file. run = the saved game object (null = none); screen = 'title' | 'run' | 'battle' | 'result'; battle = the fight being played; view = the drawn board; preview = the static board shown while deploying.
-  // ui = small screen state that is NOT saved (selected hero, open info, speed, the last result, modal...).
-  const SAVE = 'balance.run.v1';
-  let run = store.get(SAVE, null);
-  let screen = 'title';
-  let battle = null, view = null, preview = null;
-  const ui = { startPick: [], gsel: null, selUid: 0, info: null, result: null, speed: store.get('balance.speed', 1), drag: null, modal: null };
-  // WHAT: writes the run to the browser memory. Call it after every change of the run.
-  const save = () => { if (run) { store.set(SAVE, run); if (run.freeDeck) store.set('balance.freeDeck', run.freeDeck); } };   // the free-pick queues outlive the game
-  // player identity for Elo (reviews #3 #4): a random id kept in this browser
-  // WHAT: this browser's anonymous player id (made once). The server only ever knows players by this, never by name or email.
-  function pid() {
-    let id = store.get('balance.pid', '');
-    if (!/^[a-f0-9]{32}$/.test(id)) { const a = new Uint8Array(16); crypto.getRandomValues(a); id = [...a].map(x => x.toString(16).padStart(2, '0')).join(''); store.set('balance.pid', id); }
-    return id;
-  }
-  const myName = () => store.get('balance.name', '') || '';
-  // WHAT: ACCOUNT. acct = what the server told us about this player (crowns, perks, level, league, Elo). setAcct() copies the server answer in and shows toasts for new XP; hasPerk() = does he own a Crown Shop perk.
-  const setElo = (r, quiet) => { if (r && r.elo != null) store.set('balance.elo', r.elo); if (r && r.league != null) store.set('balance.league', { league: r.league, lp: r.lp, streak: r.streak }); setAcct(r, quiet); };
-  // v27 (owner + by David): the account. Crowns (earned the first time you reach a league each season, and
-  // from invited friends), Crown Shop unlocks, the King Tier, profiles and the invite link. The server is the source of
-  // truth (api/player.js); this cache only decides what to show before it answers.
-  const ACCT = 'balance.acct';
-  const acct = Object.assign({ account: false, crowns: 0, perks: [] }, store.get(ACCT, null) || {});
-  const hasPerk = id => B.hasPerk(acct.perks, id);
-  const isDefaultName = n => !n || /^Player [a-f0-9]{4}$/.test(n);
-  const ACCT_KEYS = ['axp', 'level', 'cleared', 'pfloor', 'bosses', 'crowns', 'perks', 'name', 'code', 'league', 'lp', 'season', 'sreach', 'seasonEnds', 'refs', 'refCrowns', 'titles', 'best', 'elo', 'runs', 'peakLeague', 'lastLeague', 'account', 'streak', 'bstreak', 'avatar', 'taunt', 'tauntId', 'vsfx', 'title', 'titleId', 'achs'];
-  // WHAT: copies the server's account answer into acct, remembers it, and shows what XP was earned.
-  function setAcct(r, quiet) {
-    if (!r || typeof r !== 'object') return;
-    for (const k of ACCT_KEYS) if (r[k] != null) acct[k] = r[k];
-    if (r.code) acct.account = true;
-    store.set(ACCT, acct); if (acct.account) store.del('balance.ref');
-    if (Array.isArray(r.xp) && r.xp.length && !quiet) xpToast(r.xp);
-    applySkin();
-  }
-  // account XP and level. A toast for what was earned; a level up names what it unlocked
-  const KIND_NAME = k => ({ taunt: 'voice line' })[k] || k;   // v74: what each kind of level reward is called
-  const unlockName = u => u.kind === 'title' ? `"${B.ACH[u.id].title}" title` : u.kind === 'taunt' ? `"${B.TAUNT_ALL.find(t => t.id === u.id).text}"` : u.kind === 'portrait' ? HEROES[u.id].name + ' portrait' : (u.kind === 'hero' ? HEROES[u.id] : u.kind === 'item' ? ITEM[u.id] : RELIC[u.id]).name;
-  // WHAT: the small "+N XP" message when account XP is earned (and "Level up! New hero: ..." when a level unlocks something).
-  function xpToast(list) {
-    const n = list.reduce((a, g) => a + g.xp, 0), up = list.filter(g => g.up).pop();
-    const us = up ? B.UNLOCKS.filter(x => x.lvl === up.level) : [], u = us[0];   // v63: a level can unlock several things
-    clearTimeout(xpToast.h); xpToast.h = setTimeout(() => toast(`✨ +${n} XP` + (list.length === 1 ? ` (${list[0].why})` : '') + (up ? ` · Level ${up.level}!${u ? ` New ${KIND_NAME(u.kind)}: ${unlockName(u)}${us.length > 1 ? ` (+${us.length - 1} more)` : ''}` : ''}` : '')), 700);
-  }
-  const lvlNow = () => B.levelOf(acct.axp || 0);
-  // v46 (, David: "Bring the player xp progression to the forefront of the game ... visually show progress after
-  // each run with looming rewards. It should be a rewarding dopamine hit and encourage playing again"): the title shows
-  // your level, its bar and the next reward; every game keeps the XP it earned (run.xpLog) and the game-over screen fills
-  // the bar line by line (level ups burst with confetti) and ends on the next reward waiting for you
-  // what a reward IS, for the hover / tap bubble
-  // WHAT: one or two sentences that explain an unlock (hero, item, power, portrait, voice line, title).
-  function unlockInfo(u) {
-    if (u.kind === 'hero') { const d = HEROES[u.id]; return `A new hero for your runs: ${d.role}${d.tag ? ', ' + d.tag.toLowerCase() : ''}. Ability, ${d.abName}: ${d.abDesc} Its portrait comes with it.`; }
-    if (u.kind === 'item') { const it = ITEM[u.id]; return `A new item that can show up in shops and events (${it.tier}${it.type ? ' ' + it.type : ''}): ${it.desc}.`; }
-    if (u.kind === 'relic') return `A new power for your whole team, offered at the start and in power shops: ${RELIC[u.id].desc}`;
-    if (u.kind === 'portrait') return `A new profile picture: ${HEROES[u.id].name}. Pick it on your profile (tap your picture).`;
-    if (u.kind === 'taunt') return 'A voice line: your speech bubble on the VS screen and on your profile, also when others face your team. Pick it in the Crown Shop, Style.';
-    if (u.kind === 'title') return `A title shown under your name (${B.ACH[u.id].desc}). Pick it in your profile, Achievements.`;
-    return '';
-  }
-  const unlockTip = u => `New ${KIND_NAME(u.kind)}: ${unlockName(u)}. ${unlockInfo(u)}`;
-  const unlockPic = (u, px) => u.kind === 'title' ? `<i class="upic" style="--px:${px}px">${B.ACH[u.id].icon}</i>` : u.kind === 'taunt' ? `<i class="upic" style="--px:${px}px">💬</i>` : u.kind === 'portrait' ? `<span class="pfp">${img(u.id, px, 'por')}</span>` : u.kind === 'hero' ? img(u.id, px, 'por') : ico(u.kind, u.id, px);
-  // a player's picture is a hero portrait (one of the four free ones, picked from the public code, until they choose one)
-  // WHAT: the portrait a player shows (avKey) and its round frame (avatarHTML), on the profile, the ladder and the top bar.
-  const avKey = (key, code) => key && HEROES[key] ? key : B.PORTRAITS_FREE[(parseInt(String(code || '').slice(0, 4), 16) || 0) % B.PORTRAITS_FREE.length];
-  const avatarHTML = (key, code, px, cls = '') => `<span class="pfp ${cls}" style="--px:${px}px">${img(avKey(key, code), px, 'por')}</span>`;
-
-  // WHAT: the win streak flame (completed runs in a row) with its number; hot from 2 on, cold at 0.
-  const streakOf = () => acct.streak == null ? 1 : acct.streak | 0;
-  const flameHTML = (n, cls = '') => `<span class="flame ${n >= 2 ? 'hot' : n <= 0 ? 'cold' : ''} ${cls}" title="Win streak: ${n} run${n === 1 ? '' : 's'} won in a row"><i>🔥</i><b>${n}</b></span>`;
-  const nextUnlock = lvl => B.UNLOCKS.find(u => u.lvl > lvl) || null;
-  const capFirst = t => String(t).charAt(0).toUpperCase() + String(t).slice(1);
-  function logGameXp(r) { if (run && r && Array.isArray(r.xp) && r.xp.length) { (run.xpLog = run.xpLog || []).push(...r.xp.map(g => ({ why: g.why, xp: g.xp | 0, k: g.k || 'first' }))); } }
-  // WHAT: the account level card (level, XP bar, what the next level unlocks).
-  function levelCardHTML() {
-    const L = B.levelProgress(acct.axp || 0), u = nextUnlock(L.lvl);
-    return `<button class="lvcard" data-act="player-tab" aria-label="Account level ${L.lvl}: see the rewards">
-      <span class="lvb">${L.lvl}</span>
-      <span class="lvm"><b>Level ${L.lvl}</b><span class="xpbar big"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span><small>${L.into}/${L.need} XP${u ? ` · next: <b>${esc(unlockName(u))}</b>` : ""}</small></span>
-      ${u ? `<span class="lvnext" data-tip="${esc('Level ' + u.lvl + ': ' + unlockName(u) + '. ' + unlockInfo(u))}">${unlockPic(u, 40)}<i>🔒</i><small>Lv ${u.lvl}</small></span>` : '<span class="lvnext done">✓</span>'}
-    </button>`;
-  }
-  const XP_ICON = { game: I('gamepad'), fight: I('swords'), boss: I('skull'), reach: I('trophy'), duel: I('sword'), champ: I('crown'), first: I('star'), crowns: I('gem') };
-  const XP_ORDER = ['game', 'fight', 'boss', 'reach', 'duel', 'champ', 'first', 'crowns'];
-  const XP_NAME = { game: 'Played', reach: 'Run complete', champ: 'Crown', first: 'Firsts', crowns: 'Crowns spent' };
-  function xpChips(log) {
-    const by = {};
-    for (const g of log) { const c = by[g.k] = by[g.k] || { k: g.k, xp: 0, n: 0, why: [] }; c.xp += g.xp; c.n++; c.why.push(capFirst(g.why)); }
-    return XP_ORDER.concat(Object.keys(by).filter(k => !XP_ORDER.includes(k))).filter(k => by[k]).map(k => { const c = by[k];
-      c.name = XP_NAME[k] || (c.n === 1 ? c.why[0].replace(/ beaten$/, '').replace(/ won$/, '') : k === 'duel' ? c.n + ' duels' : capFirst(k)); return c; });
-  }
-  // WHAT: the list of what earned XP at the end of a game, drawn on the game-over screen; animXp counts it up.
-  function xpPanelHTML() {
-    const log = run.xpLog || [], got = log.reduce((a, g) => a + g.xp, 0), to = acct.axp || 0, from = Math.max(0, to - got);
-    const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
-    const ups = B.UNLOCKS.filter(x => x.lvl > A.lvl && x.lvl <= Z.lvl);
-    const note = run.xpWait ? 'Counting your XP…' : run.xpErr ? 'Your XP could not be saved (no connection).' : '';
-    return `<div class="xppanel ${done ? '' : 'pre'}" id="xppanel" data-from="${from}" data-to="${to}">
-      <div class="xph"><span class="lvb" id="xplv">${S.lvl}</span><div class="xpm"><b>Level <span id="xplv2">${S.lvl}</span></b>
-        <span class="xpbar big"><i id="xpfill" style="width:${Math.round(100 * S.into / S.need)}%"></i></span><small id="xpnum">${S.into}/${S.need} XP</small></div>
-        <b class="xpgot" id="xpgot">+${done ? got : 0}</b></div>
-      ${log.length ? `<ul class="xplines">${xpChips(log).map(c => `<li data-xp="${c.xp}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i><span>${esc(c.name)}</span><b>+${c.xp}</b></li>`).join('')}</ul>` : note ? `<p class="small center">${note}</p>` : ''}
-      ${ups.length ? `<div class="xpups ${ups.length > 3 ? 'lots' : ups.length > 2 ? 'many' : ''}">${ups.length > 3 ? `<b class="xpupn">${ups.length} new unlocks!</b>` : ''}${ups.map(x => `<div class="xpup" data-lvl="${x.lvl}" tabindex="0" data-tip="${esc(unlockTip(x))}">${unlockPic(x, 34)}<span><small>New ${KIND_NAME(x.kind)}!</small><b>${esc(unlockName(x))}</b></span></div>`).join('')}</div>` : ''}
-      ${u ? `<div class="xpnext">${unlockPic(u, 48)}<span><small>Next reward · level ${u.lvl}</small><b>${esc(unlockName(u))}</b><i>${B.xpForLevel(u.lvl) - to} XP to go</i></span><em>🔒</em></div>` : '<p class="small center">🏅 Every reward unlocked!</p>'}
-    </div>`;
-  }
-  async function animXp() {
-    const el = $('#xppanel'); if (!el || run.xpShown || !(run.xpLog || []).length) return;
-    run.xpShown = true; save();
-    const wait = ms => new Promise(r => setTimeout(r, B.Juice && B.Juice.reduced() ? 0 : ms));
-    const fill = $('#xpfill'), num = $('#xpnum'), lv = $('#xplv'), lv2 = $('#xplv2'), gotEl = $('#xpgot');
-    let cur = +el.dataset.from, got = 0;
-    await wait(350);
-    el.classList.remove('pre');
-    for (const li of el.querySelectorAll('.xplines li')) {
-      if (!li.isConnected) return;
-      li.classList.add('in'); sfx('coin');
-      let left = +li.dataset.xp;
-      while (left > 0) {
-        const L = B.levelProgress(cur), room = L.need - L.into, step = Math.min(left, room), ms = 220 + Math.round(520 * step / L.need);
-        fill.style.transition = `width ${ms}ms ease-out`; fill.style.width = (step === room ? 100 : Math.round(100 * (L.into + step) / L.need)) + '%';
-        if (B.Juice) B.Juice.countUp(num, L.into, L.into + step, ms, v => v + '/' + L.need + ' XP');
-        await wait(ms + 40); cur += step; left -= step;
-        if (step === room) {   // a level up: the badge bumps, confetti, the reward it unlocked pops in
-          const N = B.levelProgress(cur); lv.textContent = lv2.textContent = N.lvl; sfx('levelup');
-          if (B.Juice) { B.Juice.bump(lv); B.Juice.confettiAt(lv, 60); }
-          el.querySelectorAll(`.xpup[data-lvl="${N.lvl}"]`).forEach(card => card.classList.add('in'));   // v63: a level can unlock several things
-          fill.style.transition = 'none'; fill.style.width = '0%'; num.textContent = '0/' + N.need + ' XP';
-          await wait(420);
-        }
-      }
-      if (B.Juice) B.Juice.countUp(gotEl, got, got + +li.dataset.xp, 300, v => '+' + v); got += +li.dataset.xp;
-      await wait(140);
-    }
-    const nx = el.querySelector('.xpnext'); if (nx) { nx.classList.add('loom'); sfx('star'); }
-  }
-  // WHAT: asks the server for this player's account (api/player.js, op "me") and stores it.
-  async function loadAcct() { try { setAcct(await Net.post('player', { op: 'me', pid: pid() })); } catch (_) {} }
-  const refCode = () => store.get('balance.ref', '') || undefined;
-  // the King Tier's Royal board (on by default for Kings; they can switch back to the classic stone)
-  // WHAT: the royal board colours are a King Tier perk; this switches the renderer to them when owned.
-  function applySkin() { if (B.Render) B.Render.skin = hasPerk('king') && store.get('balance.skin', 'royal') === 'royal' ? 'royal' : null; }
-  // a player's name anywhere in the game opens their profile
-  // WHAT: a player name that opens his profile when tapped. crowns() draws the crown count.
-  const plink = (name, code) => code ? `<button class="plink" data-act="profile" data-arg="${esc(code)}" title="Open profile">${esc(name)}</button>` : esc(name);
-  const crowns = n => `<span class="crn">👑 ${n | 0}</span>`;
-  // leagues. A shield in the league's colours; pips for Bronze..Platinum, a gem for Diamond, a star
-  // for Master.
-  let embN = 0;
-  // WHAT: LEAGUES (Bronze to Master). emblem() draws the badge of a league; leagueLine shows name + points.
-  function emblem(i, px) {
-    const l = B.LEAGUES[i] || B.LEAGUES[0], g = 'lg' + (++embN);
-    const mark = i >= 5 ? '<path d="M32 18 l4 9 10 1 -7.5 6.5 2.5 10 -9-5.5 -9 5.5 2.5-10 -7.5-6.5 10-1z" fill="#fff" opacity=".92"/>'
-      : i === 4 ? '<path d="M32 18 l10 11 -10 16 -10-16z" fill="#fff" opacity=".9"/><path d="M22 29h20" stroke="#3f7dff" stroke-width="1.5"/>'
-      : Array.from({ length: i + 1 }, (_, k) => { const x = 32 + (k - i / 2) * 8; return `<circle cx="${x}" cy="32" r="3.2" fill="#fff" opacity=".92"/>`; }).join('');
-    return `<svg class="lgem" width="${px}" height="${px}" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${l.hi}"/><stop offset="1" stop-color="${l.color}"/></linearGradient></defs>
-      <path d="M32 4 L56 12 V30 C56 45 45 55 32 60 C19 55 8 45 8 30 V12 Z" fill="url(#${g})" stroke="#0c0d11" stroke-width="3"/>
-      <path d="M32 11 L49 17 V30 C49 41 41 48 32 52 C23 48 15 41 15 30 V17 Z" fill="none" stroke="#ffffff66" stroke-width="2"/>${mark}</svg>`;
-  }
-  const leagueName = i => (B.LEAGUES[i] || B.LEAGUES[0]).name;
-  function leagueProgress(lg) { const top = B.LEAGUES.length - 1; return lg.league >= top ? `${lg.lp} point${lg.lp === 1 ? '' : 's'}` : `${lg.lp}/${B.LEAGUE_RULES.step}`; }
-  function leagueLine(lg) {
-    if (!lg) return '';
-    const d = lg.delta, when = lg.promoted ? `<div class="promo" style="--lc:${B.LEAGUES[lg.league].color}">${emblem(lg.league, 44)}<b>Promoted to ${leagueName(lg.league)}!</b></div>` : '';
-    return `${when}<p class="lgline">${emblem(lg.league, 20)}<span class="${d > 0 ? 'win' : d < 0 ? 'lose' : 'dim'}">${d > 0 ? '+' : ''}${d} league point${Math.abs(d) === 1 ? '' : 's'}</span><span class="dim">· ${leagueName(lg.league)} ${leagueProgress(lg)}</span></p>`;
-  }
-
-  // WHAT: the one-line description of each monster ability, for the enemy cards.
-  const MOB_ABIL = {
-    smash: 'Smash: a heavy blow that stuns its target.', mend: 'Mend: heals the weakest ally.', explode: 'Explodes when next to an enemy.',
-    wall: 'Shield Wall: shields nearby allies.', curse: 'Curse: damages, silences and slows.', slam: 'Slam: stuns everything adjacent.',
-    imps: 'Summons two imps.', cleave: 'Cleave: hits and stuns everything adjacent.', nova: 'Void Nova: stuns everything within 2 hexes.',
-  };
-  // every portrait is splash art (bust for small squares, full figure for banners)
-  // WHAT: HERO PICTURES. por(key, px) = the portrait (art from js/splash.js or the code-drawn model from js/models.js); img() wraps it in an <img> tag; ico() draws an item or power icon.
-  const por = (key, px = 44, full) => full ? B.Splash.image(key, px, Math.round(px * 1.3), 'full') : B.Splash.image(key, px, px, 'bust');
-  const img = (key, px, cls = 'por') => `<img class="${cls}" src="${por(key, px)}" alt="">`;
-  const EMBLEM = '<svg class="emblem" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M32 9v45M20 56h24M9 17h46"/><path d="M9 17 3 35M9 17l6 18M55 17l-6 18M55 17l6 18"/></g><path d="M1 35a8 6 0 0 0 16 0zM47 35a8 6 0 0 0 16 0z" fill="currentColor"/><circle cx="32" cy="8" r="4" fill="currentColor"/></svg>';
-  const ico = (kind, id, px = 36, cls = 'ico') => `<img class="${cls}" src="${kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px)}" alt="">`;
-  // readable at a glance. fmt() colours game terms and bolds numbers in any description;
-  // durations ("1.5s") are italic. It tokenises the RAW text and escapes every piece, so it is XSS-safe.
-  // WHAT: TEXT COLOURS. fmt(text) wraps numbers and key words (damage, heal, stun, burn, mana...) in coloured spans so descriptions are easy to read. KW is the list of words and their colour class (CSS .kw-*).
-  const KW = [
-    ['kw-atk', 'attack speed|attacks?|physical|damage'], ['kw-ap', 'magic damage|magic|abilities|ability'],
-    ['kw-def', 'defense|shields?|invulnerable|untargetable|dodge'], ['kw-hp', 'max health|health|heals?|healing|healed|regenerates?|regen|lifesteal|revives?|resurrect\\w*'],
-    ['kw-cc', 'stuns?|stunned|stunning|freezes?|frozen|freeze|roots?|slows?|slowed|silence[sd]?|taunts?|pulls?|knock\\w*'],
-    ['kw-dot', 'burns?|burning|burn|poisons?|poison|bleed'], ['kw-crit', 'crit chance|crit damage|critical|crits?'],
-    ['kw-mana', 'energy'], ['kw-gold', 'gold'], ['kw-xp', 'XP|level'], ['kw-move', 'move speed|range|hex(?:es)?'],
-  ];
-  const KW_RE = new RegExp('([+\\-−]?\\d+(?:[.,]\\d+)?(?:%|x|s\\b)?)|\\b(' + KW.map(k => k[1]).join('|') + ')\\b', 'gi');
-  const KW_CLS = w => { for (const [c, re] of KW) if (new RegExp('^(?:' + re + ')$', 'i').test(w)) return c; return ''; };
-  // WHAT: turns a plain description into coloured HTML (see KW above). Use it for any ability / item / power text.
-  function fmt(text) {
-    const t = B.T ? B.T(String(text == null ? '' : text)) : String(text == null ? '' : text); let out = '', last = 0, m;   // descriptions are translated here, before they are coloured
-    KW_RE.lastIndex = 0;
-    while ((m = KW_RE.exec(t))) {
-      out += esc(t.slice(last, m.index)); last = m.index + m[0].length;
-      if (m[1]) out += /\ds$/.test(m[1]) ? `<em class="dur">${esc(m[1])}</em>` : `<b class="num">${esc(m[1])}</b>`;
-      else out += `<span class="${KW_CLS(m[2])}">${esc(m[2])}</span>`;
-    }
-    return out + esc(t.slice(last));
-  }
-  // stat chips: coloured, with a symbol, instead of "HP 600 · ATK 58 · ..."
-  // WHAT: the row of coloured stat chips (health, attack, armor, speed...) shown on hero cards.
-  function chips(d, full) {
-    const c = (cls, sym, v, tip) => `<span class="stat ${cls}" title="${tip}"><i>${sym}</i>${v}</span>`;
-    return `<span class="stats-row">${c('s-hp', '❤', d.hp, 'Health')}${c('s-atk', '⚔', d.atk, 'Attack: what your hits do, and what attack abilities deal a % of')}${full ? c('s-ap', '✦', d.ap, 'Magic: what magic abilities, burns and heals deal a % of. 100 at Lv 1, +30 per level') : ''}${c('s-arm', '⛨', d.armor, 'Defense: lowers all damage taken, physical and magic')}${c('s-as', '»', d.as, 'Attacks per second')}${c('s-rng', '➶', d.range, 'Range (hexes)')}${d.crit ? c('s-crit', '✸', d.crit, 'Crit chance') : ''}${d.dodge ? c('s-dodge', '↯', d.dodge, 'Dodge') : ''}</span>`;
-  }
-  const pct = x => Math.round(x * 100) + '%';
-  // and (David: "abilities
-  // should clearly scale with AD or AP or both, AP not a multiplier"): how every ability is computed in js/sim.js, part
-  // by part. P = % of AD (attack) as physical damage; M = % of AP as magic damage; MX = [% of AD, % of AP] added, as magic
-  // damage; A = % of AD as magic damage; B = burn per second, % of AP, for 3s; BA = the same with AD; H = heal, % of AP;
-  // X = heal, % of own max HP; S = shield, % of own max HP; D = % of the target's max HP per second; Z = a sentence.
-  const lvF = d => 1 + 0.15 * ((d.lvl || 1) - 1);
-  // WHAT: HOW ABILITIES SCALE. One entry per ability id: a function that lists the parts of its damage (P = % of attack as physical, M = % of AP as magic, B = burn, H = heal, S = shield...) so the hero card can say "scales with AD / AP".
-  // When you add an ability to sim.js you must add its entry here, or the hero card shows nothing (the Chrome test "every hero ability explains how it scales" fails).
-  const SCALE = {
-    bulwark: ab => [['S', ab.shield, 'on himself'], ab.allyShield && ['Z', `allies within 2 hexes get a shield of ${pct(ab.shield * ab.allyShield)} of his max Health`], ab.burst && ['Z', `adjacent enemies take ${pct(ab.burst)} of the shield as magic damage`]],
-    shadowstep: ab => [['P', ab.dmg, 'to the weakest enemy, can crit']],
-    fireball: ab => [['M', ab.dmg, `to every enemy in ${ab.radius} hex`], ['B', ab.burn, 'burn']],
-    blizzard: ab => [['M', ab.dmg, 'to the frozen group'], ab.iceArmor && ['S', ab.iceArmor, 'on her and the weakest ally']],
-    charge: ab => [['P', ab.dmg, 'to the enemies hit']],
-    radiance: ab => [['H', ab.heal, 'the weakest ally'], ['H', ab.splash, 'allies next to it'], ab.smite && ['M', ab.smite, 'smite']],
-    volley: ab => [['P', ab.dmg, `per arrow, ${ab.count} arrows, can crit`]],
-    flamethrower: ab => [['M', ab.dmg, 'to every enemy in the flames'], ['B', ab.burn, `burn, for ${ab.dur}s`], ab.heal && ['Z', `heals ${pct(ab.heal)} of its max Health for every enemy hit`], ab.vuln && ['Z', `burning enemies take ${pct(ab.vuln)} more damage`], ['Z', `Devour: eats ${ab.devour} item${ab.devour > 1 ? 's' : ''} at the start of a fight, ${pct(ab.boost)} of its stats`]],   // v62
-    dishes: ab => [['Z', d => `hot pie: heals ${Math.round(ab.heal * (1 + ab.big) * d.ap)}; jerky: +${pct(ab.atk * (1 + ab.big))} attack and pepper soup: +${pct(ab.as * (1 + ab.big))} attack speed for ${ab.dur}s; pudding: a ${Math.round(ab.shield * (1 + ab.big) * d.ap)} shield`], ['Z', `${ab.all ? 'every ally' : ab.dishes + ' random allies'} get a dish${ab.double ? ', two effects each' : ''}`], ab.pan && ['M', ab.pan, 'to the nearest enemy (pan), 1s stun']],   // v62
-    sweep: ab => [['P', ab.dmg, `to every enemy within ${ab.reach} hexes in front, knocked back ${ab.push} hexes, stunned ${ab.stun}s`], ['Z', `its hammer blows stun for ${ab.tap}s; it gets Energy only from damage taken`]],   // v62i
-    tripleshot: ab => [['P', ab.dmg, `per shot, ${ab.shots} shots in a row, each shoves ${ab.push} hexes; +${pct(ab.close)} per hex nearer than 5`], ['Z', `every normal shot shoves ${ab.knock} hex${ab.knock > 1 ? 'es' : ''}`]],   // v62h
-    shellguard: ab => [['Z', `the first time it falls (${1 + (ab.shells || 0)}x a fight): in its shell for ${ab.shellT}s, then out with ${pct(ab.shellHp)} Health`], ['P', ab.burst, `to enemies within ${1 + (ab.burstRad || 0)} hex${ab.burstRad ? 'es' : ''} on the burst, stunned ${ab.burstStun}s`], ['Z', `attackers take ${pct(ab.spike)} of its Defense`]],   // v104
-    rewind: ab => [['H', ab.heal, `at least, to the most hurt ally${ab.targets > 1 ? ' (two allies)' : ''}: it gets back its Health of ${ab.back}s ago and ignores crowd control ${ab.immune}s`], ['Z', `his attacks slow ${pct(ab.decel)} per hit, up to ${pct(ab.decel * ab.decelCap)}`], ab.shock && ['M', ab.shock, 'to enemies next to that ally']],   // v121
-    epidemic: ab => [['M', ab.tox, `per second per Toxin stack (up to ${ab.toxCap}, ${ab.toxDur}s), ${pct(ab.antiHeal)} less healing per stack`], ['M', ab.burst, 'per stack when Epidemic bursts it, then it spreads']],
-    foxfire: ab => [['M', ab.dmg, `per flame, ${ab.flames} flames at the 2 farthest enemies`], ['P', ab.dmgAtk, 'more per flame'], ['Z', `every ${ab.jauntEvery}rd hit on her misses and she dashes behind the attacker`]],
-    skydive: ab => [['M', ab.dmg, 'to every enemy it flies over'], ['M', ab.dps, `per second in its burning wake, ${ab.dur}s`]],
-    duel: ab => [['Z', 'challenges the nearest enemy (never a boss): the two can only fight each other until one falls'], ['Z', `in the duel: +${pct(ab.edge)} Attack, +${ab.guard} Defense, ${pct(ab.ls)} lifesteal${ab.parry ? ', ' + pct(ab.parry) + ' less damage taken' : ''}`], ab.strike && ['P', ab.strike, `opening strike, stuns ${ab.stun}s`], ab.winHeal && ['X', ab.winHeal, 'when it wins'], ab.rematch && ['Z', 'a win challenges the next enemy at once']],
-    grenade: ab => [['M', ab.dmg, `to every enemy within ${ab.radius} hex of the blast`], ['H', ab.healNade, 'to every ally in the blast'], ['Z', d => `its attacks heal ${Math.round(ab.heal * d.atk)} per hit (+${pct(ab.triage)} under 40% Health)`], ab.stun && ['Z', `stuns enemies for ${ab.stun}s`], ab.shield && ['S', ab.shield, 'shield for allies in the blast']],
-    plant: ab => [['Z', `${ab.count} plants for ${ab.life}s (at most ${ab.cap}): nothing can attack them and they block movement`], ['M', ab.dmg, 'per Thornbush shot'], ['H', ab.heal, 'per Healing Bloom pulse'], ['Z', d => `Shield Lily: a ${Math.round(ab.shield * d.ap)} shield; Spore Pod: ${Math.round(ab.poison * d.ap)} poison per second`]],
-    firewall: ab => [['M', ab.dps, `per second to enemies on the wall, ${ab.dur}s, ${2 * ab.width + 1} hexes wide`], ['B', ab.burn, 'burn on those standing on it']],   // v62
-    overcharge: ab => [['M', ab.dmg, 'per second to the enemy in a beam'], ['H', ab.heal, 'per second to the hurt ally in a beam'], ['Z', `Overcharge: x${ab.mult} for ${ab.dur}s and +${ab.extra} beam`]],   // v60
-    garrison: ab => [['Z', d => `footman: ${Math.round(ab.fhp * (1 + ab.vet) * d.ap)} Health and ${Math.round(ab.fatk * (1 + ab.vet) * d.ap)} attack; archer: ${Math.round(ab.ahp * (1 + ab.vet) * d.ap)} Health and ${Math.round(ab.aatk * (1 + ab.vet) * d.ap)} attack`]],   // v60
-    raise: ab => [['Z', d => `each skeleton: ${Math.round(3 * d.ap * ab.hpMul)} Health (${pct(3 * ab.hpMul)} Magic) and ${Math.round(0.3 * d.ap)} attack (30% Magic)`], ab.explode && ['M', ab.explode, 'when a skeleton dies, 1 hex']],
-    chain: ab => [['M', ab.dmg, `per bounce, ${ab.bounces} enemies, ${pct(ab.falloff)} less each bounce`]],
-    hook: ab => [['P', ab.dmg, 'to the pulled enemy']],
-    mirror: ab => [['Z', d => `each clone: ${pct(ab.stat)} of her Health, Attack and Defense (${Math.round(d.hp * ab.stat)} Health, ${Math.round(d.atk * ab.stat)} attack)`]],
-    turret: ab => [['Z', d => `each turret: ${Math.round(340 * lvF(d) * ab.hpMul)} Health and 80% of his Attack as attack (${Math.round(0.8 * d.atk)})`]],
-    whirl: ab => [['P', ab.dmg, 'to every adjacent enemy'], ['Z', `heals ${pct(ab.heal)} of the damage dealt`]],
-    consecrate: ab => [['M', ab.dps, `per second to enemies on the ground, ${ab.dur}s`], ['Z', `allies on it heal ${pct(ab.heal)} of their max Health per second`]],
-    eclipse: ab => [['A', ab.bonus, `extra on each of the next ${ab.hits} attacks`], ['Z', `heals ${pct(ab.heal)} of that damage`]],
-    entangle: ab => [['M', ab.dmg, `to every enemy within ${ab.radius} hexes`]],
-    anthem: ab => [['H', ab.heal, 'allies within 2 hexes'], ['Z', `+${pct(ab.atk)} attack for 4s`]],
-    fan: ab => [['P', ab.dmg, `per shot, ${ab.shots} shots, can crit`]],
-    javelin: ab => [['P', ab.dmg, `per javelin, ${ab.count} javelins, can crit`], ['D', ab.poison, 'poison for 4s']],
-    headshot: ab => [['P', ab.dmg, '+8% per hex of distance, can crit']],
-    bloodfeast: ab => [['MX', [ab.dmg, ab.apdmg], `to every enemy within ${ab.radius} hexes, heals all of it`]],
-    smoke: ab => [['P', ab.dmg, `per shuriken, ${ab.count} shuriken, can crit`]],
-    howl: ab => [['P', ab.dmg, 'pounce, can crit'], ['D', ab.bleed, 'bleed for 3s'], ['Z', `allies get +${pct(ab.buff)} attack and attack speed for 4s`]],
-    hypnosis: ab => [['M', ab.dmg, 'to the hypnotized group']],
-    trick: ab => [['P', 1.5, 'pie'], ['H', ab.heal, 'balloons, every ally'], ['P', 1, `per knife, ${ab.knives} knives`], ['MX', [0.4, 0.2], 'confetti']],
-    keg: ab => [['P', ab.dmg, 'to adjacent enemies'], ab.burn && ['BA', ab.burn, 'burn'], ['X', ab.heal, 'swig']],
-    hellfire: ab => [['MX', [ab.dmg, ab.apdmg], `to every enemy within ${ab.radius} hexes`], ['BA', ab.burn, 'burn'], ['Z', `costs ${pct(ab.cost)} of his current Health`]],
-    boulder: ab => [['P', ab.dmg, 'to the target'], ['P', 1, 'to enemies next to it']],
-    wrap: ab => [['D', ab.decay, `decay on ${ab.count} enemies while rooted`]],
-    phalanx: ab => [['P', ab.dmg, `per enemy, ${ab.hits} enemies, can crit`], ['Z', `allies next to him take ${pct(ab.dr)} less damage for 4s`]],
-    waltz: ab => [['P', ab.dmg, `per enemy, up to ${ab.hits}, can crit`]],
-    flask: ab => [['M', ab.acid, 'acid flask'], ['H', ab.heal, 'healing flask']],
-    galekick: ab => [['P', ab.dmg, 'kick, can crit'], ['P', 1, 'to anyone it crashes into']],
-    hive: ab => [['M', ab.dps, `per second to enemies in the hive, ${ab.dur}s`], ['H', ab.honey, 'honey, the weakest ally'], ab.slow && ['Z', `enemies in the hive are slowed ${pct(ab.slow)}`], ab.twin && ['Z', 'a second hive on another group']],
-    wave: ab => [['M', ab.dmg, `to every enemy within ${ab.radius} hex, pushed ${ab.push} back`], ab.echo && ['Z', `a second wave 1s later deals ${pct(ab.echo)} of it`], ab.foam && ['Z', `allies next to her get a shield of ${pct(ab.foam)} of their max Health`]],
-    starfall: ab => [['MX', [ab.dmg, ab.apdmg], `where the star lands, ${ab.radius} hex, after ${Math.max(0.3, ab.delay)}s`], ab.shards && ['Z', `${ab.shards} shards hit random enemies for 50% of it`], ab.veil && ['Z', `allies within 2 hexes get a shield of ${pct(ab.veil)} of their max Health`]],
-  };
-  // d = { abil, ab, atk, ap, hp, lvl, name } from Run.heroDef or a unit in the fight
-  // WHAT: runs the SCALE entry of a hero and fills in the numbers for his current level.
-  function scaleParts(d) {
-    const S = SCALE[d.abil]; if (!S) return [];
-    const n = x => Math.round(x);
-    return S(d.ab).filter(Boolean).map(([k, v, note]) => {
-      if (k === 'Z') return { k, t: typeof v === 'function' ? v(d) : v };
-      const txt = { P: `<b>${pct(v)} Attack</b> → <b class="num">${n(v * d.atk)}</b> physical`, M: `<b>${pct(v)} Magic</b> → <b class="num">${n(v * d.ap)}</b> magic`,
-        MX: `<b>${pct(v[0])} Attack + ${pct(v[1])} Magic</b> → <b class="num">${n(v[0] * d.atk + v[1] * d.ap)}</b> magic`, A: `<b>${pct(v)} Attack</b> → <b class="num">${n(v * d.atk)}</b> magic`,
-        B: `burn <b>${pct(v)} Magic</b> → <b class="num">${n(v * d.ap)}</b> per second for 3s`, BA: `burn <b>${pct(v)} Attack</b> → <b class="num">${n(v * d.atk)}</b> per second for 3s`,
-        H: `heals <b>${pct(v)} Magic</b> → <b class="num">${n(v * d.ap)}</b> Health`, X: `heals <b>${pct(v)}</b> of max Health → <b class="num">${n(v * d.hp)}</b>`,
-        S: `shield <b>${pct(v)}</b> of max Health → <b class="num">${n(v * d.hp)}</b>`, D: `<b>${pct(v)}</b> of the target's max Health per second` }[k];
-      return { k, t: txt + (note ? ` <span class="dim">(${note})</span>` : '') };
-    });
-  }
-  const SCALE_ICON = { P: '⚔', M: '✦', MX: '✦', A: '⚔', B: '🔥', BA: '🔥', H: '✚', X: '✚', S: '🛡', D: '🧪', Z: '•' };
-  // WHAT: draws the "How it scales" list under an ability.
-  function scalingHTML(d, compact) {
-    const parts = scaleParts(d); if (!parts.length) return '';
-    const head = compact ? '' : `<div class="scal-h">How it scales <span class="dim">now: ⚔ ${Math.round(d.atk)} Attack · ✦ ${Math.round(d.ap)} Magic</span></div>`;
-    return `<div class="scal ${compact ? 'compact' : ''}">${head}<ul>${parts.map(p => `<li class="sk-${p.k}"><i>${SCALE_ICON[p.k]}</i><span>${p.t}</span></li>`).join('')}</ul></div>`;
-  }
-  // "scales with AD · AP · max HP" under a hero's name (shops, start)
-  // WHAT: the small "scales with AD · AP" label on hero cards.
-  function scaleTag(key) {
-    const h = HEROES[key], S = SCALE[h.abil]; if (!S) return '';
-    const ks = new Set(S(h.ab).filter(Boolean).map(p => p[0])), w = [];
-    if (['P', 'A', 'BA', 'MX'].some(k => ks.has(k)) || h.abil === 'turret' || h.abil === 'mirror') w.push('<span class="kw-atk">Attack</span>');
-    if (['M', 'B', 'H', 'MX'].some(k => ks.has(k)) || h.abil === 'raise') w.push('<span class="kw-ap">Magic</span>');
-    if (['S', 'X'].some(k => ks.has(k)) || h.abil === 'mirror') w.push('<span class="kw-hp">max Health</span>');
-    return w.length ? `<span class="scaletag">scales with ${w.join(' · ')}</span>` : '';
-  }
-  // WHAT: item and power labels: rarity colours, the "Rare weapon" tag, the set line, the order of the doll slots, the map node icons, shop names.
-  const TIER_COLOR = {}; for (const r of B.RARITIES) TIER_COLOR[r.id] = r.color;
-  // itemization v16: "Legendary weapon" under the name, and the set an item belongs to
-  const itemTag = it => `<span class="itag" style="color:${TIER_COLOR[it.tier]}">${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}</span>`;
-  function shopSynergyTag(id) {
-    if (!run || !run.heroes || !run.heroes.length || !ITEM[id]) return '';
-    const ev = Run.evalAutoEquip(run, id);
-    if (!ev || !ev.hero) return '';
-    const h = ev.hero, hName = esc(HEROES[h.key].name), it = ITEM[id];
-    if (ev.isSet && ev.setPieces >= 2) {
-      const setName = esc(B.SETS[it.set].name);
-      return `<span class="synpill set" title="Auto-equips on ${hName} (${ev.setPieces}/3 ${setName} set)">◆ ${ev.setPieces}/3 ${hName}</span>`;
-    }
-    if (ev.replaced) {
-      const oldName = esc(ITEM[ev.replaced].name);
-      return `<span class="synpill upg" title="Auto-equips on ${hName} (replaces ${oldName})">▲ Upgrade ${hName}</span>`;
-    }
-    return `<span class="synpill fit" title="Auto-equips into open slot on ${hName}">✓ Fits ${hName}</span>`;
-  }
-  const setInfo = it => { const S = it.set && B.SETS[it.set]; return S ? `<div class="setline">◆ <b>${esc(S.name)}</b> set · 2 pieces: ${fmt(S.bonus[2].desc)} · 3 pieces: ${fmt(S.bonus[3].desc)}</div>` : ''; };
-  const RANK = id => B.RARITIES.findIndex(r => r.id === ITEM[id].tier);
-  const DOLL = ['helmet', 'trinket', 'weapon', 'offhand', 'gloves', 'armor', 'boots'];
-  const NODE_ICON = { F: I('swords'), X: I('help'), B: I('skull'), S: I('cart'), G: I('trophy') };  // v29: friendlier icons; v49: the icon set
-  const SHOP_NAME = { heroShop: 'Hero Shop', itemShop: 'Item Shop', relicShop: 'Power Shop' };
-  const SHOP_DESC = { heroShop: 'Hire heroes & expand your squad.', itemShop: 'Equip weapons, armor & trinkets.', relicShop: 'Team-wide powers & artifacts.' };
-  // each event has its own picture (map card and a big medallion on the event screen; icon in data.js)
-  const evIcon = id => (EVENT[id] && EVENT[id].icon) || '❓';
-  const EV_RAR = { uncommon: 'Uncommon', rare: 'Rare event' };
-
-  // ------------------------------------------------------------------ header
-  // WHAT: the top bar (gold, day, Team button, review notice, menu). Called by render() and after gold changes.
-  // three lives, shown as hearts in the top bar
-  // WHAT: the hearts (lives left) shown in the top bar.
-  const heartsHTML = () => run && run.lives != null ? `<button class="lives ward ${run.lives > 0 ? 'on' : 'broken'}" data-act="ward-info" title="${run.lives > 0 ? 'Ward: whole. A lost fight breaks it and the day starts over.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${run.lives > 0 ? 'on' : ''}">${I('shield')}</i></button>` : '';
-  function header() {
-    const h = $('#top');
-    if (!run || screen === 'title') {
-      // the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
-      // the ladder, suggestions, and the menu sheet with the rest)
-      const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchip-label">LP</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
-      return;
-    }
-    if ((run.phase === 'over' || run.phase === 'tower') && screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // the end screens show only the run's results
-    const stepN = Math.max(0, run.step);
-    const g = run.g, seq = Run.pveSeq(run);
-    const prog = run.result === 'clear' && !(g && g.kind === 'tower') ? '🏰 Gauntlet' : g && g.kind === 'tower' ? I('trophy') + ' Floor ' + ((run.tower && run.tower.floor) || 1) : run.phase === 'gauntlet' || (g && g.kind === 'final') ? I('trophy') + ' Final fight' : 'Day ' + (stepN + 1) + '/' + seq.length;
-    const track = !(g && g.kind === 'tower') && run.result !== 'clear' ? `<span class="top-track" aria-hidden="true">${seq.map((t, k) => `<i class="tt-n ${k < stepN ? 'done' : k === stepN ? 'now' : ''} tt-${t === 'B' ? 'boss' : t === 'S' ? 'shop' : t === 'R' ? 'rec' : t === 'P' ? 'pvp' : 'f'}">${k === stepN ? '<span class="tt-sunburst" aria-hidden="true"></span>' : ''}<span class="tt-ico">${t === 'B' ? '💀' : t === 'S' ? '🛒' : t === 'R' ? '⛺' : '⚔'}</span></i>`).join('')}</span>` : '';
-    const lgs = store.get('balance.league', null);
-    h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
-      <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey"><span class="prog-txt">${prog}</span>${track}</button>
-      <span class="grow"></span>${battle ? soundBtn() : `<button data-act="team" style="display:none" hidden aria-hidden="true">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
-    animGold();
-  }
-  // sounds (js/sfx.js) with a switch, and a gold counter that counts up or
-  // down with a bump and a "+6" whenever the gold changes. After a won fight it waits for the coins to fly in.
-  // WHAT: sound button, sfx() plays a named sound (js/sfx.js), shownGold / animGold animate the gold counter.
-  const soundBtn = () => `<button class="sndbtn ibtn" data-act="sound" aria-label="Sound ${B.Sfx && B.Sfx.on ? 'on' : 'off'}" title="Sound">${I(B.Sfx && B.Sfx.on ? 'sound' : 'mute')}</button>`;
-  const fsBtn = () => document.body.classList.contains('desk') ? `<button class="fsbtn ibtn" data-act="fullscreen" aria-label="Fullscreen" title="Toggle Fullscreen (F11)">${I('expand')}</button>` : '';
-  const sfx = (n, a) => { if (B.Sfx) B.Sfx.play(n, a); };
-  const shownGold = () => ui.goldHold != null ? ui.goldHold : run.gold;
-  function animGold() {
-    const el = $('#top .gold'); if (!el || !run) return;
-    const g = shownGold(), was = ui.lastGold; ui.lastGold = g;
-    if (was == null || was === g || !B.Juice) return;
-    el.textContent = was; B.Juice.countUp(el, was, g, 450); B.Juice.bump(el); B.Juice.floater(el, (g > was ? '+' : '−') + Math.abs(g - was), g > was ? 'up' : 'down');
-  }
-
-  // ------------------------------------------------------------------ screens
-  // WHAT (the heart of the UI): decides which screen to show from the state (run.phase, screen) and writes its HTML into #screen. Also plays the entrance animation and clears leftovers when the screen changes.
-  // Call render() after changing the state to redraw. Things that must NOT survive a screen change (open descriptions, selections) are reset right at its top.
-  function render() {
-    header();
-    const m = $('#screen');
-    const key = screenKey();
-    const wm0 = $('#wmap'), keepMap = wm0 ? { key: wm0.dataset.key, top: wm0.scrollTop } : null;   // v65: a redraw of the map keeps where the road was scrolled to
-    if (key !== ui.lastKey) { ui.info = null; ui.gsel = null; ui.heroInfo = 0; ui.selUid = 0; ui.confirmBuy = null; ui.rmore = false; }   // v62 (reviews #77 #89): what was open on the screen before (unit / boss / item descriptions, selections) does not follow you to the next one
-    if (screen !== 'battle') document.body.classList.remove('in-danger');
-    if (screen === 'title' || !run) m.innerHTML = titleHTML();
-    else if (screen === 'battle') { m.innerHTML = battleHTML(); mountBoard(); }
-    else if (screen === 'result') m.innerHTML = resultHTML();
-    else if (run.pendingUpgrade && run.phase !== 'deploy') m.innerHTML = upgradeHTML();
-    else if (run.pending.length && run.phase !== 'deploy') m.innerHTML = levelHTML();
-    else if (run.phase === 'over') m.innerHTML = overHTML();
-    else if (run.phase === 'steal') m.innerHTML = stealHTML();
-    else if (run.phase === 'recruit') m.innerHTML = recruitHTML();
-    else if (run.phase === 'gauntlet') m.innerHTML = gauntletHTML();
-    else if (run.phase === 'tower') m.innerHTML = towerHTML();
-    else if (run.phase === 'start') m.innerHTML = startHTML();
-    else if (run.phase === 'map') { m.innerHTML = mapHTML(); layoutMap(keepMap); }
-    else if (run.phase === 'deploy') { m.innerHTML = deployHTML(); mountBoard(); }
-    else if (run.phase === 'shop') m.innerHTML = shopHTML();
-    else if (run.phase === 'event') m.innerHTML = eventHTML();
-    // v42: the screen plays its entrance only when it is a new screen (buying an item no longer makes the shop jump)
-    const sec = m.firstElementChild;
-    if (sec && key !== ui.lastKey) { sec.classList.add('enter'); onEnter(key); clearLeftovers(); if (ui.lastKey && key.startsWith('deploy') && screen === 'run') showVs(); }
-    ui.lastKey = key;
-    if (run && screen === 'run' && run.phase === 'map') findDuels();
-    if (screen === 'result' && ui.result && !ui.result.fx) celebrate(ui.result);
-    if (run && screen === 'run' && run.phase === 'over' && run.result === 'gauntlet' && !run.xpShown) animXp();   // the old Gauntlet end (saves from before v63)
-    if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear') { recordTeamWins(run.heroes); }
-    if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.endAsked && !run.lgEnd && !run.xpErr) { run.endAsked = true; save(); setTimeout(reportRunEnd, 0); }   // a run completed on the map (no last fight)
-    if (run && screen === 'run' && run.phase === 'over' && run.result === 'clear' && !run.tower && !run.vicCheered) { run.vicCheered = true; save(); sfx('win'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('.vicart', 90), 250); }
-    if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'ready' && !ui.towerBusy) setTimeout(() => ACT['tower-enter'](), 0);   // v101: back from the Gauntlet shop
-    if (run && screen === 'run' && run.phase === 'over') fitOver();   // the big end screens shrink a step when the page would scroll
-    if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !run.lpShown) animLp();
-    if (run && screen === 'run' && run.phase === 'tower' && run.tower && run.tower.status === 'over' && !run.tower.cheered) { run.tower.cheered = true; save(); sfx(run.tower.champion ? 'unlock' : run.tower.wins ? 'levelup' : 'back'); if (run.tower.wins && B.Juice) setTimeout(() => B.Juice.confettiAt('.towerart .tcrown', run.tower.champion ? 110 : 40), 450); }   // v90: the end of the climb cheers // 
-    if (run && screen === 'run' && run.phase === 'over' && run.result !== 'gauntlet' && run.overStep === 2 && !run.xpShown) animXp2();
-    if (screen === 'title' || !run) startTrailer();
-    autoGear();
-    mountBgBoard();
-    guide();
-  }
-  // WHAT: a short name for "which screen is this" (phase + step + status). render() compares it with the previous one to know the screen really changed.
-  function screenKey() {
-    if (screen === 'title' || !run) return 'title';
-    if (screen !== 'run') return screen;
-    if (run.pendingUpgrade && run.phase !== 'deploy') return 'upgrade:' + (ui.upgradeHero || 0);
-    if (run.pending.length && run.phase !== 'deploy') return 'level:' + run.pending[0].uid + ':' + run.pending[0].lvl;
-    return run.phase + (run.phase === 'start' ? ui.startStep || 1 : '') + ':' + run.step + ':' + (run.g ? run.g.round + ':' + run.g.status : '') + ':' + (run.cur && run.cur.pick != null ? 'pick' : '') + (run.cur && run.cur.done ? 'done' : '');
-  }
-  // WHAT: sounds and confetti played when a new screen appears (level up, event result).
-  function onEnter(key) {
-    if (!B.Juice) return;
-    if (key.startsWith('upgrade:')) { sfx('unlock'); const el = $('.upg-header'); if (el) setTimeout(() => B.Juice.confettiAt(el, 70), 150); }
-    else if (key.startsWith('level:')) { sfx('levelup'); const el = $('.lufull'); if (el) setTimeout(() => B.Juice.confettiAt(el, 50), 150); }
-    else if (key.startsWith('event:') && key.endsWith('done')) { const g = $('.gains'); if (g) { sfx('unlock'); B.Juice.confettiAt(g, 40); } else sfx('back'); }
-  }
-
-  // v45 (, David: "We are losing new players without experience ... make the intro screen and the selection to
-  // start the run and select hero and relic more simple and intuitive ... call it game instead of run ... remove the
-  // portraits from the start menu. Dont call it a roguelike"): the title says what you do in three steps and has one big
-  // Play button; a run is called a "game" everywhere a player reads it
-  // v49 (, David: "New game identity: Super Rogues ... Super simple landing page, put most stuff into the bar or
-  // icons. Just a play button. Beneath it put the board with random teams fighting mobs, refreshing when fight is over.
-  // Like a trailer. While old run is on ... small white flag beneath continue game button saying give up. A run doesnt
-  // count as started unless hero and relic are chosen"): a game still picking its hero and relic shows Play, not Continue
-  // WHAT: the SUPER ROGUES logo.
-  const logoHTML = () => `<h1 class="logo-big" aria-label="Super Rogues">${B.UI ? B.UI.mark('lg') : ''}<span class="wm"><span class="w1">Super</span><span class="w2">${[...'ROGUES'].map((c, k) => `<i style="--k:${k}">${c}</i>`).join('')}</span></span></h1>`;
-  // WHAT: the start page: the logo, the Play / Continue button, the trailer board, the bottom hub dock.
-  function titleHTML() {
-    const has = run && run.phase !== 'over' && run.phase !== 'start';
-    const canShop = (acct.crowns | 0) >= 30; // notification pip if crowns are available to spend
-    const hasRewards = (acct.axp | 0) > 0;
-    return `<section class="title home">
-      <div class="menu-ambient" aria-hidden="true">
-        <span class="m-glow"></span>
-        <div class="m-particles">${[...Array(12)].map((_, i) => `<i class="m-dot m-dot-${i}"></i>`).join('')}</div>
-      </div>
-      ${logoHTML()}
-      <div class="stack">
-        ${has ? `<button class="primary big cta" data-act="continue-run"><span>${I('play')} Continue</span><small>${run.phase === 'gauntlet' ? 'Final fight' : 'Day ' + (Math.max(0, run.step) + 1) + '/' + Run.pveSeq(run).length} · ${run.heroes.length} hero${run.heroes.length === 1 ? '' : 'es'} · ${run.gold} gold</small></button>
-        <button class="giveup" data-act="give-up">${I('flag')} Give up</button>`
-        : `<button class="primary big cta play" data-act="new-run">${I('play')} Play</button>`}
-        ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
-      </div>
-      <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v1.4</span>
-      <nav class="homedock" aria-label="Quick navigation">
-        <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
-        <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
-        <a href="#" class="dockitem" data-act="shop">${I('crown')}<b>Shop</b>${canShop ? '<span class="pip red"></span>' : ''}</a>
-        <a href="#" class="dockitem" data-act="scores">${I('trophy')}<b>Ranks</b></a>
-      </nav>
-    </section>`;
-  }
-  const CODEX_TABS = [
-    ['tank', '🛡 Tank', ['Tank']],
-    ['melee', '⚔ Melee', ['Fighter', 'Assassin']],
-    ['magic', '✨ Magic', ['Mage', 'Summoner']],
-    ['ranged', '🏹 Ranged', ['Ranger', 'Controller']],
-    ['aid', '💚 Aid', ['Support', 'Healer']]
-  ];
-  function codexHTML() {
-    const tab = ui.codexTab || 'tank', entry = CODEX_TABS.find(t => t[0] === tab) || CODEX_TABS[0];
-    const lvl = lvlNow(), lockedSet = new Set(B.lockedFor(lvl));
-    const unlockLv = {}; for (const u of B.UNLOCKS) if (u.kind === 'hero') unlockLv[u.id] = u.lvl;
-    const allKeys = Object.keys(HEROES);
-    const wonList = wonHeroKeys();
-    const unlockedCount = allKeys.filter(k => !lockedSet.has(k)).length;
-    const list = allKeys.filter(k => entry[2].includes(HEROES[k].role));
-    return `<div class="shead"><b>${I('user')} Heroes <span class="dim small">${unlockedCount}/${allKeys.length}</span></b><button data-act="close" aria-label="Close">✕</button></div>
-      <div class="tabs codex-tabs">${CODEX_TABS.map(([id, label]) => `<button data-act="codex-tab" data-arg="${id}" class="${id === tab ? 'on' : ''}">${label}</button>`).join('')}</div>
-      <div class="codex-grid">${list.map(k => {
-        const h = HEROES[k], lck = lockedSet.has(k), ulv = unlockLv[k] || 2;
-        const isWon = wonList.includes(k);
-        const displayName = lck ? '???' : esc(h.name);
-        const displayRole = lck ? 'Locked' : esc(h.role);
-        return `<button class="cxh ${lck ? 'locked silhouette' : ''} ${isWon ? 'gold-master' : ''}" data-act="${lck ? 'codex-locked-tip' : 'hero-peek'}" data-arg="${lck ? ulv : k}" style="--hc:${lck ? '#444' : h.color}">
-          <span class="cxp">${img(k, 44, 'por')}${isWon ? '<span class="crown-badge" title="Champion: Won a run with this hero!">👑</span>' : ''}${lck ? `<i class="cxlk">🔒 Lv ${ulv}</i>` : ''}</span>
-          <b>${displayName}</b>
-          <small>${displayRole}</small>
-        </button>`;
-      }).join('')}</div>`;
-  }
-  function homeMenuHTML() {
-    const L = B.levelProgress(acct.axp || 0), u = nextUnlock(L.lvl), on = B.Sfx && B.Sfx.on;
-    const row = (act, icon, t, s) => `<button class="mrow" data-act="${act}">${I(icon)}<span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span>${I('arrow', 'chev')}</button>`;
-    return `<div class="shead"><b>Menu</b><button data-act="close" aria-label="Close">✕</button></div><div class="mlist">
-      <div class="mpair"><button class="mrow sub" data-act="howto">${I('help')}<span><b>How to play</b></span></button><button class="mrow sub" data-act="codex">${I('user')}<span><b>Heroes</b></span></button></div>
-      <div class="msep"></div>
-      ${row('player-tab', 'star', 'Level ' + L.lvl + ' rewards', u ? 'Next: ' + esc(unlockName(u)) + ' at level ' + u.lvl : 'Every reward unlocked')}
-      ${row('my-profile', 'user', 'Profile', esc(acct.account && acct.name ? acct.name : 'You'))}
-      ${row('shop', 'crown', 'Crown Shop', (acct.crowns | 0) + ' crown' + ((acct.crowns | 0) === 1 ? '' : 's'))}
-      ${row('scores', 'trophy', 'Ladder', 'Top players and leagues')}
-      <div class="mpair"><button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span></button><button class="mrow sub" data-act="tutorial">${I('help')}<span><b>Tutorial: ${guideOn() ? 'On' : 'Off'}</b></span></button></div>
-      <div class="mpair"><button class="mrow sub" data-act="suggest">${I('bulb')}<span><b>Suggestion box</b></span></button><button class="mrow sub" data-act="art-lab">${I('palette')}<span><b>Art Lab</b></span></button></div>
-      <div class="msep"></div>
-      ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
-      ${row('language', 'globe', 'Language', `<span data-notr>${esc(((B.i18n ? B.i18n.LANGS : [['en', 'English']]).find(l => l[0] === (B.i18n ? B.i18n.lang : 'en')) || [0, 'English'])[1])}</span>`)}</div>`;
-  }
-  // the sheet opened by the Language row
-  // WHAT: the language chooser: English, Portuguese, German. Picking one stores it and reloads the page (js/i18n.js).
-  function languageHTML() {
-    const cur = B.i18n ? B.i18n.lang : 'en';
-    return `<div class="shead"><b>Language</b><button data-act="close" aria-label="Close">✕</button></div><div class="mlist">${(B.i18n ? B.i18n.LANGS : [['en', 'English']]).map(([id, name]) => `<button class="mrow${id === cur ? ' on' : ''}" data-act="set-lang" data-arg="${id}"><span data-notr><b>${name}</b>${id === cur ? '<small>✓</small>' : ''}</span></button>`).join('')}</div>`;
-  }
-  // the trailer: three random heroes against a random fight, played with no sound; a new one starts when it ends
-  // WHAT: the TRAILER under the start page: three random heroes fight a random fight with no sound; when it ends a new one starts. trailerWorld builds it, trailerLoop plays it.
-  const trailer = { W: null, view: null, cv: null, raf: 0, last: 0, acc: 0, overAt: 0, end: null };
-  function trailerWorld() {
-    const r = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()) });
-    const keys = Object.keys(HEROES).filter(k => !(r.locked || []).includes(k)).sort(() => Math.random() - 0.5);
-    Run.pickStart(r, [keys[0]], (r.relicOffer || [])[0]); Run.addHero(r, keys[1]); Run.addHero(r, keys[2]);
-    const n = 2 + Math.floor(Math.random() * 3);
-    r.fightNo = n; r.cur = Run.makeFight(r, ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)], n); r.phase = 'deploy';
-    return Run.fightWorld(r);
-  }
-  function trailerLoop(now) {
-    const cv = document.getElementById('trailer');
-    if (!cv || document.hidden || (run && screen !== 'title')) { trailer.raf = 0; return; }
-    if (trailer.cv !== cv) { trailer.cv = cv; trailer.view = Render.setup(cv, Math.max(240, Math.floor(cv.parentElement.clientWidth))); }
-    if (!trailer.W) { try { trailer.W = trailerWorld(); } catch (e) { trailer.raf = 0; return; } trailer.acc = 0; trailer.overAt = 0; trailer.end = null; trailer.last = now; }
-    const W = trailer.W, dt = Math.min(100, now - trailer.last), TICK = 1000 / Sim.TPS; trailer.last = now;
-    if (!W.over) { trailer.acc += dt * 1.5; let n = 0; while (trailer.acc >= TICK && !W.over && n++ < 40) { Sim.step(W); trailer.acc -= TICK; } }
-    if (W.over && !trailer.overAt) { trailer.overAt = now; trailer.end = { win: W.winner === 0, k: 0 }; }
-    if (trailer.end) trailer.end.k = (now - trailer.overAt) / 1600;
-    const T = W.over ? W.t + (now - trailer.overAt) / TICK * 0.3 : W.t + trailer.acc / TICK;
-    Render.draw(trailer.view, W, T, Object.assign({ mute: true }, trailer.end ? { end: trailer.end } : {}));
-    if (trailer.overAt && now - trailer.overAt > 2600) trailer.W = null;
-    trailer.raf = requestAnimationFrame(trailerLoop);
-  }
-  function startTrailer() { if (!trailer.raf && document.getElementById('trailer')) trailer.raf = requestAnimationFrame(trailerLoop); }
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) startTrailer(); });
-  // the ability name, then its passive and its active
-  // part on their own lines (same words, easier to scan); the scaling note stays small under it
-  // v47 (, David: "make every decision understandable in under 2 seconds ... showing consequences instead of
-  // mechanics ... hide complexity behind taps"): quick views (start, shops) say what an ability does without the
-  // "90% Magic" formulas; the hero card in Team keeps every number
-  // WHAT: plainAb() shortens an ability description for small cards (removes the exact % numbers).
-  const ABTOK = '\\d+(?:\\.\\d+)?% (?:Attack|Magic)(?: \\+ \\d+(?:\\.\\d+)?% (?:Attack|Magic))?';
-  const AB_RX = [[/, each with [^.;]*? as attack/g, ''], [new RegExp(`(heal(?:s|ing)?(?: \\()?)(?: for)? ?${ABTOK} ?`, 'g'), '$1 '],
-    [new RegExp(` (?:for|of) ${ABTOK}(?! (?:as |physical|magic|true|damage|\\+))`, 'g'), ''], [new RegExp(`(?:an extra )?${ABTOK} (?:as )?(?=(?:physical|magic|true|damage)\\b)`, 'g'), m => /^an extra/.test(m) ? 'extra ' : ''],
-    [new RegExp(ABTOK, 'g'), 'damage'], [/\s+([.,;)])/g, '$1'], [/\(\s+/g, '('], [/\s{2,}/g, ' ']];
-  // the shortening works on English sentences; in another language the full translated text is shown instead
-  const loc = () => B.i18n && B.i18n.lang !== 'en';
-  const plainAb = s => loc() ? String(s || '') : AB_RX.reduce((t, [rx, to]) => t.replace(rx, to), String(s || '')).trim();
-  // WHAT: the ability block of a hero card: name, description, how it scales.
-  function abilHTML(h, plain) {
-    // in another language the description is translated first and split on that language's "Passive" and "Active" words
-    const d = loc() ? B.T(String(h.abDesc || '')) : plain ? plainAb(h.abDesc) : String(h.abDesc || ''), PW = loc() ? B.T('Passive') : 'Passive', AW = loc() ? B.T('Active') : 'Active';
-    const m = d.match(new RegExp('^' + PW + '(?: \\(([^)]+)\\))?:\\s*(.*?)\\s*' + AW + ':\\s*(.*)$'));
-    if (plain && m) return `<b class="abname">${esc(h.abName)}</b> ${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}`;   // quick view: what it does when it fires
-    return `<b class="abname">${esc(h.abName)}</b>` + (m ? `<span class="abl"><i class="abk">Passive</i>${m[1] ? `<b>${esc(m[1])}</b>: ` : ''}${fmt(m[2])}</span><span class="abl"><i class="abk act">Active</i>${fmt(m[3].charAt(0).toUpperCase() + m[3].slice(1))}</span>` : ` ${fmt(d)}`);
-  }
-  // WHAT: a hero card (portrait, role, short line, details button) used on the start screen.
-  function heroCard(key, extra = '') {
-    const h = HEROES[key];
-    return `<div class="hcard">
-      <div class="hrow">${img(key, 48)}<b>${esc(h.name)}</b><span class="role">${h.role}</span></div>
-      ${chips({ hp: h.hp, atk: h.atk, armor: h.armor, as: h.as, range: h.range })}
-      <div class="abil">${abilHTML(h)}</div>${scaleTag(key)}${extra}</div>`;
-  }
-  // the game starts with 1 hero and 1 relic: pick one of each (3 offered).
-  // two short steps instead of one busy screen. Step 1: tap a hero (its ability shows under the three,
-  // no stat table), then Next. Step 2: the three relics with what they do written on them, then Start.
-  // WHAT: START SCREENS. Step 1 pick a hero, step 2 pick a starting power, step 3 fight. stepsHTML draws the 1-2-3 header; startHTML draws the current step.
-  const stepsHTML = (s, hasRelics = true) => `<ol class="ssteps">${(hasRelics ? ['Hero', 'Power', 'Fight!'] : ['Hero', 'Fight!']).map((t, i) => `<li class="${i + 1 < s ? 'done' : i + 1 === s ? 'on' : ''}"><i>${i + 1 < s ? '✓' : i + 1}</i>${t}</li>`).join('')}</ol>`;
-  // WHAT: the start flow screens (pick your first hero, pick a power).
-  // the pointing hand on the start screens is shown for the first two runs a player ever starts
-  const startHint = () => (+store.get('balance.starts', 0) || 0) < 2;
-  function startHTML() {
-    const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
-    const relics = run.relicOffer || [], n = ui.startPick.length;
-    if (ui.startStep === 2 && n === CFG.startHeroes && relics.length) {
-      const rsel = ui.startRelic && relics.includes(ui.startRelic) ? ui.startRelic : null;
-      return `<section class="start s2 v3 ${dealIn(2)}">${stepsHTML(2)}<h2 class="sc">Pick a power</h2><p class="ssub">A bonus for your whole team, all game long.</p>
-        <div class="stage pedestals srelics big">${relics.map((id, i) => `<button class="srelic ped ${rsel === id ? 'on' : rsel ? 'off' : ''}" data-act="start-relic" data-arg="${id}" style="--i:${i}"><span class="rays"></span><span class="shaft"></span><span class="orb">${ico('relic', id, 56)}</span><span class="plinth"><i></i><u></u></span><span class="srt"><b class="relic">${esc(RELIC[id].name)}</b><small class="srd">${esc(RELIC[id].short)}</small></span>${rsel === id ? '<span class="chk">✓</span>' : ''}${i === 1 && !rsel && startHint() ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`).join('')}</div>
-        ${rsel ? `<button class="hdet more srmore" data-act="relic-info" data-arg="${rsel}">${I('info')} More about ${esc(RELIC[rsel].name)}</button>` : ''}
-        <div class="bar sbar"><button data-act="start-back">◀ Back</button><button class="primary big ${rsel ? 'ready' : ''}" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a power'}</button></div></section>`;
-    }
-    const f = ui.startPick[0] || null;
-    const heroName = f && HEROES[f] ? HEROES[f].name : '';
-    const btnLabel = n === CFG.startHeroes
-      ? (heroName ? `Select ${esc(heroName)} ➔` : (relics.length && !introOn() ? 'Next ▶' : 'Start the game!'))
-      : 'Tap a hero';
-    const offer = (run.startOffer || []).slice();
-    if (B.SpriteManager && B.SpriteManager.preload) B.SpriteManager.preload(offer);
-    return `<section class="start s1 v3 ${dealIn(1)}">${stepsHTML(1, relics.length > 0)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
-      ${heroStage(offer, f, 'start-pick', startHint())}${heroDetail(f)}
-      ${(run.locked || []).length ? `${desk ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${run.locked.length} more unlock as you level up</span></p>` : `<p class="sub locknote">🔒 ${run.locked.length} more hero${run.locked.length === 1 ? '' : 'es'} unlock as you play</p>`}` : ''}
-      <div class="bar sbar"><button class="primary big ${desk ? 'hero-cta-btn ' + (n === CFG.startHeroes ? 'ready selected' : 'slot-unselected') : (n === CFG.startHeroes ? 'ready' : '')}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${desk ? btnLabel : (n === CFG.startHeroes ? (relics.length && !introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero')}</button></div></section>`;
-  }
-  // only the picked hero is lit;
-  // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
-  // WHAT: the stage of heroes under spotlights (sel = the picked one, act = the button action) and the card that says what the picked hero does.
-    // Web & itch.io progression: Hero Mastery (Gold frames for winning heroes) and Discovery (??? for unknown heroes)
-  const wonHeroKeys = () => { const s = store.get('balance.wonHeroes', []); return Array.isArray(s) ? s : []; };
-  const recordHeroWin = key => { if (!key) return; const cur = wonHeroKeys(); if (!cur.includes(key)) store.set('balance.wonHeroes', cur.concat(key)); };
-  const recordTeamWins = heroes => { (heroes || []).forEach(h => recordHeroWin(h.key || h)); };
-  const knownHeroKeys = () => {
-    const s = store.get('balance.knownHeroes', []);
-    const base = Array.isArray(s) ? s : [];
-    // Free starting heroes and won heroes are always known
-    const free = B.PORTRAITS_FREE || ['barian', 'solara', 'groth', 'tiberius'];
-    const set = new Set([...free, ...wonHeroKeys(), ...base]);
-    return set;
-  };
-  const markHeroKnown = key => { if (!key) return; const k = knownHeroKeys(); if (!k.has(key)) { k.add(key); store.set('balance.knownHeroes', Array.from(k)); } };
-
-  function heroClassBadge(d) {
-    const r = (d.role || '').toLowerCase();
-    const isRanged = d.range > 1;
-    let icon = '⚔️';
-    if (r.includes('summon')) icon = '🏰';
-    else if (r.includes('heal')) icon = '✚';
-    else if (r.includes('mage')) icon = '🔥';
-    else if (r.includes('tank') || r.includes('control')) icon = '🛡️';
-    else if (r.includes('hunt') || isRanged) icon = '🏹';
-    return `<span class="hbadge-crest">${icon}</span><span class="hbadge-txt">${esc(d.role).toUpperCase()} • ${isRanged ? 'RANGED' : 'MELEE'}</span>`;
-  }
-
-  function heroStage(offer, sel, act, hint) {
-    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
-    if (!desk) {
-      return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
-        const d = HEROES[k], on = sel === k;
-        const splashSrc = por(k, 150, true);
-        return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}"><span class="cone"></span><span class="shine"></span><img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" src="${splashSrc}" alt="${esc(d.name)}"><span class="plate"></span><b>${esc(d.name)}</b><i>${d.role} · ${d.range <= 1 ? 'Melee' : 'Ranged'}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`;
-      }).join('')}</div>`;
-    }
-    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
-      const d = HEROES[k];
-      if (!d) return '';
-      const on = sel === k;
-      const r = (d.role || '').toLowerCase();
-      const themeClass = r.includes('summon') ? 'theme-citadel' : r.includes('heal') ? 'theme-solace' : r.includes('mage') ? 'theme-feuer' : 'theme-default';
-      const range = d.range || 1;
-      const hp = Math.round(d.hp || 500);
-      const atk = Math.round(d.atk || 50);
-      const splashSrc = por(k, 180, true);
-      const topBadgeIcon = r.includes('summon') ? '🏰' : r.includes('heal') ? '🌿' : r.includes('mage') ? '🔥' : '⚔️';
-
-      return `<button class="hbanner spot hero-tarot-card ${themeClass} ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
-        <span class="cone"></span>
-        <span class="shine"></span>
-        <div class="card-crest-top">${on ? '<span class="chk-crest">✓</span>' : `<span class="class-crest-icon">${topBadgeIcon}</span>`}</div>
-        <img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" src="${splashSrc}" alt="${esc(d.name)}">
-        <div class="card-vignette-bottom">
-          <b class="hero-card-title">${esc(d.name)}</b>
-          <div class="hero-role-pill">${heroClassBadge(d)}</div>
-          <div class="hero-mini-stats">
-            <span class="mstat hp"><span class="stat-ico">❤️</span> <span class="stat-lbl">HP</span> <b>${hp}</b></span>
-            <span class="mstat atk"><span class="stat-ico">⚔️</span> <span class="stat-lbl">ATK</span> <b>${atk}</b></span>
-            <span class="mstat rng"><span class="stat-ico">🏹</span> <span class="stat-lbl">RNG</span> <b>${range}</b></span>
-          </div>
-        </div>
-        ${on ? '<span class="chk">✓</span>' : ''}
-        ${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}
-      </button>`;
-    }).join('')}</div>`;
-  }
-  function heroDetail(f) {
-    const h = f && HEROES[f];
-    return h ? `<div class="card detail floating-hero-detail">
-        <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${esc(h.tag || h.abDesc || '')}</p>
-        <button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button>
-      </div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
-  }
-  // v114 (, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
-  // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
-  // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
-  // WHAT: four bars of a hero's strengths, each against the best hero of the game.
-  // what the hero is good at (B.HERO_TRAITS, from its kit) and its power curve (from its growth); v116's measured bars are gone
-  // WHAT: the strength chips of a hero card.
-  function statBars(h) {
-    const tr = (B.HERO_TRAITS && B.HERO_TRAITS[h.key]) || [], g = h.grow || 1;
-    const curve = g >= 1.5 ? ['Peaks late', 'late'] : g <= 0.6 ? ['Strong early', 'early'] : null;
-    return tr.length || curve ? `<div class="htraits">${tr.filter(k => B.TRAIT[k]).map(k => `<span class="htr c-${B.TRAIT[k][1]}">${B.TRAIT[k][0]}</span>`).join('')}${curve ? `<span class="htr curve ${curve[1]}">${curve[1] === 'late' ? '📈' : '⚡'} ${curve[0]}</span>` : ''}</div>` : '';
-  }
-  // WHAT: 'deal' the first time a start step shows (its cards fly in), '' on the redraws after a tap.
-  function dealIn(step) { const k = (run && run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
-
-  // WHAT: the free recruit screen between days: three heroes (one of each class, the ones your team lacks first), pick one and it joins.
-  function recruitHTML() {
-    const offer = run.recruitOffer || [], f = offer.includes(ui.recruitPick) ? ui.recruitPick : null, k = (run.recruits || 0) + 1;
-    return `<section class="start s1 recruit"><h2 class="sc">A hero joins you!</h2><p class="ssub">Free hero ${k} of ${CFG.freeRecruits}. Your team: ${run.heroes.map(h => img(h.key, 26, 'por xs')).join('')}</p>
-      ${heroStage(offer, f, 'recruit-pick', false)}${heroDetail(f)}
-      <div class="bar"><button class="primary big" data-act="recruit-go" ${f ? '' : 'disabled'}>${f ? `Recruit ${esc(HEROES[f].name)} ▶` : 'Tap a hero'}</button></div></section>`;
-  }
-
-  // WHAT: the "path" sheet: the days of the run as a track (fight, shop/event, boss, last shop, Gauntlet) with where you are.
-  function pathHTML() {
-    return `<div class="shead"><b>🗺 Your journey</b><button data-act="close">✕</button></div>${trackHTML()}
-      <ul class="plegend"><li>${I('swords')} Fight</li><li>${I('help')} Shop or event</li><li>${I('skull')} Boss</li><li>${I('cart')} Last shop</li><li>${I('trophy')} Victory</li></ul>`;
-  }
-  // a trail of the whole run on top of the map. the run is a road
-  // climbing a valley at night, from the camp at the bottom to the castle of the final fight at the top. The days behind you are lit gold, your leader stands
-  // where you are, today's choices are the fork in the road (the posters), and the days ahead wind up into the dark with their bosses and duel days. The road
-  // scrolls inside the screen and opens on today.
-  // WHAT: the road of the map screen (one node per day; today = the posters). ROAD = the sizes in px; layoutMap() fits it to the screen and scrolls to today.
-  const ROAD = { row: 74, top: 150, bottom: 92 };
-  const roadToday = () => document.body.classList.contains('desk') ? 400 : 262;
-  function mapRoad() {
-    const seq = Run.pveSeq(run), n = seq.length, step = Math.max(0, Math.min(n - 1, run.step)), today = roadToday(), opts = run.opts || [];
-    const ahead = Math.max(0, n - 2 - step), todayTop = ROAD.top + ahead * ROAD.row, H = todayTop + today + step * ROAD.row + ROAD.bottom;
-    const yOf = i => i === n - 1 && i !== step ? 74 : i > step ? todayTop - (i - step - 0.5) * ROAD.row : i === step ? todayTop + today / 2 : todayTop + today + (step - 1 - i + 0.5) * ROAD.row;
-    const xOf = i => i === n - 1 ? 50 : Math.round(50 + 29 * Math.sin(i * 1.05 + 0.6));
-    let fn = 0, bn = 0; const info = seq.map((t, i) => {
-      if (t === 'F' || t === 'B') fn++; if (t === 'B') bn++;
-      const pvp = t === 'F' && (CFG.pvpFights || []).includes(fn);
-      return { t, i, pvp, boss: t === 'B' ? Run.bossOf(run, bn) : null, kind: t === 'B' ? 'boss' : t === 'G' ? 'final' : pvp ? 'pvp' : t === 'F' ? 'fight' : t === 'S' ? 'shop' : 'event' };
-    });
-    const nextBoss = info.find(d => d.i > step && d.boss);
-    const icon = d => d.boss ? img(d.boss, 40, 'por') : d.kind === 'final' ? I('trophy') : d.pvp ? I('ghost') : d.kind === 'fight' ? I('swords') : d.kind === 'shop' ? I('cart') : I('help');
-    const what = d => d.boss ? `Boss · ${esc(B.BOSSES[d.boss].name)}${d === nextBoss ? ` <i>in ${d.i - step} day${d.i - step === 1 ? '' : 's'}</i>` : ''}` : d.kind === 'final' ? 'Victory · then the Gauntlet' : d.pvp ? 'Duel · PvP' : d.kind === 'fight' ? 'Fight' : d.kind === 'shop' ? 'Last shop' : 'Shop or event';
-    const start = [50, H - ROAD.bottom / 2], last = step ? [xOf(step - 1), yOf(step - 1)] : start, prev = step > 1 ? [xOf(step - 2), yOf(step - 2)] : start;
-    const k = opts.length || 1, ox = k === 1 ? [50] : k === 2 ? [27, 73] : [17, 50, 83], top0 = todayTop + 34, bot0 = todayTop + today - 12;
-    const seg = (a, b) => `M${a[0]} ${a[1]} C${a[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${b[1]}`;
-    const past = [start].concat(info.filter(d => d.i < step).map(d => [xOf(d.i), yOf(d.i)]));
-    const after = info.filter(d => d.i > step).map(d => [xOf(d.i), yOf(d.i)]), nextPt = after[0];
-    const paths = past.slice(1).map((p, j) => `<path class="rpast" d="${seg(past[j], p)}"/>`).join('')
-      + ox.map(x => `<path class="rfork" d="${seg(last, [x, bot0])}"/>${nextPt ? `<path class="rfork" d="${seg([x, top0], nextPt)}"/>` : ''}`).join('')
-      + after.slice(1).map((p, j) => `<path class="rnext" d="${seg(after[j], p)}"/>`).join('');
-    const road = `<svg class="wroad" viewBox="0 0 100 ${H}" preserveAspectRatio="none" style="height:${H}px" aria-hidden="true">${paths.replace(/<path class="(\w+)"/g, '<path class="bed"')}${paths}</svg>`;
-    // decorations: pines down in the valley, rocks higher up, never on the road (the road keeps between 21% and 79%)
-    const decor = []; for (let y = 120, j = 0; y < H - 40; y += 58, j++) {
-      const side = (j + (run.seed | 0)) % 2, x = side ? 88 + ((j * 37 + (run.seed | 0)) % 9) : 3 + ((j * 53 + (run.seed | 0)) % 9), z = y / H;
-      decor.push(`<span class="wdec ${z < 0.3 ? 'rock' : z < 0.6 ? 'pine dk' : 'pine'}" style="left:${x}%;top:${y}px;--s:${0.75 + ((j * 13) % 5) / 10}"></span>`);
-    }
-    const nodes = info.filter(d => d.i !== step).map(d => {
-      const st = d.i < step ? 'done' : 'next', x = xOf(d.i), y = yOf(d.i), far = nextBoss && d.i > nextBoss.i && d.kind !== 'final';
-      const left = x > 55, label = st === 'done' ? '' : `<span class="rl ${left ? 'lft' : 'rgt'}" style="--room:${left ? x : 100 - x}"><b>Day ${d.i + 1}</b> ${what(d)}</span>`;
-      return `<span class="rn ${d.kind} ${st} ${far ? 'far' : ''}" style="left:${x}%;top:${y}px" title="Day ${d.i + 1}">${d.kind === 'final' ? '<span class="castle" aria-hidden="true"></span>' : ''}<span class="ri">${st === 'done' ? '✓' : icon(d)}</span>${label}</span>`;
-    }).join('');
-    const t = seq[step], title = run.result === 'clear' ? '🏰 Gauntlet shop: gear up for the climb' : t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';
-    const leader = run.heroes[0];
-    const ribbonTailL = `<svg class="ribbon-tail tail-l" viewBox="0 0 20 36" aria-hidden="true"><polygon points="20,0 20,36 0,28 10,18 0,8" fill="#d48817"/><polygon points="20,0 20,36 12,18" fill="#9a6b13" opacity="0.65"/></svg>`;
-    const ribbonTailR = `<svg class="ribbon-tail tail-r" viewBox="0 0 20 36" aria-hidden="true"><polygon points="0,0 0,36 20,28 10,18 20,8" fill="#d48817"/><polygon points="0,0 0,36 8,18" fill="#734f0a" opacity="0.65"/></svg>`;
-    const rdayTitle = run.result === 'clear' ? '' : `<b>Day ${step + 1}/${n}</b> `;
-    return `<div class="wmap" id="wmap" data-today="${todayTop}" data-key="${run.seed}:${step}"><div class="wtrack" style="height:${H}px"><span class="wsky"></span><span class="wpeaks"></span>${decor.join('')}${road}
-      <span class="rn camp done" style="left:50%;top:${start[1]}px"><span class="ri">⛺</span><span class="rl rgt"><b>Start</b></span></span>${nodes}
-      ${leader ? `<span class="rtok" style="left:${last[0]}%;top:${last[1]}px" data-to="${last[0]},${last[1]}" data-from="${prev[0]},${prev[1]}">${img(leader.key, 44, 'por')}</span>` : ''}
-      <div class="rtoday" style="top:${todayTop}px;height:${today}px">
-        <div class="path-ribbon-wrap">
-          ${ribbonTailL}
-          <div class="rday-ribbon">${rdayTitle}${title}</div>
-          ${ribbonTailR}
-        </div>
-        ${run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(run.nextMod))}</p>` : ''}
-        <div class="banners rb${k}">${opts.map(optHTML).join('')}</div></div></div></div>`;
-  }
-  // WHAT: fits the road to the screen (the page itself never scrolls) and opens it on today; a redraw on the same day keeps where you scrolled to.
-  function layoutMap(keep) {
-    const wm = $('#wmap'); if (!wm) return;
-    let y = 0; for (let e = wm; e; e = e.offsetParent) y += e.offsetTop;
-    const strip = $('.map .mstrip'), sh = strip && strip.offsetParent ? strip.offsetHeight + 8 : 0;
-    const vh = window.visualViewport ? window.visualViewport.height : innerHeight;
-    wm.style.height = Math.max(240, Math.round(vh - y - sh - 8)) + 'px';
-    const over = document.documentElement.scrollHeight - vh; if (over > 0) wm.style.height = Math.max(240, wm.clientHeight - Math.ceil(over)) + 'px';   // the paddings below it
-    if (keep && keep.key === wm.dataset.key) { wm.scrollTop = keep.top; return; }
-    wm.scrollTop = Math.max(0, +wm.dataset.today - Math.round(wm.clientHeight * (document.body.classList.contains('desk') ? 0.12 : 0.16)));
-    // a new day, the leader hops along the road from where it stood to today's spot
-    const [seed, step] = wm.dataset.key.split(':').map(Number), tok = wm.querySelector('.rtok');
-    if (tok && step > 0 && ui.roadAt === seed + ':' + (step - 1) && !(B.Juice && B.Juice.reduced())) {
-      const [fx, fy] = tok.dataset.from.split(',').map(Number), [tx, ty] = tok.dataset.to.split(',').map(Number);
-
-      const end = wm.scrollTop, MS = 2200, cam = y => Math.max(0, Math.min(wm.scrollHeight - wm.clientHeight, y - wm.clientHeight * 0.62));
-      const s0 = Math.max(end, cam(fy)); wm.scrollTop = s0;
-      tok.style.left = fx + '%'; tok.style.top = fy + 'px'; tok.classList.add('walk'); void tok.offsetWidth;
-      setTimeout(() => {
-        if (!tok.isConnected) return; tok.style.left = tx + '%'; tok.style.top = ty + 'px'; sfx('pick');
-        const t0 = performance.now(), ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-        (function follow(now) { if (!wm.isConnected || ui.roadAt !== wm.dataset.key) return; const t = Math.min(1, (now - t0) / MS); wm.scrollTop = s0 + (end - s0) * ease(t); if (t < 1) requestAnimationFrame(follow); else tok.classList.remove('walk'); })(t0);
-      }, 400);
-    }
-    ui.roadAt = wm.dataset.key;
-  }
-  // WHAT: the team under the road on phones (portraits with levels, items waiting in the bag, powers); on computers the full party panel sits beside it.
-  function mstripHTML() {
-    return `<div class="mstrip"><button class="mteam" data-act="team" aria-label="Team">${run.heroes.map(h => `<span class="mh">${img(h.key, 40, 'por')}<i>${h.lvl}</i></span>`).join('')}${run.bag.length ? `<span class="mbag">${I('bag')}<b>${run.bag.length}</b></span>` : ''}</button>
-      ${run.relics.length ? `<span class="mrel">${run.relics.slice(0, 4).map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 28)}</button>`).join('')}${run.relics.length > 4 ? `<button class="mmore" data-act="team">+${run.relics.length - 4}</button>` : ''}</span>` : ''}</div>`;
-  }
-  // WHAT: the little progress track shown above the map.
-  function trackHTML() {
-    return `<div class="track">${Run.pveSeq(run).map((t, i) => `<span class="node ${i < run.step ? 'done' : i === run.step ? 'cur' : ''} ${t === 'B' ? 'boss' : ''}" title="${t}">${NODE_ICON[t]}</span>`).join('')}</div>`;
-  }
-  // WHAT: the list of enemies of a fight as small chips.
-  function enemyList(f) {
-    const cnt = {};
-    for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); cnt[k] = (cnt[k] || 0) + 1; }
-    return Object.keys(cnt).map(k => { const key = k.replace('*', ''), m = B.MOBS[key] || B.BOSSES[key]; return `<span class="en ${k.endsWith('*') ? 'elite' : ''}">${img(key, 22, 'por sm')}${esc(m.name)}${cnt[k] > 1 ? ' ×' + cnt[k] : ''}${k.endsWith('*') ? ' [Elite]' : ''}</span>`; }).join(' ');
-  }
-  // WHAT: one big option card of the map (a fight, a shop or an event) with its banner, title, body and reward.
-  function bannerHTML(i, kind, emblem, title, body, reward) {
-    return `<button class="banner b-${kind}" data-act="choose" data-arg="${i}"><span class="rod"></span><span class="emb">${emblem}</span>
-      <span class="bt">${title}</span><span class="bd">${body}</span>${reward ? `<span class="rw">${reward}</span>` : ''}</button>`;
-  }
-  // every option of the map is a small poster
-  // with its own scene: the enemies' faces for a fight (skulls = how hard), a fan of mystery cards for a shop, the boss with red rays, the event's picture
-  // WHAT: the poster of one map option: a scene on top, then title, a line of text and the reward.
-  function posterHTML(i, kind, scene, title, body, reward, ribbon) {
-    const coinPlaqueSVG = `<svg class="rw-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/><circle cx="10" cy="10" r="5.5" fill="#fde047"/></svg>`;
-    const formattedReward = reward ? `<span class="rw gold-treasure-plaque">${coinPlaqueSVG}<span>${reward}</span></span>` : '';
-    const actionPill = (kind === 'shop') ? '<span class="card-action-btn">🛒 Browse Shop</span>'
-      : (kind === 'event') ? '<span class="card-action-btn">🎲 Enter Den</span>'
-      : '<span class="card-action-btn">⚔️ Battle</span>';
-    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon rib-${kind}">${ribbon}</span>` : ''}</span><span class="bt">${title}</span><span class="bd">${body}</span>${formattedReward}${actionPill}</button>`;
-  }
-  const mobsOf = f => { const cnt = {}, order = []; for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); if (!cnt[k]) order.push(k); cnt[k] = (cnt[k] || 0) + 1; } return order.map(k => ({ key: k.replace('*', ''), n: cnt[k], elite: k.endsWith('*') })); };
-  const pickN = (arr, n, seed) => { const out = []; for (let k = 0; out.length < n && k < arr.length * 4; k++) { const v = arr[(seed * 7 + k * 5 + k * k) % arr.length]; if (!out.includes(v)) out.push(v); } return out; };
-  const SKULLS = { easy: 1, medium: 2, hard: 3 };
-  function optHTML(o, i) {
-    if (o.type === 'fight') {
-      const list = mobsOf(o), show = list.slice(0, 3), more = list.length - show.length;
-      const faces = `<span class="mobs m${show.length}">${show.map(m => `<span class="mob ${m.elite ? 'elite' : ''}">${img(m.key, o.diff === 'boss' ? 96 : 64, 'por')}${m.n > 1 ? `<i>×${m.n}</i>` : ''}${m.elite ? '<u class="elt-crown">◆</u>' : ''}</span>`).join('')}${more > 0 ? `<span class="mob more">+${more}</span>` : ''}</span>`;
-      if (o.diff === 'boss') { const b = o.enemies.map(e => B.BOSSES[e.key]).find(Boolean); return posterHTML(i, 'boss', `<span class="rays"></span><span class="mobs m1 bigmob"><span class="mob">${img(b.key, 96, 'por')}</span></span>`, esc(b.name), `<span class="small">${fmt(String(b.desc).split(/(?<=[.!?])\s/)[0])}</span>`, '+' + o.gold + ' gold', I('skull') + I('skull') + I('skull') + I('skull')); }
-      return posterHTML(i, o.diff, faces, B.DIFF[o.diff].name + ' fight', `<span class="mn">${list.map(m => (m.elite ? '<b class="elt">Elite</b> ' : '') + esc((B.MOBS[m.key] || B.BOSSES[m.key]).name) + (m.n > 1 ? ' ×' + m.n : '')).join(' · ')}</span>`, '+' + o.gold + ' gold', I('skull').repeat(SKULLS[o.diff] || 1));
-    }
-    if (o.type === 'shop') {
-      const seed = run.step * 3 + i;
-      const cards = o.kind === 'heroShop' ? pickN(Object.keys(HEROES), 3, seed).map(k => img(k, 64, 'por sil'))
-        : o.kind === 'itemShop' ? B.TYPES.slice(0, 3).map(t => `<img class="ico" src="${B.Icons.slot(t.id, 48)}" alt="">`)
-        : pickN(Object.keys(RELIC), 3, seed).map(k => ico('relic', k, 48));
-      const scene = `<span class="fan ${o.kind}">${cards.map((c, j) => `<span class="fc f${j}">${c}<b>?</b></span>`).join('')}</span>`;
-      return posterHTML(i, 'shop', scene, SHOP_NAME[o.kind], `<span class="small">${SHOP_DESC[o.kind]}</span>`, '', o.final ? 'Last' : '');
-    }
-    if (o.type === 'duel') {
-      // another player's team that reached about the same day; its power next to yours tells how risky the duel is
-      if (!o.opp) return `<button class="banner v2 b-duel wait" disabled><span class="scene"><span class="rays"></span><span class="evbig">${I('ghost')}</span></span><span class="bt">Duel</span><span class="bd"><span class="small">Looking for an opponent…</span></span></button>`;
-      const mine = Run.powerOf(run, run.heroes), th = Run.ghostPower(o.opp), lab = Run.powerLabel(mine, th);
-      const faces = `<span class="mobs m3">${o.opp.team.slice(0, 3).map(h => `<span class="mob">${img(h.key, 64, 'por')}</span>`).join('')}</span>`;
-      return posterHTML(i, 'duel', `<span class="rays"></span>${faces}`, `Duel: ${esc(o.opp.name)}`, `<span class="small">Another player's team. Win to steal a hero, item or power.</span>`, `<span class="pw ${lab.tone}">${I('swords')} ${lab.text}</span><span class="pw me">Power ${th} · yours ${mine}</span>`, 'PvP');
-    }
-    if (o.type === 'event') { const e = EVENT[o.id]; return posterHTML(i, 'event' + (e.rar === 'rare' ? ' b-rare' : ''), `<span class="rays"></span><span class="evbig">${evIcon(o.id)}</span>`, esc(e.name), `<span class="small">${esc(e.text)}</span>`, '', EV_RAR[e.rar] || ''); }
-    return '';
-  }
-  // what an event did to the next fight, in words
-  // WHAT: text for a "next fight" modifier bought in an event.
-  function modText(M) {
-    const pc = v => (v > 0 ? '+' : '') + Math.round(v * 100) + '%', out = [];
-    if (M.enemyHp) out.push(`enemies ${pc(M.enemyHp)} Health`);
-    if (M.enemyAtk) out.push(`enemies ${pc(M.enemyAtk)} attack`);
-    if (M.atkPct) out.push(`your heroes ${pc(M.atkPct)} attack`);
-    if (M.manaStart) out.push(`your heroes start with +${M.manaStart} Energy`);
-    if (M.regen) out.push(`your heroes regenerate ${Math.round(M.regen * 100)}% Health per second`);
-    if (M.goldPct) out.push(`${pc(M.goldPct)} gold`);
-    if (M.reward) out.push(`win it for a ${M.reward} item`);
-    if (M.rewardGold) out.push(`win it for +${M.rewardGold} gold`);
-    return out.join(', ');
-  }
-  // WHAT: THE MAP SCREEN: the road (mapRoad) with today's options (run.opts built by Run.advance), the team strip under it on phones, the party panel beside it on computers.
-  function mapHTML() {
-    return `<section class="map road"><div class="mapmain">${mapRoad()}${mstripHTML()}</div><aside class="mapside">${partyHTML()}</aside></section>`;
-  }
-  // the party under the map (levels, XP, worn items, relics) and the next boss, so each choice is informed
-  // WHAT: deploy powers column and unequipped items bag dock on desktop deploy screen
-  function deployLeftHTML() {
-    if (!run) return '';
-    const relics = (run.relics || []).filter(id => RELIC[id]).map(id => {
-      const r = RELIC[id];
-      const tip = esc(r.name + ': ' + (r.desc || r.short || ''));
-      return '<button class="relicbtn" data-act="relic-info" data-arg="' + id + '" data-tip="' + tip + '" aria-label="' + esc(r.name) + '"><img class="ico sm" src="' + B.Icons.relic(id, 26) + '" alt=""></button>';
-    }).join('');
-
-    // Always render at least 4 empty slots in the bag so dragging & dropping is always accessible
-    const bagSlots = [];
-    const minSlots = 4;
-    const actualCount = (run.bag || []).length;
-    const totalSlots = Math.max(minSlots, Math.ceil((actualCount + 1) / 2) * 2);
-    const dsel = ui.dsel;
-
-    for (let i = 0; i < totalSlots; i++) {
-      const id = (run.bag || [])[i];
-      const isSelected = dsel && dsel.k === 'b' && dsel.i === i;
-      if (id && ITEM[id]) {
-        const it = ITEM[id];
-        const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-        const rarityClass = it.tier >= 3 ? 'r-epic' : it.tier === 2 ? 'r-rare' : it.tier === 1 ? 'r-magic' : 'r-common';
-        bagSlots.push('<button class="ditem eqitem ' + rarityClass + (isSelected ? ' dsel-active' : '') + '" data-drag="b:' + i + '" data-drop="bag:' + i + '" data-act="ditem-click" data-arg="b:' + i + '" data-tip="' + tip + '" aria-label="' + esc(it.name) + '"><span class="rarity-bloom"></span><img class="ico" src="' + B.Icons.item(id, 32) + '" alt=""></button>');
-      } else {
-        bagSlots.push('<button class="ditem empty' + (isSelected ? ' dsel-active' : '') + '" data-drop="bag:' + i + '" data-act="ditem-click" data-arg="b:' + i + '" title="Empty bag slot"></button>');
-      }
-    }
-    const autoPill = '<button class="auto-equip-toggle ' + (autoOn() ? 'on' : '') + '" data-act="gear-auto">Auto-equip <b class="a-pill">' + (autoOn() ? 'ON' : 'OFF') + '</b></button>';
-    return '<div class="dleft-dock">' +
-      (relics ? '<div class="dpowers-col"><div class="dl-title">POWERS</div><div class="dl-list">' + relics + '</div></div>' : '') +
-      '<div class="dbag-drawer" data-drop="bag">' +
-        '<div class="dbag-top">' + autoPill + '<span class="dl-count">BAG (' + actualCount + ')</span></div>' + (dsel && dsel.k === 'b' && run.bag[dsel.i] ? '<div class="dsel-panel"><div class="dsel-desc"><b class="dsel-name">' + esc(ITEM[run.bag[dsel.i]].name) + '</b> <span class="dsel-val">(+' + Run.sellValue(run.bag[dsel.i]) + 'g)</span></div><button class="dsell-btn gold-plaque" data-act="dsell">Sell</button></div>' : '') +
-        '<div class="dl-slots">' + bagSlots.join('') + '</div>' +
-      '</div>' +
-    '</div>';
-  }
-  // WHAT: deploy hero slots: only splash arts and equipped items next to each hero, no container box
-  function deployPartyHTML() {
-    if (!run || !run.heroes) return '';
-    const dsel = ui.dsel;
-    const heroes = run.heroes.map(h => {
-      const d = HEROES[h.key] || {};
-      const maxS = Run.slots(run, h);
-      const socks = [];
-      for (let j = 0; j < Math.max(2, maxS); j++) {
-        const id = h.items[j];
-        const isSelected = dsel && dsel.k === 'w' && dsel.uid === h.uid && dsel.i === j;
-        if (id && ITEM[id]) {
-          const it = ITEM[id];
-          const tip = esc(it.name + ' (' + (B.RARITY[it.tier] ? B.RARITY[it.tier].name : '') + ' ' + (B.TYPE[it.type] ? B.TYPE[it.type].name.toLowerCase() : '') + '): ' + it.desc);
-          socks.push('<button class="dsock filled slot-' + (j + 1) + (isSelected ? ' dsel-active' : '') + '" data-drag="w:' + h.uid + ':' + j + '" data-drop="sock:' + h.uid + ':' + j + '" data-act="dsock-click" data-arg="w:' + h.uid + ':' + j + '" data-tip="' + tip + '" aria-label="' + esc(it.name) + '"><img class="ico xs" src="' + B.Icons.item(id, 36) + '" alt=""></button>');
-        } else {
-          socks.push('<button class="dsock empty slot-' + (j + 1) + (isSelected ? ' dsel-active' : '') + '" data-drop="sock:' + h.uid + ':' + j + '" data-act="dsock-click" data-arg="w:' + h.uid + ':' + j + '" title="Equip or swap item here"><span class="empty-sil" aria-hidden="true">' + (j === 0 ? '⚔' : '🛡') + '</span></button>');
-        }
-      }
-      return '<div class="pm' + (h.bench ? ' benched' : '') + '" data-drop="hero:' + h.uid + '">' +
-        '<button class="por-btn" data-act="hero-peek" data-arg="' + h.key + '" aria-label="' + esc(d.name) + '">' + img(h.key, 52, 'por') + '<span class="dplv">Lv ' + h.lvl + '</span></button>' +
-        '<div class="pmb">' +
-          '<div class="pmn"><b>' + esc(d.name || h.key) + '</b></div>' +
-          '<div class="pmi">' + socks.join('') + '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-    return '<div class="pgrid">' + heroes + '</div>';
-  }
-  // WHAT: the party row (hero portraits with levels and items) shown on the map screen.
-  function partyHTML() {
-    const heroes = run.heroes.map(h => {
-      const next = h.lvl < CFG.maxLevel ? CFG.xpLevels[h.lvl + 1] : null, prev = CFG.xpLevels[h.lvl] || 0;
-      const maxSl = maxSlots(h);
-      const slots = [];
-      for (let s = 0; s < maxSl; s++) {
-        const id = h.items[s];
-        if (id) slots.push(`<span class="mslot filled"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></span>`);
-        else slots.push(`<span class="mslot empty"><svg class="slot-rune" viewBox="0 0 16 16"><path d="M8 3 L13 8 L8 13 L3 8 Z" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"/></svg></span>`);
-      }
-      return `<button class="pm${h.bench ? ' benched' : ''}" data-act="team">${img(h.key, 48, 'por')}<span class="pmb"><span class="pmn"><b>${esc(hName(h))}</b><span class="lv">Lv ${h.lvl}</span>${h.path != null ? '<span class="chk-gold" title="Boss Upgraded">★</span>' : ''}${h.bench ? '<span class="pmbench">Not placed</span>' : ''}</span>
-        <span class="xpbar glossy-tube"><i style="width:${next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100}%"></i></span>
-        <span class="pmi slots3">${slots.join('')}</span></span></button>`;
-    }).join('');
-    let boss = '';
-    const seq = Run.pveSeq(run);
-    for (let k = Math.max(0, run.step); k < seq.length; k++) if (seq[k] === 'B') {
-      const nth = seq.slice(0, k + 1).filter(x => x === 'B').length, b = B.BOSSES[Run.bossOf(run, nth)], d = k - run.step;
-      const daysText = d <= 0 ? '<span class="boss-days-gold">today</span>' : `<span class="boss-days-gold">in ${d} day${d > 1 ? 's' : ''}</span>`;
-      const skullGlow = `<svg class="boss-skull-glow" viewBox="0 0 24 24"><path d="M12 2 C6.5 2 3 5.5 3 10 C3 13.5 5 15.5 7 16.5 L7 20 C7 21 8 22 9 22 L15 22 C16 22 17 21 17 20 L17 16.5 C19 15.5 21 13.5 21 10 C21 5.5 17.5 2 12 2 Z M8 11 C7 11 6 10 6 9 C6 8 7 7 8 7 C9 7 10 8 10 9 C10 10 9 11 8 11 Z M16 11 C15 11 14 10 14 9 C14 8 15 7 16 7 C17 7 18 8 18 9 C18 10 17 11 16 11 Z" fill="#e9d5ff" stroke="#a855f7" stroke-width="1.2"/></svg>`;
-      boss = `<button class="nextboss boss-arcane-card" data-act="form-info" data-arg="${esc(b.name + ': ' + b.desc)}"><div class="boss-frame">${img(b.key, 46, 'por')}</div><div class="boss-meta"><div class="boss-title">${skullGlow} <b>${esc(b.name)}</b></div><div class="boss-countdown">${daysText}</div></div>${I('info', 'chev')}</button>`;
-      break;
-    }
-    const equipBadge = run.bag.length ? `<a href="#" data-act="team" class="bagnote equip-pulse">🎒 ${run.bag.length} to equip</a>` : `<span class="team-cap">${run.heroes.length}/${Run.teamMax(run)}</span>`;
-    return `<div class="party tactical-dock"><div class="bph"><b>YOUR TEAM</b>${equipBadge}</div>
-      <div class="pgrid">${heroes}</div>${run.relics.length ? `<div class="relicline"><b>POWERS</b><div class="relic-row">${run.relics.map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 28)}</button>`).join('')}</div></div>` : ''}${boss}</div>`;
-  }
-
-  // v49 (, David: "On level-up, make choices feel impactful with concise effects/playstyle tags and transform the
-  // specialization path into a clear branching progression with the current choice highlighted and future nodes
-  // subdued"): each power gets up to two playstyle tags read from what it does, and the path is a tree (two branches a
-  // level; the ones you took in gold, today's pair glowing, later ones dim) with a fork from the branch you took
-  // WHAT: LEVEL UP. specTags gives each power option small tags (Heal, Summon, ...) read from its description; levelHTML shows the two powers to choose from (js/run.js chooseSpec applies the pick).
-  const STYLE = [['Summon', 'ghost', /skeleton|turret|clone|summon|decoy|\bbees?\b|spawn|minion/i], ['Heal', 'heart', /heal|lifesteal|regenerat|revive|rises/i],
-    ['Control', 'lock', /stun|root|slow|freez|taunt|blind|pull|push|knock|silence|hypno|charm|fear|longer/i], ['Tank', 'shield', /defense|max health|shield|invulnerab|untargetable|less damage|damage taken/i],
-    ['Area', 'swords', /radius|every enemy|all enemies|adjacent|within \d+ hex|group|bounce|chain|splash|nearby|around|more enemies|more targets|\d+ targets/i],
-    ['Speed', 'bolt', /attack speed|move speed|faster|sooner|dodge|blink|dash|energy|cooldown|twice|range/i], ['Damage', 'sword', /damage|crit|execut|burn|poison|bleed|\battack\b|\bmagic\b|strike|kill|double|\d+% more|more (?:knives|flasks|shots|arrows)/i]];
-  // the level-up powers' balance factor
-  // (B.TUNE.spec, v88) still applies, silently, like a hero's power factor; the cards show only the power itself
-  const specTags = sp => { const t = STYLE.filter(x => x[2].test(sp.desc)).slice(0, 2); return (t.length ? t : [['Upgrade', 'star']]).map(([n, ic]) => `<span class="ptag pt-${n.toLowerCase()}">${I(ic)}${n}</span>`).join(''); };
-  // WHAT: the level-up screen: pick one of two powers for the hero that levelled.
-  function levelHTML() {
-    const p = run.pending[0], h = run.heroes.find(x => x.uid === p.uid), d = HEROES[h.key];
-    const pair = d.specs[p.lvl - 2];
-    // a big splash, what the level gives, the two choices as big cards and the whole specialization path
-    const side = k => { const id = h.specs[k]; return id == null ? -1 : d.specs[k].findIndex(sp => sp.id === id); };
-    const path = d.specs.map((pr, k) => {
-      const lv = k + 2, st = lv === p.lvl ? 'now' : lv < p.lvl ? 'done' : 'later', from = k ? side(k - 1) : -2;
-      const fork = k ? `<div class="sp-fork ${st} from-${from === 0 ? 'a' : from === 1 ? 'b' : 'mid'}"><i></i></div>` : '';
-      return fork + `<div class="sp-row ${st}"><span class="sp-lv">Lv ${lv}</span>${pr.map((sp, j) => `<span class="sp-n ${h.specs[k] === sp.id ? 'on' : st === 'done' ? 'off' : ''}">${esc(sp.name)}</span>`).join('')}</div>`;
-    }).join('');
-    return `<section class="levelup"><h2 class="sc headline win">Level up!</h2>
-      <div class="luhero"><img class="lufull" src="${por(h.key, 104, true)}" alt=""><div><b class="luname">${esc(d.name)}</b><span class="lulv">Lv ${p.lvl - 1} → <b>Lv ${p.lvl}</b></span>
-        <p class="small lugain" title="+15% Health and Attack, +30 Magic, +4 Defense">${I('up')} Stronger in every way${p.lvl >= 3 ? `<br><b class="kw-gold">${I('bag')} +1 item slot</b>` : ''}</p></div></div>
-      <h3>Pick a new power</h3>
-      <div class="opts spec2">${pair.map((sp, i) => `<button class="card opt" data-act="spec" data-arg="${i}" title="${esc(sp.desc)}"><div class="ptags">${specTags(sp)}</div><div class="ctitle spec">${esc(sp.name)}</div><div class="small">${fmt(plainAb(sp.desc))}</div></button>`).join('')}</div>
-      <div class="sp-path tree"><div class="bph"><b>Power path</b><span class="dim small">one of two at each level</span></div>${path}</div></section>`;
-  }
-
-  // BOSS UPGRADE: after beating a boss, player chooses an un-upgraded hero of their loadout to upgrade along 1 of 3 distinct paths
-  function upgradeHTML() {
-    const unupgraded = run.heroes.filter(h => h.path == null);
-    if (!unupgraded.length) {
-      run.pendingUpgrade = null;
-      render();
-      return '';
-    }
-    const selUid = ui.upgradeHero && unupgraded.some(h => h.uid === ui.upgradeHero) ? ui.upgradeHero : unupgraded[0].uid;
-    ui.upgradeHero = selUid;
-    const h = run.heroes.find(x => x.uid === selUid);
-    const d = HEROES[h.key];
-    const paths = (B.HERO_PATHS && B.HERO_PATHS[h.key]) || [];
-
-    const heroPickers = run.heroes.map(x => {
-      const isUpgraded = x.path != null;
-      const isSelected = x.uid === selUid;
-      const xName = hName(x);
-      return `<button class="upg-hero-tab ${isSelected ? 'selected' : ''} ${isUpgraded ? 'done' : 'ready'}" data-act="upgrade-select-hero" data-arg="${x.uid}">
-        <span class="uht-pic">${img(x.key, 44, 'por')}${isUpgraded ? '<span class="chk-gold">✓</span>' : ''}</span>
-        <div class="uht-meta"><b class="uht-name">${esc(xName)}</b><span class="uht-status">${isUpgraded ? 'Upgraded' : 'Available'}</span></div>
-      </button>`;
-    }).join('');
-
-    const pathCards = paths.map((p, idx) => {
-      return `<button class="card opt upg-path-card" data-act="upgrade-path" data-arg="${idx}" style="--cloth:${d.color}">
-        <div class="upg-badge"><span class="star-icon">★</span> Path ${idx + 1}</div>
-        <div class="ctitle upg-title">${esc(p.name)}</div>
-        <div class="small upg-desc">${fmt(p.desc)}</div>
-        <div class="upg-cta-label">Awaken ${esc(p.name)} ➔</div>
-      </button>`;
-    }).join('');
-
-    return `<section class="levelup upgrade-screen">
-      <div class="upg-header">
-        <h2 class="sc headline win"><span class="star-gold">★</span> Boss Conquered! <span class="star-gold">★</span></h2>
-        <p class="ssub">Choose a hero of your loadout to empower with an exclusive Boss Path</p>
-      </div>
-
-      <div class="upg-team-dock">
-        <div class="bph"><b>Select Loadout Hero</b><span class="dim small">Each hero can only be upgraded once</span></div>
-        <div class="upg-heroes-row">${heroPickers}</div>
-      </div>
-
-      <div class="luhero upg-hero-showcase">
-        <img class="lufull" src="${por(h.key, 104, true)}" alt="">
-        <div>
-          <b class="luname">${esc(d.name)}</b>
-          <span class="lulv">Role: <b>${esc(d.role)}</b> · Lv ${h.lvl}</span>
-          <p class="small lugain">${esc(d.tag || d.abDesc || '')}</p>
-        </div>
-      </div>
-
-      <div class="bph upg-paths-head"><b>Choose 1 of 3 Paths for ${esc(d.name)}</b></div>
-      <div class="opts upg-paths-grid">${pathCards}</div>
-    </section>`;
-  }
-
-  // the enemy roster on the deploy screen, grouped, with what each one does (positioning is the decision here)
-  // WHAT: the enemy roster shown while deploying (bosses and elites get a card, plain monsters small chips).
-  function foesHTML(gau, f) {
-    const groups = [];
-    if (gau) for (const h of run.g.opp.team) groups.push({ key: h.key, n: 1, name: HEROES[h.key].name + ' Lv ' + h.lvl, what: HEROES[h.key].tag || HEROES[h.key].abName, peek: true });   // v53: a few words, More for the rest
-    else {
-      const by = {};
-      for (const e of f.enemies) {
-        const k = e.key + '|' + (e.elite || ''), m = B.MOBS[e.key] || B.BOSSES[e.key], el = e.elite && B.ELITES.find(x => x.id === e.elite);
-        if (!by[k]) groups.push(by[k] = { key: e.key, n: 0, boss: !!B.BOSSES[e.key], elite: el ? el.name : '', name: m.name,
-          what: B.BOSSES[e.key] ? m.desc : m.abil ? MOB_ABIL[m.abil] || '' : (m.fl || []).includes('dive') ? 'Leaps to your back line.' : '', ranged: m.range > 1 });
-        by[k].n++;
-      }
-    }
-    // enemies
-    // that do something special get a card with what they do; the plain ones are small chips under them
-    const big = groups.filter(g => g.what), small = groups.filter(g => !g.what);
-    const nm = g => `${esc(g.name)}${g.n > 1 ? ' ×' + g.n : ''}`;
-    const filigreeCorner = (pos) => `<svg class="fili-corner fili-${pos}" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M0,0 L16,0 C12,0 8,4 8,8 C8,12 0,12 0,16 L0,0 Z" fill="none" stroke="#d4af37" stroke-width="1.2"/><circle cx="5" cy="5" r="1.5" fill="#fff3a1"/></svg>`;
-    const traitBadge = (g) => {
-      const k = g.key.toLowerCase(), w = (g.what || '').toLowerCase();
-      if (g.boss || g.elite || w.includes('shield')) return `<span class="foe-trait trait-shield" title="Shielded / Armored">🛡</span>`;
-      if (w.includes('curse') || w.includes('silence') || k.includes('hex')) return `<span class="foe-trait trait-curse" title="Arcane Curse">🔮</span>`;
-      if (w.includes('poison') || w.includes('venom')) return `<span class="foe-trait trait-poison" title="Poison">☠</span>`;
-      if (w.includes('leap') || w.includes('back') || g.ranged) return `<span class="foe-trait trait-daggers" title="Infiltrator / Piercing">⚔</span>`;
-      return `<span class="foe-trait trait-star" title="Elite Enemy">◆</span>`;
-    };
-    return `<div class="foes ${gau ? 'gau' : ''}">
-      <div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
-      ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}" data-foe="${g.key}">
-        <div class="foe-bezel">${img(g.key, 44, 'por')}</div>
-        <div class="foe-info"><div class="foe-title"><b>${nm(g)}</b>${traitBadge(g)}${g.elite ? ` <span class="elt">◆ ${esc(g.elite)}</span>` : ''}</div><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div>
-      </div>`).join('')}</div>` : ''}
-      ${small.length ? `<div class="fsmall">${small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" data-foe="${g.key}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}${g.ranged ? ', attacks from range' : ''}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">◆</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('')}</div>` : ''}</div>`;
-  }
-  // a mini tutorial. 1) the first game: an animated "Try moving your hero" over the board on every deploy
-  // screen until a hero is moved (balance.tut.moved); the game it first showed in (balance.tut.run) is the only one it nags in.
-  // 2) once that is done, a flashing "speed up" hint under the speed buttons in battle until the player taps anywhere in a
-  // battle (balance.tut.speedDismissed). Players who had already played before this existed (they saw the deploy tip 3 times)
-  // are not taught what they know.
-  function tutVeteran() {
-    if (store.get('balance.tut.run', null) == null && !store.get('balance.tut.moved', false) && (store.get('balance.tips.deploy', 0) | 0) >= 3) { store.set('balance.tut.moved', true); store.set('balance.tut.speedDismissed', true); }
-  }
-  function tutMoveOn() {
-    if (!run) return false;
-    tutVeteran();
-    if (store.get('balance.tut.moved', false)) return false;
-    const first = store.get('balance.tut.run', null);
-    if (first == null) { store.set('balance.tut.run', run.seed); return true; }
-    return first === run.seed;
-  }
-  const tutSpeedOn = () => { tutVeteran(); return !!store.get('balance.tut.moved', false) && !store.get('balance.tut.speedDismissed', false); };
-  // v118 (, David: "Improve the tutorial with more content. Specifically in hero positioning for battle, people dont understand the value or the
-  // point... Implement some nice visualizations why positioning is important, maybe explaining exploiting terrain, chokepoints, rangers are more fragile, etc.
-  // Tips that appear in the first few runs but only once each"): the COACH. On the deploy screen of a player's first runs, one tip at a time, each once
-  // (balance.coach = the ids seen): a short line over the board, and the hexes it talks about glow on the board (Render: o.coach) with arrows where enemies come.
-  // WHAT: the positioning tips: when it may show, which hexes glow, the colour and icon on them, the line.
-  const hasFrontliner = () => run && run.heroes && run.heroes.some(h => { const d = HEROES[h.key]; return d && (d.role === 'Tank' || d.role === 'Fighter'); });
-  const hasBackliner = () => run && run.heroes && run.heroes.some(h => { const d = HEROES[h.key]; return d && (d.range > 1 || d.role === 'Healer'); });
-  const enemiesHaveDive = () => {
-    if (!run || !run.cur || !run.cur.enemies) return false;
-    return run.cur.enemies.some(e => {
-      const m = B.MOBS[e.key] || (B.BOSSES && B.BOSSES[e.key]);
-      return m && (m.fl || []).includes('dive');
-    });
-  };
-  const enemiesHaveAoE = () => {
-    if (!run || !run.cur || !run.cur.enemies) return false;
-    return run.cur.enemies.some(e => {
-      const m = B.MOBS[e.key] || (B.BOSSES && B.BOSSES[e.key]);
-      if (!m) return false;
-      const desc = (m.desc || '') + ' ' + (B.MOB_ABIL && B.MOB_ABIL[m.abil] ? B.MOB_ABIL[m.abil].desc || '' : '');
-      return /radius|all enemies|bounce|chain|splash|nearby|cone|circle/i.test(desc);
-    });
-  };
-  const COACH = [
-    { id: 'c_front', when: () => hasFrontliner(), hexes: () => coachRow(4), color: '#3ddc84', icon: '🛡', arrows: true, text: 'Enemies advance from above. Place resilient Tanks in FRONT to absorb damage.' },
-    { id: 'c_back', when: () => hasBackliner(), hexes: () => coachRow(7), color: '#4aa3ff', icon: '🏹', text: 'Rangers and Healers are vulnerable: position them in the BACK behind your frontline.' },
-    { id: 'c_terrain', when: () => ((Run.mapOf(run) || { cells: [] }).cells || []).length > 0, hexes: () => ((Run.mapOf(run) || { cells: [] }).cells || []).map(t => ({ c: t.c, r: t.r })), color: '#ffb347', icon: '⛔', text: 'Terrain blocks movement. Enemies must path around: use obstacles as natural barricades.' },
-    { id: 'c_choke', when: () => coachChokes().length > 0 && ((Run.mapOf(run) || { cells: [] }).cells || []).length > 0, hexes: coachChokes, color: '#ff5a8a', icon: '🚪', text: 'Gaps create CHOKEPOINTS: one sturdy unit placed here can bottle up multiple attackers.' },
-    { id: 'c_dive', when: () => enemiesHaveDive(), hexes: () => coachRow(7).concat(coachRow(6)), color: '#c77dff', icon: '🗡', text: 'Assassins leap to your backline! Guard fragile heroes with a nearby brawler.' },
-    { id: 'c_spread', when: () => enemiesHaveAoE(), hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#ffd23f', icon: '💥', text: 'Area attacks punish grouping! Spread out formations to minimize splash damage.' },
-  ];
-  const coachRow = r => B.Hex.all().filter(h => h.r === r && !Run.blockedAt(run, h.c, h.r));
-  // WHAT: the free hexes on your side or in the middle with two or more blocked neighbours (gaps an enemy has to squeeze through).
-  function coachChokes() { const bl = (c, r) => Run.blockedAt(run, c, r); return B.Hex.all().filter(h => h.r >= 2 && h.r <= 5 && !bl(h.c, h.r) && B.Hex.neighbors(h.c, h.r).filter(n => bl(n.c, n.r)).length >= 2); }
-  const coachSeen = () => { const s = store.get('balance.coach', []); return Array.isArray(s) ? s : []; };
-  // WHAT: the coach tip to show on this deploy screen (null = none): the first runs only, never during the intro or the first fight of the first run (the tutorial bubbles talk there).
-  function coachTip() {
-    if (!run || run.phase !== 'deploy' || introStage() || (+store.get('balance.starts', 0) || 0) > 6 || Run.benched(run).length) return null;
-    if ((+store.get('balance.starts', 0) || 0) <= 1 && run.step < 1) return null;
-    if (guideOn() && ['t_dep1', 't_dep2', 't_foes', 't_fight'].some(id => !guideSeen().includes(id))) return null;   // one bubble at a time: the tutorial's deploy tips first
-    if (ui.coachId && !coachSeen().includes(ui.coachId)) return COACH.find(t => t.id === ui.coachId) || null;
-    const seen = coachSeen(), t = COACH.find(x => !seen.includes(x.id) && (!x.when || x.when()));
-    ui.coachId = t ? t.id : null; return t || null;
-  }
-  // WHAT: what the board draws for the coach tip (glowing hexes, icon, arrows).
-  function coachDraw() { const t = coachTip(); return t ? { coach: { hexes: t.hexes(), color: t.color, icon: t.icon, arrows: !!t.arrows } } : {}; }
-  function coachDone() { const t = ui.coachId; if (!t) return; const s = coachSeen(); if (!s.includes(t)) store.set('balance.coach', s.concat(t)); ui.coachId = null; }
-  function tutMoved() { if (!store.get('balance.tut.moved', false)) store.set('balance.tut.moved', true); const e = document.querySelector('.tutmove'); if (e) e.remove(); }
-  function tutSpeedDisarm() { if (tutSpeedDisarm.h) { document.removeEventListener('pointerdown', tutSpeedDisarm.h, true); tutSpeedDisarm.h = null; } }
-  function tutSpeedArm() {
-    tutSpeedDisarm(); if (!tutSpeedOn()) return;
-    tutSpeedDisarm.h = () => { store.set('balance.tut.speedDismissed', true); const e = document.querySelector('.tutspeed'); if (e) e.remove(); tutSpeedDisarm(); };
-    document.addEventListener('pointerdown', tutSpeedDisarm.h, true);
-  }
-  // the guide.
-  // One small bubble at a time points at the thing it explains (the road, the lives, a duel, the bag, the shop...). It never blocks: taps go
-  // through it, the first tap anywhere after it showed puts it away for good (balance.guide = the ids seen), and a screen change takes it off.
-  // v87: everyone gets it until a run reaches the final fight (see guideOn); the deploy and battle hints above stay as they were.
-  // v103 (reviews #190 #191, David: "Make a complete tutorial from the ground up that can be reactivated in the settings. But dont make it too invasive.
-  // But people must understand what hero deployment is and why it's useful, what powers are, what the objective of the journey is (days, choices, until
-  // gauntlet), and the menu/general options... it should only be there in a person's first run or whenever the tutorial changes"; "The tutorial must be
-  // piecewise in small texts to not bore people"): the guide below IS the tutorial. Each tip is one short line in a bubble pointing at what it explains;
-  // a screen with several tips shows them one after the other (the next one comes a moment after the last was tapped away). It runs through a player's
-  // first run and ends with that run's end screens; TUT_V is its version: raise it when the tips change and everyone sees the new tutorial once.
-  // Menu -> Tutorial turns it on again (from the start) or off.
-  // WHAT: the tutorial tips, in the order they come: id, scr ('title' or the run), when it shows, what it points at (a selector), the text.
-  // two tips for the bench of ; TUT_V 4 shows players only these new ones.
-  const TUT_V = 4;
-  const GUIDE = [
-    { id: 't_play', scr: 'title', when: () => true, at: '.title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start your journey.' },
-    { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'Game settings, rules, audio and language.' },
-    { id: 't_hero', when: () => run.phase === 'start' && (ui.startStep || 1) === 1, at: '[data-act=start-pick]', text: 'Choose your first hero. Two more join you free as you advance.' },
-    { id: 't_power', when: () => run.phase === 'start' && ui.startStep === 2, at: '.srelics', text: 'Powers grant permanent passive bonuses to your whole squad.' },
-    { id: 't_goal', when: () => run.phase === 'map' && run.result !== 'clear', at: '.rday', text: 'Your map: one stop each day. Defeat both bosses to conquer the run.' },
-    { id: 't_path', when: () => run.phase === 'map' && run.result !== 'clear', at: '[data-act=choose]', text: 'Choose your path. Harder fights grant richer gold and loot.' },
-    { id: 't_ward', when: () => run.phase === 'map' && run.step >= 1, at: '#top .lives', text: 'Your protective Ward. Defeat breaks it and retries the day; a second loss ends the run.' },
-    { id: 't_gaunt', when: () => run.phase === 'map' && run.step >= 2 && run.result !== 'clear', at: '.rn.final', text: 'After the final boss: climb the Gauntlet against saved player teams.' },
-    { id: 't_bench', when: () => run.phase === 'deploy' && !introStage() && Run.benched(run).length > 0, at: '#bench', text: 'Recruited hero waiting. Drag onto the board to unlock the fight.' },
-    { id: 't_dep1', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Position heroes on your half of the board before combat starts.' },
-    { id: 't_dep2', when: () => run.phase === 'deploy' && !introStage(), at: '#board', text: 'Place tough tanks in front; position fragile damage & healers behind.' },
-    { id: 't_foes', when: () => run.phase === 'deploy' && !introStage(), at: '.foes', text: 'Enemy roster. Tap any unit or card to inspect stats and abilities.' },
-    { id: 't_fight', when: () => run.phase === 'deploy' && !introStage() && !Run.benched(run).length, at: '[data-act=fight]', text: 'Ready? Start combat! Units fight and cast automatically.' },
-    { id: 't_keep', when: () => run.phase === 'deploy' && !introStage() && run.heroes.length > 1 && !Run.benched(run).length, at: '#board', text: 'Formations persist across days. Drag any hero to adjust.' },
-    { id: 'gear', when: () => (run.phase === 'map' || run.phase === 'shop') && run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in bag! Tap Team to inspect or equip.' },
-    { id: 'shop', when: () => run.phase === 'shop', at: '[data-act=reroll]', text: 'Spend gold on upgrades. Use New to refresh stock.' },
-    { id: 't_rshop', when: () => run.phase === 'shop' && run.cur && run.cur.kind === 'relicShop', at: '.shop, .stock', text: 'Team-wide powers remain active for the rest of your run.' },
-    { id: 'event', when: () => run.phase === 'event', at: '.evchoices', text: 'Event encounter: choose an option. Special options require specific heroes.' },
-    { id: 'level', when: () => run.pending.length && run.phase !== 'deploy', at: '.spec2', text: 'Level up! Pick one of two specialization perks for this hero.' },
-    { id: 't_win', when: () => run.phase === 'over' && run.result === 'clear' && !run.tower, at: '.vicart', text: 'Bosses defeated! Enter the Gauntlet to test your build.' },
-    { id: 't_tower', when: () => run.phase === 'tower' && (!run.tower || run.tower.status === 'gate'), at: '.trules', text: 'Climb floor by floor: each tier is tougher and awards bonus LP.' },
-    { id: 'league', when: () => run.phase === 'over' && run.result !== 'gauntlet' && (run.overStep || 1) === 1 && !!document.querySelector('#lpmeter'), at: '#lpmeter', text: 'League points: earn LP to climb tiers from Bronze to Master.' },
-    { id: 'chest', when: () => run.phase === 'over' && run.overStep === 2, at: '#chest', text: 'Account XP: level up to unlock new heroes, items and powers.' },
-  ];
-  // the tips seen in this version of the tutorial; the version finished (or turned off)
-  const guideSeen = () => { const s = store.get('balance.guide3', []); return Array.isArray(s) ? s : []; };
-  const guideOn = () => !navigator.webdriver && (store.get('balance.guide.v', 0) | 0) < TUT_V;
-  const guideEnd = () => store.set('balance.guide.v', TUT_V);
-  // the explain bubble of anything with data-tip (the rewards in the chest, the level road, the next reward). A mouse shows it while
-  // hovering; a tap (or keyboard focus) shows it until the next tap. Fixed over the page like the guide, so nothing moves.
-  // WHAT: shows / hides the data-tip bubble.
-  const htip = { el: null, on: null };
-  function tipShow(t) {
-    tipHide(); const text = t.getAttribute('data-tip'); if (!text) return;
-    const r = t.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, b = document.createElement('div'); b.className = 'htip'; b.textContent = text; document.body.appendChild(b);
-    const w = Math.min(280, vw - 24); b.style.width = w + 'px'; const h = b.offsetHeight, up = r.top - h - 10 >= 8;
-    const cx = Math.max(12 + w / 2, Math.min(vw - 12 - w / 2, r.left + r.width / 2));
-    b.style.left = (cx - w / 2) + 'px'; b.style.top = (up ? r.top - h - 10 : Math.min(vh - h - 8, r.bottom + 10)) + 'px'; b.classList.add(up ? 'up' : 'down');
-    b.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - (cx - w / 2))) + 'px');
-    htip.el = b; htip.on = t; htip.at = performance.now();
-  }
-  function tipHide() { if (htip.el) htip.el.remove(); htip.el = null; htip.on = null; }
-  document.addEventListener('pointerover', e => {
-    if (e.pointerType !== 'mouse') return;
-    const t = e.target.closest && e.target.closest('[data-tip]');
-    if (t && t !== htip.on) tipShow(t);
-    else if (!t && htip.on) tipHide();
-    const foeEl = e.target.closest && e.target.closest('[data-foe]');
-    const foeKey = foeEl ? foeEl.dataset.foe : null;
-    if (foeKey !== ui.hoverFoe) {
-      ui.hoverFoe = foeKey;
-      if (screen === 'run' && run && run.phase === 'deploy' && !battle) drawPreview();
-    }
-  });
-  document.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); else tipHide(); }, true);
-  document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('[data-tip]'); if (t && t !== htip.on) tipShow(t); });
-  addEventListener('scroll', () => { if (htip.el && performance.now() - htip.at > 300) tipHide(); }, true); addEventListener('resize', tipHide);
-  // WHAT: after each render, shows the first guide tip that fits this screen and was never seen (or removes the one of a screen that is gone).
-  function guide() {
-    clearTimeout(guide.t); const old = document.querySelector('.gtip'); if (old) old.remove(); guideDisarm(); if (htip.on && !htip.on.isConnected) tipHide();
-    if (!guideOn() || ui.modal || (screen !== 'run' && screen !== 'title') || (screen === 'run' && !run)) return;
-    const seen = guideSeen(), g = GUIDE.find(x => !seen.includes(x.id) && (x.scr === 'title' ? screen === 'title' : screen === 'run' && x.when()));
-    if (!g) { if (screen === 'run' && run.phase === 'over' && run.overStep === 2) guideEnd(); return; }   // v103: the first run is over: so is the tutorial
-    const key = ui.lastKey;
-    // a moment after the screen settles (the entry animation, the map walk), then the bubble finds its target
-    guide.t = setTimeout(() => {
-      if (ui.lastKey !== key || ui.modal) return;
-      const el = [...document.querySelectorAll(g.at)].find(e => { const r = e.getBoundingClientRect(); return r.width && r.height; });
-      if (!el) return;
-      const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, tip = document.createElement('div');
-      tip.className = 'gtip'; tip.setAttribute('role', 'status'); tip.innerHTML = `<b>💡</b><span>${esc(g.text)}</span>`;
-      document.body.appendChild(tip);
-      const isDesk = document.body.classList.contains('desk'); const w = isDesk ? Math.min(480, vw - 48) : Math.min(300, vw - 24); tip.style.width = w + 'px';
-      const th = tip.offsetHeight, below = r.bottom + th + 14 <= vh, top = below ? r.bottom + 10 : Math.max(8, r.top - th - 10);
-      const cx = Math.max(12 + w / 2, Math.min(vw - 12 - w / 2, r.left + r.width / 2));
-      tip.style.left = (cx - w / 2) + 'px'; tip.style.top = top + 'px'; tip.classList.add(below ? 'down' : 'up');
-      tip.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - (cx - w / 2))) + 'px');
-      // the next tap anywhere (after it had time to be read) puts it away for good; the tap itself still does what it does
-      const shownAt = performance.now();
-      guideDisarm.h = () => { if (performance.now() - shownAt < 700) return; store.set('balance.guide3', guideSeen().concat(g.id)); if (g.id === 'chest') guideEnd(); tip.classList.add('bye'); setTimeout(() => { tip.remove(); guide(); }, 350); guideDisarm(); };   // v103: the next tip of the same screen follows
-      document.addEventListener('pointerdown', guideDisarm.h, true);
-    }, 650);
-  }
-  function guideDisarm() { if (guideDisarm.h) { document.removeEventListener('pointerdown', guideDisarm.h, true); guideDisarm.h = null; } }
-  // v126 (, David: "Make it so when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time. Fight doesnt
-  // start until you do, include plenty of indicators for that. But after first deployment the hex persists until changed until end of run"): a hero that joined in the
-  // middle of the run waits on the BENCH (Run.benched) until the player puts it on the board. The bench sits beside the board (above it on phones) with a NEW badge
-  // and a bouncing arrow; the banner over the board names who is missing; the free hexes of your half glow; the Fight button is locked (a tap says why and shakes the
-  // bench). Drag a hero from the bench onto a hex, or tap it and then tap a hex. Once placed it keeps its hex for the rest of the run.
-  // WHAT: the bench of heroes still to place ('' when there is none).
-  function benchHTML(need) {
-    if (!need.length) return '';
-    const sel = need.some(h => h.uid === ui.selUid);
-    return `<div class="bench" id="bench"><div class="bnh"><span class="bnew">NEW</span><b>${need.length > 1 ? 'Deploy your new heroes' : 'Deploy your new hero'}</b><span class="bnarrow" aria-hidden="true"></span></div>
-      <div class="bnl">${need.map(h => `<button class="bnc${h.uid === ui.selUid ? ' on' : ''}" data-act="bench-pick" data-arg="${h.uid}" data-bench="${h.uid}" aria-label="${esc(hName(h))}">${img(h.key, 44)}<span class="bnb"><b>${esc(hName(h))}</b><span class="dim small">${esc(HEROES[h.key].role)} · ${HEROES[h.key].range <= 1 ? 'Front row' : 'Back row'}</span></span></button>`).join('')}</div>
-      <p class="bnt small">${sel ? 'Now tap a glowing hex on your half.' : 'Drag onto your half of the board, or tap it and then a hex.'}</p></div>`;
-  }
-  // WHAT: Fight was pressed with heroes still on the bench: say who, shake the bench.
-  function benchNudge(need) {
-    sfx('deny'); toast(need.length > 1 ? `Place your ${need.length} new heroes on the board first` : `Drag ${HEROES[need[0].key].name} onto your half of the board first`);
-    const b = $('#bench'); if (b) { b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge'); if (b.scrollIntoView) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-  }
-  // WHAT: a benched hero was put on hex h: dust, thud, and the screen again (the bench, the banner and the Fight button change).
-  function benchPlaced(uid, h) {
-    Run.setPos(run, uid, h.c, h.r); ui.selUid = 0;
-    const x = run.heroes.find(y => y.uid === uid); if (!x || x.bench) { sfx('deny'); render(); return; }
-    save(); tutMoved(); sfx('place');
-    if (B.Juice && view) { const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); }
-    const left = Run.benched(run).length;
-    render(); toast(left ? (left > 1 ? `${left} more heroes to place` : 'One more hero to place') : 'Everyone is on the board. Fight when ready!');
-  }
-  // the ribbon over
-  // the board says "Drag heroes to reposition" (with a hand); with heroes on the bench it says "Place <name>!".
-  // WHAT: THE DEPLOY SCREEN: the board where you drag your heroes, the formation line, the enemy roster, the Items button and the big Fight button.
-  function deployHTML() {
-    const gau = run.cur && run.cur.type === 'gauntlet';
-    const f = run.cur;
-    const map = Run.mapOf(run), need = Run.benched(run);
-    if (introStage()) return `<section class="deploy intro"><div class="boardwrap"><canvas id="board"></canvas>${introStage() === 'move' ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Drag your hero to move it ⇉</div>' : ''}</div></section>`;   // only the battlefield
-    const depbanContent = need.length
-      ? (need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`)
-      : 'Drag heroes to reposition';
-
-    return `<section class="deploy">
-      ${speedPills(!gau, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${run.g.kind === 'final' ? 'Final' : duelName(run.g)} · ${esc(run.g.opp.name)} · Power ${Run.ghostPower(run.g.opp)} (you ${Run.powerOf(run, run.heroes)})` : f && f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f && f.diff === 'boss' ? I('skull') + ' Boss fight' : f && f.diff && B.DIFF[f.diff] ? I('swords') + ' ' + B.DIFF[f.diff].name + ' fight' : I('swords') + ' Battle'}</div>
-      ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
-        : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
-      ${benchHTML(need)}
-      ${run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
-      <div class="boardwrap">
-        <canvas id="board"></canvas>
-        <div class="depban ${need.length ? 'need' : ''}" aria-hidden="true">
-          ${need.length ? I('shield') : '<span class="dbh">✋</span>'}
-          <span class="depban-text">${depbanContent}</span>
-        </div>
-        ${tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(coachTip())}
-      </div>
-      <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
-      ${foesHTML(gau, f)}
-      ${deployLeftHTML()}
-      <div class="bar sticky"><button class="fight-gold-btn ${need.length ? 'locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}><span class="fight-sparks"></span><span class="fight-lbl">${need.length ? (need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`) : gau ? (run.g.kind === 'final' ? 'Final fight!' : run.g.kind === 'tower' ? 'Climb!' : 'Duel!') : 'Fight!'}</span></button></div>
-      <div class="dparty">${deployPartyHTML()}</div>
-    </section>`;
-  }
-  // v44: what a challenge pays
-  // WHAT: text of what a challenge fight pays.
-  function winText(w) {
-    const out = [];
-    if (w.gold) out.push('+' + w.gold + ' gold');
-    if (w.item) out.push((/^[aeiou]/.test(w.item) ? 'an ' : 'a ') + w.item + ' item');
-    if (w.relic) out.push('a power');
-    if (w.boost) out.push('+' + Math.round((w.boost.hpPct || 0) * 100) + '% Health and Attack for good');
-    if (w.xp) out.push('+' + w.xp + ' XP');
-    return out.join(', ');
-  }
-  // who gets what from the formation relics, from where the heroes stand right now
-  // one chip per formation relic with how many heroes it reaches; the chip's
-  // tooltip and a tap still give the full "who gets what"
-  // WHAT: the chips of formation powers (who gets what from where the heroes stand).
-  function formHTML(W) {
-    const got = W ? Sim.formation(W, 0) : [];
-    return run.relics.filter(id => RELIC[id] && RELIC[id].form).map(id => {
-      const r = RELIC[id], who = got.filter(b => b.fl === r.fl);
-      const full = `${r.name}: ` + (who.length ? who.map(b => `${b.u.name} ${B.FORMATION[b.fl](b.n)}`).join(', ') : 'nobody yet (move your heroes)');
-      return `<button class="fr ${who.length ? 'got' : 'none'}" data-act="form-info" data-arg="${esc(full)}" title="${esc(full)}" aria-label="${esc(r.name)}">${ico('relic', id, 22)}<span>${who.length ? '✓' : '✗'}</span></button>`;
-    }).join('');
-  }
-  // under the
-  // board, a card per hero (HP and shield in numbers, mana bar named after the ability that glows when READY, status
-  // badges, live damage with the leader crowned) and the enemy roster with its own HP bars and a count of who is left.
-  // the speed pills, also on the deploy
-  // screen (on the sky of the board); the Skip button only in PvE fights
-  const speedPills = (skip, cls = '') => `<div class="speed ${cls}">${[1, 2, 4].map(x => `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
-  // WHAT: THE BATTLE SCREEN layout: top bar with speed buttons, the board canvas, the hero strip and the enemy strip. The numbers update live from the loop below.
-  function battleHTML() {
-    return `<section class="deploy battle">
-      <div class="hud"><div id="bhud" class="hud-l"></div>
-        ${tutSpeedOn() ? '<div class="tutspeed" aria-hidden="true">⬆ Tap here to speed up the fight!</div>' : ''}${speedPills(!(battle && battle.gau))}</div>
-      <div class="boardwrap"><canvas id="board"></canvas></div>
-      <div class="bpanel"><div class="teamstrip v2" id="tstrip"></div>
-        <div class="bph"><b>Enemies</b><span id="ecount" class="dim small"></span></div><div class="estrip" id="estrip"></div></div>
-      <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div></section>`;
-  }
-  // WHAT: battle strips: dmgBy = damage done per hero, ccHTML = status badges (stun, slow...), stripHTML builds the hero cards and updateStrip refreshes their bars every few frames.
-  const kfmt = n => n >= 10000 ? Math.round(n / 1000) + 'k' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(Math.round(n));
-  // damage per hero, summons counted for their owner
-  function dmgBy(W) { const d = {}; for (const u of W.units) { const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side === 0 && o.kind === 'hero') d[o.id] = (d[o.id] || 0) + (u.dmgDone || 0); } return d; }
-  const CC_STATUS = [['stun', 'STUN', 'st'], ['silence', 'SILENCE', 'si'], ['root', 'ROOT', 'ro'], ['frozenU', 'FROZEN', 'fr'], ['confuseU', 'CONFUSED', 'co'], ['blindU', 'BLIND', 'bl'], ['slowU', 'SLOW', 'sl'], ['tauntU', 'TAUNTED', 'ta']];
-  function ccHTML(W, u) { return u.dead ? '' : CC_STATUS.filter(([k]) => u.st[k] > W.t).slice(0, 2).map(([, t, c]) => `<span class="sb sb-${c}">${t}</span>`).join(''); }
-  function stripHTML(W) {
-    return W.units.filter(u => u.side === 0 && u.kind === 'hero').map(u => `<div class="ts" data-id="${u.id}">
-      <div class="tsp">${img(u.key, 40, 'por')}<span class="tslv">${u.lvl}</span><span class="crown">👑</span>${u.items && u.items.length ? `<span class="tsitems">${u.items.map(id => `<img class="ico xs" src="${B.Icons.item(id, 18)}" alt="">`).join('')}</span>` : ''}</div>
-      <div class="tsb"><div class="tsn"><b>${esc(u.name)}</b><span class="tsst"></span><span class="tsd"></span><span class="tsh"></span></div>
-        <i class="hp"><s></s><em></em></i><i class="mp"><s></s><em>${esc((HEROES[u.key] || {}).abName || '')}</em></i><i class="dm"><s></s><b class="dmb"></b></i></div></div>`).join('');
-  }
-  function updateStrip(W) {
-    const el = $('#tstrip'); if (!el) return;
-    if (!el.firstChild) el.innerHTML = stripHTML(W);
-    const dmg = dmgBy(W), top = Math.max(1, ...Object.values(dmg));
-    let topHeal = 1;
-    for (const u of W.units) if (u.side === 0 && (u.healDone || 0) > topHeal) topHeal = u.healDone;
-    for (const d of el.querySelectorAll('.ts')) {
-      const u = W.byId[d.dataset.id]; if (!u) continue;
-      const ready = !u.dead && u.maxMana > 0 && u.mana >= u.maxMana, dd = dmg[u.id] || 0, hh = u.healDone || 0, sh = u.shield > 0 && u.shieldU > W.t ? Math.round(u.shield) : 0;
-      d.classList.toggle('dead', !!u.dead); d.classList.toggle('ready', ready); d.classList.toggle('mvp', dd > 0 && dd >= top);
-      d.querySelector('.hp s').style.width = Math.max(0, 100 * u.hp / u.maxHp) + '%';
-      d.querySelector('.hp em').textContent = u.dead ? 'fallen' : Math.max(0, Math.round(u.hp)) + ' / ' + u.maxHp + (sh ? '  +' + sh + ' shield' : '');
-      d.querySelector('.mp s').style.width = (u.maxMana ? Math.min(100, 100 * u.mana / u.maxMana) : 0) + '%';
-      d.querySelector('.dm s').style.width = 100 * dd / top + '%';
-      const dmb = d.querySelector('.dm .dmb');
-      if (dmb) dmb.style.width = (hh > 0 ? (100 * hh / topHeal) : 0) + '%';
-      d.querySelector('.tsd').textContent = '⚔ ' + kfmt(dd);
-      const tsh = d.querySelector('.tsh');
-      if (tsh) tsh.textContent = hh >= 20 ? ('💚 ' + kfmt(hh)) : '';
-      const st = ccHTML(W, u), sd = d.querySelector('.tsst'); if (sd.innerHTML !== st) sd.innerHTML = st;
-    }
-    const es = $('#estrip'); if (!es) return;
-    const foes = W.units.filter(u => u.side === 1 && u.kind !== 'summon'), summons = W.units.filter(u => u.side === 1 && u.kind === 'summon' && !u.dead).length;
-    for (const u of foes) if (!es.querySelector(`[data-id="${u.id}"]`)) {
-      const c = document.createElement('span'); c.className = 'ec' + (u.boss ? ' boss' : '') + (u.elite ? ' elite' : ''); c.dataset.id = u.id;
-      c.innerHTML = `${img(u.key, u.boss ? 34 : 26, 'por')}<i><s></s></i>`; c.title = u.name; es.appendChild(c);
-    }
-    for (const c of es.querySelectorAll('.ec')) { const u = W.byId[c.dataset.id]; if (!u) continue; c.classList.toggle('dead', !!u.dead); c.querySelector('s').style.width = Math.max(0, 100 * u.hp / u.maxHp) + '%'; }
-    const left = foes.filter(u => !u.dead).length, ec = $('#ecount');
-    if (ec) ec.textContent = `${left} of ${foes.length} left${summons ? ' · +' + summons + ' summoned' : ''}`;
-  }
-
-
-  // WHAT: RESULT SCREEN pieces: eloLine, clock (m:ss), resultHTML (win or lose, stars, rewards, XP, details), celebrate (confetti and sounds).
-  function eloLine(r) {
-    if (r.pending) return '<p class="dim center">Saving…</p>';
-    if (r.error) return `<p class="err center">${esc(r.error)}</p><p class="center"><button data-act="retry-elo">Try again</button></p>`;
-    return '';
-  }
-  const clock = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-  // a banner
-  // with what was fought and how long it took, every reward as a chip, then one card per hero (damage dealt with its
-  // share, damage taken, kills, fallen or standing, XP) and the enemy line-up with who went down.
-  // WHAT: THE RESULT SCREEN after a fight or a duel: victory / defeat, stars, gold, XP per hero, prizes, Elo change and the Continue button.
-  function resultHTML() {
-    const r = ui.result, S = r.stats || {};
-    const hs = r.xp.map(x => ({ x, h: run.heroes.find(q => q.uid === x.uid), s: S[x.uid] || { dmg: (r.dmg || {})[x.uid] || 0, taken: 0, kills: 0, alive: true } })).filter(o => o.h);
-    const top = Math.max(1, ...hs.map(o => o.s.dmg)), total = Math.max(1, hs.reduce((a, o) => a + o.s.dmg, 0));
-    const mvpUid = hs.length > 1 || r.win ? (hs.slice().sort((a, b) => b.s.dmg - a.s.dmg)[0] || {}).x : null;
-    const what = r.duel ? `${r.tower ? 'Gauntlet · Floor ' + r.floor : r.final ? 'Final fight' : 'Duel'} · vs ${plink(r.opp.name, r.opp.code)}` : r.boss ? `👹 ${esc(r.bossName || 'Boss')}` : esc(r.fightName || 'Fight');
-    const foesDown = r.foes ? r.foes.filter(f => f.dead).length : null, fx = r.fx || {};
-    const meta = [r.time != null ? `<span title="Time">⏱ ${clock(r.time)}</span>` : '', r.foes ? `<span title="Enemies down">💥 ${foesDown}/${r.foes.length}</span>` : '', `<span title="Heroes standing">♥ ${hs.filter(o => o.s.alive).length}/${hs.length}</span>`, r.timeout ? '<span>time ran out</span>' : ''].filter(Boolean).join('');
-    const starRow = ''; // User directive: stars removed from everywhere in the game
-    const loseTag = !r.win && r.left != null ? `<p class="losetag">${esc(Run.lossTag(r.left, r.timeout))}</p>` : '';
-    const chips = [];
-    if (r.win && !r.duel) chips.push(`<span class="rw rw-gold"><i class="coin"></i><b>+${fx.gold ? r.gold : 0}</b><em>gold</em></span>`);
-    if (r.relic && RELIC[r.relic]) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f">${ico('relic', r.relic, 26)}<b>${esc(RELIC[r.relic].name)}</b><em>power</em></span>`);
-    if (r.bank) chips.push(`<span class="rw ${r.bank > 0 ? 'rw-pos' : 'rw-neg'}"><i>🏦</i><b>${r.bank > 0 ? '+' : ''}${r.bank}</b><em>${r.bank > 0 ? 'investment' : 'loan paid'}</em></span>`);
-    // what the run relics did after this fight
-    if (r.phoenix) chips.push(`<span class="rw rw-prize" style="--tier:#ff7a3d">${ico('relic', 'phoenix', 26)}<b>Phoenix Egg</b><em>hatched, gone</em></span>`);
-    if (r.anvil && ITEM[r.anvil.to]) chips.push(`<span class="rw rw-prize" style="--tier:${TIER_COLOR[ITEM[r.anvil.to].tier]}">${ico('item', r.anvil.to, 26)}<b>${esc(ITEM[r.anvil.to].name)}</b><em>anvil upgrade</em></span>`);
-    if (r.changeling && HEROES[r.changeling.to]) chips.push(`<span class="rw rw-up">${img(r.changeling.to, 22, 'por sm')}<b>${esc(HEROES[r.changeling.from].name)} → ${esc(HEROES[r.changeling.to].name)}</b><em>changeling</em></span>`);
-    if (r.double) chips.push(`<span class="rw ${r.double === 'won' ? 'rw-pos' : 'rw-neg'}">${ico('relic', 'double', 22)}<b>${r.double === 'won' ? 'Double!' : 'Nothing'}</b><em>double or nothing</em></span>`);
-    if (r.snow != null) chips.push(`<span class="rw ${r.snow ? 'rw-pos' : 'rw-neg'}">${ico('relic', 'snowball', 22)}<b>${r.snow ? '+' + 4 * r.snow + '%' : 'Melted'}</b><em>snowball</em></span>`);
-    if (r.boost) chips.push(`<span class="rw rw-up">${img(r.boost.key, 22, 'por sm')}<b>${esc(r.boost.text)}</b><em>for good</em></span>`);
-    if (r.bonusXp) chips.push(`<span class="rw rw-xp"><i>🏆</i><b>+${r.bonusXp}</b><em>bonus XP</em></span>`);
-    if (r.prize) chips.push(`<span class="rw rw-prize" style="--tier:${TIER_COLOR[ITEM[r.prize].tier]}">${ico('item', r.prize, 26)}<b>${esc(ITEM[r.prize].name)}</b><em>${B.RARITY[ITEM[r.prize].tier].name} ${B.TYPE[ITEM[r.prize].type].name.toLowerCase()}</em></span>`);
-    const xp = hs.reduce((a, o) => a + o.x.gained, 0), ups = hs.filter(o => o.x.to > o.x.from).length;
-    if (xp) chips.push(`<span class="rw rw-xp"><i>✨</i><b>+${xp}</b><em>XP</em></span>`);
-    if (ups) chips.push(`<span class="rw rw-up"><i>▲</i><b>${ups}</b><em>level up${ups > 1 ? 's' : ''}</em></span>`);
-    if (r.boss && r.win) chips.push(`<span class="rw rw-up" style="--tier:#ffd23f">★ <b>Boss Upgrade</b><em>choose a path</em></span>`);
-    if (r.trophy) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f"><i>🏆</i><b>${esc(r.trophy.name)}</b><em>trophy · +${r.trophy.crowns || 1} 👑</em></span>`);
-    if (r.lg) chips.push(`<span class="rw ${r.lg.delta > 0 ? 'rw-pos' : r.lg.delta < 0 ? 'rw-neg' : ''}">${emblem(r.lg.league, 20)}<b>${r.lg.delta > 0 ? '+' : ''}${r.lg.delta}</b><em>LP · ${leagueName(r.lg.league)} ${leagueProgress(r.lg)}</em></span>`);
-    if (r.lg && r.lg.crowns) chips.push(`<span class="rw rw-crown"><i>👑</i><b>+${r.lg.crowns}</b><em>crowns</em></span>`);
-    const promo = r.lg && r.lg.promoted ? `<div class="promo" style="--lc:${B.LEAGUES[r.lg.league].color}">${emblem(r.lg.league, 40)}<b>Promoted to ${leagueName(r.lg.league)}!</b>${r.lg.crowns ? `<span class="crn">+${r.lg.crowns} 👑</span>` : ''}</div>` : '';
-    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
-    const heroes = hs.map(({ x, h, s: st }) => {
-      const mvp = mvpUid === x && st.dmg > 0, next = h.lvl < CFG.maxLevel ? CFG.xpLevels[h.lvl + 1] : null, prev = CFG.xpLevels[h.lvl] || 0;
-      const w1 = next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100, w0 = x.to > x.from ? 0 : next ? Math.max(0, Math.round(100 * (h.xp - x.gained - prev) / (next - prev))) : 100;
-      return `<div class="rh ${mvp ? 'mvp' : ''} ${st.alive ? '' : 'ko'}"><span class="rhp">${img(h.key, desk ? 42 : 46, 'por')}${st.alive ? '' : '<i class="kox">✝</i>'}</span><div class="rhb">
-        <div class="rhn"><b>${esc(x.name)}</b>${mvp ? `<span class="mvpb ${fx.done ? 'stamp' : 'wait'}">MVP</span>` : ''}${x.to > x.from ? `<span class="badge-levelup ${fx.done ? 'on' : 'wait'}">LEVEL UP!</span>` : ''}<span class="grow"></span>${x.to > x.from ? `<span class="lv lv-trans">Lv ${x.from} → <b>Lv ${x.to}</b></span>` : `<span class="lv">Lv ${x.to}</span>`}</div>
-        <div class="stacked-bars"><div class="dmgbar"><s style="width:${100 * st.dmg / top}%"></s>${desk ? '' : `<em>⚔ ${kfmt(st.dmg)} · ${Math.round(100 * st.dmg / total)}%</em>`}</div>${desk && (st.taken || st.heal) ? `<div class="sub-stat-bar"><s style="width:${Math.min(100, Math.round(100 * (st.taken + st.heal) / (top || 1)))}%"></s></div>` : ''}</div>
-        <div class="rst">${desk ? `<span class="rdmg" title="Damage dealt">⚔ ${kfmt(st.dmg)}</span>` : ''}${st.heal ? `<span class="rheal" title="Healing done">💚 ${kfmt(st.heal)}</span>` : ''}<span class="rtaken" title="Damage taken">🛡 ${kfmt(st.taken)}</span><span class="rkills" title="Kills">💥 ${st.kills}</span>${`<span class="rxp"><span class="xpbar"><i style="width:${fx.xp ? w1 : w0}%" data-w="${w1}"></i></span><span class="kw-xp">+${x.gained} XP</span></span>`}</div></div></div>`;
-    }).join('');
-    const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
-    const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';
-    const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(run.lives).icon} <b>${B.victoryOf(run.lives).name} victory!</b> The run is complete.</p>` : '';
-    const nextCta = !run ? 'Continue' : run.phase === 'over' ? 'See Results →' : (run.pendingUpgrade) ? 'Upgrade Hero! ★' : (run.pending && run.pending.length) ? 'Level Up! ▲' : run.phase === 'steal' ? 'Claim Spoils!' : run.phase === 'recruit' ? 'Recruit Hero! +' : 'Proceed';
-
-    if (!desk) {
-      return `<section class="result v2 ${ui.rmore ? 'more' : ''}">
-        <div class="rhead ${r.win ? 'win' : 'lose'}">
-          <span class="rays"></span>
-          <h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'Battle Won' : 'Defeat'}</h2>
-          ${starRow}${loseTag}
-          <p class="rwhat">${what}</p>
-          <p class="rmeta">${meta}</p>
-        </div>
-        ${eloLine(r)}${spoils}${promo}${lostRun}
-        <div class="rbody-cols">
-          <div class="rcol-left">
-            <div class="rpanel-head"><span class="rp-title">STATS</span><span class="rp-sub">HERO PERFORMANCE</span></div>
-            <div class="rheroes">${heroes}</div>${foes}
-          </div>
-          <div class="rcol-right">
-            <div class="rpanel-head"><span class="rp-title">RESULTS</span><span class="rp-sub">REWARDS</span></div>
-            ${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}
-            <div class="bar">
-              <button class="rmorebtn" data-act="result-more">${ui.rmore ? 'Less' : I('chart') + ' Details'}</button>
-              <button class="primary big proceed-cta" data-act="result-ok" ${r.pending ? 'disabled' : ''}>${nextCta}</button>
-            </div>
-          </div>
-        </div>
-      </section>`;
-    }
-
-    const fmtDur = t => {
-      if (t == null || isNaN(t)) return '0.0 S';
-      const m = Math.floor(t / 60), s = (t % 60).toFixed(1);
-      return m > 0 ? `${m} M ${s} S` : `${s} S`;
-    };
-    const combatDuration = fmtDur(r.time || 12.4);
-    const runDuration = fmtDur(Math.max(r.time || 12.4, (Date.now() - (run && run.t0 || (Date.now() - 162600))) / 1000));
-    const hexCoin = `<svg class="hex-coin" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7" fill="#d97706" stroke="#fbbf24" stroke-width="1.5"/><polygon points="12,5 18,8.5 18,15.5 12,19 6,15.5 6,8.5" fill="#f59e0b"/><rect x="10.5" y="8" width="3" height="8" rx="1.5" fill="#fde68a"/></svg>`;
-    const aliveBonus = hs.filter(o => o.s.alive).length;
-    const totalEarned = (fx.gold ? (r.gold || 0) : 0) + (aliveBonus ? aliveBonus : 0);
-
-    return `<section class="result v2 desktop-hex-result">
-      <div class="rhead ${r.win ? 'win' : 'lose'}">
-        <h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'BATTLE WON' : 'DEFEAT'}</h2>
-      </div>
-      ${eloLine(r)}${spoils}${promo}${lostRun}
-      <div class="rbody-cols rhex-trio">
-        <!-- STATS COLUMN -->
-        <div class="rcol-left rpanel-framed">
-          <div class="rpanel-head">
-            <div class="rph-title-wrap">
-              <span class="rp-title">STATS</span>
-              <div class="rp-tabs">
-                <span class="rp-tab active">TRACKER</span>
-                <span class="rp-tab">HERO STATS</span>
-              </div>
-            </div>
-            <div class="rp-durations">
-              <div class="rpd-item"><span class="rpd-lbl">RUN DURATION</span><span class="rpd-val">${runDuration}</span></div>
-              <div class="rpd-item"><span class="rpd-lbl">COMBAT DURATION</span><span class="rpd-val">${combatDuration}</span></div>
-            </div>
-          </div>
-
-          <div class="rmatchup-row">
-            <div class="rm-heroes">${hs.map(o => `<span class="rm-hero-orb">${img(o.h.key, 28, 'por')}</span>`).join('')}</div>
-            <span class="rm-vs">VS</span>
-            <div class="rm-foes">${(r.foes && r.foes.length ? r.foes : [{ dead: true }, { dead: true }]).map(f => `<span class="rm-foe-skull ${f.dead ? 'dead' : ''}">💀</span>`).join('')}</div>
-          </div>
-
-          <div class="tactical-stats-wrap">
-            ${hs.map(o => {
-              const dVal = o.s.dmg || 0;
-              const tVal = o.s.taken || 0;
-              const hVal = o.s.heal || 0;
-              const maxVal = Math.max(1, top, ...hs.map(q => Math.max(q.s.dmg || 0, q.s.taken || 0, q.s.heal || 0)));
-              const mvp = mvpUid === o.x && o.s.dmg > 0;
-              return `
-                <div class="thr-row ${mvp ? 'mvp' : ''}">
-                  <div class="thr-avatar-wrap">
-                    <span class="thr-avatar">${img(o.h.key, 32, 'por')}</span>
-                    ${mvp ? '<span class="thr-mvp-badge">MVP</span>' : ''}
-                  </div>
-                  <div class="thr-bars-col">
-                    <div class="thr-line">
-                      <div class="thr-track dmg"><s style="width:${Math.round(100 * dVal / maxVal)}%"></s></div>
-                      <span class="thr-num">${dVal.toLocaleString()}</span>
-                    </div>
-                    <div class="thr-line">
-                      <div class="thr-track taken"><s style="width:${Math.round(100 * tVal / maxVal)}%"></s></div>
-                      <span class="thr-num">${tVal.toLocaleString()}</span>
-                    </div>
-                    <div class="thr-line">
-                      <div class="thr-track heal"><s style="width:${Math.round(100 * hVal / maxVal)}%"></s></div>
-                      <span class="thr-num">${hVal.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  ${o.x.to > o.x.from ? `<div class="thr-levelup-badge">LVL UP! Lv ${o.x.to}</div>` : ''}
-                </div>
-              `;
-            }).join('')}
-          </div>
-          ${foes}
-        </div>
-
-        <!-- RESULTS COLUMN -->
-        <div class="rcol-right rpanel-framed">
-          <div class="rpanel-head">
-            <span class="rp-title">RESULTS</span>
-          </div>
-
-          <div class="rbreakdown">
-            <div class="rb-row">
-              <span class="rb-lbl">BATTLE WON</span>
-              <span class="rb-val">${hexCoin} <b>${fx.gold ? (r.gold || 0) : 0}</b></span>
-            </div>
-            ${aliveBonus ? `
-            <div class="rb-row">
-              <span class="rb-lbl">SURVIVING HERO BONUS</span>
-              <span class="rb-val">${hexCoin} <b>${aliveBonus}</b></span>
-            </div>` : ''}
-            ${r.challenge ? `
-            <div class="rb-row">
-              <span class="rb-lbl">CHALLENGE CLEARED</span>
-              <span class="rb-val"><span class="badge-cleared">CLEARED</span></span>
-            </div>` : ''}
-            ${chips.length ? `<div class="rewards2">${chips.join('')}</div>` : ''}
-            <div class="rb-sep"></div>
-            <div class="rb-row rb-total">
-              <span class="rb-lbl">TOTAL EARNED</span>
-              <span class="rb-val">${hexCoin} <b>${totalEarned}</b></span>
-            </div>
-          </div>
-
-          <div class="bar">
-            <button class="primary big proceed-cta proceed-hex-btn" data-act="result-ok" ${r.pending ? 'disabled' : ''}>
-              <span class="bracket-l">&lt;</span> <span class="cta-txt">${nextCta}</span> <span class="bracket-r">&gt;</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- DAMAGE DEALT FLOATING PANEL -->
-        <div class="rcol-damage rpanel-framed">
-          <div class="rcd-head">
-            <div class="rcd-tabs">
-              <span class="rcd-tab active" title="Damage Dealt">⚔</span>
-              <span class="rcd-tab" title="Damage Taken">🛡</span>
-              <span class="rcd-tab" title="Healing">✚</span>
-            </div>
-            <span class="rcd-title">DAMAGE DEALT</span>
-          </div>
-          <div class="rcd-list">
-            ${hs.map(o => `
-              <div class="rcd-row">
-                <div class="rcd-avatar">${img(o.h.key, 28, 'por')}</div>
-                <div class="rcd-details">
-                  <span class="rcd-num">${kfmt(o.s.dmg)}</span>
-                  <div class="rcd-bar"><s style="width:${100 * o.s.dmg / top}%"></s></div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-    </section>`;
-  }
-
-  // the rewards play in order. Confetti, the stars one by one, the gold
-  // counting up and flying into the top bar, the XP bars filling, then the level ups and the MVP stamp. Every step is
-  // written into r.fx, so a re-render mid-way (the Elo answer arriving) keeps what was already shown.
-  // WHAT: the victory / defeat flourish (stars, confetti, coins flying).
-  async function celebrate(r) {
-    if (r.fx) return;
-    const fx = r.fx = {}, J = B.Juice, live = () => ui.result === r && screen === 'result';
-    if (!J || J.reduced() || !r.win) { Object.assign(fx, { stars: r.stars || 0, gold: true, xp: true, done: true }); ui.goldHold = null; render(); return; }
-    // Clean, instant transition without stars loop or annoying delays
-    fx.stars = r.stars || 0;
-    fx.gold = true;
-    ui.goldHold = null;
-    fx.xp = true;
-    fx.done = true;
-    render();
-  }
-
-  // ---------------- gauntlet (reviews #3 #4 by David)
-  // WHAT: THE GAUNTLET. teamRow draws a team (heroes, items, powers) in a row; gateForm the name form at the gate; gauntletHTML the intro, the match card and the end.
-  function teamRow(team, relics) {
-    // the ghost's items are shown hero by hero (they fight with them, like its relics)
-    return `<div class="gteam">${team.map(h => `<div class="gh">${img(h.key, 56)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl}</span>
-      <span class="gitems">${h.items.filter(id => ITEM[id]).map(id => `<img class="ico xs" src="${B.Icons.item(id, 22)}" title="${esc(ITEM[id].name + ': ' + ITEM[id].desc)}" alt="${esc(ITEM[id].name)}">`).join('') || '<i>no items</i>'}</span></div>`).join('')}</div>
-      ${relics && relics.length ? `<div class="relics inline">${relics.filter(id => RELIC[id]).map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" title="${esc(RELIC[id].name + ': ' + RELIC[id].desc)}" aria-label="${esc(RELIC[id].name)}"><img class="ico sm" src="${B.Icons.relic(id, 26)}" alt=""></button>`).join('')}</div>` : ''}`;
-  }
-  // the last day is the FINAL FIGHT against a team that won its own final fight (the tower is gone)
-  // WHAT: the final fight screen: your team, your lives and the button that finds the opponent.
-  function gauntletHTML() {
-    return `<section class="title gintro2 final"><div class="gcrest">${I('trophy')}</div><h2 class="sc gtitle">The final fight</h2>
-      <p class="gsub">Your team meets a team that also reached its final fight. Win and the run is complete.</p>
-      <p class="lifeline">${heartsHTML()} <span>${run.lives} ${run.lives === 1 ? 'life' : 'lives'} left</span></p>
-      ${teamRow(Run.teamSnapshot(run), run.relics)}
-      ${gateForm()}</section>`;
-  }
-  // v90 (, David: "Add the gauntlet again... After pve run win but before xp a button appears enter gauntlet explaining briefly what it is with a cool
-  // visual. Then seamless experience as always, beat teams until you lose or crowned champion... Gauntlet wins add +1 LP for floor 1, 2 for 2 etc. No penalty")
-  // WHAT: a duel's name on screen: Final fight, Duel, or Gauntlet · Floor N.
-  const duelName = g => !g ? 'Duel' : g.kind === 'final' ? 'Final fight' : g.kind === 'tower' ? 'Gauntlet · Floor ' + ((run && run.tower && run.tower.floor) || 1) : 'Duel';
-  // WHAT: the tower drawing: floors stacked up to the crown; cleared floors lit, the current one glowing.
-  function towerArt(T) {
-    // v126 (, David: "The gauntlet is bugged. Its increasing a level everytime the champion defends. But it should only increase whenever a new champion
-    // is crowned"): the tower had one floor more than the floor you stand on, so losing to the champion drew a floor above the champion. Now it has exactly the
-    // server's floors (the top one = the champion); a crowned climb ends at its own floor, under the crown. Before the height is known (the gate) it draws 3.
-    const top = T.champion ? Math.max(1, T.wins | 0) : Math.max(T.peak ? 2 : 3, T.peak || 0, T.floor || 1), shown = Math.min(top, 7), from = Math.max(1, Math.min((T.floor || 1) - 2, top - shown + 1));
-    let fl = ''; for (let k = from + shown - 1; k >= from; k--) fl += `<span class="tfl ${k < (T.floor || 1) || (T.status === 'over' && T.champion && k <= T.wins) ? 'done' : k === (T.floor || 1) && T.status !== 'over' ? 'cur' : k === (T.floor || 1) && !T.champion ? 'fell' : ''}" style="--k:${k - from}"><b>${k}</b></span>`;
-    return `<div class="towerart ${T.champion ? 'crowned' : ''}" aria-hidden="true"><span class="tcrown">👑</span><div class="tfloors">${fl}</div><span class="tdoor"></span><span class="tglow"></span></div>`;
-  }
-  // the champion's card (name, team,
-  // floors climbed, climbers stopped), loaded once per gate from GET /api/elo?champ=1. Until it arrives (or offline) the plain rule shows.
-  // WHAT: the epic crown of the current Gauntlet champion (ladder rows, the gate card).
-  const champMark = () => '<span class="champmark" title="Current Gauntlet champion">👑</span>';
-  function champCard() {
-    const c = ui.champ;
-    if (ui.champ === undefined && !ui.champBusy) { ui.champBusy = true; Net.get('elo?champ=1').then(r => { ui.champ = r.champ || null; }, () => { ui.champ = null; }).then(() => { ui.champBusy = false; if (run && run.phase === 'tower') render(); }); }
-    if (!c) return '<li>👑 Beat the top floor and you are the champion</li>';
-    return `<li class="champcard">${champMark()}<span class="cc"><small>Current champion</small><b>${esc(c.name)}</b><small>${c.wins} floor${c.wins === 1 ? '' : 's'} climbed · ${c.stopped} stopped</small></span><span class="ccteam">${c.team.slice(0, 6).map(h => img(h.key, 40, 'por')).join('')}</span></li>`;
-  }
-  // v123 (, David: "Whenever you finish a gauntlet run, win or lose, have a menu with a card with the champions, items, etc... 1 click share or copy with
-  // a link to the game... make this feature dope and hype"): the end of every climb has "Share my team": the brag card (js/card.js) in a sheet with confetti, and
-  // Share (the phone's own share menu), WhatsApp and Copy link. The link opens card.html with the same card and a Play button.
-  // WHAT: the card data of the climb that just ended.
-  function bragData() { const lg = store.get('balance.league', null); return B.Card.fromRun(run, { name: acct.account && acct.name ? acct.name : myName() || 'A hero', league: acct.account ? (lg && lg.league != null ? lg.league : acct.league | 0) : null }); }
-  // the card is drawn as a picture and saved
-  // on the server once (api/card.js), which gives a short link /c/<id> whose page carries the picture as its preview; Share sends the picture itself too.
-  // WHAT: makes the card picture and the short link once per climb (falls back to the long link when offline).
-  function bragPrep() {
-    const d = bragData(), key = JSON.stringify(d.h) + d.f + d.w + d.c;
-    if (ui.brag && ui.brag.key === key) return ui.brag.p;
-    const p = (async () => { let img = null, blob = null, url = B.Card.url(d);
-      try { img = await B.Card.image(d, (k, px) => por(k, px), (kind, id, px) => kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px)); const bin = atob(img.split(',')[1]), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); blob = new Blob([u8], { type: 'image/jpeg' }); } catch (_) {}   // (no fetch of data: URLs: the CSP allows only our own address)
-      try { if (img) { const r = await Net.post('card', { pid: pid(), data: d, img }); if (r && r.path) url = location.origin + r.path; } } catch (_) {}
-      return { url, blob }; })();
-    ui.brag = { key, p }; return p;
-  }
-  function bragHTML() {
-    const d = bragData(), pic = (k, px) => por(k, px), icon = (kind, id, px) => kind === 'item' ? B.Icons.item(id, px) : B.Icons.relic(id, px);
-    return `<div class="shead"><b>📣 Your Gauntlet card</b><button data-act="close" aria-label="Close">✕</button></div><div class="bragwrap">${B.Card.html(d, pic, icon)}</div>
-      <div class="bragbar"><button class="primary big" data-act="brag-share">📤 Share</button><button class="wa" data-act="brag-wa">💬 WhatsApp</button><button data-act="brag-copy">🔗 Copy link</button></div>`;
-  }
-  // WHAT: THE GAUNTLET screen (after a completed run): the gate (enter or skip) and the end of the climb (floor reached, LP won, the crown).
-  function towerHTML() {
-    const T = run.tower || { status: 'gate', floor: 1 };
-    if (T.status === 'over') {
-      const head = T.champion ? '👑 Champion of the Gauntlet!' : T.wins ? `Floor ${T.floor} reached` : 'The Gauntlet held';
-      const sub = T.champion ? 'You stand at the top. The next climbers have to beat you.' : `${T.wins} floor${T.wins === 1 ? '' : 's'} cleared. Your team stays on floor ${T.floor} as a ghost.`;
-      return `<section class="title towerscr over ${T.champion ? 'champ' : ''}"><h2 class="sc ovh">${head}</h2><p class="ovsub">${sub}</p>${towerArt(T)}
-        <p class="tlp"><b>+${T.lp | 0}</b> LP</p>${T.err ? `<p class="small dim center">${esc(T.err)}</p>` : ''}
-        <div class="overbar two"><button class="brag" data-act="brag">📣 Share my team</button><button class="primary big cta" data-act="tower-done">Next ${I('arrow')}</button></div></section>`;
-    }
-    return `<section class="title towerscr gate"><h2 class="sc gtitle">The Gauntlet</h2>
-      <p class="gsub">Duel against real player ghost squads, scaling tougher each floor. Reach the pinnacle to dethrone the Champion.</p>${towerArt(T)}
-      <ul class="trules"><li>🏰 <b>Tiered Glory:</b> Each floor won grants LP matching its level (Floor 3 = +3 LP)</li><li>🛡 <b>Zero Risk:</b> Falling incurs zero penalty; your squad joins the tower as a ghost defender</li>${champCard()}</ul>
-      ${acct.account && !isDefaultName(acct.name) ? '' : `<input id="tname" class="tname" maxlength="16" placeholder="Your name on the ladder" value="${esc(myName())}" aria-label="Your name on the ladder">`}
-      <div class="overbar two"><button data-act="tower-skip">Skip</button><button class="primary big cta" data-act="tower-enter" ${ui.towerBusy ? 'disabled' : ''}>${I('trophy')} Enter the Gauntlet</button></div></section>`;
-  }
-  // WHAT: applies the server's answer to a Gauntlet floor: LP won, the next opponent, or the end (fell / crowned).
-  function towerAnswer(r, res) {
-    const T = run.tower; if (!T) return;
-    if (r.lg) { T.lp = (T.lp | 0) + (r.lg.delta | 0); T.lgLast = r.lg; T.crowns = (T.crowns | 0) + (r.lg.crowns | 0); }
-    if (r.peak != null) T.peak = r.peak;   // the tower's real height (it grows only when someone is crowned)
-    if (r.over) { T.status = 'over'; T.champion = !!r.champion; if (r.wins != null) T.wins = r.wins | 0; T.next = null; if (res) res.champion = !!r.champion; }
-    else if (r.opponent) { T.floor = r.floor || (T.floor + 1); T.next = r.opponent; }
-  }
-  // a won duel lets you steal one of three things from the team you beat (a hero, an item, a power)
-  // WHAT: the steal screen: three things to take from the beaten team; a hero asks which of your heroes it replaces when the team is full.
-  function stealHTML() {
-    const opts = run.steal || [], pick = ui.stealPick != null ? opts[ui.stealPick] : null;
-    if (pick && pick.kind === 'hero') {
-      const x = pick.hero, d = HEROES[x.key];
-      return `<section class="stealscreen"><h2 class="sc">Who steps aside?</h2><p class="ssub">${img(x.key, 28, 'por')} <b>${esc(d.name)}</b> Lv ${x.lvl} takes the place of one of your heroes. Its items go to your bag.</p>
-        <div class="tgrid">${run.heroes.map(h => `<button class="tpick" data-act="steal-swap" data-arg="${h.uid}">${img(h.key, 48)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl}</span></button>`).join('')}</div>
-        <div class="bar"><button data-act="steal-back">Back</button></div></section>`;
-    }
-    const row = (o, i) => {
-      if (o.kind === 'hero') { const x = o.hero, d = HEROES[x.key]; return `<button class="steal k-hero" data-act="steal" data-arg="${i}" style="--rc:${d.color}"><span class="sp">${img(x.key, 56, 'por')}</span><span class="st"><b>${esc(d.name)} <em>Lv ${x.lvl}</em></b><small>Hero · ${esc(d.role)} · ${esc(d.tag || d.abName)}</small></span><i class="take">Take</i></button>`; }
-      if (o.kind === 'item') { const it = ITEM[o.id]; return `<button class="steal k-item" data-act="steal" data-arg="${i}" style="--rc:${TIER_COLOR[it.tier]}"><span class="sp">${ico('item', o.id, 48)}</span><span class="st"><b style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</b><small>${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()} · ${fmt(it.desc)}</small></span><i class="take">Take</i></button>`; }
-      const r = RELIC[o.id]; return `<button class="steal k-relic" data-act="steal" data-arg="${i}" style="--rc:#ffd23f"><span class="sp">${ico('relic', o.id, 48)}</span><span class="st"><b class="relic">${esc(r.name)}</b><small>Power · ${esc(r.short)}</small></span><i class="take">Take</i></button>`;
-    };
-    return `<section class="stealscreen"><h2 class="sc">Spoils of war</h2><p class="ssub">Take one thing from ${run.stealFrom ? esc(run.stealFrom) : 'their team'}.</p><div class="stealrows">${opts.map(row).join('')}</div></section>`;
-  }
-  // WHAT: the name form of the final fight: asks the ladder name once, then looks for the opponent.
-  function gateForm() {
-    const named = acct.account && !isDefaultName(acct.name);
-    return `<form class="stack" data-form="gauntlet">${named ? `<input type="hidden" name="name" value="${esc(acct.name)}"><p class="small center">You fight as <b>${esc(acct.name)}</b> <span class="dim">(name changes: 👑 Crown Shop)</span></p>`
-      : `<input name="name" maxlength="16" placeholder="Your name on the ladder" value="${esc(myName())}" required><p class="small dim center">Pick it well: changing it later costs 👑 ${B.SHOP_ITEM.rename.price}.</p>`}<button class="primary big">Find my opponent</button></form>`;
-  }
-  // WHAT: SHOP. stockCard draws one product (hero, item or power with price); shopHTML draws the whole shop.
-  const CORNER_FLOURISH_SVG = `<svg class="card-flourish tl" viewBox="0 0 18 18" aria-hidden="true"><path d="M1,17 L1,5 C1,2.8 2.8,1 5,1 L17,1 M1,7 C4,7 7,4 7,1" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>
-  <svg class="card-flourish tr" viewBox="0 0 18 18" aria-hidden="true"><path d="M1,1 L13,1 C15.2,1 17,2.8 17,5 L17,17 M11,1 C11,4 14,7 17,7" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>
-  <svg class="card-flourish bl" viewBox="0 0 18 18" aria-hidden="true"><path d="M1,1 L1,13 C1,15.2 2.8,17 5,17 L17,17 M1,11 C4,11 7,14 7,17" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>
-  <svg class="card-flourish br" viewBox="0 0 18 18" aria-hidden="true"><path d="M17,1 L17,13 C17,15.2 15.2,17 13,17 L1,17 M17,11 C14,11 11,14 11,17" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
-
-  function stockCard(s, i) {
-    const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
-    const dis = s.sold || run.gold < s.price;
-    let body = '';
-    // heroes are splash cards (the full art, class and range on it), items and powers are rows with a glowing medallion
-    if (s.kind === 'hero') {
-      const h = HEROES[s.id];
-      body = `<div class="art" style="--hc:${h.color}"><img class="splash" src="${por(s.id, 112, true)}" alt=""><span class="rolechip">${esc(h.role)}</span>${run.heroes.length < Run.teamMax(run) && Run.shopHeroLevel(run) > 1 ? `<span class="shoplv" title="Joins at the level of your lowest hero, with random powers">Lv ${Run.shopHeroLevel(run)}</span>` : ''}<button class="hdet" data-act="hero-peek" data-arg="${s.id}" aria-label="Details">${I('info')}</button><span class="rngchip">${h.range <= 1 ? I('sword') + ' Up close' : I('bow') + ' From afar'}</span></div><div class="meta"><div class="ctitle">${esc(h.name)}</div><p class="htag">${esc(h.tag || h.abName)}</p></div>`;
-    } else if (s.kind === 'item') {
-      const it = ITEM[s.id];
-      const rar = it.tier || 'common';
-      body = `<div class="medal item-socket r-${rar}"><div class="socket-inner">${ico('item', s.id, desk ? 52 : 44, 'ico big')}</div></div><div class="meta"><div class="ctitle r-${rar}" style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</div>${desk ? `<div class="sh-tags">${itemTag(it)}${shopSynergyTag(s.id)}</div>` : `${itemTag(it)}${shopSynergyTag(s.id)}`}<div class="small item-desc">${fmt(it.desc)}</div>${setInfo(it)}</div>`;
-    } else {
-      const r = RELIC[s.id];
-      body = `<div class="medal"><div class="socket-inner">${ico('relic', s.id, desk ? 52 : 44, 'ico big')}</div></div><div class="meta"><div class="ctitle relic">${esc(r.name)}</div><div class="tier t-relic">power</div><p class="htag">${esc(r.short)}</p>${r.short !== r.desc ? `<button class="hdet more" data-act="relic-info" data-arg="${s.id}">${I('info')} More</button>` : ''}</div>`;
-    }
-    const rc = s.kind === 'item' ? TIER_COLOR[ITEM[s.id].tier] : s.kind === 'hero' ? HEROES[s.id].color : '#ffd23f';
-    const shine = s.kind === 'item' && RANK(s.id) >= 3 ? ' shine' : s.kind === 'relic' ? ' shine soft' : '';
-    const coinSVG = `<svg class="buy-coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f59e0b" stroke="#78350f" stroke-width="1.8"/><circle cx="12" cy="12" r="7.5" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/><circle cx="12" cy="12" r="4.5" fill="#fde68a" opacity="0.8"/></svg>`;
-    const buyBtn = desk
-      ? `<button class="${dis ? '' : 'primary'} buyb gold-ingot-btn" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `${coinSVG}<span class="price-val">${s.price}</span>` : 'Free!'}</button>`
-      : `<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button>`;
-    return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}${buyBtn}</div>`;
-  }
-  // with a full team, a hero bought in the Hero Shop takes the place of one of yours (its level, XP and items; powers picked at random)
-  // WHAT: the sheet that asks which hero steps aside for the hero being bought.
-  function swapHTML(key) {
-    const d = HEROES[key];
-    return `<div class="shead"><b>${img(key, 28, 'por')} ${esc(d.name)} joins</b><button data-act="close" aria-label="Close">✕</button></div>
-      <p class="small">Squad is full. Select who steps aside: <b>${esc(d.name)}</b> inherits their level, board spot & equipped items.</p>
-      <div class="tgrid">${run.heroes.map(h => `<button class="tpick" data-act="buy-swap" data-arg="${h.uid}">${img(h.key, 48)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl} · ${h.items.length} item${h.items.length === 1 ? '' : 's'}</span></button>`).join('')}</div>`;
-  }
-  // WHAT: THE SHOP SCREEN (hero, item or power shop): the products, the reroll button, the Leave button.
-  function shopHTML() {
-    const c = run.cur, rc = Run.rerollCost(run);
-    const note = c.kind === 'heroShop' ? `<span class="lockpill">${run.heroes.length >= Run.teamMax(run) ? 'Full team: a new hero swaps in' : `Team ${run.heroes.length}/${Run.teamMax(run)}`}</span>` : '';
-    // once
-    const swapTip = c.kind === 'heroShop' && !store.get('balance.hint.hswap', 0) ? `<div class="coach shopcoach" style="--cc:#ffd23f"><span class="ci">🔄</span><span class="ct">Full squad: buying a hero replaces a teammate, keeping their level, position & equipped gear.</span><button class="cok" data-act="hswap-ok">Got it</button></div>` : '';
-    const bagVal = (run.bag || []).reduce((sum, id) => sum + (Run.sellValue ? Run.sellValue(id) : (ITEM[id] ? Math.round(ITEM[id].cost * 0.5) : 0)), 0);
-    const pouchSVG = `<svg class="pouch-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6 C7 4, 10 2, 12 2 C14 2, 17 4, 17 6 C15 7, 9 7, 7 6 Z" fill="#92400e"/><path d="M5 8 C3 12, 3 19, 6 21 C9 22.5, 15 22.5, 18 21 C21 19, 21 12, 19 8 C16 9, 8 9, 5 8 Z" fill="#b45309" stroke="#78350f" stroke-width="1.2"/><ellipse cx="12" cy="15" rx="4" ry="4.5" fill="#d97706" opacity="0.6"/><text x="12" y="17.5" font-size="7" font-weight="900" fill="#fef3c7" text-anchor="middle">$</text></svg>`;
-    const sellBagBtn = (run.bag && run.bag.length > 0) ? `<button class="qsell-btn gold-plaque" data-act="quick-sell-bag" title="Sell all unequipped bag items">${pouchSVG} <span>Sell Bag (+${bagVal}g)</span></button>` : '';
-
-    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
-    if (!desk) return `<section class="shop sh-${c.kind}"><div class="shophead"><h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>${sellBagBtn}${note}</div>${swapTip}<div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}</div><div class="bar sticky"><button data-act="reroll" class="reroll" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">${I('refresh')} New <span class="price">${rc}</span></button><button class="primary" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
-
-    const rerollCoinSVG = `<svg class="btn-coin-sm" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#f59e0b" stroke="#78350f" stroke-width="1.2"/><circle cx="8" cy="8" r="4.5" fill="#fde047"/></svg>`;
-
-    return `<section class="shop sh-${c.kind} floating-shop">
-      <div class="shophead">
-        <h2>${c.kind === 'heroShop' ? I('user') : c.kind === 'itemShop' ? I('cart') : I('gem')} ${SHOP_NAME[c.kind]}</h2>
-        ${sellBagBtn}${note}
-      </div>
-      ${swapTip}
-      <div class="grid ${c.kind === 'heroShop' ? 'heroes' : c.kind === 'relicShop' ? 'rels' : 'rows'} ${c.stock.length > 4 ? 'many' : ''} ${ui.deal ? 'deal' : ''}">
-        ${c.stock.map(stockCard).join('') || '<p>Nothing left to sell.</p>'}
-      </div>
-      <div class="bar sticky floating-shop-bar">
-        <button data-act="reroll" class="reroll sapphire-btn" ${run.gold < rc || (run.relics.includes('deck') && c.stock.length <= 1) ? 'disabled' : ''} aria-label="New offers for ${rc} gold">
-          <svg class="ui" viewBox="0 0 24 24"><path d="M4 12 A8 8 0 0 1 18.5 6.5 L21 4 L21 10 L15 10 L17.5 7.5 A6 6 0 0 0 6 12 Z M20 12 A8 8 0 0 1 5.5 17.5 L3 20 L3 14 L9 14 L6.5 16.5 A6 6 0 0 0 18 12 Z" fill="currentColor"/></svg>
-          New ${rerollCoinSVG} <span class="price-val">${rc}</span>
-        </button>
-        <button class="primary molten-gold-cta" data-act="leave">Continue <span class="cta-arrow">▶</span></button>
-      </div>
-    </section>`;
-  }
-  // v44: what an event gave, as pictures (items, relics, a hero joining, gold, XP, boosts)
-  // WHAT: the pictures of what an event choice gave (gold, XP, item, power, hero).
-  function gainsHTML(G) {
-    if (!G || !G.length) return '';
-    const one = g => {
-      if (g.kind === 'item') { const it = ITEM[g.v]; return it ? `<div class="gain" style="--tier:${TIER_COLOR[it.tier]}">${ico('item', g.v, 56)}<b style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</b><span>${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}</span></div>` : ''; }
-      if (g.kind === 'relic') { const r = RELIC[g.v]; return r ? `<div class="gain" style="--tier:#ffd23f">${ico('relic', g.v, 56)}<b class="relic">${esc(r.name)}</b><span>power</span></div>` : ''; }
-      if (g.kind === 'hero') return `<div class="gain" style="--tier:${HEROES[g.v].color}">${img(g.v, 56, 'por')}<b>${esc(HEROES[g.v].name)}</b><span>joins the team</span></div>`;
-      if (g.kind === 'gold') return `<div class="gain gg"><i class="bigcoin"></i><b>+${g.v}</b><span>gold</span></div>`;
-      if (g.kind === 'bank') return `<div class="gain gg"><i class="gicon">🏦</i><b>+${g.v}</b><span>after your next win</span></div>`;
-      if (g.kind === 'xp') return `<div class="gain gx">${g.t ? img(g.t, 56, 'por') : '<i class="gicon">✨</i>'}<b>+${g.v} XP</b><span>${g.t ? esc(HEROES[g.t].name) : 'every hero'}</span></div>`;
-      if (g.kind === 'level') return `<div class="gain gx">${g.t ? img(g.t, 56, 'por') : '<i class="gicon">▲</i>'}<b>Level up!</b><span>${g.t ? esc(HEROES[g.t].name) : 'every hero'}</span></div>`;
-      return `<div class="gain gb">${g.t ? img(g.t, 56, 'por') : '<i class="gicon">💪</i>'}<b>${esc(g.v)}</b><span>${g.t ? esc(HEROES[g.t].name) : 'every hero'}</span></div>`;
-    };
-    return `<div class="gains">${G.map(one).join('')}</div>`;
-  }
-  // "Sharpen: +10 attack to one hero" reads as a bold name and what it does, on two lines
-  // WHAT: formats an event choice label.
-  function evLabel(t0) {
-    const t = B.T ? B.T(String(t0)) : String(t0);   // translated first, then split into the bold name and the rest
-    const m = String(t).match(/^([^:0-9]{2,32}):\s+(.+)$/);
-    return m ? `<b class="evn">${esc(m[1])}</b><span class="eve">${fmt(m[2].charAt(0).toUpperCase() + m[2].slice(1))}</span>` : fmt(t);
-  }
-  // 3 choices with a visible price or risk; some ask you to pick the hero, item or item type they apply to
-  // WHAT: THE EVENT SCREEN: the story text and its choices (greyed out with the reason when you cannot take one), then the result.
-  function eventHTML() {
-    const e = EVENT[run.cur.id], chs = Run.eventChoices(run);
-    const head = `<section class="event ev-${e.rar || 'common'}">${run.cur.done || run.cur.pick != null ? '' : `<button class="evskipb" data-act="leave">Skip ${I('arrow')}</button>`}<div class="evmed">${evIcon(e.id)}</div>${EV_RAR[e.rar] ? `<p class="center"><span class="evrar">${EV_RAR[e.rar]}</span></p>` : ''}<h2>${esc(e.name)}</h2><p>${esc(e.text)}</p>`;
-    if (run.cur.done) return head + `${gainsHTML(run.cur.gains)}<div class="card result">${fmt(run.cur.done)}</div><div class="bar"><button class="primary big" data-act="leave">Continue ${I('arrow')}</button></div></section>`;
-    const pickCh = run.cur.pick != null ? chs[run.cur.pick] : null;
-    if (pickCh) {
-      const ts = Run.eventTargets(run, pickCh);
-      let grid;
-      if (pickCh.target === 'hero') grid = ts.map(t => { const h = run.heroes.find(x => x.uid === t.uid); return `<button class="tpick" data-act="event-target" data-arg="${t.arg}">${img(h.key, 48)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl}${pickCh.act === 'respec' && h.specs.length ? ' · ★ ' + esc((Run.specOf(h.key, h.specs[h.specs.length - 1]) || {}).name || '') : ''}</span></button>`; }).join('');
-      else if (pickCh.target === 'type') grid = ts.map(t => `<button class="tpick" data-act="event-target" data-arg="${t.arg}"><img class="ico" src="${B.Icons.slot(t.type, 40)}" alt=""><b>${B.TYPE[t.type].name}</b></button>`).join('');
-      else grid = ts.map(t => { const it = ITEM[t.id], who = t.uid ? run.heroes.find(h => h.uid === t.uid) : null; return `<button class="tpick item" data-act="event-target" data-arg="${t.arg}">${ico('item', t.id, 40)}<b style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</b><span>${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}${who ? ' · on ' + esc(HEROES[who.key].name) : ' · bag'}</span></button>`; }).join('');
-      return head + `<div class="card evpick"><div class="small">${fmt(pickCh.label)}${pickCh.cost ? ` <span class="price">${pickCh.cost}</span>` : ''}</div>
-        <h3>${pickCh.target === 'hero' ? 'Choose a hero' : pickCh.target === 'type' ? 'Choose an item type' : 'Choose an item'}</h3><div class="tgrid">${grid}</div></div>
-        <div class="bar"><button data-act="event-back">Back</button></div></section>`;
-    }
-    // each choice has a round picture of what it does (a hero, an item or power, or an icon for gold, XP, a fight, a gamble...)
-    const EACT = { gold: '🪙', xpAll: '✨', xpHero: '✨', item: '🎁', fight: '⚔️', buffHero: '💪', buffAll: '💪', upgradeItem: '⚒️', invest: '🏦', gamble: '🎲', gambleItem: '🎲', transmute: '🔮', respec: '🔁', relicItem: '💎', relic: '💎', potion: '🧪', mimic: '📦', loan: '💸', hpHero: '❤️', hpAll: '❤️', none: '🚪' };
-    return head + `<div class="stack evchoices">${chs.map((ch, i) => {
-      const c = Run.canChoose(run, ch), pic = ch.hero ? img(ch.hero, 40) : ch.item ? ico('item', ch.item, 40) : ch.relic ? ico('relic', ch.relic, 40) : `<span class="ci">${EACT[String(ch.act || '').split(':')[0]] || '❔'}</span>`;
-      const tag = ch.item ? `<span class="itag" style="color:${TIER_COLOR[ITEM[ch.item].tier]}">${B.RARITY[ITEM[ch.item].tier].name} ${B.TYPE[ITEM[ch.item].type].name.toLowerCase()}</span>` : '';
-      // a challenge, a choice only some heroes unlock (FTL's blue options), a risk
-      const tags = [], rq = ch.req && B.EVENT_REQ[ch.req], who = rq ? Run.reqHeroes(run, ch.req) : [];
-      if (ch.fight) tags.push(`<span class="etag efight">${I('swords')} Challenge · fight now</span>`);
-      if (rq) tags.push(who.length ? `<span class="etag ereq">${img(who[0].key, 18, 'por xs')}${esc(HEROES[who[0].key].name)} unlocks this</span>` : `<span class="etag ereq no">${I('lock')} Needs ${esc(rq.name)}</span>`);
-      if (ch.risk) tags.push(`<span class="etag erisk">${I('warn')} ${esc(ch.risk)}</span>`);
-      const cls = ['evch', pic ? 'haspic' : '', ch.fight ? 'isfight' : '', rq ? (who.length ? 'isreq' : 'isreq locked') : ''].filter(Boolean).join(' ');
-      return `<button class="${cls}" data-act="event" data-arg="${i}" ${c.ok ? '' : 'disabled'}>${pic}<span class="t">${tags.length ? `<span class="etags">${tags.join('')}</span>` : ''}${tag}${evLabel(ch.label)}${c.ok || c.req ? '' : `<span class="why">${esc(c.why)}</span>`}</span>${ch.cost ? `<span class="price">${ch.cost}</span>` : ''}${ch.target ? '<i class="chev" title="You choose">›</i>' : ''}</button>`;
-    }).join('')}</div></section>`;
-  }
-  // WHAT: THE GAME OVER SCREEN (defeat or end of the Gauntlet): score, XP panel, ladder, Play again.
-  function overHTML() {
-    const g = run.g;
-    if (run.result === 'gauntlet' && g) {   // a game that ended in the old Gauntlet (saved before v63)
-      const d = g.elo - g.eloStart;
-      return `<section class="title"><h2 class="sc">${g.status === 'champion' ? '👑 Champion' : 'The Gauntlet is over'}</h2>
-        <p class="gline"><b class="score sm">${g.wins}</b> duel${g.wins === 1 ? '' : 's'} won</p>${xpPanelHTML()}
-        <div class="stack againrow"><button class="primary big cta again" data-act="new-run">▶ Play again</button><button data-act="scores" aria-label="Ladder">🏆</button></div></section>`;
-    }
-    // a completed run is a Perfect, Gold or Bronze victory by the lives left
-    // v68 (reviews #140 #141, David): two screens with the big button in the same place at the bottom, for one finger. Screen 1 = the league: a meter in the
-    // league's colours with its banner on top, filling (or falling) to where you are, and the LP gained or lost in big on the right; Next. Screen 2 = the XP:
-    // the same kind of meter for the account level; a level up cheers and a chest bursts open with the level's rewards (no level up = the chest stays shaded);
-    // Play again
-    const won = run.result === 'clear', V = won ? B.victoryOf(run.lives) : null;
-    const brokenShieldSVG = `<svg class="broken-ward-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 L28 7 V16 C28 23 22 28 16 30 C10 28 4 23 4 16 V7 Z" fill="#451a1a" stroke="#ef4444" stroke-width="2"/><path d="M16 2 L13 11 L18 16 L12 21 L16 30" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round"/></svg>`;
-    const head = won ? `<h2 class="sc ovh">${V.icon} ${V.name} victory!</h2><p class="ovsub">${run.lives >= CFG.lives ? 'No fight lost' : 'Your Ward broke on the way'}</p>`
-      : `<div class="lp-head-block"><div class="lp-title-row">${brokenShieldSVG} <h2 class="lp-modal-title">The Ward is <span class="crimson-text">Broken</span></h2></div></div>`;
-    // the victory screen of a completed run, before the Gauntlet gate
-    if (won && !run.tower) return `<section class="title vicscr">${head}<div class="vicart" aria-hidden="true">${V.icon}</div>
-        <p class="vicline">PvE complete · ${run.won} fight${run.won === 1 ? '' : 's'} won</p>${teamRow(Run.teamSnapshot(run), run.relics)}
-        <div class="overbar"><button class="primary big cta" data-act="victory-next" ${run.xpWait ? 'disabled' : ''}>Next ${I('arrow')}</button></div></section>`;
-    if ((run.overStep || 1) === 1) return `<section class="title over1 lpscr">${head}${lpScreenHTML(lgAll(), won)}
-        <div class="overbar lp-footer"><button class="primary big cta molten-gold-cta lp-next-btn" data-act="over-next">Next <span class="cta-arrow">→</span></button></div></section>`;
-    return `<section class="title over2 xpscr">
-      ${xpScreenHTML()}
-      <div class="overbar xp-footer"><button class="primary big cta again molten-gold-cta xp-again-btn" data-act="new-run"><span class="play-triangle">▶</span> Play again</button></div></section>`;
-  }
-  // WHAT: makes the end screen fit the phone: adds .tight, then .tighter, while the page is taller than the screen (many XP lines, many rewards).
-  function fitOver() {
-    const s = $('.lpscr, .xpscr'); if (!s) return; const vh = window.visualViewport ? window.visualViewport.height : innerHeight;
-    for (const c of ['tight', 'tighter']) { if (document.documentElement.scrollHeight <= vh + 1) return; s.classList.add(c); }
-    const over = document.documentElement.scrollHeight - vh; if (over <= 1) return;   // still too tall: the meter, the lines and the chest shrink together
-    const parts = [...s.querySelectorAll(':scope > .vmwrap, :scope > .chestzone')], h = parts.reduce((a, e) => a + e.offsetHeight * (+e.style.zoom || 1), 0);
-    if (h) { const z = Math.max(0.5, (h - over - 6) / h); parts.forEach(e => { e.style.zoom = ((+e.style.zoom || 1) * z).toFixed(3); }); }
-  }
-  // WHAT: a vertical meter (league or level): the banner on top, the tube, the filling (height in %), a line under it.
-  const meterHTML = (id, style, banner, pct, foot) => `<div class="vmeter" id="${id}" style="${style}"><div class="vmban">${banner}</div><div class="vmtube"><i style="height:${pct}%"></i><span class="vmshine"></span></div><small class="vmfoot">${foot}</small></div>`;
-  // WHAT: the league screen (end of a run, screen 1): the league meter on the left, the LP in big, why, the streak and the call to beat other players on the right.
-  // the league screen comes after the Gauntlet and adds its LP: the run's change (op complete) and then the tower's floors
-  // WHAT: the run's league change merged with the Gauntlet's (the league and LP after the last floor, the deltas added).
-  function lgAll() {
-    const lg = run.lgEnd, T = run.tower; if (!lg || !T || !T.lgLast) return lg;
-    const from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) };
-    return Object.assign({}, lg, { from, league: T.lgLast.league, lp: T.lgLast.lp, delta: (lg.delta | 0) + (T.lp | 0), promoted: T.lgLast.league > from.league, demoted: T.lgLast.league < from.league, crowns: (lg.crowns | 0) + (T.crowns | 0) || null });
-  }
-  function lpScreenHTML(lg, won) {
-    if (!lg) return `<p class="dim center">${run.xpWait ? 'Counting your league points…' : run.xpErr ? 'Your league points could not be saved (no connection).' : 'No league points this time.'}</p>`;
-    const R = B.LEAGUE_RULES, L = B.LEAGUES, from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) }, done = !!run.lpShown;
-    const lgi = done ? lg.league : from.league, l = L[lgi] || L[0], pct = x => Math.max(0, Math.min(100, 100 * x / R.step));
-    const parts = B.lpParts({ done: won, failed: !won && run.result === 'defeat', pve: !!run.reachedFinal, pvp: run.pvpLog, duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, streak: lg.streak ? lg.streak.to : 0 }, from.league), raw = parts.reduce((a, x) => a + x.lp, 0);
-    const NAME = { pve: () => 'PvE finished', fail: () => 'Run lost', duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Run complete', loss: n => `${n} PvP lost`, streak: n => `Streak ${n}` };
-    const ICON = { fail: I('skull'), pve: I('flag'), duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥' };
-    const s = lg.streak || { to: 0, from: 0, best: 2 };
-    const winStreakTo = s.to || 0, winStreakBest = s.best || 2;
-    const fightsWon = run.won != null ? run.won : 7;
-    const curLp = done ? lg.lp : from.lp;
-    const foot = lgi >= L.length - 1 ? `${curLp} LP` : `${curLp}/${R.step} LP`;
-    const curPct = pct(curLp);
-
-    const bronzeWingsSVG = `<svg class="bronze-wings" viewBox="0 0 160 50" aria-hidden="true">
-      <path d="M80 35 C60 15, 25 10, 5 22 C25 28, 55 32, 75 42 Z" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>
-      <path d="M80 35 C100 15, 135 10, 155 22 C135 28, 105 32, 85 42 Z" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>
-      <path d="M80 30 C65 18, 40 15, 20 24 C38 28, 62 30, 78 36 Z" fill="#d97706" opacity="0.6"/>
-      <path d="M80 30 C95 18, 120 15, 140 24 C122 28, 98 30, 82 36 Z" fill="#d97706" opacity="0.6"/>
-    </svg>`;
-
-    const bronzeShieldSVG = `<svg class="bronze-shield-3d" viewBox="0 0 80 96" aria-hidden="true">
-      <defs>
-        <linearGradient id="bronzeGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#fed7aa"/>
-          <stop offset="30%" stop-color="#f97316"/>
-          <stop offset="70%" stop-color="#c2410c"/>
-          <stop offset="100%" stop-color="#7c2d12"/>
-        </linearGradient>
-      </defs>
-      <path d="M40 4 L74 18 C74 58, 60 82, 40 92 C20 82, 6 58, 6 18 Z" fill="url(#bronzeGrad)" stroke="#431407" stroke-width="3"/>
-      <path d="M40 10 L68 22 C68 54, 56 76, 40 84 C24 76, 12 54, 12 22 Z" fill="#7c2d12" opacity="0.5"/>
-      <path d="M40 12 L40 82 C54 74, 64 52, 64 23 Z" fill="#ffedd5" opacity="0.25"/>
-    </svg>`;
-
-    const protectShieldSVG = `<svg class="protect-shield-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L20 6 V12 C20 17 16 20.5 12 22 C8 20.5 4 17 4 12 V6 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="1.5"/><path d="M12 4 L12 20 C15 18.5 18 15.5 18 12 V7 Z" fill="#dbeafe" opacity="0.3"/></svg>`;
-
-    const metaSummaryPill = `<div class="lp-summary-pill"><span class="swords-ico">⚔️</span> <b>${fightsWon} Fights Won</b> <span class="dot-sep">•</span> <span class="flame-ico">🔥</span> <b>Win Streak: ${winStreakTo} (Best: ${winStreakBest})</b></div>`;
-
-    return `<div class="lp-modal-wrap">
-      ${metaSummaryPill}
-      <div class="lp-body-grid">
-        <div class="lp-left-crest-card" id="lpmeter" style="--lc:${l.color};--lh:${l.hi}">
-          <div class="crest-emblem-wrap">
-            ${bronzeWingsSVG}
-            ${bronzeShieldSVG}
-          </div>
-          <div class="crest-tier-title">${l.name.toUpperCase()} TIER</div>
-          <div class="vmtube mini-thermometer">
-            <i style="height:${curPct}%"></i>
-            <span class="vmshine"></span>
-          </div>
-          <div class="vmfoot crest-lp-foot">${foot}</div>
-        </div>
-
-        <div class="lp-right-panel">
-          <div class="lp-delta-row">
-            <span class="lp-delta-val ${lg.delta >= 0 ? 'pos' : 'neg'}"><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : (lg.delta >= 0 ? '+' : '') + '0'}</span> <small>LP</small></span>
-          </div>
-
-          <div class="rank-protect-badge">
-            ${protectShieldSVG}
-            <div class="badge-txt">
-              <div class="badge-title">RANK PROTECTION</div>
-              <div class="badge-sub">A lost run costs no LP in Bronze</div>
-            </div>
-          </div>
-
-          <div class="lp-horiz-bar-wrap">
-            <div class="lp-horiz-track">
-              <div class="lp-horiz-fill" style="width:${curPct}%"></div>
-              <span class="lp-horiz-text">${foot}</span>
-            </div>
-          </div>
-
-          <div class="streak-sub-note">🔥 Win streak best ${winStreakBest}</div>
-          <div class="vmpromo" id="lppromo">${done && lg.promoted ? `<b>Promoted to ${l.name}!</b>` : done && lg.demoted ? `<b class="lose">Dropped to ${l.name}</b>` : ''}</div>
-        </div>
-      </div>
-    </div>`;
-  }
-  // WHAT: the league meter's animation: the LP count up or down; the tube fills or falls; a promotion fills to the top, swaps the banner and fills again; a drop empties, swaps and falls.
-  async function animLp() {
-    const m = $('#lpmeter'), lg = lgAll(); if (!m || !lg || run.lpShown) return;
-    run.lpShown = true; save();
-    const fast = B.Juice && B.Juice.reduced(), wait = ms => new Promise(r => setTimeout(r, fast ? 0 : ms)), R = B.LEAGUE_RULES, L = B.LEAGUES;
-    const fill = m.querySelector('.vmtube i'), foot = m.querySelector('.vmfoot'), big = $('#lpbig'), live = () => fill && fill.isConnected;
-    const horizFill = document.querySelector('.lp-horiz-fill'), horizTxt = document.querySelector('.lp-horiz-text');
-    const go = (pct, ms) => {
-      if (fill) { fill.style.transition = `height ${ms}ms cubic-bezier(.3, .8, .3, 1)`; fill.style.height = pct + '%'; }
-      if (horizFill) { horizFill.style.transition = `width ${ms}ms cubic-bezier(.3, .8, .3, 1)`; horizFill.style.width = pct + '%'; }
-      return wait(ms + 60);
-    };
-    const setLeague = i => {
-      const l = L[i] || L[0];
-      m.style.setProperty('--lc', l.color);
-      m.style.setProperty('--lh', l.hi);
-      const title = m.querySelector('.crest-tier-title');
-      if (title) title.textContent = `${l.name.toUpperCase()} TIER`;
-      if (B.Juice) B.Juice.bump(m);
-    };
-    await wait(450); if (!live()) return;
-    if (B.Juice) B.Juice.countUp(big, 0, lg.delta, 900, v => (v > 0 ? '+' : '') + v); sfx(lg.delta >= 0 ? 'coin' : 'deny');
-    const pct = x => Math.max(0, Math.min(100, 100 * x / R.step));
-    if (lg.promoted) {
-      await go(100, 800); if (!live()) return;
-      setLeague(lg.league); if (fill) { fill.style.transition = 'none'; fill.style.height = '0%'; void fill.offsetWidth; }
-      if (horizFill) { horizFill.style.transition = 'none'; horizFill.style.width = '0%'; void horizFill.offsetWidth; }
-      sfx('levelup'); if (B.Juice) B.Juice.confettiAt(m, 80);
-      const p = $('#lppromo'); if (p) { p.innerHTML = `<b>Promoted to ${leagueName(lg.league)}!</b>${lg.crowns ? ` <span class="crn">+${lg.crowns} 👑</span>` : ''}`; p.classList.add('pop'); }
-      await go(pct(lg.lp), 700);
-    } else if (lg.demoted) {
-      await go(0, 700); if (!live()) return;
-      setLeague(lg.league); m.classList.add('fizzle'); if (fill) { fill.style.transition = 'none'; fill.style.height = '100%'; void fill.offsetWidth; }
-      if (horizFill) { horizFill.style.transition = 'none'; horizFill.style.width = '100%'; void horizFill.offsetWidth; }
-      sfx('deny');
-      const p = $('#lppromo'); if (p) { p.innerHTML = `<b class="lose">Dropped to ${leagueName(lg.league)}</b>`; p.classList.add('pop'); }
-      await go(pct(lg.lp), 700);
-    } else await go(pct(lg.lp), 1000);
-    if (!live()) return;
-    const footVal = lg.league >= L.length - 1 ? `${lg.lp} LP` : `${lg.lp}/${R.step} LP`;
-    if (foot) foot.textContent = footVal;
-    if (horizTxt) horizTxt.textContent = footVal;
-    fitOver();
-  }
-  // WHAT: the XP screen (end of a run, screen 2): the level meter on the left, the XP gained in big and where it came from on the right, and the reward chest.
-  function xpScreenHTML() {
-    const log = run.xpLog || [], got = log.reduce((a, g) => a + g.xp, 0), to = acct.axp || 0, from = Math.max(0, to - got);
-    const A = B.levelProgress(from), Z = B.levelProgress(to), done = !!run.xpShown || !log.length, S = done ? Z : A, u = nextUnlock(Z.lvl);
-    const ups = B.UNLOCKS.filter(x => x.lvl > A.lvl && x.lvl <= Z.lvl), na = (run.newAchs || []).map(id => B.ACH[id]).filter(Boolean), n = ups.length + na.length;   // new titles come out of the chest too
-    const note = run.xpWait ? 'Counting your XP…' : run.xpErr ? 'Your XP could not be saved (no connection).' : '';
-    const pct = Math.round(100 * S.into / S.need);
-
-    const levelBadgeSVG = `<svg class="lvl-gold-shield" viewBox="0 0 100 110" aria-hidden="true">
-      <defs>
-        <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#fffbeb"/>
-          <stop offset="25%" stop-color="#fde047"/>
-          <stop offset="60%" stop-color="#eab308"/>
-          <stop offset="100%" stop-color="#854d0e"/>
-        </linearGradient>
-      </defs>
-      <polygon points="50,4 94,22 94,76 50,104 6,76 6,22" fill="url(#shieldGrad)" stroke="#451a03" stroke-width="3"/>
-      <polygon points="50,10 88,26 88,72 50,96 12,72 12,26" fill="#78350f" opacity="0.3"/>
-    </svg>`;
-
-    const chestSVG = `<svg class="fantasy-chest-3d" viewBox="0 0 160 140" aria-hidden="true">
-      <defs>
-        <radialGradient id="chestGlowRad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
-          <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.5"/>
-          <stop offset="100%" stop-color="#78350f" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-      <!-- Volumetric Light Rays -->
-      <path class="chest-rays" d="M30 60 L10 10 L150 10 L130 60 Z" fill="url(#chestGlowRad)"/>
-      <!-- Lower Chest Base -->
-      <rect x="25" y="70" width="110" height="58" rx="6" fill="#543315" stroke="#261505" stroke-width="3"/>
-      <!-- Wooden Planks Detail -->
-      <line x1="25" y1="90" x2="135" y2="90" stroke="#3b220b" stroke-width="2"/>
-      <line x1="25" y1="110" x2="135" y2="110" stroke="#3b220b" stroke-width="2"/>
-      <!-- Iron / Gold Trim Vertical Straps -->
-      <rect x="36" y="70" width="16" height="58" fill="#d97706" stroke="#78350f" stroke-width="2"/>
-      <rect x="108" y="70" width="16" height="58" fill="#d97706" stroke="#78350f" stroke-width="2"/>
-      <rect x="72" y="70" width="16" height="58" fill="#f59e0b" stroke="#78350f" stroke-width="2"/>
-      <!-- Keyhole Plaque -->
-      <rect x="73" y="78" width="14" height="18" rx="3" fill="#fde047" stroke="#78350f" stroke-width="1.5"/>
-      <circle cx="80" cy="84" r="2.5" fill="#291605"/>
-      <polygon points="78.5,85 81.5,85 82,91 78,91" fill="#291605"/>
-      <!-- Open Lid Banding -->
-      <path d="M20 70 C20 35, 45 25, 80 25 C115 25, 140 35, 140 70 Z" fill="#6a401c" stroke="#261505" stroke-width="3"/>
-      <path d="M36 70 C36 40, 52 30, 80 30 C108 30, 124 40, 124 70" fill="none" stroke="#d97706" stroke-width="8"/>
-      <path d="M72 70 C72 38, 76 28, 80 28 C84 28, 88 38, 88 70" fill="none" stroke="#f59e0b" stroke-width="8"/>
-    </svg>`;
-
-    const chestLoot = `<div class="chestzone ${n ? (done ? 'open' : 'will') : 'shut'}" id="chest">
-        <b class="cheer" id="cheer">LEVEL UP!</b>
-        <div class="chest-wrap-3d" aria-hidden="true">
-          ${chestSVG}
-          <div class="chest-burst-particles"></div>
-        </div>
-        ${n ? `<div class="loot loot-cards-row ${n > 4 ? 'lots' : ''}">${na.map((a, i) => `<span class="lootit ach loot-card-3d" style="--i:${i}" tabindex="0" data-tip="${esc('New title: ' + a.title + '. You earned it: ' + a.desc)}"><i class="achi">${a.icon}</i><b class="loot-card-name">${esc(a.title)}</b><small class="loot-card-tag">New title!</small></span>`).join('')}${ups.map((x, i) => `<span class="lootit loot-card-3d" style="--i:${i + na.length}" tabindex="0" data-tip="${esc(unlockTip(x))}">${unlockPic(x, 48)}<b class="loot-card-name">${esc(unlockName(x))}</b><small class="loot-card-tag">New ${KIND_NAME(x.kind)}</small></span>`).join('')}</div>`
-          : u ? `<p class="chestnote">${I('lock')} Next chest at level ${u.lvl}: <b>${esc(unlockName(u))}</b> · ${B.xpForLevel(u.lvl) - to} XP to go</p>` : '<p class="chestnote">🏅 Every reward unlocked!</p>'}</div>`;
-
-    return `<div class="xp-modal-wrap" id="xppanel" data-from="${from}" data-to="${to}">
-      <!-- Top Tier: Account Level & XP Card -->
-      <div class="xp-top-card">
-        <div class="xp-top-main">
-          <div class="xp-left-col">
-            <div class="xp-level-crest">
-              ${levelBadgeSVG}
-              <div class="crest-text-overlay">
-                <span class="crest-num" id="xplv">${S.lvl}</span>
-                <span class="crest-lbl">LEVEL</span>
-              </div>
-            </div>
-            <div class="xp-title-grp">
-              <div class="xp-title-row">
-                <span class="spark-ico">✨</span>
-                <h3 class="xp-heading">Account XP</h3>
-                <button class="ladb sm xp-trophy-btn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="xp-right-col">
-            <div class="xp-gain-val">+<span id="xpbig">${done ? got : 0}</span> XP</div>
-            ${log.length ? `<div class="xp-pills-row">${xpChips(log).map((c, i) => `<span class="xp-chip-pill" style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i> <b>${esc(c.name)}</b> <span class="chip-add">+${c.xp}</span></span>`).join('')}</div>` : note ? `<p class="small dim">${note}</p>` : ''}
-          </div>
-        </div>
-
-        <!-- Full-Width Horizontal XP Progress Bar -->
-        <div class="xp-horiz-bar-wrap" id="xpmeter">
-          <div class="vmtube xp-horiz-track">
-            <i class="xp-horiz-fill" style="width:${pct}%"></i>
-            <span class="xp-horiz-label"><span id="xpnum">${S.into}/${S.need}</span> XP</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Tier: 3D Chest & Loot Drop Cards -->
-      <div class="xp-bottom-loot-tier">
-        ${chestLoot}
-      </div>
-    </div>`;
-  }
-  // WHAT: the XP screen's animation: the total counts up, the level tube fills; every level up cheers (LEVEL UP!) and empties the tube; at the end a chest with rewards bursts open.
-  async function animXp2() {
-    const el = $('#xppanel'); if (!el || run.xpShown || !(run.xpLog || []).length) return;
-    run.xpShown = true; save();
-    const fast = B.Juice && B.Juice.reduced(), wait = ms => new Promise(r => setTimeout(r, fast ? 0 : ms));
-    const fill = $('#xpmeter .vmtube i'), num = $('#xpnum'), lv = $('#xplv'), big = $('#xpbig'), cheer = $('#cheer'), chest = $('#chest');
-    let cur = +el.dataset.from, left = +el.dataset.to - cur; const total = left, live = () => fill && fill.isConnected;
-    await wait(400); if (!live()) return;
-    if (B.Juice) B.Juice.countUp(big, 0, total, 1100, v => '+' + v); sfx('coin');
-    while (left > 0) {
-      const L = B.levelProgress(cur), room = L.need - L.into, step = Math.min(left, room), ms = 300 + Math.round(700 * step / L.need);
-      if (fill) {
-        fill.style.transition = `width ${ms}ms ease-out`;
-        fill.style.width = (step === room ? 100 : Math.round(100 * (L.into + step) / L.need)) + '%';
-      }
-      if (B.Juice) B.Juice.countUp(num, L.into, L.into + step, ms, v => v + '/' + L.need);
-      await wait(ms + 60); if (!live()) return; cur += step; left -= step;
-      if (step === room) {
-        const N = B.levelProgress(cur); if (lv) lv.textContent = N.lvl; sfx('levelup');
-        if (cheer) {
-          cheer.textContent = `LEVEL ${N.lvl}!`; cheer.classList.remove('pop'); void cheer.offsetWidth; cheer.classList.add('pop');
-        }
-        if (B.Juice && lv) { B.Juice.bump(lv); B.Juice.confettiAt(lv, 60); }
-        if (fill) { fill.style.transition = 'none'; fill.style.width = '0%'; }
-        if (num) num.textContent = '0/' + N.need; await wait(500);
-      }
-    }
-    if (chest && chest.classList.contains('will') && (run.newAchs || []).length && cheer && !cheer.classList.contains('pop')) { cheer.textContent = 'NEW TITLE!'; cheer.classList.add('pop'); }
-    if (chest && chest.classList.contains('will')) {
-      chest.classList.add('shake'); await wait(700); if (!chest.isConnected) return;
-      chest.classList.remove('will', 'shake'); chest.classList.add('open'); sfx('unlock'); if (B.Juice) B.Juice.confettiAt(chest.querySelector('.chest-wrap-3d') || chest, 90);
-    }
-  }
-
-  // ------------------------------------------------------------------ unit info panel
-  // WHAT: the small info panel under the board when you tap a unit or terrain (stats and ability text).
-  function infoHTML() {
-    const W = battle ? battle.W : preview;
-    if (!W || !ui.info) return '';
-    if (typeof ui.info === 'string') { const T = B.TERRAIN[ui.info]; return T ? `<div class="hrow"><span class="ticon">${T.icon}</span><b>${T.name}</b><span class="dim small">terrain</span><button class="info-close" data-act="info-close" aria-label="Close details">✕</button></div><div class="small">${esc(T.desc)}</div>` : ''; }
-    const u = W.byId[ui.info]; if (!u) return '';
-    const hd = HEROES[u.key];
-    // the card is short and fixed in size (name, stats and the ability's NAME, or
-    // one sentence for monsters) and the heroes' full text is one tap away on Details; on the deploy screen it takes the place of the enemies list
-    const first = s => String(s || '').split(/(?<=[.!?])\s/)[0];
-    const abil = hd ? `<b class="abname">${esc(hd.abName)}</b> <button class="linkbtn" data-act="hero-peek" data-arg="${u.key}">Details</button>` : u.boss ? fmt(first(B.BOSSES[u.key].desc)) : u.abil ? fmt(MOB_ABIL[u.abil] || '') : u.fl.has('dive') ? 'Leaps to your back line at the start.' : u.kind === 'summon' ? 'Summoned unit.' : 'No special ability.';
-    return `<div class="hrow">${img(u.key, 40)}<b>${esc(u.name)}</b>${u.kind === 'hero' ? ' Lv ' + u.lvl : ''}${u.elite ? ' <span class="elite">★ elite</span>' : ''}<button class="info-close" data-act="info-close" aria-label="Close details">✕</button></div>
-      ${chips({ hp: Math.max(0, Math.round(u.hp)) + '/' + u.maxHp, atk: Math.round(Sim.atkOf(W, u)), ap: Math.round(u.ap), armor: Math.round(Sim.armorOf(W, u)), as: Sim.asOf(W, u).toFixed(2), range: u.range, crit: u.crit ? pct(u.crit) : 0, dodge: u.dodge ? pct(u.dodge) : 0 }, true)}
-      <div class="small">${abil}</div>`;
-  }
-
-  // ------------------------------------------------------------------ board mount + input
-  // WHAT: builds the simulation of the current fight (normal or Gauntlet) for the preview or the real battle.
-  function worldFor(preview) {
-    const t = run.cur && run.cur.type;
-    return t === 'gauntlet' ? Run.gauntletWorld(run, preview, { takeMul: B.PVP_TAKE[Math.max(0, Math.min(B.PVP_TAKE.length - 1, acct.league | 0))] }) : Run.fightWorld(run, preview);   // every league takes full PvE damage (had Bronze take 20% less)
-  }
-
-  // the board takes the width AND the height left on screen, on phones (portrait/landscape), tablets and desktops.
-  // WHAT: BOARD SIZE AND INPUT. The board is a canvas sized to the screen (layoutClasses, boardWidth, mountBoard); onDown / onMove / onUp handle drag and tap of heroes (pointer events work for mouse and touch).
-  const BOARD_RATIO = 0.703; // board height / width (render.js setup: 10.35 * size + 4 over 14.72 * size)
-  const DESK_BOARD_RATIO = 0.589; // desktop glade board height / width (12.65 * size over 21.48 * size)
-  function layoutClasses() {
-    const vw = window.innerWidth, vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.body.classList.toggle('landscape', vw > vh * 1.25 && vh < 600);
-    document.body.classList.toggle('wide', vw >= 760 && !document.body.classList.contains('landscape'));
-    document.body.classList.toggle('side', document.body.classList.contains('wide') && vw >= vh * 1.1);  // panel beside the board
-    document.body.classList.toggle('desk', (document.body.classList.contains('side') && vw >= 960 && vh >= 500) || (vw >= 1024 && vh >= 540));  // v29: a full-screen stage on computers
-  }
-  function boardWidth(wrap) {
-    const vw = window.innerWidth, vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    const land = document.body.classList.contains('landscape');
-    // on tablets/desktops the deploy and battle screens put their panel in a column beside the board
-    // v29 (owner: "on PC the framing is horrible"): the board takes all the height the screen has, the panel sits beside it
-    if (document.body.classList.contains('desk')) return Math.floor(Math.max(480, Math.min(vw - 64, (vh - 165) / DESK_BOARD_RATIO, 1320)));
-    if (document.body.classList.contains('side')) return Math.floor(Math.max(300, Math.min(Math.min(vw, 1180) - 36 - 356, (vh - 64 - 8) / BOARD_RATIO, 1000)));
-    const reserved = land ? 64 : screen === 'battle' ? 175 : 215;
-    const byHeight = Math.max(200, (vh - reserved - 4) / BOARD_RATIO);
-    const maxW = land ? vw * 0.62 : 1000;
-    return Math.floor(Math.min(wrap.clientWidth || vw - 16, byHeight, maxW));
-  }
-  // WHAT: creates the board canvas view and its pointer listeners after a screen with a board was drawn.
-  let bgView = null, bgPreview = null;
-  function bgWorldFor() {
-    if (!run) return null;
-    const raw = (run.heroes && run.heroes.length) ? run.heroes : (ui.startPick && ui.startPick.length) ? ui.startPick.map((k, i) => ({ uid: i + 1, key: k, lvl: 1, xp: 0, specs: [], items: [], bonus: {} })) : (run.startOffer || []).slice(0, 3).map((k, i) => ({ uid: i + 1, key: k, lvl: 1, xp: 0, specs: [], items: [], bonus: {} }));
-    // Place heroes on outer flanking hexes (c=0 on odd rows, c=7 on even rows) so they stand visibly on both sides of centered overlays
-    const slots = [[0, 5], [7, 4], [0, 3], [7, 6], [0, 7], [7, 2], [1, 4], [6, 5]], taken = new Set();
-    const heroes = raw.map((h, idx) => {
-      let [c, r] = slots[idx % slots.length];
-      if (taken.has(c + ',' + r)) {
-        for (const [cc, rr] of slots) if (!taken.has(cc + ',' + rr)) { c = cc; r = rr; break; }
-      }
-      taken.add(c + ',' + r);
-      return { def: Run.heroDef(run, h), c, r };
-    });
-    const m = Run.mapOf(run);
-    return Sim.create({
-      terrain: m ? m.cells : [],
-      mode: 'fight', seed: 1, noStart: true, fightNo: Math.max(1, run.fightNo || 1), relics: run.relics || [],
-      heroes, enemies: []
-    });
-  }
-  function drawBgPreview(now) {
-    if (bgView && bgPreview) Render.draw(bgView, bgPreview, (now || performance.now()) / 50, { deploy: false, mute: true });
-  }
-  function mountBgBoard() {
-    const desk = document.body.classList.contains('desk');
-    const needBg = desk && run && screen !== 'title' && screen !== 'battle' && !(screen === 'run' && run.phase === 'deploy') && !(screen === 'run' && run.phase === 'start') && !(screen === 'run' && run.phase === 'recruit');
-    let st = $('#bgstage');
-    if (!needBg) {
-      if (st) st.hidden = true;
-      return;
-    }
-    if (!st) {
-      st = document.createElement('div');
-      st.id = 'bgstage';
-      st.setAttribute('aria-hidden', 'true');
-      st.innerHTML = '<canvas id="bgboard"></canvas>';
-      const app = $('#app'), scr = $('#screen');
-      if (app && scr) app.insertBefore(st, scr);
-    }
-    st.hidden = false;
-    const cv = $('#bgboard');
-    if (cv) {
-      const w = boardWidth(st);
-      if (!bgView || bgView.canvas !== cv || bgView.w !== w) bgView = Render.setup(cv, w);
-      bgPreview = bgWorldFor();
-      drawBgPreview();
-    }
-  }
-  function mountBoard() {
-    const cv = $('#board'); if (!cv) return;
-    const wrap = cv.parentElement;
-    view = Render.setup(cv, boardWidth(wrap));
-    if (screen !== 'battle') { preview = worldFor(true); drawPreview(); }
-    cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerup', onUp);
-    cv.addEventListener('pointerleave', () => { if (ui.hoverHex) { ui.hoverHex = null; if (!battle) drawPreview(); } cv.style.cursor = ''; });
-    cv.addEventListener('pointercancel', () => { ui.drag = null; ui.hoverHex = null; drawPreview(); });
-  }
-  // WHAT: draws the static board (deploy screen), with the selected hero, the drag ghost and the drop hex.
-  function drawPreview(extra) {
-    if (view && preview && screen !== 'battle') {
-      Render.draw(view, preview, performance.now() / 50, Object.assign({
-        deploy: true,
-        sel: (ui.drag && ui.drag.u && ui.drag.u.uid) || ui.selUid,
-        infoId: ui.info,
-        hoverHex: ui.hoverHex,
-        hoverFoe: ui.hoverFoe,
-        dragging: !!ui.drag
-      }, introDraw(), coachDraw(), benchDraw(), extra || {}));
-    }
-  }
-  // while a hero waits on the bench, the free hexes of your half glow (where it can go)
-  function benchDraw() {
-    if (!run || run.phase !== 'deploy' || introStage() || !Run.benched(run).length) return {};
-    const taken = new Set(run.heroes.filter(h => h.pos && !h.bench).map(h => h.pos.c + ',' + h.pos.r));
-    return { slots: B.Hex.all().filter(h => h.r >= 4 && !Run.blockedAt(run, h.c, h.r) && !taken.has(h.c + ',' + h.r)) };
-  }
-  const benchSel = () => !!(run && ui.selUid && run.heroes.some(h => h.uid === ui.selUid && h.bench));
-  // dragging a hero from the bench (pointer events on the page: a touch stays with the button it started on). Over the board the hex under
-  // the finger lights up; let go there and the hero is placed. A short tap is a pick (ACT 'bench-pick').
-  // WHAT: pointer down / move / up of a drag from the bench.
-  function benchDown(e) {
-    const el = e.target.closest && e.target.closest('[data-bench]'); if (!el || battle || !run || run.phase !== 'deploy' || !view) return;
-    const h = run.heroes.find(x => x.uid === +el.dataset.bench); if (!h || !h.bench) return;
-    ui.bdrag = { uid: h.uid, key: h.key, x0: e.clientX, y0: e.clientY, moved: false };
-  }
-  function benchMove(e) {
-    const d = ui.bdrag; if (!d) return;
-    if (!d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 8) return;
-    if (!d.moved) { d.moved = true; ui.selUid = 0; d.g = document.createElement('div'); d.g.className = 'benchghost'; d.g.innerHTML = img(d.key, 64); document.body.appendChild(d.g); }
-    if (e.cancelable) e.preventDefault();
-    d.g.style.left = e.clientX + 'px'; d.g.style.top = e.clientY + 'px';
-    const { h } = evHex(e, 1.35), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r);
-    if (ok && (!d.lastSnapped || d.lastSnapped.c !== h.c || d.lastSnapped.r !== h.r)) {
-      d.lastSnapped = h;
-      try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
-    }
-    d.g.classList.toggle('ok', !!ok); drawPreview({ drop: ok ? h : null });
-  }
-  function benchUp(e) {
-    const d = ui.bdrag; if (!d) return; ui.bdrag = null;
-    if (d.g) d.g.remove();
-    if (!d.moved) return;
-    ui.bdragAt = performance.now();
-    const { h } = e.type === 'pointerup' && view ? evHex(e, 1.35) : {};
-    if (h && h.r >= 4 && !onTerrain(h)) benchPlaced(d.uid, h); else drawPreview();
-  }
-  document.addEventListener('pointerdown', benchDown);
-  document.addEventListener('pointermove', benchMove, { passive: false });
-  document.addEventListener('pointerup', benchUp);
-  document.addEventListener('pointercancel', benchUp);
-  // ---- v97 (, David: "The very first time you press play, and choose a hero, cut to the battlefield and that hero drops in. Then after he is
-  // moved, per indicated, an enemy weak unit comes in from the other side, the hero gets an exclamation mark in a speech bubble, and fight starts
-  // seamlessly. Thats the first fight"). run.onb.stage: 'drop' (the hero falls onto the board) -> 'move' (the hint; the enemy is hidden) -> 'enter'
-  // (the Grunt walks in from the top, the hero shouts "!") -> the battle starts by itself, with no countdown and no VS screen.
-  // balance.intro = the intro was played once (never again). Tests (webdriver, headless Chrome) skip it unless balance.introTest is set.
-  const introOn = () => !store.get('balance.intro', 0) && !(+store.get('balance.starts', 0)) && ((!navigator.webdriver && !/HeadlessChrome/.test(navigator.userAgent)) || !!store.get('balance.introTest', 0));
-  const introStage = () => run && run.phase === 'deploy' && run.onb && run.onb.stage !== 'done' ? run.onb.stage : null;
-  const easeOut = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
-  // WHAT: the drawing options of the intro: the hero lifted while it drops, the enemy hidden until the hero moved, then lifted while it walks in.
-  function introDraw() {
-    const st = introStage(); if (!st || !view) return {};
-    const now = performance.now(), fast = B.Juice && B.Juice.reduced();
-    if (st === 'drop') {
-      if (!ui.introT0) ui.introT0 = now;
-      const k = fast ? 1 : (now - ui.introT0) / 650;
-      if (k >= 1 && !ui.introLand) { ui.introLand = true; setTimeout(introLanded, 0); }
-      return { hide: u => u.side === 1, lift: u => u.side === 0 ? (1 - easeOut(k)) * view.h : 0 };
-    }
-    if (st === 'move') return { hide: u => u.side === 1 };
-    const k = fast ? 1 : (now - (ui.introE0 || now)) / 1100;
-    return { lift: u => u.side === 1 ? (1 - easeOut(k)) * view.h * 0.75 : 0 };
-  }
-  // WHAT: the hero touched the ground: dust, thud, then the drag hint.
-  function introLanded() {
-    ui.introLand = false; if (introStage() !== 'drop') return;
-    run.onb.stage = 'move'; save();
-    const h = run.heroes[0]; sfx('place');
-    if (h && h.pos && B.Juice && view) { const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.pos.c, h.pos.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); }
-    render();
-  }
-  // WHAT: the hero was moved: the enemy walks in, the hero shouts "!" in a speech bubble, the fight starts.
-  function introEnemy() {
-    if (introStage() !== 'move') return;
-    run.onb.stage = 'enter'; ui.introE0 = performance.now(); save();
-    const e = document.querySelector('.tutmove'); if (e) e.remove();
-    const fast = B.Juice && B.Juice.reduced(), mine = run;
-    setTimeout(() => {
-      if (run !== mine || introStage() !== 'enter') return;
-      const h = run.heroes[0], wrap = document.querySelector('.boardwrap');
-      if (h && h.pos && wrap && view) { const p = Render.hexScreen(view, h.pos.c, h.pos.r), b = document.createElement('div'); b.className = 'bang'; b.textContent = '!'; b.style.left = (view.canvas.offsetLeft + p.x) + 'px'; b.style.top = (view.canvas.offsetTop + p.y - view.size * 1.9) + 'px'; wrap.appendChild(b); }
-      sfx('pick');
-      setTimeout(() => { if (run !== mine || introStage() !== 'enter') return; run.onb.stage = 'done'; ui.noCountdown = true; startBattle(); }, fast ? 300 : 900);
-    }, fast ? 100 : 1150);
-  }
-  // v62b: the deploy board only breathes (idle poses, pond ripples), so it repaints about 30 times a second instead of every screen frame
-  let idleAt = 0;
-  (function idle(now) {
-    if (now - idleAt >= 32 && !document.hidden) {
-      if (screen !== 'battle' && preview && document.querySelector('#board') && !ui.drag && !ui.bdrag) { idleAt = now; drawPreview(); }
-      else if (bgView && bgPreview && !battle) { const st = document.getElementById('bgstage'); if (st && !st.hidden) { idleAt = now; drawBgPreview(now); } }
-    }
-    requestAnimationFrame(idle);
-  })(0);
-  // WHAT: converts a pointer event into a board hex (c, r).
-  function evHex(e, pad = 1.0) { const r = view.canvas.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; return { x, y, h: Render.hexAt(view, x, y, pad) }; }
-  function unitAt(W, h) { return h && W ? W.units.find(u => !u.dead && u.c === h.c && u.r === h.r) : null; }
-  // a hero is picked up by its whole figure
-  // (it stands taller than its hex), and dragging over another hero shows that one moving to the empty spot (they swap on drop)
-  // WHAT: your hero whose drawn figure is under the point (x, y), the nearest one.
-  function heroBodyAt(W, x, y) { if (!W || !view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead || u.side !== 0 || !u.uid) continue; const p = Render.hexScreen(view, u.c, u.r), s = view.size;
-    if (Math.abs(x - p.x) < s * 0.65 && y > p.y - s * 1.85 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
-  function unitBodyAt(W, x, y) { if (!W || !view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead) continue; const p = Render.hexScreen(view, u.c, u.r), s = view.size * (u.boss ? 1.35 : u.elite ? 1.15 : 1);
-    if (Math.abs(x - p.x) < s * 0.7 && y > p.y - s * 1.9 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
-  // WHAT: pointer down on the board: pick up a hero (start of a drag) or tap a unit to see its info.
-  function onDown(e) {
-    if (battle && battle.W && battle.W.over && battle.endAt) { battle.endAt = performance.now(); return; }
-    const { x, y, h: h0 } = evHex(e, 1.25); const W = battle ? battle.W : preview; let h = h0, u = unitAt(W, h);
-    if (!battle && (!u || u.side !== 0)) { const b = heroBodyAt(W, x, y); if (b) { u = b; h = { c: b.c, r: b.r }; } }
-    if (!u) { const b = unitBodyAt(W, x, y); if (b) { u = b; h = { c: Math.round(b.c), r: Math.round(b.r) }; } }
-    const tk = !u && h && W && W.tk ? W.tk[B.Hex.key(h.c, h.r)] : null;
-    if (u || tk) { ui.info = u ? u.id : tk; if (u && B.UIAudio) B.UIAudio.pop(); const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } if (!battle) drawPreview(); }
-    if (battle || !h) return;
-    if (introStage() && introStage() !== 'move') return;   // v97: the intro lets the hero move once
-    if (u && u.side === 0 && u.uid && !benchSel()) { ui.drag = { uid: u.uid, from: h, key: u.key, lastSnapped: null }; try { view.canvas.setPointerCapture(e.pointerId); } catch (_) {} }   // v126: with a bench hero picked, a tap places it
-  }
-  function onMove(e) {
-    if (!view) return;
-    if (!ui.drag || battle) {
-      if (e.pointerType === 'mouse') {
-        const { x, y, h } = evHex(e, 1.05), W = battle ? battle.W : preview;
-        const u = unitAt(W, h) || unitBodyAt(W, x, y);
-        const tk = !u && h && W && W.tk ? W.tk[B.Hex.key(h.c, h.r)] : null;
-        view.canvas.style.cursor = !battle && u && u.side === 0 && u.uid ? 'grab' : (u || tk || (!battle && ui.selUid && h && h.r >= 4)) ? 'pointer' : '';
-        const prev = ui.hoverHex;
-        ui.hoverHex = h || null;
-        if (!battle && ((prev && !h) || (!prev && h) || (prev && h && (prev.c !== h.c || prev.r !== h.r)))) drawPreview();
-      }
-      return;
-    }
-    view.canvas.style.cursor = 'grabbing';
-    const { x, y, h } = evHex(e, 1.35), ok = h && h.r >= 4 && !Run.blockedAt(run, h.c, h.r), o = ok ? unitAt(preview, h) : null;
-    if (ok && (!ui.drag.lastSnapped || ui.drag.lastSnapped.c !== h.c || ui.drag.lastSnapped.r !== h.r)) {
-      ui.drag.lastSnapped = h;
-      try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
-    }
-    drawPreview({
-      drop: ok ? h : null,
-      dragFrom: ui.drag ? ui.drag.from : null,
-      dragGhost: { x, y, key: ui.drag.key },
-      swapGhost: o && o.side === 0 && o.uid !== ui.drag.uid ? { c: ui.drag.from.c, r: ui.drag.from.r, key: o.key } : null
-    });
-  }
-  // a hero can't be placed on a tree, boulder, ridge or pond
-  function onTerrain(h) { const x = h && (Run.mapOf(run) || { cells: [] }).cells.find(t => t.c === h.c && t.r === h.r); if (x) sfx('deny'); if (x) toast(`${B.TERRAIN[x.k].icon} ${B.TERRAIN[x.k].name}: heroes can't stand here`); return !!x; }
-  // WHAT: pointer up on the board: drop the hero on the new hex (rows 4-7 only, not on terrain) or select it; the first move ends the tutorial prompt.
-  function onUp(e) {
-    if (battle) return;
-    const { h } = evHex(e, 1.35); const d = ui.drag; ui.drag = null;
-    // a hero set down raises a puff of dust and a soft thud where it lands
-    const landed = () => { sfx('place'); try { if (navigator.vibrate) navigator.vibrate(20); } catch (_) {} if (!B.Juice) return; const r = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + view.size * 0.35); };
-    if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(run, d.uid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); } }
-    else if (d) { ui.selUid = ui.selUid === d.uid ? 0 : d.uid; if (ui.selUid) { sfx('tap'); if (B.UIAudio) B.UIAudio.pop(); } }
-    else if (ui.selUid && h && h.r >= 4 && benchSel()) { if (!onTerrain(h)) benchPlaced(ui.selUid, h); return; }   // a picked bench hero goes here
-    else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); tutMoved(); landed(); }
-    preview = worldFor(true);
-    const fl = $('#formline'); if (fl) fl.innerHTML = formHTML(preview);
-    drawPreview();
-    const h0 = run.heroes[0], o0 = run.onb && run.onb.from;   // v97: the hero stands somewhere new: the intro goes on
-    if (introStage() === 'move' && h0 && h0.pos && (!o0 || h0.pos.c !== o0.c || h0.pos.r !== o0.r)) introEnemy();
-  }
-
-  // ------------------------------------------------------------------ battle
-  // WHAT: the Fight! button: builds the real simulation, shows what Smolder ate, switches to the battle screen and starts the loop.
-  function startBattle() {
-    if (!introStage() && Run.benched(run).length) { benchNudge(Run.benched(run)); return; }   // never with heroes on the bench
-    const gau = run.cur && run.cur.type === 'gauntlet';
-    if (gau && run.g && run.g.kind === 'final') run.guideFinal = true;   // the guide ends after this run
-    const W = worldFor(false);
-    save();
-    const ate = (run.devoured || []).map(x => x.msg).join(' ');   // v62: Smolder's meal
-    battle = { W, acc: 0, last: performance.now(), endAt: 0, gau };
-    store.set('balance.tips.deploy', (store.get('balance.tips.deploy', 0) | 0) + 1);
-    ui.info = null; screen = 'battle'; render();
-    tutSpeedArm();
-    if (ate) toast(ate);
-    countdown(battle);
-    requestAnimationFrame(loop);
-  }
-
-  // the fight waits (b.hold) while big see-through numbers pop over the top of the board, then FIGHT! and it starts. Not in an automated browser (the tests).
-  // WHAT: the 3, 2, 1, FIGHT! countdown at the start of a battle.
-  function countdown(b) {
-    if (ui.noCountdown) { ui.noCountdown = false; return; }   // v97: the intro fight starts seamlessly
-    if (navigator.webdriver) return;
-    const step = B.Juice && B.Juice.reduced() ? 300 : 620, el = document.createElement('div'); el.className = 'cdown'; el.setAttribute('aria-live', 'polite');
-    document.body.appendChild(el); b.hold = performance.now() + step * 3 + 150;
-    ['3', '2', '1', 'FIGHT!'].forEach((t, i) => setTimeout(() => { if (battle !== b) { el.remove(); return; } el.innerHTML = `<b class="${i === 3 ? 'go' : ''}">${t}</b>`; sfx(i === 3 ? 'go' : 'pick'); }, i * step));
-    setTimeout(() => el.remove(), step * 3 + 700);
-  }
-  const DPR_STEPS = [1.5, 1, 0.8, 0.65, 0.5];
-  // a computer (mouse) also counts 30 fps as slow; a phone not (iPhones in Low Power Mode draw 30 frames a second on purpose)
-  // the start of a
-  // fight (the countdown, the first frames) and a phone's 30 fps jitter counted as a slow device, the picture dropped a step and the drop was kept for
-  // good. Now: no measuring during the countdown and the first 1.5s; a phone counts only frames under ~22 fps and never goes under 1.5x (its own
-  // pixel ratio when lower); a smooth fight wins a step back for the next one; and the levels kept by v77-v85 are forgotten (new key).
-  const FINE = matchMedia('(pointer: fine)').matches, SLOW_MS = FINE ? 26 : 45, DPR_FLOOR = FINE ? 0.5 : Math.min(1.5, window.devicePixelRatio || 1);
-  { const m = +store.get('balance.maxDpr2', 0); if (m >= DPR_FLOOR && m <= 2) Render.maxDpr = m; }
-  // WHAT: THE BATTLE LOOP (every screen frame): advances the simulation by real time x speed, draws the board, updates the clock and strips, and calls endBattle when the fight is over.
-  // the fights play 25% faster at every speed (1x, 2x, 4x are 1.25x, 2.5x, 5x real time); the fight itself is the same
-  const PACE = 1.25;
-  function loop(now) {
-    const b = battle; if (!b) return;
-    if (now - b.last < 12) { requestAnimationFrame(loop); return; }   // v62b: a 120 / 144 Hz screen draws about 60 frames a second, not 144 (the time is not lost, the next frame adds it)
-    // a slow phone frame (up to 250 ms) no longer loses game time (the cap was 100 ms)
-    const dt = Math.min(250, now - b.last); b.last = now;
-    // v62r: a computer that draws slowly (no graphics acceleration, weak integrated GPU) gets a smaller canvas by itself: frames slower than ~30 fps for about 1.5 s
-    // drop the pixel ratio one step (2 -> 1.5 -> 1); the picture keeps its size on screen, just a little softer
-    if (!b.t0) b.t0 = now; const warm = now < Math.max(b.hold || 0, b.t0) + 1500;   // the countdown and the first 1.5s are not measured
-    if (!warm && !document.hidden) { b.slow = Math.max(0, Math.min(60, (b.slow || 0) + (dt > SLOW_MS ? 1 : -1))); b.frames = (b.frames || 0) + 1; if (dt <= 20) b.fast = (b.fast || 0) + 1; }
-    // the steps go on below 1 (a computer without graphics acceleration), and the level found is kept for the next visits
-    if (b.slow >= 30 && view && view.dpr > DPR_FLOOR + 0.01 && !document.hidden) { const nx = DPR_STEPS.find(x => x < view.dpr - 0.01 && x >= DPR_FLOOR - 0.01); if (nx) { b.slow = 0; b.dropped = true; Render.maxDpr = nx; store.set('balance.maxDpr2', nx); view = Render.setup(view.canvas, view.w); } }
-    const TICK = 1000 / Sim.TPS;
-    if (!b.W.over && !(b.hold && now < b.hold)) {
-      b.acc += dt * ui.speed * PACE;
-      // Cap max catch-up steps per frame to 12 ticks (600ms) to prevent thermal spiral-of-death on mobile
-      let n = 0;
-      while (b.acc >= TICK && !b.W.over && n++ < 12) {
-        Sim.step(b.W);
-        b.acc -= TICK;
-      }
-      if (b.acc > TICK * 3) b.acc = TICK * 3; // Discard excessive backlog if frame dropped severely
-    }
-    // the last blow plays on in slow motion under a big VICTORY / DEFEAT (render.js drawEnd)
-    if (b.W.over && !b.overAt) { b.overAt = now; b.end = { win: b.W.winner === 0, k: 0 }; if (!b.endAt) b.endAt = now + 1800; sfx(b.end.win ? 'win' : 'lose'); }
-    const T = b.W.over ? b.W.t + (now - b.overAt) / TICK * 0.3 : b.W.t + b.acc / TICK;
-    if (b.end) b.end.k = (now - b.overAt) / 1600;
-    if (view) Render.draw(view, b.W, T, Object.assign({ infoId: ui.info, hoverHex: ui.hoverHex }, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {}));   // standing tall during the countdown
-    const hud = $('#bhud');
-    if (hud) {
-      const secs = Math.floor(b.W.t / Sim.TPS);
-      const title = b.gau ? `${I('trophy')} ${duelName(run.g)} · ${esc(run.g.opp.name)}`
-        : run.cur && run.cur.challenge ? I('bolt') + ' ' + esc(run.cur.challenge.name)
-        : run.cur && run.cur.diff === 'boss' ? I('skull') + ' Boss'
-        : run.cur && run.cur.diff && B.DIFF[run.cur.diff] ? I('swords') + ' ' + B.DIFF[run.cur.diff].name
-        : I('swords') + ' Fight';
-      const toSd = CFG.suddenDeath - secs, clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-      const str = `<b>${title}</b><span class="clock ${toSd <= 0 ? 'sd' : toSd <= 10 ? 'warn' : ''}">⏱ ${clock}${toSd <= 0 ? ' · SUDDEN DEATH' : toSd <= 10 ? ' · sudden death in ' + toSd + 's' : ''}</span>`;
-      if (str !== b.hudStr) { hud.innerHTML = str; b.hudStr = str; }
-    }
-    if ((b.frame = (b.frame || 0) + 1) % 6 === 0) {
-      updateStrip(b.W);
-      if (ui.info) { const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } }
-      if (b.W && !b.W.over) {
-        const hs = b.W.units.filter(u => u.side === 0 && u.kind === 'hero');
-        const avgHp = hs.length ? (hs.reduce((a, u) => a + Math.max(0, u.hp), 0) / hs.reduce((a, u) => a + u.maxHp, 0)) : 1;
-        document.body.classList.toggle('in-danger', avgHp <= 0.28 || (run && run.lives === 0));
-      }
-    }
-    if (b.endAt && now >= b.endAt) { endBattle(); return; }
-    requestAnimationFrame(loop);
-  }
-  // WHAT: a fight ended: collects the damage / kills stats, then (normal fight) Run.finishFight and reports a lost run to the server, or (Gauntlet duel) sends the result and Elo.
-  // Also reports boss results for the boss Elo.
-  async function endBattle() {
-    document.body.classList.remove('in-danger');
-    tutSpeedDisarm();
-    { const b = battle; if (b && !b.dropped && (b.frames | 0) >= 120 && b.fast / b.frames >= 0.9 && Render.maxDpr && Render.maxDpr < 2) { const up = [0.5, 0.65, 0.8, 1, 1.5, 2].find(x => x > Render.maxDpr + 0.01); Render.maxDpr = up; store.set('balance.maxDpr2', up); } }   // a smooth fight wins a step back
-    const b = battle; battle = null; const W = b.W;
-    // per hero (its summons count for it): damage dealt and taken, kills, standing at the end
-    const stats = {}, dmg = {};
-    for (const u of W.units) {
-      const o = u.owner && W.byId[u.owner] ? W.byId[u.owner] : u; if (o.side !== 0 || !o.uid) continue;
-      const st = stats[o.uid] = stats[o.uid] || { dmg: 0, taken: 0, kills: 0, heal: 0, alive: false };
-      st.dmg += u.dmgDone || 0; st.kills += u.kb || 0; st.heal += u.healDone || 0;   // healing done (its summons and plants count for it)
-      if (o === u) { st.taken += u.dmgTaken || 0; st.alive = !u.dead; }
-    }
-    for (const k in stats) dmg[k] = stats[k].dmg;
-    const foes = W.units.filter(u => u.side === 1 && u.kind !== 'summon').map(u => ({ key: u.key, dead: !!u.dead, boss: !!u.boss, elite: !!u.elite }));
-    const hs = W.units.filter(u => u.side === 0 && u.kind === 'hero'), hpLeft = hs.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, hs.reduce((a, u) => a + u.maxHp, 0));
-    const stars = W.winner === 0 ? 1 + (hs.every(u => !u.dead) ? 1 : 0) + (hs.every(u => !u.dead) && hpLeft >= 0.6 ? 1 : 0) : 0;
-    const fu = W.units.filter(u => u.side === 1 && u.kind !== 'summon'), left = fu.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, fu.reduce((a, u) => a + u.maxHp, 0));   // how much of the enemy was left
-    const extra = { stats, dmg, foes, time: W.t / Sim.TPS, stars, left };
-    if (b.gau && run.g.kind === 'tower') {   // a Gauntlet floor
-      const opp = run.g.opp, res = Run.finishDuel(run, W), req = { op: 'towerResult', pid: pid(), ref: refCode(), teamId: run.tower.teamId, win: res.win, oppName: opp.name, team: run.lastFight.team, relics: run.lastFight.relics };
-      ui.result = Object.assign(res, extra, { fightName: 'Gauntlet · Floor ' + res.floor, opp, pending: true, req }); screen = 'result';
-      save(); render(); window.scrollTo(0, 0);
-      try { const r = await Net.post('elo', req); setElo(r); logGameXp(r); towerAnswer(r, ui.result); ui.result.pending = false; }
-      catch (e) { Object.assign(ui.result, { pending: false, error: e.message }); if (run.tower) { run.tower.status = 'over'; run.tower.err = 'The last result could not be saved (no connection).'; } }
-      save(); render();
-      return;
-    }
-    if (b.gau) {
-      // v63 (reviews #117 #118): a duel on a PvP day or the final fight: XP, lives and the spoils are the run's; the server hears the result for the Elo
-      const opp = run.g.opp, final = run.g.kind === 'final';
-      const res = Run.finishDuel(run, W), req = { op: 'duel', pid: pid(), ref: refCode(), oppId: opp.teamId || 0, oppName: opp.name, final, win: res.win, team: run.lastFight.team, relics: run.lastFight.relics };
-      ui.result = Object.assign(res, extra, { fightName: final ? 'Final fight' : 'Duel', opp, pending: true, req }); screen = 'result';
-      save(); render(); window.scrollTo(0, 0);
-      try { const r = await Net.post('elo', req); setElo(r); logGameXp(r); Object.assign(ui.result, { trophy: r.trophy || null, pending: false }); }
-      catch (e) { Object.assign(ui.result, { pending: false, error: e.message }); }
-      save(); render();
-      if (run.phase === 'over') await reportRunEnd();
-      return;
-    }
-    const bossKey = run.cur && run.cur.diff === 'boss' && !run.cur.challenge ? (run.cur.enemies.find(e => B.BOSSES[e.key]) || {}).key : null;
-    const fightName = run.cur && run.cur.challenge ? 'Challenge · ' + run.cur.challenge.name : run.cur && run.cur.diff && B.DIFF[run.cur.diff] ? `${B.DIFF[run.cur.diff].name} fight · #${run.cur.fightNo}` : 'Fight';
-    ui.result = Object.assign(Run.finishFight(run, W), extra, { fightName, bossName: bossKey ? B.BOSSES[bossKey].name : null }); screen = 'result';
-    if (ui.result.win && (ui.result.gold || ui.result.bank)) ui.goldHold = run.gold - (ui.result.gold || 0) - (ui.result.bank || 0);   // the top bar waits for the coins to fly in
-    if (bossKey) {  // the boss's own Elo (never the player's); v27: shown with the Content Elo unlock
-      const res = ui.result;
-      Net.post('elo', { op: 'boss', pid: pid(), ref: refCode(), boss: bossKey, win: res.win }).then(r => { setAcct(r); logGameXp(r); if (r.boss) { res.bossElo = r.boss; if (ui.result === res && screen === 'result') render(); } }).catch(() => {});
-    }
-    save(); render(); window.scrollTo(0, 0);
-    if (run.phase === 'over') await reportRunEnd();
-  }
-  // the run ended (the third life was lost, or the final fight was won): the server gets the end (league points, XP, the team becomes a finalist)
-  // WHAT: tells the server the run is over: 'complete' when the final fight was won, 'fail' when the lives ran out.
-  async function reportRunEnd() {
-    const R0 = ui.result || {};   // v96: a run completed on the map has no result screen
-    R0.pending = true; render();
-    run.xpWait = true;   // v46: the game's XP (fights won, the boss beaten) comes back with the answer
-    const teamSnap = (run.lastFight && run.lastFight.team) || (run.heroes && Run.teamSnapshot(run)) || [];
-    const relicsSnap = (run.lastFight && run.lastFight.relics) || (run.relics || []).slice();
-    const snapData = { team: teamSnap, relics: relicsSnap };
-    const pName = myName();
-    try { const r = await Net.post('elo', Object.assign({ op: run.result === 'clear' ? 'complete' : 'fail', pid: pid(), ref: refCode(), runId: run.seed, flog: run.flog, tele: run.tele || null, achs: Run.endAchs(run), game: { fights: Math.max(0, run.won - (run.duelsWon || 0)), duels: (run.trophies || []).filter(t => !t.final).length, lost: run.pvpLost || 0, lives: run.lives, bosses: run.fightNo > Run.bossFight(run, 1) ? 1 : 0, pve: !!run.reachedFinal, pvp: run.pvpLog || [] } }, snapData, pName ? { name: pName } : {})); setElo(r, true); logGameXp(r); run.lgEnd = r.lg || null; run.newAchs = Array.isArray(r.achs) ? r.achs.filter(id => B.ACH[id]) : []; Object.assign(R0, { lg: r.lg }); }
-    catch (e) { R0.error = e.message; run.xpErr = true; }
-    run.xpWait = false;
-    R0.pending = false; save(); render();
-  }
-  // when the map shows a PvP day, the opponent is looked up (another player's team from about the same day; none yet = a made-up one, )
-  // WHAT: finds the opponent of each duel option on the map (the server first, a random ghost when it has none or does not answer) and shows it.
-  function findDuels() {
-    for (const o of run.opts || []) {
-      if (o.type !== 'duel' || o.opp) continue;
-      const key = run.seed + ':' + o.fightNo; ui.duelAsked = ui.duelAsked || new Set(); if (ui.duelAsked.has(key)) continue; ui.duelAsked.add(key);
-      const mine = run, ask = Net.post('elo', { op: 'snap', pid: pid(), ref: refCode(), day: o.fightNo, team: Run.teamSnapshot(run), relics: run.relics, faced: run.faced || [] }).then(r => { setAcct(r, true); return r.opponent || null; }).catch(() => null);
-      Promise.race([ask, new Promise(res => setTimeout(() => res(null), 6000))]).then(opp => {
-        if (run !== mine || !run.opts.includes(o)) return;
-        o.opp = opp || Run.randomGhost(run, o.fightNo); save();
-        if (screen === 'run' && run.phase === 'map') render();
-      });
-    }
-  }
-  // v66 (, David: "before every fight, be it pve or pvp, have a short animation, one of those TEAM VS TEAM battle screens ... your team always on the
-  // left, with your name on top; then a cool VS grows, then the other team, a shake ... If PvP, include the current score between you"): it plays when a fight's
-  // deploy screen opens (PvE, duels, the final fight, event challenges); a tap skips it. each side shows its taunt in a comic bubble and its VS entrance.
-  // WHAT: the VS screen (showVs), the made-up taunt of a ghost that has no player (ghostTaunt), closeVs removes it.
-  const ghostTaunt = name => { let h = 0; for (const c of String(name || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 3 ? B.TAUNTS[h % B.TAUNTS.length].text : null; };
-  function closeVs() { const v = $('#vs'); if (!v) return; clearTimeout(ui.vsT); v.classList.add('out'); setTimeout(() => v.remove(), 260); }
-  function showVs(force) {
-    if (!run || !run.cur || run.phase !== 'deploy' || (navigator.webdriver && !force) || introStage()) return;
-    const g = run.g, duel = run.cur.type === 'gauntlet' && g && g.opp, f = run.cur;
-    const bk0 = !duel && (f.enemies || []).map(e => e.key).find(k => B.BOSSES[k]);
-    if (!force && !duel && !bk0 && !f.challenge) return;
-    closeVs(); const old = $('#vs'); if (old) old.remove();
-    let theirs, name, taunt = null, fx = null, av = '', tag, code = null;
-    if (duel) {
-      const o = g.opp; theirs = (o.team || []).map(h => h.key); name = esc(o.name || 'Rival'); code = o.code || null;
-      taunt = o.code ? o.taunt || null : ghostTaunt(o.name); fx = o.vsfx || null; tag = g.kind === 'final' ? `${I('trophy')} Final fight` : g.kind === 'tower' ? `${I('trophy')} ${duelName(g)}` : `${I('ghost')} Duel`;
-      av = avatarHTML(o.avatar, o.code || o.name, 40);
-    } else {
-      theirs = []; for (const e of f.enemies || []) if (!theirs.includes(e.key)) theirs.push(e.key);
-      const bk = bk0;
-      name = bk ? esc(B.BOSSES[bk].name) : f.challenge ? 'Challenge' : esc((B.DIFF[f.diff] || { name: 'Monster' }).name + ' fight');
-      tag = bk ? `${I('skull')} Boss` : `Day ${Math.max(0, run.step) + 1}`;
-    }
-    // a boss day opens with
-    // its own splash: the screen goes dark, a low rumble, then the boss card (picture, name, which boss of the run, what it does)
-    { const bk = !duel && (f.enemies || []).map(e => e.key).find(k => B.BOSSES[k]);
-      if (bk) { const bo = B.BOSSES[bk], nm = String(bo.name), seq = Run.pveSeq(run), n = seq.slice(0, Math.max(0, run.step) + 1).filter(x => x === 'B').length || 1;
-        const el = document.createElement('div'); el.id = 'vs'; el.className = 'vs bossvs' + (B.Juice && B.Juice.reduced() ? ' calm' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${nm}. Tap to skip`);
-        el.innerHTML = `<div class="bcard"><span class="bglow"></span>${img(bk, 160, 'por')}<small>${I('skull')} Boss ${n} of 2 · Day ${Math.max(0, run.step) + 1}</small><b>${esc((/\bthe\b/i.test(nm) ? '' : 'The ') + nm).toUpperCase()}</b>${bo.desc ? `<p>${fmt(String(bo.desc).split(/(?<=\.)\s/)[0])}</p>` : ''}</div><small class="vsskip">Tap to skip</small>`;
-        el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); closeVs(); });
-        document.body.appendChild(el); sfx('boss'); if (B.Juice) setTimeout(() => { if (el.isConnected) { B.Juice.bump(el.querySelector('.bcard'), 'shake'); sfx('slam'); } }, 1000);
-        ui.vsT = setTimeout(closeVs, B.Juice && B.Juice.reduced() ? 1600 : 3400); return; } }
-    const more = theirs.length > 5 ? theirs.length - 4 : 0, shown = more ? theirs.slice(0, 4) : theirs;
-    const myTaunt = acct.taunt || null, myFx = acct.vsfx || null, me = esc(acct.account && acct.name ? acct.name : myName() || 'You');
-    const parts = (fxId, n) => { const v = fxId && B.VSFX.find(x => x.id === fxId); return v ? `<span class="vsfx ${v.id}">${Array.from({ length: n }, (_, i) => `<i style="--i:${i}">${v.icon}</i>`).join('')}</span>` : ''; };
-    const bubble = t => t ? `<span class="vsbub">${esc(t)}</span>` : '';
-    const el = document.createElement('div'); el.id = 'vs'; el.className = 'vs' + (B.Juice && B.Juice.reduced() ? ' calm' : ''); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', `${me} versus ${name}. Tap to skip`);
-    // a player's side takes the colours of their league,
-    // with its badge, LP, account level and win streak (yours always; a duel rival's too when it is a real player)
-    const lgs = store.get('balance.league', null), myLg = acct.account ? (lgs && lgs.league != null ? lgs.league : acct.league | 0) : null;
-    const lgStyle = i => { const l = B.LEAGUES[i] || B.LEAGUES[0]; return `--lc:${l.color};--lh:${l.hi}`; };
-    const plate = (i, lp, lvl, st) => i == null ? '' : `<div class="vsplate">${emblem(i, 34)}<div><b>${leagueName(i)}</b><small>${lp | 0} LP · Lv ${lvl}</small></div>${flameHTML(st)}</div>`;
-    const oppLg = duel && g.opp.code && g.opp.league != null ? g.opp.league : null;
-    el.innerHTML = `<div class="vsside me ${myLg != null ? 'lg' : ''}" style="${myLg != null ? lgStyle(myLg) : ''}">${parts(myFx, 9)}<div class="vsname">${acct.account ? avatarHTML(acct.avatar, acct.code, 40) : ''}<b>${me}</b></div>${acct.title ? `<span class="vstitle">${esc(acct.title)}</span>` : ''}${plate(myLg, lgs ? lgs.lp : acct.lp, lvlNow(), streakOf())}${bubble(myTaunt)}
-        <div class="vsteam n${run.heroes.length}">${run.heroes.map((h, i) => `<span style="--i:${i}">${img(h.key, 96, 'por')}<i>Lv ${h.lvl}</i></span>`).join('')}</div></div>
-      <div class="vsmid"><b class="vsword">VS</b><small>${tag}</small><span class="vsscore" id="vsscore"></span></div>
-      <div class="vsside them ${oppLg != null ? 'lg' : ''}" style="${oppLg != null ? lgStyle(oppLg) : ''}">${parts(fx, 9)}<div class="vsname"><b>${name}</b>${av}</div>${duel && g.opp.title ? `<span class="vstitle">${esc(g.opp.title)}</span>` : ''}${oppLg != null ? plate(oppLg, g.opp.lp, g.opp.level || 1, g.opp.streak == null ? 1 : g.opp.streak) : ''}${bubble(taunt)}
-        <div class="vsteam n${shown.length + (more ? 1 : 0)}">${shown.map((k, i) => `<span style="--i:${i}">${img(k, 96, 'por')}</span>`).join('')}${more ? `<span class="more" style="--i:4"><b>+${more}</b></span>` : ''}</div></div>
-      <small class="vsskip">Tap to skip</small>`;
-    el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); closeVs(); });
-    document.body.appendChild(el); sfx('go');
-    if (B.Juice) setTimeout(() => { if (el.isConnected) { B.Juice.bump(el.querySelector('.vsword'), 'shake'); sfx('levelup'); } }, 650);
-    ui.vsT = setTimeout(closeVs, B.Juice && B.Juice.reduced() ? 1400 : 2900);
-    if (duel && code) Net.post('player', { op: 'profile', pid: pid(), code }).then(r => {   // the score between you two (PvP)
-      const s = $('#vsscore'), h = r && r.profile && r.profile.h2h; if (s && h) s.innerHTML = `<b class="win">${h.w}</b><i>–</i><b class="lose">${h.l}</b><em>${h.w + h.l ? 'your duels' : 'first duel'}</em>`;
-    }).catch(() => {});
-  }
-  // WHAT: the Skip button (Crown Shop perk): plays the whole fight at once.
-  function skipBattle() { const b = battle; if (!b) return; let n = 0; while (!b.W.over && n++ < 20 * 60 * 30) Sim.step(b.W); b.endAt = performance.now(); }
-
-  // ------------------------------------------------------------------ modals
-  // when
-  // the screen changes, a toast or a sheet left from the screen before goes away (the ones this tap just opened stay)
-  // WHAT: MODALS AND TOAST. When the screen changes, an info bubble (toast) or sheet left over from the screen before is closed, except the ones the very same tap just opened.
-  function clearLeftovers() {
-    const now = performance.now();
-    clearTimeout(xpToast.h);
-    if (toast.t && (toast.info || now - toast.t > 350)) { const t = $('#toast'); if (t) t.classList.remove('on'); }   // v62: an info bubble (boss, formation) never outlives its screen
-    if (ui.modal && ui.modal !== 'artlab' && now - (ui.modalT || 0) > 350) closeModal();
-  }
-  // WHAT: shows a sheet (popup) with the given HTML. closeModal() hides it; toast(msg) shows a bubble at the bottom (info = true for descriptions that must vanish when the screen changes).
-  function openModal(html) { ui.modalT = performance.now(); clearTimeout(guide.t); const gt = document.querySelector(".gtip"); if (gt) gt.remove(); const m = $('#modal'); m.innerHTML = `<div class="sheet">${html}</div>`; m.hidden = false; ui.modal = true; }
-  function closeModal() { if (ui.modal === 'artlab' && B.ArtLab) B.ArtLab.closed(); const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; clearInterval(ui.sugTimer); if (typeof sheetSwipe !== 'undefined') { sheetSwipe.tracking = false; sheetSwipe.sheet = null; sheetSwipe.dy = 0; } }
-  function toast(msg, info) { toast.info = !!info; toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }
-
-  // v54 (, David: "Equipping items ... is still difficult and unintuitive. Theres so many tiny slots. Cant you
-  // think of a cooler inventory system that a 14yo kid will understand? Intuitive drag drop, easy, satisfying, any child
-  // could do it, dopamine power fantasy"): the Gear screen. One hero at a time, big: its art, its main stats and a few big
-  // gear sockets (as many as it can wear; the next ones show the level that opens them). The bag below holds big item
-  // tiles. Drag an item onto the hero (or onto another hero's tab) to put it on, drag it back to the bag to take it off,
-  // or tap it and use the big button. Auto-equip dresses the whole team with the best gear in one tap. Every equip pops:
-  // the socket bounces, the item's effect flies onto the hero and the stat it raised counts up.
-  // WHAT: THE ITEMS (GEAR) SCREEN. It is a sheet with the hero doll (7 slots), the bag, Auto-equip (purple button) and drag and drop. gearHTML draws it; gearPut / gearDo change the run.
-  const GEAR_PAGE = 10;
-  const shortName = n => n.length > 14 ? n.split(' ').slice(-1)[0] : n;
-  const gearHero = () => run.heroes.find(h => h.uid === ui.gHero) || run.heroes[0];
-  const SLOT_LV = [3, 4, 5];   // each of these levels opens one more item slot (run.js slots)
-  const futureSlots = h => SLOT_LV.filter(l => l > h.lvl);
-  const maxSlots = h => Run.slots(run, h) + futureSlots(h).length;
-  const gearStats = h => { const d = Run.heroDef(run, h); return { hp: Math.round(d.hp), atk: Math.round(d.atk), ap: Math.round(d.ap) }; };
-  // WHAT: draws the whole Items screen: hero tabs, the doll, the bag page, the selected item's description and the buttons.
-  function gearHTML() {
-    if (ui.heroInfo && run.heroes.some(h => h.uid === ui.heroInfo)) return `<div class="shead"><b>${I('user')} Hero</b><button data-act="close" aria-label="Close">✕</button></div>${heroCardHTML(run.heroes.find(h => h.uid === ui.heroInfo))}`;
-    const h = gearHero(); if (!h) return '';
-    ui.gHero = h.uid;
-    const d = HEROES[h.key], sl = Run.slots(run, h), st = gearStats(h), sel = ui.gsel;
-    const tabs = run.heroes.map(x => `<button class="gtab ${x.uid === h.uid ? 'on' : ''}" data-act="gear-hero" data-arg="${x.uid}" data-drop="hero:${x.uid}">${img(x.key, 44, 'por')}<b>${esc(hName(x))}</b><i>${x.items.length}/${Run.slots(run, x)}</i></button>`).join('');
-    // sockets: worn items, empty ones, then the ones a level opens
-    const microStat = it => {
-      if (!it || !it.desc) return '';
-      const part = it.desc.split(',')[0].trim();
-      return esc(part.length > 18 ? part.slice(0, 17) + '…' : part);
-    };
-    const socks = [];
-    for (let i = 0; i < maxSlots(h); i++) {
-      const id = h.items[i];
-      if (id) { const it = ITEM[id], on = sel && sel.k === 'w' && sel.uid === h.uid && sel.i === i;
-        socks.push(`<button class="gsock full ${on ? 'on' : ''}" style="--tier:${TIER_COLOR[it.tier]}" data-act="gear-pick" data-arg="w:${h.uid}:${i}" data-drag="w:${h.uid}:${i}" data-drop="sock:${h.uid}:${i}">${ico('item', id, 44)}<span>${esc(shortName(it.name))}</span><small class="gitem-stat">${microStat(it)}</small></button>`); }
-      else if (i < sl) socks.push(`<span class="gsock empty" data-drop="hero:${h.uid}">${I('bag')}<span>Free</span></span>`);
-      else socks.push(`<span class="gsock locked">${I('lock')}<span>Lv ${futureSlots(h)[i - sl]}</span></span>`);
-    }
-    const sc = Run.setCounts(h.items), sets = Object.keys(sc).map(sid => `<span class="gset ${sc[sid] >= 2 ? 'on' : ''}">◆ ${esc(B.SETS[sid].name)} ${sc[sid]}/3${sc[sid] >= 2 ? ' ✓' : ''}</span>`).join('');
-    // the bag, best first, a page at a time
-    const order = run.bag.map((id, i) => i).sort((a, b) => RANK(run.bag[b]) - RANK(run.bag[a]) || DOLL.indexOf(ITEM[run.bag[a]].type) - DOLL.indexOf(ITEM[run.bag[b]].type));
-    const pages = Math.max(1, Math.ceil(order.length / GEAR_PAGE)), pg = Math.min(ui.gPage || 0, pages - 1);
-    const tiles = order.slice(pg * GEAR_PAGE, (pg + 1) * GEAR_PAGE).map(i => { const id = run.bag[i], it = ITEM[id], on = sel && sel.k === 'b' && sel.i === i, fits = Run.canEquip(run, h, id);
-      return `<button class="gitem ${on ? 'on' : ''} ${fits ? '' : 'nofit'}" style="--tier:${TIER_COLOR[it.tier]}" data-act="gear-pick" data-arg="b:${i}" data-drag="b:${i}" aria-label="${esc(it.name)}">${ico('item', id, 42)}<span>${esc(shortName(it.name))}</span><small class="gitem-stat">${microStat(it)}</small></button>`; }).join('');
-    // what the selected item does, and the one big button
-    let det = '';
-    if (sel && sel.k === 'b' && run.bag[sel.i]) {
-      const id = run.bag[sel.i], it = ITEM[id], same = h.items.findIndex(x => ITEM[x].type === it.type), full = same < 0 && h.items.length >= sl;
-      const worst = full ? h.items.reduce((w, x, j) => RANK(x) < RANK(h.items[w]) ? j : w, 0) : -1;
-      const label = same >= 0 ? `Swap for ${esc(shortName(ITEM[h.items[same]].name))}` : full ? `Swap for ${esc(shortName(ITEM[h.items[worst]].name))}` : `Put on ${esc(d.name)}`;
-      det = `<div class="gdet" style="--tier:${TIER_COLOR[it.tier]}">${ico('item', id, 40)}<div class="gdt"><b style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</b> ${itemTag(it)}<span class="small">${fmt(it.desc)}</span></div>
-        <div class="gdb"><button class="primary" data-act="gear-equip">${I('up')} ${label}</button><button data-act="sell">Sell ${Run.sellValue(id)}g</button></div></div>`;
-    } else if (sel && sel.k === 'w' && h.items[sel.i]) {
-      const id = h.items[sel.i], it = ITEM[id];
-      det = `<div class="gdet" style="--tier:${TIER_COLOR[it.tier]}">${ico('item', id, 40)}<div class="gdt"><b style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</b> ${itemTag(it)}<span class="small">${fmt(it.desc)}</span></div>
-        <div class="gdb"><button data-act="gear-off">${I('back')} Take off</button></div></div>`;
-    } else det = `<p class="ghint">${run.bag.length ? `${I('bag')} Drag gear onto a hero, or tap it` : 'Your bag is empty. Item Shops and events fill it.'}</p>`;
-    return `<div class="shead"><b>${I('bag')} Gear up</b><button data-act="close" aria-label="Close">✕</button></div>
-      <div class="gtabs">${tabs}</div>
-      <div class="gstage" data-drop="hero:${h.uid}">
-        <button class="gart" data-act="hero-info" data-arg="${h.uid}" aria-label="${esc(d.name)}: see the hero"><img src="${por(h.key, 104, true)}" alt=""><span class="glv">Lv ${h.lvl}</span>${I('info', 'gi')}</button>
-        <div class="gside"><div class="gstats"><span data-st="hp" data-act="stat-info" data-arg="hp" role="button" tabindex="0" title="Health">${I('heart')}<b>${st.hp}</b></span><span data-st="atk" data-act="stat-info" data-arg="atk" role="button" tabindex="0" title="Attack">${I('sword')}<b>${st.atk}</b></span><span data-st="ap" data-act="stat-info" data-arg="ap" role="button" tabindex="0" title="Magic (AP)">${I('bolt')}<b>${st.ap}</b></span></div>
-          <div class="gsockets n${Math.min(maxSlots(h), 6)}">${socks.join('')}</div>${sets ? `<div class="gsets">${sets}</div>` : ''}</div>
-      </div>
-      ${det}
-      <div class="gbag" data-drop="bag"><div class="gbh"><b>Bag</b><span>${run.bag.length}</span>${pages > 1 ? `<span class="grow"></span><button class="gpg" data-act="gear-page" data-arg="-1" ${pg ? '' : 'disabled'} aria-label="Previous">${I('back')}</button><span>${pg + 1}/${pages}</span><button class="gpg" data-act="gear-page" data-arg="1" ${pg < pages - 1 ? '' : 'disabled'} aria-label="Next">${I('arrow')}</button>` : ''}</div>
-        <div class="gbgrid">${tiles || `<p class="dim small">Empty</p>`}</div></div>
-      <div class="bar gbar"><button class="gauto ${autoOn() ? 'on' : ''}" data-act="gear-auto" ${run.bag.length || run.heroes.some(h => h.items.length) ? '' : 'disabled'}>${I('bolt')} Auto-equip${autoOn() ? '<i class="gon">ON</i>' : ''}</button><button class="primary" data-act="close">Done</button></div>`;
-  }
-  // WHAT: opens or refreshes the Items screen.
-  function openGear() { openModal(gearHTML()); ui.modal = 'gear'; const sh = $('#modal .sheet'); if (sh) sh.classList.add('gearsheet'); }
-  // put a bag item on hero uid: same type = swap; full = replaces the socket j (or the weakest one); returns the socket it went into
-  // WHAT: moves an item from the bag onto a hero slot (swapping if the type is taken).
-  function gearPut(bagIdx, uid, j) {
-    const h = run.heroes.find(x => x.uid === uid), id = run.bag[bagIdx]; if (!h || !id) return -1;
-    const same = h.items.findIndex(x => ITEM[x].type === ITEM[id].type);
-    if (same < 0 && h.items.length >= Run.slots(run, h)) {
-      const out = j != null && h.items[j] ? j : h.items.reduce((w, x, k) => RANK(x) < RANK(h.items[w]) ? k : w, 0);
-      Run.unequip(run, uid, out);   // goes to the end of the bag: the dragged index stays valid
-    }
-    const err = Run.equip(run, bagIdx, uid); if (err) { toast(err); return -1; }
-    return h.items.indexOf(id);
-  }
-  // the pop after an equip: the socket bounces, the effect flies onto the hero, the stats that rose count up
-  function gearFx(uid, sock, id, before) {
-    sfx('buy'); const h = run.heroes.find(x => x.uid === uid); if (!h || !B.Juice) return;
-    const after = gearStats(h), s = $(`#modal .gsock[data-arg="w:${uid}:${sock}"]`), art = $('#modal .gart');
-    if (s) { B.Juice.bump(s, 'pop'); B.Juice.confettiAt(s, 16, { speed: 220 }); }
-    if (art && id && ITEM[id]) B.Juice.floater(art, ITEM[id].desc.split(',')[0], 'up');
-    for (const k of ['hp', 'atk', 'ap']) if (after[k] !== before[k]) { const el = $(`#modal .gstats [data-st=${k}] b`); if (el) { B.Juice.countUp(el, before[k], after[k], 500); B.Juice.bump(el.parentElement); } }
-  }
-  // with Auto on (the default), gear that lands in the
-  // bag goes on by itself; a choice by hand in Gear turns Auto off, the purple button turns it on again
-  // WHAT: Auto-equip. While it is on (the default) new items are handed out by Run.autoEquip as soon as they appear; touching gear by hand turns it off until the purple button is pressed.
-  const autoOn = () => run && run.autoGear !== false;
-  function autoGear() {
-    if (!autoOn() || battle || !run.bag.length || run.phase === 'over' || ui.modal === 'gear') return;
-    const n = Run.autoEquip(run); if (!n) return;
-    save(); header(); const t = $('#top [data-act=team]'); if (t && B.Juice) B.Juice.bump(t, 'pop');
-    clearTimeout(autoGear.h); autoGear.h = setTimeout(() => toast('Auto-equip put on your new gear'), 500);
-  }
-  function manualGear() { if (autoOn()) { run.autoGear = false; toast('Auto-equip is off: you choose. The purple button turns it back on.'); } }
-  // WHAT: runs a manual gear change, turns Auto-equip off, refreshes the screens and plays the effect.
-  function gearDo(fn, uid) { manualGear(); const h = run.heroes.find(x => x.uid === uid), before = h ? gearStats(h) : null; const r = fn(); ui.gsel = null; ui.gHero = uid; save(); if (ui.modal === 'gear') openGear(); if (run && run.phase === 'deploy') render(); else refreshBehind(); if (r && r.sock >= 0 && before) gearFx(uid, r.sock, r.id, before); }
-  // the decisions live in run.js (Run.autoEquip: hero profiles, item scores, best match first)
-  // WHAT: the purple button: Run.autoEquip for the whole team.
-  function gearAuto() { return Run.autoEquip(run); }
-
-  // drag and drop with the pointer (mouse and touch): a ghost follows the finger, drop targets glow
-  // WHAT: drag and drop on the Items screen or Deploy screen with a pointer (mouse and touch): gearDown starts, gearMove shows the ghost and glows drop targets, gearUp drops.
-  const gdrag = { on: false };
-  function gearDown(e) {
-    ui.gNoClick = 0;   // a new touch: an old drop no longer eats taps
-    const src = e.target.closest('[data-drag]'); if (!src || e.button > 0) return;
-    Object.assign(gdrag, { src, x: e.clientX, y: e.clientY, on: false, id: e.pointerId, ghost: null });
-  }
-  function gearMove(e) {
-    if (!gdrag.src || e.pointerId !== gdrag.id) return;
-    if (!gdrag.on) {
-      if (Math.hypot(e.clientX - gdrag.x, e.clientY - gdrag.y) < 8) return;
-      gdrag.on = true; const im = gdrag.src.querySelector('img'); const g = gdrag.ghost = document.createElement('div'); g.className = 'gghost';
-      if (im) g.appendChild(im.cloneNode()); document.body.appendChild(g); document.body.classList.add('gdragging'); gdrag.src.classList.add('lifted'); sfx('pick');
-    }
-    e.preventDefault();
-    gdrag.ghost.style.left = e.clientX + 'px'; gdrag.ghost.style.top = e.clientY + 'px';
-    const t = document.elementFromPoint(e.clientX, e.clientY), drop = t && t.closest('[data-drop]');
-    for (const x of document.querySelectorAll('.dropover')) if (x !== drop) x.classList.remove('dropover');
-    if (drop) drop.classList.add('dropover');
-  }
-  function gearUp(e) {
-    if (!gdrag.src || e.pointerId !== gdrag.id) return;
-    const was = gdrag.on, src = gdrag.src.dataset.drag; gdrag.src.classList.remove('lifted');
-    if (gdrag.ghost) gdrag.ghost.remove(); document.body.classList.remove('gdragging'); gdrag.src = null; gdrag.on = false;
-    for (const x of document.querySelectorAll('.dropover')) x.classList.remove('dropover');
-    if (!was) return;
-    ui.gNoClick = performance.now();
-    const t = document.elementFromPoint(e.clientX, e.clientY), drop = t && t.closest('[data-drop]'); if (!drop) return;
-    const [dk, da, db] = drop.dataset.drop.split(':'), [sk, sa, sb] = src.split(':');
-    const inDeploy = !ui.modal && run && run.phase === 'deploy';
-    const postDo = () => { ui.dsel = null; if (inDeploy) render(); };
-
-    // 1) Worn item dropped on bag
-    if (dk === 'bag' && sk === 'w') {
-      gearDo(() => { Run.unequip(run, +sa, +sb); sfx('back'); }, +sa);
-      postDo();
-    }
-    // 2) Bag item dropped on hero or socket
-    else if ((dk === 'hero' || dk === 'sock') && sk === 'b') {
-      const targetUid = +da;
-      const targetSock = dk === 'sock' ? +db : null;
-      const targetHero = run.heroes.find(x => x.uid === targetUid);
-      if (targetHero) {
-        manualGear();
-        const bagIdx = +sa;
-        const bagId = run.bag[bagIdx];
-        if (targetSock != null && targetHero.items[targetSock]) {
-          // Direct replace on socket
-          const oldWorn = targetHero.items[targetSock];
-          run.bag[bagIdx] = oldWorn;
-          targetHero.items[targetSock] = bagId;
-          sfx('buy');
-          save();
-          if (ui.modal === 'gear') openGear();
-          postDo();
-        } else {
-          // Regular equip
-          gearDo(() => ({ sock: gearPut(bagIdx, targetUid, targetSock), id: bagId }), targetUid);
-          postDo();
-        }
-      }
-    }
-    // 3) Worn item dropped on another hero or socket (or same hero different socket)
-    else if ((dk === 'hero' || dk === 'sock') && sk === 'w') {
-      const fromUid = +sa, fromSock = +sb;
-      const targetUid = +da, targetSock = dk === 'sock' ? +db : null;
-      const fromHero = run.heroes.find(x => x.uid === fromUid);
-      const targetHero = run.heroes.find(x => x.uid === targetUid);
-
-      if (fromHero && targetHero && fromHero.items[fromSock]) {
-        manualGear();
-        if (fromUid === targetUid) {
-          // Reorder or swap sockets on the same hero
-          if (targetSock != null && targetSock !== fromSock) {
-            const temp = fromHero.items[fromSock];
-            fromHero.items[fromSock] = fromHero.items[targetSock];
-            if (fromHero.items[fromSock] == null) delete fromHero.items[fromSock];
-            fromHero.items[targetSock] = temp;
-            fromHero.items = fromHero.items.filter(Boolean);
-            sfx('buy');
-            save();
-            if (ui.modal === 'gear') openGear();
-            postDo();
-          }
-        } else {
-          // Cross-hero transfer or swap
-          const fromItem = fromHero.items[fromSock];
-          if (targetSock != null && targetHero.items[targetSock]) {
-            // Direct 1-to-1 swap between heroes!
-            const targetItem = targetHero.items[targetSock];
-            fromHero.items[fromSock] = targetItem;
-            targetHero.items[targetSock] = fromItem;
-            sfx('buy');
-            save();
-            if (ui.modal === 'gear') openGear();
-            postDo();
-          } else {
-            // Transfer to target hero (unequip from A, equip on B)
-            Run.unequip(run, fromUid, fromSock);
-            const bagIdx = run.bag.length - 1;
-            gearPut(bagIdx, targetUid, targetSock);
-            sfx('buy');
-            save();
-            if (ui.modal === 'gear') openGear();
-            postDo();
-          }
-        }
-      }
-    }
-  }
-  document.addEventListener('pointerdown', gearDown);
-  document.addEventListener('pointermove', gearMove, { passive: false });
-  document.addEventListener('pointerup', gearUp); document.addEventListener('pointercancel', gearUp);
-  // a drag ends with a click on what was under the finger: that click is not a tap
-  document.addEventListener('click', e => { if (ui.gNoClick && performance.now() - ui.gNoClick < 250 && e.target.closest('#modal, [data-drag]')) { e.stopPropagation(); e.preventDefault(); ui.gNoClick = 0; } }, true);
-
-  // the hero card on top of the team sheet
-  // a hero's Details from the shop or the start: the picture, what it does in plain words, the whole
-  // ability with its numbers, its stats, and every level's two powers
-  // WHAT: the "details" sheet of a hero (stats, ability, all his powers) opened from cards.
-  function heroPeekHTML(key) {
-    const d = HEROES[key]; if (!d) return '';
-    const def = Run.heroDef({ relics: [], heroes: [], bag: [] }, { key, lvl: 1, specs: [], items: [], bonus: {}, uid: 0 });
-    // v120 (, David: "Nas descrições detalhadas tenta sempre garantir que cabe tudo no ecrã do smart phone. Se tens que fazer scroll está demasiado
-    // longo/complexo"): the sheet fits a phone screen: a smaller picture with the strength chips, the scaling in one compact list, and the 8 powers as 4 rows of
-    // two buttons; the one you tap is explained in a single line under them
-    const ps = ui.peekSpec && ui.peekSpec.key === key ? d.specs.flat().find(s => s.id === ui.peekSpec.id) : null;
-    const backBtn = ui.fromCodex ? `<button class="chip" data-act="codex" aria-label="Back to Heroes">← Heroes</button>` : '';
-    return `<div class="shead">${backBtn}<b>${esc(d.name)}</b><span class="grow"></span><button data-act="close" aria-label="Close">✕</button></div>
-      <div class="peek"><img class="peekart" src="${por(key, 110, true)}" alt=""><div class="peekt"><span class="role">${esc(d.role)} · ${d.range <= 1 ? I('sword') + ' fights up close' : I('bow') + ' attacks from afar'}</span><p class="htag big">${esc(d.tag || '')}</p>${statBars(d)}<div class="small dim" style="margin-top:4px">🛡 <b>${Math.round(def.armor || 0)}</b> Defense · ✦ <b>${Math.round(def.ap || 100)}</b> Magic</div></div></div>
-      <div class="abil peekab">${abilHTML(d)}</div>${scalingHTML(def, true)}
-      <h3 class="peekh">Powers it can learn <span class="dim">· tap one</span></h3><div class="peekpow v2">${d.specs.map((pr, k) => `<div class="pp"><span class="sp-lv">Lv ${k + 2}</span>${pr.map(sp => `<button class="ppb ${ps && ps.id === sp.id ? 'on' : ''}" data-act="peek-spec" data-arg="${key}:${sp.id}">${esc(sp.name)}</button>`).join('')}</div>`).join('')}</div>
-      <p class="ppdesc ${ps ? '' : 'dim'}">${ps ? `<b class="spec">${esc(ps.name)}</b> ${fmt(plainAb(ps.desc))}` : 'Each level up you pick one of the two.'}</p>`;
-  }
-  // WHAT: a hero card inside sheets.
-  function heroCardHTML(h) {
-    const d = HEROES[h.key], def = Run.heroDef(run, h), specs = h.specs.map(id => Run.specOf(h.key, id)).filter(Boolean);
-    return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(hName(h))}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}${h.path != null ? ' · ★ ' + esc(h.pathName) : ''}</span>
-        <div class="small">${abilHTML(d)}</div></div><button class="chip" data-act="hero-info" data-arg="0" aria-label="Close">✕</button></div>
-      ${scalingHTML(def)}
-      ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
-      ${Object.entries(Run.setCounts(h.items)).filter(([, n]) => n >= 2).map(([sid, n]) => `<div class="small setfull">◆ <b>${esc(B.SETS[sid].name)}</b> ${n}/3 · ${fmt(B.SETS[sid].bonus[2].desc)}${n >= 3 ? ' · ' + fmt(B.SETS[sid].bonus[3].desc) : ''}</div>`).join('')}</div>`;
-  }
-  // WHAT: SUGGESTION BOX. "Send for review" lets anyone propose changes; they go to api/suggest.js and the owner's assistant reads them. ago() = "5 min ago".
-  function ago(ms, now) { const s = Math.max(0, Math.round((now - ms) / 1000)); return s < 60 ? s + 's ago' : s < 3600 ? Math.round(s / 60) + ' min ago' : Math.round(s / 3600) + ' h ago'; }
-  // Suggestions: the player writes changes into a local list (up to 10), then presses "Send for review".
-  // That sends the whole list as one batch and wakes Claude (tools/watcher.js) right away.
-  // WHAT: the list of drafted changes kept in the browser before sending (max 10).
-  const MAX_DRAFTS = 10;
-  const drafts = () => store.get('balance.drafts', []);
-  // WHAT: the status line of the review (queued, in progress, done) and queueHTML the list of suggestions with their replies.
-  function statusHTML(r, list) {
-    if (!r) return '';
-    const working = (list || []).some(s => s.status === 'doing');
-    const online = working || (r.seen && r.now - r.seen < 3 * 60e3);
-    const main = r.paused ? '⏸ Reviews are paused by the owner. Your list waits in the queue.'
-      : working ? '🛠 Claude is reviewing a list right now. Yours goes next.'
-      : online ? '🟢 Reviewer online. Claude starts as soon as you press <b>Send for review</b>.'
-      : '⚪ Reviewer offline right now. Your list waits in the queue and is reviewed when it is back.';
-    return `<div class="review ${online && !r.paused ? 'on' : ''}">${main}${r.lastRun ? ` <span class="dim">Last update shipped ${ago(r.lastRun, r.now)}.</span>` : ''}</div>`;
-  }
-  const STATUS = { new: 'queued', doing: 'in progress', held: "awaiting owner's OK", done: 'done ✓', declined: 'declined' };
-  function queueHTML(list) {
-    if (!list.length) return '<p class="dim small">Nothing yet. Be the first!</p>';
-    const groups = [], by = {};
-    for (const s of list) { if (!by[s.batch]) { by[s.batch] = []; groups.push(s.batch); } by[s.batch].push(s); }
-    return groups.map(b => {
-      const items = by[b].sort((x, y) => x.id - y.id), f = items[0];
-      const st = items.some(x => x.status === 'doing') ? 'doing' : items.some(x => x.status === 'new') ? 'new' : items.some(x => x.status === 'held') ? 'held' : 'done';
-      return `<div class="batch"><div class="row"><b>Review #${b}</b><span class="dim small">${esc(f.name || 'anonymous')} · ${new Date(f.created).toLocaleDateString()} · ${items.length} change${items.length > 1 ? 's' : ''}</span><span class="st ${st}">${STATUS[st]}</span></div>
-        ${items.map(s => `<div class="sug ${s.status}"><div class="row"><span class="dim small">#${s.id}</span><span class="st">${STATUS[s.status] || esc(s.status)}</span></div><div class="txt">${esc(s.text)}</div>${s.reply ? `<div class="reply">🤖 ${esc(s.reply)}</div>` : ''}</div>`).join('')}</div>`;
-    }).join('');
-  }
-  function draftsHTML() {
-    const d = drafts();
-    return d.length ? `<ol class="drafts">${d.map((t, i) => `<li><span>${esc(t)}</span><button class="chip" data-act="draft-del" data-arg="${i}" aria-label="Remove">✕</button></li>`).join('')}</ol>`
-      : '<p class="dim small">Your list is empty.</p>';
-  }
-  function renderDrafts() {
-    const el = $('#drafts'); if (el) el.innerHTML = draftsHTML();
-    const n = drafts().length, btn = $('[data-act=send-review]');
-    if (btn) btn.textContent = n ? `Send ${n} change${n > 1 ? 's' : ''} for review` : 'Send for review';
-    const add = $('form[data-form=draft] button'); if (add) add.disabled = n >= MAX_DRAFTS;
-  }
-  // WHAT: the frame of the suggestion sheet (text box, drafts, queue). openSuggest opens it, sendReview sends the drafts, loadQueue refreshes the queue.
-  function suggestShell() {
-    return `<div class="shead"><b>${I('bulb')} Suggest changes</b><span class="grow"></span><button class="chip" data-act="sug-refresh">↻ Refresh</button><button data-act="close">✕</button></div>
-      <div id="sugStatus"></div>
-      <p class="small">Write each change and tap <b>Add</b>. Got 5 ideas? Add all 5, then tap <b>Send for review</b>. Claude reviews the whole list and ships it. When the new version is live, a small notice at the top offers to reload the game.</p>
-      <form data-form="draft" class="stack">
-        <textarea name="text" maxlength="1500" rows="3" placeholder="A bug, a rebalance, a new hero, item or power, a UI change, a full restructure... One change per note. Any language is fine."></textarea>
-        <button>+ Add to my list</button>
-      </form>
-      <h3>My list</h3><div id="drafts">${draftsHTML()}</div>
-      <div class="row"><input id="sugName" maxlength="24" placeholder="Your name (optional)" value="${esc(store.get('balance.name', ''))}"><button class="primary" data-act="send-review">Send for review</button></div>
-      <p class="small">Made hero art? <a href="#" data-act="art-lab">Try it in the 🎨 Art Lab</a> and send the pictures from there.</p>
-      <p class="dim small">Everything sent is public. Claude implements what fits the game, replies to each change, and declines anything harmful or unrelated to the game.</p>
-      <h3>Queue</h3><div id="sugQueue"><p class="dim">Loading…</p></div>`;
-  }
-  async function loadQueue() {
-    try {
-      const d = await Net.get('suggest');
-      if (ui.modal !== 'suggest') return;
-      $('#sugStatus').innerHTML = statusHTML(d.review, d.list); $('#sugQueue').innerHTML = queueHTML(d.list);
-    } catch (e) { const q = $('#sugQueue'); if (q && ui.modal === 'suggest') q.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
-  }
-  function openSuggest() {
-    openModal(suggestShell()); ui.modal = 'suggest'; renderDrafts(); loadQueue();
-    clearInterval(ui.sugTimer); ui.sugTimer = setInterval(() => { if (ui.modal === 'suggest') loadQueue(); else clearInterval(ui.sugTimer); }, 20000);
-  }
-  // WHAT: sends the drafted changes (and Art Lab pictures) to the server as one review batch.
-  async function sendReview(btn) {
-    const ta = $('form[data-form=draft] textarea'), extra = ta ? ta.value.trim() : '';
-    const items = drafts().concat(extra ? [extra] : []).slice(0, MAX_DRAFTS);
-    if (!items.length) { toast('Add at least one change first'); return; }
-    const name = (($('#sugName') || {}).value || '').trim(); store.set('balance.name', name);
-    btn.disabled = true;
-    try {
-      const r = await Net.post('suggest', { items, name });
-      store.set('balance.drafts', []); if (ta) ta.value = '';
-      renderDrafts(); toast(`Sent! Review #${r.batch} (${items.length} change${items.length > 1 ? 's' : ''}) is in the queue.`); trackBatch(r.batch); loadQueue();
-    } catch (e) { toast(e.message); }
-    btn.disabled = false;
-  }
-  // a tab per kind of content with its own Elo, to balance heroes, items and relics
-  // WHAT: THE LADDER: tabs Player / Ranking / Heroes / Items / Powers. The content tabs (Elo of every piece) are a Crown Shop unlock.
-  const LADDER_TABS = [['player', 'Player'], ['players', 'Global'], ['friends', 'Friends']];   // Friends = the players you follow
-
-  // WHAT: the Player tab: your league, level, rewards and the road ahead (roadmapHTML).
-  function playerTabHTML(me) {
-    const L = B.LEAGUES, R = B.LEAGUE_RULES, cur = me.league | 0, top = L.length - 1, lp = me.lp | 0;
-    const paid = me.sreach | 0;
-    const banners = L.map((l, i) => {
-      const st = i < cur ? 'Reached ✓' : i === cur ? (i === top ? `${lp} points · no ceiling` : `${lp} / ${R.step} points`) : i === top ? `${R.step} points in ${L[i - 1].name} · no ceiling` : `${R.step} points in ${L[i - 1].name}`;
-      const cr = i ? `<span class="lgc ${paid >= i ? 'got' : ''}">👑 ${B.CROWNS.league[i]}${paid >= i ? ' ✓' : ''}</span>` : '';
-      return `<div class="lgb ${i < cur ? 'done' : i === cur ? 'cur' : 'locked'}" style="--lc:${l.color};--lh:${l.hi}"><span class="rod"></span>${emblem(i, 40)}<b>${l.name}</b><span class="lgs">${st.replace(/points/g, 'LP')}</span>${cr}
-        ${i === cur && i < top ? `<span class="lgbar"><i style="width:${100 * lp / R.step}%"></i></span>` : i === cur ? '<span class="here">You are here</span>' : ''}</div>`;
-    }).join('');
-    const path = L.map((l, i) => `<span class="pn ${i < cur ? 'done' : i === cur ? 'cur' : ''}" title="${l.name}">${emblem(i, i === cur ? 30 : 22)}</span>${i < top ? `<span class="pl"><i style="width:${i < cur ? 100 : i === cur ? Math.round(100 * lp / R.step) : 0}%"></i></span>` : ''}`).join('');
-    const season = me.season || B.seasonOf(Date.now()), days = Math.max(0, Math.ceil((B.seasonEnds(season) - Date.now()) / 864e5));
-    return `<div class="ptab"><div class="pme"><span class="pwho">${avatarHTML(me.avatar || acct.avatar, me.code || acct.code, 56)}</span><div><b>${me.code ? plink(me.name || 'You', me.code) : esc(me.name || 'You')}</b><span class="pl1" style="color:${L[cur].hi}">${L[cur].name} league</span>
-        <span class="small">${cur >= top ? `${lp} LP in Master` : `${lp}/${R.step} LP to ${L[cur + 1].name}`}</span><span class="dim small">${me.runs} games${me.titles ? ' · 🏆 ' + me.titles + ' completed' : ''} · ${crowns(me.crowns)}</span><span class="small">${flameHTML(me.streak == null ? 1 : me.streak)} win streak · best ${me.bstreak == null ? 1 : me.bstreak}</span></div></div>
-      <div class="row center ptabbtns"><button data-act="my-profile">👤 My profile</button><button data-act="shop">👑 Crown Shop</button></div>
-      ${roadmapHTML(me)}
-      <h3 class="lgh">Leagues <span class="seasonl">Season ${season} · ${days} day${days === 1 ? '' : 's'} left</span></h3>
-      <div class="lgscroll mini" id="lgscroll">${banners}</div>
-      <div class="lgpath">${path}</div>
-      <p class="small dim">League points (LP): a completed run +${B.LP.final}, plus +${B.LP_PVE[0]} in Bronze and +${B.LP_PVE[1]} in Silver, plus its 🔥 win streak (+${B.LP.streak} LP per run in the streak); then each Gauntlet floor won pays its number (floor 3 = +3). In Master a completed run pays no LP: only Gauntlet floors do. A lost run costs 5 LP per league above Bronze (Silver 5, Gold 10...); a fall in the Gauntlet costs nothing. The higher the league, the harder the climb: wins pay ×${B.LP_LEAGUE.gain[0]} in Bronze down to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Master, losses cost ×${B.LP_LEAGUE.loss[0]} up to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}. ${R.step} LP move you up a league; below 0 you drop to the league under (at ${R.demoteTo} LP). Master has no ceiling. The first time you reach a league in a season you earn the crowns on its banner. A season lasts ${B.SEASON.days} days; then everyone starts again from Bronze (your best league stays on your profile).</p>
-    </div>`;
-  }
-  // the account level and the road of rewards (one new hero, item or relic per level)
-  function roadmapHTML(me) {
-    const xp = me.axp | 0, L = B.levelProgress(xp), lvl = L.lvl, per = L.need, inLv = L.into, max = B.UNLOCKS[B.UNLOCKS.length - 1].lvl, X = B.GAME_XP;
-    const pic = u => unlockPic(u, 44);
-    const nodes = B.UNLOCKS.map(u => `<div class="rmn ${u.lvl <= lvl ? 'got' : u.lvl === lvl + 1 ? 'next' : ''}" tabindex="0" data-tip="${esc('Level ' + u.lvl + ': ' + unlockName(u) + '. ' + unlockInfo(u))}"><span class="rml">Lv ${u.lvl}</span>${pic(u)}<b>${esc(unlockName(u))}</b><i>${KIND_NAME(u.kind)}</i><em>${u.lvl <= lvl ? '✓' : '🔒'}</em></div>`).join('');
-    return `<div class="acctlv"><div class="alh"><span class="lvb">${lvl}</span><div class="alb"><b>Account level ${lvl}</b>
-        <span class="xpbar big"><i style="width:${lvl > max ? 100 : Math.round(100 * inLv / per)}%"></i></span>
-        <span class="small">${lvl > max ? `${xp} XP · every reward unlocked` : `${inLv}/${per} XP to level ${lvl + 1}`}</span></div></div>
-      <div class="roadmap" id="roadmap">${nodes}</div>
-      <p class="small xpways">Every game: 🎮 +${X.played} for playing · ⚔️ +${X.fight} per fight won · 👹 +${X.boss} per boss beaten · 🏆 +${X.reached} for completing the run · 🤺 +${X.duel} per Gauntlet floor won · 👑 +${X.champion} for the Gauntlet crown. Each level needs a bit more XP than the last.</p>
-      <p class="small xpways">Bonus firsts: ⭐ first PvE clear with each hero +${B.ACCOUNT.heroClear} <span class="dim">(${me.cleared | 0}/${Object.keys(HEROES).length})</span> · 👹 each boss beaten the first time +${B.ACCOUNT.boss} <span class="dim">(${me.bosses | 0}/${Object.keys(B.BOSSES).length})</span> · 💎 +${B.ACCOUNT.crownXp} per crown spent${hasPerk('xp2') ? ' · <b class="kw-gold">✨ Double XP on</b>' : ''}</p></div>`;
-  }
-  // WHAT: opens the ladder sheet on a tab (loads the ranking from api/elo.js).
-  // two tabs, you and the ranking;
-  // the ranking is by league, then league points (LP)
-  async function openScores(tab) {
-    tab = ui.ladderTab = LADDER_TABS.some(t => t[0] === tab) ? tab : LADDER_TABS.some(t => t[0] === ui.ladderTab) ? ui.ladderTab : 'players';
-    const head = `<div class="shead"><b>${I('trophy')} Ladder</b><button data-act="close">✕</button></div>
-      <div class="tabs">${LADDER_TABS.map(([k, n]) => `<button data-act="ladder-tab" data-arg="${k}" class="${k === tab ? 'on' : ''}">${n}</button>`).join('')}</div>`;
-    openModal(head + '<p class="dim">Loading…</p>');
-    try {
-      if (tab === 'player') {
-        let me = null;
-        try {
-          me = await Net.post('elo', { op: 'hello', pid: pid() }); setElo(me);
-        } catch (_) {}
-        if (ui.modal && ui.ladderTab === tab) {
-          if (!me || !me.runs) {
-            openModal(head + `<div class="klock"><span class="hi">🏆</span><b>Rankings start with your first clear</b><p class="small">When you first clear a run, you get to choose your name and compete in the rankings and leagues.</p><button class="primary" data-act="new-run">▶ Play</button></div>`);
-            return;
-          }
-          openModal(head + playerTabHTML(me)); header();
-          const sc = $('#lgscroll'), c = sc && sc.querySelector('.lgb.cur');
-          if (c) sc.scrollLeft = c.offsetLeft - (sc.clientWidth - c.clientWidth) / 2;
-          const rm = $('#roadmap'), n = rm && (rm.querySelector('.rmn.next') || rm.querySelector('.rmn:last-child'));
-          if (n) rm.scrollLeft = n.offsetLeft - (rm.clientWidth - n.clientWidth) / 2;
-        }
-        return;
-      }
-      // v65 (reviews #132 #134): Global or Friends (the players you follow, and you); every row has the win streak now and the best one
-      // Global = the top 10, then '…' and your own row with your place when you are not in it; Friends = all of them and you
-      let e = null;
-      try {
-        e = tab === 'friends' ? await Net.post('player', { op: 'friends', pid: pid() }) : await Net.post('player', { op: 'ladder', pid: pid() });
-      } catch (err) {
-        e = { top: [], me: null, champ: null };
-      }
-      const rowOf = (p, rank) => `<tr class="${p.code && p.code === acct.code ? 'me' : ''}"><td>${rank}</td><td class="who">${avatarHTML(p.avatar, p.code, 26)}${emblem(p.league || 0, 20)}${e.champ && e.champ.code && p.code === e.champ.code ? champMark() : ''}${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${plink(p.name, p.code)}${p.title ? `<small class="ltitle">${esc(p.title)}</small>` : ''}</td><td><b>${p.lp | 0}</b></td><td class="stk">${flameHTML(p.streak == null ? 1 : p.streak)}</td><td class="stk"><small>${p.bstreak == null ? 1 : p.bstreak}</small></td><td class="stk" title="Best Gauntlet floor reached">${p.best ? `<small>${p.best}</small>` : '<small class="dim">·</small>'}</td></tr>`;
-      const eRows = e.top.map((p, i) => rowOf(p, i + 1)).join('') + (tab !== 'friends' && e.me && e.me.code ? `<tr class="gap"><td colspan="6">…</td></tr>` + rowOf(e.me, e.me.rank || e.rank) : '');
-      const none = tab === 'friends' ? `<p class="dim">${acct.account ? 'Follow players from their profile (tap a name) and they show up here.' : 'Your account starts when your first run ends; then follow players from their profile.'}</p>` : '<p class="dim">No ranked players yet.</p>';
-      if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="dim small ladnote">${tab === 'friends' ? 'You and the players you follow. ' : ''}By league, then league points (LP), which come from completed runs and the Gauntlet. 🔥 = runs won in a row now, Best = the longest streak, 🏰 = the best Gauntlet floor reached, 👑 = King Tier, the glowing crown = the current Gauntlet champion. Tap a name to open the profile.</p>
-        ${e.champ ? `<div class="ladchamp">${champMark()}<span><small>Gauntlet champion</small> ${e.champ.code ? plink(e.champ.name, e.champ.code) : esc(e.champ.name)} <small class="dim">· ${e.champ.wins} floor${e.champ.wins === 1 ? '' : 's'} climbed · ${e.champ.stopped} stopped</small></span></div>` : ''}
-        ${eRows ? `<table class="tbl"><tr><th>#</th><th>Name</th><th>LP</th><th title="Win streak">🔥</th><th>Best</th><th title="Best Gauntlet floor reached">🏰</th></tr>${eRows}</table>` : ''}${!eRows || (tab === 'friends' && e.top.length <= 1) ? none : ''}`);
-    } catch (err) { if (ui.modal && ui.ladderTab === tab) openModal(head + `<p class="err">${esc(err.message)}</p>`); }
-  }
-  // ---------------- v27 (owner + by David): Crown Shop, profiles, invites
-  // WHAT: CROWN SHOP, PROFILES AND INVITES. The shop sells perks for crowns (data.js B.SHOP_ITEM), profileHTML shows a player, the invite link gives crowns when friends join.
-  function crownShopHTML() {
-    const a = acct, season = a.season || B.seasonOf(Date.now()), days = Math.max(0, Math.ceil((B.seasonEnds(season) - Date.now()) / 864e5)), paid = a.account ? a.sreach | 0 : 0;
-    const buyBtn = it => { const conf = ui.confirmBuy === it.id, cant = !a.account || (a.crowns | 0) < it.price;
-      return `<button class="cprice ${conf ? 'confirm' : ''}" data-act="buy-perk" data-arg="${it.id}" ${cant ? 'disabled' : ''}>${conf ? 'Tap again to buy · ' : ''}👑 ${it.price}</button>`; };
-    const perk = it => { const own = hasPerk(it.id);
-      return `<div class="perk ${own ? 'own' : ''}"><span class="pi">${it.icon}</span><div class="pb"><b>${esc(it.name)}</b><p class="small">${esc(it.desc)}</p></div>${own ? '<span class="owned">Owned ✓</span>' : buyBtn(it)}</div>`; };
-    const rn = B.SHOP_ITEM.rename, K = B.SHOP_ITEM.king, king = hasPerk('king'), skin = store.get('balance.skin', 'royal');
-    const leagues = B.LEAGUES.map((l, i) => i ? `<div class="crl ${paid >= i ? 'got' : ''}">${emblem(i, 24)}<b>${l.name}</b><span>👑 ${B.CROWNS.league[i]}</span><i>${paid >= i ? '✓' : ''}</i></div>` : '').join('');
-    const link = a.account && a.code ? location.origin + '/?ref=' + a.code : '';
-    return `<div class="shead"><b>${I('crown')} Crown Shop</b><button data-act="close">✕</button></div>
-      <div class="wallet"><span class="wc">👑</span><div><b>${a.crowns | 0}</b> crown${(a.crowns | 0) === 1 ? '' : 's'}<span class="small dim">Season ${season} · ${days} day${days === 1 ? '' : 's'} left</span></div></div>
-      ${a.account ? '' : '<p class="small center dim">Your account starts when your first game ends. Then crowns, unlocks and your invite link live here.</p>'}
-      ${a.account ? (ui.redeemOpen ? `<form class="row redeem" data-form="redeem"><input name="code" maxlength="40" placeholder="Code" autocomplete="off" autocapitalize="off" spellcheck="false"><button>Redeem</button></form>` : '<div class="center"><button class="linkbtn redeemb" data-act="redeem-open">🎟 Redeem a code</button></div>') : ''}
-      <div class="stabs">${[['perks', 'Perks'], ['style', 'Style'], ['king', 'Name & King'], ['earn', 'Earn'], ['invite', 'Invite']].map(([id, n]) => `<button class="${(ui.shopTab || 'perks') === id ? 'on' : ''}" data-act="shop-tab" data-arg="${id}">${n}</button>`).join('')}</div>
-      ${(ui.shopTab || 'perks') === 'earn' ? `<h3>Earn crowns</h3>
-      <p class="small">🏆 Every duel you win: +1 crown. And the first time you reach a league this season, the crowns on its banner (league points come at the end of each run). A new season every ${B.SEASON.days} days sends everyone back to Bronze, so the crowns come again.</p>
-      <div class="crlist">${leagues}</div>` : ''}
-      ${(ui.shopTab || 'perks') === 'style' ? styleTab(buyBtn) : ''}
-      ${(ui.shopTab || 'perks') === 'perks' ? `${perk(B.SHOP_ITEM.xp2)}${perk(B.SHOP_ITEM.skip)}` : ''}
-      ${(ui.shopTab || 'perks') === 'king' ? `<div class="perk"><span class="pi">${rn.icon}</span><div class="pb"><b>${esc(rn.name)}</b><p class="small">${esc(rn.desc)}${a.account ? ` Now: <b>${esc(a.name || '')}</b>.` : ''}</p>
-        <form class="row" data-form="rename"><input name="name" maxlength="16" placeholder="New name" ${a.account ? '' : 'disabled'}><button class="cprice" ${!a.account || (a.crowns | 0) < rn.price ? 'disabled' : ''}>👑 ${rn.price}</button></form></div></div>
-      <div class="king ${king ? 'own' : ''}"><div class="kh"><span class="kcrown">👑</span><div><b>King Tier</b><span class="small">${king ? 'You are a King' : 'The top of the shop'}</span></div><span class="rboard" aria-hidden="true"></span></div>
-        <ul class="small"><li><b>Royal board</b>: violet and gold stone, only for Kings</li><li><b>Deeper profiles</b>, yours and everyone else's: most played heroes, best win rate heroes, the wins and losses of all their ghosts</li><li>A 👑 next to your name on the ladder and on your profile</li></ul>
-        ${king ? `<div class="row"><span class="small">Board</span><button class="${skin === 'royal' ? 'on' : ''}" data-act="skin" data-arg="royal">Royal</button><button class="${skin !== 'royal' ? 'on' : ''}" data-act="skin" data-arg="classic">Classic</button></div>` : buyBtn(K)}</div>` : ''}
-      ${(ui.shopTab || 'perks') === 'invite' ? `<h3>Invite friends</h3>
-      <div class="invite"><p class="small">A friend who starts playing from your link is yours for good: every time they earn crowns by playing, you get ${Math.round(B.CROWNS.referPct * 100)}% of it (at least ${B.CROWNS.referMin} crown).</p>
-        ${link ? `<div class="row"><input id="refLink" readonly value="${esc(link)}"><button data-act="copy-ref">Copy</button></div><p class="small dim">${a.refs | 0} friend${(a.refs | 0) === 1 ? '' : 's'} joined · they earned you 👑 ${a.refCrowns | 0}</p>` : '<p class="small dim">Your invite link appears after your first run.</p>'}</div>` : ''}`;
-  }
-  // the Style tab: taunts (your comic bubble on your profile and the VS screen, also when others face your ghost), VS entrances, and
-  // the portraits your level has not opened yet. Bought ones get a Show button: you show one taunt and one entrance.
-  // WHAT: the Style tab of the Crown Shop.
-  function styleTab(buyBtn) {
-    const a = acct, lvl = lvlNow(), own = id => hasPerk(id);
-    const show = (kind, id, on) => `<button class="cshow ${on ? 'on' : ''}" data-act="style-set" data-arg="${kind}:${on ? '' : id}">${on ? '✓ Showing' : 'Show'}</button>`;
-    const row = (it, on, body) => `<div class="perk cos ${own(it.id) ? 'own' : ''}"><span class="pi" data-act="cos-preview" data-arg="${it.id}" title="Tap to preview">${it.icon}</span><div class="pb" data-act="cos-preview" data-arg="${it.id}">${body}</div>${own(it.id) ? show(it.kind, it.id, on) : buyBtn(it)}</div>`;
-    const taunts = B.COSMETICS.filter(x => x.kind === 'taunt').map(it => row(it, a.tauntId === it.id, `<span class="tbub">${esc(it.text)}</span>`)).join('')
-      + B.LEVEL_TAUNTS.map(t => `<div class="perk cos ${t.lvl <= lvl ? 'own' : ''}"><span class="pi" data-act="cos-preview" data-arg="${t.id}">🎁</span><div class="pb" data-act="cos-preview" data-arg="${t.id}"><span class="tbub">${esc(t.text)}</span></div>${t.lvl <= lvl ? show('taunt', t.id, a.tauntId === t.id) : `<span class="owned dim">🔒 Lv ${t.lvl}</span>`}</div>`).join('');   // the voice lines your level gives
-    const fx = B.COSMETICS.filter(x => x.kind === 'vsfx').map(it => row(it, a.vsfx === it.id, `<b>${esc(it.name)}</b><p class="small">${esc(it.desc)}</p>`)).join('');
-    const pors = B.PORTRAIT_UNLOCKS.filter(k => B.portraitLevel(k) > lvl).map(k => { const it = B.SHOP_ITEM['pt_' + k]; return `<div class="cpor">${avatarHTML(k, '', 54)}<span>${esc(HEROES[k].name)}</span>${own(it.id) ? '<i>✓ Yours</i>' : buyBtn(it)}</div>`; }).join('');
-    return `<h3>💬 Taunts</h3><p class="small dim">Your profile says it in a comic bubble, and so does your team on the VS screen before a fight, also when other players face your ghost.</p>${taunts}
-      <h3>⚡ VS entrances</h3><p class="small dim">How your team bursts onto the VS screen.</p>${fx}
-      <h3>🖼 Portraits</h3><p class="small dim">Every level opens one more for free; buy one now to use it as your picture (Profile → Change picture).</p>${pors ? `<div class="cpors">${pors}</div>` : '<p class="small">Your level has opened every portrait.</p>'}`;
-  }
-  function openShop(noFetch) {
-    openModal(crownShopHTML()); ui.modal = 'shop';
-    if (!noFetch) loadAcct().then(() => { if (ui.modal === 'shop') { const sc = $('#modal .sheet'), y = sc ? sc.scrollTop : 0; openModal(crownShopHTML()); ui.modal = 'shop'; const s2 = $('#modal .sheet'); if (s2) s2.scrollTop = y; } header(); });
-  }
-  function refreshShop() { const sc = $('#modal .sheet'), y = sc ? sc.scrollTop : 0; openModal(crownShopHTML()); ui.modal = 'shop'; const s2 = $('#modal .sheet'); if (s2) s2.scrollTop = y; if (screen === 'title') render(); else header(); }
-  function heroList(rows, what) {
-    return rows.length ? `<div class="phl">${rows.map(r => `<span class="phh">${img(r.hero, 34, 'por')}<b>${esc((HEROES[r.hero] || { name: r.hero }).name)}</b><em>${what(r)}</em></span>`).join('')}</div>` : '<p class="small dim">Not enough games yet.</p>';
-  }
-  // WHAT: a player profile sheet (league, Elo, titles, best floor, favourite heroes for Kings).
-  function profileHTML(p, viewerKing) {
-    const L = B.LEAGUES, l = L[p.league] || L[0], top = L.length - 1, R = B.LEAGUE_RULES;
-    const since = p.since ? new Date(p.since).toLocaleDateString() : '';
-    const stat = (v, k) => `<div><b>${v}</b><span>${k}</span></div>`;
-    const more = p.more ? `<div class="pmore"><h3>👑 King's view</h3>
-        <div class="pmh">Most played heroes</div>${heroList(p.more.most, r => `${r.games} game${r.games === 1 ? '' : 's'}`)}
-        <div class="pmh">Best win rate <span class="dim">(3+ games)</span></div>${heroList(p.more.best, r => `${Math.round(100 * r.wins / r.games)}% of ${r.games}`)}
-        <div class="pmh">Ghosts</div><p class="gw"><b class="win">${p.more.ghosts.w}</b> wins · <b class="lose">${p.more.ghosts.l}</b> losses <span class="dim small">defending, over ${p.more.ghosts.n} ghost${p.more.ghosts.n === 1 ? '' : 's'}</span></p>
-        <p class="small dim">Games = finished runs and duels.</p></div>`
-      : `<div class="klock"><span class="hi">👑</span><b>King Tier</b><p class="small">Kings also see ${p.own ? 'your' : "this player's"} most played heroes, best win rate heroes and the wins and losses of ${p.own ? 'your' : 'their'} ghosts.</p><button data-act="shop">👑 Crown Shop</button></div>`;
-    return `<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>
-      <div class="prof" style="--lc:${l.color};--lh:${l.hi}">
-        <div class="phead"><span class="pwho">${avatarHTML(p.avatar, p.code, 76)}${emblem(p.league, 30)}</span><div><b class="pname">${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${esc(p.name)} <span class="lvb sm" title="Account level">${p.level || 1}</span></b>${p.title ? `<span class="ptitle">${esc(p.title)}</span>` : ''}<span class="pl1" style="color:${l.hi}">${l.name} league</span>
-          <span class="small dim">${p.league >= top ? `${p.lp} LP` : `${p.lp}/${R.step} LP`} · Season ${p.season}${since ? ' · since ' + since : ''}</span>${p.own ? `<button class="avedit" data-act="avatar-pick">${I('user')} Change picture</button>` : ''}</div></div>
-        ${p.taunt ? `<div class="pbubble">${esc(p.taunt)}</div>` : p.own ? `<button class="linkbtn ptaunt" data-act="shop-tab" data-arg="style">💬 Pick a taunt (Crown Shop)</button>` : ''}
-        <div class="pfollow">${!p.own ? `<button class="follow ${p.followed ? 'on' : 'primary'}" data-act="follow" data-arg="${esc(p.code)}">${p.followed ? '✓ Following' : '+ Follow'}</button>` : ''}<small id="pfcount">${followText(p)}</small></div>
-        ${p.h2h ? `<div class="h2h"><span>You vs ${esc(p.name)}</span><b class="win">${p.h2h.w}</b><i>–</i><b class="lose">${p.h2h.l}</b><small>${p.h2h.w + p.h2h.l ? 'duels between you two' : 'no duel between you two yet'}</small></div>` : ''}
-        <div class="pstats">${stat(`${flameHTML(p.streak == null ? 1 : p.streak)} <small>best ${p.bstreak == null ? 1 : p.bstreak}</small>`, 'Win streak')}${stat(p.trophies ? '🏆 ' + p.trophies.n : '—', 'Trophies')}${stat(p.titles || '—', 'Runs completed')}<button class="pstatb" data-act="achs-open"><b>🏅 ${(p.achs || []).length}/${B.ACHIEVEMENTS.length}</b><span>Achievements ›</span></button>
-          <div>${emblem(p.peakLeague, 24)}<span>Best league</span></div><div>${p.lastLeague >= 0 ? emblem(p.lastLeague, 24) : '<b>—</b>'}<span>Last season</span></div></div>
-        ${p.trophies && p.trophies.list.length ? `<div class="ptro"><div class="pmh">Latest trophies</div><div>${p.trophies.list.map(t => `<span class="tro ${t.final ? 'fin' : ''}">🏆 ${t.code ? plink(t.name, t.code) : esc(t.name)}${t.final ? ' <i>final</i>' : ''}</span>`).join('')}</div></div>` : ''}
-        ${more}
-        ${p.own ? `<div class="row center"><button data-act="shop">👑 Crown Shop · ${acct.crowns | 0}</button></div>` : ''}</div>`;
-  }
-  // v73 (reviews #150 #151): the achievements on a profile: the ones earned lit, the rest dim (the secret ones say so); on your own profile a tap makes one your title
-  // WHAT: the achievements grid of a profile.
-  function achsHTML(p) {
-    const own = p.achs || [], mine = p.own, cur = mine ? acct.titleId : null;
-    const cell = a => { const got = own.includes(a.id), secret = !got && /secret/i.test(a.desc); return `<${mine && got ? 'button data-act="title-set" data-arg="' + (cur === a.id ? '' : a.id) + '"' : 'div'} class="achc ${got ? 'got' : ''} ${cur === a.id ? 'on' : ''}" title="${esc(a.desc)}"><i>${got || !secret ? a.icon : '❔'}</i><b>${esc(got || !secret ? a.title : '???')}</b><small>${esc(secret ? 'A secret' : a.desc)}</small>${cur === a.id ? '<em>✓ Your title</em>' : ''}</${mine && got ? 'button' : 'div'}>`; };
-    return `<div class="pachs"><div class="pmh">🏅 Achievements <span class="dim">${own.length}/${B.ACHIEVEMENTS.length}</span>${mine ? ' <span class="dim small">· tap one you earned to show it as your title</span>' : ''}</div><div class="achgrid">${B.ACHIEVEMENTS.map(cell).join('')}</div></div>`;
-  }
-  const followText = p => `${p.followers | 0} follower${(p.followers | 0) === 1 ? '' : 's'} · following ${p.following | 0}`;
-  // the portraits your level has opened (four free, then one more each level); the locked ones say the level they open at
-  // WHAT: the sheet to pick your picture (a hero portrait).
-  function avatarPickHTML() {
-    const lvl = lvlNow(), cur = avKey(acct.avatar, acct.code), list = B.PORTRAITS_FREE.concat(B.PORTRAIT_UNLOCKS), open = list.filter(k => B.portraitLevel(k) <= lvl || hasPerk('pt_' + k)).length;
-    return `<div class="shead"><b>${I('user')} Your picture</b><button data-act="close" aria-label="Close">✕</button></div><p class="small dim">Every account level opens one more hero portrait (or buy one in the Crown Shop, Style). Level ${lvl}: ${open} of ${list.length}.</p>
-      <div class="avgrid">${list.map(k => { const need = B.portraitLevel(k), ok = need <= lvl || hasPerk('pt_' + k); return `<button class="avpick ${k === cur ? 'on' : ''} ${ok ? '' : 'locked'}" data-act="avatar-set" data-arg="${k}" ${ok ? '' : 'disabled'}>${avatarHTML(k, '', 54)}<span>${ok ? esc(HEROES[k].name) : `🔒 Lv ${need} · 👑 ${B.PORTRAIT_PRICE}`}</span></button>`; }).join('')}</div>`;
-  }
-  async function openProfile(code) {
-    if (code && String(code).startsWith('bot_')) {
-      const idx = parseInt(String(code).slice(4), 10) || 0;
-      const bots = ['Valkyrie', 'ShadowMage', 'Ironclad', 'Frostbite', 'Stormcaller', 'Aegis', 'Wildfire', 'Nightshade', 'PaladinX', 'Blaze'];
-      const name = bots[idx % bots.length];
-      const botP = {
-        name, code, league: Math.max(1, 5 - Math.floor(idx / 2)), lp: Math.max(120, 2800 - idx * 190),
-        elo: 1000 + idx * 50, streak: Math.max(1, 7 - idx), bstreak: Math.max(3, 9 - idx), best: Math.max(2, 8 - Math.floor(idx / 2)),
-        avatar: ['solara', 'groth', 'tiberius', 'barian', 'mira', 'dmitri'][idx % 6],
-        level: Math.max(2, 10 - idx), season: 1, titles: Math.max(1, 4 - Math.floor(idx / 3)), trophies: { n: 0, list: [] },
-        followers: 12 + idx, following: 4 + idx, achs: []
-      };
-      ui.modal = 'profile'; ui.profile = code; ui.lastProfile = botP;
-      openModal(profileHTML(botP, false));
-      return;
-    }
-    const shell = b => `<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>${b}`;
-    openModal(shell('<p class="dim">Loading…</p>')); ui.modal = 'profile'; ui.profile = code;
-    try {
-      const r = await Net.post('player', { op: 'profile', pid: pid(), code });
-      if (ui.modal === 'profile' && ui.profile === code) { ui.lastProfile = r.profile; openModal(profileHTML(r.profile, r.viewerKing)); ui.modal = 'profile'; }
-    } catch (e) { if (ui.modal === 'profile' && ui.profile === code) { openModal(shell(`<p class="err">${esc(e.message)}</p>`)); ui.modal = 'profile'; } }
-  }
-  async function openMyProfile() {
-    if (!acct.account) await loadAcct();
-    if (acct.account && acct.code) return openProfile(acct.code);
-    openModal(`<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>
-      <div class="klock"><span class="hi">👤</span><b>Your profile starts with your first game</b><p class="small">When a game ends, your league, trophies and completed runs show up here, and anyone can open your profile by tapping your name.</p>
-      <button class="primary" data-act="new-run">▶ Play</button></div>`);
-  }
-  // the basics first, in five short lines for someone who never played this kind of game; the full
-  // rules fold under them
-  // WHAT: the How to play text (also the HTML of that sheet). Update it when a rule changes.
-  const HOWTO = `<div class="shead"><b>How to play</b><button data-act="close">✕</button></div>
-    <ol class="howbasics">
-      <li>${I('user')}<span><b>Pick a hero and a power.</b> Two more heroes join you for free after your first days.</span></li>
-      <li>${I('map')}<span><b>Every day, pick a path:</b> a fight, a shop or an event.</span></li>
-      <li>${I('shield')}<span><b>Before a fight, drag your heroes onto the board.</b> Tanks in front, ranged behind. A new hero waits beside the board until you place it, then keeps its spot.</span></li>
-      <li>${I('swords')}<span><b>The fight plays by itself.</b> Win for gold and XP. Heroes level up and use their power when the blue bar is full.</span></li>
-      <li>${I('skull')}<span><b>You carry a Ward.</b> Beat 2 bosses to complete the run, then shop and climb the Gauntlet against other players' teams. Lose a fight and the Ward breaks: that day starts over. Lose again with it broken and the run ends.</span></li>
-    </ol>
-    <div class="center"><button class="linkbtn" data-act="guide-again">💡 Show the tips again</button></div>
-    <details class="howmore"><summary>All the rules</summary>
-    <ol class="small howto">
-      <li><b>⚔️ Starting Out:</b> Start with 1 hero (3 offered: a tank, a support, a damage dealer) and 1 power (3 offered). After each of the first two days a free hero joins (you pick 1 of 3). Each hero has a unique ability that fires when its blue Energy bar is full.</li>
-      <li><b>🗺️ The Daily Path:</b> Every step offers 2 options: easy/medium/hard fights, or a shop/event. Fights 4 and 8 are bosses.</li>
-      <li><b>❓ Events & Challenges:</b> Trades, bets, powers and items to pick, and <b>challenges</b> (optional fights that start right away: win for a reward; lose and only that reward is gone, the game goes on). Some choices only open with the right hero in your team.</li>
-      <li><b>🛡️ Board & Frontline:</b> Before each fight, place heroes in the 4 blue rows. Then the battle plays itself.</li>
-      <li><b>⚑ Formations:</b> Formation powers reward where you place your heroes (next to each other, alone, in the front or back row, in one line, next to terrain). While deploying, the line above the board shows who gets what.</li>
-      <li><b>🌳 Terrain & Slam:</b> Every fight after the first is on a map with terrain: 🌳 trees, 🪨 boulders, ⛰️ ridges and 💧 ponds block the way (nobody can stand on them or walk through; arrows and spells fly over). Units pushed into a tree, boulder or ridge are slammed and stunned. Bosses fight at the Standing Stones.</li>
-      <li><b>📊 Stats & Scaling:</b> <b>Health</b> (❤), <b>Attack</b> (⚔), <b>Magic</b> (✦: 100 at Lv 1, grows every level at each hero's own pace, more from items), <b>Defense</b> (⛨: lowers all damage taken, physical and magic) and <b>Energy</b> (the blue bar that fires the ability). Every ability names its stat: it deals a % of Attack as <span class="kw-atk">physical</span> damage, a % of Magic as <span class="kw-ap">magic</span> damage, or both added together (like "40% Attack + 20% Magic"); heals scale with Magic; shields are a % of max Health. Magic never multiplies Attack. Tap a hero (in battle or in Team) to see its numbers.</li>
-      <li><b>✨ Hero Growth:</b> Heroes earn XP for every second they stay alive. Level ups raise stats and let you pick a specialization. From Lv 3, each level adds an item slot. Lv 5 is rare.</li>
-      <li><b>🎁 Gear & Sets:</b> Items have a type (weapon, off-hand, helmet, armor, gloves, boots, trinket) and a rarity: <span class="r-common">common</span>, <span class="r-uncommon">uncommon</span>, <span class="r-rare">rare</span>, <span class="r-epic">epic</span>, <span class="r-set">set</span>, <span class="r-legendary">legendary</span> and <span class="r-mythic">mythic</span>. A hero wears one item of each type, up to their slot count. Two or three pieces of a set on the same hero unlock set bonuses.</li>
-      <li><b>🪙 Gold & Teams:</b> Win fights for gold. Spend it in hero, item and power shops. Your team holds up to 3 heroes; with a full team a hero from the Hero Shop takes the place of one of yours (its level and items, powers picked at random). You carry a Ward: lose a fight and it breaks (the day starts over); lose again with it broken and the run ends. Heroes always heal after a fight.</li>
-      <li><b>🏰 The Gauntlet:</b> After the second boss and a last shop the run is complete. Then you may climb the Gauntlet, a tower of other players' teams, floor by floor until you fall or take the crown. This is the only PvP.</li>
-      <li><b>🏆 Leagues & LP:</b> League points (LP): a completed run +${B.LP.final}, plus +${B.LP_PVE[0]} in Bronze and +${B.LP_PVE[1]} in Silver, plus its 🔥 win streak (+${B.LP.streak} LP per run in the streak); then each Gauntlet floor won pays its number (floor 3 = +3). In Master a completed run pays no LP: only Gauntlet floors do. A lost run costs 5 LP per league above Bronze (Silver 5, Gold 10...); a fall in the Gauntlet costs nothing. Higher leagues are harder to climb: a win pays less (×${B.LP_LEAGUE.gain[0]} in Bronze to ×${B.LP_LEAGUE.gain[B.LP_LEAGUE.gain.length - 1]} in Master) and a loss costs more (×${B.LP_LEAGUE.loss[0]} to ×${B.LP_LEAGUE.loss[B.LP_LEAGUE.loss.length - 1]}). A completed run is a 💎 Perfect (no fight lost), 🥇 Gold or 🥉 Bronze victory. 100 LP move you up a league, below 0 you drop one. A season lasts ${B.SEASON.days} days, then everyone starts again from Bronze.</li>
-      <li><b>🏰 The Gauntlet Champions:</b> After a completed run you may climb a tower of other players' saved teams (ghosts). The tower is one floor taller than the champion's own climb (a champion who climbed 4 floors sits on floor 5). Floor 1 holds one of the weakest ghosts and each floor up a stronger one; the strength is a hidden rating that every Gauntlet fight moves. Each floor won gives as many LP as its number (floor 3 = +3); falling costs nothing, and your team stays in the tower as a ghost for others to fight. Beat the champion on the top floor and you are the new champion: the tower grows to your climb plus one. Your best floor shows on the ladder, and the current champion wears the glowing crown there.</li>
-      <li><b>🔥 Win Streak & Trophies:</b> The runs you completed in a row (everyone starts at 1). Losing a run, or giving it up, puts it back to 0. Every duel you win is a trophy with the name of the player you beat, and 1 crown. A profile shows its trophies and your duels against that player.</li>
-      <li><b>👑 Crowns & Profile:</b> Earned the first time you reach each league in a season, and from friends who joined with your invite link (1% of what they earn, at least 1). Every duel won pays 1 too. Spend them in the Crown Shop: Double XP, Skip fights, name changes, and the King Tier (Royal board, deeper profiles). Tap any player's name to open their profile: league, win streak, trophies, runs completed and your duels against them. Follow players there to see them in the Friends ladder. Your picture is a hero portrait: every account level opens one more.</li>
-      <li><b>✨ Account Level:</b> Every game earns XP by how far it went (+${B.GAME_XP.played} for playing, +${B.GAME_XP.fight} per fight won, +${B.GAME_XP.boss} per boss, +${B.GAME_XP.reached} for completing the run, +${B.GAME_XP.duel} per Gauntlet floor won, +${B.GAME_XP.champion} for the Gauntlet crown), plus bonuses the first time you complete a run with each hero (+${B.ACCOUNT.heroClear}) and beat each boss (+${B.ACCOUNT.boss}), and for crowns spent (+${B.ACCOUNT.crownXp} each). Each level needs a bit more XP than the last, and every level opens rewards: new heroes (two a level up to level 5), items, powers, hero portraits, voice lines and titles (see the road on the title or in Ladder → Player).</li>
-    </ol></details>`;
-
-
-  // ------------------------------------------------------------------ review notice (top bar)
-  // After "Send for review" the page follows that batch: queued -> Claude working -> READY ("press F5"). Claude marks
-  // items done only AFTER the update is deployed, so "all items answered" means the new version is already live.
-  // Everyone else gets a softer "the game was just updated" when a new update ships while the page is open.
-  // WHAT: THE REVIEW NOTICE at the top: after you send changes it shows "waiting / in progress / new version, tap to reload". nt = its state, poll() asks api/suggest.js every few seconds while something is pending.
-  const PEND = 'balance.pending';
-  const nt = { lastRun: null, latest: 0, update: false, timer: 0 };
-  // WHAT: draws the review notice in the top bar.
-  function renderNotice() {
-    const el = $('#notice'); if (!el) return;
-    const p = store.get(PEND, null);
-    let cls = '', html = '';
-
-    // no more "#12 in progress" / "your changes are live" pills and no lightbulb; the status of a batch is in the menu's suggestion box. Only the plain "New version" pill stays.
-    if (nt.update) {
-      cls = 'info'; html = '🔄 New version: tap to reload<span class="nx" data-act="notice-x" aria-label="Dismiss">✕</span>';
-    }
-    el.className = cls; el.innerHTML = html; el.hidden = !html;
-  }
-  function trackBatch(batch) { store.set(PEND, { batch, state: 'waiting', sentAt: Date.now() }); nt.update = false; renderNotice(); schedulePoll(1500); }
-  // WHAT: asks the server for the review status and whether a new version of the game was published.
-  async function poll() {
-    const p = store.get(PEND, null);
-    try {
-      if (p && p.state === 'waiting') {
-        const d = await Net.get('suggest?batch=' + p.batch);
-        const items = d.items || [];
-        if (!items.length) { store.del(PEND); }
-        else if (items.every(i => i.status === 'done' || i.status === 'declined')) {
-          Object.assign(p, { state: 'ready', done: items.filter(i => i.status === 'done').length, declined: items.filter(i => i.status === 'declined').length, readyAt: Date.now() });
-          store.set(PEND, p); nt.lastRun = d.review.lastRun; nt.update = true;
-        } else {
-          Object.assign(p, { ahead: d.ahead, working: items.some(i => i.status === 'doing'), held: !items.some(i => i.status === 'doing' || i.status === 'new') && items.some(i => i.status === 'held'), offline: !(d.review.seen && d.review.now - d.review.seen < 3 * 60e3) });
-          store.set(PEND, p);
-        }
-        if (nt.lastRun == null) nt.lastRun = d.review.lastRun;
-        nt.latest = d.review.lastRun;
-      } else {
-        const d = await Net.get('suggest?lite=1');
-        nt.latest = d.review.lastRun;
-        if (nt.lastRun == null) nt.lastRun = d.review.lastRun;
-        else if (d.review.lastRun > nt.lastRun) nt.update = true;
-      }
-    } catch (_) { /* offline: try again later */ }
-    renderNotice(); schedulePoll();
-  }
-  function schedulePoll(ms) {
-    clearTimeout(nt.timer);
-    const p = store.get(PEND, null);
-    nt.timer = setTimeout(() => { if (document.hidden) schedulePoll(); else poll(); }, ms || (p && p.state === 'waiting' ? 8000 : 45000));
-  }
-  function bootNotice() {
-    const p = store.get(PEND, null);
-    // loaded after the review was ready = the player already pressed F5: show what shipped, once
-    if (p && p.state === 'ready') { p.state = 'shown'; store.set(PEND, p); }
-    renderNotice(); poll();
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) schedulePoll(500); });
-  }
-  $('#notice').addEventListener('click', e => {
-    if (e.target.closest('[data-act=notice-x]')) { e.stopPropagation(); const p = store.get(PEND, null); if (p && p.state !== 'waiting') store.del(PEND); nt.update = false; nt.lastRun = Math.max(nt.lastRun || 0, nt.latest); renderNotice(); return; }
-    const p = store.get(PEND, null);
-    if ((p && p.state === 'ready' && p.done > 0) || (!p && nt.update)) { location.reload(); return; }
-    openSuggest();
-  });
-
+  const U = B._ui;
+  const { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts } = U;
   // ------------------------------------------------------------------ actions
   // WHAT (the button table): ACT[name] runs when a button with data-act="name" is tapped (one global listener, no inline handlers because of the CSP).
   // To make a new button work: put data-act="my-name" in its HTML and add my-name: (arg, el) => {...} here. arg is the data-arg value. Names with a dash must be quoted.
   const ACT = {
     // Play / Play again: starts a fresh run.
     'new-run': () => {
-      run = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()), deck: store.get('balance.freeDeck', null) });
-      ui.startPick = []; ui.startRelic = null; ui.focusRelic = null; ui.focus = null; ui.startStep = 1; ui.lastGold = null; ui.goldHold = null; screen = 'run'; save(); render();
+      U.run = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()), deck: store.get('balance.freeDeck', null) });
+      ui.startPick = []; ui.startRelic = null; ui.focusRelic = null; ui.focus = null; ui.startStep = 1; ui.lastGold = null; ui.goldHold = null; U.screen = 'run'; save(); render();
     },
     // Continue: back into the saved run.
-    'continue-run': () => { screen = 'run'; render(); },
-    menu: () => { if (battle) return; screen = 'title'; closeModal(); render(); },
-    'ward-info': () => { if (!run) return; sfx('tap'); toast(run.lives > 0 ? '🛡 Ward intact: one defeat allowed before game over' : '💔 Ward broken: next defeat ends the run!'); },
+    'continue-run': () => { U.screen = 'run'; render(); },
+    menu: () => { if (U.battle) return; U.screen = 'title'; closeModal(); render(); },
+    'ward-info': () => { if (!U.run) return; sfx('tap'); toast(U.run.lives > 0 ? '🛡 Ward intact: one defeat allowed before game over' : '💔 Ward broken: next defeat ends the run!'); },
     'stat-info': k => { const desc = k === 'hp' ? '❤️ Health: Maximum damage before falling' : k === 'atk' ? '⚔️ Attack: Base physical damage dealt per strike' : '⚡ Magic (AP): Powers hero abilities, spells and shields'; toast(desc, true); sfx('pick'); },
     'cos-preview': id => {
       const t = B.TAUNT_ALL && B.TAUNT_ALL.find(x => x.id === id);
@@ -3379,40 +23,40 @@
       const v = B.VSFX && B.VSFX.find(x => x.id === id);
       if (v) { sfx('go'); toast(`⚡ VS entrance: ${v.name}`, true); const m = $('#modal .sheet'); if (m && B.Juice) B.Juice.confettiAt(m, 24); return; }
     },
-    howto: () => openModal(HOWTO),
+    howto: () => openModal(U.HOWTO),
     // the guide tips come back (even on an account with many runs)
     'guide-again': () => { store.set('balance.guide3', []); store.set('balance.guide.v', 0); closeModal(); toast('The tutorial will show again as you play'); render(); },
     // Menu -> Tutorial: on = from the start again, off = no more tips
-    tutorial: () => { if (guideOn()) { guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); toast('Tutorial on: the tips show again as you play'); } openModal(homeMenuHTML()); ui.modal = 'home'; },
+    tutorial: () => { if (U.guideOn()) { U.guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); toast('Tutorial on: the tips show again as you play'); } openModal(U.homeMenuHTML()); ui.modal = 'home'; },
     // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
-    'start-pick': k => { markHeroKnown(k); ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); if (ui.startPick[0] === k && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 26); },
+    'start-pick': k => { U.markHeroKnown(k); ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); if (ui.startPick[0] === k && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 26); },
     // the free recruit between days
-    'recruit-pick': k => { markHeroKnown(k); ui.recruitPick = ui.recruitPick === k ? null : k; render(); },
-    'recruit-go': () => { if (!ui.recruitPick) return; const err = Run.recruit(run, ui.recruitPick); if (err) { toast(err); return; } ui.recruitPick = null; sfx('levelup'); save(); render(); window.scrollTo(0, 0); },
-    'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (introOn() && (run.relicOffer || []).length) { ui.startRelic = run.relicOffer[0]; ACT['start-go'](); return; }   // straight to the battlefield
-      if ((run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
+    'recruit-pick': k => { U.markHeroKnown(k); ui.recruitPick = ui.recruitPick === k ? null : k; render(); },
+    'recruit-go': () => { if (!ui.recruitPick) return; const err = Run.recruit(U.run, ui.recruitPick); if (err) { toast(err); return; } ui.recruitPick = null; sfx('levelup'); save(); render(); window.scrollTo(0, 0); },
+    'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (U.introOn() && (U.run.relicOffer || []).length) { ui.startRelic = U.run.relicOffer[0]; ACT['start-go'](); return; }   // straight to the battlefield
+      if ((U.run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
     'start-back': () => { ui.startStep = 1; render(); },
-    'coach-ok': () => { coachDone(); sfx('tap'); render(); },
+    'coach-ok': () => { U.coachDone(); sfx('tap'); render(); },
     'hswap-ok': () => { store.set('balance.hint.hswap', 1); render(); },
     'start-relic': id => { const was = ui.startRelic; ui.focusRelic = id; ui.startRelic = id; render(); if (was !== id && B.Juice) B.Juice.confettiAt('.start .srelic.ped.on .orb', 30); },
-    'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((run.relicOffer || []).length && !ui.startRelic)) return; const intro = introOn(); store.set('balance.starts', (+store.get('balance.starts', 0) || 0) + 1); Run.pickStart(run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1;
-      if (intro) { store.set('balance.intro', 1); Run.startIntro(run); ui.introT0 = 0; }   // the first fight is the intro
+    'start-go': () => { if (ui.startPick.length !== CFG.startHeroes || ((U.run.relicOffer || []).length && !ui.startRelic)) return; const intro = U.introOn(); store.set('balance.starts', (+store.get('balance.starts', 0) || 0) + 1); Run.pickStart(U.run, ui.startPick, ui.startRelic); ui.startRelic = null; ui.startStep = 1;
+      if (intro) { store.set('balance.intro', 1); Run.startIntro(U.run); ui.introT0 = 0; }   // the first fight is the intro
       save(); render(); },
     // A map option was tapped: opens that fight, shop or event (Run.choose).
-    choose: i => { Run.choose(run, +i); ui.info = null; save(); render(); window.scrollTo(0, 0); },
+    choose: i => { Run.choose(U.run, +i); ui.info = null; save(); render(); window.scrollTo(0, 0); },
     // A power was picked at a level-up.
-    spec: i => { Run.chooseSpec(run, +i); save(); render(); },
+    spec: i => { Run.chooseSpec(U.run, +i); save(); render(); },
     // Hero chosen to inspect for Boss Upgrade
     'upgrade-select-hero': uid => { ui.upgradeHero = +uid; sfx('tap'); render(); },
     // Path chosen for Boss Upgrade
     'upgrade-path': idx => {
-      const unupgraded = run.heroes.filter(h => h.path == null);
+      const unupgraded = U.run.heroes.filter(h => h.path == null);
       const selUid = ui.upgradeHero && unupgraded.some(h => h.uid === ui.upgradeHero) ? ui.upgradeHero : (unupgraded[0] || {}).uid;
       if (!selUid) return;
-      const ok = Run.upgradeHero(run, selUid, +idx);
+      const ok = Run.upgradeHero(U.run, selUid, +idx);
       if (ok) {
         sfx('levelup');
-        const h = run.heroes.find(x => x.uid === selUid);
+        const h = U.run.heroes.find(x => x.uid === selUid);
         if (B.Juice) {
           const el = document.querySelector('.upgrade-screen');
           if (el) B.Juice.confettiAt(el, 100);
@@ -3423,31 +67,31 @@
       }
     },
     // The big Fight! button on the deploy screen.
-    fight: () => { const need = run ? Run.benched(run) : []; if (need.length && !introStage()) { benchNudge(need); return; } sfx('go'); coachDone(); startBattle(); },   // locked until the bench is empty
+    fight: () => { const need = U.run ? Run.benched(U.run) : []; if (need.length && !U.introStage()) { U.benchNudge(need); return; } sfx('go'); U.coachDone(); U.startBattle(); },   // locked until the bench is empty
     // a tap on a hero of the bench picks it (then a tap on a hex places it); a drag is handled by the bench listeners (benchDown)
     'bench-pick': uid => { if (performance.now() - (ui.bdragAt || 0) < 400) return; uid = +uid; ui.selUid = ui.selUid === uid ? 0 : uid; render(); },
     // Battle speed 1x / 2x / 4x (unlocked for all players). skip plays the fight at once (perk).
     speed: s => { ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
     skip: () => {
-      const gau = (battle && battle.gau) || (run && run.cur && run.cur.type === 'gauntlet');
+      const gau = (U.battle && U.battle.gau) || (U.run && U.run.cur && U.run.cur.type === 'gauntlet');
       if (gau) { toast('Duels and the final fight cannot be skipped.'); return; }
       if (!hasPerk('skip')) { toast(`Skipping fights is a Crown Shop unlock (👑 ${B.SHOP_ITEM.skip.price}).`); return; }
-      if (!battle && run && run.phase === 'deploy') {
-        const need = Run.benched(run);
-        if (need.length && !introStage()) { benchNudge(need); return; }
-        coachDone();
-        startBattle();
+      if (!U.battle && U.run && U.run.phase === 'deploy') {
+        const need = Run.benched(U.run);
+        if (need.length && !U.introStage()) { U.benchNudge(need); return; }
+        U.coachDone();
+        U.startBattle();
       }
-      skipBattle();
+      U.skipBattle();
     },
     'info-close': () => { ui.info = null; render(); },
     // Continue on the result screen: next day, the Gauntlet or the game-over screen.
-    'result-ok': () => { if (run && run.phase === 'tower' && run.tower && run.tower.status === 'climb' && run.tower.next) { const o = run.tower.next; run.tower.next = null; Run.startDuel(run, o, 'tower', 9); save(); }
-      if (run && run.phase === 'over' && run.result === 'clear' && !run.tower) { ui.champ = undefined; run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); }   // the Gauntlet comes before the league screen
-      ui.result = null; ui.goldHold = null; screen = 'run'; render(); window.scrollTo(0, 0); },
-    'tower-skip': () => { run.tower = Object.assign(run.tower || {}, { status: 'skipped' }); run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
-    brag: () => { openModal(bragHTML()); ui.modal = 'brag'; sfx('unlock'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('#modal .scard', bragData().c ? 120 : 60), 120); bragPrep(); },
-    'brag-share': async () => { const s = await bragPrep(), d = bragData();
+    'result-ok': () => { if (U.run && U.run.phase === 'tower' && U.run.tower && U.run.tower.status === 'climb' && U.run.tower.next) { const o = U.run.tower.next; U.run.tower.next = null; Run.startDuel(U.run, o, 'tower', 9); save(); }
+      if (U.run && U.run.phase === 'over' && U.run.result === 'clear' && !U.run.tower) { ui.champ = undefined; U.run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; U.run.phase = 'tower'; save(); }   // the Gauntlet comes before the league screen
+      ui.result = null; ui.goldHold = null; U.screen = 'run'; render(); window.scrollTo(0, 0); },
+    'tower-skip': () => { U.run.tower = Object.assign(U.run.tower || {}, { status: 'skipped' }); U.run.phase = 'over'; U.run.overStep = U.run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
+    brag: () => { openModal(U.bragHTML()); ui.modal = 'brag'; sfx('unlock'); if (B.Juice) setTimeout(() => B.Juice.confettiAt('#modal .scard', U.bragData().c ? 120 : 60), 120); U.bragPrep(); },
+    'brag-share': async () => { const s = await U.bragPrep(), d = U.bragData();
       try { if (navigator.share) { const file = s.blob ? new File([s.blob], 'super-rogues-card.jpg', { type: 'image/jpeg' }) : null, o = { title: 'Super Rogues', text: B.Card.text(d) + ' ▶ Super Rogues', url: s.url };
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) o.files = [file]; await navigator.share(o); return; } } catch (_) { return; } ACT['brag-copy'](); },
     fullscreen: () => {
@@ -3459,85 +103,85 @@
         }
       } catch (_) {}
     },
-    'brag-wa': async () => { const s = await bragPrep(), d = bragData(); window.open('https://wa.me/?text=' + encodeURIComponent(B.Card.text(d) + ' ▶ ' + s.url), '_blank', 'noopener'); },
-    'brag-copy': async () => { const s = await bragPrep(), d = bragData(), plain = B.Card.text(d) + ' ▶ ' + s.url, rich = `${esc(B.Card.text(d))} ▶ <a href="${s.url}">Super Rogues</a>`;
+    'brag-wa': async () => { const s = await U.bragPrep(), d = U.bragData(); window.open('https://wa.me/?text=' + encodeURIComponent(B.Card.text(d) + ' ▶ ' + s.url), '_blank', 'noopener'); },
+    'brag-copy': async () => { const s = await U.bragPrep(), d = U.bragData(), plain = B.Card.text(d) + ' ▶ ' + s.url, rich = `${esc(B.Card.text(d))} ▶ <a href="${s.url}">Super Rogues</a>`;
       try { if (window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': new Blob([plain], { type: 'text/plain' }), 'text/html': new Blob([rich], { type: 'text/html' }) })]); else await navigator.clipboard.writeText(plain); toast('Link copied! Paste it anywhere 🎉'); } catch (_) { toast(s.url, true); } },
-    'tower-done': () => { run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
+    'tower-done': () => { U.run.phase = 'over'; U.run.overStep = U.run.lpShown ? 2 : 1; save(); render(); window.scrollTo(0, 0); },
     'tower-enter': async () => {
       if (ui.towerBusy) return;
       const ni0 = $('#tname'); if (ni0 && !ni0.value.trim()) { toast('Pick your name for the ladder first.'); ni0.focus(); return; }
       // the last shop is the Gauntlet's: entering opens it once, leaving it starts the climb (status 'ready')
-      if (run.tower && !run.tower.shopped && Run.seqOf(run)[run.step + 1] === 'S') { if (ni0) store.set('balance.name', ni0.value.trim().slice(0, 16)); run.tower.shopped = true; Run.advance(run); save(); render(); window.scrollTo(0, 0); return; }
+      if (U.run.tower && !U.run.tower.shopped && Run.seqOf(U.run)[U.run.step + 1] === 'S') { if (ni0) store.set('balance.name', ni0.value.trim().slice(0, 16)); U.run.tower.shopped = true; Run.advance(U.run); save(); render(); window.scrollTo(0, 0); return; }
       // with no final fight, the Gauntlet gate is where a new player picks the name shown on the ladder
       const ni = $('#tname'), enteredName = ni ? ni.value.trim().slice(0, 16) : '';
       const name = enteredName || myName() || (acct.account && !isDefaultName(acct.name) ? acct.name : '');
       if (ni && !name) { toast('Pick your name for the ladder first.'); ni.focus(); return; }
       if (name) store.set('balance.name', name);
       ui.towerBusy = true; render();
-      let r = null; try { r = await Net.post('elo', Object.assign({ op: 'tower', pid: pid(), ref: refCode(), team: Run.teamSnapshot(run), relics: run.relics }, name ? { name } : {})); setElo(r, true); } catch (e) { ui.towerBusy = false; if (run.tower && run.tower.status === 'ready') run.tower.status = 'gate'; toast(e.message || 'No connection'); render(); return; }
+      let r = null; try { r = await Net.post('elo', Object.assign({ op: 'tower', pid: pid(), ref: refCode(), team: Run.teamSnapshot(U.run), relics: U.run.relics }, name ? { name } : {})); setElo(r, true); } catch (e) { ui.towerBusy = false; if (U.run.tower && U.run.tower.status === 'ready') U.run.tower.status = 'gate'; toast(e.message || 'No connection'); render(); return; }
       ui.towerBusy = false;
       // an empty tower: a made-up champion guards it until the first real one
-      const opp = r.opponent || Object.assign(Run.randomGhost(run, 8, true), { name: 'Gauntlet Champion' });
-      run.tower = { status: 'climb', teamId: r.teamId, floor: 1, wins: 0, lp: 0, peak: r.peak || 1, history: [] };
-      Run.startDuel(run, opp, 'tower', 9); ui.info = null; save(); render(); window.scrollTo(0, 0);
+      const opp = r.opponent || Object.assign(Run.randomGhost(U.run, 8, true), { name: 'Gauntlet Champion' });
+      U.run.tower = { status: 'climb', teamId: r.teamId, floor: 1, wins: 0, lp: 0, peak: r.peak || 1, history: [] };
+      Run.startDuel(U.run, opp, 'tower', 9); ui.info = null; save(); render(); window.scrollTo(0, 0);
     },
-    'victory-next': () => { if (!run || run.result !== 'clear' || run.xpWait) return; run.tower = run.tower || { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; save(); render(); window.scrollTo(0, 0); },
-    'over-next': () => { if (run.result === 'clear' && !run.tower) { run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; run.phase = 'tower'; run.lpShown = true; save(); render(); window.scrollTo(0, 0); return; }
-      run.overStep = 2; run.lpShown = true; save(); render(); window.scrollTo(0, 0); },
-    'retry-elo': () => { const r0 = ui.result; if (r0 && r0.req) { r0.pending = true; render(); Net.post('elo', r0.req).then(r => { setElo(r); logGameXp(r); if (r0.tower) towerAnswer(r, r0); Object.assign(r0, { trophy: r.trophy || null, pending: false, error: null }); save(); render(); }).catch(e => { Object.assign(r0, { pending: false, error: e.message }); render(); }); } else if (run && run.phase === 'over') { reportRunEnd(); } },
+    'victory-next': () => { if (!U.run || U.run.result !== 'clear' || U.run.xpWait) return; U.run.tower = U.run.tower || { status: 'gate', floor: 1, lp: 0, wins: 0 }; U.run.phase = 'tower'; save(); render(); window.scrollTo(0, 0); },
+    'over-next': () => { if (U.run.result === 'clear' && !U.run.tower) { U.run.tower = { status: 'gate', floor: 1, lp: 0, wins: 0 }; U.run.phase = 'tower'; U.run.lpShown = true; save(); render(); window.scrollTo(0, 0); return; }
+      U.run.overStep = 2; U.run.lpShown = true; save(); render(); window.scrollTo(0, 0); },
+    'retry-elo': () => { const r0 = ui.result; if (r0 && r0.req) { r0.pending = true; render(); Net.post('elo', r0.req).then(r => { setElo(r); logGameXp(r); if (r0.tower) U.towerAnswer(r, r0); Object.assign(r0, { trophy: r.trophy || null, pending: false, error: null }); save(); render(); }).catch(e => { Object.assign(r0, { pending: false, error: e.message }); render(); }); } else if (U.run && U.run.phase === 'over') { U.reportRunEnd(); } },
     // The steal screen after a won duel: take a hero (it asks which hero steps aside when the team is full), an item or a power.
-    steal: i => { const o = run.steal && run.steal[+i]; if (!o) return; if (o.kind === 'hero' && run.heroes.length >= Run.teamMax(run)) { ui.stealPick = +i; render(); return; } const err = Run.steal(run, +i); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },
-    'steal-swap': uid => { const err = Run.steal(run, ui.stealPick, +uid); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },
+    steal: i => { const o = U.run.steal && U.run.steal[+i]; if (!o) return; if (o.kind === 'hero' && U.run.heroes.length >= Run.teamMax(U.run)) { ui.stealPick = +i; render(); return; } const err = Run.steal(U.run, +i); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },
+    'steal-swap': uid => { const err = Run.steal(U.run, ui.stealPick, +uid); if (err) { toast(err); return; } ui.stealPick = null; sfx('coin'); save(); render(); window.scrollTo(0, 0); },
     'steal-back': () => { ui.stealPick = null; render(); },
     // a bought card flies into the Team button with a coin sound and gets a SOLD stamp; a reroll deals
     // the new cards in with a shuffle
     // Buy product i in a shop. reroll refreshes the stock.
     buy: i => {
-      const s0 = run.cur && run.cur.stock[+i];
-      if (s0 && s0.kind === 'hero' && !s0.sold && run.gold >= s0.price && run.heroes.length >= Run.teamMax(run)) { ui.swapBuy = +i; openModal(swapHTML(s0.id)); ui.modal = 'swap'; return; }
+      const s0 = U.run.cur && U.run.cur.stock[+i];
+      if (s0 && s0.kind === 'hero' && !s0.sold && U.run.gold >= s0.price && U.run.heroes.length >= Run.teamMax(U.run)) { ui.swapBuy = +i; openModal(U.swapHTML(s0.id)); ui.modal = 'swap'; return; }
       const card = $(`.card.stock[data-i="${+i}"]`), pic = card && card.querySelector('.ico.big, .por.big');
-      const err = Run.buy(run, +i);
+      const err = Run.buy(U.run, +i);
       if (err) { toast(err); sfx('deny'); if (B.Juice) B.Juice.bump(card, 'shake'); return; }
       sfx('buy'); if (B.Juice && pic) { B.Juice.flyCopy(pic, '#top [data-act=team]'); B.Juice.confettiAt(card, 16, { speed: 300 }); }
-      if (s0 && s0.kind === 'item') autoGear();
+      if (s0 && s0.kind === 'item') U.autoGear();
       ui.justSold = +i; save(); render(); ui.justSold = null;
     },
-    'buy-swap': uid => { const i = ui.swapBuy, err = Run.buy(run, i, +uid); closeModal(); if (err) { toast(err); sfx('deny'); return; } sfx('buy'); ui.justSold = i; ui.swapBuy = null; save(); render(); ui.justSold = null; },
-    reroll: () => { if (!Run.reroll(run)) { toast('Not enough gold'); sfx('deny'); return; } sfx('reroll'); ui.deal = true; save(); render(); ui.deal = false; },
-    sound: () => { if (!B.Sfx) return; B.Sfx.toggle(); for (const b of document.querySelectorAll('.sndbtn')) { b.innerHTML = I(B.Sfx.on ? 'sound' : 'mute'); b.setAttribute('aria-label', 'Sound ' + (B.Sfx.on ? 'on' : 'off')); } if (ui.modal === 'home') { openModal(homeMenuHTML()); ui.modal = 'home'; } },
+    'buy-swap': uid => { const i = ui.swapBuy, err = Run.buy(U.run, i, +uid); closeModal(); if (err) { toast(err); sfx('deny'); return; } sfx('buy'); ui.justSold = i; ui.swapBuy = null; save(); render(); ui.justSold = null; },
+    reroll: () => { if (!Run.reroll(U.run)) { toast('Not enough gold'); sfx('deny'); return; } sfx('reroll'); ui.deal = true; save(); render(); ui.deal = false; },
+    sound: () => { if (!B.Sfx) return; B.Sfx.toggle(); for (const b of document.querySelectorAll('.sndbtn')) { b.innerHTML = I(B.Sfx.on ? 'sound' : 'mute'); b.setAttribute('aria-label', 'Sound ' + (B.Sfx.on ? 'on' : 'off')); } if (ui.modal === 'home') { openModal(U.homeMenuHTML()); ui.modal = 'home'; } },
     // Opens the menu sheet; give-up asks, give-up-yes ends the game (and reports the fights it played).
-    'shop-tab': id => { ui.shopTab = id; refreshShop(); },
+    'shop-tab': id => { ui.shopTab = id; U.refreshShop(); },
     // the redeem code box under the wallet
-    'redeem-open': () => { ui.redeemOpen = true; refreshShop(); const i = $('form[data-form=redeem] input'); if (i) i.focus(); },
-    'home-menu': () => { openModal(homeMenuHTML()); ui.modal = 'home'; },
-    codex: () => { ui.fromCodex = false; openModal(codexHTML()); ui.modal = 'codex'; },
-    'codex-tab': id => { ui.codexTab = id; openModal(codexHTML()); ui.modal = 'codex'; },
-    language: () => { openModal(languageHTML()); ui.modal = 'lang'; },
+    'redeem-open': () => { ui.redeemOpen = true; U.refreshShop(); const i = $('form[data-form=redeem] input'); if (i) i.focus(); },
+    'home-menu': () => { openModal(U.homeMenuHTML()); ui.modal = 'home'; },
+    codex: () => { ui.fromCodex = false; openModal(U.codexHTML()); ui.modal = 'codex'; },
+    'codex-tab': id => { ui.codexTab = id; openModal(U.codexHTML()); ui.modal = 'codex'; },
+    language: () => { openModal(U.languageHTML()); ui.modal = 'lang'; },
     'set-lang': id => { if (B.i18n && /^(en|pt|de)$/.test(id)) B.i18n.set(id); },
     'give-up': () => { openModal(`<div class="shead"><b>Give up?</b><button data-act="close" aria-label="Close">✕</button></div><div class="giveupask">${I('flag', 'big')}<p>Your team goes home and this game ends. It does not count as a loss.</p><div class="bar"><button data-act="close">Keep playing</button><button class="danger" data-act="give-up-yes">${I('flag')} Give up</button></div></div>`); },
-    'give-up-yes': () => { if (run && run.tower) { closeModal(); run.tower.status = 'over'; run.tower.next = null; run.g = null; run.cur = null; run.phase = 'over'; run.overStep = run.lpShown ? 2 : 1; save(); screen = 'run'; render(); return; }   // v90: leaving the Gauntlet only ends the climb (the run is complete)
-      if (run && run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: run.seed, flog: run.flog || [], tele: run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; screen = 'title'; render(); },   // giving up ends the win streak
+    'give-up-yes': () => { if (U.run && U.run.tower) { closeModal(); U.run.tower.status = 'over'; U.run.tower.next = null; U.run.g = null; U.run.cur = null; U.run.phase = 'over'; U.run.overStep = U.run.lpShown ? 2 : 1; save(); U.screen = 'run'; render(); return; }   // leaving the Gauntlet only ends the climb (the run is complete)
+      if (U.run && U.run.phase !== 'start') { Net.post('elo', { op: 'flog', pid: pid(), runId: U.run.seed, flog: U.run.flog || [], tele: U.run.tele || null, gaveUp: true }).catch(() => {}); acct.streak = 0; store.set(ACCT, acct); } U.run = null; store.del(SAVE); closeModal(); ui.lastGold = null; ui.goldHold = null; U.screen = 'title'; render(); },   // giving up ends the win streak
     // Shows a description in a bubble (boss, formation chip). It disappears when the screen changes.
     'form-info': t => toast(t, true),
-    'hero-peek': k => { if (HEROES[k]) { ui.fromCodex = ui.modal === 'codex'; ui.peekSpec = null; openModal(heroPeekHTML(k)); ui.modal = 'peek'; } },
-    'peek-spec': a => { const [k, id] = String(a).split(':'); if (!HEROES[k]) return; ui.peekSpec = ui.peekSpec && ui.peekSpec.id === id ? null : { key: k, id }; openModal(heroPeekHTML(k)); ui.modal = 'peek'; },
-    path: () => { if (run) { openModal(pathHTML()); ui.modal = 'path'; } },
+    'hero-peek': k => { if (HEROES[k]) { ui.fromCodex = ui.modal === 'codex'; ui.peekSpec = null; openModal(U.heroPeekHTML(k)); ui.modal = 'peek'; } },
+    'peek-spec': a => { const [k, id] = String(a).split(':'); if (!HEROES[k]) return; ui.peekSpec = ui.peekSpec && ui.peekSpec.id === id ? null : { key: k, id }; openModal(U.heroPeekHTML(k)); ui.modal = 'peek'; },
+    path: () => { if (U.run) { openModal(U.pathHTML()); ui.modal = 'path'; } },
     'result-more': () => { ui.rmore = !ui.rmore; render(); },
-    leave: () => { Run.leave(run); save(); render(); window.scrollTo(0, 0); },
+    leave: () => { Run.leave(U.run); save(); render(); window.scrollTo(0, 0); },
     event: i => {
-      const ch = Run.eventChoices(run)[+i]; if (!ch) return;
-      if (ch.target) { run.cur.pick = +i; render(); return; }
-      Run.eventAct(run, +i); run.cur.pick = null; save(); render();
+      const ch = Run.eventChoices(U.run)[+i]; if (!ch) return;
+      if (ch.target) { U.run.cur.pick = +i; render(); return; }
+      Run.eventAct(U.run, +i); U.run.cur.pick = null; save(); render();
     },
-    'event-target': arg => { const i = run.cur.pick; run.cur.pick = null; if (i == null) return; Run.eventAct(run, i, arg); save(); render(); },
-    'event-back': () => { run.cur.pick = null; render(); },
+    'event-target': arg => { const i = U.run.cur.pick; U.run.cur.pick = null; if (i == null) return; Run.eventAct(U.run, i, arg); save(); render(); },
+    'event-back': () => { U.run.cur.pick = null; render(); },
     // Deploy screen click-to-select and click-to-place (click-and-click item manipulation)
     'dsell': () => {
-      if (!run || run.phase !== 'deploy' || !ui.dsel || ui.dsel.k !== 'b') return;
-      const id = run.bag[ui.dsel.i];
+      if (!U.run || U.run.phase !== 'deploy' || !ui.dsel || ui.dsel.k !== 'b') return;
+      const id = U.run.bag[ui.dsel.i];
       if (!id) return;
       const val = Run.sellValue(id);
-      Run.sell(run, ui.dsel.i);
+      Run.sell(U.run, ui.dsel.i);
       ui.dsel = null;
       sfx('coin');
       save();
@@ -3546,11 +190,11 @@
       toast('Sold ' + ITEM[id].name + ' for +' + val + ' gold');
     },
     'ditem-click': arg => {
-      if (!run || run.phase !== 'deploy') return;
+      if (!U.run || U.run.phase !== 'deploy') return;
       const [k, idxStr] = arg.split(':');
       const idx = +idxStr;
       const dsel = ui.dsel;
-      const bagItem = (run.bag || [])[idx];
+      const bagItem = (U.run.bag || [])[idx];
 
       if (!dsel) {
         if (bagItem) {
@@ -3573,8 +217,8 @@
             sfx('pick');
           } else {
             // Move item to empty slot
-            const it = run.bag.splice(dsel.i, 1)[0];
-            run.bag.splice(idx, 0, it);
+            const it = U.run.bag.splice(dsel.i, 1)[0];
+            U.run.bag.splice(idx, 0, it);
             ui.dsel = null;
             sfx('tap');
             save();
@@ -3583,17 +227,17 @@
         }
       } else if (dsel.k === 'w') {
         // Unequip worn item to this bag slot
-        manualGear();
-        const hero = run.heroes.find(x => x.uid === dsel.uid);
+        U.manualGear();
+        const hero = U.run.heroes.find(x => x.uid === dsel.uid);
         if (hero && hero.items[dsel.i]) {
           const wornId = hero.items[dsel.i];
           if (bagItem) {
             // Swap worn item with clicked bag item
             hero.items[dsel.i] = bagItem;
-            run.bag[idx] = wornId;
+            U.run.bag[idx] = wornId;
             sfx('buy');
           } else {
-            Run.unequip(run, dsel.uid, dsel.i);
+            Run.unequip(U.run, dsel.uid, dsel.i);
             sfx('back');
           }
           ui.dsel = null;
@@ -3603,11 +247,11 @@
       }
     },
     'dsock-click': arg => {
-      if (!run || run.phase !== 'deploy') return;
+      if (!U.run || U.run.phase !== 'deploy') return;
       const [k, uidStr, sockStr] = arg.split(':');
       const uid = +uidStr, sockIdx = +sockStr;
       const dsel = ui.dsel;
-      const targetHero = run.heroes.find(x => x.uid === uid);
+      const targetHero = U.run.heroes.find(x => x.uid === uid);
       if (!targetHero) return;
       const targetItem = targetHero.items[sockIdx];
 
@@ -3622,17 +266,17 @@
 
       if (dsel.k === 'b') {
         // Equip bag item to this hero socket
-        manualGear();
+        U.manualGear();
         const bagIdx = dsel.i;
-        const bagId = run.bag[bagIdx];
+        const bagId = U.run.bag[bagIdx];
         if (bagId) {
           if (targetItem) {
             // Direct swap
-            run.bag[bagIdx] = targetItem;
+            U.run.bag[bagIdx] = targetItem;
             targetHero.items[sockIdx] = bagId;
             sfx('buy');
           } else {
-            gearPut(bagIdx, uid, sockIdx);
+            U.gearPut(bagIdx, uid, sockIdx);
             sfx('buy');
           }
           ui.dsel = null;
@@ -3646,8 +290,8 @@
           render();
         } else {
           // Swap or transfer between sockets
-          manualGear();
-          const fromHero = run.heroes.find(x => x.uid === dsel.uid);
+          U.manualGear();
+          const fromHero = U.run.heroes.find(x => x.uid === dsel.uid);
           if (fromHero && fromHero.items[dsel.i]) {
             const fromItem = fromHero.items[dsel.i];
             if (targetItem) {
@@ -3669,29 +313,29 @@
     },
     // The Items / Team button: opens the gear screen. hero-info / gear-* / sell are its buttons.
     team: () => {
-      if (!run || battle) return;
-      if (run.phase === 'deploy') {
+      if (!U.run || U.battle) return;
+      if (U.run.phase === 'deploy') {
         toast('Manage gear right here on the battlefield');
-      } else if (run.phase === 'map') {
+      } else if (U.run.phase === 'map') {
         toast('Equip gear during battle deploy before each fight');
       }
     },
-    'hero-info': uid => { ui.heroInfo = +uid && ui.heroInfo !== +uid ? +uid : 0; ui.gsel = null; openGear(); },
-    'gear-hero': uid => { ui.gHero = +uid; ui.gsel = null; openGear(); },
-    'gear-pick': a => { const [k, x, y] = a.split(':'), sl = k === 'b' ? { k, i: +x } : { k, uid: +x, i: +y }; ui.gsel = ui.gsel && JSON.stringify(ui.gsel) === JSON.stringify(sl) ? null : sl; if (k === 'w') ui.gHero = +x; openGear(); },
-    'gear-equip': () => { const g = ui.gsel; if (!g || g.k !== 'b') return; const h = gearHero(), id = run.bag[g.i]; gearDo(() => ({ sock: gearPut(g.i, h.uid, null), id }), h.uid); },
-    'gear-off': () => { const g = ui.gsel; if (!g || g.k !== 'w') return; gearDo(() => { Run.unequip(run, g.uid, g.i); }, g.uid); },
-    'gear-auto': () => { run.autoGear = true; const n = gearAuto(); ui.gsel = null; save(); openGear(); refreshBehind(); if (n) { sfx('unlock'); const st = $('#modal .gstage'); if (st && B.Juice) { B.Juice.confettiAt(st, 50); B.Juice.bump(st, 'pop'); } toast(n > 1 ? n + ' heroes got better gear' : 'A hero got better gear'); } else toast('Your team already wears its best gear'); },
-    'gear-page': d => { ui.gPage = Math.max(0, (ui.gPage || 0) + +d); openGear(); },
-    sell: () => { const g = ui.gsel; if (!g || g.k !== 'b') return; Run.sell(run, g.i); ui.gsel = null; sfx('coin'); save(); openGear(); header(); },
+    'hero-info': uid => { ui.heroInfo = +uid && ui.heroInfo !== +uid ? +uid : 0; ui.gsel = null; U.openGear(); },
+    'gear-hero': uid => { ui.gHero = +uid; ui.gsel = null; U.openGear(); },
+    'gear-pick': a => { const [k, x, y] = a.split(':'), sl = k === 'b' ? { k, i: +x } : { k, uid: +x, i: +y }; ui.gsel = ui.gsel && JSON.stringify(ui.gsel) === JSON.stringify(sl) ? null : sl; if (k === 'w') ui.gHero = +x; U.openGear(); },
+    'gear-equip': () => { const g = ui.gsel; if (!g || g.k !== 'b') return; const h = U.gearHero(), id = U.run.bag[g.i]; U.gearDo(() => ({ sock: U.gearPut(g.i, h.uid, null), id }), h.uid); },
+    'gear-off': () => { const g = ui.gsel; if (!g || g.k !== 'w') return; U.gearDo(() => { Run.unequip(U.run, g.uid, g.i); }, g.uid); },
+    'gear-auto': () => { U.run.autoGear = true; const n = U.gearAuto(); ui.gsel = null; save(); U.openGear(); refreshBehind(); if (n) { sfx('unlock'); const st = $('#modal .gstage'); if (st && B.Juice) { B.Juice.confettiAt(st, 50); B.Juice.bump(st, 'pop'); } toast(n > 1 ? n + ' heroes got better gear' : 'A hero got better gear'); } else toast('Your team already wears its best gear'); },
+    'gear-page': d => { ui.gPage = Math.max(0, (ui.gPage || 0) + +d); U.openGear(); },
+    sell: () => { const g = ui.gsel; if (!g || g.k !== 'b') return; Run.sell(U.run, g.i); ui.gsel = null; sfx('coin'); save(); U.openGear(); header(); },
     'quick-sell-bag': () => {
-      if (!run || !run.bag || !run.bag.length) return;
-      let totalG = 0, count = run.bag.length;
-      while (run.bag.length > 0) {
-        const id = run.bag[run.bag.length - 1];
+      if (!U.run || !U.run.bag || !U.run.bag.length) return;
+      let totalG = 0, count = U.run.bag.length;
+      while (U.run.bag.length > 0) {
+        const id = U.run.bag[U.run.bag.length - 1];
         const val = Run.sellValue ? Run.sellValue(id) : (ITEM[id] ? Math.round(ITEM[id].cost * 0.5) : 0);
         totalG += val;
-        Run.sell(run, run.bag.length - 1);
+        Run.sell(U.run, U.run.bag.length - 1);
       }
       sfx('coin');
       save();
@@ -3700,33 +344,33 @@
       toast(`Sold ${count} items for +${totalG} gold!`);
     },
     // Closes the open sheet.
-    close: () => { closeModal(); ui.fromCodex = false; ui.gsel = null; ui.heroInfo = 0; if (!battle) render(); },
+    close: () => { closeModal(); ui.fromCodex = false; ui.gsel = null; ui.heroInfo = 0; if (!U.battle) render(); },
     // Opens the suggestion box.
-    suggest: () => openSuggest(),
+    suggest: () => U.openSuggest(),
     'art-lab': arg => { if (ui.modal) closeModal(); B.ArtLab.open(labKit, arg); },
-    'draft-del': i => { const d = drafts(); d.splice(+i, 1); store.set('balance.drafts', d); renderDrafts(); },
-    'send-review': (a, el) => sendReview(el),
-    'sug-refresh': () => loadQueue(),
+    'draft-del': i => { const d = U.drafts(); d.splice(+i, 1); store.set('balance.drafts', d); U.renderDrafts(); },
+    'send-review': (a, el) => U.sendReview(el),
+    'sug-refresh': () => U.loadQueue(),
     // Opens the ladder.
-    scores: () => openScores(),
-    'player-tab': () => openScores('player'),
+    scores: () => U.openScores(),
+    'player-tab': () => U.openScores('player'),
     // Opens the hidden balance dashboard (stats.html) in a new tab.
     stats: () => { window.open('stats.html', '_blank', 'noopener'); },
     'relic-info': id => { const r = RELIC[id]; if (r) toast(r.name + ': ' + r.desc, true); },
-    'ladder-tab': k => openScores(k),
-    shop: () => openShop(),
-    profile: code => openProfile(code),
-    'my-profile': () => openMyProfile(),
+    'ladder-tab': k => U.openScores(k),
+    shop: () => U.openShop(),
+    profile: code => U.openProfile(code),
+    'my-profile': () => U.openMyProfile(),
     // follow / unfollow from a profile
     follow: async code => {
       if (!acct.account) { toast('Your account starts when your first run ends. Play one first!'); return; }
       const b = $('[data-act=follow]'), on = !(b && b.classList.contains('on'));
-      try { const r = await Net.post('player', { op: 'follow', pid: pid(), code, on }); const b2 = $('[data-act=follow]'); if (b2) { b2.classList.toggle('on', r.followed); b2.classList.toggle('primary', !r.followed); b2.textContent = r.followed ? '✓ Following' : '+ Follow'; } const c = $('#pfcount'); if (c) c.textContent = followText(r); sfx(r.followed ? 'coin' : 'back'); }
+      try { const r = await Net.post('player', { op: 'follow', pid: pid(), code, on }); const b2 = $('[data-act=follow]'); if (b2) { b2.classList.toggle('on', r.followed); b2.classList.toggle('primary', !r.followed); b2.textContent = r.followed ? '✓ Following' : '+ Follow'; } const c = $('#pfcount'); if (c) c.textContent = U.followText(r); sfx(r.followed ? 'coin' : 'back'); }
       catch (e) { toast(e.message); }
     },
     // show an earned achievement as your title (tap it again to hide it)
     // the achievements of the profile you are looking at, in their own sheet (the profile stays short)
-    'achs-open': () => { const p = ui.lastProfile; if (!p) return; openModal(`<div class="shead"><b>🏅 ${esc(p.name)}</b><button data-act="profile" data-arg="${esc(p.code)}" aria-label="Back">✕</button></div>${achsHTML(p)}`); ui.modal = 'achs'; },
+    'achs-open': () => { const p = ui.lastProfile; if (!p) return; openModal(`<div class="shead"><b>🏅 ${esc(p.name)}</b><button data-act="profile" data-arg="${esc(p.code)}" aria-label="Back">✕</button></div>${U.achsHTML(p)}`); ui.modal = 'achs'; },
     'title-set': async id => {
       try { const r = await Net.post('player', { op: 'title', pid: pid(), title: id || null }); acct.title = r.title || null; acct.titleId = r.titleId || null; setAcct(r); sfx('coin'); toast(r.title ? `Your title: ${r.title}` : 'No title shown'); if (ui.modal === 'achs' && ui.lastProfile) { ui.lastProfile.title = r.title || null; ACT['achs-open'](); } } catch (e) { toast(e.message); }
     },
@@ -3734,35 +378,35 @@
     'style-set': async arg => {
       const [kind, id] = String(arg).split(':'), taunt = kind === 'taunt' ? id || null : acct.tauntId || null, vsfx = kind === 'vsfx' ? id || null : acct.vsfx || null;
       try { const r = await Net.post('player', { op: 'style', pid: pid(), taunt, vsfx }); acct.tauntId = r.tauntId || null; acct.taunt = r.taunt || null; acct.vsfx = r.vsfx || null; setAcct(r); sfx('coin'); } catch (e) { toast(e.message); }
-      if (ui.modal === 'shop') refreshShop();
+      if (ui.modal === 'shop') U.refreshShop();
     },
     // pick your picture
-    'avatar-pick': () => { openModal(avatarPickHTML()); ui.modal = 'avatar'; },
+    'avatar-pick': () => { openModal(U.avatarPickHTML()); ui.modal = 'avatar'; },
     'avatar-set': async key => {
-      try { const r = await Net.post('player', { op: 'avatar', pid: pid(), hero: key }); setAcct(r); sfx('coin'); header(); if (ui.modal === 'avatar') { openModal(avatarPickHTML()); ui.modal = 'avatar'; } toast(`${HEROES[key].name} is your picture`); }
+      try { const r = await Net.post('player', { op: 'avatar', pid: pid(), hero: key }); setAcct(r); sfx('coin'); header(); if (ui.modal === 'avatar') { openModal(U.avatarPickHTML()); ui.modal = 'avatar'; } toast(`${HEROES[key].name} is your picture`); }
       catch (e) { toast(e.message); }
     },
     // Crown Shop: the first tap asks, the second buys (nobody spends 300 crowns by accident).
     'buy-perk': async id => {
-      if (ui.confirmBuy !== id) { ui.confirmBuy = id; refreshShop(); return; }   // two taps: nobody spends 300 crowns by accident
+      if (ui.confirmBuy !== id) { ui.confirmBuy = id; U.refreshShop(); return; }   // two taps: nobody spends 300 crowns by accident
       ui.confirmBuy = null;
       try { const r = await Net.post('player', { op: 'buy', pid: pid(), item: id }); setAcct(r); toast(`${B.SHOP_ITEM[id].name} unlocked!`); } catch (e) { toast(e.message); }
-      if (ui.modal === 'shop') refreshShop();
+      if (ui.modal === 'shop') U.refreshShop();
     },
-    skin: k => { store.set('balance.skin', k === 'royal' ? 'royal' : 'classic'); applySkin(); refreshShop(); toast(k === 'royal' ? 'Royal board on' : 'Classic board on'); },
+    skin: k => { store.set('balance.skin', k === 'royal' ? 'royal' : 'classic'); applySkin(); U.refreshShop(); toast(k === 'royal' ? 'Royal board on' : 'Classic board on'); },
     'copy-ref': () => { const i = $('#refLink'); if (!i) return; i.select(); const done = () => toast('Invite link copied'); if (navigator.clipboard) navigator.clipboard.writeText(i.value).then(done, () => { try { document.execCommand('copy'); done(); } catch (_) {} }); else { try { document.execCommand('copy'); done(); } catch (_) {} } },
   };
   // Art Lab (owner, 2026-09-29): its buttons join the one click listener; it gets the helpers it needs
   // WHAT: the small toolbox handed to the Art Lab (js/artlab.js).
-  const labKit = { $, $$: s => [...document.querySelectorAll(s)], esc, toast, openModal, Net, store, trackBatch, ui };
+  const labKit = { $, $$: s => [...document.querySelectorAll(s)], esc, toast, openModal, Net, store, trackBatch: U.trackBatch, ui };
   Object.assign(ACT, B.ArtLab.actions); B.ArtLab.init(labKit);
   // hero pictures (this device's test art or the official art) finish loading after the first screen: redraw it
-  B.Art.onChange(() => { if (screen === 'battle' || ui.modal || ui.drag) return; clearTimeout(ui.artH); ui.artH = setTimeout(() => { if (screen !== 'battle' && !ui.modal && !ui.drag) render(); }, 80); });
+  B.Art.onChange(() => { if (U.screen === 'battle' || ui.modal || ui.drag) return; clearTimeout(ui.artH); ui.artH = setTimeout(() => { if (U.screen !== 'battle' && !ui.modal && !ui.drag) render(); }, 80); });
   B.Art.boot();
   // WHAT: after a change inside a sheet, redraws the top bar and the board behind it.
-  function refreshBehind() { header(); if (run && run.phase === 'deploy' && screen !== 'battle') { preview = worldFor(true); drawPreview(); } else if (run && screen !== 'battle') mountBgBoard(); }
+  function refreshBehind() { header(); if (U.run && U.run.phase === 'deploy' && U.screen !== 'battle') { U.preview = U.worldFor(true); U.drawPreview(); } else if (U.run && U.screen !== 'battle') U.mountBgBoard(); }
 
-  // v42: every tap has a sound; these actions have their own (null = the action plays it, it depends on the outcome)
+  // every tap has a sound; these actions have their own (null = the action plays it, it depends on the outcome)
   // WHAT: which sound each button makes (null = silent).
   const ACT_SFX = { 'gear-equip': null, 'gear-auto': null, sell: null, buy: null, reroll: null, sound: null, fight: null, 'start-go': 'go', choose: 'pick', 'start-pick': 'pick', 'recruit-pick': 'pick', 'over-next': 'pick', 'start-relic': 'pick', 'start-next': 'pick', 'start-back': 'back',
     spec: 'unlock', event: 'pick', 'event-target': 'pick', equip: 'pick', bag: 'pick', unequip: 'back', close: 'back', 'event-back': 'back', sell: 'coin', 'result-ok': 'pick', 'stat-info': null, 'cos-preview': null };
@@ -3770,27 +414,27 @@
     if (e.target.closest('#notice')) return;
     const foeEl = !e.target.closest('[data-act]') && e.target.closest('[data-foe]');
     if (foeEl) {
-      const W = battle ? battle.W : preview, key = foeEl.dataset.foe;
+      const W = U.battle ? U.battle.W : U.preview, key = foeEl.dataset.foe;
       const u = W && W.units && W.units.find(x => !x.dead && x.side === 1 && x.key === key);
       if (u) {
         ui.info = ui.info === u.id ? null : u.id;
         if (B.UIAudio) B.UIAudio.pop();
         sfx('tap');
-        const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.toggle('empty', !ui.info); }
-        if (!battle) drawPreview();
+        const el = $('#info'); if (el) { el.innerHTML = U.infoHTML(); el.classList.toggle('empty', !ui.info); }
+        if (!U.battle) U.drawPreview();
       }
       return;
     }
     const unitEl = !e.target.closest('[data-act]') && e.target.closest('.ts[data-id], .ec[data-id]');
     if (unitEl) {
-      const W = battle ? battle.W : preview, id = +unitEl.dataset.id || unitEl.dataset.id;
+      const W = U.battle ? U.battle.W : U.preview, id = +unitEl.dataset.id || unitEl.dataset.id;
       const u = W && W.byId && W.byId[id];
       if (u) {
         ui.info = ui.info === u.id ? null : u.id;
         if (B.UIAudio) B.UIAudio.pop();
         sfx('tap');
-        const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.toggle('empty', !ui.info); }
-        if (!battle) drawPreview();
+        const el = $('#info'); if (el) { el.innerHTML = U.infoHTML(); el.classList.toggle('empty', !ui.info); }
+        if (!U.battle) U.drawPreview();
       }
       return;
     }
@@ -3862,22 +506,22 @@
       if (kind === 'draft') {
         const t = f.text.value.trim(); if (btn) btn.disabled = false;
         if (t.length < 5) { toast('Write at least a few words'); return; }
-        const d = drafts(); if (d.length >= MAX_DRAFTS) { toast('Up to ' + MAX_DRAFTS + ' changes per review'); return; }
-        d.push(t); store.set('balance.drafts', d); f.text.value = ''; renderDrafts(); f.text.focus();
+        const d = U.drafts(); if (d.length >= U.MAX_DRAFTS) { toast('Up to ' + U.MAX_DRAFTS + ' changes per review'); return; }
+        d.push(t); store.set('balance.drafts', d); f.text.value = ''; U.renderDrafts(); f.text.focus();
       } else if (kind === 'redeem') {
         const code = f.code.value.trim();
         if (!code) { toast('Type a code'); if (btn) btn.disabled = false; return; }
-        const r = await Net.post('player', { op: 'redeem', pid: pid(), code }); setAcct(r); ui.redeemOpen = false; sfx('coin'); toast(`+${r.redeemed} 👑 crowns!`); refreshShop();
+        const r = await Net.post('player', { op: 'redeem', pid: pid(), code }); setAcct(r); ui.redeemOpen = false; sfx('coin'); toast(`+${r.redeemed} 👑 crowns!`); U.refreshShop();
       } else if (kind === 'rename') {
         const name = f.name.value.trim().replace(/\s+/g, ' ');
         if (name.length < 2) { toast('Pick a name of 2 to 16 characters'); if (btn) btn.disabled = false; return; }
-        const r = await Net.post('player', { op: 'rename', pid: pid(), name }); setAcct(r); toast(`You are now ${r.name}`); refreshShop();
+        const r = await Net.post('player', { op: 'rename', pid: pid(), name }); setAcct(r); toast(`You are now ${r.name}`); U.refreshShop();
       } else if (kind === 'gauntlet') {
         const name = f.name.value.trim(); if (!acct.account || isDefaultName(acct.name)) store.set('balance.name', name);
-        // v63: the final opponent is a team that won its own final fight; none yet (or no connection) = a made-up one ()
+        // the final opponent is a team that won its own final fight; none yet (or no connection) = a made-up one 
         // the first ask also leaves your team in the final pool
-        let opp = null; try { const r = await Net.post('elo', Object.assign({ op: 'final', pid: pid(), ref: refCode(), name, faced: run.faced || [] }, run.finalSaved ? {} : { team: Run.teamSnapshot(run), relics: run.relics })); run.finalSaved = true; save(); setElo(r, true); opp = r.opponent || null; } catch (_) { opp = null; }
-        Run.startDuel(run, opp || Run.randomGhost(run, 8, true), 'final', run.fightNo + 1); ui.info = null; save(); render(); window.scrollTo(0, 0);
+        let opp = null; try { const r = await Net.post('elo', Object.assign({ op: 'final', pid: pid(), ref: refCode(), name, faced: U.run.faced || [] }, U.run.finalSaved ? {} : { team: Run.teamSnapshot(U.run), relics: U.run.relics })); U.run.finalSaved = true; save(); setElo(r, true); opp = r.opponent || null; } catch (_) { opp = null; }
+        Run.startDuel(U.run, opp || Run.randomGhost(U.run, 8, true), 'final', U.run.fightNo + 1); ui.info = null; save(); render(); window.scrollTo(0, 0);
       }
     } catch (err) { toast(err.message); if (btn) btn.disabled = false; }
   });
@@ -3886,12 +530,12 @@
   function onResize() {
     clearTimeout(rz);
     rz = setTimeout(() => {
-      const was = document.body.className; layoutClasses();
-      if (!battle && was !== document.body.className && !ui.modal) { render(); return; }
-      const cv = $('#board'); if (cv) { view = Render.setup(cv, boardWidth(cv.parentElement)); drawPreview(); }
-      mountBgBoard();
-      trailer.cv = null;   // v49: the trailer sizes itself again on its next frame
-      const wm = $('#wmap'); if (wm) layoutMap({ key: wm.dataset.key, top: wm.scrollTop });   // v65: the road fits the new screen
+      const was = document.body.className; U.layoutClasses();
+      if (!U.battle && was !== document.body.className && !ui.modal) { render(); return; }
+      const cv = $('#board'); if (cv) { U.view = Render.setup(cv, U.boardWidth(cv.parentElement)); U.drawPreview(); }
+      U.mountBgBoard();
+      U.trailer.cv = null;   // the trailer sizes itself again on its next frame
+      const wm = $('#wmap'); if (wm) U.layoutMap({ key: wm.dataset.key, top: wm.scrollTop });   // the road fits the new screen
     }, 120);
   }
   
@@ -3912,8 +556,8 @@
         const prim = $('#modal button.primary:not(:disabled)');
         if (prim) { prim.click(); e.preventDefault(); return; }
       }
-      if (screen === 'run' && run) {
-        if (run.phase === 'deploy' && !battle) {
+      if (U.screen === 'run' && U.run) {
+        if (U.run.phase === 'deploy' && !U.battle) {
           const fb = $('button[data-act=fight]:not(:disabled)');
           if (fb) { fb.click(); e.preventDefault(); return; }
         }
@@ -3927,7 +571,7 @@
       const idx = parseInt(k, 10) - 1;
 
       // Battle speed toggle (1x, 2x, 4x)
-      if (battle) {
+      if (U.battle) {
         const sp = parseInt(k, 10);
         if ([1, 2, 4].includes(sp)) {
           ACT.speed(sp);
@@ -3937,19 +581,19 @@
       }
 
       // Start screen / recruit hero pick (1, 2, 3)
-      if (screen === 'run' && run && (run.phase === 'start' || run.phase === 'recruit')) {
+      if (U.screen === 'run' && U.run && (U.run.phase === 'start' || U.run.phase === 'recruit')) {
         const spots = document.querySelectorAll('.stage .hbanner.spot, .stage.pedestals .srelic.ped');
         if (spots && spots[idx]) { spots[idx].click(); e.preventDefault(); return; }
       }
 
       // Shop offers (1, 2, 3, 4)
-      if (screen === 'run' && run && run.phase === 'shop') {
+      if (U.screen === 'run' && U.run && U.run.phase === 'shop') {
         const cards = document.querySelectorAll('.shop .stock.v2:not(.sold) .buyb:not(:disabled)');
         if (cards && cards[idx]) { cards[idx].click(); e.preventDefault(); return; }
       }
 
       // Bench hero selection during deploy (1-4)
-      if (screen === 'run' && run && run.phase === 'deploy' && !battle) {
+      if (U.screen === 'run' && U.run && U.run.phase === 'deploy' && !U.battle) {
         const benchCards = document.querySelectorAll('.bench .bnc');
         if (benchCards && benchCards[idx]) { benchCards[idx].click(); e.preventDefault(); return; }
       }
@@ -3961,20 +605,21 @@
   if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
 
   // ------------------------------------------------------------------ boot
+  Object.assign(U, { ACT, sheetSwipe, refreshBehind });
   // BOOT: everything above only defined things; from here the game starts: update an old save, read an invite link, load the account, draw the title screen, start the review notice polling.
-  run = Run.migrate(run);
-  // v27: an invite link (?ref=<code>) is kept until this browser's first run creates the account, then sent with it
+  U.run = Run.migrate(U.run);
+  // an invite link (?ref=<code>) is kept until this browser's first run creates the account, then sent with it
   try {
     const u = new URL(location.href), ref = (u.searchParams.get('ref') || '').toLowerCase();
     if (/^[a-f0-9]{12}$/.test(ref) && !acct.account && ref !== acct.code) store.set('balance.ref', ref);
     if (u.searchParams.has('ref')) { u.searchParams.delete('ref'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); }
   } catch (_) {}
   applySkin();
-  loadAcct().then(() => { if (screen === 'title' && !ui.modal) render(); });
-  screen = 'title';
-  layoutClasses();
+  loadAcct().then(() => { if (U.screen === 'title' && !ui.modal) render(); });
+  U.screen = 'title';
+  U.layoutClasses();
   render();
-  bootNotice();
+  U.bootNotice();
   // test hook (headless Chrome tests drive the game through this)
-  window.__bal = { deployBench: () => { if (!run) return 0; const n = Run.benched(run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(run, h); } if (n.length) { save(); render(); } return n.length; }, showVs, closeVs, get ui() { return ui; }, get run() { return run; }, get battle() { return battle; }, get acct() { return acct; }, get result() { return ui.result; }, get screen() { return screen; }, set screen(s) { screen = s; }, loadAcct, ACT, render, skipBattle, poll, fmt, scaleParts, hexScreen: (c, r) => { const b = view.canvas.getBoundingClientRect(), p = Render.hexScreen(view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
+  window.__bal = { deployBench: () => { if (!U.run) return 0; const n = Run.benched(U.run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(U.run, h); } if (n.length) { save(); render(); } return n.length; }, showVs: U.showVs, closeVs: U.closeVs, get ui() { return ui; }, get run() { return U.run; }, get battle() { return U.battle; }, get acct() { return acct; }, get result() { return ui.result; }, get screen() { return U.screen; }, set screen(s) { U.screen = s; }, loadAcct, ACT, render, skipBattle: U.skipBattle, poll: U.poll, fmt, scaleParts, hexScreen: (c, r) => { const b = U.view.canvas.getBoundingClientRect(), p = Render.hexScreen(U.view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
 })();

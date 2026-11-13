@@ -2174,7 +2174,7 @@
   ]
 };
 
-  // ---------------------------------------------------------------- items (78 first, 120 since v16: see TYPES below)
+  // ---------------------------------------------------------------- items (78 first, 120 since see TYPES below)
   // WHAT: the first generation of items: I(id, name, rarity, mods, description). Below, N(type, ...) is the newer form with an equipment type.
   const I = (id, name, tier, mods, desc) => ({ id, name, tier, mods, desc });
   // WHAT: every item. mods = the stats it gives. Rarities: common, uncommon, rare, epic, set, legendary, mythic (shop prices in B.CFG.itemCost).
@@ -2274,7 +2274,7 @@
   ];
   B.TYPE = {}; for (const t of B.TYPES) B.TYPE[t.id] = t;
   B.RARITIES = [
-    // v29: brighter so every rarity reads on the new sky-blue panels
+    // brighter so every rarity reads on the new sky-blue panels
     { id: 'common', name: 'Common', color: '#e2e8f2' }, { id: 'uncommon', name: 'Uncommon', color: '#6ff09a' },
     { id: 'rare', name: 'Rare', color: '#7cc8ff' }, { id: 'epic', name: 'Epic', color: '#dca8ff' },
     { id: 'set', name: 'Set', color: '#4ff0dc' }, { id: 'legendary', name: 'Legendary', color: '#ffb35c' }, { id: 'mythic', name: 'Mythic', color: '#ff6f82' },
@@ -2415,10 +2415,10 @@
     coralie: 'Sends a wave that pushes enemies back',
     stellan: 'Drops a falling star on enemies',
   };
-  TAGS.prism = 'Beams that heal friends and burn foes'; TAGS.citadel = 'A tower that sends soldiers to fight';   // v60
-  TAGS.smolder = 'Eats an item each fight, burns foes'; TAGS.tom = 'Serves dishes that buff or heal allies'; TAGS.ashwing = 'A fire bird that returns from an egg';   // v62
-  TAGS.plasma = 'Never moves, shoves foes back'; TAGS.duelist = 'Locks itself and one foe in a duel'; TAGS.medic = 'Heals with its attacks and grenades'; TAGS.gardener = 'Plants that attack, heal and shield'; TAGS.rohammer = 'Slow hammer, rages when hit';    // v62h
-  TAGS.chronos = 'Turns back time on a hurt ally'; TAGS.bella = 'Stacks poison, then makes it spread'; TAGS.kitsune = 'Dodges, dashes and charms the back row';   // v121
+  TAGS.prism = 'Beams that heal friends and burn foes'; TAGS.citadel = 'A tower that sends soldiers to fight';   
+  TAGS.smolder = 'Eats an item each fight, burns foes'; TAGS.tom = 'Serves dishes that buff or heal allies'; TAGS.ashwing = 'A fire bird that returns from an egg';   
+  TAGS.plasma = 'Never moves, shoves foes back'; TAGS.duelist = 'Locks itself and one foe in a duel'; TAGS.medic = 'Heals with its attacks and grenades'; TAGS.gardener = 'Plants that attack, heal and shield'; TAGS.rohammer = 'Slow hammer, rages when hit';    
+  TAGS.chronos = 'Turns back time on a hurt ally'; TAGS.bella = 'Stacks poison, then makes it spread'; TAGS.kitsune = 'Dodges, dashes and charms the back row';   
   TAGS.onyx = 'A spiky turtle that hides in its shell'; TAGS.dragon = 'Dives through foes, leaving fire';
   for (const k in TAGS) if (B.HEROES[k]) B.HEROES[k].tag = TAGS[k];
   // a hero has one name, h.name.
@@ -2551,7 +2551,7 @@
   B.FORMATION = {
     shieldwall: n => `+${10 * n} Defense`, lonewolf: () => '+25% attack speed, +10% crit', vanguard: () => 'shield 25% Health',
     rearguard: () => '+20% Attack & Magic', battleline: () => '+15% attack speed & attack', cover: () => '+15% dodge, +15 Defense',
-    highground: n => n > 0 ? '+1 range, +20% damage' : '15% less damage', center: n => n > 0 ? 'the Star: +40% Health, Attack & Magic' : '10% less Health',   // v50
+    highground: n => n > 0 ? '+1 range, +20% damage' : '15% less damage', center: n => n > 0 ? 'the Star: +40% Health, Attack & Magic' : '10% less Health',   
   };
   // a short line for every relic (what it does, in a few words)
   // for shops, the start and the map; the full rule is one tap away (r.desc)
@@ -2708,7 +2708,7 @@
   };
   // Health and Attack of all six bosses set by tools/tune-bosses.js so every boss of a floor is won about as often (boss 1 ~62%, boss 2 ~57%,
   // the same teams for each; before: 72 / 60 / 19% and 76 / 71 / 76%)
-  // WHAT: which bosses can wait in boss slot 1 (fight 4) and slot 2 (fight 8); one is picked per run (v83: three per slot).
+  // WHAT: which bosses can wait in boss slot 1 (fight 4) and slot 2 (fight 8); one is picked per run (three per slot).
   B.BOSS_SLOTS = [['gorewarden', 'mirewitch', 'packlord'], ['hollowking', 'colossus', 'lichqueen']];
   // WHAT: the elite modifiers (armored, swift, enraged, giant) an enemy can get on harder fights.
   B.ELITES = [
@@ -2728,9 +2728,9 @@
   };
   // WHAT: the three fight difficulties offered on the map. budget = how much enemy there is, elites = how many elites, mul = strength multiplier per fight number (tuned by tools/tune-pve.js).
   B.DIFF = {
-    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: [1.09, 0.95, 1.19, 0.99, 1.09, 1.13, 1.06, 1.06, 1.09] },   // v61: mul = strength per fight number (~99%)
+    easy: { name: 'Easy', budget: 3.2, elites: 0, mul: [1.09, 0.95, 1.19, 0.99, 1.09, 1.13, 1.06, 1.06, 1.09] },   // mul = strength per fight number (~99%)
     medium: { name: 'Medium', budget: 4.6, elites: 0 },
-    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: [0.93, 0.76, 0.95, 0.91, 0.93, 1.09, 1.03, 0.99, 0.93] },   // v61: ~60% (v62: 72% in fights 1-3)
+    hard: { name: 'Hard', budget: 5.8, elites: 1, mul: [0.93, 0.76, 0.95, 0.91, 0.93, 1.09, 1.03, 0.99, 0.93] },   // ~60% (72% in fights 1-3)
     horde: { name: 'Horde', budget: 8.4, elites: 0, pool: 2 },   // the Bounty Board's horde challenge
   };
 
@@ -2883,7 +2883,7 @@
   // <TUNE-BEGIN>
   B.TUNE = { base: 1.173, growth: 0.711, power: {}, spec: { ash2a: 1.0111, ash2b: 0.9838, ash3a: 0.9528, ash3b: 1.0406, ash4a: 0.9828, ash4b: 1.0037, ash5a: 0.94, ash5b: 1.06, azg2a: 1.0359, azg2b: 0.9498, azg3a: 0.9533, azg3b: 1.0378, azg4a: 0.9878, azg4b: 1.004, azg5a: 0.9686, azg5b: 1.0245, bar2a: 0.9676, bar2b: 1.0282, bar3a: 1.0415, bar3b: 0.9571, bar4a: 0.9896, bar4b: 0.9615, bar5a: 0.98, bar5b: 1.02, bas2a: 1.0245, bas2b: 0.9751, bas3a: 0.9504, bas3b: 1.0418, bas4a: 0.9585, bas4b: 1.0402, bas5a: 0.9699, bas5b: 1.0052, bel2a: 0.9906, bel2b: 1.0035, bel3a: 1.1079, bel3b: 0.8941, bel4a: 1.0333, bel4b: 0.9504, blz2a: 0.9884, blz2b: 0.9995, blz3a: 0.9773, blz3b: 1.0148, blz4a: 0.9693, blz4b: 1.0252, blz5a: 0.8897, blz5b: 1.1044, bra2a: 1.0536, bra2b: 0.9468, bra3a: 1.0242, bra3b: 0.974, bra4a: 0.9977, bra4b: 0.9742, bra5a: 0.99, brm2a: 1.1719, brm2b: 0.8467, brm3a: 0.9864, brm3b: 1.0049, brm4a: 0.7523, brm4b: 1.2939, brm5a: 1.0358, brm5b: 0.9615, buz2a: 1.0752, buz2b: 0.9276, buz3a: 1.0428, buz3b: 0.9568, buz4a: 1.0174, buz4b: 1.0206, buz5a: 1.03, chr2a: 1.0008, chr2b: 0.9974, chr3a: 1.079, chr3b: 0.9225, chr4a: 1.1105, chr4b: 0.8964, chr5a: 0.8306, chr5b: 1.191, cit2a: 0.9786, cit2b: 0.9892, cit3a: 0.9374, cit3b: 1.0597, cit4a: 1.0333, cit4b: 0.9604, cit5a: 0.8431, cit5b: 1.1749, cor2a: 1.0049, cor2b: 0.9918, cor3a: 1.2896, cor3b: 0.7469, cor4a: 0.9726, cor4b: 0.939, cor5a: 1.01, cor5b: 0.99, dra2a: 0.9834, dra2b: 1.0079, dra3a: 0.9561, dra3b: 1.0413, dra4a: 0.957, dra4b: 1.0254, dra5a: 1.1236, dra5b: 0.8836, dsh2a: 0.9649, dsh2b: 1.0257, dsh3a: 0.9916, dsh3b: 0.9958, dsh4a: 0.9982, dsh4b: 0.9926, dsh5a: 0.9985, dsh5b: 1.1236, due2a: 1.0149, due2b: 0.9734, due3a: 0.9873, due3b: 1.013, due4a: 0.9921, due4b: 0.9933, due5a: 0.95, due5b: 1.05, ech2a: 1.0277, ech2b: 0.9693, ech3a: 1.1076, ech3b: 0.9001, ech4a: 1.0553, ech4b: 0.935, gar2a: 0.9485, gar2b: 1.0477, gar3a: 0.9605, gar3b: 1.0399, gar4a: 1.0353, gar4b: 0.9646, gar5a: 1.03, gar5b: 0.97, gla2a: 0.8828, gla2b: 1.0832, gla3a: 0.9224, gla3b: 1.0796, gla4a: 0.6978, gla4b: 1.3818, gla5a: 0.87, gla5b: 1.13, gri2a: 0.9103, gri2b: 1.0857, gri3a: 1.0951, gri3b: 0.9009, gri4a: 1.0374, gri4b: 0.9465, gri5a: 0.94, gri5b: 1.06, grk2a: 1.0183, grk2b: 0.9765, grk3a: 1.0184, grk3b: 0.9744, grk4a: 1.0783, grk4b: 0.9554, grk5a: 1.02, har2a: 1.0151, har2b: 0.9801, har3a: 1.006, har3b: 0.9894, har4a: 1.0607, har4b: 0.9227, har5a: 0.8979, har5b: 1.0417, hip2a: 1.0543, hip2b: 0.9414, hip3a: 0.9238, hip3b: 1.0668, hip4a: 1.0492, hip4b: 0.9485, hip5a: 0.9186, hip5b: 1.1134, imh2a: 1.0896, imh2b: 0.9128, imh3a: 0.9837, imh3b: 1.0034, imh4a: 1.1734, imh4b: 0.844, imh5a: 1.06, imh5b: 0.94, kag2a: 1.0518, kag2b: 0.9461, kag3a: 1.015, kag3b: 0.9781, kag4a: 1.0416, kag4b: 0.9062, kag5a: 0.9648, kag5b: 1.032, kes2a: 1.0034, kes2b: 0.9886, kes3a: 1.0286, kes3b: 0.9567, kes4a: 1.0556, kes4b: 0.93, kes5a: 1.1794, kes5b: 0.8388, kit2a: 0.9273, kit2b: 1.0745, kit3a: 0.9847, kit3b: 1.0089, kit4a: 0.972, kit4b: 1.0108, kit5a: 0.935, kit5b: 1.0582, leo2a: 1.0238, leo2b: 0.974, leo3a: 0.9798, leo3b: 1.0125, leo4a: 0.9829, leo4b: 1.014, leo5a: 0.8836, leo5b: 1.2023, lum2a: 1.087, lum2b: 1.0248, lum3a: 1.0591, lum3b: 0.9421, lum4a: 1.121, lum4b: 0.8823, lum5a: 0.9206, lum5b: 1.0278, med2a: 0.8881, med2b: 1.0766, med3a: 1.1674, med3b: 0.8679, med4a: 1.0283, med4b: 0.9715, med5a: 1.0247, med5b: 0.9583, mir2a: 0.9278, mir2b: 1.0399, mir3a: 0.9605, mir3b: 1.0355, mir4a: 0.9906, mir4b: 0.9983, mir5a: 0.95, mir5b: 1.05, mor2a: 0.9615, mor2b: 1.0299, mor3a: 0.7153, mor3b: 1.3695, mor4a: 1.0645, mor4b: 0.9319, mor5a: 0.92, nyx2a: 1.0614, nyx2b: 0.9538, nyx3a: 1.005, nyx3b: 0.985, nyx4a: 1.0581, nyx4b: 0.9397, nyx5a: 1.2262, nyx5b: 0.8052, ony2a: 0.9794, ony2b: 1.0175, ony3a: 0.8665, ony3b: 1.1445, ony4a: 0.8796, ony4b: 1.1276, ony5a: 1.0944, ony5b: 0.9064, pip2a: 1.0555, pip2b: 0.9419, pip3a: 1.0639, pip3b: 0.9344, pip4a: 1.0148, pip4b: 0.9999, pip5a: 0.95, pla2a: 0.9501, pla2b: 1.0581, pla3a: 1.0177, pla3b: 1.0039, pla4a: 1.0048, pla4b: 1.0073, pla5a: 0.9825, pla5b: 1.0133, pri2a: 0.966, pri2b: 1.0318, pri3a: 0.954, pri3b: 1.0456, pri4a: 0.9791, pri4b: 1.0508, pri5a: 1.09, pri5b: 0.91, pyr2a: 0.9926, pyr2b: 1.0921, pyr3a: 0.9336, pyr3b: 1.0663, pyr4a: 0.9409, pyr4b: 1.0443, pyr5a: 0.9157, pyr5b: 1.0966, rex2a: 0.8466, rex2b: 1.1689, rex3a: 1.0542, rex3b: 0.9335, rex4a: 1.0136, rex4b: 0.9758, rex5a: 0.95, rex5b: 1.05, roh2a: 1.1012, roh2b: 0.9037, roh3a: 0.9591, roh3b: 1.0338, roh4a: 0.9482, roh4b: 1.0473, roh5a: 1.1564, roh5b: 0.8593, roo2a: 0.9434, roo2b: 1.0548, roo3a: 0.905, roo3b: 1.0858, roo4a: 0.8087, roo4b: 1.216, roo5b: 1.1, ser2a: 0.989, ser2b: 1.0054, ser3a: 1.0483, ser3b: 0.9448, ser4a: 0.8589, ser4b: 1.1485, ser5b: 1.03, smo2a: 1.0343, smo2b: 0.9534, smo3a: 1.0143, smo3b: 1.004, smo4a: 1.0997, smo4b: 0.8965, smo5a: 0.95, smo5b: 1.05, spr2a: 0.8786, spr2b: 1.0365, spr3a: 0.8806, spr3b: 1.117, spr4a: 0.861, spr4b: 1.1324, spr5b: 0.95, ste2a: 0.9732, ste2b: 1.0236, ste3a: 0.9747, ste3b: 1.0209, ste4a: 1.0461, ste4b: 0.947, ste5a: 1.02, ste5b: 0.98, tem2a: 0.9887, tem2b: 1.0042, tem3a: 0.8813, tem3b: 1.0395, tem4a: 0.9159, tem4b: 1.0777, tem5a: 1.15, tem5b: 0.85, thr2a: 1.0429, thr2b: 1.0142, thr3a: 1.03, thr3b: 0.9618, thr4a: 0.9306, thr4b: 1.0597, thr5a: 1.0689, thr5b: 0.9245, tom2a: 1.0604, tom2b: 1.0159, tom3a: 0.9005, tom3b: 1.124, tom4a: 0.928, tom4b: 1.0753, tom5a: 1.12, tom5b: 0.88, ves2a: 1.0015, ves2b: 0.9881, ves3a: 1.0265, ves3b: 0.9718, ves4a: 0.9859, ves4b: 1.0037, ves5a: 1.0408, ves5b: 0.9309, vex2a: 1.0324, vex2b: 1.0061, vex3a: 1.0099, vex3b: 0.9791, vex4a: 0.9927, vex4b: 0.9932, vex5a: 1.0349, vex5b: 0.9602, vey2a: 0.9287, vey2b: 1.0707, vey3a: 0.9524, vey3b: 0.9754, vey4a: 1.3372, vey4b: 0.7208, vey5a: 1.03, vey5b: 0.97, zep2a: 1.0444, zep2b: 1.0347, zep3a: 1.0828, zep3b: 0.9092, zep4a: 1.0053, zep4b: 0.9775, zep5a: 0.97, zep5b: 1.03 }, pvp: { ashwing: 1.009, azgul: 0.692, barley: 1.051, blaze: 0.877, brakk: 0.799, bramble: 1.108, buzzwell: 1.189, citadel: 1.115, coralie: 0.983, deadshot: 0.836, echo: 1.322, gardener: 1.295, glacia: 0.865, grimhook: 1.057, grok: 0.653, harlequin: 0.646, hippolyta: 0.744, imhotep: 0.645, kage: 0.788, kestrel: 1.092, leonidas: 0.776, lumen: 1.384, medic: 1.6, mirage: 1.159, morrow: 1.308, nyx: 0.85, plasma: 1.171, prism: 1.256, pyra: 0.771, rex: 0.785, rohammer: 0.81, rook: 1.122, seraph: 1.137, smolder: 0.933, sprocket: 1.041, stellan: 0.99, tempest: 0.764, tom: 1.063, vesper: 1.15, vex: 0.907, vey: 0.901, zephyr: 0.9 } };
   // <TUNE-END>
-  // v44: who can take a "req" choice (FTL's blue options)
+  // who can take a "req" choice (FTL's blue options)
   const CASTER_ROLES = ['Mage', 'Controller', 'Healer', 'Summoner', 'Bard', 'Hypnotist', 'Alchemist', 'Beekeeper', 'Tidecaller', 'Stargazer', 'Trickster'];
   const HEALER_ROLES = ['Healer', 'Paladin', 'Bard', 'Beekeeper', 'Tidecaller'];
   // WHAT: the hero requirements some event choices have (a tank, a caster, a healer): who qualifies.
@@ -2910,7 +2910,7 @@
   ];
   B.LEAGUE_RULES = { step: 100, demoteTo: 75, duelWin: 0, pveLoss: 0 };   // duelWin / pveLoss: only the old Gauntlet ops (old tabs) still read them
   // a completed run is a victory of a kind by the lives left: Perfect (no fight lost), Gold, Bronze
-  // WHAT: the three kinds of victory (by lives left). v65: only a name and a medal (league points come from PvP fights).
+  // WHAT: the three kinds of victory (by lives left). only a name and a medal (league points come from PvP fights).
   // one Ward: Perfect with the Ward whole, Gold with it broken
   B.VICTORY = [
     { lives: 1, id: 'perfect', name: 'Perfect', icon: '💎', color: '#7ee8ff' },
@@ -2959,7 +2959,7 @@
     const pve = g.done || g.pve ? B.LP_PVE[Math.max(0, Math.min(B.LP_PVE.length - 1, league | 0))] : 0;
     if (g.failed && B.lpFail(league)) out.push({ id: 'fail', n: 1, lp: -B.lpFail(league) });
     if (pve) out.push({ id: 'pve', n: 1, lp: pve });
-    // v94: with the list of PvP fights ([won, opponent's league, final]) each fight is scored with its league gap; without it, by the counts as before
+    // with the list of PvP fights ([won, opponent's league, final]) each fight is scored with its league gap; without it, by the counts as before
     const P = Array.isArray(g.pvp) ? g.pvp.slice(0, 12).filter(x => Array.isArray(x)) : null;
     if (P && P.length) {
       const me = league | 0, gap = x => x[1] == null || !Number.isFinite(+x[1]) ? null : Math.round(+x[1]) - me;
@@ -3087,7 +3087,7 @@
   // level from level 2 to 5
   B.START_HEROES = ['bastion', 'grok', 'citadel', 'leonidas', 'barley', 'lumen', 'glacia', 'medic', 'prism', 'vey', 'kestrel', 'pyra', 'vex', 'tempest', 'rook', 'thorne', 'nyx', 'blaze', 'deadshot', 'hippolyta',
     'sprocket', 'bramble', 'rex', 'pip', 'buzzwell', 'imhotep', 'azgul', 'coralie', 'smolder', 'harlequin', 'zephyr', 'tom', 'rohammer', 'stellan', 'gardener', 'ashwing', 'plasma', 'duelist',
-    'onyx', 'dragon', 'chronos', 'bella', 'kitsune'];   // v121: the three new heroes are open from the start too // the two new heroes are open from the start
+    'onyx', 'dragon', 'chronos', 'bella', 'kitsune'];   // the three new heroes are open from the start too // the two new heroes are open from the start
   // one a level from level 2 to 27; two a level from 2 to 5
   B.HERO_UNLOCKS = ['morrow', 'grimhook', 'brakk', 'mirage', 'vesper', 'echo', 'seraph', 'kage'];
   // your picture (profile, ladder, the top bar) is a hero portrait. Four are free;
@@ -3096,14 +3096,14 @@
   // (one reward, not two), and the other starting heroes' portraits are the rewards of levels 28 to 43, after the last hero. So a chest holds one main
   // thing (a hero, or a portrait), sometimes an item or power, rarely a title or voice line besides.
   B.PORTRAITS_FREE = ['bastion', 'lumen', 'pyra', 'kestrel'];
-  B.PORTRAITS_LATE = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k));   // the levels after the last hero (v91: 22..37)
+  B.PORTRAITS_LATE = B.START_HEROES.filter(k => !B.PORTRAITS_FREE.includes(k));   // the levels after the last hero (22..37)
   B.PORTRAIT_UNLOCKS = B.HERO_UNLOCKS.concat(B.PORTRAITS_LATE);
   for (const k of B.PORTRAIT_UNLOCKS) { const it = { id: 'pt_' + k, kind: 'portrait', hero: k, icon: '🖼', name: (B.HEROES[k] || {}).name + ' portrait', price: B.PORTRAIT_PRICE, desc: 'Use this portrait before your level opens it.' }; B.COSMETICS.push(it); B.SHOP_ITEM[it.id] = it; }
   // the first 12 heroes come two a level (levels 2 to 7), the other 14 one a level (8 to 21)
   B.EARLY_PAIRS = 4;   // every unlocked hero comes two a level (2 to 5); the items and powers then one a level from 6, the portraits after them
   // WHAT: the account level that unlocks the i-th hero of B.HERO_UNLOCKS.
   B.heroUnlockLevel = i => i < 2 * B.EARLY_PAIRS ? 2 + Math.floor(i / 2) : 2 + B.EARLY_PAIRS + (i - 2 * B.EARLY_PAIRS);
-  // v91: the items and powers the levels unlock come one a level after the two-hero levels (8 to 22), so an early chest holds its two heroes and little else
+  // the items and powers the levels unlock come one a level after the two-hero levels (8 to 22), so an early chest holds its two heroes and little else
   B.UNLOCKS = [
     [2, 'relic', 'beehive'], [3, 'item', 'honeycomb'], [4, 'relic', 'seashell'], [6, 'relic', 'kite'],
     [7, 'item', 'starcloak'], [8, 'relic', 'compass'], [9, 'relic', 'teapot'], [11, 'item', 'tidepearl'],
@@ -3111,7 +3111,7 @@
     [17, 'item', 'comethammer'], [18, 'relic', 'pinwheel'], [19, 'relic', 'horseshoe'],
   ].map(([lvl, kind, id], i) => ({ lvl: 2 + B.EARLY_PAIRS + i, kind, id })).concat(B.HERO_UNLOCKS.map((id, i) => ({ lvl: B.heroUnlockLevel(i), kind: 'hero', id })))   // one hero a level; two a level at first
     .concat(B.LEVEL_TAUNTS.map(t => ({ lvl: t.lvl, kind: 'taunt', id: t.id }))).concat(B.ACHIEVEMENTS.filter(a => a.by === 'level').map(a => ({ lvl: a.lvl, kind: 'title', id: a.id })))
-    .concat(B.PORTRAITS_LATE.map((id, i) => ({ lvl: B.heroUnlockLevel(B.HERO_UNLOCKS.length - 1) + 1 + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);   // v88: a new hero's portrait comes with the hero
+    .concat(B.PORTRAITS_LATE.map((id, i) => ({ lvl: B.heroUnlockLevel(B.HERO_UNLOCKS.length - 1) + 1 + i, kind: 'portrait', id }))).sort((a, b) => a.lvl - b.lvl);   // a new hero's portrait comes with the hero
   // WHAT: the account level a hero's portrait opens at (1 = free from the start, 0 = no such portrait).
   B.portraitLevel = key => B.PORTRAITS_FREE.includes(key) ? 1 : B.HERO_UNLOCKS.includes(key) ? B.heroUnlockLevel(B.HERO_UNLOCKS.indexOf(key)) : (B.UNLOCKS.find(u => u.kind === 'portrait' && u.id === key) || { lvl: 0 }).lvl;
   B.xpToNext = lvl => B.ACCOUNT.base + B.ACCOUNT.step * (Math.max(1, lvl) - 1);
@@ -3119,7 +3119,7 @@
   B.levelOf = xp => { let l = 1, left = Math.max(0, xp || 0); while (left >= B.xpToNext(l)) { left -= B.xpToNext(l); l++; } return l; };
   // where an XP total sits: its level, the XP into that level and what the level costs
   B.levelProgress = xp => { const lvl = B.levelOf(xp), into = Math.max(0, xp || 0) - B.xpForLevel(lvl); return { lvl, into, need: B.xpToNext(lvl) }; };
-  B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl && ['hero', 'item', 'relic'].includes(u.kind)).map(u => u.id);   // v65: portraits are pictures, they never lock a hero
+  B.lockedFor = lvl => B.UNLOCKS.filter(u => u.lvl > lvl && ['hero', 'item', 'relic'].includes(u.kind)).map(u => u.id);   // portraits are pictures, they never lock a hero
   B.hasPerk = (perks, id) => (perks || []).includes(id);
 
   // ---------------------------------------------------------------- terrain (, David)

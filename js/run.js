@@ -27,7 +27,7 @@
   // WHAT: the three lists of everything this player may get in this run: hero keys, items, powers (relics). Locked content is left out.
   const heroKeysOf = run => Object.keys(B.HEROES).filter(k => isOpen(run, k));
   const itemsOf = run => B.ITEMS.filter(i => isOpen(run, i.id));
-  const relicsOf = run => B.RELICS.filter(r => isOpen(run, r.id) && r.id !== 'solo');   // v63: the Lone Crown needs a team of one, and the run now starts with three heroes: it is no longer offered
+  const relicsOf = run => B.RELICS.filter(r => isOpen(run, r.id) && r.id !== 'solo');   // the Lone Crown needs a team of one, and the run now starts with three heroes: it is no longer offered
   // WHAT: n DIFFERENT random items of a list (no repeats). pickN(run, list, 3).
   function pickN(run, arr, n) { const a = arr.slice(), o = []; while (a.length && o.length < n) o.push(a.splice(Math.floor(rnd(run) * a.length), 1)[0]); return o; }
   // WHAT: a random key from { key: weight } where a bigger weight is likelier. wpick(run, { common: 0.5, rare: 0.1 }).
@@ -55,7 +55,7 @@
     // the sequence and the fight scale live in the run; runs started before keep the old 13 steps
     if (run.v === 4) { run.v = 5; run.seq = ['F', 'X', 'F', 'X', 'B', 'X', 'F', 'X', 'F', 'X', 'B', 'S', 'G']; run.fightScale = [1, 0.9, 1.1, 1.3, 1.5, 1.75, 2]; }
     if (run.v === 5) {
-      if (run.lives == null) run.lives = 3;   // runs saved before lives got the full three (v101: turned into the Ward below)
+      if (run.lives == null) run.lives = 3;   // runs saved before lives got the full three (turned into the Ward below)
       if (!run.wardV) { run.wardV = 1; run.lives = run.lives >= 3 ? 1 : 0; }   // three lives become the Ward (whole only if no fight was lost)
       if (run.g && run.g.teamId != null && run.phase !== 'over') { run.phase = 'gauntlet'; run.cur = null; run.g = { status: 'intro', history: [] }; }   // the old tower is gone: the run goes to the final fight
       // no PvP inside the run. A saved run waiting for (or deploying for) the final fight is complete; duel options leave the map
@@ -72,7 +72,7 @@
       step: -1, fightNo: 0, phase: 'start', opts: [], cur: null, pending: [], curse: 0, log: [], won: 0, lost: 0, score: 0, startOffer: [],
       seq: C.seq.slice(), fightScale: C.fightScale.slice(), locked: ((opts && opts.locked) || []).slice() };
     run.freeDeck = JSON.parse(JSON.stringify((opts && opts.deck) || {}));   // the free-pick queues, carried from game to game by ui.js
-    // heroes offered by class (v64, one of each class, the player picks one); v100: drawn from the free-pick queues
+    // heroes offered by class (v64, one of each class, the player picks one); drawn from the free-pick queues
     run.startOffer = [].concat(...B.CLASSES.map(cl => { const o = []; for (let i = 0; i < C.startOffer / B.CLASSES.length; i++) { const k = drawFree(run, cl, new Set(o)); if (k) o.push(k); } return o; }));
     run.relicOffer = C.startRelics ? pickN(run, relicsOf(run).map(r => r.id), C.startRelics) : [];
     run.lives = C.lives; run.wardV = 1;
@@ -309,7 +309,7 @@
   // ------------------------------------------------------------------ fights
   // WHAT: which enemies can show up in fight number n (B.POOLS in data.js: stronger monsters unlock in later fights).
   function poolFor(n) { let k = 1; for (const x of Object.keys(B.POOLS).map(Number)) if (x <= n) k = x; return B.POOLS[k]; }
-  // v61: a difficulty strength, one number or one per fight number (B.DIFF.hard.mul[fightNo])
+  // a difficulty strength, one number or one per fight number (B.DIFF.hard.mul[fightNo])
   // WHAT: how strong a difficulty (easy / medium / hard) is on fight number n. A number or a list with one number per fight (B.DIFF in data.js).
   function diffMul(diff, fightNo) { const m = B.DIFF[diff] && B.DIFF[diff].mul; return Array.isArray(m) ? m[Math.min(fightNo, m.length - 1)] : m || 1; }
   // WHAT (important): builds one fight to offer on the map: which enemies (bosses and escorts, or a budget of monsters, plus elites), where they stand, their strength scale, the gold prize and the map.
@@ -345,7 +345,7 @@
       const h = pick(run, spots); e.c = h.c; e.r = h.r; taken.add(Hx.key(h.c, h.r));
     }
     let gold = diff === 'boss' ? C.gold.boss : C.gold[diff] || 0;
-    if (has(run, 'huntmap')) gold = diff === 'hard' ? gold * 2 : diff === 'easy' ? 0 : gold;   // v50
+    if (has(run, 'huntmap')) gold = diff === 'hard' ? gold * 2 : diff === 'easy' ? 0 : gold;   
     if (has(run, 'quill')) gold = Math.max(0, gold - 2);
     return { type: 'fight', diff, fightNo, scale, enemies, gold, map };
   }
@@ -355,7 +355,7 @@
       const d = B.Sim.mobScaleDef(e.key, fight.scale), M = fight.mod || {};
       if (fight.curse) d.hp *= 1 + fight.curse;
       if (M.enemyHp) d.hp *= 1 + M.enemyHp;
-      if (has(run, 'cursecoin')) d.hp *= 1 + 0.05 * (run.coinN || 0);   // v50
+      if (has(run, 'cursecoin')) d.hp *= 1 + 0.05 * (run.coinN || 0);   
       if (M.enemyAtk) d.atk *= 1 + M.enemyAtk;
       if (e.elite) B.Sim.applyElite(d, B.ELITES.find(x => x.id === e.elite));
       return { def: d, c: e.c, r: e.r };
@@ -384,7 +384,7 @@
   function fightWorld(run, preview, o) {
     if (!preview) devour(run);
     placeAll(run, preview);
-    const f = run.cur, team = (f.solo ? run.heroes.filter(h => h.uid === f.solo) : run.heroes).filter(h => !h.bench);   // v44: a duel = one hero; v126: the bench is off the board
+    const f = run.cur, team = (f.solo ? run.heroes.filter(h => h.uid === f.solo) : run.heroes).filter(h => !h.bench);   // a duel = one hero; the bench is off the board
     return B.Sim.create({
       terrain: terrainOf(run),
       mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: f.fightNo, relics: run.relics, takeMul: o && o.takeMul,
@@ -431,7 +431,7 @@
       if (u.kind !== 'hero' || !u.uid) continue;
       const h = run.heroes.find(x => x.uid === u.uid); if (!h) continue;
       const before = h.lvl, xp0 = h.xp;
-      gainXp(run, h, has(run, 'medal') ? (u.kb || 0) * 14 : u.xpT / B.Sim.TPS);   // v50: the Veteran's Medal
+      gainXp(run, h, has(run, 'medal') ? (u.kb || 0) * 14 : u.xpT / B.Sim.TPS);   // the Veteran's Medal
       res.xp.push({ uid: h.uid, name: B.HEROES[h.key].name, gained: h.xp - xp0, from: before, to: h.lvl });
     }
     if (win) {
@@ -450,10 +450,10 @@
     else run.lost++;
     fightAchs(run, W, win, f.diff === 'boss' && !f.challenge, f.fightNo === 1 && !f.challenge);
     if (has(run, 'cursecoin')) run.coinN = (run.coinN || 0) + 1;
-    if (W.used && W.used.phoenix) { run.relics = run.relics.filter(id => id !== 'phoenix'); res.phoenix = true; }   // v50: the egg hatched
+    if (W.used && W.used.phoenix) { run.relics = run.relics.filter(id => id !== 'phoenix'); res.phoenix = true; }   // the egg hatched
     run.log.push((win ? 'Won ' : 'Lost ') + (f.challenge ? f.challenge.name : f.diff === 'boss' ? 'boss' : f.diff) + ' fight ' + f.fightNo);
     run.cur = null;
-    // v44: a challenge from an event pays its reward on a win
+    // a challenge from an event pays its reward on a win
     if (f.challenge) { res.challenge = f.challenge.name; if (win) challengeReward(run, f, res); }
     // v101 (reviews #186 #189): every lost PvE fight (event fights too) breaks the Ward and the day starts over with new choices (a boss waits again);
     // lost with the Ward already broken, the run ends
@@ -486,7 +486,7 @@
     if (run.result !== 'clear') return run.achs || [];
     if (run.lives >= C.lives) ach(run, 'perfect'); if (run.lives === 0) ach(run, 'comeback');
     if (!run.fell) ach(run, 'untouchable');
-    if ((C.pvpFights || []).length && (run.trophies || []).filter(t => !t.final).length >= C.pvpFights.length && !run.pvpLost) ach(run, 'duelmaster');   // v96: no duel days, no Duel Master
+    if ((C.pvpFights || []).length && (run.trophies || []).filter(t => !t.final).length >= C.pvpFights.length && !run.pvpLost) ach(run, 'duelmaster');   // no duel days, no Duel Master
     if (run.gold >= 100) ach(run, 'hoarder');
     return run.achs || [];
   }
@@ -554,7 +554,7 @@
       const key = pick(run, all.filter(k => B.heroClass(k) === cl)), b = B.HEROES[key];
       const specs = b.specs.slice(0, lvl - 1).map(pr => pr[Math.floor(rnd(run) * 2)].id), items = [], types = new Set();
       for (let n = 0, tries = 0; n < nItems && tries < 30; tries++) { const it = B.ITEM[randomItemOf(run, wpick(run, w))]; if (types.has(it.type)) continue; types.add(it.type); items.push(it.id); n++; }
-      const gp = (C.ghostPower || 1) - 1;   // v63: how strong the made-up teams are (B.CFG.ghostPower, 1 = as built), tuned so a PvE-built team completes about as often as intended
+      const gp = (C.ghostPower || 1) - 1;   // how strong the made-up teams are (B.CFG.ghostPower, 1 = as built), tuned so a PvE-built team completes about as often as intended
       team.push({ key, lvl, specs, items, bonus: gp ? { hpPct: gp, atkPct: gp } : {}, pos: { c: [3, 4, 2][i], r: b.range <= 1 ? 4 : 6 } });
     });
     const relics = pickN(run, B.RELICS.filter(r => !B.NONCOMBAT.relic.includes(r.id) && r.id !== 'solo').map(r => r.id), nRel);
@@ -692,7 +692,7 @@
       // the ghost fights with its own relics too (stat relics via heroDef, team effects via enemyRelics)
       mode: 'fight', seed: preview ? 1 : Math.floor(rnd(run) * 1e9), noStart: !!preview, fightNo: 7, relics: run.relics, enemyRelics: o.relics || [], takeMul: o2 && o2.takeMul,   // v95 (reviews #176 #177): see B.PVP_TAKE
      
-      heroes: run.heroes.filter(h => !h.bench).map(h => ({ def: pvpDef(heroDef(run, h), h.key), c: h.pos.c, r: h.pos.r })),   // v126: the bench is off the board // v88: pvpDef = the PvP-only balance (B.TUNE.pvp)
+      heroes: run.heroes.filter(h => !h.bench).map(h => ({ def: pvpDef(heroDef(run, h), h.key), c: h.pos.c, r: h.pos.r })),   // the bench is off the board // pvpDef = the PvP-only balance (B.TUNE.pvp)
       // their formation, mirrored so it faces ours: rows 4..7 -> 3..0
       enemies: o.team.map(h => { const d = pvpDef(heroDef(ghost, h), h.key); d.uid = 0; return { def: d, c: 7 - h.pos.c, r: 7 - h.pos.r }; }),
     });
@@ -715,7 +715,7 @@
 
   // ------------------------------------------------------------------ map
   // the fight number of the n-th boss in this run's sequence
-  // v52: the boss of slot n in this game (games from before v52 keep the two old ones)
+  // the boss of slot n in this game (games from before v52 keep the two old ones)
   // WHAT: which boss waits in boss slot n of this run (chosen at newRun from B.BOSS_SLOTS).
   function bossOf(run, n) { return ((run && run.bosses) || ['gorewarden', 'hollowking'])[n - 1] || (n === 1 ? 'gorewarden' : 'hollowking'); }
   // WHAT: the fight number of the n-th boss in this run's sequence (4 and 8 normally).
@@ -779,7 +779,7 @@
   // WHAT: the player tapped option i of the map: opens that fight (deploy), shop or event.
   function choose(run, i) {
     const o = run.opts[i]; if (!o) return;
-    if (o.type === 'duel') { if (!o.opp) return; run.opts = []; run.fightNo = o.fightNo; startDuel(run, o.opp, 'pvp', o.fightNo); return; }   // v63: the opponent is found when the map opens (ui.js)
+    if (o.type === 'duel') { if (!o.opp) return; run.opts = []; run.fightNo = o.fightNo; startDuel(run, o.opp, 'pvp', o.fightNo); return; }   // the opponent is found when the map opens (ui.js)
     run.cur = o; run.opts = [];
     if (o.type === 'fight') {
       run.fightNo = o.fightNo;
@@ -796,7 +796,7 @@
   // ------------------------------------------------------------------ shops
   // WHAT: SHOPS. Everything that builds shop stock and prices is below; prices come from B.CFG (heroCost, itemCost, relicCost, reroll).
   const seal = run => run.relics.includes('seal') ? 1 : 0;
-  // itemization v16: 7 rarities; set and legendary from the 2nd fight on, mythic only in the late shops
+  // itemization 7 rarities; set and legendary from the 2nd fight on, mythic only in the late shops
   // WHAT: how likely each item rarity is in a shop, by how far you are in the run (rarer items appear later).
   function tierWeights(run) {
     const n = run.fightNo;
@@ -811,7 +811,7 @@
     const st = stockBase(run, kind), up = has(run, 'xmap') ? 1 : 0;
     if (st.length > 1 && st.length % 2) st.pop();
     if (up) for (const s of st) s.price += up;
-    if (has(run, 'ledger') && st.length) { const free = Math.floor(rnd(run) * st.length); st.forEach((s, i) => { s.price = i === free ? 0 : s.price + 2; if (i === free) s.free = true; }); }   // v50
+    if (has(run, 'ledger') && st.length) { const free = Math.floor(rnd(run) * st.length); st.forEach((s, i) => { s.price = i === free ? 0 : s.price + 2; if (i === free) s.free = true; }); }   
     return st;
   }
   // WHAT: the raw stock: 4 heroes you do not own, 4 items (6 with the Faded Chart), or 4 powers you do not own, with their prices.
@@ -835,9 +835,9 @@
   // WHAT: refreshes the stock of the open shop. Returns false when you cannot afford it.
   function reroll(run) {
     const c = rerollCost(run); if (run.gold < c) return false;
-    if (has(run, 'deck') && run.cur.stock.length <= 2) return false;   // v50: the Shuffled Deck has run out of cards
+    if (has(run, 'deck') && run.cur.stock.length <= 2) return false;   // the Shuffled Deck has run out of cards
     const n = run.cur.stock.length; run.gold -= c; run.cur.rerolls++; run.cur.stock = stockFor(run, run.cur.kind); for (const s of run.cur.stock) seen(run, s.kind, [s.id]);
-    if (has(run, 'deck')) run.cur.stock = run.cur.stock.slice(0, Math.max(2, n - 2));   // v51: two at a time, so it stays even
+    if (has(run, 'deck')) run.cur.stock = run.cur.stock.slice(0, Math.max(2, n - 2));   // two at a time, so it stays even
     return true;
   }
   // "): a hero bought into a free slot starts at the level of
@@ -863,7 +863,7 @@
     run.relics.push(id);
     if (id === 'purse') run.gold += 10;
     if (id === 'tome') for (const h of run.heroes) gainXp(run, h, 45);
-    if (id === 'cursecoin') { run.gold += 25; run.coinN = 0; }   // v50
+    if (id === 'cursecoin') { run.gold += 25; run.coinN = 0; }   
   }
   // WHAT: leave the shop / event and go to the next day.
   function leave(run) { if (run.cur && run.cur.type === 'event') { seen(run, 'event', [run.cur.id]); if (!run.cur.done) took(run, 'event', run.cur.id + '#skip'); } run.cur = null; advance(run); }
@@ -1026,7 +1026,7 @@
     if (ch.cost) run.gold -= ch.cost;
     if (run.cur && run.cur.type === 'event') took(run, 'event', run.cur.id + '#' + (ch.id || i));
     const [a, x, y, z] = ch.act.split(':'); let msg = 'Nothing happens.';
-    // v44: what the choice gave, shown as pictures on the event's result (kind: gold | xp | item | relic | hero | boost)
+    // what the choice gave, shown as pictures on the event's result (kind: gold | xp | item | relic | hero | boost)
     const gains = [], got = (kind, v, t) => gains.push({ kind, v, t });
     const name = h => B.HEROES[h.key].name, hero = tgt && tgt.uid ? run.heroes.find(h => h.uid === tgt.uid) : null;
     const it = tgt && tgt.id ? itemAt(run, tgt.arg) : null, iname = id => B.ITEM[id].name;
@@ -1099,7 +1099,7 @@
       for (const k in ch.next) M[k] = typeof ch.next[k] === 'number' ? (M[k] || 0) + ch.next[k] : ch.next[k];
       msg += ' It will matter in your next fight.';
     }
-    if (has(run, 'xmap')) { const id = randomItem(run); run.bag.push(id); got('item', id); msg += ' The Treasure Map finds ' + iname(id) + '.'; }   // v50
+    if (has(run, 'xmap')) { const id = randomItem(run); run.bag.push(id); got('item', id); msg += ' The Treasure Map finds ' + iname(id) + '.'; }   
     run.cur.done = msg; run.cur.gains = gains; return msg;
   }
   // WHAT: names and formats stats for text ("+10% attack speed"). modsText(m) writes a whole bag of stats as a sentence.
@@ -1158,7 +1158,7 @@
   function heroProfile(key) {
     if (profCache[key]) return profCache[key];
     const h = B.HEROES[key], t = h.abDesc + ' ' + h.specs.flat().map(s => s.desc).join(' ');
-    const ap = (t.match(/% (?:of (?:his|her) )?Magic\b/g) || []).length, ad = (t.match(/% (?:of (?:his|her) )?Attack\b/g) || []).length;   // v62h: the stat names are Magic and Attack now
+    const ap = (t.match(/% (?:of (?:his|her) )?Magic\b/g) || []).length, ad = (t.match(/% (?:of (?:his|her) )?Attack\b/g) || []).length;   // the stat names are Magic and Attack now
     const apShare = ap + ad ? ap / (ap + ad) : 0.3;   // an ability that names neither leans on attacks
     return (profCache[key] = { apShare, tank: TANK_ROLES.includes(h.role) || (h.range <= 1 && h.hp >= 850), ranged: h.range > 1 });
   }
@@ -1199,7 +1199,7 @@
     const pool = run.bag.concat(...run.heroes.map(h => h.items));
     for (const h of run.heroes) h.items = [];
     const left = pool.slice(), MIN = 0.2;   // best matches go first; a free slot still takes a small plus, never an off-role item
-    const cap = h => slots(run, h) - (has(run, 'vow') ? 1 : 0);   // v61: the Minimalist's Vow pays for one free slot
+    const cap = h => slots(run, h) - (has(run, 'vow') ? 1 : 0);   // the Minimalist's Vow pays for one free slot
     for (;;) {
       let best = null;
       for (const h of run.heroes) {

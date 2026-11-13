@@ -25,7 +25,7 @@
     // (the battle loop lowers it when frames stay slow); the browser stretches the picture back to its size on screen.
     // Desktop devices get full crisp resolution (capped at 2x DPR) for razor-sharp textures and typography.
     const dpr = desk ? Math.max(1, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1))
-      : Math.max(0.5, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1, Math.sqrt(PX_CAP / Math.max(1, w * h))));   // v62r: the battle loop lowers maxDpr by itself when a computer draws slowly // v62b: 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
+      : Math.max(0.5, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1, Math.sqrt(PX_CAP / Math.max(1, w * h))));   // the battle loop lowers maxDpr by itself when a computer draws slowly // 2 is plenty sharp for a game board and costs 45% fewer pixels than 3 on a phone
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -103,7 +103,7 @@
     }
     return p;
   }
-  // v55: what the screen shows follows the sim softly: the body glides (a teleport still snaps), it turns around instead
+  // what the screen shows follows the sim softly: the body glides (a teleport still snaps), it turns around instead
   // of flipping, its legs keep one rhythm across hexes, it flinches when hit, and its health bar leaves a fading trail
   // WHAT: remembers per-unit drawing state (smoothed position, facing) between frames.
   function look(v, W, u) {
@@ -798,21 +798,21 @@
   // WHAT: which animation a unit is in right now (idle, walk, attack windup, cast, hurt, death) with how far along it is.
   function poseOf(W, u, T, d, dt) {
     const s = W.t, pose = { t: T / 20 + u.id * 0.37, face: 1 };
-    // facing: toward the target, else toward the enemy side (v55: only when it is clearly to one side, and it turns)
+    // facing: toward the target, else toward the enemy side (only when it is clearly to one side, and it turns)
     const tgt = W.byId[u.tgt];
     let want = d && d.faceT != null ? d.faceT : u.side === 0 ? 1 : -1;
     if (tgt && !tgt.dead) { const a = B.Sim.posAt(u, T, 10), b = B.Sim.posAt(tgt, T, 10); if (Math.abs(b.x - a.x) > 3) want = b.x > a.x ? 1 : -1; }
     else if (u.m1t > u.m0t && T < u.m1t && u.c !== u.fc) want = u.c > u.fc ? 1 : -1;
     else if (!tgt) want = u.side === 0 ? 1 : -1;
     pose.face = want;
-    if (u.shellU > s) pose.shell = 1; if (u.flyU > s) pose.fly = 1;   // v104: Onyx in his shell, the Wyrm in the air
+    if (u.shellU > s) pose.shell = 1; if (u.flyU > s) pose.fly = 1;   // Onyx in his shell, the Wyrm in the air
     if (d) {
       d.faceT = want; if (d.face == null) d.face = want;
       d.face += (want - d.face) * (1 - Math.exp(-(dt || 0.016) * 16));
       pose.face = Math.abs(d.face) < 0.12 ? (d.face < 0 ? -0.12 : 0.12) : d.face;
     }
     const moving = u.ms > 0 && u.m1t > u.m0t && T >= u.m0t && T < u.m1t + 2;
-    if (d) {   // v55: one walking rhythm across hexes (it used to restart on every hex)
+    if (d) {   // one walking rhythm across hexes (it used to restart on every hex)
       const dT = d.lastT == null ? 0 : Math.max(0, Math.min(4, T - d.lastT)); d.lastT = T;
       if (moving) { d.ph += dT * Math.max(1.2, u.ms) / 20; pose.walk = d.ph % 1; }
     } else if (u.m1t > u.m0t && T >= u.m0t && T < u.m1t && u.ms > 0) pose.walk = ((T - u.m0t) / Math.max(1, u.m1t - u.m0t)) % 1;
@@ -820,14 +820,14 @@
     else if (a && a.k === 'atk' && T > a.t1 && T < a.t1 + 5) pose.rec = (T - a.t1) / 5;   // the follow-through after a blow
     const cd = B.Art && B.Art.castTicks ? B.Art.castTicks(u.key === 'clone' ? 'mirage' : u.key) : 14;   // long art animations
     if (T - u.castT >= 0 && T - u.castT < cd) pose.cast = (T - u.castT) / cd;
-    if (u.dead) pose.dead = Math.max(0, Math.min(1, (T - u.deathT) / deadTicks(u)));   // v42: T, so the last death plays on in the slow motion after the fight
+    if (u.dead) pose.dead = Math.max(0, Math.min(1, (T - u.deathT) / deadTicks(u)));   // T, so the last death plays on in the slow motion after the fight
     void s; return pose;
   }
   // WHAT: draws one unit: ground ring, the model or art, health / mana bars, status badges, floating numbers anchor.
   function drawUnit(v, W, u, p, T, o, dt) {
     const { ctx, size } = v, s = W.t, d = o.deploy ? null : look(v, W, u);
     const S = size * 1.5 * u.size;   // bigger units
-    // v55: a hit makes the body flinch away and flash white for a moment
+    // a hit makes the body flinch away and flash white for a moment
     if (d) { const now = (d.now += dt || 0.016); if (u.hp < d.hp - 0.5) d.hitAt = now; d.hp = u.hp; d.trail = Math.max(u.hp, d.trail - (d.trail - u.hp) * Math.min(1, (dt || 0.016) * 3.2) - u.maxHp * 0.002); }
     const since = d && d.hitAt >= 0 ? d.now - d.hitAt : 9, flinch = since < 0.18 ? Math.sin(since / 0.18 * Math.PI) * size * 0.08 : 0;
     let alpha = u.alpha; if (u.st.untarg > s) alpha *= 0.45;
@@ -864,7 +864,7 @@
     }
     // a filled disc in the side's colour under every unit
     const sideC = hero ? '74,163,255' : '255,92,110';
-    // v55: a soft glow in the side's colour instead of a hard ring (a thin rim stays for the selected hero and elites)
+    // a soft glow in the side's colour instead of a hard ring (a thin rim stays for the selected hero and elites)
     if (!u.dead) {
       const rx = S * 0.55, g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rx); g.addColorStop(0, `rgba(${sideC},0.55)`); g.addColorStop(0.65, `rgba(${sideC},0.28)`); g.addColorStop(1, `rgba(${sideC},0)`);
       ctx.save(); ctx.translate(p.x, p.y); ctx.scale(1, K * 0.55); ctx.translate(-p.x, -p.y); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
@@ -884,7 +884,7 @@
     } else {
       // Standard vector model or B.Art sprite rendering fallback
       const bx0 = p.x - (pose.face > 0 ? 1 : -1) * flinch, flash = since < 0.09 && !u.dead && FILTER;
-      // v55: squash and stretch from the feet: a pop when the fight starts, a squash on the strike and when hit
+      // squash and stretch from the feet: a pop when the fight starts, a squash on the strike and when hit
       const intro = Math.min(1, T / 8), hitK = since < 0.16 ? Math.sin(since / 0.16 * Math.PI) : 0, strike = pose.atk != null && pose.atk > 0.75 ? Math.sin((pose.atk - 0.75) / 0.25 * Math.PI) : 0;
       // the countdown holds the fight at its first frame,
       // where the start pop is squashed; while it runs (o.still) the units stand tall and the pop plays when FIGHT! lets the fight go
@@ -903,7 +903,7 @@
     if (u.st.frozenU > s) { ctx.globalAlpha = 0.45; ctx.fillStyle = '#9fe8ff'; ctx.beginPath(); ctx.moveTo(p.x, p.y - S * 1.45); ctx.lineTo(p.x + S * 0.42, p.y - S * 0.7); ctx.lineTo(p.x, p.y + S * 0.05); ctx.lineTo(p.x - S * 0.42, p.y - S * 0.7); ctx.closePath(); ctx.fill(); }
     if (u.shield > 0 && u.shieldU > s && !u.dead) { ctx.globalAlpha = 0.25; ctx.strokeStyle = '#e8ecff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(p.x, p.y - S * 0.62, S * 0.5, S * 0.8, 0, 0, Math.PI * 2); ctx.stroke(); }
     ctx.globalAlpha = 1;
-    if (u.dead || u.plant) return;   // v62h: a plant has no health bar (nothing can hurt it)
+    if (u.dead || u.plant) return;   // a plant has no health bar (nothing can hurt it)
     // bars above the head
     const headTop = p.y - S * (u.boss ? 1.75 : 1.5), bw = Math.max(S * 0.95, size * 1.1), bx = p.x - bw / 2, by = headTop - 11;
     const bh = 8;
@@ -1202,7 +1202,7 @@
         ctx.globalAlpha = 1 - k * k;
         // crit = twice the size, bold, with a hop; a normal hit small and muted; magic purple; damage over time small ticks (burn orange, poison green)
         const nk = f.n || (f.big ? 'crit' : 'hit'), fs = f.k === 'text' ? Math.max(12, Math.round(size * 0.55)) : nk === 'crit' ? Math.max(22, Math.round(size * 1.0)) : nk === 'dot' ? Math.max(10, Math.round(size * 0.38)) : Math.max(12, Math.round(size * (nk === 'magic' ? 0.5 : 0.46)));
-        ctx.font = (f.k === 'text' || nk === 'crit' ? '800 ' : nk === 'dot' ? '600 ' : '700 ') + fs + "px 'Fredoka', 'Inter', system-ui, sans-serif";   // v58: numbers big enough to read
+        ctx.font = (f.k === 'text' || nk === 'crit' ? '800 ' : nk === 'dot' ? '600 ' : '700 ') + fs + "px 'Fredoka', 'Inter', system-ui, sans-serif";   // numbers big enough to read
         ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
         const hop = f.k === 'num' && nk === 'crit' ? Math.sin(Math.min(1, k / 0.35) * Math.PI) * size * 0.45 : 0;
         const arcSpread = f.k === 'num' ? Math.sin((((f.t0 || 0) * 11) % 7) / 7 * Math.PI * 2) * size * 0.22 * Math.sqrt(k) : 0;
@@ -1239,7 +1239,7 @@
         ctx.globalAlpha = basic ? 0.3 : 0.38; ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(x, y, r * (basic ? 2.4 : 2.8), 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r * 0.6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.globalAlpha = 0.8; ctx.fill(); ctx.globalAlpha = 1;
       } else if (f.k === 'bolt') {
-        // v62n: a wide soft glow, the colour, then a white-hot core; the jagged middle flickers each frame
+        // a wide soft glow, the colour, then a white-hot core; the jagged middle flickers each frame
         const fl = Math.floor(T * 1.5);
         const bolt = () => { ctx.beginPath(); f.pts.forEach(([c, r], i) => {
           const p = hexScreen(v, c, r); p.y -= size * 0.7;
@@ -1273,7 +1273,7 @@
     if (!o.deploy) bossBar(v, W);
     if (o.end) drawEnd(v, W, o.end, S, dt);
     if (o.swapGhost) { const g = o.swapGhost, p = hexScreen(v, g.c, g.r); ctx.globalAlpha = 0.55; B.Models.draw(ctx, g.key, p.x, p.y, size * 1.3, { t: T / 20, face: 1 }); ctx.globalAlpha = 1;
-      ctx.font = `800 ${Math.round(size * 0.55)}px 'Fredoka', sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#0b0f3f'; ctx.strokeText('⇄', p.x, p.y - size * 1.5); ctx.fillStyle = '#ffe066'; ctx.fillText('⇄', p.x, p.y - size * 1.5); }   // v118: the hero that swaps into the empty spot
+      ctx.font = `800 ${Math.round(size * 0.55)}px 'Fredoka', sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#0b0f3f'; ctx.strokeText('⇄', p.x, p.y - size * 1.5); ctx.fillStyle = '#ffe066'; ctx.fillText('⇄', p.x, p.y - size * 1.5); }   // the hero that swaps into the empty spot
     if (o.dragGhost) {
       const g = o.dragGhost, art = B.Art && B.Art.sprite(g.key); ctx.globalAlpha = 0.65;
       if (art) B.Art.draw(ctx, art, g.x, g.y + size * 0.5, size * 1.3, { t: T / 20, face: 1 }); else B.Models.draw(ctx, g.key, g.x, g.y + size * 0.5, size * 1.3, { t: T / 20, face: 1 });
@@ -1365,7 +1365,7 @@
       tint('#5a2a1a', 0.36);
       g.fillStyle = 'rgba(255,90,60,0.55)'; g.beginPath(); g.arc(W * 0.78, top * 0.4, size * 0.6, 0, Math.PI * 2); g.fill();
       g.fillStyle = '#2a140c'; for (let i = 0; i < 9; i++) { const x = rnd() * W, y = top + size * (0.7 + rnd() * 0.4), h = size * (0.6 + rnd() * 0.8); g.beginPath(); g.moveTo(x - size * 0.3, y); g.lineTo(x, y - h); g.lineTo(x + size * 0.3, y); g.fill(); }
-    } else if (key === 'lichqueen') {   // v83: falling snow over a frozen field
+    } else if (key === 'lichqueen') {   // falling snow over a frozen field
       tint('#2a4a6a', 0.38);
       g.fillStyle = '#e8f6ff'; for (let i = 0; i < 90; i++) { g.globalAlpha = 0.25 + rnd() * 0.6; g.beginPath(); g.arc(rnd() * W, rnd() * H, 0.8 + rnd() * 1.8, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1;
       g.strokeStyle = 'rgba(160,230,255,0.45)'; g.lineWidth = 1.4; for (let i = 0; i < 8; i++) { let x = rnd() * W, y = top + rnd() * (H - top); g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (rnd() - 0.5) * size; y += (rnd() - 0.5) * size * 0.5; g.lineTo(x, y); } g.stroke(); }
@@ -1498,7 +1498,7 @@
     if (boss) bossBackdrop(g, boss, W, H, top, v.size, rnd);
     v.bd = { R, boss: boss || null, c }; return c;
   }
-  // v42: the end of a fight. The last blow plays on in slow motion under a big VICTORY / DEFEAT, with confetti on a win
+  // the end of a fight. The last blow plays on in slow motion under a big VICTORY / DEFEAT, with confetti on a win
   // WHAT: the big VICTORY / DEFEAT banner and slow motion at the end of a fight.
   function drawEnd(v, W, e, S, dt) {
     const { ctx, size } = v, k = Math.min(1, e.k), win = e.win;
@@ -1564,7 +1564,7 @@
       S.seen.add(f);
       if (mine) AF.run(abilKit, v, W, T, S, f, 'spawn');
       const u = f.id ? W.byId[f.id] : null, p = u ? unitPos(v, W, u, T) : f.c != null ? hexScreen(v, f.c, f.r) : null;
-      if (f.k === 'num' && p && f.n === 'dot') continue;   // v122: damage-over-time ticks make no sound and no sparks
+      if (f.k === 'num' && p && f.n === 'dot') continue;   // damage-over-time ticks make no sound and no sparks
       if (f.k === 'num' && p) {
         const heal = String(f.text)[0] === '+';
         sfx(heal ? 'heal' : f.big ? 'crit' : 'hit');
@@ -1629,7 +1629,7 @@
       if (st.n >= 2) { S.calls.push({ id: u.id, text: ['', '', 'Double KO!', 'Triple KO!', 'Quadra KO!'][Math.min(4, st.n)] || 'Rampage!', t: 0, col: '#ffe066', big: true }); sfx('streak', st.n); S.shake = Math.max(S.shake, 4); }
     }
   }
-  let muted = false;   // v49: the title trailer draws a fight with no sound
+  let muted = false;   // the title trailer draws a fight with no sound
   const sfx = (n, a) => { if (B.Sfx && !muted) B.Sfx.play(n, a); };
   function drawParts(ctx, S, dt) {
     const keep = [];

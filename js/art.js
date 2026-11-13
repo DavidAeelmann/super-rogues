@@ -73,7 +73,7 @@
     smolder: { splash: 'art/smolder/splash.jpg', crop: { x: 0.5, y: 0.19, z: 1.2 }, flip: false, scale: 1 },   // Smolder
     tom: { splash: 'art/tom/splash.jpg', crop: { x: 0.42, y: 0.265, z: 1.2 }, flip: false, scale: 1 },   // Tom
     vey: { splash: 'art/mesmer/splash.jpg', crop: { x: 0.59, y: 0.24, z: 1.2 }, flip: false, scale: 1 },   // Mesmer
-    // v127: splash art for all remaining heroes
+    // splash art for all remaining heroes
     kestrel: { splash: 'art/talon/splash.jpg', crop: { x: 0.5, y: 0.28, z: 1.15 }, flip: false, scale: 1 },   // Talon
     tempest: { splash: 'art/tempest/splash.jpg', crop: { x: 0.5, y: 0.27, z: 1.2 }, flip: false, scale: 1 },   // Tempest
     echo: { splash: 'art/lyric/splash.jpg', crop: { x: 0.5, y: 0.26, z: 1.2 }, flip: false, scale: 1 },   // Lyric
