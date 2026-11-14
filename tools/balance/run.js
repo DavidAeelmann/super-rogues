@@ -49,22 +49,32 @@ async function simulate() {
   const heroes = Object.keys(D.HEROES), items = D.ITEMS.map(i => i.id), relics = D.RELICS.map(r => r.id);
   const t0 = Date.now(), log = m => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)}s] ${m}`);
   const simOnly = arg('sim-only', null), fromSims = arg('from-sims', null);
+  const simMode = arg('mode', 'hero');
+  const fromItemSims = arg('from-item-sims', null), fromRelicSims = arg('from-relic-sims', null);
   if (simOnly) {
-    log(`chunk hero runs: ${PER_HERO} x ${heroes.length} (seed ${SEED})`);
-    const base = await runBatch(PER_HERO * heroes.length, SEED, null, 'hero');
+    const list = simMode === 'item' ? items : simMode === 'relic' ? relics : null;
+    const per = simMode === 'item' ? PER_ITEM : simMode === 'relic' ? PER_RELIC : PER_HERO;
+    const countN = simMode === 'item' ? items.length : simMode === 'relic' ? relics.length : heroes.length;
+    log(`chunk ${simMode} runs: ${per} x ${countN} (seed ${SEED})`);
+    const chunk = await runBatch(per * countN, SEED, null, simMode, list);
     fs.mkdirSync(path.dirname(path.resolve(ROOT, simOnly)), { recursive: true });
-    fs.writeFileSync(path.resolve(ROOT, simOnly), JSON.stringify(base));
-    log(`saved ${base.length} runs to ${simOnly}`);
+    fs.writeFileSync(path.resolve(ROOT, simOnly), JSON.stringify(chunk));
+    log(`saved ${chunk.length} ${simMode} runs to ${simOnly}`);
     process.exit(0);
   }
+  const loadChunks = spec => {
+    const arr = [];
+    for (const f of spec.split(',').map(s => s.trim()).filter(Boolean)) {
+      for (const r of JSON.parse(fs.readFileSync(path.resolve(ROOT, f), 'utf8'))) arr.push(r);
+    }
+    return arr;
+  };
   let base, itm = [], rel = [];
   if (fromSims) {
-    base = [];
-    for (const f of fromSims.split(',').map(s => s.trim()).filter(Boolean)) {
-      const arr = JSON.parse(fs.readFileSync(path.resolve(ROOT, f), 'utf8'));
-      for (const r of arr) base.push(r);
-    }
+    base = loadChunks(fromSims);
     log(`loaded ${base.length} hero runs from ${fromSims.split(',').length} chunks`);
+    if (fromItemSims) { itm = loadChunks(fromItemSims); log(`loaded ${itm.length} item runs`); }
+    if (fromRelicSims) { rel = loadChunks(fromRelicSims); log(`loaded ${rel.length} relic runs`); }
   } else {
     log(`hero runs: ${PER_HERO} x ${heroes.length}`); base = await runBatch(PER_HERO * heroes.length, SEED, null, 'hero');
     log(`item runs: ${PER_ITEM} x ${items.length}`); itm = await runBatch(PER_ITEM * items.length, SEED + 1, null, 'item', items);
