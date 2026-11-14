@@ -47,7 +47,7 @@
          { id: 'bas5b', name: 'Tremor', desc: 'Taunted enemies are also stunned for 1.2s.', ab: { stun: 1.2 } }],
       ] }),
     vex: H({ name: 'Vex', glyph: '🗡', role: 'Assassin', color: '#a05cff',
-      hp: 750, atk: 93, ap: 70, armor: 16, as: 0.95, range: 1, ms: 3, mana: 61, m0: 40, crit: 0.2, grow: 0.85,
+      hp: 740, atk: 92, ap: 70, armor: 16, as: 0.95, range: 1, ms: 3, mana: 61, m0: 40, crit: 0.2, grow: 0.85,
       abil: 'shadowstep', abName: 'Veilstrike', abDesc: 'Blinks next to the weakest enemy and strikes for 300% Attack as physical damage.',
       ab: { dmg: 3, twin: 0, execute: 0, untarg: 0, mark: 0 },
       specs: [
@@ -202,7 +202,7 @@
       ] }),
     // ---- heroes whose power grows during the fight (passive scaling, from the start or on upgrade)
     thorne: H({ name: 'Ravager', glyph: '🪓', role: 'Fighter', color: '#d4483b',
-      hp: 950, atk: 65, ap: 65, armor: 28, as: 0.8, range: 1, ms: 2.5, mana: 70, m0: 20, grow: 1.15,
+      hp: 965, atk: 66, ap: 65, armor: 28, as: 0.8, range: 1, ms: 2.5, mana: 70, m0: 20, grow: 1.15,
       mods: { stackAtk: 2, stackAtkCap: 25 },
       abil: 'whirl', abName: 'Crimson Spin', abDesc: 'Passive (Fury): +2 Attack per hit (stacks 25x). Active: spins, hitting every adjacent enemy for 180% Attack as physical damage and healing 15% of the damage.',
       ab: { dmg: 1.8, heal: 0.15, radius: 1 },
@@ -293,7 +293,7 @@
       ] }),
     // ---- 
     hippolyta: H({ name: 'Skara', glyph: '🔱', role: 'Ranger', color: '#c98a3a',
-      hp: 695, atk: 54, ap: 55, armor: 16, as: 1.0, range: 2, ms: 2.5, mana: 92, m0: 10, grow: 0.85,
+      hp: 685, atk: 53, ap: 55, armor: 16, as: 1.0, range: 2, ms: 2.5, mana: 92, m0: 10, grow: 0.85,
       mods: { stackAs: 0.04, stackAsCap: 10, poisonOnHit: 0.012 },
       abil: 'javelin', abName: 'Skyspear Barrage', abDesc: 'Passive: +4% attack speed per hit (up to 10x); her spear poisons. Active: javelins hit 3 enemies for 150% Attack each and poison them for 2% max Health per second.',
       ab: { count: 3, dmg: 1.5, poison: 0.02, root: 0 },
@@ -351,7 +351,7 @@
          { id: 'kag5b', name: 'Blossom of Blades', desc: 'Shuriken deal 80% more.', ab: { dmg: 0.72 } }],
       ] }),
     rex: H({ name: 'Fang', glyph: '🐕', role: 'Fighter', color: '#a0703a',
-      hp: 755, atk: 50, ap: 65, armor: 28, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.85,
+      hp: 745, atk: 49, ap: 65, armor: 28, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.85,
       abil: 'howl', abName: 'Howl & Pounce', abDesc: 'Passive: regenerates 1% Health per second. Active: allies within 3 hexes get +20% Attack and attack speed for 4s, then Fang pounces on the nearest enemy: 150% Attack and a bleed of 2% max Health per second for 3s.',
       ab: { radius: 3, buff: 0.2, dmg: 1.5, bleed: 0.02, stun: 0, taunt: 0, reach: 0, cleave: 0 },
       specs: [
@@ -463,7 +463,7 @@
          { id: 'leo5b', name: 'Hero of the Pass', desc: 'The thrust hits every enemy within 2 hexes.', ab: { hits: 9 } }],
       ] }),
     harlequin: H({ name: 'Rapture', glyph: '🃏', role: 'Assassin', color: '#d23a8a',
-      hp: 940, atk: 91, ap: 70, armor: 16, as: 1.05, range: 1, ms: 3, mana: 60, m0: 20, crit: 0.15, mods: { critStack: 0.015, critStackCap: 0.15 }, grow: 1.15,
+      hp: 950, atk: 92, ap: 70, armor: 16, as: 1.05, range: 1, ms: 3, mana: 60, m0: 20, crit: 0.15, mods: { critStack: 0.015, critStackCap: 0.15 }, grow: 1.15,
       abil: 'waltz', abName: 'Steel Minuet', abDesc: 'Passive: each crit gives +1.5% crit (up to +15%). Active: dances through up to 3 enemies, striking each for 120% Attack as physical damage.',
       ab: { hits: 3, dmg: 1.2, silence: 0, untarg: 0 },
       specs: [
@@ -534,7 +534,7 @@
          { id: 'cor5b', name: 'Whirlpool', desc: 'The wave also stuns for 1s.', ab: { stun: 1 } }],
       ] }),
     stellan: H({ name: 'Astral', glyph: '⭐', role: 'Mage', color: '#8a7aff',
-      hp: 780, atk: 60, ap: 125, armor: 18, as: 0.85, range: 3, ms: 2, mana: 59, m0: 25, grow: 1.15,
+      hp: 790, atk: 61, ap: 125, armor: 18, as: 0.85, range: 3, ms: 2, mana: 59, m0: 25, grow: 1.15,
       abil: 'starfall', abName: 'Falling Star', abDesc: 'Calls a star onto the densest enemy group; 0.8s later it crashes: 120% Attack + 60% Magic as magic damage in 1 hex and a 1.2s stun.',
       ab: { radius: 1, dmg: 1.2, apdmg: 0.6, stun: 1.2, delay: 0.8, shards: 0, blessing: 0, veil: 0 },
       specs: [
@@ -588,7 +588,7 @@
     // which if destroyed kills him, but after a few seconds revives the hero (only one egg per combat). Fire phoenix whose
     // short but still range ability is making a wall of fire on target, line 3 hexes that does dot damage for a time."
     smolder: H({ name: 'Smolder', glyph: '🌋', role: 'Tank', color: '#ff6a2a', fl: ['devour'],
-      hp: 1385, atk: 59, ap: 105, armor: 38, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.15,
+      hp: 1370, atk: 58, ap: 105, armor: 38, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.15,
       abil: 'flamethrower', abName: 'Flamethrower', abDesc: 'Passive (Devour): at the start of each fight it eats one of its items and keeps its stats for good (not its effect). Active: a cone of fire 2 hexes ahead: 30% Magic, then a burn of 30% Magic per second for 4s.',
       ab: { dmg: 0.3, burn: 0.3, dur: 4, reach: 2, spread: 1, devour: 1, boost: 1, vuln: 0, heal: 0 },
       specs: [
@@ -631,7 +631,7 @@
       ] }),
     // Rohammer, a huge brute with a very slow hammer
     rohammer: H({ name: 'Rohammer', glyph: '🔨', role: 'Tank', color: '#e8943a', fl: ['brute'],
-      hp: 1155, atk: 90, ap: 80, armor: 45, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 1,
+      hp: 1130, atk: 88, ap: 80, armor: 45, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 1,
       abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): slow hammer blows stun for 0.2s; it gains Energy only from damage taken (2 per 1% of max Health). Active: sweeps enemies within 2 hexes in front: 150% Attack, knocked back 2 hexes and stunned 1s.',
       ab: { dmg: 1.5, reach: 2, push: 2, stun: 1, tap: 0.2, gain: 2 },
       specs: [
@@ -645,7 +645,7 @@
          { id: 'roh5b', name: 'Unstoppable', desc: 'Takes 20% less damage and the sweep deals 50% more.', mods: { dmgReduce: 0.2 }, ab: { dmg: 0.75 } }],
       ] }),
     plasma: H({ name: 'Plasma Cannon', glyph: '💥', role: 'Ranger', color: '#5fe0ff', fl: ['closest', 'plasma'],
-      hp: 525, atk: 51, ap: 50, armor: 18, as: 0.6, range: 6, ms: 0, mana: 55, m0: 20, grow: 1,
+      hp: 535, atk: 52, ap: 50, armor: 18, as: 0.6, range: 6, ms: 0, mana: 55, m0: 20, grow: 1,
       abil: 'tripleshot', abName: 'Triple Shot', abDesc: 'Passive (Overload): never moves; shoots the closest enemy, +12% damage per hex nearer than 5, and shoves it back 1 hex. Active: three shots at the closest enemy, 150% Attack each, each shoving it back 2 hexes.',
       ab: { dmg: 1.5, shots: 3, push: 2, knock: 1, close: 0.12 },
       specs: [
@@ -721,7 +721,7 @@
     // seconds bursts back out, stunning all adjacent enemies and inflicting damage. Second, also passive ability, is that enemies who attack him with
     // autoattack get damaged x% of his defense"): two passives, no cast (shellguard never fires)
     onyx: H({ name: 'Onyx', glyph: '🐢', role: 'Tank', color: '#3fae8a', fl: ['shell', 'spikes'],
-      hp: 785, atk: 33, ap: 65, armor: 60, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1,
+      hp: 770, atk: 32, ap: 65, armor: 60, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1,
       abil: 'shellguard', abName: 'Shell', abDesc: 'Passive (Shell): the first time he falls, he hides in his shell for 4s (untouchable, blocks the way), then bursts out at 40% Health: 150% Attack and a 1.5s stun to adjacent enemies. Passive (Spiked Shell): attackers take 60% of his Defense as damage.',
       ab: { shellT: 4, shellHp: 0.4, burst: 1.5, burstStun: 1.5, burstRad: 0, burstArmor: 0, spike: 0.6, shells: 0, shellTaunt: 0, biteArmor: 0 },
       specs: [
