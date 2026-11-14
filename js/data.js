@@ -11,7 +11,7 @@
     gold: { easy: 6, medium: 9, hard: 13, boss: 16 },
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
-    fightScale: [1, 1.63, 1.48, 1.69, 1.857, 1.96, 2.25, 2.47, 2.672],   // tuned by tools/tune-pve.js
+    fightScale: [1, 1.63, 1.48, 1.69, 1.896, 1.96, 2.25, 2.47, 2.728],   // tuned by tools/tune-pve.js
     firstFight: 0.3,  // fight 1 is 1vN with a small enemy budget
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // sudden death burns every unit for 1% max HP per second stacking
@@ -75,7 +75,7 @@
          { id: 'pyr5b', name: 'Last Flare', desc: 'When she falls, a full-power Cinder Comet crashes where she stood.', ab: { ashFall: 1 } }],
       ] }),
     glacia: H({ name: 'Frostbane', glyph: '❄', role: 'Controller', color: '#5fd4ff',
-      hp: 690, atk: 46, ap: 95, armor: 24, as: 0.7, range: 3, ms: 2, mana: 46, m0: 30, grow: 0.85,
+      hp: 715, atk: 48, ap: 100, armor: 24, as: 0.7, range: 3, ms: 2, mana: 46, m0: 30, grow: 0.85,
       abil: 'blizzard', abName: 'Rime Squall', abDesc: 'Freezes the densest enemy group for 1.5s with 70% Magic as magic damage, then slows them by 40% for 2s.',
       ab: { dmg: 0.7, radius: 1, freeze: 1.5, slow: 0.4, shatter: 0, iceArmor: 0 },
       specs: [
@@ -520,7 +520,7 @@
          { id: 'buz5b', name: "Queen's Guard", desc: 'A second, smaller hive guards her own spot (half the stings).', ab: { guardHive: 0.5 } }],
       ] }),
     coralie: H({ name: 'Maelstrom', glyph: '🌊', role: 'Controller', color: '#2fb8d8',
-      hp: 1055, atk: 67, ap: 95, armor: 26, as: 0.75, range: 3, ms: 2, mana: 37, m0: 25, grow: 0.85,
+      hp: 1015, atk: 64, ap: 90, armor: 26, as: 0.75, range: 3, ms: 2, mana: 37, m0: 25, grow: 0.85,
       abil: 'wave', abName: 'Tidal Wave', abDesc: 'A wave crashes over the densest enemy group: 75% Magic as magic damage within 1 hex, pushes them 1 hex back and slows them 30% for 2s.',
       ab: { radius: 1, dmg: 0.75, push: 1, slow: 0.3, stun: 0, foam: 0, echo: 0 },
       specs: [
@@ -534,7 +534,7 @@
          { id: 'cor5b', name: 'Whirlpool', desc: 'The wave also stuns for 1s.', ab: { stun: 1 } }],
       ] }),
     stellan: H({ name: 'Astral', glyph: '⭐', role: 'Mage', color: '#8a7aff',
-      hp: 755, atk: 58, ap: 120, armor: 18, as: 0.85, range: 3, ms: 2, mana: 59, m0: 25, grow: 1.15,
+      hp: 780, atk: 60, ap: 125, armor: 18, as: 0.85, range: 3, ms: 2, mana: 59, m0: 25, grow: 1.15,
       abil: 'starfall', abName: 'Falling Star', abDesc: 'Calls a star onto the densest enemy group; 0.8s later it crashes: 120% Attack + 60% Magic as magic damage in 1 hex and a 1.2s stun.',
       ab: { radius: 1, dmg: 1.2, apdmg: 0.6, stun: 1.2, delay: 0.8, shards: 0, blessing: 0, veil: 0 },
       specs: [
@@ -721,7 +721,7 @@
     // seconds bursts back out, stunning all adjacent enemies and inflicting damage. Second, also passive ability, is that enemies who attack him with
     // autoattack get damaged x% of his defense"): two passives, no cast (shellguard never fires)
     onyx: H({ name: 'Onyx', glyph: '🐢', role: 'Tank', color: '#3fae8a', fl: ['shell', 'spikes'],
-      hp: 875, atk: 37, ap: 70, armor: 60, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1,
+      hp: 845, atk: 36, ap: 65, armor: 60, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1,
       abil: 'shellguard', abName: 'Shell', abDesc: 'Passive (Shell): the first time he falls, he hides in his shell for 4s (untouchable, blocks the way), then bursts out at 40% Health: 150% Attack and a 1.5s stun to adjacent enemies. Passive (Spiked Shell): attackers take 60% of his Defense as damage.',
       ab: { shellT: 4, shellHp: 0.4, burst: 1.5, burstStun: 1.5, burstRad: 0, burstArmor: 0, spike: 0.6, shells: 0, shellTaunt: 0, biteArmor: 0 },
       specs: [
