@@ -33,7 +33,7 @@
   B.ROLE_DEF_GROW = { Tank: 8, Fighter: 5, Controller: 5, Support: 3, Healer: 3, Summoner: 3, Assassin: 3, Mage: 3, Ranger: 3 };
   B.HEROES = {
     bastion: H({ name: 'Aegir', glyph: '🛡', role: 'Tank', color: '#4f7cff',
-      hp: 975, atk: 45, ap: 75, armor: 50, as: 0.65, range: 1, ms: 2, mana: 106, m0: 30, grow: 0.85,
+      hp: 945, atk: 44, ap: 75, armor: 50, as: 0.65, range: 1, ms: 2, mana: 106, m0: 30, grow: 0.85,
       abil: 'bulwark', abName: 'Stoneward', abDesc: 'Raises a stone ward: a shield of 33% of his max Health. Taunts enemies within 2 hexes for 2.5s.',
       ab: { shield: 0.33, radius: 2, taunt: 2.5, allyShield: 0, burst: 0, stun: 0 },
       specs: [
@@ -117,7 +117,7 @@
          { id: 'lum5b', name: 'Sanctuary', desc: 'The ally she heals takes 30% less damage for 3s.', ab: { ward: 0.3 } }],
       ] }),
     kestrel: H({ name: 'Talon', glyph: '🏹', role: 'Ranger', color: '#7bd66b',
-      hp: 640, atk: 68, ap: 50, armor: 14, as: 0.9, range: 4, ms: 2, mana: 63, m0: 0, grow: 1.15,
+      hp: 665, atk: 71, ap: 50, armor: 14, as: 0.9, range: 4, ms: 2, mana: 63, m0: 0, grow: 1.15,
       abil: 'volley', abName: 'Volley', abDesc: 'Passive (Focus): each attack gives +3% attack speed (stacks 15x). Active: fires 5 arrows at random enemies, 100% Attack as physical damage each.',
       ab: { count: 5, dmg: 1, all: 0, pierce: 0, focus: 0.03, focusCap: 15 },
       specs: [
@@ -187,7 +187,7 @@
          { id: 'mir5b', name: 'Phase Shift', desc: 'Once per fight, lethal damage instead leaves Mirage untargetable for 2s and heals 30%.', fl: ['phaseshift'] }],
       ] }),
     rook: H({ name: 'Rivet', glyph: '⚙', role: 'Summoner', color: '#d9a441',
-      hp: 790, atk: 50, ap: 65, armor: 24, as: 0.8, range: 2, ms: 2, mana: 70, m0: 50, grow: 1,
+      hp: 765, atk: 49, ap: 65, armor: 24, as: 0.8, range: 2, ms: 2, mana: 70, m0: 50, grow: 1,
       abil: 'turret', abName: 'Clockwork Turret', abDesc: 'Builds a turret (range 3, 80% of his Attack as attack) next to Rivet. Max 2; at max, repairs them instead.',
       ab: { max: 2, hpMul: 1, asMul: 1, burn: 0, stun: 0, mortar: 0 },
       specs: [
@@ -202,7 +202,7 @@
       ] }),
     // ---- heroes whose power grows during the fight (passive scaling, from the start or on upgrade)
     thorne: H({ name: 'Ravager', glyph: '🪓', role: 'Fighter', color: '#d4483b',
-      hp: 980, atk: 67, ap: 65, armor: 28, as: 0.8, range: 1, ms: 2.5, mana: 70, m0: 20, grow: 1.15,
+      hp: 950, atk: 65, ap: 65, armor: 28, as: 0.8, range: 1, ms: 2.5, mana: 70, m0: 20, grow: 1.15,
       mods: { stackAtk: 2, stackAtkCap: 25 },
       abil: 'whirl', abName: 'Crimson Spin', abDesc: 'Passive (Fury): +2 Attack per hit (stacks 25x). Active: spins, hitting every adjacent enemy for 180% Attack as physical damage and healing 15% of the damage.',
       ab: { dmg: 1.8, heal: 0.15, radius: 1 },
@@ -247,7 +247,7 @@
          { id: 'nyx5b', name: 'Void Burst', desc: 'Umbral Edge attacks deal +200% instead.', ab: { bonus: 1 } }],
       ] }),
     bramble: H({ name: 'Bramble', glyph: '🌳', role: 'Tank', color: '#6a9a3a',
-      hp: 1225, atk: 54, ap: 95, armor: 38, as: 0.6, range: 1, ms: 1.8, mana: 80, m0: 30, grow: 0.85,
+      hp: 1190, atk: 52, ap: 90, armor: 38, as: 0.6, range: 1, ms: 1.8, mana: 80, m0: 30, grow: 0.85,
       mods: { rampHpPct: 0.01, rampHpPctCap: 0.4 },
       abil: 'entangle', abName: 'Rootsnare', abDesc: 'Passive: +1% max Health every second (up to +40%). Active: roots every enemy within 2 hexes for 2s and deals 45% Magic as magic damage.',
       ab: { radius: 2, root: 2, dmg: 0.45, shield: 0 },
@@ -322,7 +322,7 @@
          { id: 'dsh5b', name: 'Spotter', desc: 'After Longwatch Round, his whole team deals 25% more to that target for 5s.', ab: { spot: 0.25 } }],
       ] }),
     vesper: H({ name: 'Vesper', glyph: '🧛', role: 'Fighter', color: '#8a1f3a',
-      hp: 755, atk: 55, ap: 85, armor: 26, as: 0.85, range: 1, ms: 3, mana: 74, m0: 20, ls: 0.15, grow: 0.85,
+      hp: 735, atk: 53, ap: 80, armor: 26, as: 0.85, range: 1, ms: 3, mana: 74, m0: 20, ls: 0.15, grow: 0.85,
       mods: { omni: 0.2 },
       abil: 'bloodfeast', abName: 'Crimson Draught', abDesc: 'Passive: abilities heal 20% of their damage. Active: drains every enemy within 2 hexes for 70% Attack + 40% Magic as magic damage and heals for all of it.',
       ab: { radius: 2, dmg: 0.7, apdmg: 0.4, share: 0, bats: 0, bleed: 0 },
@@ -351,7 +351,7 @@
          { id: 'kag5b', name: 'Blossom of Blades', desc: 'Shuriken deal 80% more.', ab: { dmg: 0.72 } }],
       ] }),
     rex: H({ name: 'Fang', glyph: '🐕', role: 'Fighter', color: '#a0703a',
-      hp: 790, atk: 53, ap: 65, armor: 28, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.85,
+      hp: 765, atk: 51, ap: 65, armor: 28, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.85,
       abil: 'howl', abName: 'Howl & Pounce', abDesc: 'Passive: regenerates 1% Health per second. Active: allies within 3 hexes get +20% Attack and attack speed for 4s, then Fang pounces on the nearest enemy: 150% Attack and a bleed of 2% max Health per second for 3s.',
       ab: { radius: 3, buff: 0.2, dmg: 1.5, bleed: 0.02, stun: 0, taunt: 0, reach: 0, cleave: 0 },
       specs: [
@@ -365,7 +365,7 @@
          { id: 'rex5b', name: 'Cerberus', desc: 'The bite hits every adjacent enemy.', ab: { cleave: 1 } }],
       ] }),
     vey: H({ name: 'Mesmer', glyph: '🌀', role: 'Controller', color: '#7a4ac8',
-      hp: 885, atk: 59, ap: 95, armor: 22, as: 0.75, range: 3, ms: 2, mana: 62, m0: 30, grow: 1.15,
+      hp: 915, atk: 61, ap: 100, armor: 22, as: 0.75, range: 3, ms: 2, mana: 62, m0: 30, grow: 1.15,
       abil: 'hypnosis', abName: 'Dreamspiral', abDesc: 'Hypnotizes the densest enemy group: for 2.5s they attack their own allies, and they take 30% Magic as magic damage.',
       ab: { radius: 1, dur: 2.5, dmg: 0.3, amp: 0, shield: 0, dot: 0 },
       specs: [
@@ -491,7 +491,7 @@
          { id: 'spr5b', name: 'Chain Reaction', desc: 'Throws 3 more flasks.', ab: { count: 3 } }],
       ] }),
     zephyr: H({ name: 'Kaze', glyph: '🌪', role: 'Fighter', color: '#7ac8c8',
-      hp: 825, atk: 65, ap: 65, armor: 26, as: 1.0, range: 1, ms: 3, mana: 54, m0: 20, dodge: 0.1, grow: 1.15,
+      hp: 865, atk: 68, ap: 70, armor: 26, as: 1.0, range: 1, ms: 3, mana: 54, m0: 20, dodge: 0.1, grow: 1.15,
       abil: 'galekick', abName: 'Squall Kick', abDesc: 'Kicks the target 2 hexes back for 170% Attack as physical damage. Anyone it crashes into takes 100% Attack and is stunned for 1s.',
       ab: { dmg: 1.7, push: 2, stun: 0, splash: 0, targets: 1, tailwind: 0 },
       specs: [
@@ -588,7 +588,7 @@
     // which if destroyed kills him, but after a few seconds revives the hero (only one egg per combat). Fire phoenix whose
     // short but still range ability is making a wall of fire on target, line 3 hexes that does dot damage for a time."
     smolder: H({ name: 'Smolder', glyph: '🌋', role: 'Tank', color: '#ff6a2a', fl: ['devour'],
-      hp: 1280, atk: 54, ap: 95, armor: 38, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.15,
+      hp: 1345, atk: 57, ap: 100, armor: 38, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.15,
       abil: 'flamethrower', abName: 'Flamethrower', abDesc: 'Passive (Devour): at the start of each fight it eats one of its items and keeps its stats for good (not its effect). Active: a cone of fire 2 hexes ahead: 30% Magic, then a burn of 30% Magic per second for 4s.',
       ab: { dmg: 0.3, burn: 0.3, dur: 4, reach: 2, spread: 1, devour: 1, boost: 1, vuln: 0, heal: 0 },
       specs: [
@@ -674,7 +674,7 @@
       ] }),
     // Chronos: "A battlefield manipulator who controls the flow of combat and turns back time on damage"
     chronos: H({ name: 'Chronos', glyph: '⏳', role: 'Controller', color: '#4dd0e1',
-      hp: 600, atk: 38, ap: 95, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.85,
+      hp: 620, atk: 39, ap: 100, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.85,
       abil: 'rewind', abName: 'Rewind', abDesc: 'Passive (Decelerate): his attacks slow 5% per hit (up to 5x, 3s). Active: the most hurt ally goes back 2.5s in time: its Health returns to what it was (at least 150% Magic healed) and it ignores crowd control for 2s.',
       ab: { heal: 1.5, back: 2.5, immune: 2, decel: 0.05, decelCap: 5, paradox: 0, stasis: 0, warp: 0, anchor: 0, shock: 0, accel: 0, targets: 1, timestop: 0 },
       specs: [
