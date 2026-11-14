@@ -311,11 +311,7 @@
     // The Items / Team button: opens the gear screen. hero-info / gear-* / sell are its buttons.
     team: () => {
       if (!U.run || U.battle) return;
-      if (U.run.phase === 'deploy') {
-        toast('Manage gear right here on the battlefield');
-      } else if (U.run.phase === 'map') {
-        toast('Equip gear during battle deploy before each fight');
-      }
+      U.openGear();
     },
     'hero-info': uid => { ui.heroInfo = +uid && ui.heroInfo !== +uid ? +uid : 0; ui.gsel = null; U.openGear(); },
     'gear-hero': uid => { ui.gHero = +uid; ui.gsel = null; U.openGear(); },

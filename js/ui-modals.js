@@ -18,7 +18,7 @@
   const maxSlots = h => Run.slots(U.run, h) + futureSlots(h).length;
   const gearStats = h => { const d = Run.heroDef(U.run, h); return { hp: Math.round(d.hp), atk: Math.round(d.atk), ap: Math.round(d.ap) }; };
   function gearHTML() {
-    if (ui.heroInfo && U.run.heroes.some(h => h.uid === ui.heroInfo)) return `<div class="shead"><b>${I('user')} Hero</b><button data-act="close" aria-label="Close">✕</button></div>${heroCardHTML(U.run.heroes.find(h => h.uid === ui.heroInfo))}`;
+    if (ui.heroInfo && U.run.heroes.some(h => h.uid === ui.heroInfo)) return `<div class="shead"><button class="chip" data-act="hero-info" data-arg="0">← Gear</button><b>${I('user')} Hero</b><span class="grow"></span><button data-act="close" aria-label="Close">✕</button></div>${heroCardHTML(U.run.heroes.find(h => h.uid === ui.heroInfo))}`;
     const h = gearHero(); if (!h) return '';
     ui.gHero = h.uid;
     const d = HEROES[h.key], sl = Run.slots(U.run, h), st = gearStats(h), sel = ui.gsel;
@@ -67,7 +67,7 @@
         <div class="gbgrid">${tiles || `<p class="dim small">Empty</p>`}</div></div>
       <div class="bar gbar"><button class="gauto ${autoOn() ? 'on' : ''}" data-act="gear-auto" ${U.run.bag.length || U.run.heroes.some(h => h.items.length) ? '' : 'disabled'}>${I('bolt')} Auto-equip${autoOn() ? '<i class="gon">ON</i>' : ''}</button><button class="primary" data-act="close">Done</button></div>`;
   }
-  function openGear() { openModal(gearHTML()); ui.modal = 'gear'; const sh = $('#modal .sheet'); if (sh) sh.classList.add('gearsheet'); }
+  function openGear() { openModal(gearHTML()); ui.modal = 'gear'; const sh = $('#modal .sheet'); if (sh) { sh.classList.add('gearsheet'); sh.classList.toggle('is-hero-info', !!(ui.heroInfo && U.run && U.run.heroes.some(h => h.uid === ui.heroInfo))); } }
   // put a bag item on hero uid: same type = swap; full = replaces the socket j (or the weakest one); returns the socket it went into
   function gearPut(bagIdx, uid, j) {
     const h = U.run.heroes.find(x => x.uid === uid), id = U.run.bag[bagIdx]; if (!h || !id) return -1;
@@ -236,10 +236,10 @@
   }
   function heroCardHTML(h) {
     const d = HEROES[h.key], def = Run.heroDef(U.run, h), specs = h.specs.map(id => Run.specOf(h.key, id)).filter(Boolean);
-    return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(hName(h))}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}${h.path != null ? ' · ★ ' + esc(h.pathName) : ''}</span>
-        <div class="small">${U.abilHTML(d)}</div></div><button class="chip" data-act="hero-info" data-arg="0" aria-label="Close">✕</button></div>
+    return `<div class="hdetail"><div class="row">${img(h.key, 44)}<div class="grow"><b>${esc(hName(h))}</b> <span class="lv">Lv ${h.lvl}</span> <span class="dim small">${esc(d.role)}${h.path != null ? ' · ◆ ' + esc(h.pathName) : ''}</span>
+        <div class="small">${U.abilHTML(d)}</div></div></div>
       ${scalingHTML(def)}
-      ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">★ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
+      ${specs.length ? `<div class="hspecs">${specs.map(sp => `<div class="small"><b class="spec">◆ ${esc(sp.name)}</b> ${fmt(sp.desc)}</div>`).join('')}</div>` : ''}
       ${Object.entries(Run.setCounts(h.items)).filter(([, n]) => n >= 2).map(([sid, n]) => `<div class="small setfull">◆ <b>${esc(B.SETS[sid].name)}</b> ${n}/3 · ${fmt(B.SETS[sid].bonus[2].desc)}${n >= 3 ? ' · ' + fmt(B.SETS[sid].bonus[3].desc) : ''}</div>`).join('')}</div>`;
   }
   const LADDER_TABS = [['player', 'Player'], ['players', 'Global'], ['friends', 'Friends']];   // Friends = the players you follow
@@ -292,7 +292,7 @@
         } catch (_) {}
         if (ui.modal && ui.ladderTab === tab) {
           if (!me || !me.runs) {
-            openModal(head + `<div class="klock"><span class="hi">🏆</span><b>Rankings start with your first clear</b><p class="small">When you first clear a run, you get to choose your name and compete in the rankings and leagues.</p><button class="primary" data-act="new-run">▶ Play</button></div>`);
+            openModal(head + `<div class="klock"><span class="hi">🏆</span><b>Rankings start with your first clear</b><p class="small">When you first clear a run, you get to choose your name and compete in the rankings and leagues.</p><button class="primary" data-act="new-run">▶ Play</button></div>${roadmapHTML({ axp: acct.axp || 0, cleared: 0, bosses: 0 })}`);
             return;
           }
           openModal(head + playerTabHTML(me)); header();
@@ -379,7 +379,7 @@
         <div class="pmh">Best win rate <span class="dim">(3+ games)</span></div>${heroList(p.more.best, r => `${Math.round(100 * r.wins / r.games)}% of ${r.games}`)}
         <div class="pmh">Ghosts</div><p class="gw"><b class="win">${p.more.ghosts.w}</b> wins · <b class="lose">${p.more.ghosts.l}</b> losses <span class="dim small">defending, over ${p.more.ghosts.n} ghost${p.more.ghosts.n === 1 ? '' : 's'}</span></p>
         <p class="small dim">Games = finished runs and duels.</p></div>`
-      : `<div class="klock"><span class="hi">👑</span><b>King Tier</b><p class="small">Kings also see ${p.own ? 'your' : "this player's"} most played heroes, best win rate heroes and the wins and losses of ${p.own ? 'your' : 'their'} ghosts.</p><button data-act="shop">👑 Crown Shop</button></div>`;
+      : `<div class="klock"><span class="hi">👑</span><b>King Tier</b><p class="small">Kings also see ${p.own ? 'your' : "this player's"} most played heroes, best win rate heroes and the wins and losses of ${p.own ? 'your' : 'their'} ghosts.</p>${p.own ? '' : '<button data-act="shop">👑 Crown Shop</button>'}</div>`;
     return `<div class="shead"><b>${I('user')} Profile</b><button data-act="close">✕</button></div>
       <div class="prof" style="--lc:${l.color};--lh:${l.hi}">
         <div class="phead"><span class="pwho">${avatarHTML(p.avatar, p.code, 76)}${emblem(p.league, 30)}</span><div><b class="pname">${p.king ? '<span class="kingmark" title="King Tier">👑</span>' : ''}${esc(p.name)} <span class="lvb sm" title="Account level">${p.level || 1}</span></b>${p.title ? `<span class="ptitle">${esc(p.title)}</span>` : ''}<span class="pl1" style="color:${l.hi}">${l.name} league</span>

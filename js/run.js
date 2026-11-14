@@ -945,7 +945,7 @@
     else if (a === 'relicItem') { const was = iname(it.id); it.drop(); const r = randomRelic(run); msg = 'The shrine took ' + was + '. ' + (r ? 'You gained ' + r.name + '.' : ''); if (r) got('relic', r.id); }
     else if (a === 'respec') {
       const k = hero.specs.length - 1, pair = B.HEROES[hero.key].specs[k], was = hero.specs[k], now = pair[0].id === was ? pair[1] : pair[0];
-      hero.specs[k] = now.id; msg = name(hero) + ' now follows ' + now.name + '.'; got('boost', '★ ' + now.name, hero.key);
+      hero.specs[k] = now.id; msg = name(hero) + ' now follows ' + now.name + '.'; got('boost', '◆ ' + now.name, hero.key);
     }
     else if (a === 'hire' || a === 'join') { const h = hero ? swapIn(run, hero.uid, x, true) : addHero(run, x, true); msg = name(h) + (hero ? ' takes ' + B.HEROES[hero.key].name + "'s place!" : ' joins your team!'); got('hero', x); }
     else if (a === 'take') { run.bag.push(x); msg = 'You took ' + iname(x) + '.'; got('item', x); }

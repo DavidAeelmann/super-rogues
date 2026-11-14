@@ -101,7 +101,7 @@ await sleep(200);
 ok(await ev(`document.querySelectorAll('[data-act=choose]').length === (__bal.run.relics.includes('quill') ? 3 : 2)`), "first map step shows 2 options (3 with the Pathfinder's Quill)");
 await shot('03-map'); await noHScroll('map'); await noVScroll('map');
 // v47 (review #58): the journey sits behind the Day chip; the map itself has no 17-icon strip
-ok(await ev(`(() => { const seq = B.Run.pveSeq(__bal.run), r = __bal.run, wm = document.querySelector('#wmap'); if (!wm) return false; const w = wm.getBoundingClientRect(); return !!wm.querySelector('.rtok') && wm.querySelectorAll('.rn:not(.camp)').length === seq.length - 1 && !!wm.querySelector('.rn.camp') && wm.querySelectorAll('.rn.boss').length === 2 && wm.querySelectorAll('.rn.pvp').length === 0 && !!wm.querySelector('.rn.final .castle') && /Day 1.16/.test(wm.querySelector('.rday').textContent) && wm.querySelectorAll('.rtoday [data-act=choose]').length === r.opts.length && wm.scrollHeight > wm.clientHeight && wm.scrollTop > 0 && [...wm.querySelectorAll('.rtoday .banner')].every(b => { const q = b.getBoundingClientRect(); return q.top >= w.top - 1 && q.bottom <= w.bottom + 1; }) && !!document.querySelector('#top button.prog[data-act=path]'); })()`), "v65 (review #130): the map is a vertical road: the camp, every day ahead (2 bosses, v96: no duel days, the castle of the victory), your leader, and today's choices as the fork, in view");
+ok(await ev(`(() => { const seq = B.Run.pveSeq(__bal.run), r = __bal.run, wm = document.querySelector('#wmap'); if (!wm) return false; const w = wm.getBoundingClientRect(); return !!wm.querySelector('.rtok') && wm.querySelectorAll('.rn:not(.camp)').length === seq.length - 1 && !!wm.querySelector('.rn.camp') && wm.querySelectorAll('.rn.boss').length === 2 && wm.querySelectorAll('.rn.pvp').length === 0 && !!wm.querySelector('.rn.final .castle') && /Day 1.16/.test(wm.querySelector('.rday-ribbon, .rday').textContent) && wm.querySelectorAll('.rtoday [data-act=choose]').length === r.opts.length && wm.scrollHeight > wm.clientHeight && wm.scrollTop > 0 && [...wm.querySelectorAll('.rtoday .banner')].every(b => { const q = b.getBoundingClientRect(); return q.top >= w.top - 1 && q.bottom <= w.bottom + 1; }) && !!document.querySelector('#top button.prog[data-act=path]'); })()`), "v65 (review #130): the map is a vertical road: the camp, every day ahead (2 bosses, v96: no duel days, the castle of the victory), your leader, and today's choices as the fork, in view");
 await click('#top [data-act=path]'); await sleep(150);
 ok(await ev(`document.querySelectorAll('#modal .track .node').length > 10 && document.querySelectorAll('#modal .plegend li').length === 5`), 'v47: tapping the Day chip shows the whole journey with a legend');
 await click('[data-act=close]'); await sleep(100);
@@ -130,17 +130,18 @@ while (steps++ < 160) {
   }
   if (st.phase === 'steal') { await click('[data-act=steal]:last-of-type'); await sleep(100); continue; }
   if (await ev(`!!document.querySelector('[data-act=result-ok]')`)) { if (fightsSeen === 1) { await sleep(900); await shot('06-result'); await noVScroll('result');
-      ok(await ev(`!!document.querySelector('.result.v2 .rhead .headline') && /⏱/.test(document.querySelector('.rmeta').textContent) && /💥 [0-9]+.[0-9]+/.test(document.querySelector('.rmeta').textContent) && !!document.querySelector('.rh .rst') && /🛡/.test(document.querySelector('.rh .rst').textContent) && (document.querySelector('.rhead.win') ? document.querySelectorAll('.rstars .st').length === 3 : document.querySelectorAll('.rfoes .rf').length > 0) && !/NaN|undefined/.test(document.querySelector('.result').textContent)`), 'review #25/#51: the after-battle screen: banner, time and foes down, damage dealt and taken and kills per hero, stars on a win (the enemy line-up on a loss)');
-      // review #51: the rewards play in order and end with the stars lit, the gold counted and the top bar showing the new gold
+      ok(await ev(`!!document.querySelector('.result.v2 .rhead .headline') && /⏱/.test(document.querySelector('.rmeta').textContent) && /💥 [0-9]+.[0-9]+/.test(document.querySelector('.rmeta').textContent) && !!document.querySelector('.rh .rst') && /🛡/.test(document.querySelector('.rh .rst').textContent) && (document.querySelector('.rhead.win') ? document.querySelectorAll('.rheroes .rh').length > 0 : document.querySelectorAll('.rfoes .rf').length > 0) && !/NaN|undefined/.test(document.querySelector('.result').textContent)`), 'review #25/#51: the after-battle screen: banner, time and foes down, damage dealt and taken and kills per hero, victory/defeat details');
+      // review #51: the rewards play in order and end with the gold counted and the top bar showing the new gold
       for (let k = 0; k < 40 && !(await ev(`!!(__bal.result && __bal.result.fx && __bal.result.fx.done)`)); k++) await sleep(150);
       for (let k = 0; k < 25 && !(await ev(`+document.querySelector('#top .gold').textContent === __bal.run.gold`)); k++) await sleep(120);
-      ok(await ev(`(() => { const r = __bal.result; if (!r || !r.win) return true; const lit = document.querySelectorAll('.rstars .st.lit').length; return r.stars >= 1 && lit === r.stars && document.querySelector('.rw-gold b').textContent === '+' + r.gold && +document.querySelector('#top .gold').textContent === __bal.run.gold; })()`), 'review #51: after the reward animation: the stars lit, +gold counted, the top bar shows the new gold');
+      ok(await ev(`(() => { const r = __bal.result; if (!r || !r.win) return true; return document.querySelector('.rw-gold b').textContent === '+' + r.gold && +document.querySelector('#top .gold').textContent === __bal.run.gold; })()`), 'review #51: after the reward animation: +gold counted, the top bar shows the new gold');
       // v47 (review #58): the numbers wait behind Details
       ok(await ev(`!document.querySelector('.result.v2.more') && getComputedStyle(document.querySelector('.rmeta')).display === 'none' && !!document.querySelector('[data-act=result-more]')`), 'v47: the result shows the win and the rewards; the numbers wait behind Details'); await click('[data-act=result-more]'); await sleep(80); ok(await ev(`!!document.querySelector('.result.v2.more') && getComputedStyle(document.querySelector('.rmeta')).display !== 'none'`), 'v47: Details shows the time, the damage and the kills'); await click('[data-act=result-more]'); await sleep(80); }
       ok(await ev(`(() => { const r = __bal.result; return !r || r.win || r.duel || (!!document.querySelector('.rhead .losetag') && document.querySelector('.losetag').textContent.length > 3); })()`), 'v62 (review #94): a lost fight says how close it was (SO CLOSE! ... You were wrecked!)');
       await click('[data-act=result-ok]'); await sleep(100); continue; }
   if (st.phase === 'tower' && await ev(`!!document.querySelector('[data-act=tower-skip]')`)) { await click('[data-act=tower-skip]'); await sleep(200); continue; }   // v91: a completed run meets the Gauntlet gate first
   if (st.phase === 'over') break;
+  if (st.phase === 'upgrade' && await ev(`!!document.querySelector('[data-act=upgrade-path]')`)) { if (!globalThis.__sawUpgrade) { globalThis.__sawUpgrade = 1; await shot('07d-upgrade'); await noHScroll('boss upgrade'); await noVScroll('boss upgrade'); } await click('[data-act=upgrade-path]'); await sleep(120); continue; }
   if (await ev(`!!document.querySelector('[data-act=spec]')`)) { if (!sawLevel) { await shot('07-levelup'); await noVScroll('level up'); sawLevel = true; } await click('[data-act=spec]'); await sleep(80); continue; }
   if (st.phase === 'map') {
     // prefer medium fights and shops so the run goes the distance
@@ -246,11 +247,11 @@ while (steps++ < 160) {
         await sleep(60);
       }
       await sleep(900); await shot('05-battle'); await noHScroll('battle'); await noVScroll('battle');
-      ok(await ev(`/4×🔒/.test(document.querySelector('.speed').textContent) && !!document.querySelector('.speed [data-arg="2"]')`), 'v27: 2× speed is free, 4× is locked (Crown Shop)');
+      ok(await ev(`!!document.querySelector('.speed [data-arg="2"]') && !!document.querySelector('.speed [data-arg="4"]') && !document.querySelector('.speed [data-arg="4"].locked')`), '2× and 4× speed are unlocked for all players');
       ok(await ev(`!!document.querySelector('.tutspeed') && /speed up the fight/.test(document.querySelector('.tutspeed').textContent)`), 'v62 (review #83): once a hero has moved, the first battle hints at the speed buttons');
       await ev(`document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))`);
       ok(await ev(`!document.querySelector('.tutspeed') && localStorage.getItem('balance.tut.speedDismissed') === 'true'`), 'v62 (review #83): a tap during the battle dismisses the speed hint for good');
-      await click('.speed [data-arg="4"]'); ok(await ev(`/Crown Shop/.test(document.querySelector('#toast').textContent)`), 'tapping the locked 4× says where to get it');
+      await click('.speed [data-arg="4"]'); ok(await ev(`document.querySelector('.speed [data-arg="4"]').classList.contains('on')`), 'tapping 4× switches battle speed to 4×');
       ok(await ev(`!!document.querySelector('.speed .skip.locked')`), 'v30: the skip button is locked (Crown Shop perk)'); await click('.speed .skip'); ok(await ev(`/Skipping fights/.test(document.querySelector('#toast').textContent) && !!__bal.battle`), 'tapping it explains the unlock and the fight goes on');
     }
     await ev('__bal.skipBattle()');  // v30: the ⏭ button is a Crown Shop perk now
@@ -373,7 +374,7 @@ if (!REMOTE) {
   await ev(`document.querySelector('#tname').value = 'TestBot'`);
   await click('[data-act=tower-enter]'); await sleep(300);
   // v101 (review #183): entering the Gauntlet opens the last shop first; leaving it starts the climb
-  ok(await ev(`__bal.run.phase === 'map' && __bal.run.opts.length >= 2 && __bal.run.opts.every(o => o.type === 'shop') && /Gauntlet shop/.test(document.querySelector('.rday').textContent)`), 'v101 (review #183): the last shop opens on entering the Gauntlet');
+  ok(await ev(`__bal.run.phase === 'map' && __bal.run.opts.length >= 2 && __bal.run.opts.every(o => o.type === 'shop') && /Gauntlet shop/.test(document.querySelector('.rday-ribbon, .rday').textContent)`), 'v101 (review #183): the last shop opens on entering the Gauntlet');
   await shot('19a-gauntlet-shop'); await noVScroll('gauntlet shop');
   await click('[data-act=choose]'); await sleep(200); await click('[data-act=leave]'); await sleep(300);
   for (let k = 0; k < 60 && !(await ev(`__bal.run.phase === 'deploy'`)); k++) await sleep(100);
@@ -407,7 +408,7 @@ if (!REMOTE) {
   for (let i = 0; i < 30 && !(await ev(`!!document.querySelector('#modal .wallet') && /40[0-9]/.test(document.querySelector('#modal .wallet').textContent)`)); i++) await sleep(100);
   // review #108: the shop is four tabs (Perks / Name & King / Earn / Invite) so nothing sits below the screen
   const shopTab = async t => { await ev(`__bal.ACT['shop-tab']('${t}')`); await sleep(150); };
-  ok(await ev(`document.querySelectorAll('#modal .perk').length === 3 && !/Content Elo/.test(document.querySelector('#modal').textContent) && document.querySelectorAll('#modal .stabs button').length === 5`), 'Crown Shop: wallet, tabs (v66: + Style), 3 perks on the first (4x speed, Double XP, Skip fights; no Content Elo)');
+  ok(await ev(`document.querySelectorAll('#modal .perk').length === 2 && !/Content Elo/.test(document.querySelector('#modal').textContent) && document.querySelectorAll('#modal .stabs button').length === 5`), 'Crown Shop: wallet, tabs (v66: + Style), 2 perks on the first (Double XP, Skip fights; no Content Elo)');
   await click('#modal [data-act=shop-tab][data-arg=style]'); await sleep(150);
   ok(await ev(`document.querySelectorAll('#modal .perk.cos').length === B.TAUNTS.length + B.LEVEL_TAUNTS.length + B.VSFX.length && document.querySelectorAll('#modal .tbub').length === B.TAUNTS.length + B.LEVEL_TAUNTS.length && !!document.querySelector('#modal .cpors .cpor')`), 'v66 (review #136): the Style tab sells taunts, VS entrances and portraits');
   await click('#modal [data-act=shop-tab][data-arg=perks]'); await sleep(100);
@@ -516,7 +517,7 @@ if (!REMOTE) {
   await ev(`(() => { localStorage.removeItem('balance.intro'); localStorage.setItem('balance.starts', '0'); localStorage.setItem('balance.introTest', '1'); localStorage.removeItem('balance.run'); })()`);
   await ev(`__bal.ACT['new-run']()`); await sleep(200);
   await pickHero(); await click('[data-act=start-next]'); await sleep(150);
-  ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.onb && __bal.run.cur.enemies.length === 1 && __bal.run.cur.enemies[0].key === 'grunt' && !!document.querySelector('.deploy.intro #board') && !document.querySelector('[data-act=fight]') && __bal.run.relics.length === 1`), 'v97 (review #179): the first Play goes from the hero straight to the battlefield (one Grunt, no map, no Fight button)');
+  ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.onb && __bal.run.cur.enemies.length === 1 && __bal.run.cur.enemies[0].key === 'grunt' && !!document.querySelector('.deploy.intro #board') && !document.querySelector('[data-act=fight]') && __bal.run.relics.length === B.CFG.startRelics`), 'v97 (review #179): the first Play goes from the hero straight to the battlefield (one Grunt, no map, no Fight button)');
   for (let k = 0; k < 40 && !(await ev(`__bal.run.onb.stage === 'move'`)); k++) await sleep(100);
   ok(await ev(`__bal.run.onb.stage === 'move' && /Drag your hero/.test(document.querySelector('.tutmove').textContent)`), 'v97: the hero drops in, then the hint says to drag it');
   await shot('40-intro-move'); await noHScroll('intro'); await noVScroll('intro');

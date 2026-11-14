@@ -209,7 +209,7 @@
     const xp = hs.reduce((a, o) => a + o.x.gained, 0), ups = hs.filter(o => o.x.to > o.x.from).length;
     if (xp) chips.push(`<span class="rw rw-xp"><i>✨</i><b>+${xp}</b><em>XP</em></span>`);
     if (ups) chips.push(`<span class="rw rw-up"><i>▲</i><b>${ups}</b><em>level up${ups > 1 ? 's' : ''}</em></span>`);
-    if (r.boss && r.win) chips.push(`<span class="rw rw-up" style="--tier:#ffd23f">★ <b>Boss Upgrade</b><em>choose a path</em></span>`);
+    if (r.boss && r.win) chips.push(`<span class="rw rw-up" style="--tier:#ffd23f">◆ <b>Boss Upgrade</b><em>choose a path</em></span>`);
     if (r.trophy) chips.push(`<span class="rw rw-prize" style="--tier:#ffd23f"><i>🏆</i><b>${esc(r.trophy.name)}</b><em>trophy · +${r.trophy.crowns || 1} 👑</em></span>`);
     if (r.lg) chips.push(`<span class="rw ${r.lg.delta > 0 ? 'rw-pos' : r.lg.delta < 0 ? 'rw-neg' : ''}">${emblem(r.lg.league, 20)}<b>${r.lg.delta > 0 ? '+' : ''}${r.lg.delta}</b><em>LP · ${leagueName(r.lg.league)} ${leagueProgress(r.lg)}</em></span>`);
     if (r.lg && r.lg.crowns) chips.push(`<span class="rw rw-crown"><i>👑</i><b>+${r.lg.crowns}</b><em>crowns</em></span>`);
@@ -226,7 +226,7 @@
     const foes = r.foes && r.foes.length && !r.win ? `<div class="rfoes">${r.foes.map(f => `<span class="rf ${f.dead ? 'dead' : ''} ${f.boss ? 'boss' : ''} ${f.elite ? 'elite' : ''}">${img(f.key, f.boss ? 30 : 24, 'por')}</span>`).join('')}</div>` : '';
     const lostRun = r.win ? '' : r.tower ? `<p class="small center">The climb ends on floor ${r.floor}. Your team stays there as a ghost for the next climbers. No LP lost.</p>` : r.retry ? `<p class="small center lifelost">${heartsHTML()} Your Ward broke! Beat this day again.</p>` : '<p class="small dim center">Your Ward was already broken. The run is over.</p>';
     const spoils = r.win && r.tower ? `<p class="small center vline">🏰 <b>Floor ${r.floor} cleared</b> · +${B.towerLp(r.floor)} LP${r.champion ? ' · 👑 <b>You are the champion!</b>' : ''}</p>` : r.win && r.duel && !r.final ? '<p class="small center">Your spoils await: pick one thing from their team.</p>' : r.win && r.final ? `<p class="small center vline">${B.victoryOf(U.run.lives).icon} <b>${B.victoryOf(U.run.lives).name} victory!</b> The run is complete.</p>` : '';
-    const nextCta = !U.run ? 'Continue' : U.run.phase === 'over' ? 'See Results →' : (U.run.pendingUpgrade) ? 'Upgrade Hero! ★' : (U.run.pending && U.run.pending.length) ? 'Level Up! ▲' : U.run.phase === 'steal' ? 'Claim Spoils!' : U.run.phase === 'recruit' ? 'Recruit Hero! +' : 'Proceed';
+    const nextCta = !U.run ? 'Continue' : U.run.phase === 'over' ? 'See Results →' : (U.run.pendingUpgrade) ? 'Upgrade Hero! ◆' : (U.run.pending && U.run.pending.length) ? 'Level Up! ▲' : U.run.phase === 'steal' ? 'Claim Spoils!' : U.run.phase === 'recruit' ? 'Recruit Hero! +' : 'Proceed';
 
     if (!desk) {
       return `<section class="result v2 ${ui.rmore ? 'more' : ''}">
@@ -269,18 +269,16 @@
     return `<section class="result v2 desktop-hex-result">
       <div class="rhead ${r.win ? 'win' : 'lose'}">
         <h2 class="sc headline ${r.win ? 'win' : 'lose'}">${r.win ? 'BATTLE WON' : 'DEFEAT'}</h2>
+        ${loseTag}
       </div>
       ${eloLine(r)}${spoils}${promo}${lostRun}
-      <div class="rbody-cols rhex-trio">
+      <div class="rbody-cols rhex-trio rhex-duo">
         <!-- STATS COLUMN -->
         <div class="rcol-left rpanel-framed">
           <div class="rpanel-head">
             <div class="rph-title-wrap">
               <span class="rp-title">STATS</span>
-              <div class="rp-tabs">
-                <span class="rp-tab active">TRACKER</span>
-                <span class="rp-tab">HERO STATS</span>
-              </div>
+              <span class="rp-sub">⚔ Dealt · 🛡 Taken · ✚ Healed</span>
             </div>
             <div class="rp-durations">
               <div class="rpd-item"><span class="rpd-lbl">RUN DURATION</span><span class="rpd-val">${runDuration}</span></div>
@@ -333,16 +331,17 @@
         <div class="rcol-right rpanel-framed">
           <div class="rpanel-head">
             <span class="rp-title">RESULTS</span>
+            <span class="rp-sub">REWARDS</span>
           </div>
 
           <div class="rbreakdown">
             <div class="rb-row">
-              <span class="rb-lbl">BATTLE WON</span>
+              <span class="rb-lbl">${r.win ? 'BATTLE WON' : 'BATTLE LOST'}</span>
               <span class="rb-val">${hexCoin} <b>${fx.gold ? (r.gold || 0) : 0}</b></span>
             </div>
             ${aliveBonus ? `
             <div class="rb-row">
-              <span class="rb-lbl">SURVIVING HERO BONUS</span>
+              <span class="rb-lbl">SURVIVING HEROES (${aliveBonus})</span>
               <span class="rb-val">${hexCoin} <b>${aliveBonus}</b></span>
             </div>` : ''}
             ${r.challenge ? `
@@ -360,31 +359,8 @@
 
           <div class="bar">
             <button class="primary big proceed-cta proceed-hex-btn" data-act="result-ok" ${r.pending ? 'disabled' : ''}>
-              <span class="bracket-l">&lt;</span> <span class="cta-txt">${nextCta}</span> <span class="bracket-r">&gt;</span>
+              <span class="cta-txt">${nextCta}</span> <span class="bracket-r">→</span>
             </button>
-          </div>
-        </div>
-
-        <!-- DAMAGE DEALT FLOATING PANEL -->
-        <div class="rcol-damage rpanel-framed">
-          <div class="rcd-head">
-            <div class="rcd-tabs">
-              <span class="rcd-tab active" title="Damage Dealt">⚔</span>
-              <span class="rcd-tab" title="Damage Taken">🛡</span>
-              <span class="rcd-tab" title="Healing">✚</span>
-            </div>
-            <span class="rcd-title">DAMAGE DEALT</span>
-          </div>
-          <div class="rcd-list">
-            ${hs.map(o => `
-              <div class="rcd-row">
-                <div class="rcd-avatar">${img(o.h.key, 28, 'por')}</div>
-                <div class="rcd-details">
-                  <span class="rcd-num">${kfmt(o.s.dmg)}</span>
-                  <div class="rcd-bar"><s style="width:${100 * o.s.dmg / top}%"></s></div>
-                </div>
-              </div>
-            `).join('')}
           </div>
         </div>
       </div>
@@ -517,7 +493,7 @@
     // one sentence for monsters) and the heroes' full text is one tap away on Details; on the deploy screen it takes the place of the enemies list
     const first = s => String(s || '').split(/(?<=[.!?])\s/)[0];
     const abil = hd ? `<b class="abname">${esc(hd.abName)}</b> <button class="linkbtn" data-act="hero-peek" data-arg="${u.key}">Details</button>` : u.boss ? fmt(first(B.BOSSES[u.key].desc)) : u.abil ? fmt(MOB_ABIL[u.abil] || '') : u.fl.has('dive') ? 'Leaps to your back line at the start.' : u.kind === 'summon' ? 'Summoned unit.' : 'No special ability.';
-    return `<div class="hrow">${img(u.key, 40)}<b>${esc(u.name)}</b>${u.kind === 'hero' ? ' Lv ' + u.lvl : ''}${u.elite ? ' <span class="elite">★ elite</span>' : ''}<button class="info-close" data-act="info-close" aria-label="Close details">✕</button></div>
+    return `<div class="hrow">${img(u.key, 40)}<b>${esc(u.name)}</b>${u.kind === 'hero' ? ' Lv ' + u.lvl : ''}${u.elite ? ' <span class="elite">◆ elite</span>' : ''}<button class="info-close" data-act="info-close" aria-label="Close details">✕</button></div>
       ${chips({ hp: Math.max(0, Math.round(u.hp)) + '/' + u.maxHp, atk: Math.round(Sim.atkOf(W, u)), ap: Math.round(u.ap), armor: Math.round(Sim.armorOf(W, u)), as: Sim.asOf(W, u).toFixed(2), range: u.range, crit: u.crit ? pct(u.crit) : 0, dodge: u.dodge ? pct(u.dodge) : 0 }, true)}
       <div class="small">${abil}</div>`;
   }
@@ -543,7 +519,7 @@
     const land = document.body.classList.contains('landscape');
     // on tablets/desktops the deploy and battle screens put their panel in a column beside the board
     // the board takes all the height the screen has, the panel sits beside it
-    if (document.body.classList.contains('desk')) return Math.floor(Math.max(480, Math.min(vw - 64, (vh - 165) / DESK_BOARD_RATIO, 1320)));
+    if (document.body.classList.contains('desk')) return Math.floor(Math.max(520, Math.min(vw - 520, (vh - 150) / DESK_BOARD_RATIO, 1180)));
     if (document.body.classList.contains('side')) return Math.floor(Math.max(300, Math.min(Math.min(vw, 1180) - 36 - 356, (vh - 64 - 8) / BOARD_RATIO, 1000)));
     const reserved = land ? 64 : U.screen === 'battle' ? 175 : 215;
     const byHeight = Math.max(200, (vh - reserved - 4) / BOARD_RATIO);

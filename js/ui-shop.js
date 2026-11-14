@@ -28,8 +28,8 @@
     const shine = s.kind === 'item' && RANK(s.id) >= 3 ? ' shine' : s.kind === 'relic' ? ' shine soft' : '';
     const coinSVG = `<svg class="buy-coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f59e0b" stroke="#78350f" stroke-width="1.8"/><circle cx="12" cy="12" r="7.5" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/><circle cx="12" cy="12" r="4.5" fill="#fde68a" opacity="0.8"/></svg>`;
     const buyBtn = desk
-      ? `<button class="${dis ? '' : 'primary'} buyb gold-ingot-btn" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `${coinSVG}<span class="price-val">${s.price}</span>` : 'Free!'}</button>`
-      : `<button class="${dis ? '' : 'primary'} buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button>`;
+      ? `<button class="buyb gold-ingot-btn" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `${coinSVG}<span class="price-val">${s.price}</span>` : 'Free!'}</button>`
+      : `<button class="buyb" data-act="buy" data-arg="${i}" ${dis ? 'disabled' : ''} aria-label="${s.sold ? 'Sold' : s.price ? 'Buy for ' + s.price + ' gold' : 'Take it for free'}">${s.sold ? 'Sold' : s.price ? `<span class="price">${s.price}</span>` : 'Free!'}</button>`;
     return `<div class="card stock v2 k-${s.kind}${shine} ${s.sold ? 'sold' : ''} ${ui.justSold === i ? 'just' : ''}" style="--rc:${rc}" data-i="${i}">${body}${buyBtn}</div>`;
   }
   // with a full team, a hero bought in the Hero Shop takes the place of one of yours (its level, XP and items; powers picked at random)
@@ -100,7 +100,7 @@
     if (pickCh) {
       const ts = Run.eventTargets(U.run, pickCh);
       let grid;
-      if (pickCh.target === 'hero') grid = ts.map(t => { const h = U.run.heroes.find(x => x.uid === t.uid); return `<button class="tpick" data-act="event-target" data-arg="${t.arg}">${img(h.key, 48)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl}${pickCh.act === 'respec' && h.specs.length ? ' · ★ ' + esc((Run.specOf(h.key, h.specs[h.specs.length - 1]) || {}).name || '') : ''}</span></button>`; }).join('');
+      if (pickCh.target === 'hero') grid = ts.map(t => { const h = U.run.heroes.find(x => x.uid === t.uid); return `<button class="tpick" data-act="event-target" data-arg="${t.arg}">${img(h.key, 48)}<b>${esc(HEROES[h.key].name)}</b><span>Lv ${h.lvl}${pickCh.act === 'respec' && h.specs.length ? ' · ◆ ' + esc((Run.specOf(h.key, h.specs[h.specs.length - 1]) || {}).name || '') : ''}</span></button>`; }).join('');
       else if (pickCh.target === 'type') grid = ts.map(t => `<button class="tpick" data-act="event-target" data-arg="${t.arg}"><img class="ico" src="${B.Icons.slot(t.type, 40)}" alt=""><b>${B.TYPE[t.type].name}</b></button>`).join('');
       else grid = ts.map(t => { const it = ITEM[t.id], who = t.uid ? U.run.heroes.find(h => h.uid === t.uid) : null; return `<button class="tpick item" data-act="event-target" data-arg="${t.arg}">${ico('item', t.id, 40)}<b style="color:${TIER_COLOR[it.tier]}">${esc(it.name)}</b><span>${B.RARITY[it.tier].name} ${B.TYPE[it.type].name.toLowerCase()}${who ? ' · on ' + esc(HEROES[who.key].name) : ' · bag'}</span></button>`; }).join('');
       return head + `<div class="card evpick"><div class="small">${fmt(pickCh.label)}${pickCh.cost ? ` <span class="price">${pickCh.cost}</span>` : ''}</div>
@@ -166,78 +166,55 @@
     if (!lg) return `<p class="dim center">${U.run.xpWait ? 'Counting your league points…' : U.run.xpErr ? 'Your league points could not be saved (no connection).' : 'No league points this time.'}</p>`;
     const R = B.LEAGUE_RULES, L = B.LEAGUES, from = lg.from || { league: lg.league, lp: Math.max(0, lg.lp - lg.delta) }, done = !!U.run.lpShown;
     const lgi = done ? lg.league : from.league, l = L[lgi] || L[0], pct = x => Math.max(0, Math.min(100, 100 * x / R.step));
-    const parts = B.lpParts({ done: won, failed: !won && U.run.result === 'defeat', pve: !!U.run.reachedFinal, pvp: U.run.pvpLog, duels: (U.run.trophies || []).filter(t => !t.final).length, lost: U.run.pvpLost || 0, streak: lg.streak ? lg.streak.to : 0 }, from.league), raw = parts.reduce((a, x) => a + x.lp, 0);
-    const NAME = { pve: () => 'PvE finished', fail: () => 'Run lost', duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Run complete', loss: n => `${n} PvP lost`, streak: n => `Streak ${n}` };
-    const ICON = { fail: I('skull'), pve: I('flag'), duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥' };
+    const parts = B.lpParts({ done: won, failed: !won && U.run.result === 'defeat', pve: !!U.run.reachedFinal, pvp: U.run.pvpLog, duels: (U.run.trophies || []).filter(t => !t.final).length, lost: U.run.pvpLost || 0, streak: lg.streak ? lg.streak.to : 0 }, from.league);
+    if (U.run.tower && U.run.tower.lp) parts.push({ id: 'tower', n: U.run.tower.wins || 1, lp: U.run.tower.lp });
+    const NAME = { pve: () => 'PvE finished', fail: () => 'Run lost', duel: n => `${n} duel${n === 1 ? '' : 's'} won`, final: () => 'Run complete', loss: n => `${n} PvP lost`, streak: n => `Streak ${n}`, tower: n => `Gauntlet ${n}F` };
+    const ICON = { fail: I('skull'), pve: I('flag'), duel: I('swords'), final: I('trophy'), loss: I('skull'), streak: '🔥', tower: '🏰' };
+    const lpWhyHTML = parts.length ? `<div class="lpwhy small">${parts.map(p => `<span class="lpw ${p.lp >= 0 ? 'pos' : 'neg'}">${ICON[p.id] || ''} ${NAME[p.id](p.n)} <b>${p.lp > 0 ? '+' : ''}${p.lp}</b></span>`).join('')}</div>` : '';
     const s = lg.streak || { to: 0, from: 0, best: 2 };
-    const winStreakTo = s.to || 0, winStreakBest = s.best || 2;
-    const fightsWon = U.run.won != null ? U.run.won : 7;
+    const winStreakTo = s.to || 0, winStreakBest = Math.max(winStreakTo, s.best || 1);
+    const fightsWon = U.run.won != null ? U.run.won : 0;
     const curLp = done ? lg.lp : from.lp;
     const foot = lgi >= L.length - 1 ? `${curLp} LP` : `${curLp}/${R.step} LP`;
     const curPct = pct(curLp);
 
-    const bronzeWingsSVG = `<svg class="bronze-wings" viewBox="0 0 160 50" aria-hidden="true">
-      <path d="M80 35 C60 15, 25 10, 5 22 C25 28, 55 32, 75 42 Z" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>
-      <path d="M80 35 C100 15, 135 10, 155 22 C135 28, 105 32, 85 42 Z" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>
-      <path d="M80 30 C65 18, 40 15, 20 24 C38 28, 62 30, 78 36 Z" fill="#d97706" opacity="0.6"/>
-      <path d="M80 30 C95 18, 120 15, 140 24 C122 28, 98 30, 82 36 Z" fill="#d97706" opacity="0.6"/>
-    </svg>`;
-
-    const bronzeShieldSVG = `<svg class="bronze-shield-3d" viewBox="0 0 80 96" aria-hidden="true">
-      <defs>
-        <linearGradient id="bronzeGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#fed7aa"/>
-          <stop offset="30%" stop-color="#f97316"/>
-          <stop offset="70%" stop-color="#c2410c"/>
-          <stop offset="100%" stop-color="#7c2d12"/>
-        </linearGradient>
-      </defs>
-      <path d="M40 4 L74 18 C74 58, 60 82, 40 92 C20 82, 6 58, 6 18 Z" fill="url(#bronzeGrad)" stroke="#431407" stroke-width="3"/>
-      <path d="M40 10 L68 22 C68 54, 56 76, 40 84 C24 76, 12 54, 12 22 Z" fill="#7c2d12" opacity="0.5"/>
-      <path d="M40 12 L40 82 C54 74, 64 52, 64 23 Z" fill="#ffedd5" opacity="0.25"/>
-    </svg>`;
-
     const protectShieldSVG = `<svg class="protect-shield-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L20 6 V12 C20 17 16 20.5 12 22 C8 20.5 4 17 4 12 V6 Z" fill="#3b82f6" stroke="#93c5fd" stroke-width="1.5"/><path d="M12 4 L12 20 C15 18.5 18 15.5 18 12 V7 Z" fill="#dbeafe" opacity="0.3"/></svg>`;
-
-    const metaSummaryPill = `<div class="lp-summary-pill"><span class="swords-ico">⚔️</span> <b>${fightsWon} Fights Won</b> <span class="dot-sep">•</span> <span class="flame-ico">🔥</span> <b>Win Streak: ${winStreakTo} (Best: ${winStreakBest})</b></div>`;
+    const metaSummaryPill = `<div class="lp-summary-pill"><span class="swords-ico">⚔️</span> <b>${fightsWon} Fights Won</b> <span class="dot-sep">•</span> <span id="lpstk" class="vmstk">${flameHTML(winStreakTo)} <span>Win streak ${winStreakTo} · best ${winStreakBest}</span></span></div>`;
 
     return `<div class="lp-modal-wrap">
       ${metaSummaryPill}
-      <div class="lp-body-grid">
-        <div class="lp-left-crest-card" id="lpmeter" style="--lc:${l.color};--lh:${l.hi}">
+      <div class="lp-body-grid" id="lpmeter" style="--lc:${l.color};--lh:${l.hi}">
+        <div class="lp-left-crest-card">
           <div class="crest-emblem-wrap">
-            ${bronzeWingsSVG}
-            ${bronzeShieldSVG}
+            ${emblem(lgi, 64)}
           </div>
           <div class="crest-tier-title">${l.name.toUpperCase()} TIER</div>
-          <div class="vmtube mini-thermometer">
-            <i style="height:${curPct}%"></i>
-            <span class="vmshine"></span>
-          </div>
           <div class="vmfoot crest-lp-foot">${foot}</div>
         </div>
 
         <div class="lp-right-panel">
           <div class="lp-delta-row">
-            <span class="lp-delta-val ${lg.delta >= 0 ? 'pos' : 'neg'}"><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : (lg.delta >= 0 ? '+' : '') + '0'}</span> <small>LP</small></span>
+            <span class="lp-delta-val vmbig ${lg.delta >= 0 ? 'pos' : 'neg'}"><span id="lpbig">${done ? (lg.delta > 0 ? '+' : '') + lg.delta : (lg.delta >= 0 ? '+' : '') + '0'}</span> <small>LP</small></span>
           </div>
 
-          <div class="rank-protect-badge">
+          ${lgi === 0 ? `<div class="rank-protect-badge">
             ${protectShieldSVG}
             <div class="badge-txt">
               <div class="badge-title">RANK PROTECTION</div>
               <div class="badge-sub">A lost run costs no LP in Bronze</div>
             </div>
-          </div>
+          </div>` : ''}
 
           <div class="lp-horiz-bar-wrap">
-            <div class="lp-horiz-track">
-              <div class="lp-horiz-fill" style="width:${curPct}%"></div>
-              <span class="lp-horiz-text">${foot}</span>
+            <div class="lp-bar-hdr"><span>League Progress</span><span class="lp-horiz-text">${foot}</span></div>
+            <div class="vmtube lp-horiz-track">
+              <i class="lp-horiz-fill" style="width:${curPct}%"></i>
+              <span class="vmshine"></span>
             </div>
           </div>
 
-          <div class="streak-sub-note">🔥 Win streak best ${winStreakBest}</div>
+          ${lpWhyHTML}
+          <div class="vmcall streak-sub-note">Beat other players' teams at the top of the Gauntlet</div>
           <div class="vmpromo" id="lppromo">${done && lg.promoted ? `<b>Promoted to ${l.name}!</b>` : done && lg.demoted ? `<b class="lose">Dropped to ${l.name}</b>` : ''}</div>
         </div>
       </div>
@@ -248,16 +225,17 @@
     U.run.lpShown = true; save();
     const fast = B.Juice && B.Juice.reduced(), wait = ms => new Promise(r => setTimeout(r, fast ? 0 : ms)), R = B.LEAGUE_RULES, L = B.LEAGUES;
     const fill = m.querySelector('.vmtube i'), foot = m.querySelector('.vmfoot'), big = $('#lpbig'), live = () => fill && fill.isConnected;
-    const horizFill = document.querySelector('.lp-horiz-fill'), horizTxt = document.querySelector('.lp-horiz-text');
+    const horizTxt = m.querySelector('.lp-horiz-text');
     const go = (pct, ms) => {
-      if (fill) { fill.style.transition = `height ${ms}ms cubic-bezier(.3, .8, .3, 1)`; fill.style.height = pct + '%'; }
-      if (horizFill) { horizFill.style.transition = `width ${ms}ms cubic-bezier(.3, .8, .3, 1)`; horizFill.style.width = pct + '%'; }
+      if (fill) { fill.style.transition = `width ${ms}ms cubic-bezier(.3, .8, .3, 1)`; fill.style.width = pct + '%'; }
       return wait(ms + 60);
     };
     const setLeague = i => {
       const l = L[i] || L[0];
       m.style.setProperty('--lc', l.color);
       m.style.setProperty('--lh', l.hi);
+      const wrap = m.querySelector('.crest-emblem-wrap');
+      if (wrap) wrap.innerHTML = emblem(i, 64);
       const title = m.querySelector('.crest-tier-title');
       if (title) title.textContent = `${l.name.toUpperCase()} TIER`;
       if (B.Juice) B.Juice.bump(m);
@@ -267,15 +245,13 @@
     const pct = x => Math.max(0, Math.min(100, 100 * x / R.step));
     if (lg.promoted) {
       await go(100, 800); if (!live()) return;
-      setLeague(lg.league); if (fill) { fill.style.transition = 'none'; fill.style.height = '0%'; void fill.offsetWidth; }
-      if (horizFill) { horizFill.style.transition = 'none'; horizFill.style.width = '0%'; void horizFill.offsetWidth; }
+      setLeague(lg.league); if (fill) { fill.style.transition = 'none'; fill.style.width = '0%'; void fill.offsetWidth; }
       sfx('levelup'); if (B.Juice) B.Juice.confettiAt(m, 80);
       const p = $('#lppromo'); if (p) { p.innerHTML = `<b>Promoted to ${leagueName(lg.league)}!</b>${lg.crowns ? ` <span class="crn">+${lg.crowns} 👑</span>` : ''}`; p.classList.add('pop'); }
       await go(pct(lg.lp), 700);
     } else if (lg.demoted) {
       await go(0, 700); if (!live()) return;
-      setLeague(lg.league); m.classList.add('fizzle'); if (fill) { fill.style.transition = 'none'; fill.style.height = '100%'; void fill.offsetWidth; }
-      if (horizFill) { horizFill.style.transition = 'none'; horizFill.style.width = '100%'; void horizFill.offsetWidth; }
+      setLeague(lg.league); m.classList.add('fizzle'); if (fill) { fill.style.transition = 'none'; fill.style.width = '100%'; void fill.offsetWidth; }
       sfx('deny');
       const p = $('#lppromo'); if (p) { p.innerHTML = `<b class="lose">Dropped to ${leagueName(lg.league)}</b>`; p.classList.add('pop'); }
       await go(pct(lg.lp), 700);
@@ -344,7 +320,7 @@
         ${n ? `<div class="loot loot-cards-row ${n > 4 ? 'lots' : ''}">${na.map((a, i) => `<span class="lootit ach loot-card-3d" style="--i:${i}" tabindex="0" data-tip="${esc('New title: ' + a.title + '. You earned it: ' + a.desc)}"><i class="achi">${a.icon}</i><b class="loot-card-name">${esc(a.title)}</b><small class="loot-card-tag">New title!</small></span>`).join('')}${ups.map((x, i) => `<span class="lootit loot-card-3d" style="--i:${i + na.length}" tabindex="0" data-tip="${esc(unlockTip(x))}">${unlockPic(x, 48)}<b class="loot-card-name">${esc(unlockName(x))}</b><small class="loot-card-tag">New ${KIND_NAME(x.kind)}</small></span>`).join('')}</div>`
           : u ? `<p class="chestnote">${I('lock')} Next chest at level ${u.lvl}: <b>${esc(unlockName(u))}</b> · ${B.xpForLevel(u.lvl) - to} XP to go</p>` : '<p class="chestnote">🏅 Every reward unlocked!</p>'}</div>`;
 
-    return `<div class="xp-modal-wrap" id="xppanel" data-from="${from}" data-to="${to}">
+    return `<div class="xp-modal-wrap vmwrap xp" id="xppanel" data-from="${from}" data-to="${to}">
       <!-- Top Tier: Account Level & XP Card -->
       <div class="xp-top-card">
         <div class="xp-top-main">
@@ -367,15 +343,15 @@
 
           <div class="xp-right-col">
             <div class="xp-gain-val"><span id="xpbig">${done ? '+' + got : '+0'}</span> XP</div>
-            ${log.length ? `<div class="xp-pills-row">${xpChips(log).map((c, i) => `<span class="xp-chip-pill" style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i> <b>${esc(c.name)}</b> <span class="chip-add">+${c.xp}</span></span>`).join('')}</div>` : note ? `<p class="small dim">${note}</p>` : ''}
+            ${log.length ? `<ul class="xp-pills-row xplines">${xpChips(log).map((c, i) => `<li class="xp-chip-pill" style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i> <b>${esc(c.name)}</b> <span class="chip-add">+${c.xp}</span></li>`).join('')}</ul>` : note ? `<p class="small dim">${note}</p>` : ''}
           </div>
         </div>
 
         <!-- Full-Width Horizontal XP Progress Bar -->
         <div class="xp-horiz-bar-wrap" id="xpmeter">
+          <div class="xp-bar-hdr"><span>Account Level</span><span class="xp-horiz-label"><span id="xpnum">${S.into}/${S.need}</span> XP</span></div>
           <div class="vmtube xp-horiz-track">
             <i class="xp-horiz-fill" style="width:${pct}%"></i>
-            <span class="xp-horiz-label"><span id="xpnum">${S.into}/${S.need}</span> XP</span>
           </div>
         </div>
       </div>

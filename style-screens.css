@@ -80,8 +80,10 @@ body:not(.desk) section.lpscr .badge-txt .badge-title { font-size: 11px !importa
 body:not(.desk) section.lpscr .badge-txt .badge-sub { font-size: 10.5px !important; }
 body:not(.desk) section.lpscr .lp-horiz-track { height: 22px !important; }
 body:not(.desk) section.lpscr .lp-horiz-text { font-size: 11.5px !important; }
-body:not(.desk) section.lpscr .lp-footer { justify-content: center !important; margin-top: 4px !important; }
-body:not(.desk) section.lpscr .lp-next-btn { width: 100% !important; height: 46px !important; min-height: 46px !important; }
+body:not(.desk) section.lpscr .lp-footer,
+body:not(.desk) section.xpscr .xp-footer { justify-content: center !important; margin-top: auto !important; padding: 8px 0 4px !important; }
+body:not(.desk) section.lpscr .lp-next-btn,
+body:not(.desk) section.xpscr .xp-again-btn { width: min(100%, 340px) !important; height: 48px !important; min-height: 48px !important; }
 body:not(.desk) section.xpscr .xp-modal-wrap { gap: 8px !important; }
 body:not(.desk) section.xpscr .xp-top-card { padding: 10px 12px !important; }
 body:not(.desk) section.xpscr .xp-top-main { margin-bottom: 8px !important; }
@@ -91,13 +93,12 @@ body:not(.desk) section.xpscr .crest-lbl { font-size: 8.5px !important; }
 body:not(.desk) section.xpscr .xp-heading { font-size: 18px !important; }
 body:not(.desk) section.xpscr .xp-gain-val { font-size: 28px !important; }
 body:not(.desk) section.xpscr .xp-chip-pill { padding: 3px 8px !important; font-size: 11px !important; }
-body:not(.desk) section.xpscr .xp-horiz-track { height: 28px !important; min-height: 28px !important; border-width: 2px !important; }
-body:not(.desk) section.xpscr .xp-horiz-label { font-size: 13.5px !important; font-weight: 900 !important; }
+body:not(.desk) section.xpscr .xp-horiz-track { height: 24px !important; min-height: 24px !important; border-width: 2px !important; }
+body:not(.desk) section.xpscr .xp-horiz-label { font-size: 12px !important; font-weight: 800 !important; }
 body:not(.desk) section.xpscr .chest-wrap-3d { width: 96px !important; height: 84px !important; }
 body:not(.desk) section.xpscr .fantasy-chest-3d { width: 90px !important; height: 78px !important; }
 body:not(.desk) section.xpscr .xp-bottom-loot-tier .chestzone { gap: 12px !important; flex-wrap: wrap !important; }
 body:not(.desk) section.xpscr .loot-card-3d { width: 76px !important; height: 76px !important; min-width: 76px !important; min-height: 76px !important; }
-body:not(.desk) section.xpscr .xp-again-btn { width: 100% !important; height: 48px !important; min-height: 48px !important; }
 body.desk .lpscr .vmtube.mini-thermometer { width: 44px !important; min-height: 70px !important; height: 70px !important; }
 body.desk .xpscr .vmtube.xp-horiz-track { width: 100% !important; height: 24px !important; min-height: 24px !important; }
 body.desk .smithy-frame .gold-embossed-title { color: #fde047 !important; background: none !important; -webkit-text-fill-color: #fde047 !important; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85) !important; }
@@ -122,10 +123,10 @@ body.desk section.title.home .dockitem b { font-size: 13px !important; font-weig
 .lvchip-label { font-size: 11px; font-weight: 800; color: #ffcf5a; margin-left: 2px; }
 body.desk .map.road { grid-template-columns: minmax(0, 1fr) 340px !important; gap: 20px !important; align-items: start !important; }
 body.desk section.map.road .mapside { display: block !important; width: 340px !important; background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
-body.desk body.desk .banner.v2 { min-height: 280px !important; height: auto !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; padding: 0 0 16px 0 !important; border-radius: 14px !important; overflow: hidden !important; }
-body.desk body.desk .banner.v2 .scene { width: 100% !important; height: 110px !important; display: flex !important; align-items: center !important; justify-content: center !important; mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important; -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important; }
-body.desk body.desk .banner.v2 .bt { padding: 6px 12px 2px !important; font-size: 18px !important; font-weight: 800 !important; }
-body.desk body.desk .banner.v2 .bd { padding: 2px 14px 10px !important; font-size: 12.5px !important; line-height: 1.3 !important; color: #cbd5e1 !important; }
+body.desk .banner.v2 { min-height: 280px !important; height: auto !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; padding: 0 0 16px 0 !important; border-radius: 14px !important; overflow: hidden !important; }
+body.desk .banner.v2 .scene { width: 100% !important; height: 110px !important; display: flex !important; align-items: center !important; justify-content: center !important; mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important; -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important; }
+body.desk .banner.v2 .bt { padding: 6px 12px 2px !important; font-size: 18px !important; font-weight: 800 !important; }
+body.desk .banner.v2 .bd { padding: 2px 14px 10px !important; font-size: 12.5px !important; line-height: 1.3 !important; color: #cbd5e1 !important; }
 .card-action-btn { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important; margin: 8px auto 0 !important; padding: 6px 18px !important; border-radius: 999px !important; background: linear-gradient(180deg, #3b82f6, #1d4ed8) !important; border: 1.5px solid #93c5fd !important; border-bottom: 3px solid #1e3a8a !important; color: #ffffff !important; font-family: var(--fun) !important; font-size: 13px !important; font-weight: 700 !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important; }
 body:not(.desk) .card-action-btn { display: none !important; }
 .banner.v2.b-easy .card-action-btn, .banner.v2.b-hard .card-action-btn, .banner.v2.b-boss .card-action-btn { background: linear-gradient(180deg, #ef4444, #b91c1c) !important; border-color: #fca5a5 !important; border-bottom-color: #7f1d1d !important; }
@@ -174,7 +175,7 @@ body.desk section.result.v2 .rhead .rwhat { font-size: 13px !important; font-wei
 body.desk section.result.v2 .rhead .rmeta { display: inline-flex !important; align-items: center !important; gap: 8px !important; font-size: 12px !important; color: #cbd5e1 !important; margin-top: 4px !important; }
 body.desk section.result.v2 .rhead .rmeta span { display: inline-flex !important; align-items: center !important; gap: 4px !important; background: rgba(15, 23, 42, 0.7) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; padding: 3px 10px !important; border-radius: 999px !important; font-weight: 600 !important; }
 body.desk section.result.v2.desktop-hex-result { max-width: 1120px !important; width: 96% !important; margin: auto !important; padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; }
-body.desk section.result.v2.desktop-hex-result .rhead .headline { font-family: 'Cinzel', 'Trajan Pro', Georgia, serif !important; letter-spacing: 0.18em !important; font-size: 28px !important; font-weight: 800 !important; color: #f8fafc !important; text-shadow: 0 0 24px rgba(56, 189, 248, 0.4), 0 2px 8px rgba(0, 0, 0, 0.9) !important; text-transform: uppercase !important; margin: 0 0 16px !important; }
+body.desk section.result.v2.desktop-hex-result .rhead .headline { font-family: var(--fun) !important; letter-spacing: 0.12em !important; font-size: 28px !important; font-weight: 800 !important; color: #f8fafc !important; text-shadow: 0 0 24px rgba(56, 189, 248, 0.4), 0 2px 8px rgba(0, 0, 0, 0.9) !important; text-transform: uppercase !important; margin: 0 0 16px !important; }
 body.desk section.result.v2 .rhex-trio { display: grid !important; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.05fr) minmax(0, 0.72fr) !important; gap: 16px !important; align-items: stretch !important; width: 100% !important; }
 body.desk section.result.v2 .rpanel-framed { background: rgba(9, 13, 17, 0.88) !important; backdrop-filter: blur(16px) !important; border: 1px solid rgba(200, 170, 110, 0.35) !important; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important; border-radius: 6px !important; padding: 16px !important; position: relative !important; display: flex !important; flex-direction: column !important; min-width: 0 !important; }
 body.desk section.result.v2 .rpanel-framed::before, body.desk section.result.v2 .rpanel-framed::after { content: "" !important; position: absolute !important; width: 6px !important; height: 6px !important; border-color: #c8aa6e !important; pointer-events: none !important; }
@@ -454,3 +455,972 @@ body.desk .hero-mini-stats .mstat.rng b { color: #4cc9f0 !important; }
 .upg-desc { font-size: 13px; line-height: 1.45; color: #cbd5e1; flex-grow: 1; }
 .upg-cta-label { margin-top: 10px; padding: 6px 12px; border-radius: 8px; background: linear-gradient(180deg, #ffd700, #d08600); color: #1a1a1a; font-family: var(--fun); font-size: 13px; font-weight: bold; text-align: center; box-shadow: 0 3px 0 #8c5b00, 0 6px 14px rgba(255, 215, 0, 0.35); transition: transform 0.12s ease; }
 .upg-path-card:hover .upg-cta-label { transform: scale(1.03); background: linear-gradient(180deg, #ffe066, #e59400); }
+
+/* ==========================================================================
+   OBSIDIAN ARCADE TACTICS — UNIFIED DESIGN SYSTEM LAYER (PHASE 4)
+   ========================================================================== */
+:root {
+  --sr-bg-0: #0b0e15;
+  --sr-bg-1: #121724;
+  --sr-bg-2: #1a2133;
+  --sr-bg-3: #232c42;
+  --sr-border: rgba(148, 163, 184, 0.22);
+  --sr-border-gold: rgba(212, 168, 75, 0.55);
+  --sr-ink: #f1f5f9;
+  --sr-ink-muted: #94a3b8;
+  --sr-gold: #ffd23f;
+  --sr-gold-deep: #996500;
+  --sr-sapphire: #1e3a8a;
+  --sr-sky: #38bdf8;
+  --sr-emerald: #22c55e;
+  --sr-crimson: #ef4444;
+  --sr-serif: var(--fun);
+}
+
+html, body {
+  background: var(--sr-bg-0) !important;
+  background-color: var(--sr-bg-0) !important;
+  color: var(--sr-ink) !important;
+}
+
+body:not(.desk) #app {
+  padding-bottom: 0 !important;
+}
+
+input, select, textarea {
+  background: var(--sr-bg-1) !important;
+  color: var(--sr-ink) !important;
+  border: 1.5px solid var(--sr-border) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45) !important;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--sr-ink-muted) !important;
+}
+input:focus, textarea:focus {
+  outline: 2px solid var(--sr-sky) !important;
+  border-color: var(--sr-sky) !important;
+}
+
+/* ---------- Top Bar (#top) & Mobile 360px Fit ---------- */
+#top, body.desk #top {
+  background: #0b0e15 !important;
+  background-color: #0b0e15 !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+#top .logo {
+  color: var(--sr-ink) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7) !important;
+}
+#top .gold,
+body.desk #top .gold,
+#top .crownchip,
+body.desk #top .crownchip {
+  background: var(--sr-bg-2) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  color: var(--sr-gold) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: none !important;
+}
+#top .crownchip b,
+body.desk #top .crownchip b {
+  color: var(--sr-gold) !important;
+}
+#top .prog,
+#top .lgchip,
+#top .lives.ward {
+  background: var(--sr-bg-2) !important;
+  border: 1.5px solid var(--sr-border) !important;
+  color: var(--sr-ink) !important;
+}
+#top .teambtn {
+  background: var(--sr-bg-2) !important;
+  border: 1.5px solid var(--sr-border) !important;
+  color: var(--sr-ink) !important;
+  box-shadow: 0 2px 0 #05070b !important;
+}
+#top .teambtn svg.ui {
+  color: var(--sr-sky) !important;
+}
+
+@media (max-width: 440px) {
+  #top {
+    gap: 4px !important;
+    padding: 4px 6px !important;
+    min-height: 48px !important;
+  }
+  #top .logo { font-size: 16px !important; }
+  #top .gold,
+  #top .prog,
+  #top .lgchip,
+  #top .crownchip,
+  #top button {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 8px !important;
+    font-size: 12px !important;
+    gap: 4px !important;
+  }
+  #top button:not(.crownchip):not(.lgchip) {
+    min-width: 34px !important;
+  }
+  #top .teambtn span {
+    display: none !important;
+  }
+  #top .gold::before {
+    width: 11px !important;
+    height: 11px !important;
+  }
+}
+
+/* ---------- Strict Yellow Reservation: Primary CTAs Only ---------- */
+button.primary:not(:disabled):not(.locked),
+.playnow:not(:disabled),
+body.desk .hero-cta-btn.ready.selected:not(:disabled),
+body.desk .deploy > .bar.sticky > button[data-act="fight"]:not(.locked):not(:disabled),
+.fight-gold-btn:not(.locked):not(:disabled),
+body.desk section.result.v2 .bar button.proceed-hex-btn:not(:disabled),
+section.result.v2 .bar button.proceed-cta:not(:disabled),
+section.shop .molten-gold-cta:not(:disabled),
+.molten-gold-cta:not(:disabled) {
+  background: linear-gradient(180deg, #ffe066 0%, #f5b700 58%, #e5a00d 100%) !important;
+  color: #1c1404 !important;
+  border: 1.5px solid #fef08a !important;
+  border-bottom: 3.5px solid #996500 !important;
+  box-shadow: 0 4px 16px rgba(229, 160, 13, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  font-family: var(--fun) !important;
+  font-weight: 800 !important;
+}
+button.primary:not(:disabled):not(.locked) small,
+button.cta:not(:disabled):not(.locked) small {
+  color: #3d2a04 !important;
+}
+
+button.primary:disabled,
+button.primary.locked,
+.fight-gold-btn.locked,
+.fight-gold-btn:disabled,
+body.desk .deploy > .bar.sticky > button[data-act="fight"].locked,
+body.desk .deploy > .bar.sticky > button[data-act="fight"]:disabled,
+.hero-cta-btn.slot-unselected,
+body.desk .hero-cta-btn.slot-unselected {
+  background: var(--sr-bg-2) !important;
+  color: var(--sr-ink-muted) !important;
+  border: 1.5px dashed rgba(148, 163, 184, 0.35) !important;
+  border-bottom: 1.5px dashed rgba(148, 163, 184, 0.35) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  opacity: 0.78 !important;
+  animation: none !important;
+}
+
+/* ---------- Obsidian Secondary Buttons & Neutral Controls ---------- */
+button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):not(.pm):not(.gold-ingot-btn):not(.molten-gold-cta):not(.proceed-hex-btn):not(.dockitem):not(.playnow):not(.cprice):not(.hero-cta-btn):not(.fr):not(.cxh):not(.avpick):not(.tpick):not(.achc):not(.lvcard):not(.bnc):not(.relicbtn):not(.auto-equip-toggle):not(.dsell-btn),
+.shead button:not(.chip),
+.shead button[data-act="close"],
+body.desk .floating-shop-bar button.steel-btn,
+body.desk .smithy-frame .steel-btn,
+button.steel-btn,
+.rmorebtn,
+.overbar > button:not(.primary):not(.brag),
+.bar > button:not(.primary):not(.fight-gold-btn) {
+  background: linear-gradient(180deg, var(--sr-bg-3) 0%, var(--sr-bg-2) 100%) !important;
+  color: var(--sr-ink) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.32) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 0 #090c14 !important;
+  text-shadow: none !important;
+}
+
+button.reroll,
+body.desk .floating-shop-bar button.reroll,
+body.desk .smithy-frame .sapphire-btn {
+  background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+  color: #f8fafc !important;
+  border: 1.5px solid rgba(96, 165, 250, 0.55) !important;
+  border-bottom: 3px solid #0f172a !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+}
+
+.gbar button.gauto {
+  background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+  color: #f8fafc !important;
+  border: 1.5px solid rgba(96, 165, 250, 0.55) !important;
+  box-shadow: 0 3px 0 #0f172a !important;
+}
+
+/* Buy buttons: Obsidian steel + gold frame + #ffd23f price text (not solid yellow fill) */
+.card.stock.v2 .buyb,
+.card.stock.v2 .gold-ingot-btn,
+body.desk .card.stock.v2 .gold-ingot-btn,
+body.desk .smithy-frame .gold-ingot-btn,
+button.cprice {
+  background: linear-gradient(180deg, var(--sr-bg-3) 0%, var(--sr-bg-1) 100%) !important;
+  color: var(--sr-gold) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  border-bottom: 3px solid #593e08 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: none !important;
+}
+.card.stock.v2 .gold-ingot-btn .price,
+.card.stock.v2 .gold-ingot-btn .price-val,
+body.desk .card.stock.v2 .gold-ingot-btn .price-val,
+body.desk .smithy-frame .gold-ingot-btn .price {
+  color: var(--sr-gold) !important;
+  text-shadow: none !important;
+}
+button.cprice.confirm {
+  background: linear-gradient(180deg, #15803d 0%, #14532d 100%) !important;
+  color: #f0fdf4 !important;
+  border-color: #4ade80 !important;
+  border-bottom-color: #052e16 !important;
+}
+
+/* Sell buttons: Dark slate + warm amber accent text */
+.qsell-btn,
+.dsell-btn,
+button[data-act="sell"],
+body.desk .smithy-frame .gold-plaque,
+.gold-plaque {
+  background: var(--sr-bg-2) !important;
+  color: #fcd34d !important;
+  border: 1.5px solid rgba(212, 168, 75, 0.5) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: none !important;
+}
+
+/* Active tabs, chips, speed toggles, upgrade CTAs, and badges -> Sapphire / Obsidian (no yellow fill) */
+.tabs button.on,
+.stabs button.on,
+.codex-tabs button.on,
+.chip.on,
+.speed button.on,
+body.desk .speed button.on,
+body.desk .deploy.battle .hud .speed button.on,
+.peekpow.v2 .ppb.on {
+  background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+  color: #f8fafc !important;
+  border: 1.5px solid #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  text-shadow: none !important;
+  transform: none !important;
+}
+
+.sp-n.on,
+.tree .sp-row.done .sp-n.on {
+  background: var(--sr-sapphire) !important;
+  color: #f8fafc !important;
+  border-color: var(--sr-sky) !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.35) !important;
+}
+
+.upg-cta-label {
+  background: var(--sr-bg-2) !important;
+  color: var(--sr-gold) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+}
+.upg-path-card:hover .upg-cta-label {
+  background: var(--sr-sapphire) !important;
+  color: #f8fafc !important;
+  border-color: var(--sr-sky) !important;
+}
+
+.wallet,
+.klock {
+  background: var(--sr-bg-1) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  color: var(--sr-ink) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+}
+.wallet b { color: var(--sr-gold) !important; }
+.wallet .dim, .wallet .small, .klock p { color: #cbd5e1 !important; }
+
+.king {
+  background: linear-gradient(180deg, #271b48 0%, #141128 100%) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55) !important;
+}
+
+.overbar.two .brag {
+  background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+  color: #f8fafc !important;
+  border: 1.5px solid #60a5fa !important;
+  box-shadow: 0 3px 0 #0f172a !important;
+}
+
+.stealscreen button.steal {
+  background: var(--sr-bg-1) !important;
+  border: 1.5px solid var(--rc, var(--sr-border)) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+}
+.stealscreen button.steal .take {
+  background: var(--sr-bg-2) !important;
+  color: var(--sr-gold) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  box-shadow: none !important;
+}
+
+.tro,
+.abk.act,
+.synpill.set,
+.ptitle,
+.vstitle,
+.mstrip .mbag,
+.mstrip .mh i,
+.lvb {
+  background: var(--sr-bg-2) !important;
+  color: var(--sr-gold) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  box-shadow: none !important;
+}
+.xpup {
+  background: var(--sr-bg-2) !important;
+  color: var(--sr-ink) !important;
+  border: 1.5px solid var(--sr-sky) !important;
+}
+
+.node.cur,
+.floor.cur,
+.tower .floor.cur,
+.tower .floor.ground.cur {
+  background: var(--sr-sapphire) !important;
+  color: #f8fafc !important;
+  border: 2px solid var(--sr-sky) !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45) !important;
+}
+.floor.cur .fn, .floor.cur .elo { color: #bae6fd !important; }
+
+.gtip {
+  background: var(--sr-bg-1) !important;
+  color: var(--sr-ink) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7) !important;
+}
+.gtip::after { background: var(--sr-bg-1) !important; }
+
+.tutspeed {
+  background: var(--sr-bg-1) !important;
+  color: var(--sr-gold) !important;
+  border: 1.5px solid var(--sr-sky) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ---------- Shared Card / Surface / Event / Map Obsidian Tokens ---------- */
+.card,
+.stock,
+.hcard,
+.eqhero,
+.hero,
+.card.opt,
+.evch:not(.isfight):not(.isreq),
+.opp,
+.tpick,
+.perk,
+.crl,
+.invite,
+.pstats > div,
+.phh,
+.gh,
+.hdetail,
+.idetail {
+  background: var(--sr-bg-1) !important;
+  border: 1.5px solid var(--sr-border) !important;
+  color: var(--sr-ink) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+}
+.evch.isfight {
+  background: linear-gradient(180deg, #3b1720 0%, #200d13 100%) !important;
+  border-color: rgba(239, 68, 68, 0.55) !important;
+  color: #fef2f2 !important;
+}
+.evch.isreq {
+  background: linear-gradient(180deg, #12333e 0%, #0b1f27 100%) !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  color: #f0f9ff !important;
+}
+.evch.isreq.locked {
+  background: var(--sr-bg-2) !important;
+  border-color: var(--sr-border) !important;
+  color: var(--sr-ink-muted) !important;
+}
+
+.srelic.on,
+.start.v3 .stage.pedestals .srelic.ped.on {
+  background: linear-gradient(180deg, rgba(30, 58, 138, 0.72) 0%, rgba(18, 23, 36, 0.96) 100%) !important;
+  color: #f8fafc !important;
+  border: 2px solid var(--sr-gold) !important;
+  box-shadow: 0 0 20px rgba(255, 210, 63, 0.3) !important;
+}
+.srelic.on b,
+.srelic.on small,
+.srelics.big .srelic.ped.on .srt b,
+.srelics.big .srelic.ped.on .srd,
+.srelics.big .srelic.ped.on .srd * {
+  color: #f8fafc !important;
+}
+
+.banner.v2 {
+  background: linear-gradient(180deg, var(--sr-bg-2) 0%, var(--sr-bg-0) 100%) !important;
+  border: 1.5px solid var(--sr-border) !important;
+  color: var(--sr-ink) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55) !important;
+}
+.banner.v2.b-easy { border-color: rgba(34, 197, 94, 0.55) !important; }
+.banner.v2.b-medium { border-color: rgba(212, 168, 75, 0.55) !important; }
+.banner.v2.b-hard { border-color: rgba(239, 68, 68, 0.55) !important; }
+.banner.v2.b-boss { border-color: rgba(168, 85, 247, 0.6) !important; }
+.banner.v2.b-shop { border-color: rgba(56, 189, 248, 0.55) !important; }
+.banner.v2.b-event { border-color: rgba(192, 132, 252, 0.55) !important; }
+.banner.v2.b-duel { border-color: rgba(244, 114, 182, 0.55) !important; }
+.banner.v2 .bt { color: #f8fafc !important; }
+.banner.v2 .bd { color: #cbd5e1 !important; }
+.banner.v2 .rw,
+body.desk .banner.v2 .gold-treasure-plaque {
+  background: var(--sr-bg-2) !important;
+  border: 1px solid var(--sr-border-gold) !important;
+  color: var(--sr-gold) !important;
+  box-shadow: none !important;
+}
+.banner.v2 .rw .pw.easy { color: #6ee7b7 !important; }
+.banner.v2 .rw .pw.even { color: #fcd34d !important; }
+.banner.v2 .rw .pw.hard { color: #fca5a5 !important; }
+.banner.v2 .rw .pw.me { color: #cbd5e1 !important; opacity: 1 !important; }
+body.desk .banner.v2 .card-action-btn,
+body.desk .banner.v2.b-easy .card-action-btn,
+body.desk .banner.v2.b-medium .card-action-btn,
+body.desk .banner.v2.b-hard .card-action-btn,
+body.desk .banner.v2.b-boss .card-action-btn,
+body.desk .banner.v2.b-duel .card-action-btn,
+body.desk .banner.v2.b-shop .card-action-btn,
+body.desk .banner.v2.b-event .card-action-btn {
+  background: linear-gradient(180deg, #163638 0%, #0d2022 100%) !important;
+  border: 1px solid #2dd4bf !important;
+  color: #ccfbf1 !important;
+}
+.rtoday .rday {
+  background: var(--sr-bg-1) !important;
+  border: 1.5px solid var(--sr-border-gold) !important;
+  color: var(--sr-gold) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55) !important;
+}
+.rtoday .rday b { color: var(--sr-ink) !important; }
+
+/* ---------- Title Screen & Draft Start ---------- */
+.title.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+body:not(.desk) .title.home .app-ver {
+  position: static !important;
+  order: 99 !important;
+  margin: 4px auto 0 !important;
+  text-align: center !important;
+  color: var(--sr-ink-muted) !important;
+  font-size: 11px !important;
+}
+body.desk .title.home .app-ver {
+  position: absolute !important;
+  bottom: 14px !important;
+  right: 20px !important;
+  color: var(--sr-ink-muted) !important;
+}
+.start .hand {
+  top: 8px !important;
+  right: 8px !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: rotate(-14deg) !important;
+}
+body.desk section.start.s1.v3,
+body.desk section.start {
+  max-height: calc(100dvh - 68px) !important;
+  height: auto !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+body.desk .hbanner.spot.hero-tarot-card {
+  height: clamp(230px, 42vh, 380px) !important;
+  max-height: clamp(230px, 42vh, 380px) !important;
+}
+body.desk .start .ssub {
+  background: rgba(11, 14, 21, 0.72);
+  padding: 2px 12px;
+  border-radius: 999px;
+}
+
+/* ---------- Desktop Map ---------- */
+body.desk section.map.road {
+  height: calc(100dvh - 68px) !important;
+  max-height: calc(100dvh - 68px) !important;
+  overflow: hidden !important;
+  grid-template-columns: minmax(0, 1fr) 340px !important;
+  align-items: stretch !important;
+}
+body.desk .mapmain {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+body.desk #wmap {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+}
+body.desk .wtrack .banner.v2 {
+  max-width: 220px !important;
+  min-height: 210px !important;
+}
+body.desk .rtoday .banners {
+  justify-content: center !important;
+}
+
+/* ---------- Desktop Deploy & Battle Non-Overlapping Grid ---------- */
+body.desk .deploy:not(.intro) {
+  display: grid !important;
+  grid-template-columns: minmax(150px, 195px) auto minmax(230px, 275px) !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px 14px !important;
+  width: 100% !important;
+  max-width: 1520px !important;
+  height: calc(100dvh - 68px) !important;
+  max-height: calc(100dvh - 68px) !important;
+  overflow: hidden !important;
+  margin: 0 auto !important;
+  padding: 6px 12px !important;
+  box-sizing: border-box !important;
+}
+body.desk:has(.deploy:not(.battle)) #screen {
+  padding: 0 12px !important;
+}
+body.desk .deploy:not(.intro) > .bhead {
+  display: block !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  justify-self: start !important;
+  align-self: center !important;
+  margin: 0 !important;
+  font-size: 16px !important;
+}
+body.desk .deploy:not(.intro) > .dspeed {
+  position: static !important;
+  grid-column: 2 / 4 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  align-self: center !important;
+  margin: 0 !important;
+}
+body.desk .deploy:not(.intro) > .hint.tight {
+  display: block !important;
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  position: static !important;
+  margin: 0 !important;
+  text-align: left !important;
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+body.desk .deploy:not(.intro) > .formline {
+  position: static !important;
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  align-self: center !important;
+  margin: 0 !important;
+}
+body.desk .deploy:not(.intro) > .dleft-dock {
+  position: static !important;
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  align-self: start !important;
+  max-width: none !important;
+  width: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+}
+body.desk .deploy:not(.intro) > .bench {
+  position: static !important;
+  grid-column: 1 !important;
+  grid-row: 3 !important;
+  align-self: center !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+body.desk .deploy:not(.intro) > .boardwrap {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  justify-self: center !important;
+  align-self: center !important;
+  margin: 0 !important;
+}
+body.desk .deploy:not(.intro) > .foes {
+  position: static !important;
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  max-height: 540px !important;
+  overflow-y: auto !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+body.desk .deploy:not(.intro) > #info.info.mini:not(.empty) {
+  position: static !important;
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  align-self: start !important;
+  width: 100% !important;
+  max-height: 540px !important;
+  overflow-y: auto !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+body.desk .deploy.battle > #info.info.mini:not(.empty) {
+  grid-column: 1 !important;
+  grid-row: 2 / 4 !important;
+  align-self: start !important;
+}
+body.desk .deploy:not(.intro) > .dparty {
+  position: static !important;
+  transform: none !important;
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+  justify-self: center !important;
+  align-self: center !important;
+  margin: 0 !important;
+}
+body.desk .deploy:not(.intro) > .bar.sticky {
+  position: static !important;
+  grid-column: 3 !important;
+  grid-row: 3 !important;
+  justify-self: stretch !important;
+  align-self: center !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+body.desk .deploy.battle > .hud {
+  position: static !important;
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+body.desk .deploy.battle > .bpanel {
+  position: static !important;
+  grid-column: 3 !important;
+  grid-row: 2 / 4 !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  max-height: 620px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+body.desk .deploy > .dparty .pm .pmi .dsock.empty {
+  opacity: 0.9 !important;
+  background: rgba(18, 25, 38, 0.85) !important;
+  border: 1.5px dashed rgba(148, 163, 184, 0.45) !important;
+}
+body.desk .tutmove {
+  top: auto !important;
+  bottom: 12px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  animation: none !important;
+}
+
+/* ---------- Shops, Result, Modals, Gauntlet, LP/XP, Card Page ---------- */
+.shopcoach {
+  position: static !important;
+  margin: 4px auto !important;
+}
+.v2 .art .hdet {
+  top: 6px !important;
+  right: 6px !important;
+}
+.v2 .rolechip,
+.v2 .rngchip {
+  white-space: nowrap !important;
+}
+section.shop .bar.sticky {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 8px !important;
+}
+body.desk .floating-shop-bar,
+body.desk .smithy-frame .stone-sill {
+  display: flex !important;
+}
+
+body.desk section.result.v2 .rhex-trio.rhex-duo {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) !important;
+}
+body:not(.desk) section.result.v2 {
+  width: 100% !important;
+}
+.rpanel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+body.desk .sheet.gearsheet.is-hero-info {
+  max-width: 480px !important;
+  width: 92vw !important;
+  grid-template-columns: 1fr !important;
+  grid-template-areas: "head" "hero" !important;
+}
+.sheet.gearsheet .shead {
+  gap: 10px !important;
+}
+.sheet.gearsheet .shead > b {
+  margin-right: auto !important;
+}
+
+.towerscr .tname {
+  height: 46px !important;
+  min-height: 46px !important;
+  box-sizing: border-box !important;
+}
+
+/* Lock LP & XP Screen Horizontal Progress + Equal Footer CTA Y Position */
+.over1,
+.over2 {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: calc(100dvh - 64px) !important;
+  padding: 6px 0 !important;
+  box-sizing: border-box !important;
+}
+.overbar.lp-footer,
+.overbar.xp-footer {
+  margin-top: auto !important;
+  padding: 8px 0 4px !important;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+.overbar.lp-footer .lp-next-btn,
+.overbar.xp-footer .xp-again-btn {
+  height: 48px !important;
+  min-height: 48px !important;
+  width: min(100%, 340px) !important;
+  font-size: 18px !important;
+  padding: 0 24px !important;
+  box-sizing: border-box !important;
+}
+.loot-card-3d {
+  height: auto !important;
+  min-height: 84px !important;
+}
+.vmtube.lp-horiz-track,
+.vmtube.xp-horiz-track {
+  width: 100% !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  border-radius: 999px !important;
+}
+.lp-bar-hdr,
+.xp-bar-hdr {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-bottom: 5px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--sr-text-dim) !important;
+}
+.lp-bar-hdr .lp-horiz-text,
+.xp-bar-hdr .xp-horiz-label {
+  position: static !important;
+  width: auto !important;
+  text-align: right !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  color: var(--sr-text) !important;
+  text-shadow: none !important;
+  white-space: nowrap !important;
+}
+.xp-bar-hdr .xp-horiz-label {
+  color: var(--sr-sky) !important;
+}
+.lp-right-panel .lpwhy {
+  margin-top: 2px !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+}
+.lp-right-panel .lpw {
+  padding: 2px 7px !important;
+  font-size: 11px !important;
+  background: var(--sr-bg-0) !important;
+  border: 1px solid var(--sr-border) !important;
+}
+.xp-bottom-loot-tier .chestzone {
+  position: relative !important;
+  padding-top: 32px !important;
+}
+.xp-bottom-loot-tier .cheer {
+  top: 0 !important;
+  font-size: 24px !important;
+  z-index: 6 !important;
+}
+.lp-left-crest-card,
+.xp-top-card {
+  background: var(--sr-bg-1) !important;
+  border-color: var(--sr-border-gold) !important;
+}
+.xp-gain-val {
+  color: var(--sr-sky) !important;
+}
+.lp-modal-title,
+.xp-heading {
+  font-family: var(--fun) !important;
+}
+
+/* Card Page */
+.sc-team {
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)) !important;
+}
+.sc-top {
+  gap: 6px !important;
+  padding-top: 4px !important;
+}
+
+/* ---------- Mobile Zero-Scroll Compact Overrides (360x640 & 390x740) ---------- */
+@media (max-height: 760px) and (max-width: 440px) {
+  .title.home {
+    gap: 4px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+  .title.home .logo-big { font-size: 30px !important; margin: 2px 0 !important; }
+  .title.home .cta.play,
+  .title.home .cta[data-act="continue-run"] {
+    min-height: 54px !important;
+    font-size: 24px !important;
+  }
+  .title.home .trailer {
+    max-width: 230px !important;
+    margin-top: 4px !important;
+  }
+  .title.home .homedock {
+    margin-top: 4px !important;
+    gap: 5px !important;
+  }
+  .title.home .dockitem {
+    min-height: 34px !important;
+    font-size: 11px !important;
+  }
+
+  .start.v3 {
+    min-height: calc(100dvh - 54px) !important;
+    gap: 3px !important;
+    padding-top: 2px !important;
+    padding-bottom: 4px !important;
+  }
+  .start.v3 h2.sc { font-size: 18px !important; margin: 0 !important; }
+  .start.v3 .stage {
+    min-height: 150px !important;
+    padding: 6px 6px 8px !important;
+    margin: 2px 0 !important;
+  }
+  .start.v3 .bar.sbar { padding-top: 4px !important; }
+  .start.v3 .bar.sbar button { min-height: 42px !important; }
+
+  .map.road { padding-top: 2px !important; }
+  .mstrip { margin-top: 4px !important; }
+
+  section.shop { gap: 3px !important; padding-top: 2px !important; }
+  section.shop .shophead { margin-bottom: 2px !important; }
+  section.shop .shopcoach {
+    padding: 5px 8px !important;
+    margin: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    gap: 6px !important;
+  }
+  section.shop .shopcoach .ci { width: 22px !important; height: 22px !important; font-size: 14px !important; }
+  section.shop .shopcoach .cok { padding: 5px 10px !important; font-size: 11px !important; min-height: 0 !important; }
+  section.shop .grid.heroes { gap: 6px !important; }
+  .card.stock.k-hero.v2 .art { height: 74px !important; }
+  .card.stock.k-hero.v2 .meta { padding: 4px 8px 2px !important; }
+  .card.stock.k-hero.v2 .ctitle { font-size: 14px !important; }
+  .card.stock.k-hero.v2 .htag { font-size: 11px !important; line-height: 1.2 !important; }
+  .card.stock.k-hero.v2 .buyb {
+    min-height: 32px !important;
+    margin: 3px 6px 5px !important;
+    padding: 4px 8px !important;
+    font-size: 13px !important;
+  }
+  section.shop .bar.sticky { padding: 4px 0 2px !important; }
+  section.shop .bar.sticky button { min-height: 40px !important; }
+  section.event { gap: 4px !important; padding-top: 2px !important; }
+  section.event > h2 { font-size: 18px !important; margin: 2px 0 !important; }
+  section.event > p { font-size: 12px !important; margin: 0 0 4px !important; }
+  .evchoices { gap: 5px !important; }
+  .evch { padding: 6px 8px !important; min-height: 0 !important; }
+
+  .towerscr,
+  .vicscr,
+  .over1,
+  .over2 {
+    min-height: calc(100dvh - 54px) !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+  .towerart {
+    transform: scale(0.76) !important;
+    margin: -18px auto -18px !important;
+  }
+  .vicart {
+    font-size: 64px !important;
+    margin: 6px auto 2px !important;
+  }
+  .stealscreen .stealrows { gap: 6px !important; margin: 6px 0 !important; }
+  .stealscreen button.steal { padding: 6px 10px !important; }
+  .stealscreen button.steal .sp { width: 44px !important; height: 44px !important; }
+  .stealscreen button.steal .sp img.por { width: 40px !important; height: 40px !important; }
+
+  body:not(.desk) section.lpscr .lp-modal-title { font-size: 19px !important; }
+  body:not(.desk) section.lpscr .lp-delta-val { font-size: 26px !important; }
+  body:not(.desk) section.xpscr .xp-top-card { padding: 8px 10px !important; }
+  body:not(.desk) section.xpscr .xp-gain-val { font-size: 24px !important; }
+  body:not(.desk) section.xpscr .chest-wrap-3d { width: 78px !important; height: 68px !important; }
+  body:not(.desk) section.xpscr .fantasy-chest-3d { width: 72px !important; height: 62px !important; }
+  body:not(.desk) section.xpscr .loot-card-3d { min-height: 68px !important; padding: 4px !important; }
+
+  #modal .sheet {
+    max-height: calc(100dvh - 12px) !important;
+    padding: 8px 10px 10px !important;
+  }
+  .howbasics {
+    margin: 4px 0 6px !important;
+    gap: 5px !important;
+  }
+  .howbasics li {
+    padding: 7px 10px !important;
+    gap: 8px !important;
+    font-size: 12.5px !important;
+    line-height: 1.3 !important;
+    border-radius: 10px !important;
+  }
+  .howbasics li > svg.ui {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .howmore summary { padding: 6px 10px !important; font-size: 12.5px !important; }
+  .sheet.gearsheet { gap: 4px !important; }
+  .sheet.gearsheet .shead { padding-bottom: 2px !important; }
+  .gbar button { min-height: 40px !important; }
+}
+

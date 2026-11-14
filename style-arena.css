@@ -345,8 +345,6 @@ body.desk section.map.road .mapside { background: rgba(11, 18, 24, 0.88) !import
 .tactical-dock .pm { display: flex !important; align-items: center !important; gap: 12px !important; padding: 8px 6px !important; border-radius: 0 !important; background: transparent !important; border: none !important; border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: none !important; cursor: pointer !important; transition: background 0.15s ease, transform 0.15s ease !important; text-align: left !important; }
 .tactical-dock .pm:hover { background: rgba(255, 255, 255, 0.04) !important; border-bottom-color: rgba(200, 170, 110, 0.5) !important; transform: translateX(2px) !important; }
 .tactical-dock .pm .por { width: 48px !important; height: 48px !important; border-radius: 50% !important; border: 1.5px solid rgba(200, 170, 110, 0.45) !important; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important; object-fit: cover !important; flex-shrink: 0 !important; }
-  flex-shrink: 0;
-}
 .tactical-dock .pmb { display: flex !important; flex-direction: column !important; gap: 3px !important; min-width: 0 !important; flex: 1 !important; }
 .tactical-dock .pmn b { font-family: var(--fun) !important; font-size: 14.5px !important; color: #ffffff !important; }
 .tactical-dock .pmn .lv { color: #38bdf8 !important; font-family: var(--fun) !important; font-size: 12.5px !important; font-weight: 800 !important; margin-left: 6px; }
@@ -441,7 +439,7 @@ section.lpscr::before, section.lpscr::after { display: none !important; }
 .lp-head-block { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; }
 .lp-title-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
 .broken-ward-icon { width: 36px; height: 36px; filter: drop-shadow(0 2px 6px rgba(239, 68, 68, 0.6)); }
-.lp-modal-title { margin: 0 !important; font-family: var(--serif), serif !important; font-size: 32px !important; font-weight: 800 !important; letter-spacing: 0.5px !important; color: #e2e8f0 !important; text-shadow: 0 4px 12px rgba(0, 0, 0, 0.85) !important; }
+.lp-modal-title { margin: 0 !important; font-family: var(--fun) !important; font-size: 32px !important; font-weight: 800 !important; letter-spacing: 0.5px !important; color: #e2e8f0 !important; text-shadow: 0 4px 12px rgba(0, 0, 0, 0.85) !important; }
 .crimson-text { color: #f87171 !important; text-shadow: 0 0 14px rgba(239, 68, 68, 0.6); }
 .lp-summary-pill { margin: 8px auto 18px !important; padding: 5px 18px !important; border-radius: 999px !important; background: linear-gradient(180deg, #2d3345 0%, #171b26 100%) !important; border: 1.5px solid #4a546e !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important; display: inline-flex !important; align-items: center !important; gap: 8px !important; color: #f1f5f9 !important; font-family: var(--fun) !important; font-size: 13.5px !important; font-weight: 700 !important; white-space: nowrap !important; }
 .lp-summary-pill .dot-sep { color: #94a3b8; }

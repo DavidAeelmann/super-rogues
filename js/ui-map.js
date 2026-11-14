@@ -56,13 +56,18 @@
   }
   function layoutMap(keep) {
     const wm = $('#wmap'); if (!wm) return;
-    let y = 0; for (let e = wm; e; e = e.offsetParent) y += e.offsetTop;
+    const y = Math.max(0, Math.round(wm.getBoundingClientRect().top));
     const strip = $('.map .mstrip'), sh = strip && strip.offsetParent ? strip.offsetHeight + 8 : 0;
     const vh = window.visualViewport ? window.visualViewport.height : innerHeight;
     wm.style.height = Math.max(240, Math.round(vh - y - sh - 8)) + 'px';
     const over = document.documentElement.scrollHeight - vh; if (over > 0) wm.style.height = Math.max(240, wm.clientHeight - Math.ceil(over)) + 'px';   // the paddings below it
     if (keep && keep.key === wm.dataset.key) { wm.scrollTop = keep.top; return; }
-    wm.scrollTop = Math.max(0, +wm.dataset.today - Math.round(wm.clientHeight * (document.body.classList.contains('desk') ? 0.12 : 0.16)));
+    if (document.body.classList.contains('desk')) {
+      const th = +(wm.querySelector('.rtoday') || {}).offsetHeight || 340;
+      wm.scrollTop = Math.max(0, +wm.dataset.today - Math.max(12, Math.round((wm.clientHeight - th) * 0.5)));
+    } else {
+      wm.scrollTop = Math.max(0, +wm.dataset.today - Math.round(wm.clientHeight * 0.16));
+    }
     // a new day, the leader hops along the road from where it stood to today's spot
     const [seed, step] = wm.dataset.key.split(':').map(Number), tok = wm.querySelector('.rtok');
     if (tok && step > 0 && ui.roadAt === seed + ':' + (step - 1) && !(B.Juice && B.Juice.reduced())) {
@@ -223,7 +228,7 @@
         if (id) slots.push(`<span class="mslot filled"><img class="ico xs" src="${B.Icons.item(id, 20)}" alt=""></span>`);
         else slots.push(`<span class="mslot empty"><svg class="slot-rune" viewBox="0 0 16 16"><path d="M8 3 L13 8 L8 13 L3 8 Z" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"/></svg></span>`);
       }
-      return `<button class="pm${h.bench ? ' benched' : ''}" data-act="team">${img(h.key, 48, 'por')}<span class="pmb"><span class="pmn"><b>${esc(hName(h))}</b><span class="lv">Lv ${h.lvl}</span>${h.path != null ? '<span class="chk-gold" title="Boss Upgraded">★</span>' : ''}${h.bench ? '<span class="pmbench">Not placed</span>' : ''}</span>
+      return `<button class="pm${h.bench ? ' benched' : ''}" data-act="team">${img(h.key, 48, 'por')}<span class="pmb"><span class="pmn"><b>${esc(hName(h))}</b><span class="lv">Lv ${h.lvl}</span>${h.path != null ? '<span class="chk-gold" title="Boss Upgraded">◆</span>' : ''}${h.bench ? '<span class="pmbench">Not placed</span>' : ''}</span>
         <span class="xpbar glossy-tube"><i style="width:${next ? Math.round(100 * (h.xp - prev) / (next - prev)) : 100}%"></i></span>
         <span class="pmi slots3">${slots.join('')}</span></span></button>`;
     }).join('');
@@ -294,16 +299,16 @@
 
     const pathCards = paths.map((p, idx) => {
       return `<button class="card opt upg-path-card" data-act="upgrade-path" data-arg="${idx}" style="--cloth:${d.color}">
-        <div class="upg-badge"><span class="star-icon">★</span> Path ${idx + 1}</div>
+        <div class="upg-badge"><span class="star-icon">◆</span> Path ${idx + 1}</div>
         <div class="ctitle upg-title">${esc(p.name)}</div>
         <div class="small upg-desc">${fmt(p.desc)}</div>
-        <div class="upg-cta-label">Awaken ${esc(p.name)} ➔</div>
+        <div class="upg-cta-label">Awaken ${esc(p.name)} →</div>
       </button>`;
     }).join('');
 
     return `<section class="levelup upgrade-screen">
       <div class="upg-header">
-        <h2 class="sc headline win"><span class="star-gold">★</span> Boss Conquered! <span class="star-gold">★</span></h2>
+        <h2 class="sc headline win">Boss Conquered!</h2>
         <p class="ssub">Choose a hero of your loadout to empower with an exclusive Boss Path</p>
       </div>
 

@@ -326,7 +326,7 @@
       // the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
       // ladder and menu sit in the top bar
       const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchip-label">LP</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
+      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchip-label">Lv</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
     if ((U.run.phase === 'over' || U.run.phase === 'tower') && U.screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // the end screens show only the run's results
@@ -337,7 +337,7 @@
     const lgs = store.get('balance.league', null);
     h.innerHTML = `${lgs ? `<button class="lgchip" data-act="player-tab" title="${leagueName(lgs.league)} league · ${lgs.lp | 0} LP" aria-label="Your league and league points">${emblem(lgs.league, 18)}<span>${lgs.lp | 0}</span></button>` : ''}
       <span class="gold" title="Gold">${shownGold()}</span>${heartsHTML()}<button class="prog" data-act="path" aria-label="See the journey"><span class="prog-txt">${prog}</span>${track}</button>
-      <span class="grow"></span>${U.battle ? soundBtn() : `<button data-act="team" style="display:none" hidden aria-hidden="true">${I('bag')} Team</button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
+      <span class="grow"></span>${U.battle ? soundBtn() : `<button class="teambtn" data-act="team" aria-label="Team gear">${I('bag')}<span>Team</span></button>`}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`;
     animGold();
   }
   // sounds (js/sfx.js) with a switch, and a gold counter that counts up or
@@ -429,6 +429,7 @@
     clearTimeout(xpToast.h);
     if (toast.t && (toast.info || now - toast.t > 350)) { const t = $('#toast'); if (t) t.classList.remove('on'); }   // an info bubble (boss, formation) never outlives its screen
     if (ui.modal && now - (ui.modalT || 0) > 350) closeModal();
+    document.querySelectorAll('#fx .floater, #fx .fcoin, .benchghost').forEach(el => el.remove());
   }
   function openModal(html) { ui.modalT = performance.now(); if (U.guide) clearTimeout(U.guide.t); const gt = document.querySelector(".gtip"); if (gt) gt.remove(); const m = $('#modal'); m.innerHTML = `<div class="sheet">${html}</div>`; m.hidden = false; ui.modal = true; }
   function closeModal() { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; if (U.sheetSwipe) { U.sheetSwipe.tracking = false; U.sheetSwipe.sheet = null; U.sheetSwipe.dy = 0; } }
