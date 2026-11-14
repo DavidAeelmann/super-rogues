@@ -82,6 +82,8 @@
         const t = enemies(W, u).sort((a, b) => b.maxHp - a.maxHp)[0];
         if (t) { cc(W, t, 'stun', 3); t.st.frozenU = W.t + sec(3); fxRing(W, t.c, t.r, 0, '#8ef', 12); }
       }
+      if (u.ab && u.ab.startShield) shield(W, u, u.maxHp * u.ab.startShield, 6);
+      if (u.ab && u.ab.startStacks && u.m.stackAs) { const n = Math.min(u.ab.startStacks, u.m.stackAsCap || 10); u.sc.ss = n; u.bAsPct += n * u.m.stackAs; }
     }
     for (const s of [0, 1]) for (const b of formation(W, s)) {
       const u = b.u;
@@ -288,7 +290,13 @@
 
   function deal(W, src, tgt, raw, type, o = {}) {
     if (!alive(tgt) || raw <= 0 || tgt.plant) return 0;
-    if (tgt.st.invuln > W.t) { if (!o.dot) fxText(W, tgt, 'IMMUNE', '#fff'); return 0; }
+    if (tgt.st.invuln > W.t) {
+      if (o.atk && !o.noThorns && tgt.fl.has('spikes') && tgt.ab.spike && tgt.shellU > W.t && alive(tgt)) {
+        deal(W, tgt, src, armorOf(W, tgt) * tgt.ab.spike * (tgt.ab.shellSpikes || 1), 'phys', { noThorns: true });
+      }
+      if (!o.dot) fxText(W, tgt, 'IMMUNE', '#fff');
+      return 0;
+    }
     if (o.ability && src && !o.mirrored && alive(src) && src.side !== tgt.side && tgt.kind === 'hero' && !tgt.once.mirror && flOf(W, tgt.side).mirrorshield) {
       tgt.once.mirror = 1; fxText(W, tgt, 'REFLECTED', '#bfe6ff'); fx(W, { k: 'bolt', pts: [[tgt.c, tgt.r], [src.c, src.r]], color: '#bfe6ff', t1: W.t + 6 });
       return deal(W, tgt, src, raw, type, { ability: true, mirrored: true }) && 0;
@@ -379,7 +387,7 @@
       if (o.ability && src.m.omni) { W.healBy = src.id; heal(W, src, total * src.m.omni); W.healBy = 0; }
       if (o.ability && src.m.abilityBurn && !o.dot) dot(W, tgt, 'burn', src.m.abilityBurn * tgt.maxHp, 3, src);
       if (o.atk && !o.noThorns && tgt.m.thorns && Hx.dist(src, tgt) <= 1) deal(W, tgt, src, total * tgt.m.thorns, 'magic', { noThorns: true });
-      if (o.atk && !o.noThorns && tgt.fl.has('spikes') && tgt.ab.spike && alive(tgt)) deal(W, tgt, src, armorOf(W, tgt) * tgt.ab.spike, 'phys', { noThorns: true });
+      if (o.atk && !o.noThorns && tgt.fl.has('spikes') && tgt.ab.spike && alive(tgt)) deal(W, tgt, src, armorOf(W, tgt) * tgt.ab.spike * (tgt.shellU > W.t && tgt.ab.shellSpikes ? tgt.ab.shellSpikes : 1), 'phys', { noThorns: true });
     }
     if (tgt.fl.has('brute') && tgt.maxMana > 0) tgt.mana = Math.min(tgt.maxMana, tgt.mana + total / tgt.maxHp * 100 * (tgt.ab.gain || 2));
     else if (tgt.maxMana > 0 && !o.dot) tgt.mana = Math.min(tgt.maxMana, tgt.mana + 3 * manaGain(W, tgt));
@@ -623,6 +631,7 @@
     if (u.ab && u.ab.tox) addTox(W, u, tgt, 1);
     if (u.ab && u.ab.kindle) u.kindleN = Math.min(15, (u.kindleN || 0) + 1);
     if (u.ab && u.ab.lance && (tgt.st.frozenU > W.t || tgt.st.slowU > W.t)) mult *= 1 + u.ab.lance;
+    if (u.ab && u.ab.lanceAp && (tgt.st.frozenU > W.t || tgt.st.slowU > W.t) && alive(tgt)) deal(W, u, tgt, apOf(u) * u.ab.lanceAp, 'magic', { ability: true });
     if (u.ab && u.ab.splitFull && u.focus >= (u.ab.focusCap || 15)) { const o = enemies(W, u).filter(e => e !== tgt && Hx.dist(e, u) <= u.range + 1).sort((a, b) => Hx.dist(a, tgt) - Hx.dist(b, tgt))[0]; if (o) deal(W, u, o, atkOf(W, u) * u.ab.splitFull, 'phys', { canCrit: true }); }
     const atk = atkOf(W, u) + (u.ab && u.ab.biteArmor ? u.ab.biteArmor * armorOf(W, u) : 0);
     const dealt = deal(W, u, tgt, atk * mult, 'phys', { atk: true });
