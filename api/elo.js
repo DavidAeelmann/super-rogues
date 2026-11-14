@@ -223,12 +223,17 @@ module.exports = async (req, res) => {
       const lg = leaguePoints(p, D.runLp({ done: false, failed: true, pve: !!(b.game && b.game.pve), pvp: b.game && b.game.pvp, duels: b.game && b.game.duels, lost: b.game && b.game.lost }, p.league));
       lg.streak = { from: s0, to: 0, best: p.bstreak == null ? 1 : p.bstreak | 0 };
       if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
+      const used = cleanTeam(b.team);
+      const tasks = [
+        logFights(st, req, pid, b.runId, b.flog),
+        logPicks(st, pid, b.runId, b.tele, false),
+        P.xpGame(st, p, b.game, xp),
+        P.grantAchs(st, p, b.achs),
+      ];
+      if (used) tasks.push(rateContent(st, ipHash(req), [{ used: usedIn(used, relicList(b.relics)), score: 0 }]), P.heroGames(st, pid, used, false));
+      const results = await Promise.all(tasks);
       await save({});
-      const used = cleanTeam(b.team); if (used) { await rateContent(st, ipHash(req), [{ used: usedIn(used, relicList(b.relics)), score: 0 }]); await P.heroGames(st, pid, used, false); }
-      await logFights(st, req, pid, b.runId, b.flog);
-      await logPicks(st, pid, b.runId, b.tele, false);
-      await P.xpGame(st, p, b.game, xp);
-      const achs = await P.grantAchs(st, p, b.achs);
+      const achs = results[3];
       return send(res, 200, me({ lg, achs }));
     }
 
@@ -302,9 +307,14 @@ module.exports = async (req, res) => {
         if (f) { const cid = await st.insertTeam({ pid: f.pid, name: f.name, elo_at: f.elo_at, team: f.team, relics: f.relics }); await st.updateTeam(cid, { wins: 0, status: 'champion', opp: null }); }
       }
       const opp = await GE.towerOpp(st, 1, pid, id, [], Date.now() - STALE_MS);
-      await st.updateTeam(id, { wins: 0, status: 'running', opp: opp ? opp.id : null, faced: opp ? [opp.id] : [] });
-      p.best = Math.max(p.best | 0, 1); await save();
-      return send(res, 200, me({ teamId: id, wins: 0, floor: 1, peak: await GE.floors(st, id), opponent: await styled(opp), fallback: !opp }));
+      p.best = Math.max(p.best | 0, 1);
+      const [, , peak, styledOpp] = await Promise.all([
+        st.updateTeam(id, { wins: 0, status: 'running', opp: opp ? opp.id : null, faced: opp ? [opp.id] : [] }),
+        save(),
+        GE.floors(st, id),
+        styled(opp),
+      ]);
+      return send(res, 200, me({ teamId: id, wins: 0, floor: 1, peak, opponent: styledOpp, fallback: !opp }));
     }
     if (b.op === 'towerResult') {
       const t = await st.getTeam(Math.floor(Number(b.teamId)));
@@ -314,32 +324,50 @@ module.exports = async (req, res) => {
       const mine = cleanTeam(b.team) || JSON.parse(t.team), myRelics = b.team ? relicList(b.relics) : JSON.parse(t.relics);
       const sides = [{ used: usedIn(mine, myRelics), score: win ? 1 : 0 }];
       if (opp) sides.push({ used: usedIn(JSON.parse(opp.team), JSON.parse(opp.relics)), score: win ? 0 : 1 });
-      await rateContent(st, ipHash(req), sides);
-      await P.heroGames(st, pid, mine, win);
-      if (opp) { await st.ghostResult(opp.id, opp.elo_at, !win); p.elo = await GE.playerResult(st, p, opp, win); }
-      await st.addDuel({ pid, opp_pid: opp ? opp.pid : null, opp_name: opp ? opp.name : (clean(b.oppName, 16) || 'Gauntlet Champion'), opp_code: opp ? P.codeOf(opp.pid) : null, final: false, win });
+      const oppName = opp ? opp.name : (clean(b.oppName, 16) || 'Gauntlet Champion');
+      const preTasks = [
+        rateContent(st, ipHash(req), sides),
+        P.heroGames(st, pid, mine, win),
+        st.addDuel({ pid, opp_pid: opp ? opp.pid : null, opp_name: oppName, opp_code: opp ? P.codeOf(opp.pid) : null, final: false, win }),
+      ];
+      if (opp) preTasks.push(st.ghostResult(opp.id, opp.elo_at, !win), GE.playerResult(st, p, opp, win).then(e => { p.elo = e; }));
+      await Promise.all(preTasks);
       if (!win) {   // no penalty: the team stays on this floor as a ghost for the next climbers
-        await st.updateTeam(t.id, { wins: t.wins, status: 'lost', opp: null }); p.best = Math.max(p.best | 0, floor); await save();
-        try { await st.removeOneBotGhost(); } catch (_) {}
-        try { await GE.rateNew(st, Object.assign({}, t, { status: 'lost' })); } catch (_) {}   // v102, v106: the new ghost is seeded against other ghosts
-        return send(res, 200, me({ teamId: t.id, win, wins: t.wins, floor, over: true, peak: await GE.floors(st, t.id) }));
+        p.best = Math.max(p.best | 0, floor);
+        const [, , , , peak] = await Promise.all([
+          st.updateTeam(t.id, { wins: t.wins, status: 'lost', opp: null }),
+          save(),
+          st.removeOneBotGhost().catch(() => {}),
+          GE.rateNew(st, Object.assign({}, t, { status: 'lost' })).catch(() => {}),
+          GE.floors(st, t.id),
+        ]);
+        return send(res, 200, me({ teamId: t.id, win, wins: t.wins, floor, over: true, peak }));
       }
       const wins = floor, lg = leaguePoints(p, D.towerLp(floor));
       if (lg.promoted) lg.crowns = await P.payLeagues(st, p);
       let faced = []; try { faced = JSON.parse(t.faced || '[]'); } catch (_) {}
       // v106: the next floor's ghost by hidden Elo; beating the top floor (the champion), or an empty tower, crowns you
-      const next = opp && opp.status !== 'champion' && wins < await GE.floors(st, t.id) ? await GE.towerOpp(st, wins + 1, pid, t.id, faced, Date.now() - STALE_MS) : null;
-      await P.xpDuel(st, p, !next, xp); await P.xpFloor(st, p, wins + 1, xp);
+      const peak = await GE.floors(st, t.id);
+      const next = opp && opp.status !== 'champion' && wins < peak ? await GE.towerOpp(st, wins + 1, pid, t.id, faced, Date.now() - STALE_MS) : null;
+      await Promise.all([P.xpDuel(st, p, !next, xp), P.xpFloor(st, p, wins + 1, xp)]);
       if (!next) {
-        await st.updateTeam(t.id, { wins, status: 'champion', opp: null }); await st.demoteChampions(t.id);
-        try { await st.removeOneBotGhost(); } catch (_) {}
-        p.crowns++; p.best = Math.max(p.best | 0, wins); await save();
-        try { await GE.rateNew(st, Object.assign({}, t, { status: 'champion' })); } catch (_) {}   // v106: the new champion is seeded too (it helps seed others)
+        p.crowns++; p.best = Math.max(p.best | 0, wins);
+        await Promise.all([
+          st.updateTeam(t.id, { wins, status: 'champion', opp: null }),
+          st.demoteChampions(t.id),
+          st.removeOneBotGhost().catch(() => {}),
+          save(),
+          GE.rateNew(st, Object.assign({}, t, { status: 'champion' })).catch(() => {}),
+        ]);
         return send(res, 200, me({ teamId: t.id, win, wins, floor, lg, champion: true, over: true }));
       }
-      await st.updateTeam(t.id, { wins, status: 'running', opp: next.id, faced: faced.concat(next.id) });
-      p.best = Math.max(p.best | 0, wins + 1); await save();
-      return send(res, 200, me({ teamId: t.id, win, wins, floor: wins + 1, lg, opponent: await styled(next), peak: await GE.floors(st, t.id) }));
+      p.best = Math.max(p.best | 0, wins + 1);
+      const [, , styledNext] = await Promise.all([
+        st.updateTeam(t.id, { wins, status: 'running', opp: next.id, faced: faced.concat(next.id) }),
+        save(),
+        styled(next),
+      ]);
+      return send(res, 200, me({ teamId: t.id, win, wins, floor: wins + 1, lg, opponent: styledNext, peak }));
     }
     if (b.op === 'enter') {
       const team = cleanTeam(b.team);

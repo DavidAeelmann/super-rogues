@@ -400,6 +400,7 @@
   function screenKey() {
     if (U.screen === 'title' || !U.run) return 'title';
     if (U.screen !== 'run') return U.screen;
+    if (U.run.phase === 'over') return 'over:' + U.run.step + ':' + (U.run.overStep || 1);
     if (U.run.pendingUpgrade && U.run.phase !== 'deploy') return 'upgrade:' + (ui.upgradeHero || 0);
     if (U.run.pending.length && U.run.phase !== 'deploy') return 'level:' + U.run.pending[0].uid + ':' + U.run.pending[0].lvl;
     return U.run.phase + (U.run.phase === 'start' ? ui.startStep || 1 : '') + ':' + U.run.step + ':' + (U.run.g ? U.run.g.round + ':' + U.run.g.status : '') + ':' + (U.run.cur && U.run.cur.pick != null ? 'pick' : '') + (U.run.cur && U.run.cur.done ? 'done' : '');

@@ -407,7 +407,7 @@
     if (f.challenge) { res.challenge = f.challenge.name; if (win) challengeReward(run, f, res); }
     // lost with the Ward already broken, the run ends
     if (!win) {
-      if (run.lives > 0) { run.lives--; res.lives = run.lives; res.retry = true; redoDay(run, f); } else { res.lives = 0; run.phase = 'over'; run.result = 'defeat'; }
+      if (run.lives > 0) { run.lives--; res.lives = run.lives; res.retry = true; redoDay(run, f); } else { res.lives = 0; run.phase = 'over'; run.result = 'defeat'; run.pending = []; run.pendingUpgrade = null; }
     } else {
       if ((f.diff === 'boss' || f.boss) && run.heroes.some(h => h.path == null)) {
         run.pendingUpgrade = { fightNo: f.fightNo };
