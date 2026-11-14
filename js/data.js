@@ -89,7 +89,7 @@
          { id: 'gla5b', name: 'Glacial Prison', desc: 'At fight start, freezes the toughest enemy for 3s.', fl: ['prison'] }],
       ] }),
     brakk: H({ name: 'Ironhorn', glyph: '🐗', role: 'Fighter', color: '#c4513a',
-      hp: 960, atk: 74, ap: 65, armor: 30, as: 0.8, range: 1, ms: 2.5, mana: 91, m0: 50, ls: 0.1, grow: 1,
+      hp: 940, atk: 73, ap: 65, armor: 30, as: 0.8, range: 1, ms: 2.5, mana: 91, m0: 50, ls: 0.1, grow: 1,
       abil: 'charge', abName: 'Ramming Charge', abDesc: 'Charges the farthest enemy within 4 hexes: 150% Attack as physical damage and a 1s stun to adjacent enemies, and gains 30% lifesteal for 4s.',
       ab: { dmg: 1.5, stun: 1, lsBuff: 0.3, frenzy: 0, sunder: 0, reach: 4 },
       specs: [
@@ -145,7 +145,7 @@
          { id: 'mor5b', name: 'Army of Bones', desc: 'He raises one more skeleton each time.', ab: { count: 1 } }],
       ] }),
     tempest: H({ name: 'Tempest', glyph: '⚡', role: 'Mage', color: '#b9a8ff',
-      hp: 830, atk: 62, ap: 120, armor: 16, as: 0.8, range: 3, ms: 2, mana: 48, m0: 30, grow: 1.15,
+      hp: 840, atk: 63, ap: 120, armor: 16, as: 0.8, range: 3, ms: 2, mana: 48, m0: 30, grow: 1.15,
       abil: 'chain', abName: 'Arc Cascade', abDesc: 'Lightning bounces between 4 enemies: 90% Magic as magic damage each (10% less per bounce), stunning each for 0.4s.',
       ab: { bounces: 4, dmg: 0.9, stun: 0.4, falloff: 0.1, twice: 0 },
       specs: [
@@ -159,7 +159,7 @@
          { id: 'tem5b', name: 'Twin Cascade', desc: 'Arc Cascade is cast twice.', ab: { twice: 1 } }],
       ] }),
     grimhook: H({ name: 'Hookjaw', glyph: '⚓', role: 'Controller', color: '#2fb3a0',
-      hp: 1155, atk: 79, ap: 65, armor: 32, as: 0.75, range: 1, ms: 2, mana: 62, m0: 30, grow: 0.85,
+      hp: 1135, atk: 78, ap: 65, armor: 32, as: 0.75, range: 1, ms: 2, mana: 62, m0: 30, grow: 0.85,
       abil: 'hook', abName: 'Hook', abDesc: 'Hooks the farthest enemy within 5 hexes and drags it next to Hookjaw: 120% Attack as physical damage and a 1.5s stun.',
       ab: { reach: 5, dmg: 1.2, stun: 1.5, count: 1, vuln: 0, whirl: 0, pullAll: 0 },
       specs: [
@@ -173,7 +173,7 @@
          { id: 'gri5b', name: 'Pull of the Deep', desc: 'Also drags every enemy within 3 hexes one step closer and stuns them 1s.', ab: { pullAll: 1 } }],
       ] }),
     mirage: H({ name: 'Mirage', glyph: '🎭', role: 'Summoner', color: '#ff6fb5',
-      hp: 520, atk: 50, ap: 60, armor: 18, as: 0.9, range: 2, ms: 3, mana: 79, m0: 20, dodge: 0.15, grow: 1,
+      hp: 525, atk: 51, ap: 60, armor: 18, as: 0.9, range: 2, ms: 3, mana: 79, m0: 20, dodge: 0.15, grow: 1,
       abil: 'mirror', abName: 'Twinned Veil', abDesc: 'Creates 2 decoy clones with 40% of her Health, Attack and Defense, and blinks to the safest hex.',
       ab: { count: 2, stat: 0.4, explode: 0, backstab: 0, silence: 0 },
       specs: [
@@ -217,7 +217,7 @@
          { id: 'thr5b', name: 'Titan Swing', desc: 'The spin deals double damage.', ab: { dmg: 1.8 } }],
       ] }),
     seraph: H({ name: 'Radiant', glyph: '😇', role: 'Tank', color: '#f0d27a',
-      hp: 970, atk: 51, ap: 90, armor: 40, as: 0.7, range: 1, ms: 2, mana: 92, m0: 30, grow: 0.85,
+      hp: 985, atk: 52, ap: 90, armor: 40, as: 0.7, range: 1, ms: 2, mana: 92, m0: 30, grow: 0.85,
       mods: { rampArmor: 2, rampArmorCap: 40 },
       abil: 'consecrate', abName: 'Hallowed Ground', abDesc: 'Passive: +2 Defense per second (up to +40). Active: blesses the ground around her for 4s: enemies on it take 30% Magic per second, allies heal 3% max Health per second.',
       ab: { radius: 1, dur: 4, dps: 0.3, heal: 0.03, shield: 0 },
@@ -322,7 +322,7 @@
          { id: 'dsh5b', name: 'Spotter', desc: 'After Longwatch Round, his whole team deals 25% more to that target for 5s.', ab: { spot: 0.25 } }],
       ] }),
     vesper: H({ name: 'Vesper', glyph: '🧛', role: 'Fighter', color: '#8a1f3a',
-      hp: 720, atk: 52, ap: 80, armor: 26, as: 0.85, range: 1, ms: 3, mana: 74, m0: 20, ls: 0.15, grow: 0.85,
+      hp: 710, atk: 51, ap: 80, armor: 26, as: 0.85, range: 1, ms: 3, mana: 74, m0: 20, ls: 0.15, grow: 0.85,
       mods: { omni: 0.2 },
       abil: 'bloodfeast', abName: 'Crimson Draught', abDesc: 'Passive: abilities heal 20% of their damage. Active: drains every enemy within 2 hexes for 70% Attack + 40% Magic as magic damage and heals for all of it.',
       ab: { radius: 2, dmg: 0.7, apdmg: 0.4, share: 0, bats: 0, bleed: 0 },
@@ -351,7 +351,7 @@
          { id: 'kag5b', name: 'Blossom of Blades', desc: 'Shuriken deal 80% more.', ab: { dmg: 0.72 } }],
       ] }),
     rex: H({ name: 'Fang', glyph: '🐕', role: 'Fighter', color: '#a0703a',
-      hp: 765, atk: 51, ap: 65, armor: 28, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.85,
+      hp: 755, atk: 50, ap: 65, armor: 28, as: 1.2, range: 1, ms: 3.8, mana: 80, m0: 20, mods: { regen: 0.01 }, grow: 0.85,
       abil: 'howl', abName: 'Howl & Pounce', abDesc: 'Passive: regenerates 1% Health per second. Active: allies within 3 hexes get +20% Attack and attack speed for 4s, then Fang pounces on the nearest enemy: 150% Attack and a bleed of 2% max Health per second for 3s.',
       ab: { radius: 3, buff: 0.2, dmg: 1.5, bleed: 0.02, stun: 0, taunt: 0, reach: 0, cleave: 0 },
       specs: [
@@ -435,7 +435,7 @@
          { id: 'grk5b', name: 'Earthquake', desc: 'The boulder knocks every enemy it splashes 1 hex back.', ab: { quake: 1 } }],
       ] }),
     imhotep: H({ name: 'Ankh', glyph: '🧟', role: 'Tank', color: '#c8b88a',
-      hp: 1050, atk: 60, ap: 75, armor: 40, as: 0.7, range: 1, ms: 1.8, mana: 71, m0: 30, mods: { revive: 0.3 }, grow: 0.85,
+      hp: 1035, atk: 59, ap: 75, armor: 40, as: 0.7, range: 1, ms: 1.8, mana: 71, m0: 30, mods: { revive: 0.3 }, grow: 0.85,
       abil: 'wrap', abName: 'Linen of Ages', abDesc: 'Passive: once per fight, rises again at 30% Health. Active: wraps the 2 nearest enemies: rooted 2s, healing halved, losing 3% max Health per second.',
       ab: { count: 2, root: 2, decay: 0.03, shield: 0, vuln: 0 },
       specs: [
@@ -477,7 +477,7 @@
          { id: 'har5b', name: 'Grand Finale', desc: 'The last strike of the waltz deals triple damage.', ab: { curtain: 2 } }],
       ] }),
     sprocket: H({ name: 'Vial', glyph: '⚗', role: 'Support', color: '#5ab88a',
-      hp: 715, atk: 51, ap: 100, armor: 20, as: 0.8, range: 3, ms: 2, mana: 50, m0: 20, grow: 0.85,
+      hp: 725, atk: 52, ap: 100, armor: 20, as: 0.8, range: 3, ms: 2, mana: 50, m0: 20, grow: 0.85,
       abil: 'flask', abName: 'Unstable Flasks', abDesc: 'Throws 3 random flasks: acid (65% Magic, -20 Defense), healing (120% Magic to the weakest ally), frost (1s stun) or poison (3% max Health per second).',
       ab: { count: 3, radius: 0, heal: 1.2, acid: 0.65, mana: 0 },
       specs: [
@@ -491,7 +491,7 @@
          { id: 'spr5b', name: 'Chain Reaction', desc: 'Throws 3 more flasks.', ab: { count: 3 } }],
       ] }),
     zephyr: H({ name: 'Kaze', glyph: '🌪', role: 'Fighter', color: '#7ac8c8',
-      hp: 865, atk: 68, ap: 70, armor: 26, as: 1.0, range: 1, ms: 3, mana: 54, m0: 20, dodge: 0.1, grow: 1.15,
+      hp: 880, atk: 69, ap: 70, armor: 26, as: 1.0, range: 1, ms: 3, mana: 54, m0: 20, dodge: 0.1, grow: 1.15,
       abil: 'galekick', abName: 'Squall Kick', abDesc: 'Kicks the target 2 hexes back for 170% Attack as physical damage. Anyone it crashes into takes 100% Attack and is stunned for 1s.',
       ab: { dmg: 1.7, push: 2, stun: 0, splash: 0, targets: 1, tailwind: 0 },
       specs: [
@@ -520,7 +520,7 @@
          { id: 'buz5b', name: "Queen's Guard", desc: 'A second, smaller hive guards her own spot (half the stings).', ab: { guardHive: 0.5 } }],
       ] }),
     coralie: H({ name: 'Maelstrom', glyph: '🌊', role: 'Controller', color: '#2fb8d8',
-      hp: 1005, atk: 63, ap: 90, armor: 26, as: 0.75, range: 3, ms: 2, mana: 37, m0: 25, grow: 0.85,
+      hp: 990, atk: 62, ap: 90, armor: 26, as: 0.75, range: 3, ms: 2, mana: 37, m0: 25, grow: 0.85,
       abil: 'wave', abName: 'Tidal Wave', abDesc: 'A wave crashes over the densest enemy group: 75% Magic as magic damage within 1 hex, pushes them 1 hex back and slows them 30% for 2s.',
       ab: { radius: 1, dmg: 0.75, push: 1, slow: 0.3, stun: 0, foam: 0, echo: 0 },
       specs: [
@@ -588,7 +588,7 @@
     // which if destroyed kills him, but after a few seconds revives the hero (only one egg per combat). Fire phoenix whose
     // short but still range ability is making a wall of fire on target, line 3 hexes that does dot damage for a time."
     smolder: H({ name: 'Smolder', glyph: '🌋', role: 'Tank', color: '#ff6a2a', fl: ['devour'],
-      hp: 1405, atk: 60, ap: 105, armor: 38, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.15,
+      hp: 1385, atk: 59, ap: 105, armor: 38, as: 0.9, range: 1, ms: 2, mana: 58, m0: 20, grow: 1.15,
       abil: 'flamethrower', abName: 'Flamethrower', abDesc: 'Passive (Devour): at the start of each fight it eats one of its items and keeps its stats for good (not its effect). Active: a cone of fire 2 hexes ahead: 30% Magic, then a burn of 30% Magic per second for 4s.',
       ab: { dmg: 0.3, burn: 0.3, dur: 4, reach: 2, spread: 1, devour: 1, boost: 1, vuln: 0, heal: 0 },
       specs: [
@@ -602,7 +602,7 @@
          { id: 'smo5b', name: 'Fire Brand', desc: 'Burning enemies take 20% more damage from everyone.', ab: { vuln: 0.2 } }],
       ] }),
     tom: H({ name: 'Tom', glyph: '🍲', role: 'Support', color: '#e8d9b0',
-      hp: 895, atk: 47, ap: 100, armor: 24, as: 0.9, range: 2, ms: 2, mana: 39, m0: 15, grow: 0.85,
+      hp: 880, atk: 46, ap: 100, armor: 24, as: 0.9, range: 2, ms: 2, mana: 39, m0: 15, grow: 0.85,
       abil: 'dishes', abName: 'Daily Special', abDesc: 'Serves 2 different dishes to random allies: hot pie (heals 90% Magic), jerky (+25% Attack for 8s), pepper soup (+30% attack speed for 8s) or pudding (a shield of 110% Magic).',
       ab: { dishes: 2, heal: 0.9, atk: 0.25, as: 0.3, shield: 1.1, big: 0, dur: 8, all: 0, double: 0, mana: 0, pan: 0 },
       specs: [
@@ -616,7 +616,7 @@
          { id: 'tom5b', name: 'Spice Rack', desc: 'Every dish gives two effects.', ab: { double: 1 } }],
       ] }),
     ashwing: H({ name: 'Ashwing', glyph: '🦅', role: 'Mage', color: '#ff8a2a', fl: ['rebirth'],
-      hp: 720, atk: 49, ap: 125, armor: 15, as: 0.9, range: 2, ms: 2, mana: 56, m0: 15, grow: 1.15,
+      hp: 730, atk: 50, ap: 125, armor: 15, as: 0.9, range: 2, ms: 2, mana: 56, m0: 15, grow: 1.15,
       abil: 'firewall', abName: 'Wall of Fire', abDesc: 'Passive (Rebirth): once per fight it falls into an egg with half its max Health; if the egg survives 5s it is reborn at 60% Health. Active: a wall of fire 3 hexes wide, up to 3 hexes away, burns enemies on it for 50% Magic per second for 4s.',
       ab: { dps: 0.5, dur: 4, reach: 3, width: 1, burn: 0.2, slow: 0, eggHp: 0.5, hatch: 5, revive: 0.6, burst: 0 },
       specs: [
@@ -631,7 +631,7 @@
       ] }),
     // Rohammer, a huge brute with a very slow hammer
     rohammer: H({ name: 'Rohammer', glyph: '🔨', role: 'Tank', color: '#e8943a', fl: ['brute'],
-      hp: 1185, atk: 93, ap: 80, armor: 45, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 1,
+      hp: 1155, atk: 90, ap: 80, armor: 45, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 1,
       abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): slow hammer blows stun for 0.2s; it gains Energy only from damage taken (2 per 1% of max Health). Active: sweeps enemies within 2 hexes in front: 150% Attack, knocked back 2 hexes and stunned 1s.',
       ab: { dmg: 1.5, reach: 2, push: 2, stun: 1, tap: 0.2, gain: 2 },
       specs: [
@@ -645,7 +645,7 @@
          { id: 'roh5b', name: 'Unstoppable', desc: 'Takes 20% less damage and the sweep deals 50% more.', mods: { dmgReduce: 0.2 }, ab: { dmg: 0.75 } }],
       ] }),
     plasma: H({ name: 'Plasma Cannon', glyph: '💥', role: 'Ranger', color: '#5fe0ff', fl: ['closest', 'plasma'],
-      hp: 515, atk: 50, ap: 50, armor: 18, as: 0.6, range: 6, ms: 0, mana: 55, m0: 20, grow: 1,
+      hp: 525, atk: 51, ap: 50, armor: 18, as: 0.6, range: 6, ms: 0, mana: 55, m0: 20, grow: 1,
       abil: 'tripleshot', abName: 'Triple Shot', abDesc: 'Passive (Overload): never moves; shoots the closest enemy, +12% damage per hex nearer than 5, and shoves it back 1 hex. Active: three shots at the closest enemy, 150% Attack each, each shoving it back 2 hexes.',
       ab: { dmg: 1.5, shots: 3, push: 2, knock: 1, close: 0.12 },
       specs: [
@@ -674,7 +674,7 @@
       ] }),
     // Chronos: "A battlefield manipulator who controls the flow of combat and turns back time on damage"
     chronos: H({ name: 'Chronos', glyph: '⏳', role: 'Controller', color: '#4dd0e1',
-      hp: 625, atk: 39, ap: 100, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.85,
+      hp: 635, atk: 40, ap: 100, armor: 24, as: 0.8, range: 3, ms: 2, mana: 74, m0: 25, grow: 0.85,
       abil: 'rewind', abName: 'Rewind', abDesc: 'Passive (Decelerate): his attacks slow 5% per hit (up to 5x, 3s). Active: the most hurt ally goes back 2.5s in time: its Health returns to what it was (at least 150% Magic healed) and it ignores crowd control for 2s.',
       ab: { heal: 1.5, back: 2.5, immune: 2, decel: 0.05, decelCap: 5, paradox: 0, stasis: 0, warp: 0, anchor: 0, shock: 0, accel: 0, targets: 1, timestop: 0 },
       specs: [
@@ -721,7 +721,7 @@
     // seconds bursts back out, stunning all adjacent enemies and inflicting damage. Second, also passive ability, is that enemies who attack him with
     // autoattack get damaged x% of his defense"): two passives, no cast (shellguard never fires)
     onyx: H({ name: 'Onyx', glyph: '🐢', role: 'Tank', color: '#3fae8a', fl: ['shell', 'spikes'],
-      hp: 810, atk: 34, ap: 65, armor: 60, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1,
+      hp: 785, atk: 33, ap: 65, armor: 60, as: 0.6, range: 1, ms: 2, mana: 111, m0: 0, grow: 1,
       abil: 'shellguard', abName: 'Shell', abDesc: 'Passive (Shell): the first time he falls, he hides in his shell for 4s (untouchable, blocks the way), then bursts out at 40% Health: 150% Attack and a 1.5s stun to adjacent enemies. Passive (Spiked Shell): attackers take 60% of his Defense as damage.',
       ab: { shellT: 4, shellHp: 0.4, burst: 1.5, burstStun: 1.5, burstRad: 0, burstArmor: 0, spike: 0.6, shells: 0, shellTaunt: 0, biteArmor: 0 },
       specs: [
@@ -737,7 +737,7 @@
     // v104 (, David: "dragon. Tanky dragon. Active ability: flies in the direction with the most enemies in a straight line, leaving a line of
     // fire in his wake, then lands at the end (the farthest hex in that line still in the map). Invulnerable while flying")
     dragon: H({ name: 'Ember Wyrm', glyph: '🐉', role: 'Tank', color: '#e2543a',
-      hp: 1810, atk: 90, ap: 95, armor: 38, as: 0.7, range: 1, ms: 2, mana: 98, m0: 35, grow: 1,
+      hp: 1830, atk: 91, ap: 95, armor: 38, as: 0.7, range: 1, ms: 2, mana: 98, m0: 35, grow: 1,
       abil: 'skydive', abName: 'Skyfire Dive', abDesc: 'Flies along the line with the most enemies and lands at its far end, untouchable in the air. Enemies below take 80% Magic, and his trail burns for 4s (25% Magic per second).',
       ab: { dmg: 0.8, dps: 0.25, dur: 4, landStun: 0, refund: 0, lineSlow: 0, wide: 0, landShield: 0, aura: 0 },
       specs: [
@@ -751,7 +751,7 @@
          { id: 'dra5b', name: 'Ancient Wyrm', desc: 'Landing gives him a shield of 25% of his max Health.', ab: { landShield: 0.25 } }],
       ] }),
     medic: H({ name: 'Combat Medic', glyph: '⛑️', role: 'Healer', color: '#7dffb0', fl: ['medic'],
-      hp: 405, atk: 25, ap: 110, armor: 22, as: 0.9, range: 2, ms: 2, mana: 93, m0: 15, grow: 0.85,
+      hp: 410, atk: 25, ap: 110, armor: 22, as: 0.9, range: 2, ms: 2, mana: 93, m0: 15, grow: 0.85,
       abil: 'grenade', abName: 'Field Grenade', abDesc: 'Passive (Triage): its attacks heal a hurt ally within 2 hexes for 110% Attack (+60% if under 40% Health); with nobody hurt, it attacks. Active: a grenade up to 4 hexes away: enemies within 1 hex take 40% Magic, allies heal 50% Magic.',
       ab: { heal: 1.1, triage: 0.6, stim: 0, dmg: 0.4, healNade: 0.5, radius: 1, reach: 4, stun: 0, shield: 0 },
       specs: [

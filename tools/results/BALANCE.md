@@ -1,10 +1,10 @@
 # Balance report (tools/balance/run.js)
 
-Simulated runs: 15300 hero runs (completion 55.3%), plus the item, power and calibration runs. Live data: not used.
+Simulated runs: 38250 hero runs (completion 55.0%), plus the item, power and calibration runs. Live data: not used.
 
-Elasticities measured: +10% hero power = +23.0pp completion; +5% enemy strength = e -0.3pp, m -1.4pp, h -6.1pp, b -9.4pp fight win rate.
+Elasticities measured: +10% hero power = +23.2pp completion; +5% enemy strength = e -0.3pp, m -1.3pp, h -6.2pp, b -9.7pp fight win rate.
 
-Hero spread: the start rates spread 5.4% (sd); sampling alone explains 2.9%, so the real spread between heroes is about 4.6%.
+Hero spread: the start rates spread 4.6% (sd); sampling alone explains 1.8%, so the real spread between heroes is about 4.2%.
 
 Rule: change only when |z| >= 2 and the gap >= the tolerance (hero 3%, item 3%, relic 3%, fight 4%); step = 60% of the gap, capped; per kind the Benjamini-Hochberg rule keeps false alarms under 10%. Live data weighs 1/4 of its sample (observational).
 
@@ -12,311 +12,311 @@ Rule: change only when |z| >= 2 and the gap >= the tolerance (hero 3%, item 3%, 
 
 | difficulty | target | simulation (n) | players (n) | z | verdict |
 |---|---|---|---|---|---|
-| Easy | 99% | 99.4% (18010) | - | 7.2 | hold |
-| Medium | 93% | 97.0% (46738) | - | 47.6 | hold |
-| Hard | 68% | 76.1% (21067) | - | 29.0 | harder (enemies +4.2%) |
-| Boss | 60% | 62.3% (32062) | - | 8.0 | hold |
+| Easy | 99% | 99.4% (45022) | - | 12.6 | hold |
+| Medium | 93% | 97.1% (116972) | - | 75.3 | hold |
+| Hard | 68% | 75.7% (52336) | - | 43.3 | harder (enemies +3.9%) |
+| Boss | 60% | 62.2% (79983) | - | 11.7 | hold |
 
-## Heroes (start rate vs all heroes, 55.3%)
+## Heroes (start rate vs all heroes, 55.0%)
 
 | hero | simulation (n) [95% CI] | live win (games) | pick rate / pick win | gap | z | verdict |
 |---|---|---|---|---|---|---|
-| Ironhorn (brakk) | 70.0% (300) [65%-75%] | - | - | +14.7pp | 5.6 | nerf (hp 1025->985, atk 79->76, ap 65->65) |
-| Plasma Cannon (plasma) | 42.7% (300) [37%-48%] | - | - | -12.6pp | -4.4 | buff (hp 490->505, atk 47->49, ap 50->50) |
-| Ashwing (ashwing) | 43.0% (300) [38%-49%] | - | - | -12.3pp | -4.3 | buff (hp 675->695, atk 46->47, ap 115->120) |
-| Radiant (seraph) | 65.7% (300) [60%-71%] | - | - | +10.4pp | 3.8 | nerf (hp 1005->980, atk 53->52, ap 95->90) |
-| Kitsune (kitsune) | 64.7% (300) [59%-70%] | - | - | +9.4pp | 3.4 | nerf (hp 810->790, atk 80->78, ap 85->85) |
-| Onyx (onyx) | 63.0% (300) [57%-68%] | - | - | +7.7pp | 2.8 | nerf (hp 845->830, atk 36->35, ap 65->65) |
-| Lyric (echo) | 47.7% (300) [42%-53%] | - | - | -7.6pp | -2.6 | buff (hp 710->725, atk 42->43, ap 100->100) |
-| Maelstrom (coralie) | 61.7% (300) [56%-67%] | - | - | +6.4pp | 2.3 | hold (could be chance: FDR) |
-| Flint (blaze) | 49.0% (300) [43%-55%] | - | - | -6.3pp | -2.2 | hold (could be chance: FDR) |
-| Aegir (bastion) | 61.3% (300) [56%-67%] | - | - | +6.0pp | 2.1 | hold (could be chance: FDR) |
-| Prism (prism) | 61.3% (300) [56%-67%] | - | - | +6.0pp | 2.1 | hold (could be chance: FDR) |
-| Smolder (smolder) | 49.3% (300) [44%-55%] | - | - | -6.0pp | -2.1 | hold (could be chance: FDR) |
-| Vex (vex) | 61.0% (300) [55%-66%] | - | - | +5.7pp | 2.0 | hold (could be chance: FDR) |
-| Fang (rex) | 61.0% (300) [55%-66%] | - | - | +5.7pp | 2.0 | hold (could be chance: FDR) |
-| Chronos (chronos) | 49.7% (300) [44%-55%] | - | - | -5.6pp | -2.0 | hold |
-| Tempest (tempest) | 50.0% (300) [44%-56%] | - | - | -5.3pp | -1.8 | hold |
-| Citadel (citadel) | 50.0% (300) [44%-56%] | - | - | -5.3pp | -1.8 | hold |
-| Belladonna (bella) | 60.3% (300) [55%-66%] | - | - | +5.0pp | 1.8 | hold |
-| Deadeye (deadshot) | 50.3% (300) [45%-56%] | - | - | -5.0pp | -1.7 | hold |
-| Kaze (zephyr) | 50.3% (300) [45%-56%] | - | - | -5.0pp | -1.7 | hold |
-| Duelist (duelist) | 50.3% (300) [45%-56%] | - | - | -5.0pp | -1.7 | hold |
-| Bramble (bramble) | 59.7% (300) [54%-65%] | - | - | +4.4pp | 1.5 | hold |
-| Skara (hippolyta) | 59.7% (300) [54%-65%] | - | - | +4.4pp | 1.5 | hold |
-| Vesper (vesper) | 59.3% (300) [54%-65%] | - | - | +4.0pp | 1.4 | hold |
-| Graveborn (morrow) | 51.3% (300) [46%-57%] | - | - | -4.0pp | -1.4 | hold |
-| Ember Wyrm (dragon) | 51.3% (300) [46%-57%] | - | - | -4.0pp | -1.4 | hold |
-| Feuer (pyra) | 59.0% (300) [53%-64%] | - | - | +3.7pp | 1.3 | hold |
-| Solace (lumen) | 59.0% (300) [53%-64%] | - | - | +3.7pp | 1.3 | hold |
-| Rohammer (rohammer) | 59.0% (300) [53%-64%] | - | - | +3.7pp | 1.3 | hold |
-| Phalanx (leonidas) | 51.7% (300) [46%-57%] | - | - | -3.6pp | -1.3 | hold |
-| Hookjaw (grimhook) | 58.7% (300) [53%-64%] | - | - | +3.4pp | 1.2 | hold |
-| Nyx (nyx) | 58.7% (300) [53%-64%] | - | - | +3.4pp | 1.2 | hold |
-| Rivet (rook) | 52.3% (300) [47%-58%] | - | - | -3.0pp | -1.0 | hold |
-| Ravager (thorne) | 52.7% (300) [47%-58%] | - | - | -2.6pp | -0.9 | hold |
-| Mesmer (vey) | 52.7% (300) [47%-58%] | - | - | -2.6pp | -0.9 | hold |
-| Rumble (barley) | 52.7% (300) [47%-58%] | - | - | -2.6pp | -0.9 | hold |
-| Rapture (harlequin) | 52.7% (300) [47%-58%] | - | - | -2.6pp | -0.9 | hold |
-| Stinger (buzzwell) | 52.7% (300) [47%-58%] | - | - | -2.6pp | -0.9 | hold |
-| Mirage (mirage) | 57.7% (300) [52%-63%] | - | - | +2.4pp | 0.8 | hold |
-| Frostbane (glacia) | 53.3% (300) [48%-59%] | - | - | -2.0pp | -0.7 | hold |
-| Ankh (imhotep) | 57.0% (300) [51%-62%] | - | - | +1.7pp | 0.6 | hold |
-| Inferno (azgul) | 53.7% (300) [48%-59%] | - | - | -1.6pp | -0.6 | hold |
-| Vial (sprocket) | 53.7% (300) [48%-59%] | - | - | -1.6pp | -0.6 | hold |
-| Gardener (gardener) | 54.3% (300) [49%-60%] | - | - | -1.0pp | -0.3 | hold |
-| Jinx (pip) | 56.0% (300) [50%-62%] | - | - | +0.7pp | 0.2 | hold |
-| Talon (kestrel) | 54.7% (300) [49%-60%] | - | - | -0.6pp | -0.2 | hold |
-| Eclipse (kage) | 54.7% (300) [49%-60%] | - | - | -0.6pp | -0.2 | hold |
-| Combat Medic (medic) | 54.7% (300) [49%-60%] | - | - | -0.6pp | -0.2 | hold |
-| Boulder (grok) | 55.0% (300) [49%-61%] | - | - | -0.3pp | -0.1 | hold |
-| Tom (tom) | 55.0% (300) [49%-61%] | - | - | -0.3pp | -0.1 | hold |
-| Astral (stellan) | 55.3% (300) [50%-61%] | - | - | +0.0pp | 0.0 | hold |
+| Ashwing (ashwing) | 40.4% (750) [37%-44%] | - | - | -14.6pp | -8.1 | buff (hp 695->720, atk 47->49, ap 120->125) |
+| Ironhorn (brakk) | 65.6% (750) [62%-69%] | - | - | +10.6pp | 6.1 | nerf (hp 985->960, atk 76->74, ap 65->65) |
+| Onyx (onyx) | 65.3% (750) [62%-69%] | - | - | +10.4pp | 6.0 | nerf (hp 830->810, atk 35->34, ap 65->65) |
+| Vesper (vesper) | 62.4% (750) [59%-66%] | - | - | +7.4pp | 4.2 | nerf (hp 735->720, atk 53->52, ap 80->80) |
+| Plasma Cannon (plasma) | 48.5% (750) [45%-52%] | - | - | -6.4pp | -3.5 | buff (hp 505->515, atk 49->50, ap 50->50) |
+| Prism (prism) | 60.9% (750) [57%-64%] | - | - | +6.0pp | 3.4 | nerf (hp 535->525, atk 30->30, ap 110->110) |
+| Lyric (echo) | 49.3% (750) [46%-53%] | - | - | -5.6pp | -3.1 | buff (hp 725->735, atk 43->44, ap 100->100) |
+| Talon (kestrel) | 49.6% (750) [46%-53%] | - | - | -5.4pp | -2.9 | buff (hp 670->680, atk 72->73, ap 50->50) |
+| Citadel (citadel) | 49.7% (750) [46%-53%] | - | - | -5.2pp | -2.9 | buff (hp 1320->1340, atk 48->49, ap 100->100) |
+| Bramble (bramble) | 60.0% (750) [56%-63%] | - | - | +5.0pp | 2.8 | nerf (hp 1180->1165, atk 52->51, ap 90->90) |
+| Vex (vex) | 59.7% (750) [56%-63%] | - | - | +4.8pp | 2.7 | nerf (hp 760->750, atk 94->93, ap 70->70) |
+| Duelist (duelist) | 50.1% (750) [47%-54%] | - | - | -4.8pp | -2.6 | buff (hp 805->815, atk 63->64, ap 65->65) |
+| Flint (blaze) | 50.3% (750) [47%-54%] | - | - | -4.7pp | -2.6 | buff (hp 795->805, atk 72->73, ap 55->55) |
+| Rohammer (rohammer) | 59.5% (750) [56%-63%] | - | - | +4.5pp | 2.5 | nerf (hp 1200->1185, atk 94->93, ap 80->80) |
+| Radiant (seraph) | 59.3% (750) [56%-63%] | - | - | +4.4pp | 2.4 | nerf (hp 980->970, atk 52->51, ap 90->90) |
+| Ankh (imhotep) | 59.3% (750) [56%-63%] | - | - | +4.4pp | 2.4 | nerf (hp 1060->1050, atk 61->60, ap 75->75) |
+| Hookjaw (grimhook) | 59.2% (750) [56%-63%] | - | - | +4.2pp | 2.4 | nerf (hp 1170->1155, atk 80->79, ap 65->65) |
+| Smolder (smolder) | 50.7% (750) [47%-54%] | - | - | -4.3pp | -2.4 | buff (hp 1390->1405, atk 59->60, ap 105->105) |
+| Chronos (chronos) | 50.8% (750) [47%-54%] | - | - | -4.2pp | -2.3 | buff (hp 620->625, atk 39->39, ap 100->100) |
+| Phalanx (leonidas) | 50.9% (750) [47%-54%] | - | - | -4.0pp | -2.2 | buff (hp 1020->1030, atk 61->62, ap 75->75) |
+| Skara (hippolyta) | 58.8% (750) [55%-62%] | - | - | +3.8pp | 2.1 | nerf (hp 700->695, atk 55->54, ap 55->55) |
+| Belladonna (bella) | 58.8% (750) [55%-62%] | - | - | +3.8pp | 2.1 | nerf (hp 750->745, atk 48->48, ap 120->120) |
+| Maelstrom (coralie) | 58.7% (750) [55%-62%] | - | - | +3.7pp | 2.1 | nerf (hp 1015->1005, atk 64->63, ap 90->90) |
+| Graveborn (morrow) | 51.3% (750) [48%-55%] | - | - | -3.6pp | -2.0 | hold |
+| Aegir (bastion) | 58.5% (750) [55%-62%] | - | - | +3.6pp | 2.0 | hold |
+| Rapture (harlequin) | 51.5% (750) [48%-55%] | - | - | -3.5pp | -1.9 | hold |
+| Vial (sprocket) | 51.5% (750) [48%-55%] | - | - | -3.5pp | -1.9 | hold |
+| Tom (tom) | 58.4% (750) [55%-62%] | - | - | +3.4pp | 1.9 | hold |
+| Ember Wyrm (dragon) | 51.6% (750) [48%-55%] | - | - | -3.4pp | -1.8 | hold |
+| Fang (rex) | 58.3% (750) [55%-62%] | - | - | +3.3pp | 1.8 | hold |
+| Kitsune (kitsune) | 58.1% (750) [55%-62%] | - | - | +3.2pp | 1.8 | hold |
+| Ravager (thorne) | 51.9% (750) [48%-55%] | - | - | -3.1pp | -1.7 | hold |
+| Deadeye (deadshot) | 52.1% (750) [49%-56%] | - | - | -2.8pp | -1.6 | hold |
+| Rumble (barley) | 52.3% (750) [49%-56%] | - | - | -2.7pp | -1.5 | hold |
+| Solace (lumen) | 57.3% (750) [54%-61%] | - | - | +2.4pp | 1.3 | hold |
+| Nyx (nyx) | 57.3% (750) [54%-61%] | - | - | +2.4pp | 1.3 | hold |
+| Gardener (gardener) | 52.8% (750) [49%-56%] | - | - | -2.2pp | -1.2 | hold |
+| Kaze (zephyr) | 52.9% (750) [49%-56%] | - | - | -2.0pp | -1.1 | hold |
+| Boulder (grok) | 56.8% (750) [53%-60%] | - | - | +1.8pp | 1.0 | hold |
+| Mirage (mirage) | 56.7% (750) [53%-60%] | - | - | +1.7pp | 0.9 | hold |
+| Combat Medic (medic) | 53.5% (750) [50%-57%] | - | - | -1.5pp | -0.8 | hold |
+| Astral (stellan) | 53.6% (750) [50%-57%] | - | - | -1.4pp | -0.7 | hold |
+| Mesmer (vey) | 53.7% (750) [50%-57%] | - | - | -1.2pp | -0.7 | hold |
+| Stinger (buzzwell) | 53.7% (750) [50%-57%] | - | - | -1.2pp | -0.7 | hold |
+| Rivet (rook) | 53.9% (750) [50%-57%] | - | - | -1.1pp | -0.6 | hold |
+| Frostbane (glacia) | 54.0% (750) [50%-58%] | - | - | -1.0pp | -0.5 | hold |
+| Eclipse (kage) | 54.3% (750) [51%-58%] | - | - | -0.7pp | -0.4 | hold |
+| Feuer (pyra) | 54.4% (750) [51%-58%] | - | - | -0.6pp | -0.3 | hold |
+| Tempest (tempest) | 54.4% (750) [51%-58%] | - | - | -0.6pp | -0.3 | hold |
+| Inferno (azgul) | 55.5% (750) [52%-59%] | - | - | +0.5pp | 0.3 | hold |
+| Jinx (pip) | 54.9% (750) [51%-58%] | - | - | -0.0pp | -0.0 | hold |
 
 ## Items (gain of starting with it vs its rarity)
 
 | item | completion (n) | gain | rarity gain | live win (games) | pick rate / pick win | z | verdict |
 |---|---|---|---|---|---|---|---|
-| Glass Cannon's Prism (legendary) | 2.0% (150) | -53.3pp | +6.6pp | - | - | -49.4 | buff (numbers x1.15) |
-| Volatile Reactor (legendary) | 81.3% (150) | +26.0pp | +6.6pp | - | - | 6.1 | nerf (numbers x0.85) |
-| Voltaic Tether (rare) | 74.7% (150) | +19.4pp | +5.2pp | - | - | 4.0 | nerf (numbers x0.85) |
-| Wyrmhide Mail (legendary) | 74.0% (150) | +18.7pp | +6.6pp | - | - | 3.4 | nerf (numbers x0.85) |
-| Wardplate (rare) | 72.7% (150) | +17.4pp | +5.2pp | - | - | 3.3 | nerf (numbers x0.85) |
-| Emberborn Heart (mythic) | 84.0% (150) | +28.7pp | +19.0pp | - | - | 3.2 | nerf (numbers x0.85) |
-| Living Crucible (epic) | 75.3% (150) | +20.0pp | +9.5pp | - | - | 3.0 | nerf (numbers x0.85) |
-| Tidecaller Spear (rare) | 70.7% (150) | +15.4pp | +5.2pp | - | - | 2.7 | hold (could be chance: FDR) |
-| Scholar's Circlet (uncommon) | 49.3% (150) | -6.0pp | +5.0pp | - | - | -2.7 | hold (could be chance: FDR) |
-| Cutpurse Grips (rare) | 50.0% (150) | -5.3pp | +5.2pp | - | - | -2.6 | hold (could be chance: FDR) |
-| Doppelgänger Mask (legendary) | 71.3% (150) | +16.0pp | +6.6pp | - | - | 2.5 | hold (could be chance: FDR) |
-| Banneret Plate (uncommon) | 69.3% (150) | +14.0pp | +5.0pp | - | - | 2.4 | hold (could be chance: FDR) |
-| Iron Knuckles (uncommon) | 50.7% (150) | -4.6pp | +5.0pp | - | - | -2.3 | hold (could be chance: FDR) |
-| Trollheart Cuirass (rare) | 69.3% (150) | +14.0pp | +5.2pp | - | - | 2.3 | hold (could be chance: FDR) |
-| Bounty Monocle (rare) | 51.3% (150) | -4.0pp | +5.2pp | - | - | -2.2 | hold (could be chance: FDR) |
-| Harvest Scythe (epic) | 56.0% (150) | +0.7pp | +9.5pp | - | - | -2.2 | hold (could be chance: FDR) |
-| Quickstep Boots (common) | 49.3% (150) | -6.0pp | +2.8pp | - | - | -2.1 | hold (could be chance: FDR) |
-| Farseer Lens (rare) | 52.0% (150) | -3.3pp | +5.2pp | - | - | -2.1 | hold (could be chance: FDR) |
-| Final Hush (epic) | 56.7% (150) | +1.4pp | +9.5pp | - | - | -2.0 | hold (could be chance: FDR) |
-| Thunderborn Treads (set) | 50.0% (150) | -5.3pp | +2.9pp | - | - | -2.0 | hold |
-| Horizon Cleaver (mythic) | 66.7% (150) | +11.4pp | +19.0pp | - | - | -2.0 | hold |
-| Rimefrost Maul (rare) | 68.0% (150) | +12.7pp | +5.2pp | - | - | 2.0 | hold |
-| Unbound Sash (rare) | 68.0% (150) | +12.7pp | +5.2pp | - | - | 2.0 | hold |
-| Starwoven Cloak (rare) | 68.0% (150) | +12.7pp | +5.2pp | - | - | 2.0 | hold |
-| Mountain Grips (epic) | 72.0% (150) | +16.7pp | +9.5pp | - | - | 2.0 | hold |
-| Warp Spikes (epic) | 72.0% (150) | +16.7pp | +9.5pp | - | - | 2.0 | hold |
-| Adder Vial (rare) | 52.7% (150) | -2.6pp | +5.2pp | - | - | -1.9 | hold |
-| Gambler's Token (common) | 65.3% (150) | +10.0pp | +2.8pp | - | - | 1.8 | hold |
-| Scarlet Grips (set) | 65.3% (150) | +10.0pp | +2.9pp | - | - | 1.8 | hold |
-| Brawler's Wraps (uncommon) | 67.3% (150) | +12.0pp | +5.0pp | - | - | 1.8 | hold |
-| Hands of Unmaking (mythic) | 67.3% (150) | +12.0pp | +19.0pp | - | - | -1.8 | hold |
-| Stilled Hourglass (epic) | 71.3% (150) | +16.0pp | +9.5pp | - | - | 1.8 | hold |
-| Headsman's Axe (rare) | 53.3% (150) | -2.0pp | +5.2pp | - | - | -1.7 | hold |
-| Towering Cowl (epic) | 58.0% (150) | +2.7pp | +9.5pp | - | - | -1.7 | hold |
-| Inkwell Charm (common) | 64.7% (150) | +9.4pp | +2.8pp | - | - | 1.7 | hold |
-| Galerunners (legendary) | 68.0% (150) | +12.7pp | +6.6pp | - | - | 1.6 | hold |
-| Grimoire of Blight (epic) | 58.7% (150) | +3.4pp | +9.5pp | - | - | -1.5 | hold |
-| Tempered Blade (common) | 52.0% (150) | -3.3pp | +2.8pp | - | - | -1.5 | hold |
-| Hide Jerkin (common) | 64.0% (150) | +8.7pp | +2.8pp | - | - | 1.5 | hold |
-| Weaver's Gloves (uncommon) | 66.0% (150) | +10.7pp | +5.0pp | - | - | 1.5 | hold |
-| Repeating Arbalest (rare) | 54.7% (150) | -0.6pp | +5.2pp | - | - | -1.4 | hold |
-| Ironshod Boots (rare) | 54.7% (150) | -0.6pp | +5.2pp | - | - | -1.4 | hold |
-| Wildman's Axe (rare) | 54.7% (150) | -0.6pp | +5.2pp | - | - | -1.4 | hold |
-| Runner's Treads (uncommon) | 54.7% (150) | -0.6pp | +5.0pp | - | - | -1.4 | hold |
-| Bloodhound Cleaver (epic) | 59.3% (150) | +4.0pp | +9.5pp | - | - | -1.4 | hold |
-| Clan Warpaint (common) | 52.7% (150) | -2.6pp | +2.8pp | - | - | -1.3 | hold |
-| Hide Gloves (common) | 52.7% (150) | -2.6pp | +2.8pp | - | - | -1.3 | hold |
-| Ringlink Hauberk (common) | 63.3% (150) | +8.0pp | +2.8pp | - | - | 1.3 | hold |
-| Mendmoss Pouch (common) | 63.3% (150) | +8.0pp | +2.8pp | - | - | 1.3 | hold |
-| Codex Without End (mythic) | 78.7% (150) | +23.4pp | +19.0pp | - | - | 1.3 | hold |
-| Stiletto (uncommon) | 65.3% (150) | +10.0pp | +5.0pp | - | - | 1.3 | hold |
-| Spirit Tether (rare) | 55.3% (150) | +0.0pp | +5.2pp | - | - | -1.3 | hold |
-| Cracked Monocle (rare) | 55.3% (150) | +0.0pp | +5.2pp | - | - | -1.3 | hold |
-| Stargazer Hat (rare) | 65.3% (150) | +10.0pp | +5.2pp | - | - | 1.2 | hold |
-| Honeycomb Charm (rare) | 65.3% (150) | +10.0pp | +5.2pp | - | - | 1.2 | hold |
-| Second Dawn Locket (epic) | 69.3% (150) | +14.0pp | +9.5pp | - | - | 1.2 | hold |
-| Starweaver Orb (set) | 53.3% (150) | -2.0pp | +2.9pp | - | - | -1.2 | hold |
-| Honing Stone (uncommon) | 64.7% (150) | +9.4pp | +5.0pp | - | - | 1.1 | hold |
-| Vigil Candle (uncommon) | 64.7% (150) | +9.4pp | +5.0pp | - | - | 1.1 | hold |
-| Sanguine Saber (rare) | 56.0% (150) | +0.7pp | +5.2pp | - | - | -1.1 | hold |
-| Wargreaves (rare) | 56.0% (150) | +0.7pp | +5.2pp | - | - | -1.1 | hold |
-| Kindled Falchion (rare) | 64.7% (150) | +9.4pp | +5.2pp | - | - | 1.1 | hold |
-| Ironbark Totem (rare) | 64.7% (150) | +9.4pp | +5.2pp | - | - | 1.1 | hold |
-| Crown of the Conclave (legendary) | 66.0% (150) | +10.7pp | +6.6pp | - | - | 1.1 | hold |
-| Gauntlets of Wrath (legendary) | 66.0% (150) | +10.7pp | +6.6pp | - | - | 1.1 | hold |
-| Scarlet Pendant (set) | 54.0% (150) | -1.3pp | +2.9pp | - | - | -1.0 | hold |
-| Wyrmscale Gloves (epic) | 68.7% (150) | +13.4pp | +9.5pp | - | - | 1.0 | hold |
-| Martyr's Aegis (epic) | 68.7% (150) | +13.4pp | +9.5pp | - | - | 1.0 | hold |
-| Leech Tooth (common) | 54.0% (150) | -1.3pp | +2.8pp | - | - | -1.0 | hold |
-| Iron Sallet (common) | 54.0% (150) | -1.3pp | +2.8pp | - | - | -1.0 | hold |
-| Spellward Cloak (common) | 62.0% (150) | +6.7pp | +2.8pp | - | - | 1.0 | hold |
-| Studded Buckler (common) | 62.0% (150) | +6.7pp | +2.8pp | - | - | 1.0 | hold |
-| Nightglass Blade (set) | 62.0% (150) | +6.7pp | +2.9pp | - | - | 1.0 | hold |
-| Azure Geode (rare) | 56.7% (150) | +1.4pp | +5.2pp | - | - | -0.9 | hold |
-| Hillbreaker (rare) | 56.7% (150) | +1.4pp | +5.2pp | - | - | -0.9 | hold |
-| Asp Claws (rare) | 56.7% (150) | +1.4pp | +5.2pp | - | - | -0.9 | hold |
-| Viper Needle (rare) | 64.0% (150) | +8.7pp | +5.2pp | - | - | 0.9 | hold |
-| Granite Heart (rare) | 64.0% (150) | +8.7pp | +5.2pp | - | - | 0.9 | hold |
-| Starloom Robe (rare) | 64.0% (150) | +8.7pp | +5.2pp | - | - | 0.9 | hold |
-| Heartwood Shield (uncommon) | 56.7% (150) | +1.4pp | +5.0pp | - | - | -0.9 | hold |
-| Trail Rations (uncommon) | 56.7% (150) | +1.4pp | +5.0pp | - | - | -0.9 | hold |
-| Houndmaster's Whistle (uncommon) | 56.7% (150) | +1.4pp | +5.0pp | - | - | -0.9 | hold |
-| Duskforged Greatsword (legendary) | 65.3% (150) | +10.0pp | +6.6pp | - | - | 0.9 | hold |
-| Herald's Horn (epic) | 61.3% (150) | +6.0pp | +9.5pp | - | - | -0.9 | hold |
-| Thunderborn Grips (set) | 54.7% (150) | -0.6pp | +2.9pp | - | - | -0.9 | hold |
-| Conqueror's Circlet (epic) | 68.0% (150) | +12.7pp | +9.5pp | - | - | 0.8 | hold |
-| Hornbow (common) | 61.3% (150) | +6.0pp | +2.8pp | - | - | 0.8 | hold |
-| Nightglass Cuirass (set) | 61.3% (150) | +6.0pp | +2.9pp | - | - | 0.8 | hold |
-| Hushsteps (rare) | 57.3% (150) | +2.0pp | +5.2pp | - | - | -0.8 | hold |
-| Plated Gauntlets (uncommon) | 63.3% (150) | +8.0pp | +5.0pp | - | - | 0.8 | hold |
-| Thunderspine (epic) | 62.0% (150) | +6.7pp | +9.5pp | - | - | -0.7 | hold |
-| Mercy's Chime (epic) | 62.0% (150) | +6.7pp | +9.5pp | - | - | -0.7 | hold |
-| Cloudstriders (epic) | 62.0% (150) | +6.7pp | +9.5pp | - | - | -0.7 | hold |
-| Glasswall Shield (epic) | 62.0% (150) | +6.7pp | +9.5pp | - | - | -0.7 | hold |
-| Wellspring Charm (common) | 55.3% (150) | +0.0pp | +2.8pp | - | - | -0.7 | hold |
-| Moonstep Slippers (epic) | 67.3% (150) | +12.0pp | +9.5pp | - | - | 0.7 | hold |
-| Starweaver Hood (set) | 60.7% (150) | +5.4pp | +2.9pp | - | - | 0.6 | hold |
-| Sparkcast Blade (rare) | 58.0% (150) | +2.7pp | +5.2pp | - | - | -0.6 | hold |
-| Scout's Cap (uncommon) | 58.0% (150) | +2.7pp | +5.0pp | - | - | -0.6 | hold |
-| Heart of the Peak (legendary) | 64.0% (150) | +8.7pp | +6.6pp | - | - | 0.5 | hold |
-| Scarlet Cleaver (set) | 56.0% (150) | +0.7pp | +2.9pp | - | - | -0.5 | hold |
-| Runed Wand (common) | 56.0% (150) | +0.7pp | +2.8pp | - | - | -0.5 | hold |
-| Seer's Prism (common) | 56.0% (150) | +0.7pp | +2.8pp | - | - | -0.5 | hold |
-| Basalt Bulwark (epic) | 66.7% (150) | +11.4pp | +9.5pp | - | - | 0.5 | hold |
-| Behemoth Heart (epic) | 66.7% (150) | +11.4pp | +9.5pp | - | - | 0.5 | hold |
-| Comet Hammer (legendary) | 60.0% (150) | +4.7pp | +6.6pp | - | - | -0.5 | hold |
-| Shepherd's Sling (common) | 60.0% (150) | +4.7pp | +2.8pp | - | - | 0.5 | hold |
-| Nightglass Helm (set) | 60.0% (150) | +4.7pp | +2.9pp | - | - | 0.5 | hold |
-| Warband Pennant (rare) | 58.7% (150) | +3.4pp | +5.2pp | - | - | -0.4 | hold |
-| Resin Ring (uncommon) | 62.0% (150) | +6.7pp | +5.0pp | - | - | 0.4 | hold |
-| Bramblemail (rare) | 62.0% (150) | +6.7pp | +5.2pp | - | - | 0.4 | hold |
-| Soulmend Mask (rare) | 62.0% (150) | +6.7pp | +5.2pp | - | - | 0.4 | hold |
-| Sorrowsteel (epic) | 63.3% (150) | +8.0pp | +9.5pp | - | - | -0.4 | hold |
-| Tide Pearl (epic) | 63.3% (150) | +8.0pp | +9.5pp | - | - | -0.4 | hold |
-| Rampart of Dusk (mythic) | 75.3% (150) | +20.0pp | +19.0pp | - | - | 0.3 | hold |
-| Starweaver Robe (set) | 59.3% (150) | +4.0pp | +2.9pp | - | - | 0.3 | hold |
-| Wildwarden Hood (set) | 59.3% (150) | +4.0pp | +2.9pp | - | - | 0.3 | hold |
-| Wildwarden Quiver (set) | 59.3% (150) | +4.0pp | +2.9pp | - | - | 0.3 | hold |
-| Fatebreaker (rare) | 59.3% (150) | +4.0pp | +5.2pp | - | - | -0.3 | hold |
-| Emberweave Mantle (rare) | 59.3% (150) | +4.0pp | +5.2pp | - | - | -0.3 | hold |
-| Copper Conductor (rare) | 59.3% (150) | +4.0pp | +5.2pp | - | - | -0.3 | hold |
-| Mask of the Hollow Star (mythic) | 73.3% (150) | +18.0pp | +19.0pp | - | - | -0.3 | hold |
-| Rogue's Bandana (uncommon) | 59.3% (150) | +4.0pp | +5.0pp | - | - | -0.2 | hold |
-| Ghoststep Slippers (rare) | 61.3% (150) | +6.0pp | +5.2pp | - | - | 0.2 | hold |
-| Soul Harvester (rare) | 61.3% (150) | +6.0pp | +5.2pp | - | - | 0.2 | hold |
-| Staff of Ascent (epic) | 64.0% (150) | +8.7pp | +9.5pp | - | - | -0.2 | hold |
-| Shield of First Light (legendary) | 62.7% (150) | +7.4pp | +6.6pp | - | - | 0.2 | hold |
-| Ogrehide Girdle (common) | 57.3% (150) | +2.0pp | +2.8pp | - | - | -0.2 | hold |
-| Wool-Lined Boots (common) | 57.3% (150) | +2.0pp | +2.8pp | - | - | -0.2 | hold |
-| Duskfall Diadem (epic) | 65.3% (150) | +10.0pp | +9.5pp | - | - | 0.1 | hold |
-| Thunderborn Sigil (set) | 58.7% (150) | +3.4pp | +2.9pp | - | - | 0.1 | hold |
-| Wildwarden Boots (set) | 58.7% (150) | +3.4pp | +2.9pp | - | - | 0.1 | hold |
-| Wraithwalkers (mythic) | 74.7% (150) | +19.4pp | +19.0pp | - | - | 0.1 | hold |
-| Rushing Blade (rare) | 60.7% (150) | +5.4pp | +5.2pp | - | - | 0.0 | hold |
-| Heartstring Amulet (rare) | 60.7% (150) | +5.4pp | +5.2pp | - | - | 0.0 | hold |
+| Tempered Blade (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Ringlink Hauberk (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Ogrehide Girdle (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Hornbow (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Runed Wand (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Spellward Cloak (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wellspring Charm (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Quickstep Boots (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Brawler's Wraps (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Leech Tooth (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Studded Buckler (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Scout's Cap (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Honing Stone (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Gambler's Token (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Inkwell Charm (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Resin Ring (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Stiletto (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Mendmoss Pouch (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Shepherd's Sling (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Seer's Prism (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Sanguine Saber (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Bramblemail (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Trollheart Cuirass (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Repeating Arbalest (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Stargazer Hat (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Soulmend Mask (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Azure Geode (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Fatebreaker (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wardplate (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Rimefrost Maul (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Kindled Falchion (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Adder Vial (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Unbound Sash (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Ghoststep Slippers (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Hillbreaker (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Headsman's Axe (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Tidecaller Spear (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Sparkcast Blade (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Emberweave Mantle (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Farseer Lens (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Warband Pennant (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Ironbark Totem (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Viper Needle (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Ironshod Boots (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Second Dawn Locket (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Mountain Grips (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Towering Cowl (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Conqueror's Circlet (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Thunderspine (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Grimoire of Blight (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Mercy's Chime (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Herald's Horn (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Sorrowsteel (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Basalt Bulwark (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Cloudstriders (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Staff of Ascent (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Final Hush (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wyrmscale Gloves (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Iron Knuckles (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Clan Warpaint (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Rogue's Bandana (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Heartwood Shield (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Vigil Candle (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Trail Rations (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Houndmaster's Whistle (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wildman's Axe (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Granite Heart (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Spirit Tether (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Rushing Blade (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Starloom Robe (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Copper Conductor (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Heartstring Amulet (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Cracked Monocle (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Behemoth Heart (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Duskfall Diadem (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Harvest Scythe (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Glasswall Shield (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Stilled Hourglass (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Hide Gloves (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Plated Gauntlets (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Weaver's Gloves (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Cutpurse Grips (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Asp Claws (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wool-Lined Boots (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Runner's Treads (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wargreaves (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Hushsteps (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Iron Sallet (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Scholar's Circlet (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Hide Jerkin (common) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Banneret Plate (uncommon) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Duskforged Greatsword (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Shield of First Light (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Crown of the Conclave (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wyrmhide Mail (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Gauntlets of Wrath (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Galerunners (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Heart of the Peak (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Horizon Cleaver (mythic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Codex Without End (mythic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Mask of the Hollow Star (mythic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Rampart of Dusk (mythic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Hands of Unmaking (mythic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wraithwalkers (mythic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Emberborn Heart (mythic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Nightglass Blade (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Nightglass Helm (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Nightglass Cuirass (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Thunderborn Grips (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Thunderborn Treads (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Thunderborn Sigil (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Starweaver Hood (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Starweaver Orb (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Starweaver Robe (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Scarlet Cleaver (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Scarlet Grips (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Scarlet Pendant (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wildwarden Hood (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wildwarden Quiver (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Wildwarden Boots (set) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Honeycomb Charm (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Starwoven Cloak (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Tide Pearl (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Moonstep Slippers (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Comet Hammer (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Voltaic Tether (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Living Crucible (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Bounty Monocle (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Bloodhound Cleaver (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Glass Cannon's Prism (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Soul Harvester (rare) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Warp Spikes (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Martyr's Aegis (epic) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Doppelgänger Mask (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
+| Volatile Reactor (legendary) | 0.0% (0) | -55.0pp | -55.0pp | - | - | 0.0 | hold |
 
-## Powers (gain of starting with it vs all powers, +9.6pp)
+## Powers (gain of starting with it vs all powers, -55.0pp)
 
 | power | completion (n) | gain | live win (games) | pick rate / pick win | z | verdict |
 |---|---|---|---|---|---|---|
-| Overflow Cup (fullmana) | 7.3% (150) | -48.0pp | - | - | -26.6 | buff (numbers x1.15) |
-| Lone Wolf Pelt (lonewolf) | 83.3% (150) | +28.0pp | - | - | 6.0 | nerf (special effect: design) |
-| Veteran's Medal (medal) | 41.3% (150) | -14.0pp | - | - | -5.8 | buff (special effect: design) |
-| Changeling Mask (changeling) | 44.0% (150) | -11.3pp | - | - | -5.1 | buff (special effect: design) |
-| Ashen Plume (feather) | 80.0% (150) | +24.7pp | - | - | 4.6 | nerf (special effect: design) |
-| King's Crown (king) | 79.3% (150) | +24.0pp | - | - | 4.3 | nerf (special effect: design) |
-| Mossy Totem (cover) | 78.0% (150) | +22.7pp | - | - | 3.8 | nerf (special effect: design) |
-| Shuffled Deck (deck) | 49.3% (150) | -6.0pp | - | - | -3.8 | buff (special effect: design) |
-| Pathfinder's Quill (quill) | 50.0% (150) | -5.3pp | - | - | -3.6 | buff (special effect: design) |
-| Last Stand Banner (lastone) | 76.7% (150) | +21.4pp | - | - | 3.4 | nerf (special effect: design) |
-| Treasure Map (xmap) | 51.3% (150) | -4.0pp | - | - | -3.3 | buff (special effect: design) |
-| Phoenix Egg (phoenix) | 75.3% (150) | +20.0pp | - | - | 2.9 | nerf (special effect: design) |
-| Bounty Hunter's Map (huntmap) | 53.3% (150) | -2.0pp | - | - | -2.8 | buff (special effect: design) |
-| Energy Coil (battery) | 74.0% (150) | +18.7pp | - | - | 2.5 | nerf (numbers x0.85) |
-| Warm Teapot (teapot) | 74.0% (150) | +18.7pp | - | - | 2.5 | nerf (numbers x0.85) |
-| Anchor Chain (anchor) | 74.0% (150) | +18.7pp | - | - | 2.5 | nerf (special effect: design) |
-| Minimalist's Vow (vow) | 74.0% (150) | +18.7pp | - | - | 2.5 | nerf (special effect: design) |
-| Blink Pebble (blinkstone) | 54.7% (150) | -0.6pp | - | - | -2.5 | buff (special effect: design) |
-| Crest of Many (crest) | 73.3% (150) | +18.0pp | - | - | 2.3 | nerf (special effect: design) |
-| Mending Spring (spring) | 73.3% (150) | +18.0pp | - | - | 2.3 | nerf (numbers x0.85) |
-| Crimson Contract (bloodpact) | 73.3% (150) | +18.0pp | - | - | 2.3 | nerf (numbers x0.85) |
-| Spotlight Lamp (center) | 73.3% (150) | +18.0pp | - | - | 2.3 | nerf (special effect: design) |
-| Guild Seal (seal) | 56.0% (150) | +0.7pp | - | - | -2.2 | hold (could be chance: FDR) |
-| Plague Flask (contagion) | 56.0% (150) | +0.7pp | - | - | -2.2 | hold (could be chance: FDR) |
-| Undertaker's Shovel (gravestone) | 72.7% (150) | +17.4pp | - | - | 2.1 | hold (could be chance: FDR) |
-| Bodyguard Oath (bodyguard) | 72.7% (150) | +17.4pp | - | - | 2.1 | hold (could be chance: FDR) |
-| Mirror Shard (mirrorshield) | 72.7% (150) | +17.4pp | - | - | 2.1 | hold (could be chance: FDR) |
-| Glass Crown (glass) | 72.7% (150) | +17.4pp | - | - | 2.1 | hold (could be chance: FDR) |
-| Sprouting Acorn (seed) | 56.7% (150) | +1.4pp | - | - | -2.0 | hold (could be chance: FDR) |
-| Mossbound Tome (tome) | 72.0% (150) | +16.7pp | - | - | 1.9 | hold |
-| Snowball (snowball) | 72.0% (150) | +16.7pp | - | - | 1.9 | hold |
-| Thorn Crown (bramblecrown) | 57.3% (150) | +2.0pp | - | - | -1.9 | hold |
-| Lodestone (lodestone) | 71.3% (150) | +16.0pp | - | - | 1.7 | hold |
-| Brotherhood Chain (bond) | 71.3% (150) | +16.0pp | - | - | 1.7 | hold |
-| Lucky Sprig (clover) | 58.0% (150) | +2.7pp | - | - | -1.7 | hold |
-| Weighted Bones (dice) | 58.7% (150) | +3.4pp | - | - | -1.5 | hold |
-| Earthshaker Drum (quakedrum) | 58.7% (150) | +3.4pp | - | - | -1.5 | hold |
-| Chain Pyre (pyre) | 58.7% (150) | +3.4pp | - | - | -1.5 | hold |
-| Hush Bell (hush) | 58.7% (150) | +3.4pp | - | - | -1.5 | hold |
-| Wisp Lantern (lens) | 70.7% (150) | +15.4pp | - | - | 1.5 | hold |
-| Wrathful Shade (vengeance) | 70.7% (150) | +15.4pp | - | - | 1.5 | hold |
-| Wanted Poster (bounty) | 70.7% (150) | +15.4pp | - | - | 1.5 | hold |
-| Wayfarer's Satchel (backpack) | 59.3% (150) | +4.0pp | - | - | -1.4 | hold |
-| Rearguard Quiver (rearguard) | 59.3% (150) | +4.0pp | - | - | -1.4 | hold |
-| Echo Chime (echo) | 59.3% (150) | +4.0pp | - | - | -1.4 | hold |
-| Firefly Jar (fireflies) | 70.0% (150) | +14.7pp | - | - | 1.4 | hold |
-| Swapper's Coin (trickcoin) | 70.0% (150) | +14.7pp | - | - | 1.4 | hold |
-| Scales of Balance (scales) | 70.0% (150) | +14.7pp | - | - | 1.4 | hold |
-| Paper Kite (kite) | 60.0% (150) | +4.7pp | - | - | -1.2 | hold |
-| Curio Cabinet (cabinet) | 60.0% (150) | +4.7pp | - | - | -1.2 | hold |
-| Double or Nothing (double) | 60.0% (150) | +4.7pp | - | - | -1.2 | hold |
-| Rime Glyph (frostsigil) | 60.7% (150) | +5.4pp | - | - | -1.1 | hold |
-| Stonefoot Idol (stonefoot) | 68.7% (150) | +13.4pp | - | - | 1.0 | hold |
-| Two-Faced Coin (loaded) | 68.7% (150) | +13.4pp | - | - | 1.0 | hold |
-| Harmony Chord (harmony) | 68.7% (150) | +13.4pp | - | - | 1.0 | hold |
-| Charging Horn (warhorn) | 61.3% (150) | +6.0pp | - | - | -0.9 | hold |
-| Marble Pouch (marbles) | 61.3% (150) | +6.0pp | - | - | -0.9 | hold |
-| Ironclad Standard (standard) | 68.0% (150) | +12.7pp | - | - | 0.8 | hold |
-| Heartblood Garnet (bloodstone) | 68.0% (150) | +12.7pp | - | - | 0.8 | hold |
-| Snow Globe (snowglobe) | 68.0% (150) | +12.7pp | - | - | 0.8 | hold |
-| Jester's Bell (jesterbell) | 68.0% (150) | +12.7pp | - | - | 0.8 | hold |
-| Moonwell Basin (font) | 62.0% (150) | +6.7pp | - | - | -0.7 | hold |
-| Gravity Stone (gravity) | 62.0% (150) | +6.7pp | - | - | -0.7 | hold |
-| Berserker Chain (berserk) | 62.0% (150) | +6.7pp | - | - | -0.7 | hold |
-| Pack Rat's Sack (packrat) | 62.0% (150) | +6.7pp | - | - | -0.7 | hold |
-| Dying Gasp (lastbreath) | 67.3% (150) | +12.0pp | - | - | 0.6 | hold |
-| Muster Flag (rally) | 67.3% (150) | +12.0pp | - | - | 0.6 | hold |
-| Singing Seashell (seashell) | 67.3% (150) | +12.0pp | - | - | 0.6 | hold |
-| Vanguard Horn (vanguard) | 67.3% (150) | +12.0pp | - | - | 0.6 | hold |
-| Pack Horn (packhorn) | 67.3% (150) | +12.0pp | - | - | 0.6 | hold |
-| Watchtower Flag (highground) | 62.7% (150) | +7.4pp | - | - | -0.6 | hold |
-| Gilded Effigy (idol) | 66.7% (150) | +11.4pp | - | - | 0.5 | hold |
-| Drawn Steel (firststrike) | 66.7% (150) | +11.4pp | - | - | 0.5 | hold |
-| Siege Sling (catapult) | 66.7% (150) | +11.4pp | - | - | 0.5 | hold |
-| Gravecaller Lantern (gravecaller) | 66.7% (150) | +11.4pp | - | - | 0.5 | hold |
-| Time Crystal (timecrystal) | 66.7% (150) | +11.4pp | - | - | 0.5 | hold |
-| Heirloom Anvil (anvil) | 66.7% (150) | +11.4pp | - | - | 0.5 | hold |
-| Lucky Horseshoe (horseshoe) | 63.3% (150) | +8.0pp | - | - | -0.4 | hold |
-| Shieldwall Banner (shieldwall) | 63.3% (150) | +8.0pp | - | - | -0.4 | hold |
-| Ley Line Chalk (leyline) | 63.3% (150) | +8.0pp | - | - | -0.4 | hold |
-| Giant's Brew (giant) | 63.3% (150) | +8.0pp | - | - | -0.4 | hold |
-| Unbending Oath (ironwill) | 66.0% (150) | +10.7pp | - | - | 0.3 | hold |
-| Faded Chart (treasure) | 66.0% (150) | +10.7pp | - | - | 0.3 | hold |
-| Tiny Beehive (beehive) | 66.0% (150) | +10.7pp | - | - | 0.3 | hold |
-| Star Compass (compass) | 66.0% (150) | +10.7pp | - | - | 0.3 | hold |
-| Battle Line Pennant (battleline) | 66.0% (150) | +10.7pp | - | - | 0.3 | hold |
-| Tail Gust (wind) | 64.0% (150) | +8.7pp | - | - | -0.2 | hold |
-| Soul Jar (souljar) | 64.0% (150) | +8.7pp | - | - | -0.2 | hold |
-| Lone Crown (solo) | 64.0% (150) | +8.7pp | - | - | -0.2 | hold |
-| Clan Drum (drum) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Ogre Molar (tooth) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Whetted Mind (wits) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Quarry Brand (mark) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Smoldering Coal (ember) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Grindwheel (whetset) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Pinwheel (pinwheel) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Merchant's Ledger (ledger) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Cursed Doubloon (cursecoin) | 65.3% (150) | +10.0pp | - | - | 0.1 | hold |
-| Stormpost Totem (thunder) | 64.7% (150) | +9.4pp | - | - | -0.1 | hold |
-| Fat Purse (purse) | 64.7% (150) | +9.4pp | - | - | -0.1 | hold |
+| Gilded Effigy (idol) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Clan Drum (drum) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Ironclad Standard (standard) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Wisp Lantern (lens) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Ashen Plume (feather) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Guild Seal (seal) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Weighted Bones (dice) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Moonwell Basin (font) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Heartblood Garnet (bloodstone) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Ogre Molar (tooth) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Whetted Mind (wits) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Lucky Sprig (clover) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Wayfarer's Satchel (backpack) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Crest of Many (crest) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Wrathful Shade (vengeance) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Rime Glyph (frostsigil) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Stormpost Totem (thunder) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Mending Spring (spring) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Drawn Steel (firststrike) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Fat Purse (purse) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Mossbound Tome (tome) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Tail Gust (wind) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Quarry Brand (mark) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Smoldering Coal (ember) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Charging Horn (warhorn) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Unbending Oath (ironwill) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Sprouting Acorn (seed) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Wanted Poster (bounty) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Crimson Contract (bloodpact) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Dying Gasp (lastbreath) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Grindwheel (whetset) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Energy Coil (battery) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Faded Chart (treasure) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Muster Flag (rally) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Tiny Beehive (beehive) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Singing Seashell (seashell) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Paper Kite (kite) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Star Compass (compass) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Warm Teapot (teapot) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Snow Globe (snowglobe) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Marble Pouch (marbles) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Firefly Jar (fireflies) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Pinwheel (pinwheel) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Lucky Horseshoe (horseshoe) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Shieldwall Banner (shieldwall) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Lone Wolf Pelt (lonewolf) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Vanguard Horn (vanguard) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Rearguard Quiver (rearguard) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Battle Line Pennant (battleline) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Mossy Totem (cover) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Undertaker's Shovel (gravestone) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Earthshaker Drum (quakedrum) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Thorn Crown (bramblecrown) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Siege Sling (catapult) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Gravity Stone (gravity) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Anchor Chain (anchor) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Stonefoot Idol (stonefoot) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Blink Pebble (blinkstone) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Swapper's Coin (trickcoin) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Watchtower Flag (highground) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Spotlight Lamp (center) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Lodestone (lodestone) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Bodyguard Oath (bodyguard) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Pack Horn (packhorn) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Jester's Bell (jesterbell) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Mirror Shard (mirrorshield) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Phoenix Egg (phoenix) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Soul Jar (souljar) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Gravecaller Lantern (gravecaller) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Last Stand Banner (lastone) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Chain Pyre (pyre) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Plague Flask (contagion) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| King's Crown (king) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Echo Chime (echo) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Overflow Cup (fullmana) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Hush Bell (hush) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Ley Line Chalk (leyline) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Scales of Balance (scales) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Glass Crown (glass) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Giant's Brew (giant) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Berserker Chain (berserk) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Brotherhood Chain (bond) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Two-Faced Coin (loaded) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Time Crystal (timecrystal) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Harmony Chord (harmony) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Merchant's Ledger (ledger) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Shuffled Deck (deck) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Pathfinder's Quill (quill) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Bounty Hunter's Map (huntmap) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Heirloom Anvil (anvil) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Curio Cabinet (cabinet) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Lone Crown (solo) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Changeling Mask (changeling) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Cursed Doubloon (cursecoin) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Treasure Map (xmap) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Veteran's Medal (medal) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Double or Nothing (double) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Snowball (snowball) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Pack Rat's Sack (packrat) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
+| Minimalist's Vow (vow) | 0.0% (0) | -55.0pp | - | - | 0.0 | hold |
 
 ## Events (from the players' picks)
 
@@ -346,90 +346,105 @@ Rule: change only when |z| >= 2 and the gap >= the tolerance (hero 3%, item 3%, 
 | Armory | 0 | - | collecting data |
 | Collector | 0 | - | collecting data |
 
-## Level-up Perks (39 of 204 pairs flagged)
+## Level-up Perks (67 of 204 pairs flagged)
 
 | hero (lvl) | perk A (win% / n) | perk B (win% / n) | gap | z | verdict |
 |---|---|---|---|---|---|
-| Bramble L2 | Thorn Snare (45.5% / 576) | Sap Drain (73.1% / 588) | -27.6pp | -10.0 | Sap Drain > Thorn Snare (tune numbers) |
-| Maelstrom L3 | Riptide (61.3% / 310) | Sea Foam (79.4% / 538) | -18.1pp | -5.5 | Sea Foam > Riptide (tune numbers) |
-| Stinger L2 | Busy Bees (46.1% / 534) | Royal Jelly (60.7% / 720) | -14.6pp | -5.2 | Royal Jelly > Busy Bees (tune numbers) |
-| Fang L2 | Loyal (72.5% / 291) | Lockjaw (53.6% / 321) | +18.9pp | 5.0 | Loyal > Lockjaw (tune numbers) |
-| Mirage L2 | Sharper Images (64.7% / 286) | Switcheroo (45.7% / 326) | +19.0pp | 4.8 | Sharper Images > Switcheroo (tune numbers) |
-| Hookjaw L3 | Double Hook (66.0% / 388) | Reel In (78.8% / 519) | -12.8pp | -4.3 | Reel In > Double Hook (tune numbers) |
-| Feuer L2 | Wildfire (65.9% / 314) | Kindling (49.4% / 265) | +16.5pp | 4.0 | Wildfire > Kindling (tune numbers) |
-| Rohammer L2 | Earthbreaker (54.9% / 536) | Pain Into Power (65.9% / 706) | -11.0pp | -3.9 | Pain Into Power > Earthbreaker (tune numbers) |
-| Combat Medic L3 | Emergency Care (67.0% / 412) | Adrenaline (78.7% / 455) | -11.7pp | -3.9 | Adrenaline > Emergency Care (tune numbers) |
-| Chronos L3 | Time Warp (65.0% / 469) | Temporal Anchor (76.2% / 437) | -11.2pp | -3.7 | Temporal Anchor > Time Warp (tune numbers) |
-| Hookjaw L2 | Barbed Chain (65.3% / 499) | Long Chain (54.6% / 652) | +10.7pp | 3.7 | Barbed Chain > Long Chain (tune numbers) |
-| Deadeye L2 | Next in Line (61.7% / 311) | Hollow Point (47.6% / 332) | +14.1pp | 3.6 | Next in Line > Hollow Point (tune numbers) |
-| Radiant L3 | Sanctified Ground (74.5% / 502) | Mending Light (84.1% / 359) | -9.6pp | -3.5 | Mending Light > Sanctified Ground (tune numbers) |
-| Mesmer L4 | Puppet Master (60.0% / 110) | Mirror Mind (78.2% / 248) | -18.2pp | -3.4 | Mirror Mind > Puppet Master (tune numbers) |
-| Vial L2 | Bigger Batch (59.9% / 589) | Potent Acid (50.8% / 715) | +9.2pp | 3.3 | Bigger Batch > Potent Acid (tune numbers) |
-| Ironhorn L3 | Stampede (83.8% / 711) | Frenzy (74.1% / 282) | +9.7pp | 3.3 | Stampede > Frenzy (tune numbers) |
-| Mesmer L2 | Deep Trance (60.9% / 616) | Mind Spike (51.8% / 599) | +9.1pp | 3.2 | Deep Trance > Mind Spike (tune numbers) |
-| Kitsune L4 | Nine Tails (78.9% / 38) | Bewitching Glow (100.0% / 32) | -21.1pp | -3.2 | Bewitching Glow > Nine Tails (tune numbers) |
-| Eclipse L3 | Thick Smoke (75.4% / 293) | Assassinate (61.9% / 194) | +13.6pp | 3.2 | Thick Smoke > Assassinate (tune numbers) |
-| Graveborn L3 | Legion (80.2% / 197) | Bone Archers (67.9% / 274) | +12.3pp | 3.1 | Legion > Bone Archers (tune numbers) |
-| Solace L3 | Sanctuary (68.7% / 521) | Aegis Light (78.0% / 332) | -9.3pp | -3.1 | Aegis Light > Sanctuary (tune numbers) |
-| Belladonna L3 | Spore Burst (68.5% / 203) | Leeching Venom (80.4% / 312) | -12.0pp | -3.0 | Leeching Venom > Spore Burst (tune numbers) |
-| Duelist L3 | Blood Oath (81.5% / 119) | Crowd Pleaser (69.8% / 325) | +11.7pp | 2.7 | Blood Oath > Crowd Pleaser (tune numbers) |
-| Combat Medic L2 | Better Bandages (61.9% / 565) | Field Surgeon (54.1% / 538) | +7.9pp | 2.7 | Better Bandages > Field Surgeon (tune numbers) |
-| Vesper L2 | Blood Moon (66.8% / 346) | Mist Form (56.9% / 311) | +9.8pp | 2.6 | Blood Moon > Mist Form (tune numbers) |
-| Citadel L3 | Veterans (65.8% / 474) | Bigger Garrison (56.7% / 319) | +9.1pp | 2.6 | Veterans > Bigger Garrison (tune numbers) |
-| Astral L3 | Bright Star (82.9% / 175) | Guiding Light (73.1% / 286) | +9.8pp | 2.5 | Bright Star > Guiding Light (tune numbers) |
-| Vial L4 | Elixir of Life (85.8% / 113) | Catalyst (72.1% / 104) | +13.7pp | 2.5 | Elixir of Life > Catalyst (tune numbers) |
-| Mirage L3 | Hall of Mirrors (73.1% / 219) | Shatterglass (62.6% / 273) | +10.4pp | 2.5 | Hall of Mirrors > Shatterglass (tune numbers) |
-| Smolder L2 | Second Helping (56.5% / 868) | Napalm (48.1% / 295) | +8.3pp | 2.5 | Second Helping > Napalm (tune numbers) |
-| Tom L2 | Big Portions (50.6% / 563) | Taste Test (57.9% / 568) | -7.3pp | -2.5 | Taste Test > Big Portions (tune numbers) |
-| Vex L3 | Twin Step (73.5% / 238) | Smoke Veil (82.4% / 262) | -8.9pp | -2.4 | Smoke Veil > Twin Step (tune numbers) |
-| Vesper L4 | Bat Swarm (84.4% / 128) | Hemorrhage (92.9% / 182) | -8.5pp | -2.3 | Hemorrhage > Bat Swarm (tune numbers) |
-| Kaze L3 | Hurricane (66.7% / 153) | Pressure Point (76.3% / 304) | -9.6pp | -2.1 | Pressure Point > Hurricane (tune numbers) |
-| Gardener L2 | Fertile Soil (60.6% / 531) | Root Network (54.2% / 524) | +6.4pp | 2.1 | Fertile Soil > Root Network (tune numbers) |
-| Bramble L4 | Oakhide (96.5% / 257) | Toxic Thorns (88.9% / 81) | +7.6pp | 2.1 | Oakhide > Toxic Thorns (tune numbers) |
-| Frostbane L4 | Frost Mantle (89.7% / 174) | Frostbite (80.7% / 114) | +9.0pp | 2.1 | Frost Mantle > Frostbite (tune numbers) |
-| Phalanx L3 | Shield Wall (72.3% / 264) | Hoplite Kick (65.3% / 521) | +7.1pp | 2.1 | Shield Wall > Hoplite Kick (tune numbers) |
-| Astral L2 | Quick Comet (61.2% / 304) | Lucky Star (53.1% / 320) | +8.1pp | 2.0 | Quick Comet > Lucky Star (tune numbers) |
+| Bramble L2 | Thorn Snare (42.1% / 1476) | Sap Drain (69.8% / 1530) | -27.7pp | -15.9 | Sap Drain > Thorn Snare (tune numbers) |
+| Maelstrom L3 | Riptide (62.0% / 802) | Sea Foam (79.5% / 1365) | -17.5pp | -8.6 | Sea Foam > Riptide (tune numbers) |
+| Mesmer L4 | Puppet Master (54.2% / 288) | Mirror Mind (79.5% / 620) | -25.3pp | -7.6 | Mirror Mind > Puppet Master (tune numbers) |
+| Stinger L2 | Busy Bees (48.1% / 1394) | Royal Jelly (61.3% / 1768) | -13.2pp | -7.5 | Royal Jelly > Busy Bees (tune numbers) |
+| Combat Medic L3 | Emergency Care (67.3% / 995) | Adrenaline (80.8% / 1096) | -13.5pp | -7.1 | Adrenaline > Emergency Care (tune numbers) |
+| Hookjaw L3 | Double Hook (67.1% / 1010) | Reel In (79.1% / 1266) | -12.0pp | -6.4 | Reel In > Double Hook (tune numbers) |
+| Fang L2 | Loyal (69.6% / 747) | Lockjaw (54.1% / 740) | +15.6pp | 6.3 | Loyal > Lockjaw (tune numbers) |
+| Mirage L2 | Sharper Images (62.9% / 744) | Switcheroo (48.0% / 792) | +14.9pp | 6.0 | Sharper Images > Switcheroo (tune numbers) |
+| Hookjaw L2 | Barbed Chain (66.4% / 1205) | Long Chain (55.6% / 1646) | +10.8pp | 5.9 | Barbed Chain > Long Chain (tune numbers) |
+| Graveborn L3 | Legion (81.1% / 460) | Bone Archers (66.2% / 699) | +14.8pp | 5.8 | Legion > Bone Archers (tune numbers) |
+| Vial L2 | Bigger Batch (59.1% / 1482) | Potent Acid (49.3% / 1715) | +9.8pp | 5.6 | Bigger Batch > Potent Acid (tune numbers) |
+| Frostbane L4 | Frost Mantle (92.0% / 426) | Frostbite (76.6% / 256) | +15.5pp | 5.2 | Frost Mantle > Frostbite (tune numbers) |
+| Rohammer L2 | Earthbreaker (56.8% / 1332) | Pain Into Power (65.7% / 1750) | -9.0pp | -5.1 | Pain Into Power > Earthbreaker (tune numbers) |
+| Mesmer L2 | Deep Trance (59.4% / 1524) | Mind Spike (50.8% / 1564) | +8.7pp | 4.9 | Deep Trance > Mind Spike (tune numbers) |
+| Vex L3 | Twin Step (69.7% / 601) | Smoke Veil (81.5% / 621) | -11.8pp | -4.8 | Smoke Veil > Twin Step (tune numbers) |
+| Radiant L3 | Sanctified Ground (73.1% / 1195) | Mending Light (81.8% / 884) | -8.7pp | -4.8 | Mending Light > Sanctified Ground (tune numbers) |
+| Combat Medic L2 | Better Bandages (63.7% / 1324) | Field Surgeon (54.7% / 1347) | +9.0pp | 4.7 | Better Bandages > Field Surgeon (tune numbers) |
+| Smolder L4 | Rich Fuel (73.8% / 328) | Cauterize (90.7% / 118) | -16.9pp | -4.7 | Cauterize > Rich Fuel (tune numbers) |
+| Chronos L3 | Time Warp (65.6% / 1158) | Temporal Anchor (74.4% / 1128) | -8.7pp | -4.6 | Temporal Anchor > Time Warp (tune numbers) |
+| Feuer L2 | Wildfire (61.0% / 844) | Kindling (49.5% / 713) | +11.5pp | 4.6 | Wildfire > Kindling (tune numbers) |
+| Ironhorn L3 | Stampede (83.1% / 1694) | Frenzy (74.7% / 688) | +8.4pp | 4.4 | Stampede > Frenzy (tune numbers) |
+| Ashwing L4 | Cinder Rain (78.9% / 232) | Choking Smoke (92.9% / 140) | -14.0pp | -4.0 | Choking Smoke > Cinder Rain (tune numbers) |
+| Citadel L3 | Veterans (65.5% / 1197) | Bigger Garrison (57.0% / 738) | +8.5pp | 3.7 | Veterans > Bigger Garrison (tune numbers) |
+| Eclipse L2 | Kunai Rain (53.1% / 733) | Poisoned Stars (62.2% / 822) | -9.1pp | -3.6 | Poisoned Stars > Kunai Rain (tune numbers) |
+| Solace L3 | Sanctuary (69.2% / 1284) | Aegis Light (76.1% / 792) | -6.9pp | -3.5 | Aegis Light > Sanctuary (tune numbers) |
+| Vesper L2 | Blood Moon (66.7% / 822) | Mist Form (58.2% / 749) | +8.5pp | 3.5 | Blood Moon > Mist Form (tune numbers) |
+| Solace L4 | Rebuke (79.8% / 396) | Renewal (88.2% / 519) | -8.4pp | -3.4 | Renewal > Rebuke (tune numbers) |
+| Tempest L3 | Conductor (77.3% / 802) | Overload (68.1% / 417) | +9.2pp | 3.4 | Conductor > Overload (tune numbers) |
+| Kitsune L2 | Ghost Walk (64.5% / 690) | Phantom Fangs (56.2% / 863) | +8.3pp | 3.3 | Ghost Walk > Phantom Fangs (tune numbers) |
+| Tom L2 | Big Portions (50.6% / 1385) | Taste Test (56.8% / 1427) | -6.2pp | -3.3 | Taste Test > Big Portions (tune numbers) |
+| Duelist L3 | Blood Oath (81.0% / 274) | Crowd Pleaser (71.6% / 839) | +9.4pp | 3.3 | Blood Oath > Crowd Pleaser (tune numbers) |
+| Vial L3 | Volatile (73.4% / 1439) | Transmute (67.0% / 959) | +6.3pp | 3.3 | Volatile > Transmute (tune numbers) |
+| Smolder L2 | Second Helping (57.4% / 2151) | Napalm (50.4% / 734) | +7.0pp | 3.3 | Second Helping > Napalm (tune numbers) |
+| Rivet L3 | Flamethrower (74.5% / 611) | Overclock (65.9% / 595) | +8.6pp | 3.3 | Flamethrower > Overclock (tune numbers) |
+| Onyx L2 | Sharper Spines (66.0% / 1500) | Shell Shock (59.7% / 1019) | +6.3pp | 3.2 | Sharper Spines > Shell Shock (tune numbers) |
+| Gardener L2 | Fertile Soil (60.4% / 1330) | Root Network (54.3% / 1390) | +6.1pp | 3.2 | Fertile Soil > Root Network (tune numbers) |
+| Ember Wyrm L2 | White Flame (56.6% / 1676) | Crash Landing (50.9% / 1390) | +5.8pp | 3.2 | White Flame > Crash Landing (tune numbers) |
+| Lyric L3 | Power Chord (66.5% / 851) | Big Stage (72.7% / 1453) | -6.2pp | -3.1 | Big Stage > Power Chord (tune numbers) |
+| Astral L3 | Bright Star (80.4% / 439) | Guiding Light (72.6% / 709) | +7.8pp | 3.1 | Bright Star > Guiding Light (tune numbers) |
+| Rivet L4 | Spark Coil (86.0% / 264) | Mortar (71.9% / 121) | +14.1pp | 3.1 | Spark Coil > Mortar (tune numbers) |
+| Solace L2 | Purify (50.5% / 1251) | Answered Prayer (56.0% / 1583) | -5.5pp | -2.9 | Answered Prayer > Purify (tune numbers) |
+| Belladonna L3 | Spore Burst (73.0% / 496) | Leeching Venom (80.2% / 741) | -7.2pp | -2.9 | Leeching Venom > Spore Burst (tune numbers) |
+| Astral L2 | Quick Comet (59.8% / 779) | Lucky Star (52.6% / 781) | +7.2pp | 2.9 | Quick Comet > Lucky Star (tune numbers) |
+| Rivet L2 | Reinforced (59.2% / 699) | Rapid Fire (52.0% / 840) | +7.2pp | 2.8 | Reinforced > Rapid Fire (tune numbers) |
+| Kaze L3 | Hurricane (67.6% / 370) | Pressure Point (75.6% / 788) | -8.1pp | -2.8 | Pressure Point > Hurricane (tune numbers) |
+| Nyx L2 | Hunger (56.2% / 828) | Shadow Pounce (63.0% / 694) | -6.8pp | -2.7 | Shadow Pounce > Hunger (tune numbers) |
+| Inferno L4 | Wrath (89.2% / 186) | Imp Servants (75.6% / 90) | +13.7pp | 2.7 | Wrath > Imp Servants (tune numbers) |
+| Bramble L4 | Oakhide (95.4% / 624) | Toxic Thorns (89.0% / 200) | +6.4pp | 2.7 | Oakhide > Toxic Thorns (tune numbers) |
+| Aegir L4 | Unbroken (92.5% / 577) | Shield Burst (86.2% / 269) | +6.3pp | 2.7 | Unbroken > Shield Burst (tune numbers) |
+| Frostbane L3 | Whiteout (72.2% / 1516) | Shatter (66.9% / 859) | +5.2pp | 2.6 | Whiteout > Shatter (tune numbers) |
+| Deadeye L2 | Next in Line (58.3% / 792) | Hollow Point (51.7% / 781) | +6.6pp | 2.6 | Next in Line > Hollow Point (tune numbers) |
+| Mirage L3 | Hall of Mirrors (71.3% / 544) | Shatterglass (64.4% / 708) | +6.9pp | 2.6 | Hall of Mirrors > Shatterglass (tune numbers) |
+| Tom L3 | Extra Plate (72.9% / 1077) | Comfort Food (67.7% / 1048) | +5.1pp | 2.6 | Extra Plate > Comfort Food (tune numbers) |
+| Vial L4 | Elixir of Life (85.2% / 284) | Catalyst (76.1% / 222) | +9.1pp | 2.6 | Elixir of Life > Catalyst (tune numbers) |
+| Graveborn L2 | Ribcage Plating (59.1% / 831) | Graveside Oath (52.6% / 688) | +6.5pp | 2.5 | Ribcage Plating > Graveside Oath (tune numbers) |
+| Radiant L4 | Sunward Guard (95.2% / 394) | Verdict (88.8% / 187) | +6.4pp | 2.5 | Sunward Guard > Verdict (tune numbers) |
+| Frostbane L2 | Deep Chill (58.4% / 1830) | Ice Lance (53.8% / 1151) | +4.6pp | 2.5 | Deep Chill > Ice Lance (tune numbers) |
+| Plasma Cannon L2 | Overclock (57.0% / 791) | Focus Lens (50.9% / 696) | +6.2pp | 2.4 | Overclock > Focus Lens (tune numbers) |
+| Ankh L4 | Plague of Locusts (82.7% / 133) | Sarcophagus (91.3% / 320) | -8.5pp | -2.3 | Sarcophagus > Plague of Locusts (tune numbers) |
+| Ironhorn L2 | Bloodscent (61.2% / 1030) | Long Horns (65.3% / 2041) | -4.1pp | -2.2 | Long Horns > Bloodscent (tune numbers) |
+| Stinger L3 | Bigger Hive (69.3% / 1591) | Sticky Honey (73.6% / 841) | -4.3pp | -2.2 | Sticky Honey > Bigger Hive (tune numbers) |
+| Phalanx L3 | Shield Wall (72.6% / 656) | Hoplite Kick (67.7% / 1243) | +4.9pp | 2.2 | Shield Wall > Hoplite Kick (tune numbers) |
+| Skara L4 | Javelin Dance (68.4% / 38) | Hunting Party (88.6% / 35) | -20.2pp | -2.2 | Hunting Party > Javelin Dance (tune numbers) |
+| Onyx L4 | Mending Shell (89.4% / 349) | Spiked Burst (84.2% / 379) | +5.2pp | 2.1 | Mending Shell > Spiked Burst (tune numbers) |
+| Rumble L4 | Brawler's Luck (86.9% / 289) | Hair of the Dog (92.3% / 246) | -5.4pp | -2.1 | Hair of the Dog > Brawler's Luck (tune numbers) |
+| Chronos L4 | Chronoshock (80.3% / 381) | Accelerando (85.6% / 540) | -5.2pp | -2.1 | Accelerando > Chronoshock (tune numbers) |
+| Rapture L2 | Curtain Call (51.0% / 735) | Cutting Remarks (56.2% / 806) | -5.2pp | -2.0 | Cutting Remarks > Curtain Call (tune numbers) |
 
 ## Verification (a fresh simulation after the patch, seed 151)
 
-Heroes: spread (sd of the start rates) 5.4% before -> 4.9% after; heroes outside the band: 7 -> 11.
-Completion: 55.3% -> 54.1%.
-Fights after: h 76%, m 97%, e 99%, b 62%.
+Heroes: spread (sd of the start rates) 4.6% before -> 3.9% after; heroes outside the band: 23 -> 12.
+Completion: 55.0% -> 53.4%.
+Fights after: h 75%, m 97%, e 99%, b 61%.
 
 Changes written:
-- hero Ironhorn (brakk): stats adjusted hp 1025->985, atk 79->76, ap 65->65, grow 1->1 (nerf, start rate 70.0%, z 5.6)
-- hero Radiant (seraph): stats adjusted hp 1005->980, atk 53->52, ap 95->90, grow 0.85->0.85 (nerf, start rate 65.7%, z 3.8)
-- hero Lyric (echo): stats adjusted hp 710->725, atk 42->43, ap 100->100, grow 0.85->0.85 (buff, start rate 47.7%, z -2.6)
-- hero Ashwing (ashwing): stats adjusted hp 675->695, atk 46->47, ap 115->120, grow 1.15->1.15 (buff, start rate 43.0%, z -4.3)
-- hero Plasma Cannon (plasma): stats adjusted hp 490->505, atk 47->49, ap 50->50, grow 1->1 (buff, start rate 42.7%, z -4.4)
-- hero Kitsune (kitsune): stats adjusted hp 810->790, atk 80->78, ap 85->85, grow 0.85->0.85 (nerf, start rate 64.7%, z 3.4)
-- hero Onyx (onyx): stats adjusted hp 845->830, atk 36->35, ap 65->65, grow 1->1 (nerf, start rate 63.0%, z 2.8)
-- item Wardplate: nerf x0.85: shieldStart 435 -> 370 (text: 370) ("Starts fights with a 435 shield" -> "Starts fights with a 370 shield")
-- item Wyrmhide Mail: nerf x0.85: hp 165 -> 140 (text: 140), armor 15 -> 13 (text: 13), dmgReduce 0.07 -> 0.06 (text: 6) ("+165 Health, +15 Defense, takes 7% less damage" -> "+140 Health, +13 Defense, takes 6% less damage")
-- item Emberborn Heart: nerf x0.85: revive 0.37 -> 0.31 (text: 31), hp 120 -> 100 (text: 100), onDeathHeal 0.22 -> 0.19 (text: 19) ("Revives once at 37% Health, +120 Health, on death heals allies within 2 hexes for 22%" -> "Revives once at 31% Health, +100 Health, on death heals allies within 2 hexes for 19%")
-- item Voltaic Tether: nerf x0.85: ap 29 -> 25 (text: 25), tether 0.49 -> 0.42 (text: 42) ("+29 Magic. Tethers to furthest ally: foes crossing the beam take 49% Magic/s and are slowed 50%" -> "+25 Magic. Tethers to furthest ally: foes crossing the beam take 42% Magic/s and are slowed 50%")
-- item Living Crucible: nerf x0.85: armor 34 -> 29 (text: 29) ("+34 Defense. On death, detonates dealing 100% of all damage absorbed during battle split among surviving foes" -> "+29 Defense. On death, detonates dealing 100% of all damage absorbed during battle split among surviving foes")
-- item Glass Cannon's Prism: buff x1.15: ap 145 -> 165 (text: 165) ("+100% attack speed, +145 Magic. Max HP is locked to 1; adjacent allies intercept all incoming damage for wearer" -> "+100% attack speed, +165 Magic. Max HP is locked to 1; adjacent allies intercept all incoming damage for wearer")
-- item Volatile Reactor: nerf x0.85: armor 13 -> 11 (text: 11), ap 29 -> 25 (text: 25) ("+13 Defense, +29 Magic. Every 5s releases a cosmic blast: dealing 120% Magic to foes and shielding allies for 20% max HP" -> "+11 Defense, +25 Magic. Every 5s releases a cosmic blast: dealing 120% Magic to foes and shielding allies for 20% max HP")
-- power Mending Spring: nerf x0.85: regen 0.0026 -> 0.0022 (text: 0.22) ("Heroes regenerate 0.26% max Health per second, and all healing on them is 12% stronger." -> "Heroes regenerate 0.22% max Health per second, and all healing on them is 12% stronger.")
-- power Crimson Contract: x0.85 rounds to the same numbers, not changed
-- power Energy Coil: x0.85 rounds to the same numbers, not changed
-- power Warm Teapot: nerf x0.85: regen 0.0038 -> 0.0032 (text: 0.32) ("All heroes regenerate 0.38% Health per second." -> "All heroes regenerate 0.32% Health per second.")
-- power Overflow Cup: x1.15 rounds to the same numbers, not changed
-- power Ashen Plume: nerf by 15.1 points, but its effect is not a number: design change needed (not written)
-- power Crest of Many: nerf by 8.4 points, but its effect is not a number: design change needed (not written)
-- power Lone Wolf Pelt: nerf by 18.4 points, but its effect is not a number: design change needed (not written)
-- power Mossy Totem: nerf by 13.1 points, but its effect is not a number: design change needed (not written)
-- power Anchor Chain: nerf by 9.1 points, but its effect is not a number: design change needed (not written)
-- power Blink Pebble: buff by 10.2 points, but its effect is not a number: design change needed (not written)
-- power Spotlight Lamp: nerf by 8.4 points, but its effect is not a number: design change needed (not written)
-- power Phoenix Egg: nerf by 10.4 points, but its effect is not a number: design change needed (not written)
-- power Last Stand Banner: nerf by 11.8 points, but its effect is not a number: design change needed (not written)
-- power King's Crown: nerf by 14.4 points, but its effect is not a number: design change needed (not written)
-- power Shuffled Deck: buff by 15.6 points, but its effect is not a number: design change needed (not written)
-- power Pathfinder's Quill: buff by 14.9 points, but its effect is not a number: design change needed (not written)
-- power Bounty Hunter's Map: buff by 11.6 points, but its effect is not a number: design change needed (not written)
-- power Changeling Mask: buff by 20.9 points, but its effect is not a number: design change needed (not written)
-- power Treasure Map: buff by 13.6 points, but its effect is not a number: design change needed (not written)
-- power Veteran's Medal: buff by 23.6 points, but its effect is not a number: design change needed (not written)
-- power Minimalist's Vow: nerf by 9.1 points, but its effect is not a number: design change needed (not written)
+- hero Vex (vex): stats adjusted hp 760->750, atk 94->93, ap 70->70, grow 0.85->0.85 (nerf, start rate 59.7%, z 2.7)
+- hero Ironhorn (brakk): stats adjusted hp 985->960, atk 76->74, ap 65->65, grow 1->1 (nerf, start rate 65.6%, z 6.1)
+- hero Talon (kestrel): stats adjusted hp 670->680, atk 72->73, ap 50->50, grow 1.15->1.15 (buff, start rate 49.6%, z -2.9)
+- hero Hookjaw (grimhook): stats adjusted hp 1170->1155, atk 80->79, ap 65->65, grow 0.85->0.85 (nerf, start rate 59.2%, z 2.4)
+- hero Radiant (seraph): stats adjusted hp 980->970, atk 52->51, ap 90->90, grow 0.85->0.85 (nerf, start rate 59.3%, z 2.4)
+- hero Bramble (bramble): stats adjusted hp 1180->1165, atk 52->51, ap 90->90, grow 0.85->0.85 (nerf, start rate 60.0%, z 2.8)
+- hero Lyric (echo): stats adjusted hp 725->735, atk 43->44, ap 100->100, grow 0.85->0.85 (buff, start rate 49.3%, z -3.1)
+- hero Flint (blaze): stats adjusted hp 795->805, atk 72->73, ap 55->55, grow 1.15->1.15 (buff, start rate 50.3%, z -2.6)
+- hero Skara (hippolyta): stats adjusted hp 700->695, atk 55->54, ap 55->55, grow 0.85->0.85 (nerf, start rate 58.8%, z 2.1)
+- hero Vesper (vesper): stats adjusted hp 735->720, atk 53->52, ap 80->80, grow 0.85->0.85 (nerf, start rate 62.4%, z 4.2)
+- hero Ankh (imhotep): stats adjusted hp 1060->1050, atk 61->60, ap 75->75, grow 0.85->0.85 (nerf, start rate 59.3%, z 2.4)
+- hero Phalanx (leonidas): stats adjusted hp 1020->1030, atk 61->62, ap 75->75, grow 1.15->1.15 (buff, start rate 50.9%, z -2.2)
+- hero Maelstrom (coralie): stats adjusted hp 1015->1005, atk 64->63, ap 90->90, grow 0.85->0.85 (nerf, start rate 58.7%, z 2.1)
+- hero Prism (prism): stats adjusted hp 535->525, atk 30->30, ap 110->110, grow 0.85->0.85 (nerf, start rate 60.9%, z 3.4)
+- hero Citadel (citadel): stats adjusted hp 1320->1340, atk 48->49, ap 100->100, grow 1->1 (buff, start rate 49.7%, z -2.9)
+- hero Smolder (smolder): stats adjusted hp 1390->1405, atk 59->60, ap 105->105, grow 1.15->1.15 (buff, start rate 50.7%, z -2.4)
+- hero Ashwing (ashwing): stats adjusted hp 695->720, atk 47->49, ap 120->125, grow 1.15->1.15 (buff, start rate 40.4%, z -8.1)
+- hero Rohammer (rohammer): stats adjusted hp 1200->1185, atk 94->93, ap 80->80, grow 1->1 (nerf, start rate 59.5%, z 2.5)
+- hero Plasma Cannon (plasma): stats adjusted hp 505->515, atk 49->50, ap 50->50, grow 1->1 (buff, start rate 48.5%, z -3.5)
+- hero Duelist (duelist): stats adjusted hp 805->815, atk 63->64, ap 65->65, grow 1.15->1.15 (buff, start rate 50.1%, z -2.6)
+- hero Chronos (chronos): stats adjusted hp 620->625, atk 39->39, ap 100->100, grow 0.85->0.85 (buff, start rate 50.8%, z -2.3)
+- hero Belladonna (bella): stats adjusted hp 750->745, atk 48->48, ap 120->120, grow 0.85->0.85 (nerf, start rate 58.8%, z 2.1)
+- hero Onyx (onyx): stats adjusted hp 830->810, atk 35->34, ap 65->65, grow 1->1 (nerf, start rate 65.3%, z 6.0)
