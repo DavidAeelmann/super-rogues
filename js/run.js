@@ -172,7 +172,7 @@
       kind: 'hero', uid: h.uid, key: h.key, name: heroName, glyph: b.glyph, color: b.color, lvl: h.lvl,
       hp: isGlassPrism ? 1 : (b.hp + (m.hp || 0)) * (1 + 0.15 * g * L) * (1 + (m.hpPct || 0) + all) * tp,
       atk: (b.atk + (m.atk || 0)) * (1 + 0.15 * g * L) * (1 + (m.atkPct || 0) + all) * tp,
-      ap: ((b.ap || 100) * (1 + 0.2 * g * L) + (m.ap || 0)) * (1 + all) * tp,
+      ap: ((b.ap || 100) * (1 + 0.2 * g * L) + (m.ap || 0)) * (1 + (m.apPct || 0) + all) * tp,
       armor: (b.armor + defGrow * L + (m.armor || 0)) * (1 + all),
       as: b.as * Math.max(0.3, 1 + (m.asPct || 0)), range: Math.max(1, b.range + (m.range || 0)), ms: b.ms + (m.ms || 0),
       crit: (b.crit || 0) + (m.crit || 0), critDmg: 1.5 + (m.critDmg || 0), ls: (b.ls || 0) + (m.ls || 0),

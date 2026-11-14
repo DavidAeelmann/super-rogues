@@ -679,7 +679,7 @@
       if (!nx) break; hit.push(nx); pts.push([nx.c, nx.r]); last = nx;
     }
     fx(W, { k: 'bolt', pts, color: '#d8c8ff', t1: W.t + 6 });
-    hit.forEach((e, i) => { deal(W, u, e, dmg * Math.max(0.3, 1 - falloff * i), 'magic', { ability: isAb }); if (stun) cc(W, e, 'stun', stun); });
+    hit.forEach((e, i) => { deal(W, u, e, dmg * Math.max(0.3, 1 - falloff * i), 'magic', { ability: isAb }); if (stun) cc(W, e, 'stun', stun); if (isAb && u.ab && u.ab.shred) buff(e, 'armor', -u.ab.shred, sec(4), W); });
     return hit;
   }
 

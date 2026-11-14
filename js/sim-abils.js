@@ -19,6 +19,7 @@
     }
     if (ab.allyShield) for (const a of allies(W, u)) if (a !== u && Hx.dist(a, u) <= 2) shield(W, a, amt * ab.allyShield, 4);
     if (ab.burst) for (const e of enemies(W, u)) if (Hx.dist(e, u) <= 1) deal(W, u, e, amt * ab.burst, 'magic', { ability: true });
+    if (ab.castHeal) heal(W, u, u.maxHp * ab.castHeal, true);
     fxRing(W, u.c, u.r, ab.radius, '#4f7cff', 10);
     return true;
   };
@@ -29,7 +30,7 @@
       const n = freeNeighbors(W, t.c, t.r).sort((a, b) => Hx.dist(b, u) - Hx.dist(a, u));
       if (!n.length && Hx.dist(u, t) > 1) continue;
       if (Hx.dist(u, t) > 1) blink(W, u, n[0].c, n[0].r);
-      deal(W, u, t, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true, forceCrit: u.fl.has('ambush') });
+      deal(W, u, t, ab.dmg * atkOf(W, u), 'phys', { ability: true, canCrit: true, forceCrit: u.fl.has('ambush'), pen: ab.pen || 0 });
       if (alive(t) && ab.execute && t.hp < t.maxHp * ab.execute) { fxText(W, t, 'EXECUTE', '#f44'); deal(W, u, t, t.hp + t.shield + 1, 'true', {}); }
       if (alive(t) && ab.mark) { t.st.vulnU = W.t + sec(5); t.st.vulnP = Math.max(t.st.vulnP || 0, ab.mark); }
       if (alive(t) && ab.hamstring) slow(W, t, ab.hamstring, 3);   
@@ -142,7 +143,7 @@
       const d = { key: 'skeleton', name: big ? 'Bone Colossus' : 'Skeleton', glyph: big ? '🦴' : '☠', color: '#cfd6e6',
         hp: 3 * apOf(u) * ab.hpMul * (big ? 4 * bm : 1) * (ab.archers && !big ? 0.7 : 1),
         atk: 0.3 * apOf(u) * (big ? 2 * bm : 1) * (1 + (ab.atkMul || 0)),
-        armor: 10, as: 0.9, range: ab.archers && !big ? 3 : 1, ms: 2.5, explode: ab.explode ? ab.explode * apOf(u) : 0, size: big ? 1.2 : 0.85 };
+        armor: 10 + (ab.skelArm || 0), as: 0.9 * (1 + (ab.skelAs || 0)), range: ab.archers && !big ? 3 : 1, ms: 2.5, explode: ab.explode ? ab.explode * apOf(u) : 0, size: big ? 1.2 : 0.85 };
       const s = summon(W, u, d);
       if (s && big) for (const e of enemies(W, u)) if (Hx.dist(e, s) <= 2) { e.st.tauntU = W.t + sec(2.5); e.st.tauntBy = s.id; }
     }
@@ -184,7 +185,7 @@
     const ab = u.ab, k = ab.stat;
     for (let i = 0; i < ab.count; i++) {
       const s = summon(W, u, { key: 'clone', name: 'Veil Twin', glyph: u.glyph, color: u.color, alpha: 0.55,
-        hp: u.maxHp * k, atk: atkOf(W, u) * k, armor: u.armor * k, as: u.as, range: u.range, ms: u.ms,
+        hp: u.maxHp * k, atk: atkOf(W, u) * k, armor: u.armor * k, as: u.as * (1 + (ab.cloneAs || 0)), range: u.range, ms: u.ms,
         explode: ab.explode ? atkOf(W, u) * ab.explode : 0 });
       if (s && ab.silence) for (const e of enemies(W, u)) if (Hx.dist(e, s) <= 1) cc(W, e, 'silence', ab.silence);
     }
@@ -194,6 +195,7 @@
     for (const h of opts) { const s = Math.min(...es.map(e => Hx.dist(e, h)), 99); if (s > bs) { bs = s; best = h; } }
     if (best) blink(W, u, best.c, best.r);
     if (ab.backstab) u.backstab = ab.backstab;
+    if (ab.castHeal) heal(W, u, u.maxHp * ab.castHeal, true);
     return true;
   };
   A.turret = (W, u, free) => {
@@ -203,8 +205,8 @@
     const lv = 1 + 0.15 * (u.lvl - 1);
     const e0 = enemies(W, u).sort((a, b) => Hx.dist(u, a) - Hx.dist(u, b))[0];
     const n = freeNeighbors(W, u.c, u.r).sort((a, b) => e0 ? Hx.dist(a, e0) - Hx.dist(b, e0) : 0)[0];
-    summon(W, u, { key: 'turret', name: 'Turret', glyph: '🗼', color: '#d9a441', hp: 340 * lv * ab.hpMul, atk: 0.8 * atkOf(W, u),
-      armor: 20, as: (ab.mortar ? 0.6 : 1) * ab.asMul, range: ab.mortar ? 6 : 3, ms: 0, tStun: ab.stun || 0,
+    summon(W, u, { key: 'turret', name: 'Turret', glyph: '🗼', color: '#d9a441', hp: 340 * lv * ab.hpMul, atk: 0.8 * atkOf(W, u) * (1 + (ab.turretDmg || 0)),
+      armor: 20, as: (ab.mortar ? 0.6 : 1) * ab.asMul, range: (ab.mortar ? 6 : 3) + (ab.turretRng || 0), ms: 0, tStun: ab.stun || 0,
       m: { burnOnHit: ab.burn || 0, splash: ab.mortar ? 0.5 : 0 }, size: 0.85 }, n || u);
     return true;
   };
@@ -242,7 +244,7 @@
   };
   A.anthem = (W, u) => {
     const ab = u.ab;
-    for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) { heal(W, a, ab.heal * apOf(u), true); buff(a, 'atkPct', ab.atk, sec(4), W); if (ab.tempoAs) buff(a, 'asPct', ab.tempoAs, sec(4), W); }
+    for (const a of allies(W, u)) if (Hx.dist(a, u) <= ab.radius) { heal(W, a, ab.heal * apOf(u), true); buff(a, 'atkPct', ab.atk, sec(4), W); if (ab.tempoAs) buff(a, 'asPct', ab.tempoAs, sec(4), W); if (ab.shield) shield(W, a, a.maxHp * ab.shield, 4); }
     for (const e of enemies(W, u)) { if (ab.slow && Hx.dist(e, u) <= 2) slow(W, e, ab.slow, 2); if (ab.stun && Hx.dist(e, u) <= 1) cc(W, e, 'stun', ab.stun); }
     fxRing(W, u.c, u.r, ab.radius, '#c77dff', 12); return true;
   };

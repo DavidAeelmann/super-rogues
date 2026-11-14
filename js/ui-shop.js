@@ -366,7 +366,7 @@
           </div>
 
           <div class="xp-right-col">
-            <div class="xp-gain-val">+<span id="xpbig">${done ? got : 0}</span> XP</div>
+            <div class="xp-gain-val"><span id="xpbig">${done ? '+' + got : '+0'}</span> XP</div>
             ${log.length ? `<div class="xp-pills-row">${xpChips(log).map((c, i) => `<span class="xp-chip-pill" style="--i:${i}" title="${esc(c.why.join(' · '))}"><i>${XP_ICON[c.k] || '✨'}</i> <b>${esc(c.name)}</b> <span class="chip-add">+${c.xp}</span></span>`).join('')}</div>` : note ? `<p class="small dim">${note}</p>` : ''}
           </div>
         </div>

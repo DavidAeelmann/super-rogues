@@ -234,7 +234,7 @@
     chain: ab => [['M', ab.dmg, `per bounce, ${ab.bounces} enemies, ${pct(ab.falloff)} less each bounce`]],
     hook: ab => [['P', ab.dmg, 'to the pulled enemy']],
     mirror: ab => [['Z', d => `each clone: ${pct(ab.stat)} of her Health, Attack and Defense (${Math.round(d.hp * ab.stat)} Health, ${Math.round(d.atk * ab.stat)} attack)`]],
-    turret: ab => [['Z', d => `each turret: ${Math.round(340 * lvF(d) * ab.hpMul)} Health and 80% of his Attack as attack (${Math.round(0.8 * d.atk)})`]],
+    turret: ab => [['Z', d => `each turret: ${Math.round(340 * lvF(d) * ab.hpMul)} Health and ${Math.round(80 * (1 + (ab.turretDmg || 0)))}% of his Attack as attack (${Math.round(0.8 * (1 + (ab.turretDmg || 0)) * d.atk)})`]],
     whirl: ab => [['P', ab.dmg, 'to every adjacent enemy'], ['Z', `heals ${pct(ab.heal)} of the damage dealt`]],
     consecrate: ab => [['M', ab.dps, `per second to enemies on the ground, ${ab.dur}s`], ['Z', `allies on it heal ${pct(ab.heal)} of their max Health per second`]],
     eclipse: ab => [['A', ab.bonus, `extra on each of the next ${ab.hits} attacks`], ['Z', `heals ${pct(ab.heal)} of that damage`]],
