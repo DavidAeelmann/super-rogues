@@ -164,7 +164,7 @@
       ab: { reach: 5, dmg: 1.2, stun: 1.5, count: 1, vuln: 0, whirl: 0, pullAll: 0 },
       specs: [
         [{ id: 'gri2a', name: 'Barbed Chain', desc: 'Hook deals double damage, and his attacks poison for 1% max Health per second.', ab: { dmg: 1.2 }, mods: { poisonOnHit: 0.01 } },
-         { id: 'gri2b', name: 'Long Chain', desc: 'Hook reach +3.', ab: { reach: 3 } }],
+         { id: 'gri2b', name: 'Long Chain', desc: 'Hook reach +3 and +15% Health.', ab: { reach: 3 }, mods: { hpPct: 0.15 } }],
         [{ id: 'gri3a', name: 'Double Hook', desc: 'Pulls two enemies.', ab: { count: 1 } },
          { id: 'gri3b', name: 'Reel In', desc: 'Each hook also gives him a shield of 20% of his max Health.', ab: { hookShield: 0.2 } }],
         [{ id: 'gri4a', name: 'Drag Under', desc: 'Hooked enemies take +30% damage for 4s.', ab: { vuln: 0.3 } },
@@ -356,7 +356,7 @@
       ab: { radius: 3, buff: 0.2, dmg: 1.5, bleed: 0.02, stun: 0, taunt: 0, reach: 0, cleave: 0 },
       specs: [
         [{ id: 'rex2a', name: 'Loyal', desc: 'His Howl also heals allies in range for 10% of their max Health.', ab: { howlHeal: 0.1 } },
-         { id: 'rex2b', name: 'Lockjaw', desc: 'His bite slows its target by 45% for 3s.', ab: { lockjaw: 0.45 } }],
+         { id: 'rex2b', name: 'Lockjaw', desc: 'His bite slows its target by 45% for 3s, and he gains +20% Attack.', ab: { lockjaw: 0.45 }, mods: { atkPct: 0.2 } }],
         [{ id: 'rex3a', name: 'Pack Leader', desc: 'Howl reaches 2 more hexes.', ab: { radius: 2 } },
          { id: 'rex3b', name: 'Rabid', desc: 'The bite stuns for 1s.', ab: { stun: 1 } }],
         [{ id: 'rex4a', name: 'Guard Dog', desc: 'Howl taunts adjacent enemies for 2s.', ab: { taunt: 2 } },
@@ -439,7 +439,7 @@
       abil: 'wrap', abName: 'Linen of Ages', abDesc: 'Passive: once per fight, rises again at 30% Health. Active: wraps the 2 nearest enemies: rooted 2s, healing halved, losing 3% max Health per second.',
       ab: { count: 2, root: 2, decay: 0.03, shield: 0, vuln: 0 },
       specs: [
-        [{ id: 'imh2a', name: 'Mummify', desc: 'Wrapped enemies cannot use abilities while rooted.', ab: { mummify: 1 } },
+        [{ id: 'imh2a', name: 'Mummify', desc: 'Wrapped enemies cannot use abilities while rooted. +15% Health.', ab: { mummify: 1 }, mods: { hpPct: 0.15 } },
          { id: 'imh2b', name: 'Tomb Dust', desc: 'Wraps also blind for 1.5s: their attacks miss.', ab: { wrapBlind: 1.5 } }],
         [{ id: 'imh3a', name: 'Many Wraps', desc: 'Wraps 2 more enemies.', ab: { count: 2 } },
          { id: 'imh3b', name: 'Tight Wraps', desc: 'The root lasts 1s longer.', ab: { root: 1 } }],
@@ -526,7 +526,7 @@
       specs: [
         [{ id: 'cor2a', name: 'Undertow', desc: 'The wave pushes 1 hex farther.', ab: { push: 1 } },
          { id: 'cor2b', name: 'Cold Current', desc: 'The slow is 50% instead of 30%.', ab: { slow: 0.2 } }],
-        [{ id: 'cor3a', name: 'Riptide', desc: '+45% wave damage.', ab: { dmg: 0.34 } },
+        [{ id: 'cor3a', name: 'Riptide', desc: '+75% wave damage and +15% Magic.', ab: { dmg: 0.56 }, mods: { apPct: 0.15 } },
          { id: 'cor3b', name: 'Sea Foam', desc: 'Casting shields allies next to her for 15% of their max Health.', ab: { foam: 0.15 } }],
         [{ id: 'cor4a', name: 'High Tide', desc: 'Wave radius +1.', ab: { radius: 1 } },
          { id: 'cor4b', name: 'Drowning Depths', desc: 'Enemies hit by the wave lose 20 Defense for 4s.', ab: { soak: 20 } }],
@@ -695,7 +695,7 @@
       specs: [
         [{ id: 'bel2a', name: 'Numbing Neurotoxin', desc: 'Each Toxin stack slows the enemy attack speed by 4%.', ab: { numb: 0.04 } },
          { id: 'bel2b', name: 'Concentrated Dose', desc: 'Toxin stacks up to 8 instead of 5.', ab: { toxCap: 3 } }],
-        [{ id: 'bel3a', name: 'Spore Burst', desc: 'An enemy that falls with Toxin leaves a poison cloud for 4s.', ab: { spore: 0.3 } },
+        [{ id: 'bel3a', name: 'Spore Burst', desc: 'An enemy that falls with Toxin leaves a strong poison cloud for 4s. +15% Magic.', ab: { spore: 0.6 }, mods: { apPct: 0.15 } },
          { id: 'bel3b', name: 'Leeching Venom', desc: 'Belladonna heals 30% of all Toxin damage.', ab: { leech: 0.3 } }],
         [{ id: 'bel4a', name: 'Paralytic Shock', desc: 'Bursting a full Toxin stuns that enemy for 1.2s.', ab: { paralyze: 1.2 } },
          { id: 'bel4b', name: 'Corrosive Acid', desc: 'Each Toxin stack also takes 4 Defense.', ab: { corrode: 4 } }],
