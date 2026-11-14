@@ -48,11 +48,30 @@ async function simulate() {
   const { runBatch } = require(path.join(ROOT, 'tools/pve/batch.js'));
   const heroes = Object.keys(D.HEROES), items = D.ITEMS.map(i => i.id), relics = D.RELICS.map(r => r.id);
   const t0 = Date.now(), log = m => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)}s] ${m}`);
-  log(`hero runs: ${PER_HERO} x ${heroes.length}`); const base = await runBatch(PER_HERO * heroes.length, SEED, null, 'hero');
-  log(`item runs: ${PER_ITEM} x ${items.length}`); const itm = await runBatch(PER_ITEM * items.length, SEED + 1, null, 'item', items);
-  log(`power runs: ${PER_RELIC} x ${relics.length}`); const rel = await runBatch(PER_RELIC * relics.length, SEED + 2, null, 'relic', relics);
+  const simOnly = arg('sim-only', null), fromSims = arg('from-sims', null);
+  if (simOnly) {
+    log(`chunk hero runs: ${PER_HERO} x ${heroes.length} (seed ${SEED})`);
+    const base = await runBatch(PER_HERO * heroes.length, SEED, null, 'hero');
+    fs.mkdirSync(path.dirname(path.resolve(ROOT, simOnly)), { recursive: true });
+    fs.writeFileSync(path.resolve(ROOT, simOnly), JSON.stringify(base));
+    log(`saved ${base.length} runs to ${simOnly}`);
+    process.exit(0);
+  }
+  let base, itm = [], rel = [];
+  if (fromSims) {
+    base = [];
+    for (const f of fromSims.split(',').map(s => s.trim()).filter(Boolean)) {
+      const arr = JSON.parse(fs.readFileSync(path.resolve(ROOT, f), 'utf8'));
+      for (const r of arr) base.push(r);
+    }
+    log(`loaded ${base.length} hero runs from ${fromSims.split(',').length} chunks`);
+  } else {
+    log(`hero runs: ${PER_HERO} x ${heroes.length}`); base = await runBatch(PER_HERO * heroes.length, SEED, null, 'hero');
+    log(`item runs: ${PER_ITEM} x ${items.length}`); itm = await runBatch(PER_ITEM * items.length, SEED + 1, null, 'item', items);
+    log(`power runs: ${PER_RELIC} x ${relics.length}`); rel = await runBatch(PER_RELIC * relics.length, SEED + 2, null, 'relic', relics);
+  }
   // elasticities, measured instead of assumed: all heroes x1.1 (what 10% hero power is worth), all enemies x1.05 (what 5% enemy strength costs)
-  const calN = Math.min(8000, PER_HERO * heroes.length);
+  const calN = Math.min(4000, base.length);
   log('calibration: heroes x1.10'); const pw = Object.fromEntries(heroes.map(k => [k, (D.TUNE.power[k] || 1) * 1.1])); const hiH = await runBatch(calN, SEED + 3, { power: pw }, 'hero');
   log('calibration: enemies x1.05'); const fs5 = D.CFG.fightScale.map(x => x * 1.05); const hiE = await runBatch(calN, SEED + 3, { fightScale: fs5 }, 'hero');
   const loE = await runBatch(calN, SEED + 3, null, 'hero');
