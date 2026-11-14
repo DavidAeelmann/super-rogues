@@ -54,7 +54,7 @@
         [{ id: 'vex2a', name: 'Ambush', desc: 'Veilstrike always critically strikes.', fl: ['ambush'] },
          { id: 'vex2b', name: 'Hamstring', desc: 'Veilstrike also slows its target by 50% for 3s: no escape.', ab: { hamstring: 0.5 } }],
         [{ id: 'vex3a', name: 'Twin Step', desc: 'Veilstrike also strikes a second nearby enemy for 65% of the damage.', ab: { twin: 0.65 } },
-         { id: 'vex3b', name: 'Smoke Veil', desc: 'Untargetable for 1s after Veilstrike.', ab: { untarg: 1 } }],
+         { id: 'vex3b', name: 'Smoke Veil', desc: 'Untargetable for 1s after Veilstrike. +15% Attack.', ab: { untarg: 1 }, mods: { atkPct: 0.15 } }],
         [{ id: 'vex4a', name: 'Executioner', desc: 'Veilstrike kills enemies left below 20% Health.', ab: { execute: 0.2 } },
          { id: 'vex4b', name: 'Red Surge', desc: 'On kill: refill 60% Energy and +30% attack speed for 3s.', fl: ['bloodrush'] }],
         [{ id: 'vex5a', name: 'Marked for Ruin', desc: 'Veilstrike target takes +25% damage from all sources for 5s.', ab: { mark: 0.25 } },
@@ -123,7 +123,7 @@
       specs: [
         [{ id: 'kes2a', name: 'Eagle Eye', desc: 'Her Volley arrows go for the weakest enemies instead of random ones.', ab: { aimWeak: 1 } },
          { id: 'kes2b', name: 'Barbed Volley', desc: 'Each Volley arrow slows its target by 25% for 2s.', ab: { volSlow: 0.25 } }],
-        [{ id: 'kes3a', name: 'Split Nock', desc: 'At full Focus, every attack also hits another enemy for 55%.', ab: { splitFull: 0.55 } },
+        [{ id: 'kes3a', name: 'Split Nock', desc: 'At full Focus, every attack also hits another enemy for 75%.', ab: { splitFull: 0.75 } },
          { id: 'kes3b', name: 'Full Quiver', desc: 'Volley fires 3 more arrows.', ab: { count: 3 } }],
         [{ id: 'kes4a', name: 'Sniper', desc: '+8% damage per hex of distance to the target.', fl: ['sniper'] },
          { id: 'kes4b', name: 'Rapid Fire', desc: 'Focus gives twice as much and stacks 30x.', ab: { focus: 0.03, focusCap: 15 } }],
@@ -267,7 +267,7 @@
       abil: 'anthem', abName: 'Rallying Refrain', abDesc: 'Passive: every 4s all allies get +3% attack speed (up to 10x). Active: allies within 2 hexes heal 90% Magic and get +25% Attack for 4s.',
       ab: { radius: 2, heal: 0.9, atk: 0.25, slow: 0, stun: 0 },
       specs: [
-        [{ id: 'ech2a', name: 'Encore', desc: 'Rallying Refrain also gives +25% attack speed.', ab: { tempoAs: 0.25 } },
+        [{ id: 'ech2a', name: 'Encore', desc: 'Rallying Refrain also gives +40% attack speed.', ab: { tempoAs: 0.4 } },
          { id: 'ech2b', name: 'Harmony', desc: 'Rallying Refrain heals 55% Magic more.', ab: { heal: 0.55 } }],
         [{ id: 'ech3a', name: 'Power Chord', desc: 'Rallying Refrain gives +20% more attack.', ab: { atk: 0.2 } },
          { id: 'ech3b', name: 'Big Stage', desc: 'Rallying Refrain radius +1.', ab: { radius: 1 } }],
@@ -327,7 +327,7 @@
       abil: 'bloodfeast', abName: 'Crimson Draught', abDesc: 'Passive: abilities heal 20% of their damage. Active: drains every enemy within 2 hexes for 70% Attack + 40% Magic as magic damage and heals for all of it.',
       ab: { radius: 2, dmg: 0.7, apdmg: 0.4, share: 0, bats: 0, bleed: 0 },
       specs: [
-        [{ id: 'ves2a', name: 'Blood Moon', desc: 'Below half Health, Crimson Draught deals 50% more.', ab: { moon: 0.5 } },
+        [{ id: 'ves2a', name: 'Blood Moon', desc: 'Below half Health, Crimson Draught deals 50% more. +15% Magic.', ab: { moon: 0.5 }, mods: { apPct: 0.15 } },
          { id: 'ves2b', name: 'Mist Form', desc: 'After Crimson Draught she cannot be targeted for 1.5s.', ab: { mist: 1.5 } }],
         [{ id: 'ves3a', name: 'Crimson Tide', desc: 'Crimson Draught radius +1.', ab: { radius: 1 } },
          { id: 'ves3b', name: 'Blood Bond', desc: 'Crimson Draught also heals allies within 2 hexes for 30% of the damage.', ab: { share: 0.3 } }],
@@ -384,7 +384,7 @@
       ab: { pie: 2, heal: 0.85, knives: 5, silence: 0, encore: 0 },
       specs: [
         [{ id: 'pip2a', name: 'Bigger Pie', desc: 'The pie stuns 1s longer.', ab: { pie: 1 } },
-         { id: 'pip2b', name: 'Encore!', desc: '25% chance to pull a second trick.', ab: { encore: 0.25 } }],
+         { id: 'pip2b', name: 'Encore!', desc: '45% chance to pull a second trick.', ab: { encore: 0.45 } }],
         [{ id: 'pip3a', name: 'Juggler', desc: 'Juggles 3 more knives.', ab: { knives: 3 } },
          { id: 'pip3b', name: 'Party Balloons', desc: 'Balloons heal 55% Magic more.', ab: { heal: 0.55 } }],
         [{ id: 'pip4a', name: 'Laughing Gas', desc: 'Confetti also silences for 2s.', ab: { silence: 2 } },
@@ -486,7 +486,7 @@
         [{ id: 'spr3a', name: 'Volatile', desc: 'Flasks splash 1 hex.', ab: { radius: 1 } },
          { id: 'spr3b', name: 'Transmute', desc: '+3 gold after each won fight.', mods: { gold: 3 } }],
         [{ id: 'spr4a', name: 'Elixir of Life', desc: 'Healing flasks heal double.', ab: { heal: 1.2 } },
-         { id: 'spr4b', name: 'Catalyst', desc: 'Each flask gives 10 Energy back.', ab: { mana: 10 } }],
+         { id: 'spr4b', name: 'Catalyst', desc: 'Each flask gives 20 Energy back.', ab: { mana: 20 } }],
         [{ id: 'spr5a', name: "Philosopher's Stone", desc: 'Every flask is the right one: healing when an ally is hurt, acid otherwise.', ab: { smart: 1 } },
          { id: 'spr5b', name: 'Chain Reaction', desc: 'Throws 3 more flasks.', ab: { count: 3 } }],
       ] }),
@@ -495,7 +495,7 @@
       abil: 'galekick', abName: 'Squall Kick', abDesc: 'Kicks the target 2 hexes back for 170% Attack as physical damage. Anyone it crashes into takes 100% Attack and is stunned for 1s.',
       ab: { dmg: 1.7, push: 2, stun: 0, splash: 0, targets: 1, tailwind: 0 },
       specs: [
-        [{ id: 'zep2a', name: 'Whirlwind', desc: 'The kick also hits adjacent enemies for 65% Attack as physical damage.', ab: { splash: 0.65 } },
+        [{ id: 'zep2a', name: 'Whirlwind', desc: 'The kick also hits adjacent enemies for 100% Attack as physical damage.', ab: { splash: 1 } },
          { id: 'zep2b', name: 'Second Wind', desc: 'Every kick gives back 30% of his Energy.', ab: { refund: 0.3 } }],
         [{ id: 'zep3a', name: 'Hurricane', desc: 'Knocks back 1 hex farther.', ab: { push: 1 } },
          { id: 'zep3b', name: 'Pressure Point', desc: 'The kick stuns the target for 1.5s.', ab: { stun: 1.5 } }],
@@ -540,7 +540,7 @@
       specs: [
         [{ id: 'ste2a', name: 'Quick Comet', desc: 'The star lands 0.5s sooner.', ab: { delay: -0.5 } },
          { id: 'ste2b', name: 'Lucky Star', desc: 'The star always falls on the toughest enemy.', ab: { strongest: 1 } }],
-        [{ id: 'ste3a', name: 'Bright Star', desc: 'Star radius +1.', ab: { radius: 1 } },
+        [{ id: 'ste3a', name: 'Bright Star', desc: 'Star radius +1. +15% Magic.', ab: { radius: 1 }, mods: { apPct: 0.15 } },
          { id: 'ste3b', name: 'Guiding Light', desc: 'Casting gives allies within 2 hexes +20% Attack for 4s.', ab: { blessing: 0.2 } }],
         [{ id: 'ste4a', name: 'Shooting Stars', desc: '2 shards hit random enemies for 50% of the damage.', ab: { shards: 2 } },
          { id: 'ste4b', name: 'Constellation', desc: 'Each star makes the next one 15% stronger (up to +60%).', ab: { constel: 0.15 } }],
@@ -592,7 +592,7 @@
       abil: 'flamethrower', abName: 'Flamethrower', abDesc: 'Passive (Devour): at the start of each fight it eats one of its items and keeps its stats for good (not its effect). Active: a cone of fire 2 hexes ahead: 30% Magic, then a burn of 30% Magic per second for 4s.',
       ab: { dmg: 0.3, burn: 0.3, dur: 4, reach: 2, spread: 1, devour: 1, boost: 1, vuln: 0, heal: 0 },
       specs: [
-        [{ id: 'smo2a', name: 'Second Helping', desc: 'Eats two items per fight.', ab: { devour: 1 } },
+        [{ id: 'smo2a', name: 'Second Helping', desc: 'Eats two items per fight. +15% Health.', ab: { devour: 1 }, mods: { hpPct: 0.15 } },
          { id: 'smo2b', name: 'Napalm', desc: 'The burn lasts 2s longer.', ab: { dur: 2 } }],
         [{ id: 'smo3a', name: 'Long Nozzle', desc: 'The flames reach 1 hex further.', ab: { reach: 1 } },
          { id: 'smo3b', name: 'Fuel Tank', desc: 'Every enemy the flames hit gives it 6 Energy back.', ab: { fuel: 6 } }],
@@ -609,7 +609,7 @@
         [{ id: 'tom2a', name: 'Big Portions', desc: 'Every dish is 30% stronger.', ab: { big: 0.3 } },
          { id: 'tom2b', name: 'Taste Test', desc: 'Tom also eats a dish himself each time.', ab: { self: 1 } }],
         [{ id: 'tom3a', name: 'Extra Plate', desc: 'One more dish.', ab: { dishes: 1 } },
-         { id: 'tom3b', name: 'Comfort Food', desc: 'Dishes also free their eater from stuns, roots and slows.', ab: { cleanse: 1 } }],
+         { id: 'tom3b', name: 'Comfort Food', desc: 'Dishes also free their eater from stuns, roots and slows. +15% Magic.', ab: { cleanse: 1 }, mods: { apPct: 0.15 } }],
         [{ id: 'tom4a', name: 'Frying Pan', desc: 'Also throws a pan at the nearest enemy: 90% Magic as magic damage and a 1s stun.', ab: { pan: 0.9 } },
          { id: 'tom4b', name: "Chef's Kiss", desc: 'Every dish also gives its target 12 Energy.', ab: { mana: 12 } }],
         [{ id: 'tom5a', name: 'Banquet', desc: 'Every ally gets a dish.', ab: { all: 1 } },
@@ -635,7 +635,7 @@
       abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): slow hammer blows stun for 0.2s; it gains Energy only from damage taken (2 per 1% of max Health). Active: sweeps enemies within 2 hexes in front: 150% Attack, knocked back 2 hexes and stunned 1s.',
       ab: { dmg: 1.5, reach: 2, push: 2, stun: 1, tap: 0.2, gain: 2 },
       specs: [
-        [{ id: 'roh2a', name: 'Earthbreaker', desc: 'The sweep cracks the ground: enemies hit are slowed by 40% for 3s.', ab: { crack: 0.4 } },
+        [{ id: 'roh2a', name: 'Earthbreaker', desc: 'The sweep cracks the ground: enemies hit are slowed by 40% for 3s. +15% Attack.', ab: { crack: 0.4 }, mods: { atkPct: 0.15 } },
          { id: 'roh2b', name: 'Pain Into Power', desc: 'The sweep heals him 5% of his max Health for every enemy it hits.', ab: { sweepHeal: 0.05 } }],
         [{ id: 'roh3a', name: 'Pain Drinker', desc: 'Gets 50% more Energy from damage taken.', ab: { gain: 1 } },
          { id: 'roh3b', name: 'Long Handle', desc: 'The sweep reaches 1 hex further.', ab: { reach: 1 } }],
@@ -770,7 +770,7 @@
       ab: { count: 3, life: 9, cap: 4, reach: 3, pace: 0.7, dmg: 0.27, heal: 0.25, shield: 0.38, poison: 0.13 },
       specs: [
         [{ id: 'gar2a', name: 'Fertile Soil', desc: 'Plants last 4s longer.', ab: { life: 4 } },
-         { id: 'gar2b', name: 'Root Network', desc: 'Enemies next to any of her plants are slowed by 25%.', ab: { network: 0.25 } }],
+         { id: 'gar2b', name: 'Root Network', desc: 'Enemies next to any of her plants are slowed by 25%. +15% Magic.', ab: { network: 0.25 }, mods: { apPct: 0.15 } }],
         [{ id: 'gar3a', name: 'Bigger Bed', desc: 'One more plant every time.', ab: { count: 1 } },
          { id: 'gar3b', name: 'Compost', desc: 'A plant that withers heals the allies next to it for 10% of their max Health.', ab: { compost: 0.1 } }],
         [{ id: 'gar4a', name: 'Hardy Stems', desc: 'Plants act 30% faster.', ab: { pace: 0.2 } },
