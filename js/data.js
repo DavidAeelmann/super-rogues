@@ -11,7 +11,7 @@
     gold: { easy: 6, medium: 9, hard: 13, boss: 16 },
     xpLevels: [0, 0, 30, 85, 180, 330], // cumulative XP to reach level N (index = level); 1 XP per second alive
     maxLevel: 5, baseSlots: 1,          // item slots: 1 at Lv1-2, +1 at Lv3, Lv4, Lv5
-    fightScale: [1, 1.63, 1.48, 1.69, 1.774, 1.96, 2.25, 2.47, 2.552],   // tuned by tools/tune-pve.js
+    fightScale: [1, 1.63, 1.48, 1.69, 1.857, 1.96, 2.25, 2.47, 2.672],   // tuned by tools/tune-pve.js
     firstFight: 0.3,  // fight 1 is 1vN with a small enemy budget
     suddenDeath: 45, fightCap: 150,     // seconds
     suddenDeathRamp: 0.01,              // sudden death burns every unit for 1% max HP per second stacking
@@ -131,7 +131,7 @@
          { id: 'kes5b', name: 'Arrow Storm', desc: 'Volley fires 4 more arrows.', ab: { count: 4 } }],
       ] }),
     morrow: H({ name: 'Graveborn', glyph: '💀', role: 'Summoner', color: '#9aa3b5',
-      hp: 365, atk: 23, ap: 100, armor: 20, as: 0.7, range: 3, ms: 2, mana: 71, m0: 60, grow: 1,
+      hp: 395, atk: 25, ap: 110, armor: 20, as: 0.7, range: 3, ms: 2, mana: 71, m0: 60, grow: 1,
       abil: 'raise', abName: 'Bone Call', abDesc: 'Raises 2 skeleton warriors next to Graveborn, each with 300% Magic as Health and 30% Magic as attack.',
       ab: { count: 2, hpMul: 1, archers: 0, explode: 0, colossus: 0 },
       specs: [
@@ -631,7 +631,7 @@
       ] }),
     // Rohammer, a huge brute with a very slow hammer
     rohammer: H({ name: 'Rohammer', glyph: '🔨', role: 'Tank', color: '#e8943a', fl: ['brute'],
-      hp: 1140, atk: 89, ap: 75, armor: 45, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 1,
+      hp: 1225, atk: 96, ap: 80, armor: 45, as: 0.35, range: 1, ms: 1.8, mana: 60, m0: 0, grow: 1,
       abil: 'sweep', abName: 'Hammer Sweep', abDesc: 'Passive (Brute): slow hammer blows stun for 0.2s; it gains Energy only from damage taken (2 per 1% of max Health). Active: sweeps enemies within 2 hexes in front: 150% Attack, knocked back 2 hexes and stunned 1s.',
       ab: { dmg: 1.5, reach: 2, push: 2, stun: 1, tap: 0.2, gain: 2 },
       specs: [
@@ -789,16 +789,16 @@
     // common
     I('longsword', 'Tempered Blade', 'common', { atk: 15 }, '+15 Attack'),
     I('chainmail', 'Ringlink Hauberk', 'common', { armor: 20 }, '+20 Defense'),
-    I('belt', 'Ogrehide Girdle', 'common', { hp: 140 }, '+140 Health'),
+    I('belt', 'Ogrehide Girdle', 'common', { hp: 120 }, '+120 Health'),
     I('recurve', 'Hornbow', 'common', { asPct: 0.2 }, '+20% attack speed'),
     I('rod', 'Runed Wand', 'common', { ap: 26 }, '+26 Magic'),
     I('cloak', 'Spellward Cloak', 'common', { armor: 16, hp: 58 }, '+16 Defense, +58 Health'),
     I('tear', 'Wellspring Charm', 'common', { manaStart: 20 }, '+20 starting Energy'),
     I('boots', 'Quickstep Boots', 'common', { ms: 1, dodge: 0.08 }, '+1 move speed, +8% dodge'),
     I('gloves', "Brawler's Wraps", 'common', { crit: 0.12, dodge: 0.08 }, '+12% crit, +8% dodge'),
-    I('fang', 'Leech Tooth', 'common', { ls: 0.1 }, '+10% lifesteal'),
+    I('fang', 'Leech Tooth', 'common', { ls: 0.09 }, '+9% lifesteal'),
     I('buckler', 'Studded Buckler', 'common', { shieldStart: 150 }, 'Starts fights with a 150 shield'),
-    I('cap', "Scout's Cap", 'common', { hp: 100, armor: 10 }, '+100 Health, +10 Defense'),
+    I('cap', "Scout's Cap", 'common', { hp: 85, armor: 9 }, '+85 Health, +9 Defense'),
     I('whetstone', 'Honing Stone', 'common', { atk: 8, asPct: 0.08 }, '+8 Attack, +8% attack speed'),
     I('coin', "Gambler's Token", 'common', { gold: 1 }, '+1 gold after each won fight'),
     I('charm', 'Inkwell Charm', 'common', { xpPct: 0.3 }, '+30% XP'),
@@ -817,7 +817,7 @@
     I('bluecrystal', 'Azure Geode', 'rare', { manaRegen: 3 }, '+3 Energy per second'),
     I('infinity', 'Fatebreaker', 'rare', { crit: 0.34, critDmg: 0.66 }, '+34% crit, +66% crit damage'),
     I('guardplate', 'Wardplate', 'rare', { shieldStart: 435 }, 'Starts fights with a 435 shield'),
-    I('frozenhammer', 'Rimefrost Maul', 'rare', { atk: 15, slowOnHit: 0.3 }, '+15 Attack, attacks slow 30%'),
+    I('frozenhammer', 'Rimefrost Maul', 'rare', { atk: 17, slowOnHit: 0.35 }, '+17 Attack, attacks slow 35%'),
     I('emberblade', 'Kindled Falchion', 'rare', { atk: 10, burnOnHit: 0.2 }, '+10 Attack, attacks burn'),
     I('venomvial', 'Adder Vial', 'rare', { poisonOnHit: 0.01 }, 'Attacks poison 1% max Health/s'),
     I('quicksilver', 'Unbound Sash', 'rare', { cleanseOnce: 1, armor: 13, hp: 140 }, 'Ignores the first crowd control, +13 Defense, +140 Health'),
@@ -835,7 +835,7 @@
     // epic
     I('guardian', 'Second Dawn Locket', 'epic', { revive: 0.35, armor: 8 }, 'Revives once at 35% Health'),
     I('titan', 'Mountain Grips', 'epic', { titan: 1, hp: 52 }, 'Gains +3 Attack and +3 Defense per hit (max 15 stacks)'),
-    I('rabadon', 'Towering Cowl', 'epic', { ap: 85 }, '+85 Magic'),
+    I('rabadon', 'Towering Cowl', 'epic', { ap: 72 }, '+72 Magic'),
     I('crown', "Conqueror's Circlet", 'epic', { allPct: 0.19 }, '+19% Health, Attack, Magic, Defense'),
     I('stormbringer', 'Thunderspine', 'epic', { chainEvery: 3, chainTargets: 3, chainDmg: 0.5, asPct: 0.24 }, '+24% attack speed, every 3rd attack chains to 3 enemies'),
     I('morello', 'Grimoire of Blight', 'epic', { ap: 26, abilityBurn: 0.03 }, 'Abilities burn 3% max Health/s, +26 Magic'),
@@ -859,10 +859,10 @@
     I('stoneheart', 'Granite Heart', 'rare', { rampArmor: 2, rampArmorCap: 30 }, '+2 Defense every second (up to +30)'),
     I('soulbinder', 'Spirit Tether', 'rare', { atk: 8, killAtk: 8, killAtkCap: 49 }, '+8 Attack, +8 more when an enemy dies within 3 hexes (up to +49)'),
     I('frenzyblade', 'Rushing Blade', 'rare', { atk: 12, stackAs: 0.05, stackAsCap: 14 }, '+12 Attack, +5% attack speed per hit (14x)'),
-    I('manaweave', 'Starloom Robe', 'rare', { armor: 10, manaRegen: 3 }, '+10 Defense, +3 Energy per second'),
+    I('manaweave', 'Starloom Robe', 'rare', { armor: 9, manaRegen: 3 }, '+9 Defense, +3 Energy per second'),
     I('lightningrod', 'Copper Conductor', 'rare', { asPct: 0.23, chainEvery: 4, chainTargets: 3, chainDmg: 0.5 }, '+23% attack speed, every 4th attack chains'),
     I('lifeline', 'Heartstring Amulet', 'rare', { hp: 130, shieldStartPct: 0.17 }, '+130 Health, starts fights with a 17% shield'),
-    I('crackedlens', 'Cracked Monocle', 'rare', { crit: 0.31, critStack: 0.02, critStackCap: 0.22 }, '+31% crit, each crit +2% crit (up to +22%)'),
+    I('crackedlens', 'Cracked Monocle', 'rare', { crit: 0.26, critStack: 0.02, critStackCap: 0.19 }, '+26% crit, each crit +2% crit (up to +19%)'),
     I('colossus', 'Behemoth Heart', 'epic', { rampHpPct: 0.01, rampHpPctCap: 0.59 }, '+1% max Health every second (up to +59%)'),
     I('eclipsecrown', 'Duskfall Diadem', 'epic', { ap: 61, apPerAtk: 3 }, '+61 Magic, +3 Magic per attack'),
     I('reaper', 'Harvest Scythe', 'epic', { atk: 30, reap: 0.12 }, '+30 Attack, hits execute enemies below 12% Health'),
@@ -912,7 +912,7 @@
     N('boots', 'b_treads', "Runner's Treads", 'uncommon', { ms: 1, armor: 12, hp: 91 }, '+1 move speed, +12 Defense, +91 Health'),
     N('boots', 'b_greaves', 'Wargreaves', 'rare', { ms: 1, asPct: 0.21 }, '+1 move speed, +21% attack speed'),
     N('boots', 'b_shadow', 'Hushsteps', 'rare', { dodge: 0.15, firstMoveAtk: 0.3 }, '+15% dodge, attack after moving deals +30%'),
-    N('helmet', 'h_iron', 'Iron Sallet', 'common', { armor: 12 }, '+12 Defense'),
+    N('helmet', 'h_iron', 'Iron Sallet', 'common', { armor: 9 }, '+9 Defense'),
     N('helmet', 'h_circlet', "Scholar's Circlet", 'uncommon', { ap: 15, manaStart: 15 }, '+15 Magic, +15 starting Energy'),
     N('armor', 'a_jerkin', 'Hide Jerkin', 'common', { hp: 100, dodge: 0.03 }, '+100 Health, +3% dodge'),
     N('armor', 'a_plate', 'Banneret Plate', 'uncommon', { armor: 19, hp: 65 }, '+19 Defense, +65 Health'),
@@ -925,7 +925,7 @@
     N('boots', 'windwalkers', 'Galerunners', 'legendary', { ms: 2, dodge: 0.21, asPct: 0.16 }, '+2 move speed, +21% dodge, +16% attack speed'),
     N('trinket', 'mountainheart', 'Heart of the Peak', 'legendary', { hpPct: 0.14, regen: 0.0059, ccResist: 0.2 }, '+14% max Health, 0.59% regen per second, crowd control 20% shorter'),
     // mythic: one per slot, only in late shops
-    N('weapon', 'worldsplitter', 'Horizon Cleaver', 'mythic', { atk: 36, crit: 0.18, critDmg: 0.44, multishot: 0.44, reap: 0.09 }, '+36 Attack, +18% crit, +44% crit damage, attacks also hit a 2nd enemy for 44%, execute enemies below 9% Health'),
+    N('weapon', 'worldsplitter', 'Horizon Cleaver', 'mythic', { atk: 31, crit: 0.15, critDmg: 0.37, multishot: 0.37, reap: 0.08 }, '+31 Attack, +15% crit, +37% crit damage, attacks also hit a 2nd enemy for 37%, execute enemies below 8% Health'),
     N('offhand', 'eternitytome', 'Codex Without End', 'mythic', { ap: 36, apPerSec: 3, abilityBurn: 0.03, manaMaxPct: -0.2 }, '+36 Magic, +3 Magic every second, abilities burn 3% max Health/s and need 20% less Energy'),
     N('helmet', 'voidmask', 'Mask of the Hollow Star', 'mythic', { allPct: 0.26, cleanseOnce: 1, omni: 0.15 }, '+26% Health, Attack, Magic, Defense, ignores the first crowd control, abilities heal 15% of damage'),
     N('armor', 'obsidianplate', 'Rampart of Dusk', 'mythic', { hp: 290, armor: 23, thorns: 0.23, stasis: 1 }, '+290 Health, +23 Defense, reflects 23% melee damage, once per fight at 40% Health: invulnerable for 2s'),
@@ -935,8 +935,8 @@
     // sets: 3 pieces each, in 3 different slots
     N('weapon', 'obs_blade', 'Nightglass Blade', 'set', { atk: 18, armorPen: 0.15 }, '+18 Attack, ignore 15% Defense', 'obsidian'),
     N('helmet', 'obs_helm', 'Nightglass Helm', 'set', { armor: 14, hp: 68 }, '+14 Defense, +68 Health', 'obsidian'),
-    N('armor', 'obs_plate', 'Nightglass Cuirass', 'set', { armor: 16, hp: 100 }, '+16 Defense, +100 Health', 'obsidian'),
-    N('gloves', 'storm_gloves', 'Thunderborn Grips', 'set', { asPct: 0.15, atk: 6 }, '+15% attack speed, +6 Attack', 'storm'),
+    N('armor', 'obs_plate', 'Nightglass Cuirass', 'set', { armor: 12, hp: 72 }, '+12 Defense, +72 Health', 'obsidian'),
+    N('gloves', 'storm_gloves', 'Thunderborn Grips', 'set', { asPct: 0.13, atk: 5 }, '+13% attack speed, +5 Attack', 'storm'),
     N('boots', 'storm_boots', 'Thunderborn Treads', 'set', { ms: 1, asPct: 0.1 }, '+1 move speed, +10% attack speed', 'storm'),
     N('trinket', 'storm_sigil', 'Thunderborn Sigil', 'set', { crit: 0.12, manaRegen: 1 }, '+12% crit, +1 Energy per second', 'storm'),
     N('helmet', 'arc_hood', 'Starweaver Hood', 'set', { ap: 16, armor: 6 }, '+16 Magic, +6 Defense', 'arcanist'),
@@ -949,7 +949,7 @@
     N('offhand', 'rg_quiver', 'Wildwarden Quiver', 'set', { asPct: 0.16 }, '+16% attack speed', 'ranger'),
     N('boots', 'rg_boots', 'Wildwarden Boots', 'set', { ms: 1, dodge: 0.08 }, '+1 move speed, +8% dodge', 'ranger'),
     // five items unlocked by the account level
-    N('trinket', 'honeycomb', 'Honeycomb Charm', 'rare', { hp: 100, ap: 10, regen: 0.0074 }, '+100 Health, +10 Magic, regenerates 0.74% Health per second'),
+    N('trinket', 'honeycomb', 'Honeycomb Charm', 'rare', { hp: 85, ap: 9, regen: 0.0063 }, '+85 Health, +9 Magic, regenerates 0.63% Health per second'),
     N('armor', 'starcloak', 'Starwoven Cloak', 'rare', { armor: 17, dodge: 0.06 }, '+17 Defense, +6% dodge'),
     N('offhand', 'tidepearl', 'Tide Pearl', 'epic', { ap: 45, manaStart: 20, armor: 13 }, '+45 Magic, +20 starting Energy, +13 Defense'),
     N('boots', 'moonslippers', 'Moonstep Slippers', 'epic', { ms: 1, dodge: 0.13, manaRegen: 2 }, '+1 move speed, +13% dodge, +2 Energy per second'),
@@ -959,12 +959,12 @@
     N('armor', 'living_crucible', 'Living Crucible', 'epic', { armor: 34, crucibleDeath: 1 }, '+34 Defense. On death, detonates dealing 100% of all damage absorbed during battle split among surviving foes'),
     N('trinket', 'bounty_monocle', 'Bounty Monocle', 'rare', { atk: 12, bountyMark: 1.0 }, '+12 Attack. Marks highest-threat foe: deals +100% damage to mark, but -30% to others. Slaying mark awards +3 Gold'),
     N('weapon', 'bloodhound_cleaver', 'Bloodhound Cleaver', 'epic', { atk: 26, bloodhoundTeleport: 1 }, '+26 Attack. Blinks behind any enemy falling below 50% HP, striking with guaranteed Critical damage'),
-    N('trinket', 'glass_prism', "Glass Cannon's Prism", 'legendary', { asPct: 1, ap: 108, glassPrism: 1 }, '+100% attack speed, +108 Magic. Max HP is locked to 1; adjacent allies intercept all incoming damage for wearer'),
+    N('trinket', 'glass_prism', "Glass Cannon's Prism", 'legendary', { asPct: 1, ap: 145, glassPrism: 1 }, '+100% attack speed, +145 Magic. Max HP is locked to 1; adjacent allies intercept all incoming damage for wearer'),
     N('weapon', 'soul_siphon_scythe', 'Soul Harvester', 'rare', { atk: 18, soulHarvestKill: 15 }, '+18 Attack. Each takedown permanently grants +15 Max HP and +3 Attack for the rest of combat'),
-    N('boots', 'chronostep_boots', 'Warp Spikes', 'epic', { ms: 2, dodge: 0.15, blinkEveryAtk: 4 }, '+2 move speed, +15% dodge. Every 4th attack teleports the wearer to their target, stunning for 1s'),
+    N('boots', 'chronostep_boots', 'Warp Spikes', 'epic', { ms: 2, dodge: 0.13, blinkEveryAtk: 4 }, '+2 move speed, +13% dodge. Every 4th attack teleports the wearer to their target, stunning for 1s'),
     N('offhand', 'martyrs_aegis', "Martyr's Aegis", 'epic', { armor: 20, hp: 150, martyrAbsorb: 0.41 }, '+20 Defense, +150 Health. Intercepts 41% of all damage taken by adjacent allies into wearer'),
     N('helmet', 'mirage_mirror', 'Doppelgänger Mask', 'legendary', { ap: 41, spawnCloneStart: 1 }, '+41 Magic. Combat starts by spawning an exact illusory duplicate with 50% HP and 60% Attack'),
-    N('armor', 'chaos_engine', 'Volatile Reactor', 'legendary', { armor: 15, ap: 34, chaosNovaInterval: 5 }, '+15 Defense, +34 Magic. Every 5s releases a cosmic blast: dealing 120% Magic to foes and shielding allies for 20% max HP'),
+    N('armor', 'chaos_engine', 'Volatile Reactor', 'legendary', { armor: 13, ap: 29, chaosNovaInterval: 5 }, '+13 Defense, +29 Magic. Every 5s releases a cosmic blast: dealing 120% Magic to foes and shielding allies for 20% max HP'),
   );
   // set bonuses count the pieces worn by the SAME hero (Run.heroMods)
   B.SETS = {

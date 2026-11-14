@@ -84,7 +84,7 @@ async function live() {
 }
 
 function decide(sim, lv) {
-  const out = { hero: [], item: [], relic: [], fight: [], event: [], notes: [] };
+  const out = { hero: [], item: [], relic: [], fight: [], event: [], spec: [], notes: [] };
   const base = clearOf(sim.base), p0 = base.k / base.n;
   // elasticities
   const hiH = clearOf(sim.cal.hiH), lo = clearOf(sim.cal.lo);
@@ -169,6 +169,33 @@ function decide(sim, lv) {
     v.dir = v.sig ? (c.d > 0 ? 'harder' : 'easier') : v.dir;
     out.fight.push(Object.assign(v, { id: d, name: { e: 'Easy', m: 'Medium', h: 'Hard', b: 'Boss' }[d], target: tgt, sim: { k: x.k, n: x.n, p, ci: S.wilson(x.k, x.n) }, live: y ? { k: y.k, n: y.n, p: y.k / y.n } : null, comb: c, step: +step.toFixed(3) }));
   }
+  // ---- LEVEL-UP PERKS (specs): compare each pair (a vs b) at levels 2-5
+  const spCounts = {};
+  for (const r of sim.base) {
+    for (const id of r.specs || []) {
+      const s = spCounts[id] || (spCounts[id] = { k: 0, n: 0 });
+      s.n++; if (r.cleared) s.k++;
+    }
+  }
+  for (const [hk, h] of Object.entries(D.HEROES)) {
+    (h.specs || []).forEach((pair, idx) => {
+      if (!pair || pair.length < 2) return;
+      const [a, b] = pair, ca = spCounts[a.id] || { k: 0, n: 0 }, cb = spCounts[b.id] || { k: 0, n: 0 };
+      const pa = ca.n ? ca.k / ca.n : 0, pb = cb.n ? cb.k / cb.n : 0;
+      const d = pa - pb, se = Math.sqrt(S.seRate(pa, ca.n) ** 2 + S.seRate(pb, cb.n) ** 2);
+      const z = se > 0 ? d / se : 0;
+      const sig = Math.abs(z) >= RULE.Z && Math.abs(d) >= 0.04 && ca.n >= 20 && cb.n >= 20;
+      const winner = d > 0 ? a : b, loser = d > 0 ? b : a;
+      const numeric = !!(loser.ab || loser.mods || winner.ab || winner.mods);
+      out.spec.push({
+        hero: h.name, lvl: idx + 2, a: a.name, b: b.name,
+        pa, na: ca.n, pb, nb: cb.n,
+        comb: { d, z }, sig,
+        dir: sig ? `${winner.name} > ${loser.name}` : 'hold',
+        numeric
+      });
+    });
+  }
   // multiple comparisons: per kind, a change also needs the Benjamini-Hochberg rule (false discovery rate RULE.FDR)
   for (const kind of ['hero', 'item', 'relic']) {
     const rows = out[kind], pass = S.bh(rows.map(r => S.pOfZ(r.comb.z)), RULE.FDR);
@@ -217,6 +244,8 @@ function report(dec, ver) {
   table('Items (gain of starting with it vs its rarity)', sorted(dec.item), [['item', r => r.name + ' (' + r.tier + ')'], ['completion (n)', r => `${S.pct(r.sim.p)} (${r.sim.n})`], ['gain', r => S.pp(r.sim.gain)], ['rarity gain', r => S.pp(r.peer)], liveCol, pickCol, ['z', r => r.comb.z.toFixed(1)], ['verdict', r => r.dir + (r.sig ? (r.numeric ? ` (numbers x${r.scale})` : ' (no numbers: design)') : '')]]);
   table('Powers (gain of starting with it vs all powers, ' + S.pp(dec.relic[0] ? dec.relic[0].peer : 0) + ')', sorted(dec.relic), [['power', r => r.name + ' (' + r.id + ')'], ['completion (n)', r => `${S.pct(r.sim.p)} (${r.sim.n})`], ['gain', r => S.pp(r.sim.gain)], liveCol, pickCol, ['z', r => r.comb.z.toFixed(1)], ['verdict', r => r.dir + (r.sig ? (r.numeric ? ` (numbers x${r.scale})` : ' (special effect: design)') : '')]]);
   table('Events (from the players\' picks)', dec.event, [['event', r => r.name], ['offered', r => r.offered], ['choices (share taken / win rate of those runs)', r => r.rows.map(x => `${x.choice}: ${f2(x.share)} / ${f2(x.pwr)}`).join(', ') || '-'], ['flag', r => r.flag]]);
+  const flaggedSpecs = sorted(dec.spec).filter(r => r.sig);
+  table(`Level-up Perks (${flaggedSpecs.length} of ${dec.spec.length} pairs flagged)`, flaggedSpecs.length ? flaggedSpecs : sorted(dec.spec).slice(0, 15), [['hero (lvl)', r => `${r.hero} L${r.lvl}`], ['perk A (win% / n)', r => `${r.a} (${S.pct(r.pa)} / ${r.na})`], ['perk B (win% / n)', r => `${r.b} (${S.pct(r.pb)} / ${r.nb})`], ['gap', r => S.pp(r.comb.d)], ['z', r => r.comb.z.toFixed(1)], ['verdict', r => r.dir + (r.sig ? (r.numeric ? ' (tune numbers)' : ' (design)') : '')]]);
   if (ver) L.push('', '## Verification (a fresh simulation after the patch, seed ' + ver.seed + ')', '', ver.lines.join('\n'));
   return L.join('\n') + '\n';
 }
