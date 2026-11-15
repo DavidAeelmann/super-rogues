@@ -726,12 +726,13 @@ body.desk #top .crownchip b {
   grid-row: 2;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  width: 100%;
   line-height: 1;
 }
 #top .crownchip .cc-bar {
   display: block;
-  width: 34px;
+  width: 100%;
+  min-width: 36px;
   height: 5px;
   border-radius: 999px;
   background: #070a14;
@@ -743,12 +744,6 @@ body.desk #top .crownchip b {
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, #f59e0b 0%, #fde047 100%);
-}
-#top .crownchip .cc-sub em {
-  font-style: normal;
-  font: 700 10px/1 var(--fun);
-  color: #cbd5e1;
-  white-space: nowrap;
 }
 #top .crownchip .cc-chest {
   grid-column: 2;
@@ -1245,24 +1240,6 @@ body:not(.desk) .title.home .logo-big .w2 i {
   justify-content: center !important;
   flex: 1 1 auto !important;
   min-height: 145px !important;
-}
-.title.home .squad-plaque {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 14px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(24, 34, 68, 0.96) 0%, rgba(12, 18, 38, 0.98) 100%);
-  border: 1.5px solid rgba(251, 191, 36, 0.65);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
-  margin-bottom: 4px;
-  position: relative;
-  z-index: 3;
-}
-.title.home .squad-plaque b {
-  font: 900 11px/1.1 var(--fun);
-  letter-spacing: 1.2px;
-  color: #f8fafc;
 }
 .title.home .pedestal-link {
   display: flex;
