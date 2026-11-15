@@ -904,9 +904,207 @@
     if (u.st.stun > s && !(u.st.frozenU > s)) { ctx.fillStyle = '#ffe066'; for (let i = 0; i < 3; i++) { const a = T / 3 + i * 2.1; ctx.beginPath(); ctx.arc(p.x + Math.cos(a) * S * 0.3, headTop + 4 + Math.sin(a) * S * 0.08, 2.2, 0, Math.PI * 2); ctx.fill(); } }
   }
 
+  // Home screen Squad Pedestal diorama: borderless floating 7-hex island with cyan arcane rim and idle-animating heroes
+  function drawPedestal(canvas, cssW, cssH, heroKeys, nowSec) {
+    if (!canvas) return null;
+    const w = Math.max(220, Math.round(cssW || 320));
+    const h = Math.max(150, Math.round(cssH || 210));
+    const dpr = Math.max(1, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1));
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const PK = 0.56;
+    const s = Math.min(w / (Math.sqrt(3) * 3.85), h / 4.65);
+    const cx = w * 0.5, cy = h * 0.59;
+    const t = nowSec || 0;
+    const hexPx = (q, r) => ({
+      x: cx + s * Math.sqrt(3) * (q + r * 0.5),
+      y: cy + s * 1.5 * r * PK
+    });
+    const hexPts = (px, py, rad) => {
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 180 * (60 * i - 30);
+        pts.push({ x: px + rad * Math.cos(a), y: py + rad * Math.sin(a) * PK });
+      }
+      return pts;
+    };
+
+    // Subtle cosmic underglow beneath the floating island
+    const ug = ctx.createRadialGradient(cx, cy + s * 0.35, s * 0.3, cx, cy + s * 0.35, s * 2.7);
+    ug.addColorStop(0, 'rgba(38, 198, 255, 0.24)');
+    ug.addColorStop(0.55, 'rgba(56, 118, 255, 0.10)');
+    ug.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = ug;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + s * 0.35, s * 2.6, s * 1.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 7-hex ring: left/back lush emerald grass, front-right carved cyan rune stone
+    const TILES = [
+      { q: 0, r: -1, kind: 'grass' },
+      { q: 1, r: -1, kind: 'grass' },
+      { q: -1, r: 0, kind: 'grass' },
+      { q: 0, r: 0, kind: 'grass' },
+      { q: 1, r: 0, kind: 'stone' },
+      { q: -1, r: 1, kind: 'stone' },
+      { q: 0, r: 1, kind: 'stone' },
+    ];
+    TILES.sort((a, b) => a.r - b.r || a.q - b.q);
+    const depth = s * 0.44;
+    const pulse = 0.65 + 0.35 * Math.sin(t * 2.4);
+
+    for (const tile of TILES) {
+      const p = hexPx(tile.q, tile.r);
+      const pts = hexPts(p.x, p.y, s * 0.96);
+      const isStone = tile.kind === 'stone';
+
+      // Extruded 3D rocky side faces
+      const sideCols = isStone
+        ? ['#24344d', '#152033', '#1c2a40']
+        : ['#2c422c', '#182423', '#223328'];
+      for (let fi = 0; fi < 3; fi++) {
+        const [i, j] = [[0, 1], [1, 2], [2, 3]][fi];
+        ctx.fillStyle = sideCols[fi];
+        ctx.beginPath();
+        ctx.moveTo(pts[i].x, pts[i].y);
+        ctx.lineTo(pts[j].x, pts[j].y);
+        ctx.lineTo(pts[j].x, pts[j].y + depth);
+        ctx.lineTo(pts[i].x, pts[i].y + depth);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Glowing cyan arcane rim along bottom edge
+      ctx.save();
+      ctx.strokeStyle = `rgba(56, 214, 255, ${(isStone ? 0.55 : 0.38) * pulse})`;
+      ctx.lineWidth = Math.max(1.5, s * 0.045);
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y + depth * 0.92);
+      ctx.lineTo(pts[1].x, pts[1].y + depth * 0.92);
+      ctx.lineTo(pts[2].x, pts[2].y + depth * 0.92);
+      ctx.lineTo(pts[3].x, pts[3].y + depth * 0.92);
+      ctx.stroke();
+      ctx.restore();
+
+      // Top face
+      const top = hexPts(p.x, p.y, s * 0.93);
+      path(ctx, top);
+      const tg = ctx.createLinearGradient(p.x - s * 0.4, p.y - s * 0.5, p.x + s * 0.5, p.y + s * 0.5);
+      if (isStone) {
+        tg.addColorStop(0, '#6a85a3');
+        tg.addColorStop(0.55, '#4c6582');
+        tg.addColorStop(1, '#344760');
+      } else {
+        tg.addColorStop(0, '#8dd14f');
+        tg.addColorStop(0.55, '#5da634');
+        tg.addColorStop(1, '#3e7a24');
+      }
+      ctx.fillStyle = tg;
+      ctx.fill();
+
+      // Subtle bevel rim highlight
+      ctx.strokeStyle = isStone ? 'rgba(125, 226, 255, 0.55)' : 'rgba(186, 245, 130, 0.48)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      // Inner carved rune border for stone tiles
+      if (isStone) {
+        path(ctx, hexPts(p.x, p.y, s * 0.62));
+        ctx.fillStyle = 'rgba(72, 102, 128, 0.45)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(125, 226, 255, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    // Floating hero pedestal slots: back-left, top-center, back-right
+    const slots = [
+      { q: -1, r: 0, dx: 0.14, dy: -0.06, phase: 0.0, face: 1 },
+      { q: 0, r: -1, dx: 0.46, dy: 0.12, phase: 1.8, face: 1 },
+      { q: 1, r: -1, dx: 0.18, dy: 0.14, phase: 3.4, face: -1 },
+    ];
+    const keys = (heroKeys && heroKeys.length ? heroKeys : ['barian', 'solara', 'pyra']).slice(0, 3);
+    const items = keys.map((k, idx) => {
+      const sl = slots[idx] || slots[0];
+      const base = hexPx(sl.q, sl.r);
+      const px = base.x + sl.dx * s;
+      const py = base.y + sl.dy * s * PK;
+      return { key: k, x: px, y: py, phase: sl.phase, face: sl.face };
+    }).sort((a, b) => a.y - b.y);
+
+    const sdImg = shadowDisc();
+    for (const it of items) {
+      const d = (B.HEROES && B.HEROES[it.key]) || {};
+      const S = s * 1.48;
+      const bob = Math.sin(t * 2.1 + it.phase) * s * 0.04;
+
+      // Soft ground shadow
+      if (sdImg) {
+        ctx.save();
+        ctx.globalAlpha = 0.52;
+        const shW = s * 1.05, shH = shW * 0.34;
+        ctx.drawImage(sdImg, it.x - shW * 0.5, it.y + s * 0.06 - shH * 0.5, shW, shH);
+        ctx.restore();
+      }
+
+      // Subtle glowing cyan pedestal ring
+      ctx.save();
+      ctx.strokeStyle = 'rgba(125, 226, 255, 0.6)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(it.x, it.y + s * 0.03, s * 0.42, s * 0.42 * PK * 0.72, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // Sprite or procedural hero model
+      const spriteImg = SpriteManager.get(it.key);
+      if (spriteImg) {
+        const aspect = (spriteImg.naturalWidth || 1) / (spriteImg.naturalHeight || 1);
+        const drawH = S * 1.48;
+        const drawW = drawH * aspect;
+        const breathY = 1 + Math.sin(t * 2.1 + it.phase) * 0.025;
+        ctx.save();
+        ctx.translate(it.x, it.y + s * 0.04 + bob);
+        ctx.scale(it.face, breathY);
+        ctx.drawImage(spriteImg, -drawW * 0.5, -drawH * 0.88, drawW, drawH);
+        ctx.restore();
+      } else {
+        const pose = { t: t + it.phase, face: it.face };
+        const art = B.Art && B.Art.sprite(it.key);
+        ctx.save();
+        ctx.translate(0, bob);
+        if (art) B.Art.draw(ctx, art, it.x, it.y, S, pose, d.color || '#9df');
+        else if (B.Models) B.Models.draw(ctx, it.key, it.x, it.y, S, pose, d.color || '#9df');
+        ctx.restore();
+      }
+    }
+
+    // Gentle floating starlight sparks
+    for (let i = 0; i < 8; i++) {
+      const ph = ((t * 0.45 + i * 0.17) % 1);
+      const sx = cx + Math.sin(i * 2.7 + t * 0.6) * s * 2.15;
+      const sy = cy + s * 0.4 - ph * s * 2.35;
+      const a = Math.sin(ph * Math.PI) * 0.75;
+      ctx.fillStyle = i % 2 === 0 ? `rgba(255, 224, 102, ${a})` : `rgba(125, 226, 255, ${a})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.3 + (i % 3) * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return { w, h };
+  }
+
   const _k = {
     K, TT, royal, proj, hexScreen, corners, path, unitPos, glide,
     drawBoard, bossTiles, drawCoach, drawTerrain, drawUnit, deadTicks
   };
-  B.Render = { setup, draw: null, hexAt, hexScreen, skin: null, _k };
+  B.Render = { setup, draw: null, drawPedestal, hexAt, hexScreen, skin: null, _k };
 })(typeof window !== "undefined" ? window : globalThis);

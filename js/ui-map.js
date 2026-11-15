@@ -446,7 +446,7 @@
   // two tips for the bench of ; TUT_V 4 shows players only these new ones.
   const TUT_V = 4;
   const GUIDE = [
-    { id: 't_play', scr: 'title', when: () => true, at: '.title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start your journey.' },
+    { id: 't_play', scr: 'title', up: true, when: () => true, at: '.title .playstk, .title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start your journey.' },
     { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'Game settings, rules and audio.' },
     { id: 't_hero', when: () => U.run.phase === 'start' && (ui.startStep || 1) === 1, at: '[data-act=start-pick]', text: 'Choose your first hero. Two more join you free as you advance.' },
     { id: 't_power', when: () => U.run.phase === 'start' && ui.startStep === 2, at: '.srelics', text: 'Powers grant permanent passive bonuses to your whole squad.' },
@@ -517,7 +517,7 @@
       tip.className = 'gtip'; tip.setAttribute('role', 'status'); tip.innerHTML = `<b>💡</b><span>${esc(g.text)}</span>`;
       document.body.appendChild(tip);
       const isDesk = document.body.classList.contains('desk'); const w = isDesk ? Math.min(480, vw - 48) : Math.min(300, vw - 24); tip.style.width = w + 'px';
-      const th = tip.offsetHeight, below = r.bottom + th + 14 <= vh, top = below ? r.bottom + 10 : Math.max(8, r.top - th - 10);
+      const th = tip.offsetHeight, below = g.up ? (r.top - th - 14 < 8) : (r.bottom + th + 14 <= vh), top = below ? r.bottom + 10 : Math.max(8, r.top - th - 10);
       const cx = Math.max(12 + w / 2, Math.min(vw - 12 - w / 2, r.left + r.width / 2));
       tip.style.left = (cx - w / 2) + 'px'; tip.style.top = top + 'px'; tip.classList.add(below ? 'down' : 'up');
       tip.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - (cx - w / 2))) + 'px');

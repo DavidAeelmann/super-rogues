@@ -1,0 +1,19 @@
+{
+  "name": "Super Rogues",
+  "short_name": "Super Rogues",
+  "description": "Pick heroes, place them on the board and watch them fight.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0e15",
+  "theme_color": "#0b0e15",
+  "icons": [
+    {
+      "src": "art/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

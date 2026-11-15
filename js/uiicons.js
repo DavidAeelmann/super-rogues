@@ -40,6 +40,7 @@
     cross: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
     muscle: '<path d="M4 17.5c3-1.5 6.5-1.5 10 0 2.5 1 5.5.2 6.2-2.3.8-3-1.6-5.2-4.2-4.2l-1 .4-1.8-5.2c-.5-1.3-2-1.9-3.2-1.2L7.5 6.5l1 2.5 2.5-.8.8 3.3C8.5 12 5.5 13.5 4 17.5z" fill="currentColor" fill-opacity=".3"/><path d="M4 17.5c3-1.5 6.5-1.5 10 0 2.5 1 5.5.2 6.2-2.3.8-3-1.6-5.2-4.2-4.2l-1 .4-1.8-5.2c-.5-1.3-2-1.9-3.2-1.2L7.5 6.5l1 2.5 2.5-.8.8 3.3C8.5 12 5.5 13.5 4 17.5z"/>',
     ghost: '<path d="M5.5 20.5V11a6.5 6.5 0 0 1 13 0v9.5l-2.2-1.6-2.1 1.6-2.2-1.6-2.1 1.6-2.2-1.6z" fill="currentColor" fill-opacity=".25"/><path d="M5.5 20.5V11a6.5 6.5 0 0 1 13 0v9.5l-2.2-1.6-2.1 1.6-2.2-1.6-2.1 1.6-2.2-1.6z"/><circle cx="9.7" cy="11" r="1.1" fill="currentColor"/><circle cx="14.3" cy="11" r="1.1" fill="currentColor"/>',
+    chest: '<rect x="3.5" y="9" width="17" height="11" rx="2.5" fill="currentColor" fill-opacity=".25"/><path d="M3.5 11.5C3.5 7 7 5 12 5s8.5 2 8.5 6.5M3.5 12.5h17M10.5 12.5v2.8a1.5 1.5 0 0 0 3 0v-2.8"/><rect x="3.5" y="9" width="17" height="11" rx="2.5"/>',
   };
   const i = (name, cls) => P[name] ? `<svg class="ui${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${P[name]}</svg>` : '';
   // the Super Rogues mark: a star badge wearing a rogue's mask (v49, )

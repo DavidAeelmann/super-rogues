@@ -317,16 +317,36 @@
   const evIcon = id => (EVENT[id] && EVENT[id].icon) || '❓';
   const EV_RAR = { uncommon: 'Uncommon', rare: 'Rare event' };
 
+  // Daily quest & next Crown Shop milestone helpers
+  const QUEST_DAY = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  function dailyQuest() {
+    const day = QUEST_DAY(), q = store.get('balance.dailyQuest', null);
+    if (q && q.day === day) return { day, wins: Math.max(0, q.wins | 0), goal: q.goal || 3 };
+    return { day, wins: 0, goal: 3 };
+  }
+  function recordQuestWin() {
+    const q = dailyQuest();
+    q.wins = Math.min(q.goal, (q.wins | 0) + 1);
+    store.set('balance.dailyQuest', q);
+  }
+  function nextCrownTarget() {
+    const c = acct.crowns | 0;
+    const unowned = (B.SHOP || []).filter(it => !it.use && !hasPerk(it.id)).map(it => it.price).sort((a, b) => a - b);
+    const need = unowned.find(p => p > c) || unowned[0] || 300;
+    return { have: c, need, ready: c >= (unowned[0] || 999999) };
+  }
+
   // ------------------------------------------------------------------ header
   // three lives, shown as hearts in the top bar
   const heartsHTML = () => U.run && U.run.lives != null ? `<button class="lives ward ${U.run.lives > 0 ? 'on' : 'broken'}" data-act="ward-info" title="${U.run.lives > 0 ? 'Ward: whole. A lost fight breaks it and the day starts over.' : 'Ward: broken. One more lost fight ends the run.'}" aria-label="${U.run.lives > 0 ? 'Ward whole' : 'Ward broken'}"><i class="hrt ${U.run.lives > 0 ? 'on' : ''}">${I('shield')}</i></button>` : '';
   function header() {
     const h = $('#top');
     if (!U.run || U.screen === 'title') {
-      // the landing keeps only Play and the trailer; everything else sits up here (your level, crowns,
-      // ladder and menu sit in the top bar
       const L = B.levelProgress(acct.axp || 0);
-      h.innerHTML = `${acct.account ? `<button class="avbtn" data-act="my-profile" aria-label="Your profile">${avatarHTML(acct.avatar, acct.code, 34)}</button>` : ''}<button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvb sm">${L.lvl}</span><span class="lvchip-label">Lv</span><span class="lvchipbar"><i style="width:${Math.round(100 * L.into / L.need)}%"></i></span></button><span class="grow"></span><button class="crownchip" data-act="shop" aria-label="Crown Shop: ${acct.crowns | 0} crowns">${I('crown')}<b>${acct.crowns | 0}</b></button><button class="ibtn" data-act="scores" aria-label="Ladder">${I('trophy')}</button>${fsBtn()}<button class="ibtn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
+      const xpPct = Math.round(100 * L.into / Math.max(1, L.need));
+      const cr = nextCrownTarget();
+      const crPct = Math.min(100, Math.round(100 * cr.have / Math.max(1, cr.need)));
+      h.innerHTML = `<button class="avbtn ${acct.account ? '' : 'starter'}" data-act="my-profile" aria-label="Your profile" title="Profile"><span class="av-ring">${avatarHTML(acct.avatar, acct.code, 34)}</span><span class="av-lv">${L.lvl}</span></button><button class="lvchip" data-act="player-tab" aria-label="Level ${L.lvl}: your rewards" title="Account Level ${L.lvl} (${L.into}/${L.need} XP)"><span class="lvchip-head"><span class="lvchip-label">Lv. ${L.lvl}</span></span><span class="lvchipbar"><i style="width:${acct.axp ? Math.max(8, xpPct) : 0}%"></i></span></button><span class="grow"></span><button class="crownchip ${cr.ready ? 'ready' : ''}" data-act="shop" aria-label="Crown Shop: ${cr.have} crowns"><span class="cc-main">${I('crown')}<b>${cr.have}</b></span><span class="cc-sub"><span class="cc-bar"><i style="width:${crPct}%"></i></span><em>${cr.have}/${cr.need}</em></span>${I('chest', 'cc-chest')}</button>${fsBtn()}<button class="ibtn hmenu-btn" data-act="home-menu" aria-label="Menu">${I('menu')}</button>`;
       return;
     }
     if ((U.run.phase === 'over' || U.run.phase === 'tower') && U.screen === 'run') { h.innerHTML = `<span class="grow"></span>${fsBtn()}<button class="ibtn" data-act="menu" aria-label="Menu">${I('menu')}</button>`; return; }   // the end screens show only the run's results
@@ -435,5 +455,5 @@
   function closeModal() { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; ui.modal = null; ui.confirmBuy = null; if (U.sheetSwipe) { U.sheetSwipe.tracking = false; U.sheetSwipe.sheet = null; U.sheetSwipe.dy = 0; } }
   function toast(msg, info) { toast.info = !!info; toast.t = performance.now(); const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), Math.max(2200, String(msg).length * 45)); }
 
-  Object.assign(U, { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts });
+  Object.assign(U, { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts, dailyQuest, recordQuestWin });
 })();

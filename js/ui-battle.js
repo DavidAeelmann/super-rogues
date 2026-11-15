@@ -856,6 +856,7 @@
     const stars = W.winner === 0 ? 1 + (hs.every(u => !u.dead) ? 1 : 0) + (hs.every(u => !u.dead) && hpLeft >= 0.6 ? 1 : 0) : 0;
     const fu = W.units.filter(u => u.side === 1 && u.kind !== 'summon'), left = fu.reduce((a, u) => a + Math.max(0, u.hp), 0) / Math.max(1, fu.reduce((a, u) => a + u.maxHp, 0));   // how much of the enemy was left
     const extra = { stats, dmg, foes, time: W.t / Sim.TPS, stars, left };
+    if (W.winner === 0 && U.recordQuestWin) U.recordQuestWin();
     if (b.gau && U.run.g.kind === 'tower') {   // a Gauntlet floor
       const opp = U.run.g.opp, res = Run.finishDuel(U.run, W), req = { op: 'towerResult', pid: pid(), ref: refCode(), teamId: U.run.tower.teamId, win: res.win, oppName: opp.name, team: U.run.lastFight.team, relics: U.run.lastFight.relics };
       ui.result = Object.assign(res, extra, { fightName: 'Gauntlet · Floor ' + res.floor, opp, pending: true, req }); U.screen = 'result';

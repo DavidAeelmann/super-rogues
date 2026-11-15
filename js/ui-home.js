@@ -3,31 +3,56 @@
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
   const U = B._ui;
   const { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts } = U;
+  const APP_VER = 'v1.16';
   const logoHTML = () => `<h1 class="logo-big" aria-label="Super Rogues">${B.UI ? B.UI.mark('lg') : ''}<span class="wm"><span class="w1">Super</span><span class="w2">${[...'ROGUES'].map((c, k) => `<i style="--k:${k}">${c}</i>`).join('')}</span></span></h1>`;
+  function squadKeys() {
+    const out = [];
+    if (U.run && Array.isArray(U.run.heroes) && U.run.heroes.length) {
+      for (const h of U.run.heroes) if (h && h.key && HEROES[h.key] && !out.includes(h.key)) out.push(h.key);
+    }
+    const won = wonHeroKeys();
+    for (const k of won) if (HEROES[k] && !out.includes(k) && out.length < 3) out.push(k);
+    for (const k of ['bastion', 'vex', 'pyra', 'lumen', 'kestrel']) if (HEROES[k] && !out.includes(k) && out.length < 3) out.push(k);
+    return out.slice(0, 3);
+  }
   function titleHTML() {
     const has = U.run && U.run.phase !== 'over' && U.run.phase !== 'start';
-    const canShop = (acct.crowns | 0) >= 30; // notification pip if crowns are available to spend
+    const canShop = (acct.crowns | 0) >= 30;
     const hasRewards = (acct.axp | 0) > 0;
+    const stk = acct.account ? streakOf() : 0;
+    const dq = U.dailyQuest ? U.dailyQuest() : { wins: 0, goal: 3 };
+    const qDone = dq.wins >= dq.goal;
+    const qPct = Math.min(100, Math.round(100 * dq.wins / Math.max(1, dq.goal)));
+    if (B.SpriteManager && B.SpriteManager.preload) B.SpriteManager.preload(squadKeys());
     return `<section class="title home">
       <div class="menu-ambient" aria-hidden="true">
         <span class="m-glow"></span>
         <div class="m-particles">${[...Array(12)].map((_, i) => `<i class="m-dot m-dot-${i}"></i>`).join('')}</div>
       </div>
       ${logoHTML()}
+      <div class="trailer pedestal-stage">
+        <div class="squad-plaque"><span>👑</span><b>MY SQUAD</b></div>
+        <a href="#" class="pedestal-link" data-act="codex" aria-label="Inspect Heroes"><canvas id="trailer" aria-label="Your heroes standing on a floating hex island"></canvas></a>
+      </div>
       <div class="stack">
+        <div class="playstk ${stk > 0 ? 'hot' : 'cold'}" aria-label="Win streak ${stk}"><span class="pstk-fire">🔥</span><b>WIN STREAK: ${stk}</b></div>
         ${has ? `<button class="primary big cta" data-act="continue-run"><span>${I('play')} Continue</span><small>${U.run.phase === 'gauntlet' ? 'Final fight' : 'Day ' + (Math.max(0, U.run.step) + 1) + '/' + Run.pveSeq(U.run).length} · ${U.run.heroes.length} hero${U.run.heroes.length === 1 ? '' : 'es'} · ${U.run.gold} gold</small></button>
         <button class="giveup" data-act="give-up">${I('flag')} Give up</button>`
-        : `<button class="primary big cta play" data-act="new-run">${I('play')} Play</button>`}
-        ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
+        : `<button class="primary big cta play" data-act="new-run"><span>${I('play')} Play</span></button>`}
+        <a href="#" class="quest-pill ${qDone ? 'done' : ''}" data-act="player-tab" aria-label="Daily Quest: Win ${dq.goal} battles, ${dq.wins} of ${dq.goal}">
+          <span class="qp-body"><b>Daily Quest</b><small>${qDone ? 'Complete!' : `Win ${dq.goal} battles`} [${Math.min(dq.wins, dq.goal)}/${dq.goal}]</small><span class="qp-bar"><i style="width:${qPct}%"></i></span></span>
+          <span class="qp-chest">${I('chest')}</span>
+        </a>
       </div>
-      <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v1.15</span>
-      <nav class="homedock" aria-label="Quick navigation">
-        <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
-        <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
-        <a href="#" class="dockitem" data-act="shop">${I('crown')}<b>Shop</b>${canShop ? '<span class="pip red"></span>' : ''}</a>
-        <a href="#" class="dockitem" data-act="scores">${I('trophy')}<b>Ranks</b></a>
-      </nav>
+      <div class="dockwrap">
+        <nav class="homedock" aria-label="Quick navigation">
+          <a href="#" class="dockitem" data-act="codex"><span class="di-ico">${I('user')}</span><b>Heroes</b></a>
+          <a href="#" class="dockitem" data-act="player-tab"><span class="di-ico">${I('star')}${hasRewards ? '<span class="pip red">!</span>' : ''}</span><b>Rewards</b></a>
+          <a href="#" class="dockitem" data-act="shop"><span class="di-ico">${I('crown')}${canShop ? '<span class="pip gold">!</span>' : ''}</span><b>Shop</b></a>
+          <a href="#" class="dockitem" data-act="scores"><span class="di-ico">${I('trophy')}</span><b>Ranks</b></a>
+        </nav>
+        <span class="app-ver" aria-label="Game version">${APP_VER}</span>
+      </div>
     </section>`;
   }
   const CODEX_TABS = [
@@ -71,33 +96,23 @@
       ${row('scores', 'trophy', 'Ladder', 'Top players and leagues')}
       <div class="mpair"><button class="mrow sub" data-act="stats">${I('chart')}<span><b>Balance stats</b></span></button><button class="mrow sub" data-act="tutorial">${I('help')}<span><b>Tutorial: ${U.guideOn() ? 'On' : 'Off'}</b></span></button></div>
       <div class="msep"></div>
-      ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}</div>`;
+      ${row('sound', on ? 'sound' : 'mute', 'Sound', on ? 'On' : 'Off')}
+      <div class="mver">Super Rogues · ${APP_VER}</div></div>`;
   }
-  // the trailer: three random heroes against a random fight, played with no sound; a new one starts when it ends
-  const trailer = { W: null, view: null, cv: null, raf: 0, last: 0, acc: 0, overAt: 0, end: null };
-  function trailerWorld() {
-    const r = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()) });
-    const keys = Object.keys(HEROES).filter(k => !(r.locked || []).includes(k)).sort(() => Math.random() - 0.5);
-    Run.pickStart(r, [keys[0]], (r.relicOffer || [])[0]); Run.addHero(r, keys[1]); Run.addHero(r, keys[2]);
-    const n = 2 + Math.floor(Math.random() * 3);
-    r.fightNo = n; r.cur = Run.makeFight(r, ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)], n); r.phase = 'deploy';
-    return Run.fightWorld(r);
-  }
+  // the Squad Pedestal Diorama: 7-hex floating cluster showcasing the player's squad idle-animating smoothly
+  const trailer = { W: null, view: null, cv: null, raf: 0, last: 0, acc: 0, overAt: 0, end: null, keys: null };
   function trailerLoop(now) {
     const cv = document.getElementById('trailer');
     if (!cv || document.hidden || (U.run && U.screen !== 'title')) { trailer.raf = 0; return; }
-    if (trailer.cv !== cv) { trailer.cv = cv; trailer.view = Render.setup(cv, Math.max(240, Math.floor(cv.parentElement.clientWidth))); }
-    if (!trailer.W) { try { trailer.W = trailerWorld(); } catch (e) { trailer.raf = 0; return; } trailer.acc = 0; trailer.overAt = 0; trailer.end = null; trailer.last = now; }
-    const W = trailer.W, dt = Math.min(100, now - trailer.last), TICK = 1000 / Sim.TPS; trailer.last = now;
-    if (!W.over) { trailer.acc += dt * 1.5; let n = 0; while (trailer.acc >= TICK && !W.over && n++ < 40) { Sim.step(W); trailer.acc -= TICK; } }
-    if (W.over && !trailer.overAt) { trailer.overAt = now; trailer.end = { win: W.winner === 0, k: 0 }; }
-    if (trailer.end) trailer.end.k = (now - trailer.overAt) / 1600;
-    const T = W.over ? W.t + (now - trailer.overAt) / TICK * 0.3 : W.t + trailer.acc / TICK;
-    Render.draw(trailer.view, W, T, Object.assign({ mute: true }, trailer.end ? { end: trailer.end } : {}));
-    if (trailer.overAt && now - trailer.overAt > 2600) trailer.W = null;
+    const host = cv.parentElement || cv;
+    const desk = document.body.classList.contains('desk');
+    const maxW = desk ? 640 : Math.min(400, host.clientWidth || 320);
+    const maxH = desk ? 420 : Math.max(152, Math.min(275, host.clientHeight || 200));
+    const keys = trailer.keys || (trailer.keys = squadKeys());
+    if (Render.drawPedestal) Render.drawPedestal(cv, maxW, maxH, keys, now / 1000);
     trailer.raf = requestAnimationFrame(trailerLoop);
   }
-  function startTrailer() { if (!trailer.raf && document.getElementById('trailer')) trailer.raf = requestAnimationFrame(trailerLoop); }
+  function startTrailer() { trailer.keys = null; if (!trailer.raf && document.getElementById('trailer')) trailer.raf = requestAnimationFrame(trailerLoop); }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) startTrailer(); });
   // the ability name, then its passive and its active
   // part on their own lines (same words, easier to scan); the scaling note stays small under it

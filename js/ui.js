@@ -592,6 +592,20 @@
   loadAcct().then(() => { if (U.screen === 'title' && !ui.modal) render(); });
   U.screen = 'title';
   U.layoutClasses();
+  // Mobile browser immersion: enter fullscreen cleanly on first touch outside desktop & automated testing
+  try {
+    if (!document.body.classList.contains('desk') && !navigator.webdriver && document.documentElement.requestFullscreen) {
+      const enterMobileFs = () => {
+        try {
+          if (!document.body.classList.contains('desk') && !document.fullscreenElement && document.documentElement.requestFullscreen) {
+            const p = document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+            if (p && p.catch) p.catch(() => {});
+          }
+        } catch (_) {}
+      };
+      document.addEventListener('pointerup', enterMobileFs, { once: true, capture: true, passive: true });
+    }
+  } catch (_) {}
   render();
   // test hook (headless Chrome tests drive the game through this)
   window.__bal = { deployBench: () => { if (!U.run) return 0; const n = Run.benched(U.run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(U.run, h); } if (n.length) { save(); render(); } return n.length; }, showVs: U.showVs, closeVs: U.closeVs, get ui() { return ui; }, get run() { return U.run; }, get battle() { return U.battle; }, get acct() { return acct; }, get result() { return ui.result; }, get screen() { return U.screen; }, set screen(s) { U.screen = s; }, loadAcct, ACT, render, skipBattle: U.skipBattle, fmt, scaleParts, hexScreen: (c, r) => { const b = U.view.canvas.getBoundingClientRect(), p = Render.hexScreen(U.view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
