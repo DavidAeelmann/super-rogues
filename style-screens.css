@@ -48,9 +48,9 @@ body.desk section.title.home .dockitem svg.ui { width: 20px !important; height: 
 }
 body.desk .dparty .dsock.empty { display: flex !important; align-items: center !important; justify-content: center !important; }
 .empty-sil { font-size: 11px; color: rgba(255, 255, 255, 0.28); user-select: none; }
-section.result.v2 { position: relative; overflow: visible !important; }
+section.result.v2 { position: relative; overflow-x: clip !important; }
 body.desk #modal:has(.result.v2), body:has(section.result.v2) #modal { backdrop-filter: blur(6px) !important; background: rgba(10, 12, 18, 0.75) !important; }
-.rhead { overflow: visible !important; }
+.result.v2 .rhead { overflow: hidden !important; }
 .badge-levelup { display: inline-block; padding: 2px 8px; margin-left: 8px; border-radius: 6px; background: #14532d; color: #86efac; border: 1px solid #22c55e; font: 800 11px/1.2 var(--fun); box-shadow: 0 0 10px rgba(34, 197, 94, 0.4); letter-spacing: 0.5px; animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 .lv-trans { color: #c5cee0 !important; font-weight: 500 !important; }
 .lv-trans b { color: #ffd23f !important; font-weight: 800 !important; }
@@ -421,6 +421,15 @@ body.desk .hero-mini-stats .mstat.rng b { color: #4cc9f0 !important; }
 .upg-hero-showcase .lugain { font-size: 13px; color: #cbd5e1; margin-top: 4px; }
 .upg-paths-head { margin-top: 4px; }
 .upg-paths-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.upg-path-card { position: relative; background: linear-gradient(180deg, rgba(24, 32, 48, 0.96) 0%, rgba(14, 19, 30, 0.98) 100%) !important; border: 1.5px solid rgba(148, 163, 184, 0.25) !important; border-radius: 14px !important; padding: 16px 14px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; min-height: 140px; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important; transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2), border-color 0.18s ease, box-shadow 0.18s ease !important; text-align: left; }
+.upg-path-card:hover { transform: translateY(-4px) scale(1.01) !important; border-color: rgba(255, 210, 63, 0.7) !important; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.65), 0 0 18px rgba(56, 189, 248, 0.18) !important; }
+.upg-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.38); color: #7dd3fc; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; width: fit-content; margin-bottom: 6px; }
+.upg-badge .star-icon { color: #38bdf8; font-size: 11px; }
+.upg-title { font-family: var(--fun); font-size: 19px; color: #f8fafc; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+.upg-path-card:hover .upg-title { color: #ffe066; }
+.upg-desc { font-size: 13px; line-height: 1.45; color: #cbd5e1; flex-grow: 1; }
+.upg-cta-label { margin-top: 10px; padding: 7px 12px; border-radius: 8px; background: rgba(30, 41, 59, 0.95); border: 1.5px solid rgba(255, 210, 63, 0.45); color: #f8fafc; font-family: var(--fun); font-size: 13px; font-weight: 700; text-align: center; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5); transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease; }
+.upg-path-card:hover .upg-cta-label { transform: scale(1.02); background: rgba(255, 210, 63, 0.16); border-color: #ffd23f; color: #ffe066; }
 @media (max-width: 600px) {
 .upgrade-screen { padding: 8px 10px 10px; gap: 6px; border-radius: 14px; }
 .upg-header .headline { font-size: 20px; margin: 0 0 2px; }
@@ -440,21 +449,12 @@ body.desk .hero-mini-stats .mstat.rng b { color: #4cc9f0 !important; }
 .upg-hero-showcase .lugain { font-size: 11px; line-height: 1.2; margin-top: 2px; }
 .upg-paths-head { margin-top: 0; font-size: 11.5px; }
 .upg-paths-grid { grid-template-columns: 1fr; gap: 6px; }
-.upg-path-card { min-height: 0; padding: 7px 10px !important; border-radius: 10px !important; }
+.upg-path-card { min-height: 0 !important; padding: 8px 10px !important; border-radius: 10px !important; }
 .upg-badge { font-size: 9.5px; padding: 1px 6px; margin-bottom: 2px; }
 .upg-title { font-size: 14px; margin-bottom: 2px; }
 .upg-desc { font-size: 11.5px; line-height: 1.25; }
-.upg-cta-label { margin-top: 4px; padding: 4px 8px; font-size: 11.5px; }
+.upg-cta-label { margin-top: 5px; padding: 4px 8px; font-size: 11.5px; }
 }
-.upg-path-card { position: relative; background: linear-gradient(180deg, rgba(26, 36, 56, 0.95) 0%, rgba(16, 22, 36, 0.98) 100%) !important; border: 1.5px solid rgba(255, 215, 0, 0.35) !important; border-radius: 14px !important; padding: 16px 14px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; min-height: 140px; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important; transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2), border-color 0.18s ease, box-shadow 0.18s ease !important; text-align: left; }
-.upg-path-card:hover { transform: translateY(-4px) scale(1.02) !important; border-color: #ffd700 !important; box-shadow: 0 14px 34px rgba(255, 215, 0, 0.3), inset 0 0 12px rgba(255, 215, 0, 0.15) !important; }
-.upg-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: rgba(255, 215, 0, 0.15); border: 1px solid rgba(255, 215, 0, 0.4); color: #ffe066; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; width: fit-content; margin-bottom: 6px; }
-.upg-badge .star-icon { color: #ffd700; font-size: 11px; }
-.upg-title { font-family: var(--fun); font-size: 19px; color: #ffffff; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-.upg-path-card:hover .upg-title { color: #ffd700; }
-.upg-desc { font-size: 13px; line-height: 1.45; color: #cbd5e1; flex-grow: 1; }
-.upg-cta-label { margin-top: 10px; padding: 6px 12px; border-radius: 8px; background: linear-gradient(180deg, #ffd700, #d08600); color: #1a1a1a; font-family: var(--fun); font-size: 13px; font-weight: bold; text-align: center; box-shadow: 0 3px 0 #8c5b00, 0 6px 14px rgba(255, 215, 0, 0.35); transition: transform 0.12s ease; }
-.upg-path-card:hover .upg-cta-label { transform: scale(1.03); background: linear-gradient(180deg, #ffe066, #e59400); }
 
 /* ==========================================================================
    OBSIDIAN ARCADE TACTICS — UNIFIED DESIGN SYSTEM LAYER (PHASE 4)
@@ -936,16 +936,26 @@ body.desk .title.home .app-ver {
   left: auto !important;
   transform: rotate(-14deg) !important;
 }
+body.desk #screen {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
 body.desk section.start.s1.v3,
 body.desk section.start {
-  max-height: calc(100dvh - 68px) !important;
-  height: auto !important;
+  max-height: calc(100dvh - 76px) !important;
+  height: calc(100dvh - 76px) !important;
+  min-height: 0 !important;
   justify-content: center !important;
-  gap: 8px !important;
+  gap: 6px !important;
+  padding-top: 2px !important;
+  padding-bottom: 6px !important;
+  box-sizing: border-box !important;
 }
 body.desk .hbanner.spot.hero-tarot-card {
-  height: clamp(230px, 42vh, 380px) !important;
-  max-height: clamp(230px, 42vh, 380px) !important;
+  height: clamp(200px, 37vh, 330px) !important;
+  max-height: clamp(200px, 37vh, 330px) !important;
 }
 body.desk .start .ssub {
   background: rgba(11, 14, 21, 0.72);
@@ -955,11 +965,15 @@ body.desk .start .ssub {
 
 /* ---------- Desktop Map ---------- */
 body.desk section.map.road {
-  height: calc(100dvh - 68px) !important;
-  max-height: calc(100dvh - 68px) !important;
+  height: calc(100dvh - 76px) !important;
+  max-height: calc(100dvh - 76px) !important;
   overflow: hidden !important;
   grid-template-columns: minmax(0, 1fr) 340px !important;
   align-items: stretch !important;
+}
+body.desk section.map.road .mapside {
+  align-self: start !important;
+  height: auto !important;
 }
 body.desk .mapmain {
   display: flex !important;
@@ -990,8 +1004,8 @@ body.desk .deploy:not(.intro) {
   gap: 8px 14px !important;
   width: 100% !important;
   max-width: 1520px !important;
-  height: calc(100dvh - 68px) !important;
-  max-height: calc(100dvh - 68px) !important;
+  height: calc(100dvh - 76px) !important;
+  max-height: calc(100dvh - 76px) !important;
   overflow: hidden !important;
   margin: 0 auto !important;
   padding: 6px 12px !important;
@@ -1222,12 +1236,55 @@ body.desk .sheet.gearsheet.is-hero-info {
   height: auto !important;
   min-height: 84px !important;
 }
+body.desk .lpscr .vmtube.lp-horiz-track,
+body.desk .xpscr .vmtube.xp-horiz-track,
 .vmtube.lp-horiz-track,
 .vmtube.xp-horiz-track {
   width: 100% !important;
   height: 24px !important;
   min-height: 24px !important;
+  max-height: 24px !important;
+  flex: 0 0 auto !important;
   border-radius: 999px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8) !important;
+}
+.vmtube.lp-horiz-track i,
+.vmtube.xp-horiz-track i {
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+  height: 100% !important;
+  animation: none !important;
+}
+.lpscr .vmcall.streak-sub-note,
+body.desk .lpscr .vmcall.streak-sub-note {
+  margin-top: 2px !important;
+  padding: 7px 10px !important;
+  font-size: 12.5px !important;
+  line-height: 1.3 !important;
+  background: var(--sr-bg-0) !important;
+  border: 1px solid var(--sr-border) !important;
+  border-left: 3px solid var(--sr-sky) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  animation: none !important;
+  color: var(--sr-ink-muted) !important;
+  font-weight: 600 !important;
+}
+body.desk .towerscr .towerart {
+  transform: scale(1.16) !important;
+  transform-origin: center center !important;
+}
+.foe-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+}
+.rmn.next {
+  border: 1.5px dashed rgba(255, 210, 63, 0.55) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
 .lp-bar-hdr,
 .xp-bar-hdr {
