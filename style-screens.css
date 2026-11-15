@@ -876,7 +876,7 @@ body.desk .hero-cta-btn.slot-unselected {
 }
 
 /* ---------- Obsidian Secondary Buttons & Neutral Controls ---------- */
-button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):not(.pm):not(.gold-ingot-btn):not(.molten-gold-cta):not(.proceed-hex-btn):not(.dockitem):not(.playnow):not(.cprice):not(.hero-cta-btn):not(.fr):not(.cxh):not(.avpick):not(.tpick):not(.achc):not(.lvcard):not(.bnc):not(.relicbtn):not(.auto-equip-toggle):not(.dsell-btn),
+button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):not(.pm):not(.gold-ingot-btn):not(.molten-gold-cta):not(.proceed-hex-btn):not(.dockitem):not(.playnow):not(.cprice):not(.hero-cta-btn):not(.fr):not(.cxh):not(.avpick):not(.tpick):not(.achc):not(.lvcard):not(.bnc):not(.relicbtn):not(.auto-equip-toggle):not(.dsell-btn):not(.draft-random-btn):not(.dd-info),
 .shead button:not(.chip),
 .shead button[data-act="close"],
 body.desk .floating-shop-bar button.steel-btn,
@@ -2333,4 +2333,590 @@ body.desk .towerscr .towerart {
   .sheet.gearsheet .shead { padding-bottom: 2px !important; }
   .gbar button { min-height: 40px !important; }
 }
+
+/* ============================================================================
+   Accordion Spotlight Draft (All Hero Select Screens: Start + Recruit 1 & 2)
+   ============================================================================ */
+@property --active-role-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #a855f7;
+}
+#app:has(section.draft-stage),
+body.desk #app:has(section.draft-stage) {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-bottom: 0 !important;
+}
+#screen:has(section.draft-stage),
+body.desk #screen:has(section.draft-stage) {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+#app:has(section.draft-stage) section.start.s1.v3.draft-stage,
+body.desk section.start.s1.v3.draft-stage,
+body:not(.desk) section.start.s1.v3.draft-stage {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  overflow: hidden !important;
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  padding: 4px 0 max(8px, env(safe-area-inset-bottom)) !important;
+  gap: 4px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: --active-role-color 0.4s ease;
+}
+.draft-stage .draft-aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle at 50% 45%, var(--active-role-color), transparent 68%);
+  opacity: 0.3;
+  transition: background 0.4s ease, opacity 0.35s ease;
+}
+.draft-head {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 12px 0;
+  width: 100%;
+  flex: 0 0 auto;
+}
+.draft-head .ssteps {
+  margin: 0 auto !important;
+  padding: 2px 6px !important;
+  gap: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.draft-head .ssteps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 6px !important;
+  border-radius: 999px !important;
+  font: 700 12px/1 var(--fun) !important;
+  background: rgba(15, 23, 42, 0.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #cbd5e1 !important;
+}
+.draft-head .ssteps li i {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 11px !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #e2e8f0 !important;
+}
+.draft-head .ssteps li.on {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.45) !important;
+}
+.draft-head .ssteps li.on i {
+  background: #38bdf8 !important;
+  color: #082f49 !important;
+}
+.draft-head .recruit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #e2e8f0;
+  font: 700 12px/1 var(--fun);
+}
+.draft-head .recruit-pill .rp-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.draft-head .recruit-pill .rp-team img.por {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.draft-head h2.sc,
+body.desk .draft-head h2.sc {
+  margin: 0 !important;
+  font: 800 clamp(19px, 4.8vw, 24px)/1.12 var(--fun) !important;
+  letter-spacing: 0.2px !important;
+  text-transform: none !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9) !important;
+  text-align: center;
+}
+
+/* Accordion Horizontal Flex Container */
+#screen section.start.v3.draft-stage .stage.draft-row,
+body.desk #screen section.start.v3.draft-stage .stage.draft-row {
+  display: flex !important;
+  flex-direction: row !important;
+  grid-template-columns: none !important;
+  gap: 10px !important;
+  height: 58dvh !important;
+  max-height: 58dvh !important;
+  flex: 1 1 auto !important;
+  min-height: 180px !important;
+  width: 100% !important;
+  max-width: 540px !important;
+  padding: 6px 12px !important;
+  margin: 0 auto !important;
+  align-items: stretch !important;
+  z-index: 1 !important;
+  perspective: 1000px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+#screen section.start.v3.draft-stage .stage.draft-row .draft-card,
+body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card {
+  position: relative !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  background: #0b0e1a !important;
+  clip-path: none !important;
+  cursor: pointer;
+  user-select: none;
+  touch-action: pan-y;
+  transform-style: preserve-3d;
+  will-change: flex, transform, filter;
+  transition: flex 0.38s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s ease, box-shadow 0.3s ease, transform 0.35s ease-out, border-color 0.25s ease !important;
+}
+#screen section.start.v3.draft-stage .stage.draft-row .draft-card::before {
+  display: none !important;
+}
+#screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-sibling,
+body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-sibling {
+  flex: 0.76 !important;
+  filter: brightness(0.45) saturate(0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55) !important;
+  transform: none !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+}
+@media (hover: hover) {
+  #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-sibling:hover,
+  body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-sibling:hover {
+    filter: brightness(0.72) saturate(0.85) !important;
+    border-color: color-mix(in srgb, var(--role-color) 65%, #fff) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7) !important;
+    transform: translateY(-2px) !important;
+  }
+}
+#screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active,
+body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active {
+  flex: 2.52 !important;
+  border: 2px solid var(--role-color) !important;
+  box-shadow: 0 12px 32px -6px var(--role-color), 0 0 22px color-mix(in srgb, var(--role-color) 35%, transparent) !important;
+  filter: none !important;
+  opacity: 1 !important;
+  z-index: 2 !important;
+  transform: rotateX(calc(var(--py, 0) * -6deg)) rotateY(calc(var(--px, 0) * 6deg)) translateY(-4px) !important;
+}
+#screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active.is-tilting,
+body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active.is-tilting {
+  transition: flex 0.38s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s ease, box-shadow 0.3s ease, transform 0.06s linear !important;
+}
+
+/* 2.5D Background Image Parallax Layer */
+#screen .draft-card .draft-art {
+  position: absolute;
+  inset: -4px -8px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: calc(50% + var(--px, 0) * 8px) top;
+  transition: background-position 0.3s ease-out;
+  pointer-events: none;
+  z-index: 0;
+}
+#screen .draft-card.is-tilting .draft-art {
+  transition: none;
+}
+
+/* Holographic Foil Sweep */
+#screen section.start.v3.draft-stage .stage.draft-row .draft-card::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  height: auto !important;
+  z-index: 3 !important;
+  pointer-events: none !important;
+  border-radius: inherit !important;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%) !important;
+  transform: translateX(-120%);
+}
+#screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active.foil-sweep::after {
+  animation: holoFoilSweep 0.65s ease-out forwards;
+}
+@keyframes holoFoilSweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* Subtle Top-Right Info Trigger on Active Card Only */
+#screen .draft-stage .draft-card button.dd-info {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  z-index: 5 !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background: rgba(10, 14, 26, 0.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#screen .draft-stage .draft-card button.dd-info svg.ui {
+  width: 14px !important;
+  height: 14px !important;
+}
+#screen .draft-stage .draft-card.is-sibling button.dd-info {
+  display: none !important;
+}
+
+/* In-Card Frosted Glass Skill Drawer */
+#screen .draft-card .draft-drawer {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: auto;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: linear-gradient(to top, rgba(10, 14, 26, 0.96) 74%, rgba(10, 14, 26, 0.42) 93%, transparent);
+  padding: 12px 10px 11px;
+}
+#screen .draft-card.is-sibling .draft-drawer {
+  padding: 8px 3px 9px;
+}
+#screen .draft-card .dd-name {
+  display: block;
+  font-family: var(--fun);
+  font-size: clamp(10.5px, 2.8vw, 13px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.2px;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  position: static !important;
+  margin: 0 !important;
+}
+#screen .draft-card.is-active .dd-name {
+  font-size: clamp(18px, 5vw, 22px);
+  font-weight: 800;
+  letter-spacing: 0.1px;
+  line-height: 1.15;
+}
+#screen .draft-card .dd-role {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--role-pill);
+  color: #ffffff;
+  font-family: var(--fun);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  max-width: 100%;
+}
+#screen .draft-card.is-sibling .dd-role {
+  font-size: 8px;
+  padding: 2.5px 4px;
+  border-radius: 9px;
+  letter-spacing: 0.1px;
+  margin-top: 3px;
+  word-break: break-word;
+}
+#screen .draft-card .dd-extra {
+  width: 100%;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin-top: 0;
+}
+#screen .draft-card.is-active .dd-extra {
+  max-height: 220px;
+  opacity: 1;
+  margin-top: 7px;
+  transition: max-height 0.3s ease 0.1s, opacity 0.3s ease 0.1s, margin 0.3s ease 0.1s;
+}
+#screen .draft-card .dd-desc {
+  margin: 0;
+  font: 500 clamp(10.5px, 2.7vw, 12px)/1.28 var(--read);
+  color: #e2e8f0;
+}
+#screen .draft-card .dd-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  width: 100%;
+}
+#screen .draft-card .dd-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+  line-height: 1;
+}
+#screen .draft-card .dd-stat em {
+  font-style: normal;
+  font: 700 10px/1 var(--read);
+  color: #cbd5e1;
+}
+#screen .draft-card .dd-stat b {
+  font: 800 11.5px/1 var(--fun);
+  color: #ffffff;
+}
+
+/* Bottom Thumb-Zone Split CTA & Lock Pill */
+.draft-foot {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+.draft-lock {
+  background: rgba(15, 23, 42, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font: 600 12px/1.2 var(--read);
+  color: #e2e8f0;
+  text-align: center;
+}
+.draft-actions {
+  display: flex;
+  gap: 10px;
+  padding: 0 12px 6px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+#screen .draft-stage button.draft-pick-btn {
+  flex: 2 !important;
+  min-width: 0 !important;
+  min-height: 52px !important;
+  height: auto !important;
+  padding: 8px 14px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%) !important;
+  border: 1.5px solid #fef08a !important;
+  border-bottom: 4px solid #b45309 !important;
+  box-shadow: 0 4px 0 #b45309, 0 8px 20px rgba(245, 158, 11, 0.35) !important;
+  color: #1c1300 !important;
+  font: 900 clamp(14px, 4vw, 17px)/1.1 var(--fun) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.4px !important;
+  text-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+}
+#screen .draft-stage button.draft-pick-btn .dp-lbl {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#screen .draft-stage button.draft-pick-btn .dp-name {
+  font-weight: 900;
+}
+#screen .draft-stage button.draft-random-btn {
+  flex: 1 !important;
+  min-width: 96px !important;
+  min-height: 52px !important;
+  height: auto !important;
+  padding: 6px 8px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, rgba(88, 28, 135, 0.85) 0%, rgba(59, 7, 100, 0.94) 100%) !important;
+  border: 1.5px solid #c084fc !important;
+  border-bottom: 3.5px solid #3b0764 !important;
+  box-shadow: 0 4px 0 #3b0764, 0 6px 16px rgba(88, 28, 135, 0.4) !important;
+  color: #ffffff !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  text-shadow: none !important;
+}
+#screen .draft-stage button.draft-random-btn .dr-top {
+  font: 800 13.5px/1.1 var(--fun);
+  color: #ffffff;
+  white-space: nowrap;
+}
+#screen .draft-stage button.draft-random-btn .dr-sub {
+  font: 800 11.5px/1.1 var(--fun);
+  color: #fde047;
+  white-space: nowrap;
+}
+#screen .draft-stage button.draft-random-btn.spinning {
+  border-color: #fde047 !important;
+  box-shadow: 0 0 18px rgba(192, 132, 252, 0.65) !important;
+}
+
+/* Desktop Sizing (Accordion Centered Stage) */
+body.desk #screen section.start.v3.draft-stage {
+  max-width: 1020px !important;
+  padding: 6px 24px 12px !important;
+  gap: 8px !important;
+}
+body.desk #screen section.start.v3.draft-stage .stage.draft-row {
+  max-width: 720px !important;
+  height: clamp(340px, 58dvh, 520px) !important;
+  max-height: 58dvh !important;
+  gap: 16px !important;
+  padding: 8px 16px !important;
+}
+body.desk #screen .draft-card.is-active .dd-name {
+  font-size: 24px;
+}
+body.desk #screen .draft-card.is-sibling .dd-name {
+  font-size: 15px;
+}
+body.desk #screen .draft-card.is-sibling .dd-role {
+  font-size: 9.5px;
+  padding: 3px 7px;
+}
+body.desk #screen .draft-card .dd-desc {
+  font-size: 13px;
+  line-height: 1.35;
+}
+body.desk #screen .draft-card .dd-stat {
+  padding: 4px 10px;
+}
+body.desk #screen .draft-card .dd-stat em {
+  font-size: 11px;
+}
+body.desk #screen .draft-card .dd-stat b {
+  font-size: 13px;
+}
+body.desk #screen .draft-foot {
+  max-width: 560px;
+}
+body.desk #screen .draft-stage button.draft-pick-btn,
+body.desk #screen .draft-stage button.draft-random-btn {
+  min-height: 54px !important;
+}
+
+/* Small Phone Heights (e.g. 360x640) */
+@media (max-height: 670px) {
+  .draft-head { gap: 3px; padding-top: 0; }
+  .draft-head .ssteps li { padding: 3px 10px 3px 5px !important; font-size: 11px !important; }
+  .draft-head .ssteps li i { width: 18px !important; height: 18px !important; font-size: 10px !important; }
+  .draft-head h2.sc { font-size: 18px !important; }
+  #screen section.start.v3.draft-stage .stage.draft-row { height: 55dvh !important; max-height: 56dvh !important; padding: 4px 10px !important; gap: 8px !important; }
+  #screen .draft-card .draft-drawer { padding: 9px 8px; }
+  #screen .draft-card.is-sibling .draft-drawer { padding: 6px 2px; }
+  #screen .draft-card.is-active .dd-name { font-size: 17px; }
+  #screen .draft-card.is-active .dd-extra { margin-top: 5px; }
+  #screen .draft-card .dd-desc { font-size: 10.5px; line-height: 1.24; }
+  #screen .draft-card .dd-stats { margin-top: 6px; padding-top: 5px; gap: 4px; }
+  #screen .draft-card .dd-stat { padding: 2px 5px; }
+  .draft-foot { gap: 5px; }
+  .draft-lock { padding: 4px 12px; font-size: 11px; }
+  #screen .draft-stage button.draft-pick-btn,
+  #screen .draft-stage button.draft-random-btn { min-height: 46px !important; }
+}
+
+/* Phone Landscape (e.g. 740x360) */
+@media (max-height: 440px) {
+  .draft-head { flex-direction: row; justify-content: center; gap: 10px; padding: 0 10px; }
+  .draft-head .ssteps { margin: 0 !important; }
+  .draft-head h2.sc { font-size: 15px !important; }
+  #screen section.start.v3.draft-stage .stage.draft-row { height: 49dvh !important; min-height: 130px !important; max-height: 51dvh !important; max-width: 640px !important; padding: 2px 10px !important; }
+  #screen .draft-card .draft-drawer { padding: 6px 8px; }
+  #screen .draft-card.is-active .dd-name { font-size: 15px; }
+  #screen .draft-card .dd-desc { font-size: 10px; line-height: 1.2; }
+  #screen .draft-card .dd-stats { margin-top: 3px; padding-top: 3px; }
+  .draft-lock { display: none; }
+  .draft-actions { padding-bottom: 4px; }
+  #screen .draft-stage button.draft-pick-btn,
+  #screen .draft-stage button.draft-random-btn { min-height: 38px !important; padding: 4px 8px !important; }
+}
+
+
 

@@ -84,16 +84,13 @@ ok(picks === 3 && !(await ev(`!!document.querySelector('.stage.six')`)), 'v64 (r
 await click('#top [data-act=menu]'); await sleep(150);
 ok(await ev(`!document.querySelector('[data-act=continue-run]') && !document.querySelector('[data-act=give-up]') && !!document.querySelector('[data-act=new-run]')`), 'v49: a game still picking its hero shows Play on the landing, not Continue');
 await click('[data-act=new-run]'); await sleep(200);
-ok(await ev(`!!document.querySelector('.start .ssteps li.on') && !!document.querySelector('.ssub') && document.querySelector('[data-act=start-next]').disabled && !document.querySelector('[data-act=start-relic]')`), 'start step 1: "Tap a hero", Start is off until you pick');
+ok(await ev(`!!document.querySelector('.start .ssteps li.on') && !document.querySelector('.start .ssub') && document.querySelectorAll('.draft-card').length === 3 && document.querySelectorAll('.draft-card')[1].classList.contains('is-active') && !document.querySelector('[data-act=start-next]').disabled && !!document.querySelector('[data-act=start-random]') && !document.querySelector('[data-act=start-relic]')`), 'start step 1: center hero pre-selected in accordion spotlight with Pick and Random +2 Gold buttons');
 const fmtOut = await ev(`__bal.fmt('<b>x</b> deals 20% magic damage and stuns for 1.5s')`);
 ok(/&lt;b&gt;/.test(fmtOut) && /class="num">20%/.test(fmtOut) && /kw-ap/.test(fmtOut) && /kw-cc/.test(fmtOut) && /class="dur">1.5s/.test(fmtOut), 'descriptions colour terms, bold numbers, italic durations, and stay escaped');
-await pickHero();
-ok(await ev(`!!document.querySelector('.detail .htag') && !!document.querySelector('.detail [data-act=hero-peek]') && !document.querySelector('.detail .stat') && !document.querySelector('[data-act=start-next]').disabled`), 'start step 1: the picked hero shows its ability (no stat table) and Start turns on');
+ok(await ev(`!!document.querySelector('.draft-card.is-active .dd-desc') && document.querySelectorAll('.draft-card.is-active .dd-stat').length === 3 && !!document.querySelector('.draft-card.is-active [data-act=hero-peek]') && document.querySelector('[data-act=start-next]').textContent.toUpperCase().includes(document.querySelector('.draft-card.is-active').dataset.heroName.toUpperCase())`), 'start step 1: active card drawer shows ability, HP/ATK/RNG stats, Details icon, and dynamic PICK button');
 await shot('02a-start-hero'); await noHScroll('start hero'); await noVScroll('start hero');
-await ev(`document.querySelectorAll('[data-act=start-pick]')[2].click()`); await sleep(80);
-ok(await ev(`document.querySelectorAll('.hbanner.spot.on').length === 1 && document.querySelectorAll('.hbanner.spot')[2].classList.contains('on') && !document.querySelectorAll('.hbanner.spot')[0].classList.contains('on') && !document.querySelector('.hbanner.focus')`), 'tapping another hero moves the light: only the picked one stays lit');
-await ev(`document.querySelectorAll('[data-act=start-pick]')[2].click()`); await sleep(80);
-ok(await ev(`!document.querySelector('.hbanner.spot.on') && document.querySelector('[data-act=start-next]').disabled`), 'tapping it again puts it back (nothing stays lit)');
+await ev(`document.querySelectorAll('[data-act=start-pick]')[2].click()`); await sleep(120);
+ok(await ev(`document.querySelectorAll('.hbanner.spot.on').length === 1 && document.querySelectorAll('.hbanner.spot')[2].classList.contains('on') && !document.querySelectorAll('.hbanner.spot')[0].classList.contains('on') && document.querySelector('[data-act=start-next]').textContent.toUpperCase().includes(document.querySelectorAll('.draft-card')[2].dataset.heroName.toUpperCase())`), 'tapping another hero switches accordion spotlight and updates PICK CTA');
 await pickHero();
 await shot('02-start'); await noHScroll('start'); await noVScroll('start');
 ok(await click('[data-act=start-next]'), 'start the game');
@@ -125,7 +122,7 @@ while (steps++ < 160) {
     await sleep(150); continue;
   }
   if (st.phase === 'recruit' && !(await ev(`!!document.querySelector('[data-act=result-ok], [data-act=spec]')`))) {
-    if (!globalThis.__sawRecruit) { globalThis.__sawRecruit = 1; ok(await ev(`document.querySelectorAll('[data-act=recruit-pick]').length === 3 && document.querySelector('[data-act=recruit-go]').disabled && /Free hero 1 of 2/.test(document.querySelector('#screen').textContent)`), 'v64 (review #126): after day 1 a free hero joins: 3 to pick from'); await shot('07c-recruit'); await noHScroll('recruit'); await noVScroll('recruit'); }
+    if (!globalThis.__sawRecruit) { globalThis.__sawRecruit = 1; ok(await ev(`document.querySelectorAll('[data-act=recruit-pick]').length === 3 && document.querySelectorAll('.draft-card')[1].classList.contains('is-active') && !document.querySelector('[data-act=recruit-go]').disabled && !!document.querySelector('[data-act=recruit-random]') && /Free hero 1 of 2/.test(document.querySelector('#screen').textContent)`), 'v64/accordion: after day 1 a free hero joins: 3 accordion cards with center pre-selected'); await shot('07c-recruit'); await noHScroll('recruit'); await noVScroll('recruit'); }
     await click('[data-act=recruit-pick]'); await click('[data-act=recruit-go]'); await sleep(120); continue;
   }
   if (st.phase === 'steal') { await click('[data-act=steal]:last-of-type'); await sleep(100); continue; }

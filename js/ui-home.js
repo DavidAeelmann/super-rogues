@@ -3,7 +3,7 @@
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
   const U = B._ui;
   const { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts } = U;
-  const APP_VER = 'v1.17';
+  const APP_VER = 'v1.18';
   const logoHTML = () => `<h1 class="logo-big" aria-label="Super Rogues">${B.UI ? B.UI.mark('lg') : ''}<span class="wm"><span class="w1">Super</span><span class="w2">${[...'ROGUES'].map((c, k) => `<i style="--k:${k}">${c}</i>`).join('')}</span></span></h1>`;
   function squadKeys() {
     const out = [];
@@ -137,13 +137,70 @@
       <div class="abil">${abilHTML(h)}</div>${scaleTag(key)}${extra}</div>`;
   }
   // the game starts with 1 hero and 1 relic: pick one of each (3 offered).
-  // two short steps instead of one busy screen. Step 1: tap a hero (its ability shows under the three,
-  // no stat table), then Next. Step 2: the three relics with what they do written on them, then Start.
+  const ROLE_THEME = {
+    Tank: { glow: '#22c55e', pill: '#15803d' },
+    Fighter: { glow: '#22c55e', pill: '#15803d' },
+    Controller: { glow: '#a855f7', pill: '#6d28d9' },
+    Summoner: { glow: '#ec4899', pill: '#9d174d' },
+    Mage: { glow: '#f97316', pill: '#c2410c' },
+    Assassin: { glow: '#ef4444', pill: '#b91c1c' },
+    Ranger: { glow: '#3b82f6', pill: '#1d4ed8' },
+    Healer: { glow: '#10b981', pill: '#047857' },
+    Support: { glow: '#14b8a6', pill: '#0f766e' },
+  };
+  const roleTheme = d => (d && ROLE_THEME[d.role]) || { glow: (d && d.color) || '#a855f7', pill: '#6d28d9' };
+
   const stepsHTML = (s, hasRelics = true) => `<ol class="ssteps">${(hasRelics ? ['Hero', 'Power', 'Fight!'] : ['Hero', 'Fight!']).map((t, i) => `<li class="${i + 1 < s ? 'done' : i + 1 === s ? 'on' : ''}"><i>${i + 1 < s ? '✓' : i + 1}</i>${t}</li>`).join('')}</ol>`;
-  // the pointing hand on the start screens is shown for the first two runs a player ever starts
   const startHint = () => (+store.get('balance.starts', 0) || 0) < 2;
+
+  function draftStageHTML(opts) {
+    const { offer, sel, pickAct, goAct, randAct, headHTML, lockHTML, dealCls, isRecruit } = opts;
+    const selHero = sel && HEROES[sel];
+    const activeTheme = roleTheme(selHero || (offer[1] && HEROES[offer[1]]) || (offer[0] && HEROES[offer[0]]));
+    const colMod = offer.length > 3 ? 'six' : offer.length === 2 ? 'c2' : offer.length === 1 ? 'c1' : '';
+    if (B.SpriteManager && B.SpriteManager.preload) B.SpriteManager.preload(offer);
+    return `<section class="start s1 v3 draft-stage ${isRecruit ? 'recruit' : ''} ${dealCls}" data-draft-mode="${isRecruit ? 'recruit' : 'start'}" style="--active-role-color:${activeTheme.glow}">
+      <div class="draft-aura" aria-hidden="true"></div>
+      <div class="draft-head">${headHTML}</div>
+      <div class="stage spotlights hbanners draft-row ${colMod}">${offer.map((k, i) => {
+        const d = HEROES[k];
+        if (!d) return '';
+        const on = sel === k, th = roleTheme(d);
+        const splashSrc = por(k, 220, true);
+        const roleTxt = `${d.role} • ${(d.range || 1) > 1 ? 'Ranged' : 'Melee'}`;
+        return `<div role="button" tabindex="0" class="hbanner spot draft-card ${on ? 'on is-active foil-sweep' : 'off is-sibling'}" data-act="${pickAct}" data-arg="${k}" data-hero-key="${k}" data-hero-name="${esc(d.name)}" style="--role-color:${th.glow};--role-pill:${th.pill};--cloth:${d.color};--i:${i};--px:0;--py:0" aria-pressed="${on}">
+          <div class="draft-art" style="background-image:url('${esc(splashSrc)}')"></div>
+          <button type="button" class="dd-info" data-act="hero-peek" data-arg="${k}" aria-label="Details for ${esc(d.name)}" title="Hero details">${I('info')}</button>
+          <div class="draft-drawer">
+            <b class="dd-name">${esc(d.name)}</b>
+            <span class="dd-role">${esc(roleTxt)}</span>
+            <div class="dd-extra">
+              <p class="dd-desc">${esc(d.abDesc || d.tag || '')}</p>
+              <div class="dd-stats">
+                <span class="dd-stat"><em>HP</em><b>${Math.round(d.hp || 0)}</b></span>
+                <span class="dd-stat"><em>ATK</em><b>${Math.round(d.atk || 0)}</b></span>
+                <span class="dd-stat"><em>RNG</em><b>${d.range || 1}</b></span>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}</div>
+      <div class="draft-foot">
+        ${lockHTML || ''}
+        <div class="draft-actions">
+          <button class="primary big draft-pick-btn ${sel ? 'ready' : ''}" data-act="${goAct}" ${sel ? '' : 'disabled'}>
+            <span class="dp-tri">▶</span><span class="dp-lbl">PICK <b class="dp-name">${esc(selHero ? selHero.name : '')}</b></span>
+          </button>
+          <button class="draft-random-btn" data-act="${randAct}" aria-label="Pick a random hero for +2 bonus Gold">
+            <span class="dr-top">🎲 Random</span>
+            <span class="dr-sub">(+2 Gold)</span>
+          </button>
+        </div>
+      </div>
+    </section>`;
+  }
+
   function startHTML() {
-    const desk = typeof document !== "undefined" && document.body && document.body.classList.contains("desk");
     const relics = U.run.relicOffer || [], n = ui.startPick.length;
     if (ui.startStep === 2 && n === CFG.startHeroes && relics.length) {
       const rsel = ui.startRelic && relics.includes(ui.startRelic) ? ui.startRelic : null;
@@ -152,97 +209,159 @@
         ${rsel ? `<button class="hdet more srmore" data-act="relic-info" data-arg="${rsel}">${I('info')} More about ${esc(RELIC[rsel].name)}</button>` : ''}
         <div class="bar sbar"><button data-act="start-back">◀ Back</button><button class="primary big ${rsel ? 'ready' : ''}" data-act="start-go" ${rsel ? '' : 'disabled'}>${rsel ? 'Start the game!' : 'Tap a power'}</button></div></section>`;
     }
-    const f = ui.startPick[0] || null;
-    const heroName = f && HEROES[f] ? HEROES[f].name : '';
-    const btnLabel = n === CFG.startHeroes
-      ? (heroName ? `Select ${esc(heroName)} ➔` : (relics.length && !U.introOn() ? 'Next ▶' : 'Start the game!'))
-      : 'Tap a hero';
     const offer = (U.run.startOffer || []).slice();
-    if (B.SpriteManager && B.SpriteManager.preload) B.SpriteManager.preload(offer);
-    return `<section class="start s1 v3 ${dealIn(1)}">${stepsHTML(1, relics.length > 0)}<h2 class="sc">Pick your first hero</h2><p class="ssub">Two more join you for free after your first days.</p>
-      ${heroStage(offer, f, 'start-pick', startHint())}${heroDetail(f)}
-      ${(U.run.locked || []).length ? `${desk ? `<p class="center"><span class="lockpill" title="More heroes, items and powers unlock as your account levels up">🔒 ${U.run.locked.length} more unlock as you level up</span></p>` : `<p class="sub locknote">🔒 ${U.run.locked.length} more hero${U.run.locked.length === 1 ? '' : 'es'} unlock as you play</p>`}` : ''}
-      <div class="bar sbar"><button class="primary big ${desk ? 'hero-cta-btn ' + (n === CFG.startHeroes ? 'ready selected' : 'slot-unselected') : (n === CFG.startHeroes ? 'ready' : '')}" data-act="start-next" ${n === CFG.startHeroes ? '' : 'disabled'}>${desk ? btnLabel : (n === CFG.startHeroes ? (relics.length && !U.introOn() ? 'Next ▶' : 'Start the game!') : 'Tap a hero')}</button></div></section>`;
+    let f = ui.startPick[0] && offer.includes(ui.startPick[0]) ? ui.startPick[0] : (offer[1] || offer[0] || null);
+    if (f && ui.startPick[0] !== f) { ui.startPick = [f]; ui.focus = f; }
+    const headHTML = `${stepsHTML(1, relics.length > 0)}<h2 class="sc">Pick your first hero</h2>`;
+    const lockedCount = (U.run.locked || []).length;
+    const lockHTML = lockedCount ? `<div class="draft-lock">🔒 ${lockedCount} more hero${lockedCount === 1 ? '' : 'es'} unlock as you play</div>` : '';
+    return draftStageHTML({ offer, sel: f, pickAct: 'start-pick', goAct: 'start-next', randAct: 'start-random', headHTML, lockHTML, dealCls: dealIn(1), isRecruit: false });
   }
-  // only the picked hero is lit;
-  // tapping it again puts it back. The stage and the card under it are shared by the start screen and the free recruit screen
-    // Web & itch.io progression: Hero Mastery (Gold frames for winning heroes) and Discovery (??? for unknown heroes)
+
+  function recruitHTML() {
+    const offer = (U.run.recruitOffer || []).slice();
+    let f = ui.recruitPick && offer.includes(ui.recruitPick) ? ui.recruitPick : (offer[1] || offer[0] || null);
+    if (f && ui.recruitPick !== f) { ui.recruitPick = f; ui.focus = f; }
+    const k = (U.run.recruits || 0) + 1;
+    const headHTML = `<div class="recruit-pill"><span>Free hero ${k} of ${CFG.freeRecruits}</span><span class="rp-team">${U.run.heroes.map(h => img(h.key, 20, 'por xs')).join('')}</span></div><h2 class="sc">A hero joins you!</h2>`;
+    return draftStageHTML({ offer, sel: f, pickAct: 'recruit-pick', goAct: 'recruit-go', randAct: 'recruit-random', headHTML, lockHTML: '', dealCls: dealIn('r' + k), isRecruit: true });
+  }
+
+  function syncDraftSelection(key, triggerFoil = true) {
+    const stage = document.querySelector('section.draft-stage');
+    if (!stage || !HEROES[key]) return false;
+    const th = roleTheme(HEROES[key]);
+    stage.style.setProperty('--active-role-color', th.glow);
+    const cards = stage.querySelectorAll('.draft-card');
+    cards.forEach(card => {
+      const on = card.dataset.heroKey === key;
+      card.classList.toggle('on', on);
+      card.classList.toggle('is-active', on);
+      card.classList.toggle('off', !on);
+      card.classList.toggle('is-sibling', !on);
+      card.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if (!on) {
+        card.classList.remove('foil-sweep', 'is-tilting');
+        card.style.setProperty('--px', '0');
+        card.style.setProperty('--py', '0');
+      } else if (triggerFoil) {
+        card.classList.remove('foil-sweep');
+        void card.offsetWidth;
+        card.classList.add('foil-sweep');
+      }
+    });
+    const pickName = stage.querySelector('.draft-pick-btn .dp-name');
+    if (pickName) pickName.textContent = HEROES[key].name;
+    const pickBtn = stage.querySelector('.draft-pick-btn');
+    if (pickBtn) { pickBtn.disabled = false; pickBtn.classList.add('ready'); }
+    return true;
+  }
+
+  function runDraftRandom(mode) {
+    if (ui.randomBusy || !U.run) return;
+    const stage = document.querySelector('section.draft-stage');
+    const offer = mode === 'recruit' ? (U.run.recruitOffer || []) : (U.run.startOffer || []);
+    if (!stage || !offer.length) return;
+    const phase0 = U.run.phase;
+    const finalKey = offer[Math.floor(Math.random() * offer.length)];
+    ui.randomBusy = true;
+    const pickBtn = stage.querySelector('.draft-pick-btn');
+    const randBtn = stage.querySelector('.draft-random-btn');
+    if (pickBtn) pickBtn.disabled = true;
+    if (randBtn) { randBtn.disabled = true; randBtn.classList.add('spinning'); }
+
+    const startIdx = Math.max(0, offer.indexOf(mode === 'recruit' ? ui.recruitPick : ui.startPick[0]));
+    const steps = 8, intervalMs = 75;
+    let step = 0;
+    const timer = setInterval(() => {
+      if (!U.run || U.run.phase !== phase0 || U.screen !== 'run' || !document.contains(stage)) {
+        clearInterval(timer); ui.randomBusy = false; return;
+      }
+      step++;
+      const k = step < steps ? offer[(startIdx + step) % offer.length] : finalKey;
+      U.markHeroKnown(k);
+      ui.focus = k;
+      if (mode === 'recruit') ui.recruitPick = k; else ui.startPick = [k];
+      syncDraftSelection(k, step === steps);
+      sfx(step < steps ? 'tap' : 'coin');
+      if (step >= steps) {
+        clearInterval(timer);
+        U.run.gold = (U.run.gold || 0) + 2;
+        ui.goldHold = null;
+        header();
+        save();
+        if (B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 36);
+        toast(`🎲 ${HEROES[finalKey].name}! +2 Gold`);
+        setTimeout(() => {
+          ui.randomBusy = false;
+          if (!U.run || U.run.phase !== phase0 || U.screen !== 'run') return;
+          if (mode === 'recruit' && U.ACT && U.ACT['recruit-go']) U.ACT['recruit-go']();
+          else if (mode === 'start' && U.ACT && U.ACT['start-next']) U.ACT['start-next']();
+        }, 240);
+      }
+    }, intervalMs);
+  }
+
+  let draftParallaxBound = false;
+  function bindDraftParallax() {
+    if (draftParallaxBound || typeof document === 'undefined') return;
+    draftParallaxBound = true;
+    const scr = document.getElementById('screen') || document;
+    const updateTilt = (card, cx, cy) => {
+      if (!card || !card.classList.contains('is-active')) return;
+      const r = card.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return;
+      const px = Math.max(-1, Math.min(1, ((cx - r.left) / r.width - 0.5) * 2));
+      const py = Math.max(-1, Math.min(1, ((cy - r.top) / r.height - 0.5) * 2));
+      card.classList.add('is-tilting');
+      card.style.setProperty('--px', px.toFixed(3));
+      card.style.setProperty('--py', py.toFixed(3));
+    };
+    const resetTilt = card => {
+      if (!card) return;
+      card.classList.remove('is-tilting');
+      card.style.setProperty('--px', '0');
+      card.style.setProperty('--py', '0');
+    };
+    scr.addEventListener('pointermove', e => {
+      const card = e.target.closest('.draft-card.is-active');
+      if (card) updateTilt(card, e.clientX, e.clientY);
+      else scr.querySelectorAll('.draft-card.is-tilting').forEach(resetTilt);
+    });
+    scr.addEventListener('pointerout', e => {
+      const card = e.target.closest('.draft-card.is-active');
+      if (card && (!e.relatedTarget || !card.contains(e.relatedTarget))) resetTilt(card);
+    });
+    scr.addEventListener('pointercancel', e => resetTilt(e.target.closest('.draft-card')));
+    scr.addEventListener('touchmove', e => {
+      const t = e.touches && e.touches[0];
+      const card = t && e.target.closest('.draft-card.is-active');
+      if (card && t) updateTilt(card, t.clientX, t.clientY);
+    }, { passive: true });
+    const resetTouches = () => scr.querySelectorAll('.draft-card.is-tilting').forEach(resetTilt);
+    scr.addEventListener('touchend', resetTouches, { passive: true });
+    scr.addEventListener('touchcancel', resetTouches, { passive: true });
+    scr.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const card = e.target.closest('.draft-card[role="button"]');
+      if (card && !e.target.closest('button.dd-info')) { e.preventDefault(); card.click(); }
+    });
+  }
+
+  // Web & itch.io progression: Hero Mastery (Gold frames for winning heroes) and Discovery (??? for unknown heroes)
   const wonHeroKeys = () => { const s = store.get('balance.wonHeroes', []); return Array.isArray(s) ? s : []; };
   const recordHeroWin = key => { if (!key) return; const cur = wonHeroKeys(); if (!cur.includes(key)) store.set('balance.wonHeroes', cur.concat(key)); };
   const recordTeamWins = heroes => { (heroes || []).forEach(h => recordHeroWin(h.key || h)); };
   const knownHeroKeys = () => {
     const s = store.get('balance.knownHeroes', []);
     const base = Array.isArray(s) ? s : [];
-    // Free starting heroes and won heroes are always known
     const free = B.PORTRAITS_FREE || ['barian', 'solara', 'groth', 'tiberius'];
     const set = new Set([...free, ...wonHeroKeys(), ...base]);
     return set;
   };
   const markHeroKnown = key => { if (!key) return; const k = knownHeroKeys(); if (!k.has(key)) { k.add(key); store.set('balance.knownHeroes', Array.from(k)); } };
 
-  function heroClassBadge(d) {
-    const r = (d.role || '').toLowerCase();
-    const isRanged = d.range > 1;
-    let icon = '⚔️';
-    if (r.includes('summon')) icon = '🏰';
-    else if (r.includes('heal')) icon = '✚';
-    else if (r.includes('mage')) icon = '🔥';
-    else if (r.includes('tank') || r.includes('control')) icon = '🛡️';
-    else if (r.includes('hunt') || isRanged) icon = '🏹';
-    return `<span class="hbadge-crest">${icon}</span><span class="hbadge-txt">${esc(d.role).toUpperCase()} • ${isRanged ? 'RANGED' : 'MELEE'}</span>`;
-  }
-
-  function heroStage(offer, sel, act, hint) {
-    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
-    const colMod = offer.length > 3 ? 'six' : offer.length === 2 ? 'c2' : offer.length === 1 ? 'c1' : '';
-    if (!desk) {
-      return `<div class="stage spotlights hbanners ${colMod}">${offer.map((k, i) => {
-        const d = HEROES[k], on = sel === k;
-        const splashSrc = por(k, 150, true);
-        return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}"><span class="cone"></span><span class="shine"></span><img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" src="${splashSrc}" alt="${esc(d.name)}"><span class="plate"></span><b>${esc(d.name)}</b><i>${d.role} · ${d.range <= 1 ? 'Melee' : 'Ranged'}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`;
-      }).join('')}</div>`;
-    }
-    return `<div class="stage spotlights hbanners ${colMod}">${offer.map((k, i) => {
-      const d = HEROES[k];
-      if (!d) return '';
-      const on = sel === k;
-      const r = (d.role || '').toLowerCase();
-      const themeClass = r.includes('summon') ? 'theme-citadel' : r.includes('heal') ? 'theme-solace' : r.includes('mage') ? 'theme-feuer' : 'theme-default';
-      const range = d.range || 1;
-      const hp = Math.round(d.hp || 500);
-      const atk = Math.round(d.atk || 50);
-      const splashSrc = por(k, 180, true);
-      const topBadgeIcon = r.includes('summon') ? '🏰' : r.includes('heal') ? '🌿' : r.includes('mage') ? '🔥' : '⚔️';
-
-      return `<button class="hbanner spot hero-tarot-card ${themeClass} ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}">
-        <span class="cone"></span>
-        <span class="shine"></span>
-        <div class="card-crest-top">${on ? '<span class="chk-crest">✓</span>' : `<span class="class-crest-icon">${topBadgeIcon}</span>`}</div>
-        <img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" src="${splashSrc}" alt="${esc(d.name)}">
-        <div class="card-vignette-bottom">
-          <b class="hero-card-title">${esc(d.name)}</b>
-          <div class="hero-role-pill">${heroClassBadge(d)}</div>
-          <div class="hero-mini-stats">
-            <span class="mstat hp"><span class="stat-ico">❤️</span> <span class="stat-lbl">HP</span> <b>${hp}</b></span>
-            <span class="mstat atk"><span class="stat-ico">⚔️</span> <span class="stat-lbl">ATK</span> <b>${atk}</b></span>
-            <span class="mstat rng"><span class="stat-ico">🏹</span> <span class="stat-lbl">RNG</span> <b>${range}</b></span>
-          </div>
-        </div>
-        ${on ? '<span class="chk">✓</span>' : ''}
-        ${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}
-      </button>`;
-    }).join('')}</div>`;
-  }
-  function heroDetail(f) {
-    const h = f && HEROES[f];
-    return h ? `<div class="card detail floating-hero-detail">
-        <p class="htag"><b class="htag-title">${esc(h.abName)}:</b> ${esc(h.tag || h.abDesc || '')}</p>
-        <button class="hdet" data-act="hero-peek" data-arg="${f}">${I('info')} Details</button>
-      </div>` : '<p class="ssub tap">Tap a hero to see what it does</p>';
-  }
-  // v114 (, David: "Improve the ui of the first two choices of a run based on clarity, fun, dopamine. It must be an exhilarating experience. Optimize
-  // for screen size, no lost space at the bottom"): the two start steps fill the screen (the stage grows, the button sits at the bottom), the cards deal in,
-  // the pick lifts with a turning gold frame, a shine and confetti, and the hero card shows four bars (Health, Attack, Speed, Range) against every hero.
+  // v114: stat bars on full hero inspection
   function statBars(h) {
     const tr = (B.HERO_TRAITS && B.HERO_TRAITS[h.key]) || [], g = h.grow || 1;
     const curve = g >= 1.1 ? ['Peaks late', 'late'] : g <= 0.9 ? ['Strong early', 'early'] : null;
@@ -250,22 +369,9 @@
   }
   function dealIn(step) { const k = (U.run && U.run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
 
-  function recruitHTML() {
-    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
-    const offer = U.run.recruitOffer || [], f = offer.includes(ui.recruitPick) ? ui.recruitPick : null, k = (U.run.recruits || 0) + 1;
-    const btnLabel = f ? `Recruit ${esc(HEROES[f].name)} ▶` : 'Tap a hero';
-    return `<section class="start s1 v3 recruit ${dealIn('r' + k)}"><h2 class="sc">A hero joins you!</h2><p class="ssub">Free hero ${k} of ${CFG.freeRecruits}. Your team: ${U.run.heroes.map(h => img(h.key, 26, 'por xs')).join('')}</p>
-      ${heroStage(offer, f, 'recruit-pick', false)}${heroDetail(f)}
-      <div class="bar sbar"><button class="primary big ${desk ? 'hero-cta-btn ' + (f ? 'ready selected' : 'slot-unselected') : (f ? 'ready' : '')}" data-act="recruit-go" ${f ? '' : 'disabled'}>${btnLabel}</button></div></section>`;
-  }
-
   function pathHTML() {
     return `<div class="shead"><b>🗺 Your journey</b><button data-act="close">✕</button></div>${U.trackHTML()}
       <ul class="plegend"><li>${I('swords')} Fight</li><li>${I('help')} Shop or event</li><li>${I('skull')} Boss</li><li>${I('cart')} Last shop</li><li>${I('trophy')} Victory</li></ul>`;
   }
-  // a trail of the whole run on top of the map. the run is a road
-  // climbing a valley at night, from the camp at the bottom to the castle of the final fight at the top. The days behind you are lit gold, your leader stands
-  // where you are, today's choices are the fork in the road (the posters), and the days ahead wind up into the dark with their bosses and duel days. The road
-  // scrolls inside the screen and opens on today.
-  Object.assign(U, { titleHTML, recruitHTML, startHTML, recordTeamWins, startTrailer, plainAb, statBars, abilHTML, homeMenuHTML, markHeroKnown, codexHTML, pathHTML, trailer });
+  Object.assign(U, { titleHTML, recruitHTML, startHTML, syncDraftSelection, runDraftRandom, bindDraftParallax, recordTeamWins, startTrailer, plainAb, statBars, abilHTML, homeMenuHTML, markHeroKnown, codexHTML, pathHTML, trailer });
 })();

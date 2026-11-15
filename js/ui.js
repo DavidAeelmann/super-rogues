@@ -9,11 +9,12 @@
     // Play / Play again: starts a fresh run.
     'new-run': () => {
       U.run = Run.newRun((Math.random() * 2 ** 31) | 0, { locked: B.lockedFor(lvlNow()), deck: store.get('balance.freeDeck', null) });
-      ui.startPick = []; ui.startRelic = null; ui.focusRelic = null; ui.focus = null; ui.startStep = 1; ui.lastGold = null; ui.goldHold = null; U.screen = 'run'; save(); render();
+      const offer = U.run.startOffer || [], mid = offer[1] || offer[0] || null;
+      ui.startPick = mid ? [mid] : []; ui.startRelic = null; ui.focusRelic = null; ui.focus = mid; ui.startStep = 1; ui.randomBusy = false; ui.lastGold = null; ui.goldHold = null; U.screen = 'run'; save(); render();
     },
     // Continue: back into the saved run.
     'continue-run': () => { U.screen = 'run'; render(); },
-    menu: () => { if (U.battle) return; U.screen = 'title'; closeModal(); render(); },
+    menu: () => { if (U.battle) return; ui.randomBusy = false; U.screen = 'title'; closeModal(); render(); },
     'ward-info': () => { if (!U.run) return; sfx('tap'); toast(U.run.lives > 0 ? '🛡 Ward intact: one defeat allowed before game over' : '💔 Ward broken: next defeat ends the run!'); },
     'stat-info': k => { const desc = k === 'hp' ? '❤️ Health: Maximum damage before falling' : k === 'atk' ? '⚔️ Attack: Base physical damage dealt per strike' : '⚡ Magic (AP): Powers hero abilities, spells and shields'; toast(desc, true); sfx('pick'); },
     'cos-preview': id => {
@@ -27,12 +28,28 @@
     'guide-again': () => { store.set('balance.guide3', []); store.set('balance.guide.v', 0); closeModal(); toast('The tutorial will show again as you play'); render(); },
     // Menu -> Tutorial: on = from the start again, off = no more tips
     tutorial: () => { if (U.guideOn()) { U.guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); toast('Tutorial on: the tips show again as you play'); } openModal(U.homeMenuHTML()); ui.modal = 'home'; },
-    // Start screens: choose a hero (start-pick), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
-    'start-pick': k => { U.markHeroKnown(k); ui.focus = k; ui.focusRelic = null; ui.startPick = ui.startPick[0] === k ? [] : [k]; render(); if (ui.startPick[0] === k && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 26); },
+    // Start screens: choose a hero (start-pick), roll random +2 gold (start-random), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
+    'start-pick': k => {
+      if (ui.randomBusy || !HEROES[k]) return;
+      U.markHeroKnown(k);
+      const changed = ui.startPick[0] !== k;
+      ui.focus = k; ui.focusRelic = null; ui.startPick = [k];
+      if (!U.syncDraftSelection || !U.syncDraftSelection(k, changed)) render();
+      if (changed && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 22);
+    },
+    'start-random': () => { if (U.runDraftRandom) U.runDraftRandom('start'); },
     // the free recruit between days
-    'recruit-pick': k => { U.markHeroKnown(k); ui.recruitPick = ui.recruitPick === k ? null : k; render(); },
-    'recruit-go': () => { if (!ui.recruitPick) return; const err = Run.recruit(U.run, ui.recruitPick); if (err) { toast(err); return; } ui.recruitPick = null; sfx('levelup'); save(); render(); window.scrollTo(0, 0); },
-    'start-next': () => { if (ui.startPick.length !== CFG.startHeroes) return; if (U.introOn() && (U.run.relicOffer || []).length) { ui.startRelic = U.run.relicOffer[0]; ACT['start-go'](); return; }   // straight to the battlefield
+    'recruit-pick': k => {
+      if (ui.randomBusy || !HEROES[k]) return;
+      U.markHeroKnown(k);
+      const changed = ui.recruitPick !== k;
+      ui.focus = k; ui.recruitPick = k;
+      if (!U.syncDraftSelection || !U.syncDraftSelection(k, changed)) render();
+      if (changed && B.Juice) B.Juice.confettiAt('.start .hbanner.spot.on', 22);
+    },
+    'recruit-random': () => { if (U.runDraftRandom) U.runDraftRandom('recruit'); },
+    'recruit-go': () => { if (ui.randomBusy || !ui.recruitPick) return; const err = Run.recruit(U.run, ui.recruitPick); if (err) { toast(err); return; } ui.recruitPick = null; sfx('levelup'); save(); render(); window.scrollTo(0, 0); },
+    'start-next': () => { if (ui.randomBusy || ui.startPick.length !== CFG.startHeroes) return; if (U.introOn() && (U.run.relicOffer || []).length) { ui.startRelic = U.run.relicOffer[0]; ACT['start-go'](); return; }   // straight to the battlefield
       if ((U.run.relicOffer || []).length) { ui.startStep = 2; render(); } else ACT['start-go'](); },
     'start-back': () => { ui.startStep = 1; render(); },
     'coach-ok': () => { U.coachDone(); sfx('tap'); render(); },
@@ -556,7 +573,7 @@
 
       // Start screen / recruit hero pick (1, 2, 3)
       if (U.screen === 'run' && U.run && (U.run.phase === 'start' || U.run.phase === 'recruit')) {
-        const spots = document.querySelectorAll('.stage .hbanner.spot, .stage.pedestals .srelic.ped');
+        const spots = document.querySelectorAll('.stage .draft-card, .stage.pedestals .srelic.ped');
         if (spots && spots[idx]) { spots[idx].click(); e.preventDefault(); return; }
       }
 
@@ -607,6 +624,7 @@
     }
   } catch (_) {}
   render();
+  if (U.bindDraftParallax) U.bindDraftParallax();
   // test hook (headless Chrome tests drive the game through this)
   window.__bal = { deployBench: () => { if (!U.run) return 0; const n = Run.benched(U.run); for (const h of n) { delete h.bench; h.pos = null; Run.autoPlace(U.run, h); } if (n.length) { save(); render(); } return n.length; }, showVs: U.showVs, closeVs: U.closeVs, get ui() { return ui; }, get run() { return U.run; }, get battle() { return U.battle; }, get acct() { return acct; }, get result() { return ui.result; }, get screen() { return U.screen; }, set screen(s) { U.screen = s; }, loadAcct, ACT, render, skipBattle: U.skipBattle, fmt, scaleParts, hexScreen: (c, r) => { const b = U.view.canvas.getBoundingClientRect(), p = Render.hexScreen(U.view, c, r); return { x: b.left + p.x, y: b.top + p.y }; } };
 })();
