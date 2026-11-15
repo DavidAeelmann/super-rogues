@@ -197,13 +197,6 @@ body.desk #top { border-bottom: 1px solid rgba(197, 160, 89, 0.22) !important; }
 .lvchip-label { font-size: 12px; font-weight: 800; color: #f8fafc; letter-spacing: 0.2px; }
 body.desk .map.road { grid-template-columns: minmax(0, 1fr) 340px !important; gap: 20px !important; align-items: start !important; }
 body.desk section.map.road .mapside { display: block !important; width: 340px !important; background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
-body.desk .banner.v2 { min-height: 280px !important; height: auto !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; padding: 0 0 16px 0 !important; border-radius: 14px !important; overflow: hidden !important; }
-body.desk .banner.v2 .scene { width: 100% !important; height: 110px !important; display: flex !important; align-items: center !important; justify-content: center !important; mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important; -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%) !important; }
-body.desk .banner.v2 .bt { padding: 6px 12px 2px !important; font-size: 18px !important; font-weight: 800 !important; }
-body.desk .banner.v2 .bd { padding: 2px 14px 10px !important; font-size: 12.5px !important; line-height: 1.3 !important; color: #cbd5e1 !important; }
-.card-action-btn { display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important; margin: 8px auto 0 !important; padding: 6px 18px !important; border-radius: 999px !important; background: linear-gradient(180deg, #3b82f6, #1d4ed8) !important; border: 1.5px solid #93c5fd !important; border-bottom: 3px solid #1e3a8a !important; color: #ffffff !important; font-family: var(--fun) !important; font-size: 13px !important; font-weight: 700 !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important; }
-body:not(.desk) .card-action-btn { display: none !important; }
-.banner.v2.b-easy .card-action-btn, .banner.v2.b-hard .card-action-btn, .banner.v2.b-boss .card-action-btn { background: linear-gradient(180deg, #ef4444, #b91c1c) !important; border-color: #fca5a5 !important; border-bottom-color: #7f1d1d !important; }
 body.desk .hero-tarot-card { border: 2px solid #c89b3c !important; border-radius: 16px !important; }
 body.desk .hero-tarot-card .card-crest-top { position: absolute !important; top: -18px !important; left: 50% !important; transform: translateX(-50%) !important; background: #161924 !important; border: 2px solid #c89b3c !important; border-radius: 50% !important; width: 38px !important; height: 38px !important; z-index: 10 !important; }
 .card-vignette-bottom { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 6px !important; padding: 14px 12px !important; background: linear-gradient(180deg, transparent 0%, rgba(9, 11, 18, 0.88) 25%, #090b12 90%) !important; }
@@ -365,25 +358,6 @@ body.desk .start .ped .orb { width: 52px !important; height: 52px !important; }
 body.desk .start .ped .orb .ico { width: 40px !important; height: 40px !important; }
 body.desk .start.v3 .ped .srt b { font-size: 16px !important; }
 body.desk .start.v3 .ped .srt small { font-size: 13px !important; max-width: 240px !important; line-height: 1.35 !important; }
-#app:has(section.map), body.desk:has(section.map), #screen:has(section.map) { background: url('art/arena/map-bg.jpg') center center / cover no-repeat fixed !important; }
-body.desk .map.road .wmap, body.desk section.map.road .wmap, body.desk .wmap { background: transparent !important; border: none !important; box-shadow: none !important; }
-body.desk .wmap .wtrack { background: transparent !important; border: none !important; box-shadow: none !important; }
-body.desk .banner.v2 { background: linear-gradient(180deg, rgba(17, 24, 38, 0.94) 0%, rgba(9, 13, 20, 0.98) 100%) !important; backdrop-filter: blur(12px) !important; border-radius: 6px !important; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7) !important; position: relative !important; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important; }
-body.desk .banner.v2:hover { transform: translateY(-4px) !important; }
-body.desk .banner.v2.b-easy { border: 1.5px solid rgba(52, 211, 153, 0.5) !important; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), inset 0 2px 0 #34d399 !important; }
-body.desk .banner.v2.b-easy:hover { border-color: #34d399 !important; box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(52, 211, 153, 0.25) !important; }
-body.desk .banner.v2.b-med, body.desk .banner.v2.b-medium { border: 1.5px solid rgba(245, 158, 11, 0.5) !important; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), inset 0 2px 0 #fbbf24 !important; }
-body.desk .banner.v2.b-med:hover, body.desk .banner.v2.b-medium:hover { border-color: #fbbf24 !important; box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.25) !important; }
-body.desk .banner.v2.b-hard, body.desk .banner.v2.b-horde { border: 1.5px solid rgba(239, 68, 68, 0.5) !important; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), inset 0 2px 0 #f87171 !important; }
-body.desk .banner.v2.b-hard:hover, body.desk .banner.v2.b-horde:hover { border-color: #f87171 !important; box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(239, 68, 68, 0.25) !important; }
-body.desk .banner.v2.b-boss { border: 1.5px solid rgba(168, 85, 247, 0.55) !important; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), inset 0 2px 0 #c084fc !important; }
-body.desk .banner.v2.b-boss:hover { border-color: #c084fc !important; box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(168, 85, 247, 0.3) !important; }
-body.desk .banner.v2 .gold-treasure-plaque { background: rgba(245, 158, 11, 0.12) !important; border: 1px solid rgba(245, 158, 11, 0.35) !important; border-radius: 999px !important; padding: 3px 12px !important; color: #fde047 !important; box-shadow: none !important; }
-body.desk .banner.v2 .card-action-btn { background: linear-gradient(180deg, #163638 0%, #0d2022 100%) !important; border: 1px solid #2dd4bf !important; color: #ccfbf1 !important; border-radius: 4px !important; font-weight: 800 !important; letter-spacing: 1px !important; text-transform: uppercase !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important; }
-body.desk .banner.v2 .scene { background: rgba(0, 0, 0, 0.25) !important; }
-body.desk .banner.v2 .bt { color: #ffffff !important; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important; }
-body.desk .banner.v2 .bd { color: #cbd5e1 !important; }
-body.desk .wtrack .banner.v2 { max-width: 195px !important; margin: 0 6px !important; }
 body.desk section.map.road .mapside .party, body.desk .party.tactical-dock { background: rgba(9, 13, 17, 0.84) !important; backdrop-filter: blur(16px) !important; border: 1px solid rgba(200, 170, 110, 0.32) !important; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important; border-radius: 6px !important; position: relative !important; padding: 14px 16px !important; }
 body.desk .party.tactical-dock::before, body.desk .party.tactical-dock::after { content: "" !important; position: absolute !important; width: 6px !important; height: 6px !important; border-color: #c8aa6e !important; pointer-events: none !important; }
 body.desk .party.tactical-dock::before { top: -1px !important; left: -1px !important; border-top: 2px solid #c8aa6e !important; border-left: 2px solid #c8aa6e !important; }
@@ -1120,52 +1094,6 @@ body.desk .deploy.battle .hud .speed button.on,
   color: #f8fafc !important;
 }
 
-.banner.v2 {
-  background: linear-gradient(180deg, var(--sr-bg-2) 0%, var(--sr-bg-0) 100%) !important;
-  border: 1.5px solid var(--sr-border) !important;
-  color: var(--sr-ink) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55) !important;
-}
-.banner.v2.b-easy { border-color: rgba(34, 197, 94, 0.55) !important; }
-.banner.v2.b-medium { border-color: rgba(212, 168, 75, 0.55) !important; }
-.banner.v2.b-hard { border-color: rgba(239, 68, 68, 0.55) !important; }
-.banner.v2.b-boss { border-color: rgba(168, 85, 247, 0.6) !important; }
-.banner.v2.b-shop { border-color: rgba(56, 189, 248, 0.55) !important; }
-.banner.v2.b-event { border-color: rgba(192, 132, 252, 0.55) !important; }
-.banner.v2.b-duel { border-color: rgba(244, 114, 182, 0.55) !important; }
-.banner.v2 .bt { color: #f8fafc !important; }
-.banner.v2 .bd { color: #cbd5e1 !important; }
-.banner.v2 .rw,
-body.desk .banner.v2 .gold-treasure-plaque {
-  background: var(--sr-bg-2) !important;
-  border: 1px solid var(--sr-border-gold) !important;
-  color: var(--sr-gold) !important;
-  box-shadow: none !important;
-}
-.banner.v2 .rw .pw.easy { color: #6ee7b7 !important; }
-.banner.v2 .rw .pw.even { color: #fcd34d !important; }
-.banner.v2 .rw .pw.hard { color: #fca5a5 !important; }
-.banner.v2 .rw .pw.me { color: #cbd5e1 !important; opacity: 1 !important; }
-body.desk .banner.v2 .card-action-btn,
-body.desk .banner.v2.b-easy .card-action-btn,
-body.desk .banner.v2.b-medium .card-action-btn,
-body.desk .banner.v2.b-hard .card-action-btn,
-body.desk .banner.v2.b-boss .card-action-btn,
-body.desk .banner.v2.b-duel .card-action-btn,
-body.desk .banner.v2.b-shop .card-action-btn,
-body.desk .banner.v2.b-event .card-action-btn {
-  background: linear-gradient(180deg, #163638 0%, #0d2022 100%) !important;
-  border: 1px solid #2dd4bf !important;
-  color: #ccfbf1 !important;
-}
-.rtoday .rday {
-  background: var(--sr-bg-1) !important;
-  border: 1.5px solid var(--sr-border-gold) !important;
-  color: var(--sr-gold) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55) !important;
-}
-.rtoday .rday b { color: var(--sr-ink) !important; }
-
 /* ---------- Title Screen & Draft Start ---------- */
 body:not(.desk) #app:has(section.title.home) {
   max-width: 100% !important;
@@ -1658,10 +1586,6 @@ body.desk #wmap {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   height: 100% !important;
-}
-body.desk .wtrack .banner.v2 {
-  max-width: 220px !important;
-  min-height: 210px !important;
 }
 body.desk .rtoday .banners {
   justify-content: center !important;
@@ -2918,5 +2842,957 @@ body.desk #screen .draft-stage button.draft-random-btn {
   #screen .draft-stage button.draft-random-btn { min-height: 38px !important; padding: 4px 8px !important; }
 }
 
+/* ==========================================================================
+   TACTICAL CROSSROADS & CONSTELLATION MAP
+   ========================================================================== */
+body:has(section.map),
+body.desk:has(section.map) {
+  background:
+    radial-gradient(ellipse at 50% 28%, rgba(12, 24, 38, 0.42) 0%, rgba(8, 12, 22, 0.92) 75%),
+    url('art/arena/map-bg.jpg') center center / cover no-repeat fixed !important;
+  background-color: #080c16 !important;
+}
+#app:has(section.map),
+#screen:has(section.map) {
+  background: transparent !important;
+}
+body.desk:has(section.map) #bgstage {
+  display: none !important;
+}
+body:not(.desk) .map.road {
+  padding: 2px 0 0 !important;
+}
+.map.road .wmap,
+body.desk .map.road .wmap,
+body.desk section.map.road .wmap,
+body.desk .wmap {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.wmap .wtrack,
+body.desk .wmap .wtrack {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.wmap .wsky,
+.wmap .wpeaks,
+.wmap .wdec,
+.wmap .rn.final .castle {
+  display: none !important;
+}
 
+/* ---------- Animated Layered SVG Constellation Trails ---------- */
+.wroad path {
+  fill: none !important;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  --trail: #10b981;
+}
+.wroad path.c-emerald { --trail: #10b981; }
+.wroad path.c-crimson { --trail: #f43f5e; }
+.wroad path.c-amber   { --trail: #fb923c; }
+.wroad path.c-sky     { --trail: #38bdf8; }
+.wroad path.c-violet  { --trail: #c084fc; }
+.wroad path.c-rose    { --trail: #f472b6; }
+.wroad path.c-gold    { --trail: #fbbf24; }
+.wroad path.trail-glow {
+  stroke: var(--trail) !important;
+  stroke-width: 7px !important;
+  opacity: 0.36 !important;
+  filter: blur(4px) !important;
+}
+.wroad path.trail-core {
+  stroke: var(--trail) !important;
+  stroke-width: 2.5px !important;
+  stroke-dasharray: 6 8 !important;
+  opacity: 0.95 !important;
+}
+.wroad path.is-dim {
+  opacity: 0.24 !important;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wroad path.trail-core {
+    animation: dashFlow 1.2s linear infinite !important;
+  }
+}
+@keyframes dashFlow {
+  to { stroke-dashoffset: -28; }
+}
 
+/* ---------- Horizon Nodes & Leader Token ---------- */
+.wmap .rn {
+  width: 34px !important;
+  height: 34px !important;
+  margin: -17px 0 0 -17px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: grid !important;
+  place-items: center !important;
+}
+.wmap .rn .ri {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  transform: scale(var(--zscale, 1));
+  background: rgba(15, 23, 42, 0.88) !important;
+  border: 2px solid var(--nc, #10b981) !important;
+  box-shadow: 0 0 16px var(--nc, #10b981), inset 0 0 8px color-mix(in srgb, var(--nc, #10b981) 35%, transparent) !important;
+  color: #f8fafc !important;
+  font-size: 14px !important;
+}
+.wmap .rn .ri svg.ui {
+  width: 17px !important;
+  height: 17px !important;
+}
+.wmap .rn.done .ri {
+  width: 24px !important;
+  height: 24px !important;
+  background: rgba(120, 53, 15, 0.92) !important;
+  border-color: #fbbf24 !important;
+  color: #fef08a !important;
+  font-size: 12px !important;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5) !important;
+}
+.wmap .rn.camp .ri {
+  width: 34px !important;
+  height: 34px !important;
+  background: rgba(6, 78, 59, 0.9) !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.55) !important;
+  font-size: 17px !important;
+}
+.wmap .rn.boss {
+  width: 44px !important;
+  height: 44px !important;
+  margin: -22px 0 0 -22px !important;
+}
+.wmap .rn.boss .ri {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 2px solid #f43f5e !important;
+  box-shadow: 0 0 18px rgba(244, 63, 94, 0.75) !important;
+}
+.wmap .rn.boss .ri img.por {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+.wmap .rn.final {
+  width: 48px !important;
+  height: 48px !important;
+  margin: -24px 0 0 -24px !important;
+}
+.wmap .rn.final .ri {
+  width: 48px !important;
+  height: 48px !important;
+  background: radial-gradient(circle at 35% 30%, #fef08a, #d97706) !important;
+  border: 2px solid #fef9c3 !important;
+  color: #451a03 !important;
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.85) !important;
+}
+.wmap .rn.final .ri svg.ui {
+  width: 24px !important;
+  height: 24px !important;
+}
+.wmap .rn.far:not(.boss) {
+  opacity: 0.72 !important;
+}
+.wmap .rn .rl,
+.wmap .rtok .tok-rl {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: max-content !important;
+  max-width: calc(var(--room, 50) * 1cqw - 26px) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1px solid color-mix(in srgb, var(--nc, #94a3b8) 55%, rgba(255, 255, 255, 0.22)) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55) !important;
+  color: #e2e8f0 !important;
+  font: 600 10.5px/1.2 var(--fun) !important;
+  pointer-events: none !important;
+}
+.wmap .rn .rl b,
+.wmap .rtok .tok-rl b {
+  color: #ffffff !important;
+  margin-right: 1px !important;
+}
+.wmap .rl-dot {
+  color: #94a3b8 !important;
+  margin: 0 2px !important;
+}
+.wmap .rl-q {
+  font-style: normal !important;
+  color: #6ee7b7 !important;
+  font-weight: 800 !important;
+}
+.wmap .rn .rl i {
+  font-style: normal !important;
+  color: #fda4af !important;
+}
+.wmap .rn .rl.rgt,
+.wmap .rtok .tok-rl {
+  left: calc(100% + 9px) !important;
+  right: auto !important;
+}
+.wmap .rn .rl.lft {
+  right: calc(100% + 9px) !important;
+  left: auto !important;
+}
+.wmap .rn.boss .rl {
+  background: rgba(52, 12, 30, 0.94) !important;
+  border-color: rgba(244, 63, 94, 0.6) !important;
+  color: #fecdd3 !important;
+}
+.wmap .rn.final .rl {
+  top: calc(100% + 10px) !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  background: rgba(66, 32, 6, 0.94) !important;
+  border-color: rgba(251, 191, 36, 0.65) !important;
+  color: #fef08a !important;
+  font-size: 12px !important;
+}
+.wmap .rtok {
+  width: 46px !important;
+  height: 46px !important;
+  margin: -23px 0 0 -23px !important;
+  z-index: 5 !important;
+}
+.wmap .rtok img.por {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 50% !important;
+  border: 2.5px solid #fbbf24 !important;
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.65), 0 4px 12px rgba(0, 0, 0, 0.85) !important;
+  background: #0f172a !important;
+}
+.wmap .rtok .tok-rl {
+  --nc: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.55) !important;
+  font-size: 11px !important;
+}
+body.desk .wmap .rn .rl,
+body.desk .wmap .rtok .tok-rl {
+  font-size: 12px !important;
+  padding: 4px 12px !important;
+}
+
+/* ---------- Centered Divider Ribbon & Modifier Pill ---------- */
+.wmap .rtoday {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 0 10px 4px !important;
+  box-sizing: border-box !important;
+}
+.wmap .path-ribbon-wrap {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: -2px auto 6px !important;
+  flex: 0 0 auto !important;
+  z-index: 4 !important;
+}
+.wmap .rday-ribbon {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 5px 18px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.86) 0%, rgba(15, 23, 42, 0.97) 18%, rgba(15, 23, 42, 0.97) 82%, rgba(15, 23, 42, 0.86) 100%) !important;
+  border: 1px solid rgba(251, 191, 36, 0.48) !important;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.16), 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  color: #fde68a !important;
+  font: 800 11.5px/1.2 var(--fun) !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  text-shadow: none !important;
+}
+.wmap .rday-ribbon b {
+  color: #fef08a !important;
+  margin: 0 !important;
+}
+.wmap .rday-ribbon .rib-dot {
+  color: #fbbf24 !important;
+}
+.wmap .rtoday .nextmod {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  margin: 0 auto 5px !important;
+  padding: 3px 11px !important;
+  border-radius: 999px !important;
+  background: rgba(30, 27, 75, 0.94) !important;
+  border: 1px solid rgba(167, 139, 250, 0.45) !important;
+  color: #e9d5ff !important;
+  font: 700 10.5px/1.2 var(--fun) !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  flex: 0 0 auto !important;
+}
+
+/* ---------- Side-by-Side Tactical Encounter Cards & OR Badge ---------- */
+.wmap .rtoday .banners {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  gap: 12px !important;
+}
+.wmap .rtoday .banners.rb1 .banner.v2 {
+  max-width: 280px !important;
+  margin: 0 auto !important;
+}
+.wmap .rtoday .banners.rb3 {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+body.desk .wmap .rtoday .banners {
+  max-width: 610px !important;
+  gap: 20px !important;
+}
+body.desk .wmap .rtoday .banners.rb1 {
+  max-width: 340px !important;
+}
+body.desk .wmap .rtoday .banners.rb3 {
+  max-width: 720px !important;
+  gap: 14px !important;
+}
+.wmap .or-badge {
+  position: absolute !important;
+  left: 50% !important;
+  top: 47% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 6 !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  background: #0f172a !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+  color: #f8fafc !important;
+  font: 800 10px/1 var(--fun) !important;
+  letter-spacing: 0.4px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85) !important;
+  pointer-events: none !important;
+}
+.wmap .banner.v2 {
+  --card-accent: #38bdf8;
+  --bt-acc: #7dd3fc;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 10px 10px !important;
+  border-radius: 17px !important;
+  background: linear-gradient(180deg, rgba(24, 34, 54, 0.94) 0%, rgba(11, 16, 30, 0.98) 100%) !important;
+  border: 1.5px solid var(--card-accent) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.65), 0 0 16px color-mix(in srgb, var(--card-accent) 28%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+  text-align: center !important;
+  overflow: hidden !important;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease !important;
+}
+.wmap .banner.v2:hover:not(:disabled) {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.8), 0 0 22px color-mix(in srgb, var(--card-accent) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+.wmap .banner.v2.b-easy   { --card-accent: #10b981; --bt-acc: #6ee7b7; }
+.wmap .banner.v2.b-medium { --card-accent: #fb923c; --bt-acc: #fdba74; }
+.wmap .banner.v2.b-hard,
+.wmap .banner.v2.b-horde  { --card-accent: #f43f5e; --bt-acc: #fda4af; }
+.wmap .banner.v2.b-boss   { --card-accent: #c084fc; --bt-acc: #d8b4fe; }
+.wmap .banner.v2.b-shop   { --card-accent: #38bdf8; --bt-acc: #7dd3fc; }
+.wmap .banner.v2.b-event  { --card-accent: #a855f7; --bt-acc: #e9d5ff; }
+.wmap .banner.v2.b-rare   { --card-accent: #fbbf24; --bt-acc: #fde68a; }
+.wmap .banner.v2.b-duel   { --card-accent: #f472b6; --bt-acc: #fbcfe8; }
+
+.wmap .banner.v2 .scene {
+  position: relative !important;
+  width: calc(100% + 20px) !important;
+  margin: 0 -10px !important;
+  height: 82px !important;
+  flex: 0 0 auto !important;
+  display: grid !important;
+  place-items: center !important;
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--card-accent) 26%, transparent), rgba(15, 23, 42, 0.9) 76%) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--card-accent) 25%, transparent) !important;
+  box-shadow: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  overflow: hidden !important;
+}
+.wmap .banner.v2 .scene::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 15%, transparent) 0 8px, transparent 8px 16px) !important;
+  pointer-events: none !important;
+}
+.wmap .banner.v2 .ribbon {
+  position: absolute !important;
+  top: 6px !important;
+  left: 8px !important;
+  z-index: 3 !important;
+  padding: 2px 7px !important;
+  border-radius: 999px !important;
+  background: rgba(10, 15, 28, 0.92) !important;
+  border: 1px solid color-mix(in srgb, var(--card-accent) 55%, rgba(255, 255, 255, 0.2)) !important;
+  color: #f8fafc !important;
+  font: 700 10px/1.2 var(--fun) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+.wmap .banner.v2 .mobs {
+  padding-top: 2px !important;
+}
+.wmap .banner.v2 .mob {
+  width: 50px !important;
+  height: 50px !important;
+  margin: 0 -5px !important;
+}
+.wmap .banner.v2 .m1 .mob {
+  width: 62px !important;
+  height: 62px !important;
+}
+.wmap .banner.v2 .bigmob .mob {
+  width: 68px !important;
+  height: 68px !important;
+}
+.wmap .banner.v2 .m2 .mob {
+  width: 52px !important;
+  height: 52px !important;
+}
+.wmap .banner.v2 .mob img.por {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--card-accent) 85%, #fff), 0 0 14px var(--card-accent), 0 4px 10px rgba(0, 0, 0, 0.75) !important;
+}
+.wmap .banner.v2 .mob.elite img.por {
+  box-shadow: 0 0 0 2.5px #fbbf24, 0 0 16px rgba(251, 191, 36, 0.85), 0 4px 10px rgba(0, 0, 0, 0.75) !important;
+}
+.wmap .banner.v2 .ev-orb {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--card-accent) 42%, rgba(255, 255, 255, 0.14)), rgba(15, 23, 42, 0.94)) !important;
+  border: 2px solid color-mix(in srgb, var(--card-accent) 80%, #fff) !important;
+  box-shadow: 0 0 18px var(--card-accent), 0 4px 10px rgba(0, 0, 0, 0.6) !important;
+}
+.wmap .banner.v2 .evbig {
+  font-size: 32px !important;
+  line-height: 1 !important;
+}
+.wmap .banner.v2 .fc {
+  width: 42px !important;
+  height: 56px !important;
+}
+.wmap .banner.v2 .fc.f1 {
+  width: 46px !important;
+  height: 62px !important;
+}
+.wmap .banner.v2 .fc img {
+  width: 32px !important;
+  height: 32px !important;
+}
+.wmap .banner.v2 .card-head {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+.wmap .banner.v2 .bt {
+  padding: 0 !important;
+  font: 800 15px/1.15 var(--fun) !important;
+  color: #f8fafc !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85) !important;
+}
+.wmap .banner.v2 .bt .bt-acc {
+  color: var(--bt-acc) !important;
+}
+.wmap .banner.v2 .bd {
+  flex: 0 0 auto !important;
+  padding: 0 !important;
+  font: 600 11px/1.25 var(--read) !important;
+  color: #cbd5e1 !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
+}
+.wmap .banner.v2 .card-pills {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  width: 100% !important;
+  margin: auto 0 !important;
+}
+.wmap .banner.v2 .tpill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  max-width: 100% !important;
+  padding: 3px 9px !important;
+  border-radius: 999px !important;
+  background: rgba(15, 23, 42, 0.94) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  color: #e2e8f0 !important;
+  font: 700 10px/1.2 var(--fun) !important;
+  text-align: center !important;
+}
+.wmap .banner.v2 .tpill.safe {
+  background: rgba(6, 48, 38, 0.95) !important;
+  border-color: rgba(52, 211, 153, 0.5) !important;
+  color: #a7f3d0 !important;
+}
+.wmap .banner.v2 .tpill.bounty {
+  background: rgba(58, 28, 7, 0.95) !important;
+  border-color: rgba(251, 191, 36, 0.55) !important;
+  color: #fde68a !important;
+}
+.wmap .banner.v2 .tpill.warn {
+  background: rgba(59, 28, 10, 0.95) !important;
+  border-color: rgba(251, 146, 60, 0.55) !important;
+  color: #fed7aa !important;
+}
+.wmap .banner.v2 .tpill.danger {
+  background: rgba(59, 13, 24, 0.95) !important;
+  border-color: rgba(244, 63, 94, 0.55) !important;
+  color: #fecdd3 !important;
+}
+.wmap .banner.v2 .tpill.info {
+  background: rgba(12, 41, 66, 0.95) !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  color: #bae6fd !important;
+}
+.wmap .banner.v2 .tpill.rare {
+  background: rgba(46, 16, 101, 0.95) !important;
+  border-color: rgba(192, 132, 252, 0.5) !important;
+  color: #e9d5ff !important;
+}
+.wmap .banner.v2 .card-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 2px 0 0 !important;
+  padding: 8px 10px !important;
+  border-radius: 11px !important;
+  font: 800 13.5px/1.1 var(--fun) !important;
+  letter-spacing: 0.2px !important;
+  text-transform: none !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 3px 10px rgba(0, 0, 0, 0.55) !important;
+}
+.wmap .banner.v2.b-easy .card-action-btn {
+  background: linear-gradient(180deg, #065f46 0%, #043e2d 100%) !important;
+  border: 1.5px solid #34d399 !important;
+  color: #fef08a !important;
+}
+.wmap .banner.v2.b-medium .card-action-btn {
+  background: linear-gradient(180deg, #69330c 0%, #3d1c06 100%) !important;
+  border: 1.5px solid #fb923c !important;
+  color: #fef08a !important;
+}
+.wmap .banner.v2.b-hard .card-action-btn,
+.wmap .banner.v2.b-horde .card-action-btn {
+  background: linear-gradient(180deg, #7c1f14 0%, #440e0d 100%) !important;
+  border: 1.5px solid #fbbf24 !important;
+  color: #fef08a !important;
+}
+.wmap .banner.v2.b-boss .card-action-btn {
+  background: linear-gradient(180deg, #4c1d95 0%, #2e1065 100%) !important;
+  border: 1.5px solid #c084fc !important;
+  color: #fef08a !important;
+}
+.wmap .banner.v2.b-shop .card-action-btn {
+  background: linear-gradient(180deg, #0c4a6e 0%, #082f49 100%) !important;
+  border: 1.5px solid #38bdf8 !important;
+  color: #f0f9ff !important;
+}
+.wmap .banner.v2.b-event .card-action-btn {
+  background: linear-gradient(180deg, #581c87 0%, #3b0764 100%) !important;
+  border: 1.5px solid #c084fc !important;
+  color: #faf5ff !important;
+}
+.wmap .banner.v2.b-rare .card-action-btn {
+  background: linear-gradient(180deg, #78350f 0%, #451a03 100%) !important;
+  border: 1.5px solid #fbbf24 !important;
+  color: #fef08a !important;
+}
+.wmap .banner.v2.b-duel .card-action-btn {
+  background: linear-gradient(180deg, #831843 0%, #500724 100%) !important;
+  border: 1.5px solid #f472b6 !important;
+  color: #fdf2f8 !important;
+}
+
+/* 3-card Pathfinder layout */
+.wmap .rtoday .banners.rb3 .banner.v2 {
+  padding: 0 6px 7px !important;
+  border-radius: 14px !important;
+  gap: 3px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .scene {
+  width: calc(100% + 12px) !important;
+  margin: 0 -6px !important;
+  height: 58px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .mob {
+  width: 34px !important;
+  height: 34px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .m1 .mob,
+.wmap .rtoday .banners.rb3 .banner.v2 .bigmob .mob {
+  width: 44px !important;
+  height: 44px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .ev-orb {
+  width: 42px !important;
+  height: 42px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .evbig {
+  font-size: 24px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .fc {
+  width: 30px !important;
+  height: 42px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .fc img {
+  width: 22px !important;
+  height: 22px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .bt {
+  font-size: 12px !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .bd {
+  font-size: 9.5px !important;
+  line-height: 1.15 !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .tpill {
+  font-size: 9px !important;
+  padding: 2px 5px !important;
+  border-radius: 7px !important;
+  line-height: 1.15 !important;
+}
+.wmap .rtoday .banners.rb3 .banner.v2 .card-action-btn {
+  font-size: 11px !important;
+  padding: 6px 4px !important;
+  border-radius: 9px !important;
+}
+
+/* Desktop card proportions */
+body.desk .wmap .banner.v2 .scene {
+  height: 98px !important;
+}
+body.desk .wmap .banner.v2 .bt {
+  font-size: 17px !important;
+}
+body.desk .wmap .banner.v2 .bd {
+  font-size: 12px !important;
+}
+body.desk .wmap .banner.v2 .tpill {
+  font-size: 10.5px !important;
+  padding: 3px 10px !important;
+}
+body.desk .wmap .banner.v2 .card-action-btn {
+  font-size: 14px !important;
+  padding: 9px 12px !important;
+}
+body.desk .wmap .rtoday .banners.rb2 .banner.v2 {
+  max-width: 268px !important;
+}
+
+/* ---------- Bottom Squad Readiness Dock (.mstrip.squad-dock) ---------- */
+.mstrip.squad-dock {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 10px 8px 6px !important;
+  padding: 8px 11px !important;
+  border-radius: 16px !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+body.desk .map.road .mstrip.squad-dock {
+  display: none !important;
+}
+.mstrip.squad-dock .dock-tab {
+  position: absolute !important;
+  top: -10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  padding: 2px 12px !important;
+  border-radius: 999px !important;
+  background: #0f172a !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  color: #bae6fd !important;
+  font: 700 10px/1.1 var(--fun) !important;
+  letter-spacing: 0.3px !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+}
+.mstrip.squad-dock .mteam {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+.mstrip.squad-dock .dock-slots {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  flex: 0 0 auto !important;
+}
+.mstrip.squad-dock .mh {
+  position: relative !important;
+  flex: 0 0 auto !important;
+}
+.mstrip.squad-dock .mh img.por {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  border: 2px solid #fbbf24 !important;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.35), 0 3px 8px rgba(0, 0, 0, 0.6) !important;
+}
+.mstrip.squad-dock .mh i {
+  position: absolute !important;
+  right: -3px !important;
+  bottom: -2px !important;
+  min-width: 16px !important;
+  padding: 0 4px !important;
+  border-radius: 999px !important;
+  background: #0f172a !important;
+  border: 1.5px solid #fbbf24 !important;
+  color: #fef08a !important;
+  font: 800 10px/14px var(--fun) !important;
+  font-style: normal !important;
+  box-shadow: none !important;
+}
+.mstrip.squad-dock .mh-empty {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  border: 1.5px dashed rgba(148, 163, 184, 0.45) !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1px !important;
+  color: #cbd5e1 !important;
+  flex: 0 0 auto !important;
+  line-height: 1 !important;
+}
+.mstrip.squad-dock .mhe-plus {
+  font: 800 9px/1 var(--fun) !important;
+  color: #e2e8f0 !important;
+}
+.mstrip.squad-dock .mhe-lbl {
+  font: 600 8px/1 var(--fun) !important;
+  color: #cbd5e1 !important;
+}
+.mstrip.squad-dock .dock-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  text-align: right !important;
+  min-width: 0 !important;
+  line-height: 1.2 !important;
+}
+.mstrip.squad-dock .dock-count {
+  font: 700 12px/1.2 var(--fun) !important;
+  color: #cbd5e1 !important;
+  white-space: nowrap !important;
+}
+.mstrip.squad-dock .dock-count b {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+.mstrip.squad-dock .dock-sub {
+  font: 600 10px/1.2 var(--read) !important;
+  color: #cbd5e1 !important;
+  white-space: nowrap !important;
+}
+.mstrip.squad-dock .dock-sub.is-bag {
+  color: #fde047 !important;
+  font-weight: 800 !important;
+}
+.mstrip.squad-dock .mrel {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px 6px !important;
+  border-radius: 11px !important;
+  background: rgba(30, 41, 59, 0.88) !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  flex: 0 0 auto !important;
+}
+.mstrip.squad-dock .relicbtn {
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 0 !important;
+  padding: 2px !important;
+  border-radius: 8px !important;
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: none !important;
+  display: grid !important;
+  place-items: center !important;
+}
+.mstrip.squad-dock .mmore {
+  min-height: 0 !important;
+  padding: 4px 6px !important;
+  border-radius: 8px !important;
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+  font: 800 11px/1 var(--fun) !important;
+}
+
+/* ---------- Compact Phone (<= 660px height, e.g. 360x640) ---------- */
+@media (max-height: 660px) {
+  .wmap .rtok {
+    width: 42px !important;
+    height: 42px !important;
+    margin: -21px 0 0 -21px !important;
+  }
+  .wmap .rtok img.por {
+    width: 42px !important;
+    height: 42px !important;
+  }
+  .wmap .rday-ribbon {
+    padding: 4px 14px !important;
+    font-size: 10.5px !important;
+  }
+  .wmap .path-ribbon-wrap {
+    margin: -2px auto 4px !important;
+  }
+  .wmap .rtoday .nextmod {
+    margin-bottom: 3px !important;
+    padding: 2px 9px !important;
+    font-size: 10px !important;
+  }
+  .wmap .banner.v2 {
+    padding: 0 8px 8px !important;
+    gap: 2px !important;
+    border-radius: 15px !important;
+  }
+  .wmap .banner.v2 .scene {
+    width: calc(100% + 16px) !important;
+    margin: 0 -8px !important;
+    height: 70px !important;
+  }
+  .wmap .rtoday .nextmod ~ .banners .banner.v2 .scene {
+    height: 60px !important;
+  }
+  .wmap .banner.v2 .mob {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .wmap .banner.v2 .m1 .mob {
+    width: 54px !important;
+    height: 54px !important;
+  }
+  .wmap .banner.v2 .bigmob .mob {
+    width: 58px !important;
+    height: 58px !important;
+  }
+  .wmap .banner.v2 .ev-orb {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  .wmap .banner.v2 .evbig {
+    font-size: 26px !important;
+  }
+  .wmap .banner.v2 .bt {
+    font-size: 14px !important;
+  }
+  .wmap .banner.v2 .bd {
+    font-size: 10px !important;
+  }
+  .wmap .banner.v2 .card-pills {
+    gap: 3px !important;
+  }
+  .wmap .banner.v2 .tpill {
+    font-size: 9.5px !important;
+    padding: 2px 7px !important;
+  }
+  .wmap .banner.v2 .card-action-btn {
+    padding: 6px 8px !important;
+    font-size: 12.5px !important;
+    border-radius: 9px !important;
+  }
+  .mstrip.squad-dock {
+    margin: 8px 6px 4px !important;
+    padding: 6px 9px !important;
+    border-radius: 14px !important;
+  }
+  .mstrip.squad-dock .mh img.por,
+  .mstrip.squad-dock .mh-empty {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .mstrip.squad-dock .dock-slots {
+    gap: 6px !important;
+  }
+}

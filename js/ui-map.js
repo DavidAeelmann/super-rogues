@@ -3,90 +3,120 @@
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
   const U = B._ui;
   const { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts } = U;
-  const ROAD = { row: 74, top: 150, bottom: 92 };
-  const roadToday = () => document.body.classList.contains('desk') ? 400 : 262;
+  const ROAD = { row: 52, firstGap: 84, tokGap: 30, top: 140, bottom: 88 };
+  const isCompactMobile = () => !document.body.classList.contains('desk') && (window.visualViewport ? window.visualViewport.height : innerHeight) <= 660;
+  const roadToday = () => {
+    if (document.body.classList.contains('desk')) return 356;
+    return isCompactMobile() ? 290 : 324;
+  };
+  const optTone = o => {
+    if (!o) return 'sky';
+    if (o.type === 'fight') return o.diff === 'easy' ? 'emerald' : o.diff === 'medium' ? 'amber' : o.diff === 'boss' ? 'violet' : 'crimson';
+    if (o.type === 'shop') return 'sky';
+    if (o.type === 'event') return 'violet';
+    if (o.type === 'duel') return 'rose';
+    return 'sky';
+  };
   function mapRoad() {
     const seq = Run.pveSeq(U.run), n = seq.length, step = Math.max(0, Math.min(n - 1, U.run.step)), today = roadToday(), opts = U.run.opts || [];
-    const ahead = Math.max(0, n - 2 - step), todayTop = ROAD.top + ahead * ROAD.row, H = todayTop + today + step * ROAD.row + ROAD.bottom;
-    const yOf = i => i === n - 1 && i !== step ? 74 : i > step ? todayTop - (i - step - 0.5) * ROAD.row : i === step ? todayTop + today / 2 : todayTop + today + (step - 1 - i + 0.5) * ROAD.row;
-    const xOf = i => i === n - 1 ? 50 : Math.round(50 + 29 * Math.sin(i * 1.05 + 0.6));
-    let fn = 0, bn = 0; const info = seq.map((t, i) => {
-      if (t === 'F' || t === 'B') fn++; if (t === 'B') bn++;
+    const compact = isCompactMobile(), row = compact ? 46 : ROAD.row, firstGap = compact ? 76 : ROAD.firstGap, tokGap = compact ? 28 : ROAD.tokGap;
+    const ahead = Math.max(0, n - 2 - step), todayTop = ROAD.top + firstGap + ahead * row, H = todayTop + today + 38 + step * row + ROAD.bottom;
+    const yOf = i => i > step ? todayTop - firstGap - (i - step - 1) * row : i === step ? todayTop + today / 2 : todayTop + today + 38 + (step - 1 - i) * row;
+    const xOf = i => i === n - 1 ? 50 : Math.round(50 + 26 * Math.sin(i * 1.05 + 0.6));
+    let fn = 0, bn = 0;
+    const info = seq.map((t, i) => {
+      if (t === 'F' || t === 'B') fn++;
+      if (t === 'B') bn++;
       const pvp = t === 'F' && (CFG.pvpFights || []).includes(fn);
       return { t, i, pvp, boss: t === 'B' ? Run.bossOf(U.run, bn) : null, kind: t === 'B' ? 'boss' : t === 'G' ? 'final' : pvp ? 'pvp' : t === 'F' ? 'fight' : t === 'S' ? 'shop' : 'event' };
     });
     const nextBoss = info.find(d => d.i > step && d.boss);
     const icon = d => d.boss ? img(d.boss, 40, 'por') : d.kind === 'final' ? I('trophy') : d.pvp ? I('ghost') : d.kind === 'fight' ? I('swords') : d.kind === 'shop' ? I('cart') : I('help');
-    const what = d => d.boss ? `Boss · ${esc(B.BOSSES[d.boss].name)}${d === nextBoss ? ` <i>in ${d.i - step} day${d.i - step === 1 ? '' : 's'}</i>` : ''}` : d.kind === 'final' ? 'Victory · then the Gauntlet' : d.pvp ? 'Duel · PvP' : d.kind === 'fight' ? 'Fight' : d.kind === 'shop' ? 'Last shop' : 'Shop or event';
-    const start = [50, H - ROAD.bottom / 2], last = step ? [xOf(step - 1), yOf(step - 1)] : start, prev = step > 1 ? [xOf(step - 2), yOf(step - 2)] : start;
-    const k = opts.length || 1, ox = k === 1 ? [50] : k === 2 ? [27, 73] : [17, 50, 83], top0 = todayTop + 34, bot0 = todayTop + today - 12;
-    const seg = (a, b) => `M${a[0]} ${a[1]} C${a[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${(a[1] + b[1]) / 2} ${b[0]} ${b[1]}`;
-    const past = [start].concat(info.filter(d => d.i < step).map(d => [xOf(d.i), yOf(d.i)]));
-    const after = info.filter(d => d.i > step).map(d => [xOf(d.i), yOf(d.i)]), nextPt = after[0];
-    const paths = past.slice(1).map((p, j) => `<path class="rpast" d="${seg(past[j], p)}"/>`).join('')
-      + ox.map(x => `<path class="rfork" d="${seg(last, [x, bot0])}"/>${nextPt ? `<path class="rfork" d="${seg([x, top0], nextPt)}"/>` : ''}`).join('')
-      + after.slice(1).map((p, j) => `<path class="rnext" d="${seg(after[j], p)}"/>`).join('');
-    const road = `<svg class="wroad" viewBox="0 0 100 ${H}" preserveAspectRatio="none" style="height:${H}px" aria-hidden="true">${paths.replace(/<path class="(\w+)"/g, '<path class="bed"')}${paths}</svg>`;
-    // decorations: pines down in the valley, rocks higher up, never on the road (the road keeps between 21% and 79%)
-    const decor = []; for (let y = 120, j = 0; y < H - 40; y += 58, j++) {
-      const side = (j + (U.run.seed | 0)) % 2, x = side ? 88 + ((j * 37 + (U.run.seed | 0)) % 9) : 3 + ((j * 53 + (U.run.seed | 0)) % 9), z = y / H;
-      decor.push(`<span class="wdec ${z < 0.3 ? 'rock' : z < 0.6 ? 'pine dk' : 'pine'}" style="left:${x}%;top:${y}px;--s:${0.75 + ((j * 13) % 5) / 10}"></span>`);
-    }
+    const what = d => d.boss ? `Boss · ${esc(B.BOSSES[d.boss].name)}${d === nextBoss ? ` <i>in ${d.i - step}d</i>` : ''}` : d.kind === 'final' ? 'Victory · Gauntlet' : d.pvp ? 'Duel · PvP' : d.kind === 'fight' ? 'Fight' : d.kind === 'shop' ? 'Last Shop' : 'Shop or Event <em class="rl-q">(?)</em>';
+    const startY = todayTop + today + 38 + step * row;
+    const start = [50, startY], tokPt = [50, todayTop - tokGap], prevPt = step > 0 ? [xOf(step - 1), yOf(step - 1)] : start;
+    const k = opts.length || 1, ox = k === 1 ? [50] : k === 2 ? [27, 73] : [18, 50, 82], forkBot = todayTop + (U.run.nextMod ? 66 : 44);
+    const px = x => Math.round(x * 4);
+    const seg = (a, b) => `M${px(a[0])} ${Math.round(a[1])} C${px(a[0])} ${Math.round((a[1] + b[1]) / 2)} ${px(b[0])} ${Math.round((a[1] + b[1]) / 2)} ${px(b[0])} ${Math.round(b[1])}`;
+    const pastPts = [start].concat(info.filter(d => d.i < step).map(d => [xOf(d.i), yOf(d.i)]));
+    const afterInfo = info.filter(d => d.i > step);
+    const afterPts = [tokPt].concat(afterInfo.map(d => [xOf(d.i), yOf(d.i)]));
+    const segTone = (idx, dest) => idx === 0 ? 'crimson' : dest.kind === 'boss' ? 'crimson' : dest.kind === 'final' ? 'gold' : (dest.kind === 'shop' || dest.kind === 'event') ? 'emerald' : idx === 1 ? 'emerald' : 'sky';
+    const trailPair = (d, cls) => `<path class="trail-glow ${cls}" d="${d}"/><path class="trail-core ${cls}" d="${d}"/>`;
+    const pastSVG = pastPts.slice(1).map((p, j) => trailPair(seg(pastPts[j], p), 'c-gold')).join('')
+      + (step > 0 ? trailPair(seg(pastPts[pastPts.length - 1], [50, todayTop + today]), 'c-gold is-dim') : '');
+    const forkSVG = ox.map((x, j) => trailPair(seg(tokPt, [x, forkBot]), 'c-' + optTone(opts[j]) + ' is-fork')).join('');
+    const nextSVG = afterPts.slice(1).map((p, j) => trailPair(seg(afterPts[j], p), 'c-' + segTone(j, afterInfo[j]))).join('');
+    const road = `<svg class="wroad" viewBox="0 0 400 ${H}" preserveAspectRatio="none" style="height:${H}px" aria-hidden="true">${pastSVG}${forkSVG}${nextSVG}</svg>`;
     const nodes = info.filter(d => d.i !== step).map(d => {
-      const st = d.i < step ? 'done' : 'next', x = xOf(d.i), y = yOf(d.i), far = nextBoss && d.i > nextBoss.i && d.kind !== 'final';
-      const left = x > 55, label = st === 'done' ? '' : `<span class="rl ${left ? 'lft' : 'rgt'}" style="--room:${left ? x : 100 - x}"><b>Day ${d.i + 1}</b> ${what(d)}</span>`;
-      return `<span class="rn ${d.kind} ${st} ${far ? 'far' : ''}" style="left:${x}%;top:${y}px" title="Day ${d.i + 1}">${d.kind === 'final' ? '<span class="castle" aria-hidden="true"></span>' : ''}<span class="ri">${st === 'done' ? '✓' : icon(d)}</span>${label}</span>`;
+      const st = d.i < step ? 'done' : 'next', x = xOf(d.i), y = yOf(d.i), dist = d.i - step, far = nextBoss && d.i > nextBoss.i && d.kind !== 'final';
+      const zscale = st === 'done' ? 0.85 : dist <= 1 ? 1 : dist === 2 ? 0.92 : dist === 3 ? 0.84 : 0.78;
+      const nc = d.kind === 'boss' ? '#f43f5e' : d.kind === 'final' ? '#fbbf24' : d.kind === 'fight' ? '#818cf8' : '#10b981';
+      const left = x > 55, label = st === 'done' ? '' : `<span class="rl ${left ? 'lft' : 'rgt'}" style="--room:${left ? x : 100 - x}"><b>Day ${d.i + 1}</b> <span class="rl-dot">•</span> ${what(d)}</span>`;
+      return `<span class="rn ${d.kind} ${st} ${far ? 'far' : ''}" style="left:${x}%;top:${y}px;--nc:${nc};--zscale:${zscale}" title="Day ${d.i + 1}">${d.kind === 'final' ? '<span class="castle" aria-hidden="true"></span>' : ''}<span class="ri">${st === 'done' ? '✓' : icon(d)}</span>${label}</span>`;
     }).join('');
-    const t = seq[step], title = U.run.result === 'clear' ? '🏰 Gauntlet shop: gear up for the climb' : t === 'B' ? 'A boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';
+    const t = seq[step], title = U.run.result === 'clear' ? '🏰 Gauntlet shop • Gear up' : t === 'B' ? 'Boss blocks the way' : t === 'S' ? 'One last shop' : 'Choose your path';
     const leader = U.run.heroes[0];
-    const ribbonTailL = `<svg class="ribbon-tail tail-l" viewBox="0 0 20 36" aria-hidden="true"><polygon points="20,0 20,36 0,28 10,18 0,8" fill="#d48817"/><polygon points="20,0 20,36 12,18" fill="#9a6b13" opacity="0.65"/></svg>`;
-    const ribbonTailR = `<svg class="ribbon-tail tail-r" viewBox="0 0 20 36" aria-hidden="true"><polygon points="0,0 0,36 20,28 10,18 20,8" fill="#d48817"/><polygon points="0,0 0,36 8,18" fill="#734f0a" opacity="0.65"/></svg>`;
-    const rdayTitle = U.run.result === 'clear' ? '' : `<b>Day ${step + 1}/${n}</b> `;
-    return `<div class="wmap" id="wmap" data-today="${todayTop}" data-key="${U.run.seed}:${step}"><div class="wtrack" style="height:${H}px"><span class="wsky"></span><span class="wpeaks"></span>${decor.join('')}${road}
-      <span class="rn camp done" style="left:50%;top:${start[1]}px"><span class="ri">⛺</span><span class="rl rgt"><b>Start</b></span></span>${nodes}
-      ${leader ? `<span class="rtok" style="left:${last[0]}%;top:${last[1]}px" data-to="${last[0]},${last[1]}" data-from="${prev[0]},${prev[1]}">${img(leader.key, 44, 'por')}</span>` : ''}
+    const rdayTitle = U.run.result === 'clear' ? '' : `<b>Day ${step + 1}/${n}</b> <span class="rib-dot">•</span> `;
+    const tokLabel = U.run.result === 'clear' ? 'Gauntlet' : step === 0 ? 'Start' : `Day ${step + 1}`;
+    const cardsHTML = k === 2
+      ? opts.map(optHTML).join('<span class="or-badge" aria-hidden="true">OR</span>')
+      : opts.map(optHTML).join('');
+    return `<div class="wmap" id="wmap" data-today="${todayTop}" data-key="${U.run.seed}:${step}"><div class="wtrack" style="height:${H}px">${road}
+      <span class="rn camp done" style="left:50%;top:${start[1]}px;--nc:#10b981;--zscale:0.9"><span class="ri">⛺</span><span class="rl rgt"><b>Camp</b></span></span>${nodes}
+      ${leader ? `<span class="rtok" style="left:${tokPt[0]}%;top:${tokPt[1]}px" data-to="${tokPt[0]},${tokPt[1]}" data-from="${prevPt[0]},${prevPt[1]}">${img(leader.key, 46, 'por')}<span class="rl rgt tok-rl"><b>${tokLabel}</b></span></span>` : ''}
       <div class="rtoday" style="top:${todayTop}px;height:${today}px">
         <div class="path-ribbon-wrap">
-          ${ribbonTailL}
-          <div class="rday-ribbon">${rdayTitle}${title}</div>
-          ${ribbonTailR}
+          <div class="rday-ribbon">${rdayTitle}<span>${title}</span></div>
         </div>
         ${U.run.nextMod ? `<p class="nextmod">${I('bolt')} Next fight: ${fmt(modText(U.run.nextMod))}</p>` : ''}
-        <div class="banners rb${k}">${opts.map(optHTML).join('')}</div></div></div></div>`;
+        <div class="banners rb${k}">${cardsHTML}</div></div></div></div>`;
   }
   function layoutMap(keep) {
     const wm = $('#wmap'); if (!wm) return;
     const y = Math.max(0, Math.round(wm.getBoundingClientRect().top));
     const strip = $('.map .mstrip'), sh = strip && strip.offsetParent ? strip.offsetHeight + 8 : 0;
     const vh = window.visualViewport ? window.visualViewport.height : innerHeight;
-    wm.style.height = Math.max(240, Math.round(vh - y - sh - 8)) + 'px';
-    const over = document.documentElement.scrollHeight - vh; if (over > 0) wm.style.height = Math.max(240, wm.clientHeight - Math.ceil(over)) + 'px';   // the paddings below it
+    wm.style.height = Math.max(240, Math.round(vh - y - sh - 6)) + 'px';
+    const over = document.documentElement.scrollHeight - vh; if (over > 0) wm.style.height = Math.max(240, wm.clientHeight - Math.ceil(over)) + 'px';
     if (keep && keep.key === wm.dataset.key) { wm.scrollTop = keep.top; return; }
+    const rt = wm.querySelector('.rtoday');
+    const th = rt ? rt.offsetHeight : roadToday();
     if (document.body.classList.contains('desk')) {
-      const th = +(wm.querySelector('.rtoday') || {}).offsetHeight || 340;
-      wm.scrollTop = Math.max(0, +wm.dataset.today - Math.max(12, Math.round((wm.clientHeight - th) * 0.5)));
+      const upperRoom = Math.max(120, Math.round((wm.clientHeight - th) * 0.72));
+      wm.scrollTop = Math.max(0, +wm.dataset.today - upperRoom);
     } else {
-      wm.scrollTop = Math.max(0, +wm.dataset.today - Math.round(wm.clientHeight * 0.16));
+      const upperRoom = Math.max(110, wm.clientHeight - th - 6);
+      wm.scrollTop = Math.max(0, +wm.dataset.today - upperRoom);
     }
-    // a new day, the leader hops along the road from where it stood to today's spot
     const [seed, step] = wm.dataset.key.split(':').map(Number), tok = wm.querySelector('.rtok');
     if (tok && step > 0 && ui.roadAt === seed + ':' + (step - 1) && !(B.Juice && B.Juice.reduced())) {
       const [fx, fy] = tok.dataset.from.split(',').map(Number), [tx, ty] = tok.dataset.to.split(',').map(Number);
-
-      const end = wm.scrollTop, MS = 2200, cam = y => Math.max(0, Math.min(wm.scrollHeight - wm.clientHeight, y - wm.clientHeight * 0.62));
+      const end = wm.scrollTop, MS = 1400, cam = yy => Math.max(0, Math.min(wm.scrollHeight - wm.clientHeight, yy - wm.clientHeight * 0.62));
       const s0 = Math.max(end, cam(fy)); wm.scrollTop = s0;
       tok.style.left = fx + '%'; tok.style.top = fy + 'px'; tok.classList.add('walk'); void tok.offsetWidth;
       setTimeout(() => {
         if (!tok.isConnected) return; tok.style.left = tx + '%'; tok.style.top = ty + 'px'; sfx('pick');
         const t0 = performance.now(), ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
         (function follow(now) { if (!wm.isConnected || ui.roadAt !== wm.dataset.key) return; const t = Math.min(1, (now - t0) / MS); wm.scrollTop = s0 + (end - s0) * ease(t); if (t < 1) requestAnimationFrame(follow); else tok.classList.remove('walk'); })(t0);
-      }, 400);
+      }, 260);
     }
     ui.roadAt = wm.dataset.key;
   }
   function mstripHTML() {
-    return `<div class="mstrip"><button class="mteam" data-act="team" aria-label="Team">${U.run.heroes.map(h => `<span class="mh">${img(h.key, 40, 'por')}<i>${h.lvl}</i></span>`).join('')}${U.run.bag.length ? `<span class="mbag">${I('bag')}<b>${U.run.bag.length}</b></span>` : ''}</button>
-      ${U.run.relics.length ? `<span class="mrel">${U.run.relics.slice(0, 4).map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 28)}</button>`).join('')}${U.run.relics.length > 4 ? `<button class="mmore" data-act="team">+${U.run.relics.length - 4}</button>` : ''}</span>` : ''}</div>`;
+    const maxTeam = Run.teamMax(U.run);
+    const heroes = U.run.heroes || [];
+    const slots = [];
+    for (let s = 0; s < maxTeam; s++) {
+      const h = heroes[s];
+      if (h) slots.push(`<span class="mh">${img(h.key, 40, 'por')}<i>${h.lvl}</i></span>`);
+      else slots.push(`<span class="mh-empty"><span class="mhe-plus">[ + ]</span><span class="mhe-lbl">Slot ${s + 1}</span></span>`);
+    }
+    const bagLen = (U.run.bag || []).length;
+    const relics = (U.run.relics || []).filter(id => RELIC[id]);
+    const showRel = relics.slice(0, 2);
+    const subText = bagLen ? `🎒 ${bagLen} to equip` : heroes.length < maxTeam ? 'Recruit at Shop' : 'Heroes';
+    return `<div class="mstrip squad-dock"><span class="dock-tab" aria-hidden="true">Squad Dock</span><button class="mteam" data-act="team" aria-label="Team"><span class="dock-slots">${slots.join('')}</span><span class="dock-meta"><span class="dock-count"><b>Squad:</b> ${heroes.length}/${maxTeam}</span><span class="dock-sub ${bagLen ? 'is-bag' : ''}">${subText}</span></span></button>${relics.length ? `<span class="mrel">${showRel.map(id => `<button class="relicbtn" data-act="relic-info" data-arg="${id}" aria-label="${esc(RELIC[id].name)}">${ico('relic', id, 24)}</button>`).join('')}${relics.length > 2 ? `<button class="mmore" data-act="team" aria-label="More powers">+${relics.length - 2}</button>` : ''}</span>` : ''}</div>`;
   }
   function trackHTML() {
     return `<div class="track">${Run.pveSeq(U.run).map((t, i) => `<span class="node ${i < U.run.step ? 'done' : i === U.run.step ? 'cur' : ''} ${t === 'B' ? 'boss' : ''}" title="${t}">${NODE_ICON[t]}</span>`).join('')}</div>`;
@@ -100,25 +130,53 @@
     return `<button class="banner b-${kind}" data-act="choose" data-arg="${i}"><span class="rod"></span><span class="emb">${emblem}</span>
       <span class="bt">${title}</span><span class="bd">${body}</span>${reward ? `<span class="rw">${reward}</span>` : ''}</button>`;
   }
-  // every option of the map is a small poster
-  // with its own scene: the enemies' faces for a fight (skulls = how hard), a fan of mystery cards for a shop, the boss with red rays, the event's picture
-  function posterHTML(i, kind, scene, title, body, reward, ribbon) {
-    const coinPlaqueSVG = `<svg class="rw-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/><circle cx="10" cy="10" r="5.5" fill="#fde047"/></svg>`;
-    const formattedReward = reward ? `<span class="rw gold-treasure-plaque">${coinPlaqueSVG}<span>${reward}</span></span>` : '';
-    const actionPill = (kind === 'shop') ? '<span class="card-action-btn">🛒 Browse Shop</span>'
-      : (kind === 'event') ? '<span class="card-action-btn">🎲 Enter Den</span>'
-      : '<span class="card-action-btn">⚔️ Battle</span>';
-    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon rib-${kind}">${ribbon}</span>` : ''}</span><span class="bt">${title}</span><span class="bd">${body}</span>${formattedReward}${actionPill}</button>`;
+  const COIN_SVG = `<svg class="rw-coin" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/><circle cx="10" cy="10" r="5.5" fill="#fde047"/></svg>`;
+  function posterHTML(i, kind, scene, title, body, pills, ctaHTML, ribbon) {
+    const pillsHTML = pills && pills.length ? `<span class="card-pills">${pills.map(p => `<span class="tpill ${p.tone || ''}">${p.html}</span>`).join('')}</span>` : '';
+    const actionBtn = `<span class="card-action-btn">${ctaHTML}</span>`;
+    return `<button class="banner v2 b-${kind}" data-act="choose" data-arg="${i}"><span class="scene">${scene}${ribbon ? `<span class="ribbon rib-${kind}">${ribbon}</span>` : ''}</span><span class="card-head"><span class="bt">${title}</span><span class="bd">${body}</span></span>${pillsHTML}${actionBtn}</button>`;
   }
   const mobsOf = f => { const cnt = {}, order = []; for (const e of f.enemies) { const k = e.key + (e.elite ? '*' : ''); if (!cnt[k]) order.push(k); cnt[k] = (cnt[k] || 0) + 1; } return order.map(k => ({ key: k.replace('*', ''), n: cnt[k], elite: k.endsWith('*') })); };
   const pickN = (arr, n, seed) => { const out = []; for (let k = 0; out.length < n && k < arr.length * 4; k++) { const v = arr[(seed * 7 + k * 5 + k * k) % arr.length]; if (!out.includes(v)) out.push(v); } return out; };
-  const SKULLS = { easy: 1, medium: 2, hard: 3 };
+  const SKULLS = { easy: 1, medium: 2, hard: 3, horde: 3 };
+  function fightTrait(enemies) {
+    const total = enemies.length;
+    let ranged = 0, melee = 0, hasElite = false, rangedElite = false;
+    for (const e of enemies) {
+      const m = B.MOBS[e.key] || B.BOSSES[e.key];
+      const isRng = m && m.range > 1;
+      if (isRng) ranged++; else melee++;
+      if (e.elite) { hasElite = true; if (isRng) rangedElite = true; }
+    }
+    if (rangedElite) return `${total} ${total > 1 ? 'Enemies' : 'Enemy'} • Ranged Elite`;
+    if (ranged > 0 && melee > 0) return `${total} ${total > 1 ? 'Enemies' : 'Enemy'} • Mixed${hasElite ? ' Elite' : ''}`;
+    if (ranged > 0) return `${total} ${total > 1 ? 'Enemies' : 'Enemy'} • Ranged${hasElite ? ' Elite' : ''}`;
+    return `${total} ${total > 1 ? 'Enemies' : 'Enemy'} • Melee${hasElite ? ' Elite' : ''}`;
+  }
   function optHTML(o, i) {
     if (o.type === 'fight') {
       const list = mobsOf(o), show = list.slice(0, 3), more = list.length - show.length;
-      const faces = `<span class="mobs m${show.length}">${show.map(m => `<span class="mob ${m.elite ? 'elite' : ''}">${img(m.key, o.diff === 'boss' ? 96 : 64, 'por')}${m.n > 1 ? `<i>×${m.n}</i>` : ''}${m.elite ? '<u class="elt-crown">◆</u>' : ''}</span>`).join('')}${more > 0 ? `<span class="mob more">+${more}</span>` : ''}</span>`;
-      if (o.diff === 'boss') { const b = o.enemies.map(e => B.BOSSES[e.key]).find(Boolean); return posterHTML(i, 'boss', `<span class="rays"></span><span class="mobs m1 bigmob"><span class="mob">${img(b.key, 96, 'por')}</span></span>`, esc(b.name), `<span class="small">${fmt(String(b.desc).split(/(?<=[.!?])\s/)[0])}</span>`, '+' + o.gold + ' gold', I('skull') + I('skull') + I('skull') + I('skull')); }
-      return posterHTML(i, o.diff, faces, B.DIFF[o.diff].name + ' fight', `<span class="mn">${list.map(m => (m.elite ? '<b class="elt">Elite</b> ' : '') + esc((B.MOBS[m.key] || B.BOSSES[m.key]).name) + (m.n > 1 ? ' ×' + m.n : '')).join(' · ')}</span>`, '+' + o.gold + ' gold', I('skull').repeat(SKULLS[o.diff] || 1));
+      const faces = `<span class="mobs m${show.length}">${show.map(m => `<span class="mob ${m.elite ? 'elite' : ''}">${img(m.key, o.diff === 'boss' ? 88 : 64, 'por')}${m.n > 1 ? `<i>×${m.n}</i>` : ''}${m.elite ? '<u class="elt-crown">◆</u>' : ''}</span>`).join('')}${more > 0 ? `<span class="mob more">+${more}</span>` : ''}</span>`;
+      const cta = `${COIN_SVG}<span>+${o.gold} Gold</span>`;
+      if (o.diff === 'boss') {
+        const b = o.enemies.map(e => B.BOSSES[e.key]).find(Boolean);
+        const bossPills = [
+          { html: `${o.enemies.length} ${o.enemies.length > 1 ? 'Enemies' : 'Enemy'} • ${b.range > 1 ? 'Ranged Boss' : 'Melee Boss'}`, tone: 'danger' },
+          { html: '★ Unlocks Boss Path', tone: 'bounty' },
+        ];
+        return posterHTML(i, 'boss', `<span class="rays"></span><span class="mobs m1 bigmob"><span class="mob">${img(b.key, 88, 'por')}</span></span>`, esc(b.name), `<span class="small">${fmt(String(b.desc).split(/(?<=[.!?])\s/)[0])}</span>`, bossPills, cta, I('skull').repeat(4));
+      }
+      const fightOpts = (U.run.opts || []).filter(x => x.type === 'fight' && x.diff !== 'boss');
+      const minGold = fightOpts.length ? Math.min(...fightOpts.map(x => x.gold || 0)) : (o.gold || 0);
+      const bonus = (o.gold || 0) - minGold;
+      const pill1 = { html: esc(fightTrait(o.enemies)), tone: '' };
+      const pill2 = o.diff === 'easy' ? { html: 'Low Threat', tone: 'safe' }
+        : bonus > 0 ? { html: `🔥 +${bonus} Bonus Gold`, tone: 'bounty' }
+        : o.diff === 'medium' ? { html: 'Balanced Threat', tone: 'warn' }
+        : { html: 'High Threat', tone: 'danger' };
+      const titleHTML = `<span class="bt-acc">${esc(B.DIFF[o.diff].name)}</span> Fight`;
+      const rosterHTML = `<span class="mn">${list.map(m => (m.elite ? '<b class="elt">Elite</b> ' : '') + esc((B.MOBS[m.key] || B.BOSSES[m.key]).name) + (m.n > 1 ? ' ×' + m.n : '')).join(' • ')}</span>`;
+      return posterHTML(i, o.diff, faces, titleHTML, rosterHTML, [pill1, pill2], cta, I('skull').repeat(SKULLS[o.diff] || 1));
     }
     if (o.type === 'shop') {
       const seed = U.run.step * 3 + i;
@@ -126,16 +184,37 @@
         : o.kind === 'itemShop' ? B.TYPES.slice(0, 3).map(t => `<img class="ico" src="${B.Icons.slot(t.id, 48)}" alt="">`)
         : pickN(Object.keys(RELIC), 3, seed).map(k => ico('relic', k, 48));
       const scene = `<span class="fan ${o.kind}">${cards.map((c, j) => `<span class="fc f${j}">${c}<b>?</b></span>`).join('')}</span>`;
-      return posterHTML(i, 'shop', scene, SHOP_NAME[o.kind], `<span class="small">${SHOP_DESC[o.kind]}</span>`, '', o.final ? 'Last' : '');
+      const openSlots = Math.max(0, Run.teamMax(U.run) - U.run.heroes.length);
+      const hLv = Run.shopHeroLevel ? Run.shopHeroLevel(U.run) : 1;
+      const pills = o.kind === 'heroShop'
+        ? [{ html: `3 Heroes • Lv ${hLv}+`, tone: 'info' }, openSlots > 0 ? { html: `✨ ${openSlots} Open ${openSlots === 1 ? 'Slot' : 'Slots'}`, tone: 'safe' } : { html: 'Swap Squad Member', tone: '' }]
+        : o.kind === 'itemShop'
+        ? [{ html: 'Weapons & Armor', tone: 'info' }, o.final ? { html: '🔥 Final Prep', tone: 'bounty' } : U.run.bag.length ? { html: `🎒 ${U.run.bag.length} in Bag`, tone: 'safe' } : { html: 'Upgrade Loadout', tone: '' }]
+        : [{ html: 'Team-Wide Buffs', tone: 'info' }, o.final ? { html: '🔥 Final Prep', tone: 'bounty' } : { html: `${U.run.relics.length} Active ${U.run.relics.length === 1 ? 'Power' : 'Powers'}`, tone: '' }];
+      const badge = o.final ? 'Last Shop' : o.kind === 'heroShop' ? 'Recruit' : o.kind === 'itemShop' ? 'Armory' : 'Relics';
+      return posterHTML(i, 'shop', scene, SHOP_NAME[o.kind], `<span class="small">${SHOP_DESC[o.kind]}</span>`, pills, '<span>🛒 Enter Shop</span>', badge);
     }
     if (o.type === 'duel') {
-      // another player's team that reached about the same day; its power next to yours tells how risky the duel is
-      if (!o.opp) return `<button class="banner v2 b-duel wait" disabled><span class="scene"><span class="rays"></span><span class="evbig">${I('ghost')}</span></span><span class="bt">Duel</span><span class="bd"><span class="small">Looking for an opponent…</span></span></button>`;
+      if (!o.opp) return `<button class="banner v2 b-duel wait" disabled><span class="scene"><span class="rays"></span><span class="evbig">${I('ghost')}</span></span><span class="card-head"><span class="bt">Duel</span><span class="bd"><span class="small">Looking for an opponent…</span></span></span><span class="card-pills"><span class="tpill">Matchmaking…</span></span><span class="card-action-btn is-wait">⏳ Searching…</span></button>`;
       const mine = Run.powerOf(U.run, U.run.heroes), th = Run.ghostPower(o.opp), lab = Run.powerLabel(mine, th);
       const faces = `<span class="mobs m3">${o.opp.team.slice(0, 3).map(h => `<span class="mob">${img(h.key, 64, 'por')}</span>`).join('')}</span>`;
-      return posterHTML(i, 'duel', `<span class="rays"></span>${faces}`, `Duel: ${esc(o.opp.name)}`, `<span class="small">Another player's team. Win to steal a hero, item or power.</span>`, `<span class="pw ${lab.tone}">${I('swords')} ${lab.text}</span><span class="pw me">Power ${th} · yours ${mine}</span>`, 'PvP');
+      const duelPills = [
+        { html: `${I('swords')} ${lab.text}`, tone: lab.tone === 'easy' ? 'safe' : lab.tone === 'hard' ? 'danger' : 'warn' },
+        { html: `Power ${th} vs ${mine}`, tone: '' },
+      ];
+      return posterHTML(i, 'duel', `<span class="rays"></span>${faces}`, `Duel: ${esc(o.opp.name)}`, `<span class="small">Steal a hero, item or power.</span>`, duelPills, '<span>⚔️ Start Duel</span>', 'PvP');
     }
-    if (o.type === 'event') { const e = EVENT[o.id]; return posterHTML(i, 'event' + (e.rar === 'rare' ? ' b-rare' : ''), `<span class="rays"></span><span class="evbig">${evIcon(o.id)}</span>`, esc(e.name), `<span class="small">${esc(e.text)}</span>`, '', EV_RAR[e.rar] || ''); }
+    if (o.type === 'event') {
+      const e = EVENT[o.id];
+      const hasFight = (e.choices || []).some(c => c.act === 'fight' || c.act === 'mimic');
+      const matchedReq = (e.choices || []).some(c => c.req && B.EVENT_REQ && B.EVENT_REQ[c.req] && U.run.heroes.some(B.EVENT_REQ[c.req].ok));
+      const p1 = e.dyn ? 'Special Offer' : hasFight ? 'Optional Challenge' : `${(e.choices || []).length} Choices`;
+      const p2 = e.rar === 'rare' ? { html: '★ Rare Reward', tone: 'bounty' }
+        : matchedReq ? { html: '✨ Hero Bonus Ready', tone: 'safe' }
+        : hasFight ? { html: 'High Risk • Loot', tone: 'warn' }
+        : { html: 'Mystery Encounter', tone: 'rare' };
+      return posterHTML(i, 'event' + (e.rar === 'rare' ? ' b-rare' : ''), `<span class="rays"></span><span class="ev-orb"><span class="evbig">${evIcon(o.id)}</span></span>`, esc(e.name), `<span class="small">${esc(e.text)}</span>`, [{ html: p1, tone: 'rare' }, p2], '<span>🎲 Open Event</span>', EV_RAR[e.rar] || 'Event');
+    }
     return '';
   }
   function modText(M) {
