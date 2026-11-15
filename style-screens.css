@@ -86,19 +86,26 @@ body:not(.desk) section.lpscr .lp-next-btn,
 body:not(.desk) section.xpscr .xp-again-btn { width: min(100%, 340px) !important; height: 48px !important; min-height: 48px !important; }
 body:not(.desk) section.xpscr .xp-modal-wrap { gap: 8px !important; }
 body:not(.desk) section.xpscr .xp-top-card { padding: 10px 12px !important; }
-body:not(.desk) section.xpscr .xp-top-main { margin-bottom: 8px !important; }
-body:not(.desk) section.xpscr .xp-level-crest { width: 54px !important; height: 60px !important; }
-body:not(.desk) section.xpscr .crest-num { font-size: 20px !important; }
-body:not(.desk) section.xpscr .crest-lbl { font-size: 8.5px !important; }
-body:not(.desk) section.xpscr .xp-heading { font-size: 18px !important; }
-body:not(.desk) section.xpscr .xp-gain-val { font-size: 28px !important; }
-body:not(.desk) section.xpscr .xp-chip-pill { padding: 3px 8px !important; font-size: 11px !important; }
+body:not(.desk) section.xpscr .xp-top-main { margin-bottom: 8px !important; gap: 8px !important; align-items: flex-start !important; }
+body:not(.desk) section.xpscr .xp-left-col { min-width: 0 !important; flex: 1 1 auto !important; gap: 8px !important; }
+body:not(.desk) section.xpscr .xp-level-crest { width: 46px !important; height: 52px !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .crest-num { font-size: 18px !important; }
+body:not(.desk) section.xpscr .crest-lbl { font-size: 8px !important; }
+body:not(.desk) section.xpscr .xp-title-row { gap: 5px !important; }
+body:not(.desk) section.xpscr .xp-heading { font-size: 15px !important; white-space: nowrap !important; }
+body:not(.desk) section.xpscr .xp-right-col { max-width: none !important; min-width: 0 !important; flex: 0 1 auto !important; gap: 4px !important; }
+body:not(.desk) section.xpscr .xp-gain-val { font-size: 24px !important; }
+body:not(.desk) section.xpscr .xp-chip-pill { padding: 3px 8px !important; font-size: 10.5px !important; }
 body:not(.desk) section.xpscr .xp-horiz-track { height: 24px !important; min-height: 24px !important; border-width: 2px !important; }
 body:not(.desk) section.xpscr .xp-horiz-label { font-size: 12px !important; font-weight: 800 !important; }
 body:not(.desk) section.xpscr .chest-wrap-3d { width: 96px !important; height: 84px !important; }
 body:not(.desk) section.xpscr .fantasy-chest-3d { width: 90px !important; height: 78px !important; }
 body:not(.desk) section.xpscr .xp-bottom-loot-tier .chestzone { gap: 12px !important; flex-wrap: wrap !important; }
-body:not(.desk) section.xpscr .loot-card-3d { width: 76px !important; height: 76px !important; min-width: 76px !important; min-height: 76px !important; }
+body:not(.desk) section.xpscr .loot-card-3d { width: auto !important; min-width: 82px !important; max-width: 108px !important; height: auto !important; min-height: 82px !important; padding: 6px 8px !important; gap: 2px !important; }
+body:not(.desk) section.xpscr .loot-card-3d .ico,
+body:not(.desk) section.xpscr .loot-card-3d .por { width: 42px !important; height: 42px !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .loot-card-3d .loot-card-name { font-size: 11px !important; line-height: 1.15 !important; max-width: 92px !important; color: #f8fafc !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .loot-card-3d .loot-card-tag { font-size: 9.5px !important; line-height: 1.1 !important; color: var(--sr-gold) !important; flex-shrink: 0 !important; }
 body.desk .lpscr .vmtube.mini-thermometer { width: 44px !important; min-height: 70px !important; height: 70px !important; }
 body.desk .xpscr .vmtube.xp-horiz-track { width: 100% !important; height: 24px !important; min-height: 24px !important; }
 body.desk .smithy-frame .gold-embossed-title { color: #fde047 !important; background: none !important; -webkit-text-fill-color: #fde047 !important; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85) !important; }
@@ -1232,9 +1239,31 @@ body.desk .sheet.gearsheet.is-hero-info {
   padding: 0 24px !important;
   box-sizing: border-box !important;
 }
-.loot-card-3d {
+.loot-card-3d,
+body.desk .xpscr .loot-card-3d {
+  width: auto !important;
+  min-width: 96px !important;
   height: auto !important;
-  min-height: 84px !important;
+  min-height: 96px !important;
+  padding: 8px 10px !important;
+  gap: 3px !important;
+}
+.loot-card-3d .loot-card-name,
+.loot-card-3d .loot-card-tag {
+  flex-shrink: 0 !important;
+}
+.xpscr .vmwrap.xp .xplines li.xp-chip-pill,
+body.desk .xpscr .vmwrap.xp .xplines li.xp-chip-pill {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  translate: none !important;
+  padding: 4px 11px !important;
+  font-size: 12.5px !important;
+  border-radius: 999px !important;
+  background: var(--sr-bg-0) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  color: var(--sr-ink-1) !important;
 }
 body.desk .lpscr .vmtube.lp-horiz-track,
 body.desk .xpscr .vmtube.xp-horiz-track,
@@ -1454,7 +1483,9 @@ body.desk .towerscr .towerart {
   body:not(.desk) section.xpscr .xp-gain-val { font-size: 24px !important; }
   body:not(.desk) section.xpscr .chest-wrap-3d { width: 78px !important; height: 68px !important; }
   body:not(.desk) section.xpscr .fantasy-chest-3d { width: 72px !important; height: 62px !important; }
-  body:not(.desk) section.xpscr .loot-card-3d { min-height: 68px !important; padding: 4px !important; }
+  body:not(.desk) section.xpscr .loot-card-3d { min-height: 74px !important; min-width: 76px !important; padding: 4px 6px !important; }
+  body:not(.desk) section.xpscr .loot-card-3d .ico,
+  body:not(.desk) section.xpscr .loot-card-3d .por { width: 34px !important; height: 34px !important; }
 
   #modal .sheet {
     max-height: calc(100dvh - 12px) !important;

@@ -1,0 +1,1996 @@
+{
+  "phase": "after-pass-2",
+  "viewports": {
+    "desktop-1440x900": {
+      "01-title": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "02-home-menu": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 441,
+          "ch": 441,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "03-howto": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 481,
+          "ch": 481,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "04-codex": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 388,
+          "ch": 388,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "05-hero-peek": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 469,
+          "ch": 469,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "06-crown-shop": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 409,
+          "ch": 409,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "07-ladder": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 237,
+          "ch": 237,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "07b-rewards": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 606,
+          "ch": 606,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "07c-profile": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 578,
+          "ch": 578,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "08-start-hero-empty": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "09-start-hero-selected": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "11-map": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk",
+        "mapScroll": {
+          "sh": 1678,
+          "ch": 790,
+          "st": 888,
+          "todayTop": 385
+        }
+      },
+      "12-journey-modal": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 146,
+          "ch": 146,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "13-item-shop": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "14-hero-shop": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "14b-power-shop": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "15-event": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "16-gear-modal": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 554,
+          "ch": 554,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "16b-hero-info-modal": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 277,
+          "ch": 277,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "17-levelup": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "18-boss-upgrade": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "19-deploy-bench": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "20-deploy-ready": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "21-battle": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "22-result": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "23-gauntlet-gate": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "24-over-lp": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "25-over-xp": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "26-stats-page": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 2375,
+        "hOverflow": false,
+        "vOverflow": true,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "27-card-page": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "cardpage"
+      }
+    },
+    "desktop-1920x1080": {
+      "01-title": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "02-home-menu": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 441,
+          "ch": 441,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "03-howto": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 481,
+          "ch": 481,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "04-codex": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 388,
+          "ch": 388,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "05-hero-peek": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 469,
+          "ch": 469,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "06-crown-shop": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 409,
+          "ch": 409,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "07-ladder": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 237,
+          "ch": 237,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "07b-rewards": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 606,
+          "ch": 606,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "07c-profile": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 578,
+          "ch": 578,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "08-start-hero-empty": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "09-start-hero-selected": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "11-map": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk",
+        "mapScroll": {
+          "sh": 1678,
+          "ch": 970,
+          "st": 708,
+          "todayTop": 565
+        }
+      },
+      "12-journey-modal": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 146,
+          "ch": 146,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "13-item-shop": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "14-hero-shop": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "14b-power-shop": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "15-event": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "16-gear-modal": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 554,
+          "ch": 554,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "16b-hero-info-modal": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 315,
+          "ch": 315,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "17-levelup": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "18-boss-upgrade": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "19-deploy-bench": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "20-deploy-ready": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "21-battle": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "22-result": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "23-gauntlet-gate": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "24-over-lp": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
+      "25-over-xp": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      }
+    },
+    "tablet-768x1024": {
+      "01-title": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "02-home-menu": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 433,
+          "ch": 433,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "03-howto": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 509,
+          "ch": 509,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "04-codex": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 380,
+          "ch": 380,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "05-hero-peek": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 458,
+          "ch": 458,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "06-crown-shop": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 385,
+          "ch": 385,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "07-ladder": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 207,
+          "ch": 207,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "07b-rewards": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 574,
+          "ch": 574,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "07c-profile": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 566,
+          "ch": 566,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "08-start-hero-empty": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "09-start-hero-selected": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "11-map": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide",
+        "mapScroll": {
+          "sh": 1540,
+          "ch": 894,
+          "st": 646,
+          "todayTop": 602
+        }
+      },
+      "12-journey-modal": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 142,
+          "ch": 142,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "13-item-shop": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "14-hero-shop": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "14b-power-shop": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "15-event": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "16-gear-modal": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 527,
+          "ch": 527,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "16b-hero-info-modal": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 262,
+          "ch": 262,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "17-levelup": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "18-boss-upgrade": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "19-deploy-bench": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "20-deploy-ready": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "21-battle": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "22-result": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "23-gauntlet-gate": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "24-over-lp": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
+      "25-over-xp": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      }
+    },
+    "mobile-390x844": {
+      "01-title": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "02-home-menu": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 433,
+          "ch": 433,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "03-howto": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 658,
+          "ch": 658,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "04-codex": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 380,
+          "ch": 380,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "05-hero-peek": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 476,
+          "ch": 476,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "06-crown-shop": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 472,
+          "ch": 472,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "07-ladder": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 238,
+          "ch": 238,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "07b-rewards": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 661,
+          "ch": 661,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "07c-profile": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 582,
+          "ch": 582,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "08-start-hero-empty": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "09-start-hero-selected": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "11-map": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "",
+        "mapScroll": {
+          "sh": 1540,
+          "ch": 722,
+          "st": 818,
+          "todayTop": 422
+        }
+      },
+      "12-journey-modal": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 152,
+          "ch": 152,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "13-item-shop": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "14-hero-shop": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "14b-power-shop": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "15-event": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "16-gear-modal": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 522,
+          "ch": 522,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "16b-hero-info-modal": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 286,
+          "ch": 286,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "17-levelup": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "18-boss-upgrade": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "19-deploy-bench": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "20-deploy-ready": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "21-battle": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "22-result": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "23-gauntlet-gate": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "24-over-lp": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "25-over-xp": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "26-stats-page": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 2530,
+        "hOverflow": false,
+        "vOverflow": true,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "27-card-page": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "cardpage"
+      }
+    },
+    "mobile-375x812": {
+      "01-title": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "02-home-menu": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 433,
+          "ch": 433,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "03-howto": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 678,
+          "ch": 678,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "04-codex": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 380,
+          "ch": 380,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "05-hero-peek": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 498,
+          "ch": 498,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "06-crown-shop": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 472,
+          "ch": 472,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "07-ladder": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 238,
+          "ch": 238,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "07b-rewards": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 661,
+          "ch": 661,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "07c-profile": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 582,
+          "ch": 582,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "08-start-hero-empty": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "09-start-hero-selected": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "11-map": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "",
+        "mapScroll": {
+          "sh": 1540,
+          "ch": 690,
+          "st": 850,
+          "todayTop": 390
+        }
+      },
+      "12-journey-modal": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 151,
+          "ch": 151,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "13-item-shop": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "14-hero-shop": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "14b-power-shop": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "15-event": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "16-gear-modal": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 522,
+          "ch": 522,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "16b-hero-info-modal": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": {
+          "sh": 225,
+          "ch": 225,
+          "overflow": false
+        },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "17-levelup": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "18-boss-upgrade": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "19-deploy-bench": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "20-deploy-ready": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "21-battle": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "22-result": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "23-gauntlet-gate": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "24-over-lp": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "25-over-xp": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      }
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "failedRequests": []
+}

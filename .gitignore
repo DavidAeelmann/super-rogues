@@ -7,3 +7,4 @@ tools/watcher.log
 art-inbox/
 
 tools/results/*.json
+artifacts/ui-audit/**/*.png
