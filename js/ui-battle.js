@@ -22,6 +22,64 @@
     const left = Run.benched(U.run).length;
     render(); toast(left ? (left > 1 ? `${left} more heroes to place` : 'One more hero to place') : 'Everyone is on the board. Fight when ready!');
   }
+  const BOSS_PHASES = {
+    gorewarden: [50, 25],
+    hollowking: [66, 33],
+    mirewitch: [50],
+    colossus: [60, 30],
+    packlord: [50],
+    lichqueen: [66, 33],
+  };
+  function deployTitleHTML(gau, f) {
+    if (gau) return `${I('trophy')} ${U.run.g.kind === 'final' ? 'Final' : duelName(U.run.g)} · ${esc(U.run.g.opp.name)} · Power ${Run.ghostPower(U.run.g.opp)} (you ${Run.powerOf(U.run, U.run.heroes)})`;
+    if (f && f.challenge) return `${I('bolt')} ${esc(f.challenge.name)}`;
+    if (f && f.diff === 'boss') return `${I('skull')} Boss Fight`;
+    if (f && f.diff && B.DIFF[f.diff]) return `${I('swords')} ${B.DIFF[f.diff].name} Fight`;
+    return `${I('swords')} Battle`;
+  }
+  function deploySquadHTML() {
+    if (!U.run) return '';
+    const maxS = Run.teamMax(U.run);
+    const hs = U.run.heroes || [];
+    const deployedCount = hs.filter(h => !h.bench).length;
+    const slots = [];
+    for (let i = 0; i < maxS; i++) {
+      const h = hs[i];
+      if (h) {
+        const d = HEROES[h.key];
+        const sel = ui.selUid === h.uid;
+        slots.push(`<button class="ms-slot filled${h.bench ? ' benched' : ''}${sel ? ' on' : ''}" data-act="deploy-focus" data-arg="${h.uid}" title="${esc(hName(h))} · ${esc(d.role)}">
+          <span class="ms-av">${img(h.key, 32, 'por')}<span class="ms-lv">${h.lvl}</span></span>
+          <span class="ms-meta"><b>${esc(d.name)}</b><small>${esc(d.role)}</small></span>
+        </button>`);
+      } else {
+        slots.push(`<div class="ms-slot empty"><span class="ms-plus">+</span><small>Open</small></div>`);
+      }
+    }
+    return `<div class="msquad">
+      <div class="msquad-head"><b>Your Squad</b><span class="msquad-cnt">${deployedCount}/${maxS} Deployed</span><button class="msquad-gear" data-act="team">⚙ Gear${U.run.bag && U.run.bag.length ? ` (${U.run.bag.length})` : ''}</button></div>
+      <div class="msquad-row">${slots.join('')}</div>
+    </div>`;
+  }
+  function bossBarHTML(u) {
+    if (!u) return '';
+    const ticks = BOSS_PHASES[u.key] || [];
+    const hp = Math.max(0, Math.round(u.hp));
+    const maxHp = Math.max(1, Math.round(u.maxHp));
+    const pctW = Math.max(0, Math.min(100, 100 * u.hp / maxHp)).toFixed(1) + '%';
+    const enraged = u.rage ? '<span class="mboss-rage">ENRAGED</span>' : '';
+    return `<div class="mbossbar${u.rage ? ' enraged' : ''}" id="mbossbar">
+      <div class="mboss-top">
+        <span class="mboss-name">${I('skull')} <b>${esc(u.name)}</b>${enraged}</span>
+        <span class="mboss-hp" id="mboss-hp">${hp} / ${maxHp}</span>
+      </div>
+      <div class="mboss-track">
+        <i class="mboss-trail" id="mboss-trail" style="width:${pctW}"></i>
+        <i class="mboss-fill" id="mboss-fill" style="width:${pctW}"></i>
+        ${ticks.map(p => `<s class="mboss-tick" style="left:${p}%"></s>`).join('')}
+      </div>
+    </div>`;
+  }
   // the ribbon over
   // the board says "Drag heroes to reposition" (with a hand); with heroes on the bench it says "Place <name>!".
   function deployHTML() {
@@ -32,20 +90,55 @@
     const depbanContent = need.length
       ? (need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`)
       : 'Drag heroes to reposition';
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    const modBanner = !gau && f && f.challenge
+      ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
+      : !gau && f && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(U.modText(f.mod))}</span></p>`
+      : (desk && (store.get('balance.tips.deploy', 0) | 0) < 3) ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : '';
+    const formEl = U.run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : '';
+    const coachEl = (t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(U.coachTip());
+    const fightLbl = need.length ? (need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`)
+      : gau ? (U.run.g.kind === 'final' ? 'Final fight!' : U.run.g.kind === 'tower' ? 'Climb!' : 'Duel!')
+      : f && f.diff === 'boss' ? 'Start Boss Fight!' : 'Start Fight!';
+
+    if (!desk) {
+      return `<section class="deploy m-deploy">
+        <div class="m-subhead">
+          <div class="bhead hud-l" id="bhud"><b>${deployTitleHTML(gau, f)}</b><span class="clock m-prep-tag">Prep</span></div>
+          ${U.tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${speedPills(!gau, 'dspeed')}
+        </div>
+        ${modBanner}
+        ${benchHTML(need)}
+        ${formEl}
+        <div class="m-boardslot">
+          <div class="depban ${need.length ? 'need' : ''}" aria-hidden="true">
+            ${need.length ? I('shield') : '<span class="dbh">✋</span>'}
+            <span class="depban-text">${depbanContent}</span>
+          </div>
+        </div>
+        <div class="boardwrap">
+          <canvas id="board"></canvas>
+          ${U.tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${coachEl}
+        </div>
+        <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
+        ${U.foesHTML(gau, f)}
+        ${deploySquadHTML()}
+        <div class="bar sticky"><button class="fight-gold-btn ${need.length ? 'locked' : ''}" data-act="fight"${need.length ? ' aria-disabled="true"' : ''}><span class="fight-sparks"></span><span class="fight-lbl">${fightLbl}</span></button></div>
+      </section>`;
+    }
 
     return `<section class="deploy">
       ${speedPills(!gau, 'dspeed')}<div class="bhead">${gau ? `${I('trophy')} ${U.run.g.kind === 'final' ? 'Final' : duelName(U.run.g)} · ${esc(U.run.g.opp.name)} · Power ${Run.ghostPower(U.run.g.opp)} (you ${Run.powerOf(U.run, U.run.heroes)})` : f && f.challenge ? `${I('bolt')} ${esc(f.challenge.name)}` : f && f.diff === 'boss' ? I('skull') + ' Boss fight' : f && f.diff && B.DIFF[f.diff] ? I('swords') + ' ' + B.DIFF[f.diff].name + ' fight' : I('swords') + ' Battle'}</div>
-      ${!gau && f.challenge ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
-        : !gau && f.mod ? `<p class="hint tight"><span class="nextmod">⚑ ${fmt(U.modText(f.mod))}</span></p>` : (store.get('balance.tips.deploy', 0) | 0) < 3 ? '<p class="hint tight tip">Drag your heroes: tanks in front, ranged behind.</p>' : ''}
+      ${modBanner}
       ${benchHTML(need)}
-      ${U.run.relics.some(id => RELIC[id] && RELIC[id].form) ? `<p class="formline" id="formline">${formHTML(worldFor(true))}</p>` : ''}
+      ${formEl}
       <div class="boardwrap">
         <canvas id="board"></canvas>
         <div class="depban ${need.length ? 'need' : ''}" aria-hidden="true">
           ${need.length ? I('shield') : '<span class="dbh">✋</span>'}
           <span class="depban-text">${depbanContent}</span>
         </div>
-        ${U.tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${U.tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${(t => t ? `<div class="coach" style="--cc:${t.color}"><span class="ci">${t.icon}</span><span class="ct">${esc(t.text)}</span><button class="cok" data-act="coach-ok">Got it</button></div>` : '')(U.coachTip())}
+        ${U.tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${U.tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${coachEl}
       </div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${U.foesHTML(gau, f)}
@@ -81,6 +174,25 @@
   // screen (on the sky of the board); the Skip button only in PvE fights
   const speedPills = (skip, cls = '') => `<div class="speed ${cls}">${[1, 2, 4].map(x => `<button class="${ui.speed === x ? 'on' : ''}" data-act="speed" data-arg="${x}">${x}×</button>`).join('')}${!skip ? '' : hasPerk('skip') ? '<button class="skip" data-act="skip" aria-label="Skip">⏭</button>' : '<button class="skip locked" data-act="skip" aria-label="Skip (Crown Shop)">⏭🔒</button>'}</div>`;
   function battleHTML() {
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    if (!desk) {
+      const b = U.battle, W = b && b.W;
+      const gau = b && b.gau;
+      const f = U.run && U.run.cur;
+      const boss = W && W.units.find(u => u.side === 1 && u.boss);
+      const totalFoes = W ? W.units.filter(u => u.side === 1 && u.kind !== 'summon').length : 0;
+      const slotHTML = boss
+        ? bossBarHTML(boss)
+        : `<div class="mcombat-pill"><span class="mcombat-badge">⚔ COMBAT LIVE</span><span class="mcombat-sub" id="mcombat-sub">${!gau && f && f.mod ? fmt(U.modText(f.mod)) : `${totalFoes} ${totalFoes === 1 ? 'foe' : 'foes'} active`}</span></div>`;
+      return `<section class="deploy battle m-battle">
+        <div class="m-subhead hud"><div id="bhud" class="bhead hud-l"><b>${deployTitleHTML(gau, f)}</b><span class="clock">⏱ 0:00</span></div>
+          ${U.tutSpeedOn() ? '<div class="tutspeed" aria-hidden="true">⬆ Tap here to speed up the fight!</div>' : ''}${speedPills(!(U.battle && U.battle.gau))}</div>
+        <div class="m-boardslot">${slotHTML}</div>
+        <div class="boardwrap"><canvas id="board"></canvas></div>
+        <div class="bpanel"><div class="teamstrip v2" id="tstrip"></div>
+          <div class="bph"><b>Enemies</b><span id="ecount" class="dim small"></span></div><div class="estrip" id="estrip"></div></div>
+        <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div></section>`;
+    }
     return `<section class="deploy battle">
       <div class="hud"><div id="bhud" class="hud-l"></div>
         ${U.tutSpeedOn() ? '<div class="tutspeed" aria-hidden="true">⬆ Tap here to speed up the fight!</div>' : ''}${speedPills(!(U.battle && U.battle.gau))}</div>
@@ -95,10 +207,20 @@
   const CC_STATUS = [['stun', 'STUN', 'st'], ['silence', 'SILENCE', 'si'], ['root', 'ROOT', 'ro'], ['frozenU', 'FROZEN', 'fr'], ['confuseU', 'CONFUSED', 'co'], ['blindU', 'BLIND', 'bl'], ['slowU', 'SLOW', 'sl'], ['tauntU', 'TAUNTED', 'ta']];
   function ccHTML(W, u) { return u.dead ? '' : CC_STATUS.filter(([k]) => u.st[k] > W.t).slice(0, 2).map(([, t, c]) => `<span class="sb sb-${c}">${t}</span>`).join(''); }
   function stripHTML(W) {
-    return W.units.filter(u => u.side === 0 && u.kind === 'hero').map(u => `<div class="ts" data-id="${u.id}">
-      <div class="tsp">${img(u.key, 40, 'por')}<span class="tslv">${u.lvl}</span><span class="crown">👑</span>${u.items && u.items.length ? `<span class="tsitems">${u.items.map(id => `<img class="ico xs" src="${B.Icons.item(id, 18)}" alt="">`).join('')}</span>` : ''}</div>
-      <div class="tsb"><div class="tsn"><b>${esc(u.name)}</b><span class="tsst"></span><span class="tsd"></span><span class="tsh"></span></div>
-        <i class="hp"><s></s><em></em></i><i class="mp"><s></s><em>${esc((HEROES[u.key] || {}).abName || '')}</em></i><i class="dm"><s></s><b class="dmb"></b></i></div></div>`).join('');
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    return W.units.filter(u => u.side === 0 && u.kind === 'hero').map(u => {
+      const itemsHTML = u.items && u.items.length ? u.items.map(id => `<img class="ico xs" src="${B.Icons.item(id, 18)}" alt="">`).join('') : '';
+      if (!desk) {
+        return `<div class="ts" data-id="${u.id}">
+          <div class="tsp"><span class="tsp-frame">${img(u.key, 40, 'por')}</span><span class="tslv">${u.lvl}</span><span class="crown">👑</span></div>
+          <div class="tsb"><div class="tsn"><b>${esc(u.name)}</b>${itemsHTML ? `<span class="tsitems-inline">${itemsHTML}</span>` : ''}<span class="tsst"></span><span class="tsd"></span><span class="tsh"></span></div>
+            <i class="hp"><s></s><em></em></i><i class="mp"><s></s><em>${esc((HEROES[u.key] || {}).abName || '')}</em></i><i class="dm"><s></s><b class="dmb"></b></i></div></div>`;
+      }
+      return `<div class="ts" data-id="${u.id}">
+        <div class="tsp">${img(u.key, 40, 'por')}<span class="tslv">${u.lvl}</span><span class="crown">👑</span>${itemsHTML ? `<span class="tsitems">${itemsHTML}</span>` : ''}</div>
+        <div class="tsb"><div class="tsn"><b>${esc(u.name)}</b><span class="tsst"></span><span class="tsd"></span><span class="tsh"></span></div>
+          <i class="hp"><s></s><em></em></i><i class="mp"><s></s><em>${esc((HEROES[u.key] || {}).abName || '')}</em></i><i class="dm"><s></s><b class="dmb"></b></i></div></div>`;
+    }).join('');
   }
   function updateStrip(W) {
     const el = $('#tstrip'); if (!el) return;
@@ -110,7 +232,7 @@
         mps: d.querySelector('.mp s'), dms: d.querySelector('.dm s'),
         dmb: d.querySelector('.dm .dmb'), tsd: d.querySelector('.tsd'),
         tsh: d.querySelector('.tsh'), tsst: d.querySelector('.tsst'),
-        dead: null, ready: null, mvp: null, hpw: '', hpt: '', mpw: '', dmw: '', dmbw: '', tsdt: '', tsht: '', st: ''
+        dead: null, ready: null, castReady: null, mvp: null, hpw: '', hpt: '', mpw: '', dmw: '', dmbw: '', tsdt: '', tsht: '', st: ''
       }));
     }
     const dmg = dmgBy(W), vals = Object.values(dmg);
@@ -119,10 +241,11 @@
     for (const u of W.units) if (u.side === 0 && (u.healDone || 0) > topHeal) topHeal = u.healDone;
     for (const c of el._cards) {
       const u = W.byId[c.id]; if (!u) continue;
-      const dead = !!u.dead, ready = !dead && u.maxMana > 0 && u.mana >= u.maxMana, dd = dmg[u.id] || 0, hh = u.healDone || 0, mvp = dd > 0 && dd >= top;
+      const dead = !!u.dead, ready = !dead && u.maxMana > 0 && u.mana >= u.maxMana, castReady = !dead && u.maxMana > 0 && u.mana >= u.maxMana * 0.9, dd = dmg[u.id] || 0, hh = u.healDone || 0, mvp = dd > 0 && dd >= top;
       const sh = u.shield > 0 && u.shieldU > W.t ? Math.round(u.shield) : 0;
       if (c.dead !== dead) { c.dead = dead; c.el.classList.toggle('dead', dead); }
       if (c.ready !== ready) { c.ready = ready; c.el.classList.toggle('ready', ready); }
+      if (c.castReady !== castReady) { c.castReady = castReady; c.el.classList.toggle('cast-ready', castReady); }
       if (c.mvp !== mvp) { c.mvp = mvp; c.el.classList.toggle('mvp', mvp); }
       const hpw = Math.max(0, 100 * u.hp / u.maxHp) + '%';
       if (c.hpw !== hpw) { c.hpw = hpw; c.hps.style.width = hpw; }
@@ -505,7 +628,7 @@
   }
 
   // the board takes the width AND the height left on screen, on phones (portrait/landscape), tablets and desktops.
-  const BOARD_RATIO = 0.703; // board height / width (render.js setup: 10.35 * size + 4 over 14.72 * size)
+  const BOARD_RATIO = 0.720; // mobile board height / width (render.js setup: 10.60 * size over 14.7224 * size)
   const DESK_BOARD_RATIO = 0.589; // desktop glade board height / width (12.65 * size over 21.48 * size)
   function layoutClasses() {
     const vw = window.innerWidth, vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -521,9 +644,30 @@
     // the board takes all the height the screen has, the panel sits beside it
     if (document.body.classList.contains('desk')) return Math.floor(Math.max(520, Math.min(vw - 520, (vh - 150) / DESK_BOARD_RATIO, 1180)));
     if (document.body.classList.contains('side')) return Math.floor(Math.max(300, Math.min(Math.min(vw, 1180) - 36 - 356, (vh - 64 - 8) / BOARD_RATIO, 1000)));
-    const reserved = land ? 64 : U.screen === 'battle' ? 175 : 215;
-    const byHeight = Math.max(200, (vh - reserved - 4) / BOARD_RATIO);
-    const maxW = land ? vw * 0.62 : 1000;
+    let reserved;
+    if (land) reserved = 92;
+    else if (U.screen === 'battle') {
+      const heroCount = U.battle && U.battle.W ? U.battle.W.units.filter(u => u.side === 0 && u.kind === 'hero').length : (U.run ? (U.run.heroes || []).length : 1);
+      const topH = (document.querySelector('#top') || {}).offsetHeight || 40;
+      const subH = (document.querySelector('.m-subhead') || {}).offsetHeight || 34;
+      const slotH = (document.querySelector('.m-boardslot') || {}).offsetHeight || 46;
+      reserved = topH + subH + slotH + Math.max(1, heroCount) * 56 + (vh <= 675 ? 114 : 88);
+    } else {
+      const topH = (document.querySelector('#top') || {}).offsetHeight || 40;
+      const sec = wrap ? wrap.closest('.deploy') : null;
+      let otherH = topH + 12, vis = 0;
+      if (sec) {
+        const gap = parseFloat(getComputedStyle(sec).rowGap || getComputedStyle(sec).gap || '5') || 5;
+        for (const ch of sec.children) {
+          if (ch === wrap || ch.id === 'info' || ch.classList.contains('empty')) continue;
+          if (ch.offsetHeight) { otherH += ch.offsetHeight; vis++; }
+        }
+        if (vis > 0) otherH += vis * gap;
+      }
+      reserved = Math.max(200, otherH + (vh <= 675 ? 16 : 12));
+    }
+    const byHeight = Math.max(180, (vh - reserved - 4) / BOARD_RATIO);
+    const maxW = land ? vw * 0.56 : 1000;
     return Math.floor(Math.min(wrap.clientWidth || vw - 16, byHeight, maxW));
   }
   let bgView = null, bgPreview = null;
@@ -693,6 +837,9 @@
     if (Math.abs(x - p.x) < s * 0.65 && y > p.y - s * 1.85 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
   function unitBodyAt(W, x, y) { if (!W || !U.view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead) continue; const p = Render.hexScreen(U.view, u.c, u.r), s = U.view.size * (u.boss ? 1.35 : u.elite ? 1.15 : 1);
     if (Math.abs(x - p.x) < s * 0.7 && y > p.y - s * 1.9 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
+  function syncSquadSel() {
+    document.querySelectorAll('.ms-slot[data-act=deploy-focus]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.selUid));
+  }
   function onDown(e) {
     if (U.battle && U.battle.W && U.battle.W.over && U.battle.endAt) { U.battle.endAt = performance.now(); return; }
     const { x, y, h: h0 } = evHex(e, 1.25); const W = U.battle ? U.battle.W : U.preview; let h = h0, u = unitAt(W, h);
@@ -744,6 +891,7 @@
     else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(U.run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); U.tutMoved(); landed(); }
     U.preview = worldFor(true);
     const fl = $('#formline'); if (fl) fl.innerHTML = formHTML(U.preview);
+    syncSquadSel();
     drawPreview();
     const h0 = U.run.heroes[0], o0 = U.run.onb && U.run.onb.from;   // the hero stands somewhere new: the intro goes on
     if (introStage() === 'move' && h0 && h0.pos && (!o0 || h0.pos.c !== o0.c || h0.pos.r !== o0.r)) introEnemy();
@@ -812,20 +960,48 @@
     const T = b.W.over ? b.W.t + (now - b.overAt) / TICK * 0.3 : b.W.t + b.acc / TICK;
     if (b.end) b.end.k = (now - b.overAt) / 1600;
     if (U.view) Render.draw(U.view, b.W, T, Object.assign({ infoId: ui.info, hoverHex: ui.hoverHex }, b.end ? { end: b.end } : b.hold && now < b.hold ? { still: true } : {}));   // standing tall during the countdown
+    const desk = document.body.classList.contains('desk');
     const hud = $('#bhud');
     if (hud) {
       const secs = Math.floor(b.W.t / Sim.TPS);
-      const title = b.gau ? `${I('trophy')} ${duelName(U.run.g)} · ${esc(U.run.g.opp.name)}`
-        : U.run.cur && U.run.cur.challenge ? I('bolt') + ' ' + esc(U.run.cur.challenge.name)
-        : U.run.cur && U.run.cur.diff === 'boss' ? I('skull') + ' Boss'
-        : U.run.cur && U.run.cur.diff && B.DIFF[U.run.cur.diff] ? I('swords') + ' ' + B.DIFF[U.run.cur.diff].name
-        : I('swords') + ' Fight';
+      const title = desk
+        ? (b.gau ? `${I('trophy')} ${duelName(U.run.g)} · ${esc(U.run.g.opp.name)}`
+          : U.run.cur && U.run.cur.challenge ? I('bolt') + ' ' + esc(U.run.cur.challenge.name)
+          : U.run.cur && U.run.cur.diff === 'boss' ? I('skull') + ' Boss'
+          : U.run.cur && U.run.cur.diff && B.DIFF[U.run.cur.diff] ? I('swords') + ' ' + B.DIFF[U.run.cur.diff].name
+          : I('swords') + ' Fight')
+        : deployTitleHTML(b.gau, U.run.cur);
       const toSd = CFG.suddenDeath - secs, clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
       const str = `<b>${title}</b><span class="clock ${toSd <= 0 ? 'sd' : toSd <= 10 ? 'warn' : ''}">⏱ ${clock}${toSd <= 0 ? ' · SUDDEN DEATH' : toSd <= 10 ? ' · sudden death in ' + toSd + 's' : ''}</span>`;
       if (str !== b.hudStr) { hud.innerHTML = str; b.hudStr = str; }
     }
     if ((b.frame = (b.frame || 0) + 1) % 6 === 0) {
       updateStrip(b.W);
+      if (!desk) {
+        const mb = $('#mbossbar');
+        if (mb) {
+          const boss = b.W.units.find(u => u.side === 1 && u.boss);
+          if (boss) {
+            const hp = Math.max(0, Math.round(boss.hp)), maxHp = Math.max(1, Math.round(boss.maxHp));
+            const pctW = (boss.dead ? 0 : Math.max(0, Math.min(100, 100 * boss.hp / maxHp))).toFixed(1) + '%';
+            const fill = $('#mboss-fill'), trail = $('#mboss-trail'), hpel = $('#mboss-hp');
+            if (fill) fill.style.width = pctW;
+            if (trail) trail.style.width = pctW;
+            if (hpel) hpel.textContent = boss.dead ? 'DEFEATED' : `${hp} / ${maxHp}`;
+            mb.classList.toggle('enraged', !!boss.rage);
+            if (boss.rage && !mb.querySelector('.mboss-rage')) {
+              const nm = mb.querySelector('.mboss-name');
+              if (nm) nm.insertAdjacentHTML('beforeend', '<span class="mboss-rage">ENRAGED</span>');
+            }
+          }
+        } else {
+          const mc = $('#mcombat-sub');
+          if (mc && (b.gau || !(U.run && U.run.cur && U.run.cur.mod))) {
+            const alive = b.W.units.filter(u => u.side === 1 && !u.dead && u.kind !== 'summon').length;
+            mc.textContent = alive + (alive === 1 ? ' foe active' : ' foes active');
+          }
+        }
+      }
       if (ui.info) { const el = $('#info'); if (el) { el.innerHTML = infoHTML(); el.classList.remove('empty'); } }
       if (b.W && !b.W.over) {
         const hs = b.W.units.filter(u => u.side === 0 && u.kind === 'hero');

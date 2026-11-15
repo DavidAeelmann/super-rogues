@@ -86,6 +86,31 @@
     fight: () => { const need = U.run ? Run.benched(U.run) : []; if (need.length && !U.introStage()) { U.benchNudge(need); return; } sfx('go'); U.coachDone(); U.startBattle(); },   // locked until the bench is empty
     // a tap on a hero of the bench picks it (then a tap on a hex places it); a drag is handled by the bench listeners (benchDown)
     'bench-pick': uid => { if (performance.now() - (ui.bdragAt || 0) < 400) return; uid = +uid; ui.selUid = ui.selUid === uid ? 0 : uid; render(); },
+    'deploy-focus': uid => {
+      uid = +uid;
+      const h = U.run && U.run.heroes.find(x => x.uid === uid);
+      if (!h) return;
+      if (h.bench) {
+        ui.selUid = ui.selUid === uid ? 0 : uid;
+        ui.info = null;
+        sfx('tap');
+        render();
+        return;
+      }
+      ui.selUid = ui.selUid === uid ? 0 : uid;
+      if (ui.selUid) {
+        const W = U.preview;
+        const u = W && W.units.find(x => x.uid === uid);
+        ui.info = u ? u.id : null;
+      } else {
+        ui.info = null;
+      }
+      const el = $('#info');
+      if (el) { el.innerHTML = U.infoHTML ? U.infoHTML() : ''; el.classList.toggle('empty', !ui.info); }
+      document.querySelectorAll('.ms-slot[data-act=deploy-focus]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.selUid));
+      sfx('tap');
+      U.drawPreview();
+    },
     // Battle speed 1x / 2x / 4x (unlocked for all players). skip plays the fight at once (perk).
     speed: s => { ui.speed = +s; store.set('balance.speed', ui.speed); document.querySelectorAll('[data-act=speed]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.speed)); },
     skip: () => {

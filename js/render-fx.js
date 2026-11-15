@@ -33,7 +33,7 @@
     drawBoard(v, o, W);
     if (boss && !o.deploy) bossTiles(v, boss.key, now);
     if (o.coach) drawCoach(v, o.coach, now);
-    if (o.slots) drawCoach(v, { hexes: o.slots, color: '#ffd23f', plain: true }, now);
+    if (o.slots) drawCoach(v, { hexes: o.slots, color: v.desk ? '#ffd23f' : '#34d399', plain: true }, now);
     if (!W) return;
     for (const z of W.zones) if (z.until > W.t) {
       const owner = z.src && W.byId[z.src], zs = owner && AF && AF.SPEC[owner.abil] && AF.SPEC[owner.abil].zone;
@@ -50,6 +50,46 @@
     }
     if (!o.deploy) spawnFromFx(v, W, T, S);
     if (o.deploy && W && W.units) {
+      if (!v.desk) {
+        const heroes0 = W.units.filter(u => !u.dead && u.side === 0 && u.kind !== 'plant');
+        const foes1 = W.units.filter(u => !u.dead && u.side === 1 && u.kind !== 'plant');
+        if (heroes0.length && foes1.length) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(244, 63, 94, 0.9)';
+          ctx.lineWidth = Math.max(1.4, size * 0.045);
+          ctx.setLineDash([5, 6]);
+          ctx.lineDashOffset = -now * 22;
+          ctx.globalAlpha = 0.28;
+          for (const e of foes1) {
+            let tgt = null, bd = 999;
+            for (const h of heroes0) {
+              const d = Hx.dist(e, h);
+              if (d < bd) { bd = d; tgt = h; }
+            }
+            if (!tgt) continue;
+            const ep = hexScreen(v, e.c, e.r), hp = hexScreen(v, tgt.c, tgt.r);
+            const mx = (ep.x + hp.x) / 2 + (ep.x < hp.x ? -8 : 8), my = (ep.y + hp.y) / 2 - 10;
+            ctx.beginPath();
+            ctx.moveTo(ep.x, ep.y - size * 0.28);
+            ctx.quadraticCurveTo(mx, my, hp.x, hp.y - size * 0.28);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+        if (o.sel) {
+          const su = W.units.find(u => !u.dead && u.side === 0 && u.uid === o.sel);
+          if (su) {
+            const sp = hexScreen(v, su.c, su.r), pulse = 0.7 + 0.3 * Math.sin(now * 5);
+            ctx.save();
+            ctx.strokeStyle = `rgba(56, 189, 248, ${(0.7 * pulse).toFixed(2)})`;
+            ctx.lineWidth = 2.4;
+            ctx.beginPath();
+            ctx.ellipse(sp.x, sp.y, size * 0.72, size * 0.72 * K * 0.65, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
       let activeU = W.units.find(u => !u.dead && ((o.sel && u.side === 0 && u.uid === o.sel) || (o.infoId && u.id === o.infoId)));
       if (!activeU && o.hoverFoe) {
         activeU = W.units.find(u => !u.dead && u.side === 1 && (u.key === o.hoverFoe || (u.name && u.name.toLowerCase() === o.hoverFoe.toLowerCase())));
@@ -197,7 +237,8 @@
         ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000';
         const hop = f.k === 'num' && nk === 'crit' ? Math.sin(Math.min(1, k / 0.35) * Math.PI) * size * 0.45 : 0;
         const arcSpread = f.k === 'num' ? Math.sin((((f.t0 || 0) * 11) % 7) / 7 * Math.PI * 2) * size * 0.22 * Math.sqrt(k) : 0;
-        const y = p.y - size * (nk === 'dot' ? 2.0 : 2.45) - k * size * (f.k === 'text' ? 0.6 : nk === 'dot' ? 0.55 : 0.95) - hop;
+        const rawY = p.y - size * (nk === 'dot' ? 2.0 : 2.45) - k * size * (f.k === 'text' ? 0.6 : nk === 'dot' ? 0.55 : 0.95) - hop;
+        const y = v.desk ? rawY : Math.max(22, rawY);
         const x = p.x + (f.k === 'num' ? ((f.t0 * 7) % 11 - 5) * size * (nk === 'dot' ? 0.07 : 0.05) + arcSpread : 0);
         const pop = k < 0.15 ? 1 + (1 - k / 0.15) * (nk === 'crit' ? 0.6 : nk === 'dot' ? 0 : 0.25) : 1;
         if (nk === 'hit' || nk === 'dot') ctx.globalAlpha *= 0.88;
@@ -273,7 +314,7 @@
       vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, vgCol);
     }
     ctx.fillStyle = vg; ctx.fillRect(-10, -10, v.w + 20, v.h + 20);
-    if (!o.deploy) bossBar(v, W);
+    if (!o.deploy && v.desk) bossBar(v, W);
     if (o.end) drawEnd(v, W, o.end, S, dt);
     if (o.swapGhost) { const g = o.swapGhost, p = hexScreen(v, g.c, g.r); ctx.globalAlpha = 0.55; B.Models.draw(ctx, g.key, p.x, p.y, size * 1.3, { t: T / 20, face: 1 }); ctx.globalAlpha = 1;
       ctx.font = `800 ${Math.round(size * 0.55)}px 'Fredoka', sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#0b0f3f'; ctx.strokeText('⇄', p.x, p.y - size * 1.5); ctx.fillStyle = '#ffe066'; ctx.fillText('⇄', p.x, p.y - size * 1.5); }
@@ -626,7 +667,8 @@
       c.t += dt; if (c.t > (c.big ? 1.5 : 1.1)) continue; keep.push(c);
       const u = W.byId[c.id]; if (!u) continue;
       const p = unitPos(v, W, u, T), k = c.t / (c.big ? 1.5 : 1.1), pop = c.t < 0.12 ? 0.7 + c.t / 0.12 * (c.big ? 0.8 : 0.45) : (c.big ? 1.5 : 1.15) - Math.min(c.big ? 0.4 : 0.15, (c.t - 0.12));
-      ctx.save(); ctx.globalAlpha = k < 0.75 ? 1 : (1 - k) / 0.25; ctx.translate(p.x, p.y - size * 2.6 - k * size * 0.4); ctx.scale(pop, pop);
+      const rawCy = p.y - size * 2.6 - k * size * 0.4, cy = v.desk ? rawCy : Math.max(26, rawCy);
+      ctx.save(); ctx.globalAlpha = k < 0.75 ? 1 : (1 - k) / 0.25; ctx.translate(p.x, cy); ctx.scale(pop, pop);
       ctx.font = '700 ' + Math.round(size * (c.big ? 0.8 : 0.62)) + "px 'Fredoka', 'Inter', system-ui, sans-serif"; ctx.textAlign = 'center';
       ctx.lineJoin = 'round'; ctx.lineWidth = 11; ctx.strokeStyle = c.col; ctx.globalAlpha *= 0.35; ctx.strokeText(TT(c.text).toUpperCase(), 0, 0); ctx.globalAlpha /= 0.35;
       ctx.lineWidth = 4.5; ctx.strokeStyle = '#000'; ctx.strokeText(TT(c.text).toUpperCase(), 0, 0); ctx.fillStyle = c.col; ctx.fillText(TT(c.text).toUpperCase(), 0, 0);

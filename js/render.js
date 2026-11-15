@@ -10,7 +10,7 @@
   function setup(canvas, cssW) {
     const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk') && canvas && (canvas.id === 'board' || canvas.id === 'bgboard' || canvas.id === 'trailer');
     const size = cssW / (Math.sqrt(3) * (Hx.COLS + (desk ? 5.6 : 0.5)));
-    const flat = Hx.boardSize(size), top = size * (desk ? 4.35 : 2.4), slab = size * 0.45, padX = desk ? (cssW - flat.w) / 2 : 0;
+    const flat = Hx.boardSize(size), top = size * (desk ? 4.35 : 2.65), slab = size * 0.45, padX = desk ? (cssW - flat.w) / 2 : 0;
     const w = desk ? cssW : flat.w, h = top + flat.h * K + slab + (desk ? size * 1.65 : 4);
     const dpr = desk ? Math.max(1, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1))
       : Math.max(0.5, Math.min(B.Render && B.Render.maxDpr || 2, G.devicePixelRatio || 1, Math.sqrt(PX_CAP / Math.max(1, w * h))));
@@ -148,7 +148,7 @@
       }
       return (c + r) % 2 ? `hsla(222, 20%, ${15 + n * 3}%, 0.72)` : `hsla(224, 22%, ${18 + n * 3}%, 0.72)`;
     }
-    if (o.deploy) return r >= 4 ? `hsl(215,26%,${20 + n * 4}%)` : `hsl(350,22%,${18 + n * 3}%)`;
+    if (o.deploy) return r >= 4 ? `hsl(188,32%,${18 + n * 4}%)` : `hsl(348,22%,${14 + n * 3}%)`;
     return (c + r) % 2 ? `hsl(222,20%,${15 + n * 3}%)` : `hsl(224,22%,${18 + n * 3}%)`;
   }
   function drawBoard(v, o, W) {
@@ -162,11 +162,29 @@
     }
     ctx.drawImage(v.boardC.c, 0, 0, v.w, v.h);
     for (const k in tk) if (tk[k] === 'pond') drawPond(v, k % Hx.COLS, (k / Hx.COLS) | 0);
+    if (o.deploy && !v.desk && W && W.units) {
+      const cleaveBoss = W.units.find(u => !u.dead && u.side === 1 && u.boss && (u.range <= 1 || u.key === 'gorewarden'));
+      if (cleaveBoss) {
+        ctx.save();
+        for (let c = 0; c < Hx.COLS; c++) {
+          if (tk[Hx.key(c, 4)]) continue;
+          if (Math.abs(c - cleaveBoss.c) > 2) continue;
+          const pts = corners(v, c, 4, size * 0.90);
+          path(ctx, pts);
+          ctx.fillStyle = 'rgba(244, 63, 94, 0.14)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(244, 63, 94, 0.56)';
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
     if (o.deploy) {
       const y = hexScreen(v, 0, 4).y - size * 0.75 * K;
       const x0 = v.desk ? (v.padX || 0) - size * 0.4 : 0, x1 = v.desk ? v.w - (v.padX || 0) + size * 0.4 : v.w;
       ctx.save();
-      ctx.strokeStyle = 'rgba(212, 175, 55, 0.85)';
+      ctx.strokeStyle = v.desk ? 'rgba(212, 175, 55, 0.85)' : 'rgba(52, 211, 153, 0.82)';
       ctx.lineWidth = v.desk ? 2.2 : 2;
       ctx.setLineDash([7, 6]);
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
@@ -177,9 +195,9 @@
       ctx.save();
       path(ctx, pts);
       const ok = !o.deploy || hh.r >= 4;
-      ctx.fillStyle = ok ? 'rgba(212, 175, 55, 0.22)' : 'rgba(210, 60, 60, 0.2)';
+      ctx.fillStyle = ok ? (v.desk ? 'rgba(212, 175, 55, 0.22)' : 'rgba(52, 211, 153, 0.22)') : 'rgba(210, 60, 60, 0.2)';
       ctx.fill();
-      ctx.strokeStyle = ok ? 'rgba(235, 195, 85, 0.95)' : 'rgba(240, 90, 80, 0.85)';
+      ctx.strokeStyle = ok ? (v.desk ? 'rgba(235, 195, 85, 0.95)' : 'rgba(110, 231, 183, 0.92)') : 'rgba(240, 90, 80, 0.85)';
       ctx.lineWidth = 2.2;
       ctx.stroke();
       ctx.restore();
@@ -252,7 +270,7 @@
         }
         ctx.fillStyle = topGrad;
       } else {
-        ctx.fillStyle = drop ? '#ffe066' : tileColor(c, r, isTerr ? {} : o, desk);
+        ctx.fillStyle = drop ? (desk ? '#ffe066' : '#34d399') : tileColor(c, r, isTerr ? {} : o, desk);
       }
       ctx.fill();
       if (v.grit && !desk) { ctx.globalAlpha = royal() ? 0.9 : 0.35; ctx.fillStyle = v.grit; ctx.fill(); ctx.globalAlpha = 1; }
@@ -305,6 +323,25 @@
           ctx.strokeStyle = drop ? '#ffffff' : 'rgba(212, 175, 55, 0.35)';
           ctx.stroke();
         }
+      } else if (o.deploy && !isTerr) {
+        if (friendly) {
+          const pCen = hexScreen(v, c, r);
+          const fg = ctx.createRadialGradient(pCen.x, pCen.y, 0, pCen.x, pCen.y, size * 0.72);
+          fg.addColorStop(0, 'rgba(52, 211, 153, 0.14)');
+          fg.addColorStop(1, 'rgba(52, 211, 153, 0)');
+          ctx.fillStyle = fg;
+          path(ctx, top);
+          ctx.fill();
+        }
+        ctx.lineWidth = friendly ? 1.5 : 1.1;
+        ctx.strokeStyle = friendly ? 'rgba(52, 211, 153, 0.58)' : 'rgba(244, 63, 94, 0.22)';
+        ctx.beginPath(); ctx.moveTo(top[3].x, top[3].y); ctx.lineTo(top[4].x, top[4].y); ctx.lineTo(top[5].x, top[5].y); ctx.lineTo(top[0].x, top[0].y); ctx.stroke();
+        ctx.strokeStyle = 'rgba(10, 12, 17, 0.78)';
+        ctx.beginPath(); ctx.moveTo(top[0].x, top[0].y); ctx.lineTo(top[1].x, top[1].y); ctx.lineTo(top[2].x, top[2].y); ctx.lineTo(top[3].x, top[3].y); ctx.stroke();
+        ctx.lineWidth = friendly ? 1.2 : 0.75;
+        ctx.strokeStyle = drop ? '#ffffff' : friendly ? 'rgba(52, 211, 153, 0.48)' : 'rgba(244, 63, 94, 0.24)';
+        path(ctx, top);
+        ctx.stroke();
       } else {
         ctx.lineWidth = 1.4;
         ctx.strokeStyle = royal() ? 'rgba(255,207,90,0.5)' : 'rgba(212, 175, 55, 0.65)';

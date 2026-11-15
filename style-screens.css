@@ -850,7 +850,7 @@ body.desk .hero-cta-btn.slot-unselected {
 }
 
 /* ---------- Obsidian Secondary Buttons & Neutral Controls ---------- */
-button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):not(.pm):not(.gold-ingot-btn):not(.molten-gold-cta):not(.proceed-hex-btn):not(.dockitem):not(.playnow):not(.cprice):not(.hero-cta-btn):not(.fr):not(.cxh):not(.avpick):not(.tpick):not(.achc):not(.lvcard):not(.bnc):not(.relicbtn):not(.auto-equip-toggle):not(.dsell-btn):not(.draft-random-btn):not(.dd-info),
+button:not(.primary):not(.banner):not(.chip):not(.pfp):not(.avbtn):not(.node):not(.ts):not(.ibtn):not(.sndbtn):not(.cok):not(.crownchip):not(.gtab):not(.mrow):not(.giveup):not(.lvchip):not(.lgchip):not(.srelic):not(.hbanner):not(.gsock):not(.gitem):not(.evch):not(.steal):not(.nextboss):not(.ppb):not(.qsell-btn):not(.fight-gold-btn):not(.pm):not(.gold-ingot-btn):not(.molten-gold-cta):not(.proceed-hex-btn):not(.dockitem):not(.playnow):not(.cprice):not(.hero-cta-btn):not(.fr):not(.cxh):not(.avpick):not(.tpick):not(.achc):not(.lvcard):not(.bnc):not(.relicbtn):not(.auto-equip-toggle):not(.dsell-btn):not(.draft-random-btn):not(.dd-info):not(.msquad-gear):not(.ms-slot),
 .shead button:not(.chip),
 .shead button[data-act="close"],
 body.desk .floating-shop-bar button.steel-btn,
@@ -3796,3 +3796,947 @@ body.desk .map.road .mstrip.squad-dock {
     gap: 6px !important;
   }
 }
+
+/* ========================================================================
+   Mobile-Only Tactical Arena & Live Telemetry HUD (body:not(.desk))
+   Zero layout shift between Deploy & Battle, external Boss Header + Phase
+   Ticks, unclipped badges, Boss Dossier, and Your Squad Tray.
+   ======================================================================== */
+body:not(.desk) section.deploy.m-deploy,
+body:not(.desk) section.deploy.m-battle {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 2px 6px 4px;
+}
+
+/* Unified Sub-Header Bar (Identical geometry on Deploy & Battle) */
+body:not(.desk) .m-subhead {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 32px;
+  padding: 3px 6px;
+  border-radius: 10px;
+  background: rgba(12, 18, 34, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+body:not(.desk) .m-subhead .hud-l,
+body:not(.desk) .m-subhead #bhud {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  font-size: 12.5px;
+  text-shadow: none;
+  overflow: hidden;
+}
+body:not(.desk) .m-subhead .hud-l > b,
+body:not(.desk) .m-subhead #bhud > b {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: none !important;
+}
+body:not(.desk) .m-subhead #bhud svg.ui {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+body:not(.desk) .m-subhead .clock {
+  flex: none;
+  font-family: var(--fun);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+body:not(.desk) .m-subhead .clock.m-prep-tag {
+  color: #a7f3d0;
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(6, 78, 59, 0.8);
+}
+body:not(.desk) .m-subhead .clock.warn {
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.55);
+  background: rgba(69, 26, 3, 0.9);
+}
+body:not(.desk) .m-subhead .clock.sd {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.65);
+  background: rgba(127, 29, 29, 0.92);
+}
+body:not(.desk) .m-subhead .speed {
+  position: static !important;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0 !important;
+  padding: 0;
+  background: transparent;
+}
+body:not(.desk) .m-subhead .speed button {
+  min-width: 28px !important;
+  min-height: 24px !important;
+  height: 24px !important;
+  padding: 0 7px !important;
+  border-radius: 7px !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+body:not(.desk) .m-subhead .speed button.on {
+  transform: none !important;
+}
+body:not(.desk) .m-subhead .speed .skip {
+  padding: 0 6px !important;
+}
+body:not(.desk) .m-subhead .tutspeed {
+  position: absolute !important;
+  top: calc(100% + 4px) !important;
+  right: 4px !important;
+  left: auto !important;
+  z-index: 30;
+  font-size: 11.5px !important;
+  padding: 4px 9px !important;
+}
+
+/* Board Slot: Deploy Prompt / External Armored Boss HP / Live Combat Header */
+body:not(.desk) .m-boardslot {
+  width: 100%;
+  min-height: 28px;
+}
+body:not(.desk) .m-deploy .m-boardslot .depban {
+  position: static !important;
+  transform: none !important;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid rgba(52, 211, 153, 0.42);
+  color: #e2e8f0;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  box-shadow: none;
+  animation: none !important;
+}
+body:not(.desk) .m-deploy .m-boardslot .depban .dbh {
+  font-size: 13px;
+}
+body:not(.desk) .m-deploy .m-boardslot .depban.need {
+  background: rgba(69, 26, 3, 0.94);
+  border-color: rgba(251, 191, 36, 0.72);
+  color: #fde68a;
+}
+
+body:not(.desk) .mbossbar {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 9px 6px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(38, 12, 24, 0.96) 0%, rgba(18, 10, 20, 0.96) 100%);
+  border: 1px solid rgba(244, 63, 94, 0.55);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+body:not(.desk) .mbossbar.enraged {
+  border-color: #fb7185;
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.55);
+}
+body:not(.desk) .mboss-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+body:not(.desk) .mboss-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+body:not(.desk) .mboss-name svg.ui {
+  width: 13px;
+  height: 13px;
+  color: #fda4af;
+  flex: none;
+}
+body:not(.desk) .mboss-name b {
+  font-family: var(--fun);
+  font-size: 12px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body:not(.desk) .mboss-rage {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #be123c;
+  border: 1px solid #fda4af;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+body:not(.desk) .mboss-hp {
+  font-family: var(--fun);
+  font-size: 11px;
+  font-weight: 800;
+  color: #fecaca;
+  white-space: nowrap;
+  flex: none;
+}
+body:not(.desk) .mboss-track {
+  position: relative;
+  width: 100%;
+  height: 9px;
+  border-radius: 999px;
+  background: #090d16;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  overflow: hidden;
+}
+body:not(.desk) .mboss-trail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: #fbbf24;
+  transition: width 0.45s ease-out;
+}
+body:not(.desk) .mboss-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #9f1239 0%, #e11d48 55%, #fb7185 100%);
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.7);
+  transition: width 0.14s linear;
+}
+body:not(.desk) .mboss-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 3px #000;
+  z-index: 2;
+  pointer-events: none;
+}
+
+body:not(.desk) .mcombat-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 9px;
+  background: rgba(12, 18, 34, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+body:not(.desk) .mcombat-badge {
+  font-family: var(--fun);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.92);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  padding: 1px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+body:not(.desk) .mcombat-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Board Framing */
+body:not(.desk) .m-deploy .boardwrap,
+body:not(.desk) .m-battle .boardwrap {
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+body:not(.desk) .m-deploy .boardwrap #board,
+body:not(.desk) .m-battle .boardwrap #board {
+  border-radius: 14px;
+  box-shadow: 0 0 0 1.5px rgba(148, 163, 184, 0.35), 0 8px 20px rgba(0, 0, 0, 0.6);
+  background: #0d1626;
+}
+body:not(.desk) .m-deploy > .hint.tight,
+body:not(.desk) .m-deploy > .bench,
+body:not(.desk) .m-deploy > .formline {
+  margin: 0;
+}
+body:not(.desk) .m-deploy .bench {
+  padding: 6px 8px;
+  border-radius: 11px;
+}
+
+/* Compact Inline Unit Info Banner (no vertical bounce) */
+body:not(.desk) .m-deploy #info.info.mini,
+body:not(.desk) .m-battle #info.info.mini {
+  background: rgba(12, 18, 34, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 11px;
+  padding: 5px 8px;
+  margin: 0;
+  color: #f8fafc;
+}
+body:not(.desk) .m-deploy #info .hrow,
+body:not(.desk) .m-battle #info .hrow {
+  font-size: 12.5px;
+}
+body:not(.desk) .m-deploy #info .small,
+body:not(.desk) .m-battle #info .small {
+  color: #cbd5e1;
+}
+
+/* Mobile Pre-Combat Enemy Dossier (Boss + Regular) */
+body:not(.desk) .m-deploy .foes {
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: 11px;
+  background: rgba(12, 18, 34, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+body:not(.desk) .m-deploy .foes .bph {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 4px;
+}
+body:not(.desk) .m-deploy .foes .bph b {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #fda4af;
+  text-shadow: none !important;
+}
+body:not(.desk) .m-deploy .foes .bph .small {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+body:not(.desk) .foes-dossier {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+body:not(.desk) .m-boss-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  padding: 6px 8px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, rgba(76, 29, 149, 0.72) 0%, rgba(28, 25, 68, 0.94) 100%) !important;
+  border: 1px solid rgba(192, 132, 252, 0.55) !important;
+  box-shadow: none !important;
+}
+body:not(.desk) .foe-bezel.m-circ,
+body:not(.desk) .m-foes .foe-bezel {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  padding: 2px;
+  background: #0f172a;
+  border: 2px solid rgba(248, 113, 113, 0.75);
+  display: grid;
+  place-items: center;
+}
+body:not(.desk) .m-boss-card .foe-bezel.m-circ {
+  width: 42px;
+  height: 42px;
+  border-color: #c084fc;
+}
+body:not(.desk) .foe-bezel.m-circ img.por,
+body:not(.desk) .m-foes .foe-bezel img.por {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: none;
+}
+body:not(.desk) .m-boss-card .foe-info {
+  flex: 1;
+  min-width: 0;
+}
+body:not(.desk) .m-boss-card .foe-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+body:not(.desk) .m-boss-card .foe-title b {
+  font-size: 13px;
+  color: #f8fafc;
+}
+body:not(.desk) .m-boss-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+}
+body:not(.desk) .m-boss-pills .mbp {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid rgba(216, 180, 254, 0.45);
+  color: #f3e8ff;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+body:not(.desk) .m-boss-pills .mbp.phase {
+  background: rgba(76, 5, 25, 0.9);
+  border-color: rgba(251, 113, 133, 0.6);
+  color: #ffe4e6;
+}
+body:not(.desk) .foe-escort {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+body:not(.desk) .foe-escort:empty {
+  display: none;
+}
+body:not(.desk) .m-esc-card {
+  flex: 1 1 140px;
+  padding: 4px 7px !important;
+  background: rgba(30, 41, 59, 0.94) !important;
+  border: 1px solid rgba(248, 113, 113, 0.35) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+body:not(.desk) .m-esc-card .foe-bezel.m-circ {
+  width: 28px;
+  height: 28px;
+}
+body:not(.desk) .m-foes .fgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 4px;
+}
+body:not(.desk) .m-foes .fo {
+  background: rgba(30, 41, 59, 0.94) !important;
+  border: 1px solid rgba(248, 113, 113, 0.35) !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+  padding: 4px 7px !important;
+  gap: 7px !important;
+  align-items: center !important;
+}
+body:not(.desk) .m-foes .fo.elite {
+  background: rgba(69, 26, 3, 0.9) !important;
+  border-color: rgba(251, 191, 36, 0.55) !important;
+}
+body:not(.desk) .m-foes .fo .foe-title b {
+  font-size: 12px;
+  color: #f8fafc;
+}
+body:not(.desk) .m-foes .fo .fw {
+  font-size: 10.5px;
+  line-height: 1.2;
+  color: #cbd5e1;
+}
+body:not(.desk) .m-foes.gau .fo {
+  padding: 4px 4px !important;
+  gap: 2px !important;
+}
+body:not(.desk) .m-foes.gau .foe-bezel {
+  width: 32px;
+  height: 32px;
+}
+body:not(.desk) .m-foes.gau .fo .hdet.sm {
+  min-height: 20px;
+  margin-top: 1px;
+  font-size: 10px;
+}
+body:not(.desk) .m-foes .fsmall,
+body:not(.desk) .m-boss-foes .foe-escort {
+  gap: 4px;
+  margin-top: 3px;
+}
+body:not(.desk) .m-deploy .foes .fs {
+  background: rgba(30, 41, 59, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: #f1f5f9;
+  border-radius: 999px;
+  padding: 2px 7px 2px 3px;
+  font-size: 10.5px;
+}
+
+/* Mobile Pre-Combat Your Squad Tray */
+body:not(.desk) .msquad {
+  padding: 6px 8px;
+  border-radius: 11px;
+  background: rgba(12, 18, 34, 0.94);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+}
+body:not(.desk) .msquad-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+body:not(.desk) .msquad-head b {
+  font-family: var(--fun);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #7dd3fc;
+}
+body:not(.desk) .msquad-cnt {
+  font-size: 11px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+body:not(.desk) .msquad-gear {
+  margin-left: auto;
+  min-height: 22px !important;
+  height: 22px !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  background: rgba(30, 41, 59, 0.96) !important;
+  border: 1px solid rgba(148, 163, 184, 0.38) !important;
+  color: #e2e8f0 !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+body:not(.desk) .msquad-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+body:not(.desk) .ms-slot {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0;
+  min-height: 38px !important;
+  padding: 4px 6px !important;
+  border-radius: 9px !important;
+  text-align: left !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+body:not(.desk) .ms-slot.filled {
+  background: rgba(24, 34, 58, 0.96) !important;
+  border: 1px solid rgba(56, 189, 248, 0.42) !important;
+  color: #f8fafc !important;
+}
+body:not(.desk) .ms-slot.filled.benched {
+  border-color: rgba(251, 191, 36, 0.72) !important;
+  background: rgba(69, 26, 3, 0.85) !important;
+}
+body:not(.desk) .ms-slot.filled.on {
+  border-color: #38bdf8 !important;
+  background: rgba(14, 58, 92, 0.96) !important;
+  box-shadow: 0 0 0 1.5px rgba(56, 189, 248, 0.65) !important;
+}
+body:not(.desk) .ms-slot.empty {
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1.5px dashed rgba(148, 163, 184, 0.28);
+  color: #94a3b8;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+body:not(.desk) .ms-plus {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+body:not(.desk) .ms-av {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 28px;
+}
+body:not(.desk) .ms-av img.por {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(56, 189, 248, 0.75);
+  box-shadow: none;
+}
+body:not(.desk) .ms-lv {
+  position: absolute;
+  right: -3px;
+  bottom: -2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 14px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+body:not(.desk) .ms-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+body:not(.desk) .ms-meta b {
+  font-size: 11px;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body:not(.desk) .ms-meta small {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body:not(.desk) .m-deploy .bar.sticky {
+  margin: 0;
+  padding: 2px 0 0;
+  background: none;
+  position: static;
+}
+body:not(.desk) .m-deploy .fight-gold-btn {
+  min-height: 44px;
+}
+
+/* Mobile Active Combat Live Telemetry HUD (Unclipped Badges + Inline Items) */
+body:not(.desk) .m-battle .bpanel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+}
+body:not(.desk) .m-battle .teamstrip.v2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin: 0;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 11px;
+  background: rgba(12, 18, 34, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  box-shadow: none;
+  overflow: visible !important;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts.cast-ready {
+  border-color: rgba(56, 189, 248, 0.78);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts.mvp {
+  border-color: rgba(251, 191, 36, 0.75);
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsp {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  overflow: visible !important;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsp-frame {
+  display: block;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1.5px solid rgba(148, 163, 184, 0.45);
+  background: #0f172a;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsp-frame img.por {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  box-shadow: none;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tslv {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  z-index: 4;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a !important;
+  border: 1.5px solid #0f172a;
+  font-size: 9.5px;
+  font-weight: 900;
+  line-height: 13px;
+  text-align: center;
+  text-shadow: none !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .crown {
+  z-index: 5;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsb {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsn > b {
+  font-size: 12px;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+}
+body:not(.desk) .m-battle .tsitems-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+body:not(.desk) .m-battle .tsitems-inline .ico.xs {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: #0f172a;
+  border: 1px solid rgba(251, 191, 36, 0.65);
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsd {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fde68a;
+  white-space: nowrap;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsh {
+  font-size: 10.5px;
+  color: #6ee7b7;
+  white-space: nowrap;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsb i {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 11px;
+  border-radius: 6px;
+  background: #090e1a;
+  overflow: hidden;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsb i.mp {
+  height: 10px;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsb i.dm {
+  height: 4px;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsb i em {
+  line-height: 11px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 1px 2px #000;
+}
+body:not(.desk) .m-battle .teamstrip.v2 .ts .tsb i.mp em {
+  line-height: 10px;
+  font-size: 8.5px;
+}
+body:not(.desk) .m-battle .bph {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0 2px;
+}
+body:not(.desk) .m-battle .bph b {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fda4af;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-shadow: none !important;
+}
+body:not(.desk) .m-battle .bph #ecount {
+  font-size: 10.5px;
+  color: #cbd5e1;
+}
+body:not(.desk) .m-battle .estrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 10px;
+  background: rgba(12, 18, 34, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+body:not(.desk) .m-battle .estrip .ec {
+  width: 28px;
+}
+body:not(.desk) .m-battle .estrip .ec.boss {
+  width: 34px;
+}
+body:not(.desk) .m-battle .estrip .ec img.por {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #f87171;
+  box-shadow: none;
+}
+body:not(.desk) .m-battle .estrip .ec.boss img.por {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #c084fc;
+}
+
+/* Short Phone (360x640) Tight Mode */
+@media (max-height: 675px) and (max-width: 500px) {
+  body:not(.desk) section.deploy.m-deploy,
+  body:not(.desk) section.deploy.m-battle {
+    gap: 3px;
+    padding: 1px 6px 2px;
+  }
+  body:not(.desk) .m-subhead {
+    min-height: 28px;
+    padding: 2px 5px;
+  }
+  body:not(.desk) .m-deploy .foes,
+  body:not(.desk) .msquad {
+    padding: 4px 6px;
+  }
+  body:not(.desk) .m-deploy .foes .bph,
+  body:not(.desk) .msquad-head {
+    margin-bottom: 3px;
+  }
+  body:not(.desk) .ms-slot {
+    min-height: 32px !important;
+    padding: 3px 5px !important;
+  }
+  body:not(.desk) .ms-av,
+  body:not(.desk) .ms-av img.por {
+    width: 24px;
+    height: 24px;
+  }
+  body:not(.desk) .m-deploy .fight-gold-btn {
+    min-height: 40px;
+  }
+  body:not(.desk) .m-battle .teamstrip.v2 .ts {
+    padding: 3px 6px;
+    gap: 6px;
+  }
+  body:not(.desk) .m-battle .teamstrip.v2 .ts .tsp,
+  body:not(.desk) .m-battle .teamstrip.v2 .ts .tsp-frame {
+    width: 32px;
+    height: 32px;
+  }
+  body:not(.desk) .m-battle .estrip {
+    padding: 3px 5px;
+  }
+}
+
+/* Mobile Landscape Two-Column Grid (e.g. 740x360) */
+body.landscape:not(.desk) section.deploy.m-deploy,
+body.landscape:not(.desk) section.deploy.m-battle {
+  display: grid !important;
+  grid-template-columns: auto minmax(200px, 1fr);
+  grid-auto-rows: min-content;
+  column-gap: 8px;
+  row-gap: 4px;
+  align-items: start;
+}
+body.landscape:not(.desk) .deploy > .m-boardslot {
+  grid-column: 1;
+  grid-row: 1;
+}
+body.landscape:not(.desk) .deploy > .boardwrap {
+  grid-column: 1;
+  grid-row: 2 / span 8;
+}
+body.landscape:not(.desk) .deploy > :not(.boardwrap):not(.m-boardslot) {
+  grid-column: 2;
+}
+body.landscape:not(.desk) .m-deploy .bar.sticky {
+  position: static;
+  margin-top: 2px;
+}
+body.landscape:not(.desk) .m-deploy .fight-gold-btn {
+  min-height: 36px;
+}
+body.landscape:not(.desk) .m-subhead .clock.m-prep-tag {
+  display: none;
+}
+body.landscape:not(.desk) .ms-slot {
+  gap: 4px !important;
+  padding: 3px 5px !important;
+  min-height: 34px !important;
+}
+body.landscape:not(.desk) .ms-av,
+body.landscape:not(.desk) .ms-av img.por {
+  width: 24px;
+  height: 24px;
+}
+body.landscape:not(.desk) .m-battle .teamstrip.v2 .ts {
+  padding: 3px 6px;
+}
+body.landscape:not(.desk) .m-battle .teamstrip.v2 .ts .tsp,
+body.landscape:not(.desk) .m-battle .teamstrip.v2 .ts .tsp-frame {
+  width: 30px;
+  height: 30px;
+}
+

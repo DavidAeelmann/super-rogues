@@ -410,7 +410,14 @@
     </section>`;
   }
 
-  // the enemy roster on the deploy screen, grouped, with what each one does (positioning is the decision here)
+  const BOSS_CHIPS = {
+    gorewarden: ['AOE Cleave', '50% Horde', '25% Enrage'],
+    hollowking: ['Void Nova', '66% Court', '33% Court'],
+    mirewitch: ['Poison Bog', 'Hex Frog', '50% Serpents'],
+    colossus: ['Quake Shove', '60% Shields', '30% Meltdown'],
+    packlord: ['Pack Frenzy', 'Backline Leap', '50% Blood Moon'],
+    lichqueen: ['Blizzard', '66% Raise Dead', '33% Ice Tomb'],
+  };
   function foesHTML(gau, f) {
     const groups = [];
     if (gau) for (const h of U.run.g.opp.team) groups.push({ key: h.key, n: 1, name: HEROES[h.key].name + ' Lv ' + h.lvl, what: HEROES[h.key].tag || HEROES[h.key].abName, peek: true });   // a few words, More for the rest
@@ -423,11 +430,8 @@
         by[k].n++;
       }
     }
-    // enemies
-    // that do something special get a card with what they do; the plain ones are small chips under them
     const big = groups.filter(g => g.what), small = groups.filter(g => !g.what);
     const nm = g => `${esc(g.name)}${g.n > 1 ? ' ×' + g.n : ''}`;
-    const filigreeCorner = (pos) => `<svg class="fili-corner fili-${pos}" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M0,0 L16,0 C12,0 8,4 8,8 C8,12 0,12 0,16 L0,0 Z" fill="none" stroke="#d4af37" stroke-width="1.2"/><circle cx="5" cy="5" r="1.5" fill="#fff3a1"/></svg>`;
     const traitBadge = (g) => {
       const k = g.key.toLowerCase(), w = (g.what || '').toLowerCase();
       if (g.boss || g.elite || w.includes('shield')) return `<span class="foe-trait trait-shield" title="Shielded / Armored">🛡</span>`;
@@ -436,8 +440,31 @@
       if (w.includes('leap') || w.includes('back') || g.ranged) return `<span class="foe-trait trait-daggers" title="Infiltrator / Piercing">⚔</span>`;
       return `<span class="foe-trait trait-star" title="Elite Enemy">◆</span>`;
     };
-    return `<div class="foes ${gau ? 'gau' : ''}">
-      <div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${groups.reduce((a, g) => a + g.n, 0)}</span></div>
+    const totalCount = groups.reduce((a, g) => a + g.n, 0);
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    if (!desk && !gau && big.some(g => g.boss)) {
+      const bossG = big.find(g => g.boss);
+      const escortBig = big.filter(g => g !== bossG);
+      const bChips = BOSS_CHIPS[bossG.key] || [String(bossG.what || '').split(/(?<=[.!?])\s/)[0]];
+      const bossCard = `<div class="fo boss m-boss-card" data-foe="${bossG.key}">
+        <div class="foe-bezel m-circ">${img(bossG.key, 44, 'por')}</div>
+        <div class="foe-info">
+          <div class="foe-title"><b>${nm(bossG)}</b>${traitBadge(bossG)}</div>
+          <small class="fw m-boss-pills">${bChips.map((c, idx) => `<span class="mbp${idx > 0 ? ' phase' : ''}">${esc(c)}</span>`).join('')}</small>
+        </div>
+      </div>`;
+      const escCards = escortBig.map(g => `<div class="fo m-esc-card ${g.elite ? 'elite' : ''}" data-foe="${g.key}">
+        <div class="foe-bezel m-circ">${img(g.key, 28, 'por')}</div>
+        <div class="foe-info"><div class="foe-title"><b>${nm(g)}</b></div><small class="fw">${fmt(g.what)}</small></div>
+      </div>`).join('');
+      const escChips = small.map(g => `<span class="fs ${g.elite ? 'elite' : ''}" data-foe="${g.key}" title="${g.elite ? esc(g.elite) + ' ' : ''}${esc(g.name)}">${img(g.key, 24, 'por')}<b>${nm(g)}</b>${g.elite ? '<i class="st">◆</i>' : ''}${g.ranged ? I('bow') : ''}</span>`).join('');
+      return `<div class="foes m-boss-foes">
+        <div class="bph"><b>Enemies</b><span class="dim small">${totalCount} foes</span></div>
+        <div class="foes-dossier">${bossCard}<div class="foe-escort">${escCards}${escChips}</div></div>
+      </div>`;
+    }
+    return `<div class="foes ${gau ? 'gau' : ''} ${desk ? '' : 'm-foes'}">
+      <div class="bph"><b>${gau ? 'Their team' : 'Enemies'}</b><span class="dim small">${totalCount}</span></div>
       ${big.length ? `<div class="fgrid">${big.map(g => `<div class="fo ${g.boss ? 'boss' : ''} ${g.elite ? 'elite' : ''}" data-foe="${g.key}">
         <div class="foe-bezel">${img(g.key, 44, 'por')}</div>
         <div class="foe-info"><div class="foe-title"><b>${nm(g)}</b>${traitBadge(g)}${g.elite ? ` <span class="elt">◆ ${esc(g.elite)}</span>` : ''}</div><small class="fw">${fmt(g.what)}</small>${g.peek ? `<button class="hdet sm" data-act="hero-peek" data-arg="${g.key}">${I('info')} More</button>` : ''}</div>
