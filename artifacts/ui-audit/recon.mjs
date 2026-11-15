@@ -201,6 +201,23 @@ try {
     await clickAct(page, '[data-act=close]');
     await sleep(150);
 
+    // 10b. Recruit hero screen (2nd hero select)
+    await page.evaluate(() => {
+      const r = __bal.run;
+      r.phase = 'recruit';
+      r.recruitOffer = B.Run.recruitOffer(r);
+      __bal.ui.recruitPick = r.recruitOffer[0] || null;
+      __bal.render();
+    });
+    await sleep(350);
+    await inspectState(page, '09b-recruit-hero', vp.name);
+    await page.evaluate(() => {
+      const r = __bal.run;
+      r.phase = 'map';
+      r.recruitOffer = null;
+      __bal.ui.recruitPick = null;
+    });
+
     // 11. Shops (Item Shop, Hero Shop & Power/Relic Shop)
     await page.evaluate(() => {
       const r = __bal.run;

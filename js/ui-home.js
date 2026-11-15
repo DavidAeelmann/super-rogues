@@ -21,7 +21,7 @@
         ${acct.account ? `<span class="playstk" aria-label="Win streak ${streakOf()}">${flameHTML(streakOf(), 'big')}</span>` : ''}
       </div>
       <div class="trailer"><canvas id="trailer" aria-label="A fight playing by itself"></canvas></div>
-      <span class="app-ver" aria-label="Game version">v1.14</span>
+      <span class="app-ver" aria-label="Game version">v1.15</span>
       <nav class="homedock" aria-label="Quick navigation">
         <a href="#" class="dockitem" data-act="codex">${I('user')}<b>Heroes</b></a>
         <a href="#" class="dockitem" data-act="player-tab">${I('star')}<b>Rewards</b>${hasRewards ? '<span class="pip gold"></span>' : ''}</a>
@@ -180,14 +180,15 @@
 
   function heroStage(offer, sel, act, hint) {
     const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
+    const colMod = offer.length > 3 ? 'six' : offer.length === 2 ? 'c2' : offer.length === 1 ? 'c1' : '';
     if (!desk) {
-      return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
+      return `<div class="stage spotlights hbanners ${colMod}">${offer.map((k, i) => {
         const d = HEROES[k], on = sel === k;
         const splashSrc = por(k, 150, true);
         return `<button class="hbanner spot ${on ? 'on' : sel ? 'off' : ''}" data-act="${act}" data-arg="${k}" style="--cloth:${d.color};--i:${i}" aria-pressed="${on}"><span class="cone"></span><span class="shine"></span><img class="splash ${splashSrc.startsWith('data:image/png') ? 'drawn' : ''}" src="${splashSrc}" alt="${esc(d.name)}"><span class="plate"></span><b>${esc(d.name)}</b><i>${d.role} · ${d.range <= 1 ? 'Melee' : 'Ranged'}</i>${on ? '<span class="chk">✓</span>' : ''}${i === 1 && !sel && hint ? '<span class="hand" aria-hidden="true">👆</span>' : ''}</button>`;
       }).join('')}</div>`;
     }
-    return `<div class="stage spotlights hbanners ${offer.length > 3 ? 'six' : ''}">${offer.map((k, i) => {
+    return `<div class="stage spotlights hbanners ${colMod}">${offer.map((k, i) => {
       const d = HEROES[k];
       if (!d) return '';
       const on = sel === k;
@@ -236,10 +237,12 @@
   function dealIn(step) { const k = (U.run && U.run.seed) + ':' + step; if (ui.dealt === k) return ''; ui.dealt = k; return 'deal'; }
 
   function recruitHTML() {
+    const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
     const offer = U.run.recruitOffer || [], f = offer.includes(ui.recruitPick) ? ui.recruitPick : null, k = (U.run.recruits || 0) + 1;
-    return `<section class="start s1 recruit"><h2 class="sc">A hero joins you!</h2><p class="ssub">Free hero ${k} of ${CFG.freeRecruits}. Your team: ${U.run.heroes.map(h => img(h.key, 26, 'por xs')).join('')}</p>
+    const btnLabel = f ? `Recruit ${esc(HEROES[f].name)} ▶` : 'Tap a hero';
+    return `<section class="start s1 v3 recruit ${dealIn('r' + k)}"><h2 class="sc">A hero joins you!</h2><p class="ssub">Free hero ${k} of ${CFG.freeRecruits}. Your team: ${U.run.heroes.map(h => img(h.key, 26, 'por xs')).join('')}</p>
       ${heroStage(offer, f, 'recruit-pick', false)}${heroDetail(f)}
-      <div class="bar"><button class="primary big" data-act="recruit-go" ${f ? '' : 'disabled'}>${f ? `Recruit ${esc(HEROES[f].name)} ▶` : 'Tap a hero'}</button></div></section>`;
+      <div class="bar sbar"><button class="primary big ${desk ? 'hero-cta-btn ' + (f ? 'ready selected' : 'slot-unselected') : (f ? 'ready' : '')}" data-act="recruit-go" ${f ? '' : 'disabled'}>${btnLabel}</button></div></section>`;
   }
 
   function pathHTML() {

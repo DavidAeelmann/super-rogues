@@ -61,53 +61,135 @@ body.desk #modal:has(.result.v2), body:has(section.result.v2) #modal { backdrop-
 body.desk .sheet.gearsheet .gtab.on { background: linear-gradient(180deg, #26314d 0%, #171d30 100%) !important; color: #ffffff !important; border: 2px solid #ffd23f !important; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 210, 63, 0.35) !important; }
 body.desk .sheet.gearsheet .gtab.on i { color: #ffd23f !important; }
 .gitem-stat { display: block; font-size: 9.5px; line-height: 1; color: #9eb4d8; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
-body:not(.desk) section.lpscr .lp-modal-title { font-size: 22px !important; }
-body:not(.desk) section.lpscr .broken-ward-icon { width: 26px !important; height: 26px !important; }
-body:not(.desk) section.lpscr .lp-summary-pill { margin: 4px auto 8px !important; padding: 3px 12px !important; font-size: 11.5px !important; }
-body:not(.desk) section.lpscr .lp-body-grid { grid-template-columns: 118px minmax(0, 1fr) !important; gap: 10px !important; margin-bottom: 8px !important; }
-body:not(.desk) section.lpscr .lp-left-crest-card { padding: 8px 6px 6px !important; }
-body:not(.desk) section.lpscr .bronze-wings { width: 96px !important; height: 30px !important; }
-body:not(.desk) section.lpscr .bronze-shield-3d { width: 42px !important; height: 50px !important; margin-top: -20px !important; }
-body:not(.desk) section.lpscr .crest-tier-title { font-size: 11px !important; margin: 2px 0 4px !important; }
-body:not(.desk) section.lpscr .mini-thermometer { width: 38px !important; min-height: 52px !important; height: 52px !important; border-width: 2.5px !important; }
-body:not(.desk) section.lpscr .crest-lp-foot { font-size: 11px !important; margin-top: 3px !important; }
-body:not(.desk) section.lpscr .lp-right-panel { gap: 6px !important; }
-body:not(.desk) section.lpscr .lp-delta-val { font-size: 32px !important; }
-body:not(.desk) section.lpscr .lp-delta-val small { font-size: 16px !important; }
-body:not(.desk) section.lpscr .rank-protect-badge { padding: 6px 8px !important; gap: 8px !important; }
-body:not(.desk) section.lpscr .protect-shield-ico { width: 22px !important; height: 22px !important; }
-body:not(.desk) section.lpscr .badge-txt .badge-title { font-size: 11px !important; }
-body:not(.desk) section.lpscr .badge-txt .badge-sub { font-size: 10.5px !important; }
-body:not(.desk) section.lpscr .lp-horiz-track { height: 22px !important; }
-body:not(.desk) section.lpscr .lp-horiz-text { font-size: 11.5px !important; }
+/* Full-viewport Mobile & Tablet LP / XP Layouts */
+body:not(.desk) section.over1.lpscr,
+body:not(.desk) section.over2.xpscr {
+  height: calc(100dvh - 54px) !important;
+  min-height: calc(100dvh - 54px) !important;
+  max-height: calc(100dvh - 54px) !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding: 8px 0 6px !important;
+  box-sizing: border-box !important;
+}
+body:not(.desk) section.lpscr .lp-head-block { margin-bottom: 0 !important; flex: 0 0 auto !important; }
+body:not(.desk) section.lpscr .lp-modal-title { font-size: 26px !important; }
+body:not(.desk) section.lpscr .broken-ward-icon { width: 28px !important; height: 28px !important; }
+body:not(.desk) section.lpscr .lp-modal-wrap {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+body:not(.desk) section.lpscr .lp-summary-pill { margin: 0 auto !important; padding: 6px 14px !important; font-size: 12.5px !important; flex: 0 0 auto !important; }
+body:not(.desk) section.lpscr .lp-body-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  gap: 12px !important;
+  margin-bottom: 0 !important;
+  width: 100% !important;
+}
+body:not(.desk) section.lpscr .lp-left-crest-card {
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 12px 16px !important;
+  box-sizing: border-box !important;
+}
+body:not(.desk) section.lpscr .crest-emblem-wrap { margin-bottom: 0 !important; flex-shrink: 0 !important; }
+body:not(.desk) section.lpscr .bronze-wings { width: 78px !important; height: 24px !important; }
+body:not(.desk) section.lpscr .bronze-shield-3d { width: 36px !important; height: 44px !important; margin-top: -14px !important; }
+body:not(.desk) section.lpscr .crest-tier-title { font-size: 15px !important; margin: 0 auto 0 0 !important; text-align: left !important; }
+body:not(.desk) section.lpscr .crest-lp-foot { font-size: 14px !important; margin-top: 0 !important; white-space: nowrap !important; }
+body:not(.desk) section.lpscr .lp-right-panel {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  justify-content: space-evenly !important;
+  gap: 10px !important;
+  padding: 16px !important;
+  background: rgba(18, 23, 36, 0.86) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-sizing: border-box !important;
+}
+body:not(.desk) section.lpscr .lp-delta-val { font-size: 48px !important; }
+body:not(.desk) section.lpscr .lp-delta-val small { font-size: 20px !important; }
+body:not(.desk) section.lpscr .rank-protect-badge { padding: 10px 12px !important; gap: 10px !important; }
+body:not(.desk) section.lpscr .protect-shield-ico { width: 28px !important; height: 28px !important; }
+body:not(.desk) section.lpscr .badge-txt .badge-title { font-size: 12px !important; }
+body:not(.desk) section.lpscr .badge-txt .badge-sub { font-size: 11.5px !important; }
+body:not(.desk) section.lpscr .lp-horiz-track { height: 26px !important; max-height: 26px !important; }
+body:not(.desk) section.lpscr .lp-horiz-text { font-size: 12px !important; }
 body:not(.desk) section.lpscr .lp-footer,
-body:not(.desk) section.xpscr .xp-footer { justify-content: center !important; margin-top: auto !important; padding: 8px 0 4px !important; }
+body:not(.desk) section.xpscr .xp-footer { justify-content: center !important; margin-top: 0 !important; padding: 2px 0 !important; flex: 0 0 auto !important; }
 body:not(.desk) section.lpscr .lp-next-btn,
-body:not(.desk) section.xpscr .xp-again-btn { width: min(100%, 340px) !important; height: 48px !important; min-height: 48px !important; }
-body:not(.desk) section.xpscr .xp-modal-wrap { gap: 8px !important; }
-body:not(.desk) section.xpscr .xp-top-card { padding: 10px 12px !important; }
-body:not(.desk) section.xpscr .xp-top-main { margin-bottom: 8px !important; gap: 8px !important; align-items: flex-start !important; }
+body:not(.desk) section.xpscr .xp-again-btn { width: 100% !important; max-width: 440px !important; height: 50px !important; min-height: 50px !important; }
+body:not(.desk) section.xpscr .xp-modal-wrap {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+body:not(.desk) section.xpscr .xp-top-card { flex: 0 0 auto !important; padding: 12px 14px !important; }
+body:not(.desk) section.xpscr .xp-top-main { margin-bottom: 10px !important; gap: 10px !important; align-items: flex-start !important; }
 body:not(.desk) section.xpscr .xp-left-col { min-width: 0 !important; flex: 1 1 auto !important; gap: 8px !important; }
-body:not(.desk) section.xpscr .xp-level-crest { width: 46px !important; height: 52px !important; flex-shrink: 0 !important; }
-body:not(.desk) section.xpscr .crest-num { font-size: 18px !important; }
+body:not(.desk) section.xpscr .xp-level-crest { width: 50px !important; height: 56px !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .crest-num { font-size: 19px !important; }
 body:not(.desk) section.xpscr .crest-lbl { font-size: 8px !important; }
-body:not(.desk) section.xpscr .xp-title-row { gap: 5px !important; }
-body:not(.desk) section.xpscr .xp-heading { font-size: 15px !important; white-space: nowrap !important; }
-body:not(.desk) section.xpscr .xp-right-col { max-width: none !important; min-width: 0 !important; flex: 0 1 auto !important; gap: 4px !important; }
-body:not(.desk) section.xpscr .xp-gain-val { font-size: 24px !important; }
-body:not(.desk) section.xpscr .xp-chip-pill { padding: 3px 8px !important; font-size: 10.5px !important; }
-body:not(.desk) section.xpscr .xp-horiz-track { height: 24px !important; min-height: 24px !important; border-width: 2px !important; }
-body:not(.desk) section.xpscr .xp-horiz-label { font-size: 12px !important; font-weight: 800 !important; }
-body:not(.desk) section.xpscr .chest-wrap-3d { width: 96px !important; height: 84px !important; }
-body:not(.desk) section.xpscr .fantasy-chest-3d { width: 90px !important; height: 78px !important; }
-body:not(.desk) section.xpscr .xp-bottom-loot-tier .chestzone { gap: 12px !important; flex-wrap: wrap !important; }
-body:not(.desk) section.xpscr .loot-card-3d { width: auto !important; min-width: 82px !important; max-width: 108px !important; height: auto !important; min-height: 82px !important; padding: 6px 8px !important; gap: 2px !important; }
+body:not(.desk) section.xpscr .xp-title-row { gap: 5px !important; flex-wrap: nowrap !important; }
+body:not(.desk) section.xpscr .spark-ico { font-size: 16px !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .xp-heading { font-size: 14.5px !important; white-space: nowrap !important; }
+body:not(.desk) section.xpscr .xp-trophy-btn { width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; padding: 0 !important; display: inline-grid !important; place-items: center !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .xp-right-col { max-width: none !important; min-width: 0 !important; flex: 0 0 auto !important; gap: 5px !important; }
+body:not(.desk) section.xpscr .xp-gain-val { font-size: 25px !important; }
+body:not(.desk) section.xpscr .xp-chip-pill { padding: 3px 9px !important; font-size: 11px !important; }
+body:not(.desk) section.xpscr .xp-horiz-track { height: 26px !important; min-height: 26px !important; max-height: 26px !important; border-width: 2px !important; }
+body:not(.desk) section.xpscr .xp-horiz-label { font-size: 12.5px !important; font-weight: 800 !important; }
+body:not(.desk) section.xpscr .xp-bottom-loot-tier {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 210, 63, 0.09) 0%, rgba(18, 23, 36, 0.78) 72%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 18px !important;
+  padding: 16px 14px !important;
+  box-sizing: border-box !important;
+}
+body:not(.desk) section.xpscr .xp-bottom-loot-tier .chestzone {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 16px !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding-top: 24px !important;
+}
+body:not(.desk) section.xpscr .chest-wrap-3d { width: 124px !important; height: 108px !important; }
+body:not(.desk) section.xpscr .fantasy-chest-3d { width: 116px !important; height: 100px !important; }
+body:not(.desk) section.xpscr .loot-card-3d { width: auto !important; min-width: 98px !important; max-width: 126px !important; height: auto !important; min-height: 102px !important; padding: 8px 10px !important; gap: 3px !important; }
 body:not(.desk) section.xpscr .loot-card-3d .ico,
-body:not(.desk) section.xpscr .loot-card-3d .por { width: 42px !important; height: 42px !important; flex-shrink: 0 !important; }
-body:not(.desk) section.xpscr .loot-card-3d .loot-card-name { font-size: 11px !important; line-height: 1.15 !important; max-width: 92px !important; color: #f8fafc !important; flex-shrink: 0 !important; }
-body:not(.desk) section.xpscr .loot-card-3d .loot-card-tag { font-size: 9.5px !important; line-height: 1.1 !important; color: var(--sr-gold) !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .loot-card-3d .por { width: 50px !important; height: 50px !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .loot-card-3d .loot-card-name { font-size: 12px !important; line-height: 1.15 !important; max-width: 110px !important; color: #f8fafc !important; flex-shrink: 0 !important; }
+body:not(.desk) section.xpscr .loot-card-3d .loot-card-tag { font-size: 10px !important; line-height: 1.1 !important; color: var(--sr-gold) !important; flex-shrink: 0 !important; }
 body.desk .lpscr .vmtube.mini-thermometer { width: 44px !important; min-height: 70px !important; height: 70px !important; }
-body.desk .xpscr .vmtube.xp-horiz-track { width: 100% !important; height: 24px !important; min-height: 24px !important; }
+body.desk .xpscr .vmtube.xp-horiz-track { width: 100% !important; height: 26px !important; min-height: 26px !important; max-height: 26px !important; }
 body.desk .smithy-frame .gold-embossed-title { color: #fde047 !important; background: none !important; -webkit-text-fill-color: #fde047 !important; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85) !important; }
 body.desk .smithy-frame .grid { max-width: none !important; width: 100% !important; box-sizing: border-box !important; }
 @media (max-height: 650px) {
@@ -950,19 +1032,45 @@ body.desk #screen {
   padding-bottom: 4px !important;
 }
 body.desk section.start.s1.v3,
+body.desk section.start.v3,
 body.desk section.start {
   max-height: calc(100dvh - 76px) !important;
   height: calc(100dvh - 76px) !important;
   min-height: 0 !important;
-  justify-content: center !important;
+  justify-content: space-between !important;
   gap: 6px !important;
   padding-top: 2px !important;
   padding-bottom: 6px !important;
   box-sizing: border-box !important;
 }
+body.desk .start.v3 .stage.spotlights {
+  flex: 0 0 auto !important;
+  height: clamp(320px, 53vh, 520px) !important;
+  max-height: clamp(320px, 53vh, 520px) !important;
+  align-items: stretch !important;
+  margin: auto !important;
+}
+.start.v3 .stage.spotlights.c2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.start.v3 .stage.spotlights.c1 {
+  grid-template-columns: minmax(0, 1fr) !important;
+  max-width: 240px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+body.desk .stage.spotlights.c2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  max-width: 560px !important;
+}
+body.desk .stage.spotlights.c1 {
+  grid-template-columns: minmax(0, 1fr) !important;
+  max-width: 280px !important;
+}
 body.desk .hbanner.spot.hero-tarot-card {
-  height: clamp(200px, 37vh, 330px) !important;
-  max-height: clamp(200px, 37vh, 330px) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
 }
 body.desk .start .ssub {
   background: rgba(11, 14, 21, 0.72);
@@ -1213,7 +1321,7 @@ body.desk .sheet.gearsheet.is-hero-info {
   box-sizing: border-box !important;
 }
 
-/* Lock LP & XP Screen Horizontal Progress + Equal Footer CTA Y Position */
+/* Full-Viewport Desktop & Equal Footer LP / XP Layout */
 .over1,
 .over2 {
   display: flex !important;
@@ -1222,31 +1330,132 @@ body.desk .sheet.gearsheet.is-hero-info {
   padding: 6px 0 !important;
   box-sizing: border-box !important;
 }
+body.desk section.lpscr,
+body.desk section.xpscr {
+  max-width: min(1180px, calc(100vw - 48px)) !important;
+  width: 100% !important;
+  height: calc(100dvh - 80px) !important;
+  min-height: calc(100dvh - 80px) !important;
+  max-height: calc(100dvh - 80px) !important;
+  padding: 24px 36px 22px !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  margin: auto !important;
+}
+body.desk section.lpscr .lp-head-block {
+  margin-bottom: 0 !important;
+  flex: 0 0 auto !important;
+}
+body.desk section.lpscr .lp-modal-title {
+  font-size: 36px !important;
+}
+body.desk section.lpscr .lp-modal-wrap {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 18px !important;
+}
+body.desk section.lpscr .lp-summary-pill {
+  margin: 0 auto !important;
+  padding: 6px 20px !important;
+  font-size: 14.5px !important;
+  flex: 0 0 auto !important;
+}
+body.desk section.lpscr .lp-body-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  grid-template-columns: clamp(250px, 28%, 340px) minmax(0, 1fr) !important;
+  gap: 28px !important;
+  margin-bottom: 0 !important;
+  align-items: stretch !important;
+}
+body.desk section.lpscr .lp-left-crest-card {
+  justify-content: center !important;
+  padding: 24px 20px !important;
+}
+body.desk section.lpscr .bronze-wings { width: 176px !important; height: 54px !important; }
+body.desk section.lpscr .bronze-shield-3d { width: 76px !important; height: 90px !important; margin-top: -36px !important; }
+body.desk section.lpscr .crest-tier-title { font-size: 18px !important; margin: 10px 0 6px !important; }
+body.desk section.lpscr .crest-lp-foot { font-size: 16px !important; }
+body.desk section.lpscr .lp-right-panel {
+  justify-content: space-evenly !important;
+  gap: 12px !important;
+  padding: 22px 28px !important;
+  background: rgba(14, 19, 30, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 16px !important;
+}
+body.desk section.lpscr .lp-delta-val { font-size: 64px !important; }
+body.desk section.lpscr .lp-delta-val small { font-size: 26px !important; }
+body.desk section.lpscr .lp-horiz-track { height: 28px !important; max-height: 28px !important; }
+body.desk section.xpscr .xp-modal-wrap {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+}
+body.desk section.xpscr .xp-top-card {
+  flex: 0 0 auto !important;
+  padding: 20px 26px !important;
+}
+body.desk section.xpscr .xp-level-crest { width: 84px !important; height: 92px !important; }
+body.desk section.xpscr .crest-num { font-size: 30px !important; }
+body.desk section.xpscr .xp-heading { font-size: 26px !important; }
+body.desk section.xpscr .xp-gain-val { font-size: 48px !important; }
+body.desk section.xpscr .xp-bottom-loot-tier {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 210, 63, 0.08) 0%, rgba(14, 19, 30, 0.65) 75%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 18px !important;
+  padding: 18px 26px !important;
+  box-sizing: border-box !important;
+}
+body.desk section.xpscr .xp-bottom-loot-tier .chestzone {
+  margin: 0 auto !important;
+  gap: 32px !important;
+  padding-top: 26px !important;
+}
+body.desk section.xpscr .chest-wrap-3d { width: 170px !important; height: 146px !important; }
+body.desk section.xpscr .fantasy-chest-3d { width: 160px !important; height: 136px !important; }
+body.desk section.xpscr .loot-card-3d {
+  width: auto !important;
+  min-width: 118px !important;
+  height: auto !important;
+  min-height: 124px !important;
+  padding: 12px 14px !important;
+  gap: 4px !important;
+}
+body.desk section.xpscr .loot-card-3d .por,
+body.desk section.xpscr .loot-card-3d .ico { width: 62px !important; height: 62px !important; }
+body.desk section.xpscr .loot-card-3d .loot-card-name { font-size: 13px !important; max-width: 110px !important; }
+body.desk section.xpscr .loot-card-3d .loot-card-tag { font-size: 11px !important; }
 .overbar.lp-footer,
 .overbar.xp-footer {
   margin-top: auto !important;
-  padding: 8px 0 4px !important;
+  padding: 6px 0 2px !important;
   width: 100% !important;
   display: flex !important;
   justify-content: center !important;
+  flex: 0 0 auto !important;
 }
 .overbar.lp-footer .lp-next-btn,
 .overbar.xp-footer .xp-again-btn {
-  height: 48px !important;
-  min-height: 48px !important;
-  width: min(100%, 340px) !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  width: min(100%, 400px) !important;
   font-size: 18px !important;
   padding: 0 24px !important;
   box-sizing: border-box !important;
-}
-.loot-card-3d,
-body.desk .xpscr .loot-card-3d {
-  width: auto !important;
-  min-width: 96px !important;
-  height: auto !important;
-  min-height: 96px !important;
-  padding: 8px 10px !important;
-  gap: 3px !important;
 }
 .loot-card-3d .loot-card-name,
 .loot-card-3d .loot-card-tag {
@@ -1477,15 +1686,60 @@ body.desk .towerscr .towerart {
   .stealscreen button.steal .sp { width: 44px !important; height: 44px !important; }
   .stealscreen button.steal .sp img.por { width: 40px !important; height: 40px !important; }
 
-  body:not(.desk) section.lpscr .lp-modal-title { font-size: 19px !important; }
-  body:not(.desk) section.lpscr .lp-delta-val { font-size: 26px !important; }
+  body:not(.desk) section.over1.lpscr,
+  body:not(.desk) section.over2.xpscr {
+    gap: 5px !important;
+    padding: 4px 0 !important;
+  }
+  body:not(.desk) section.lpscr .lp-modal-title { font-size: 20px !important; }
+  body:not(.desk) section.lpscr .broken-ward-icon { width: 22px !important; height: 22px !important; }
+  body:not(.desk) section.lpscr .lp-summary-pill { padding: 3px 10px !important; font-size: 11px !important; }
+  body:not(.desk) section.lpscr .lp-modal-wrap { gap: 6px !important; }
+  body:not(.desk) section.lpscr .lp-body-grid { gap: 6px !important; }
+  body:not(.desk) section.lpscr .lp-left-crest-card { padding: 7px 12px !important; }
+  body:not(.desk) section.lpscr .bronze-wings { width: 64px !important; height: 20px !important; }
+  body:not(.desk) section.lpscr .bronze-shield-3d { width: 30px !important; height: 36px !important; margin-top: -12px !important; }
+  body:not(.desk) section.lpscr .crest-tier-title { font-size: 13px !important; }
+  body:not(.desk) section.lpscr .crest-lp-foot { font-size: 12px !important; }
+  body:not(.desk) section.lpscr .lp-right-panel { padding: 8px 12px !important; gap: 4px !important; }
+  body:not(.desk) section.lpscr .lp-delta-val { font-size: 30px !important; }
+  body:not(.desk) section.lpscr .lp-delta-val small { font-size: 14px !important; }
+  body:not(.desk) section.lpscr .rank-protect-badge { padding: 5px 8px !important; }
+  body:not(.desk) section.lpscr .lp-horiz-track { height: 20px !important; max-height: 20px !important; }
+  body:not(.desk) section.lpscr .lp-next-btn,
+  body:not(.desk) section.xpscr .xp-again-btn { height: 42px !important; min-height: 42px !important; }
+  body:not(.desk) section.xpscr .xp-modal-wrap { gap: 8px !important; }
   body:not(.desk) section.xpscr .xp-top-card { padding: 8px 10px !important; }
+  body:not(.desk) section.xpscr .xp-level-crest { width: 44px !important; height: 50px !important; }
+  body:not(.desk) section.xpscr .crest-num { font-size: 17px !important; }
+  body:not(.desk) section.xpscr .xp-heading { font-size: 15px !important; }
   body:not(.desk) section.xpscr .xp-gain-val { font-size: 24px !important; }
+  body:not(.desk) section.xpscr .xp-bottom-loot-tier { padding: 8px 10px !important; }
+  body:not(.desk) section.xpscr .xp-bottom-loot-tier .chestzone { flex-direction: row !important; flex-wrap: wrap !important; gap: 10px !important; padding-top: 12px !important; }
   body:not(.desk) section.xpscr .chest-wrap-3d { width: 78px !important; height: 68px !important; }
   body:not(.desk) section.xpscr .fantasy-chest-3d { width: 72px !important; height: 62px !important; }
   body:not(.desk) section.xpscr .loot-card-3d { min-height: 74px !important; min-width: 76px !important; padding: 4px 6px !important; }
   body:not(.desk) section.xpscr .loot-card-3d .ico,
   body:not(.desk) section.xpscr .loot-card-3d .por { width: 34px !important; height: 34px !important; }
+
+  .upgrade-screen { padding: 5px 8px 6px !important; gap: 4px !important; }
+  .upg-header .headline { font-size: 18px !important; margin: 0 !important; }
+  .upg-header .ssub { display: none !important; }
+  .upg-team-dock { padding: 4px 6px !important; gap: 3px !important; }
+  .upg-team-dock .bph { font-size: 10.5px !important; }
+  .upg-hero-tab { padding: 3px 6px !important; }
+  .upg-hero-tab .uht-pic, .upg-hero-tab .uht-pic img { width: 26px !important; height: 26px !important; }
+  .upg-hero-showcase { padding: 4px 8px !important; gap: 8px !important; }
+  .upg-hero-showcase .lufull { width: 38px !important; height: 38px !important; }
+  .upg-hero-showcase .luname { font-size: 14px !important; }
+  .upg-hero-showcase .lugain { font-size: 10.5px !important; margin-top: 1px !important; }
+  .upg-paths-head { font-size: 10.5px !important; }
+  .upg-paths-grid { gap: 4px !important; }
+  .upg-path-card { padding: 5px 8px !important; }
+  .upg-badge { font-size: 9px !important; padding: 1px 5px !important; margin-bottom: 1px !important; }
+  .upg-title { font-size: 13px !important; margin-bottom: 1px !important; }
+  .upg-desc { font-size: 11px !important; line-height: 1.2 !important; }
+  .upg-cta-label { margin-top: 3px !important; padding: 3px 6px !important; font-size: 11px !important; }
 
   #modal .sheet {
     max-height: calc(100dvh - 12px) !important;

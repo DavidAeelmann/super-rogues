@@ -200,6 +200,18 @@
         "clipped": [],
         "bodyClasses": "wide side desk"
       },
+      "09b-recruit-hero": {
+        "vw": 1440,
+        "vh": 900,
+        "sw": 1440,
+        "sh": 900,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
       "13-item-shop": {
         "vw": 1440,
         "vh": 900,
@@ -273,8 +285,8 @@
         "vOverflow": false,
         "brokenImgs": [],
         "sheetScroll": {
-          "sh": 333,
-          "ch": 333,
+          "sh": 315,
+          "ch": 315,
           "overflow": false
         },
         "clipped": [],
@@ -612,6 +624,18 @@
         "clipped": [],
         "bodyClasses": "wide side desk"
       },
+      "09b-recruit-hero": {
+        "vw": 1920,
+        "vh": 1080,
+        "sw": 1920,
+        "sh": 1080,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide side desk"
+      },
       "13-item-shop": {
         "vw": 1920,
         "vh": 1080,
@@ -685,8 +709,8 @@
         "vOverflow": false,
         "brokenImgs": [],
         "sheetScroll": {
-          "sh": 289,
-          "ch": 289,
+          "sh": 375,
+          "ch": 375,
           "overflow": false
         },
         "clipped": [],
@@ -1000,6 +1024,18 @@
         "clipped": [],
         "bodyClasses": "wide"
       },
+      "09b-recruit-hero": {
+        "vw": 768,
+        "vh": 1024,
+        "sw": 768,
+        "sh": 1024,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": "wide"
+      },
       "13-item-shop": {
         "vw": 768,
         "vh": 1024,
@@ -1073,8 +1109,8 @@
         "vOverflow": false,
         "brokenImgs": [],
         "sheetScroll": {
-          "sh": 285,
-          "ch": 285,
+          "sh": 253,
+          "ch": 253,
           "overflow": false
         },
         "clipped": [],
@@ -1168,7 +1204,7 @@
         "vw": 768,
         "vh": 1024,
         "sw": 768,
-        "sh": 1024,
+        "sh": 1026,
         "hOverflow": false,
         "vOverflow": false,
         "brokenImgs": [],
@@ -1180,7 +1216,7 @@
         "vw": 768,
         "vh": 1024,
         "sw": 768,
-        "sh": 1024,
+        "sh": 1026,
         "hOverflow": false,
         "vOverflow": false,
         "brokenImgs": [],
@@ -1388,6 +1424,18 @@
         "clipped": [],
         "bodyClasses": ""
       },
+      "09b-recruit-hero": {
+        "vw": 390,
+        "vh": 844,
+        "sw": 390,
+        "sh": 844,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
+        "clipped": [],
+        "bodyClasses": ""
+      },
       "13-item-shop": {
         "vw": 390,
         "vh": 844,
@@ -1461,8 +1509,8 @@
         "vOverflow": false,
         "brokenImgs": [],
         "sheetScroll": {
-          "sh": 225,
-          "ch": 225,
+          "sh": 386,
+          "ch": 386,
           "overflow": false
         },
         "clipped": [],
@@ -1797,6 +1845,18 @@
           "ch": 151,
           "overflow": false
         },
+        "clipped": [],
+        "bodyClasses": ""
+      },
+      "09b-recruit-hero": {
+        "vw": 375,
+        "vh": 812,
+        "sw": 375,
+        "sh": 812,
+        "hOverflow": false,
+        "vOverflow": false,
+        "brokenImgs": [],
+        "sheetScroll": null,
         "clipped": [],
         "bodyClasses": ""
       },

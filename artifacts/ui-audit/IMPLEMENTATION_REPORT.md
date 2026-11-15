@@ -51,6 +51,7 @@ Every route, modal, and responsive breakpoint (`1440×900`, `1920×1080`, `768×
 2. **Mobile & Tablet `22-result` Full-Width Lock:** Changed `.result.v2 .rhead` to `overflow: hidden` and `section.result.v2` to `overflow-x: clip`, preventing the `640×640` radial `.rays` pseudo-element from inflating mobile document width.
 3. **`.upgrade-screen` Mobile Cascade & Triple-Yellow Fix:** Moved compact mobile `@media` rules after desktop `.upg-path-card` overrides so `18-boss-upgrade` fits cleanly inside `375×812` & `390×844` without clipping Path 3, and replaced simultaneous yellow buttons with selectable Obsidian + gold-rim cards.
 4. **XP Screen (`25-over-xp`) Chest Card & Narrow Header Polish:** Replaced fixed `height: 76px` on mobile `.loot-card-3d` with `height: auto; min-height: 82px` (`74px` compact `@media`) + immediate crisp `.xp-chip-pill` rendering (eliminating entrance fade opacity capture lag) and single-line `ACCOUNT XP` header sizing so `375×812` has zero right-edge overhang and zero hero-name/tag clipping.
+5. **Unified Tall Hero Select 1/2/3 (`recruitHTML`) & Full-Viewport LP/XP (`v1.15`):** Aligned `recruitHTML()` onto `.start.v3` and `.bar.sbar` with balanced `.c2`/`.c1` grids for 2-hero offers and expanded desktop `.stage.spotlights` height (`clamp(320px, 53vh, 520px)`) so 2nd/3rd hero selection matches the 1st hero select cards verbatim. Expanded LP and XP post-run screens (`lpscr` / `xpscr`) to full-screen proportions on both mobile and desktop, tightened narrow mobile XP header trophy clearance, and tightened compact mobile `@media (max-height: 760px)` `.upgrade-screen` rules for strict zero-scroll (`390×740`, `360×640`).
 
 ---
 
@@ -58,7 +59,7 @@ Every route, modal, and responsive breakpoint (`1440×900`, `1920×1080`, `768×
 
 ### Automated Visual Reconnaissance (`node artifacts/ui-audit/recon.mjs final`)
 - **Viewports Verified:** `desktop-1440x900`, `desktop-1920x1080`, `tablet-768x1024`, `mobile-390x844`, `mobile-375x812`
-- **Total Screen & Modal Captures:** `144`
+- **Total Screen & Modal Captures:** `149`
 - **Console Errors:** `0`
 - **Page Errors:** `0`
 - **Failed Network Requests:** `0`
@@ -71,4 +72,4 @@ Every route, modal, and responsive breakpoint (`1440×900`, `1920×1080`, `768×
 - **`node tools/tests/sim-run.js 30 3 9`:** `OK` (`30` bot runs, `0` NaN units, `2` reached Gauntlet)
 - **`node tools/tests/devices.mjs`:** `63 ok, 0 fail` (zero scroll at `360×640`, `390×740`, `740×360`, `820×1180`, `1440×900`)
 - **`node tools/tests/interface.mjs`:** `130 of 130 states fine, 0 with a problem`; `contrast: every text passes WCAG AA`
-- **`node tools/tests/screens.mjs`:** `198 ok, 0 fail`; `no JS errors / CSP violations`
+- **`node tools/tests/screens.mjs`:** `199 ok, 0 fail`; `no JS errors / CSP violations`

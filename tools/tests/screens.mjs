@@ -141,7 +141,7 @@ while (steps++ < 160) {
       await click('[data-act=result-ok]'); await sleep(100); continue; }
   if (st.phase === 'tower' && await ev(`!!document.querySelector('[data-act=tower-skip]')`)) { await click('[data-act=tower-skip]'); await sleep(200); continue; }   // v91: a completed run meets the Gauntlet gate first
   if (st.phase === 'over') break;
-  if (st.phase === 'upgrade' && await ev(`!!document.querySelector('[data-act=upgrade-path]')`)) { if (!globalThis.__sawUpgrade) { globalThis.__sawUpgrade = 1; await shot('07d-upgrade'); await noHScroll('boss upgrade'); await noVScroll('boss upgrade'); } await click('[data-act=upgrade-path]'); await sleep(120); continue; }
+  if (await ev(`!!document.querySelector('[data-act=upgrade-path]')`)) { if (!globalThis.__sawUpgrade) { globalThis.__sawUpgrade = 1; await shot('07d-upgrade'); await noHScroll('boss upgrade'); await noVScroll('boss upgrade'); } await click('[data-act=upgrade-path]'); await sleep(120); continue; }
   if (await ev(`!!document.querySelector('[data-act=spec]')`)) { if (!sawLevel) { await shot('07-levelup'); await noVScroll('level up'); sawLevel = true; } await click('[data-act=spec]'); await sleep(80); continue; }
   if (st.phase === 'map') {
     // prefer medium fights and shops so the run goes the distance
