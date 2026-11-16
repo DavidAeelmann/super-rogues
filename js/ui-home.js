@@ -3,7 +3,7 @@
   const { Run, Sim, Render, Net, HEROES, ITEM, RELIC, EVENT, CFG } = B;
   const U = B._ui;
   const { $, acct, I, streakOf, flameHTML, ui, lvlNow, esc, img, nextUnlock, unlockName, fmt, chips, scaleTag, store, ico, por, sfx, NODE_ICON, emblem, SHOP_NAME, SHOP_DESC, evIcon, EV_RAR, hName, render, MOB_ABIL, toast, save, hasPerk, plink, TIER_COLOR, leagueName, leagueProgress, heartsHTML, myName, pid, isDefaultName, itemTag, shopSynergyTag, setInfo, RANK, xpPanelHTML, pct, unlockTip, unlockPic, KIND_NAME, xpChips, XP_ICON, refCode, setElo, logGameXp, setAcct, avatarHTML, DOLL, openModal, header, scalingHTML, crowns, unlockInfo, loadAcct, avKey, closeModal, ACCT, SAVE, applySkin, scaleParts } = U;
-  const APP_VER = 'v1.21';
+  const APP_VER = 'v1.22';
   const logoHTML = () => `<h1 class="logo-big" aria-label="Super Rogues">${B.UI ? B.UI.mark('lg') : ''}<span class="wm"><span class="w1">Super</span><span class="w2">${[...'ROGUES'].map((c, k) => `<i style="--k:${k}">${c}</i>`).join('')}</span></span></h1>`;
   function squadKeys() {
     const out = [];
@@ -177,9 +177,9 @@
             <div class="dd-extra">
               <p class="dd-desc">${esc(d.tag || plainAb(d.abDesc) || '')}</p>
               <div class="dd-stats">
-                <span class="dd-stat"><em>HP</em><b>${Math.round(d.hp || 0)}</b></span>
-                <span class="dd-stat"><em>ATK</em><b>${Math.round(d.atk || 0)}</b></span>
-                <span class="dd-stat"><em>RNG</em><b>${d.range || 1}</b></span>
+                <span class="dd-stat dd-hp" title="Health" aria-label="Health ${Math.round(d.hp || 0)}"><em>${I('heart')}</em><b>${Math.round(d.hp || 0)}</b></span>
+                <span class="dd-stat dd-atk" title="Attack" aria-label="Attack ${Math.round(d.atk || 0)}"><em>${I('swords')}</em><b>${Math.round(d.atk || 0)}</b></span>
+                <span class="dd-stat dd-rng" title="Attack Distance" aria-label="Distance ${d.range || 1}"><em>${I('range')}</em><b>${d.range || 1}</b></span>
               </div>
             </div>
           </div>
@@ -239,6 +239,9 @@
       card.classList.toggle('is-active', on);
       card.classList.toggle('off', !on);
       card.classList.toggle('is-sibling', !on);
+      card.classList.remove('is-swiping');
+      card.style.removeProperty('--swipe-x');
+      card.style.removeProperty('--swipe-rot');
       card.setAttribute('aria-pressed', on ? 'true' : 'false');
       if (!on) {
         card.classList.remove('foil-sweep', 'is-tilting');
@@ -255,6 +258,23 @@
     const pickBtn = stage.querySelector('.draft-pick-btn');
     if (pickBtn) { pickBtn.disabled = false; pickBtn.classList.add('ready'); }
     return true;
+  }
+
+  function stepDraftHero(stage, dir) {
+    if (!stage || ui.randomBusy) return false;
+    const cards = [...stage.querySelectorAll('.draft-card[data-hero-key]')];
+    if (cards.length < 2) return false;
+    const cur = cards.findIndex(c => c.classList.contains('is-active'));
+    const nextIdx = ((cur < 0 ? 0 : cur) + dir + cards.length) % cards.length;
+    const next = cards[nextIdx];
+    const mode = stage.dataset.draftMode === 'recruit' ? 'recruit-pick' : 'start-pick';
+    const act = U.ACT && U.ACT[mode];
+    if (next && act) {
+      act(next.dataset.heroKey);
+      sfx('tap');
+      return true;
+    }
+    return false;
   }
 
   function runDraftRandom(mode) {
@@ -307,6 +327,15 @@
     if (draftParallaxBound || typeof document === 'undefined') return;
     draftParallaxBound = true;
     const scr = document.getElementById('screen') || document;
+    let swipe = null;
+    let suppressClickUntil = 0;
+    const clearSwipeVisual = s => {
+      if (s && s.activeCard) {
+        s.activeCard.classList.remove('is-swiping');
+        s.activeCard.style.removeProperty('--swipe-x');
+        s.activeCard.style.removeProperty('--swipe-rot');
+      }
+    };
     const updateTilt = (card, cx, cy) => {
       if (!card || !card.classList.contains('is-active')) return;
       const r = card.getBoundingClientRect();
@@ -323,17 +352,79 @@
       card.style.setProperty('--px', '0');
       card.style.setProperty('--py', '0');
     };
+    scr.addEventListener('click', e => {
+      if (performance.now() < suppressClickUntil && e.target.closest('.draft-stage')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+    scr.addEventListener('pointerdown', e => {
+      if (!e.isPrimary || (e.button && e.button !== 0)) return;
+      if (e.target.closest('button.dd-info')) return;
+      const row = e.target.closest('.draft-stage .stage.draft-row');
+      if (!row || ui.randomBusy) return;
+      const stage = row.closest('section.draft-stage');
+      swipe = {
+        id: e.pointerId,
+        x0: e.clientX,
+        y0: e.clientY,
+        t0: performance.now(),
+        dx: 0,
+        swiping: false,
+        stage,
+        activeCard: row.querySelector('.draft-card.is-active')
+      };
+    });
     scr.addEventListener('pointermove', e => {
+      if (swipe && e.pointerId === swipe.id) {
+        const dx = e.clientX - swipe.x0;
+        const dy = e.clientY - swipe.y0;
+        if (!swipe.swiping && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+          swipe.swiping = true;
+          if (swipe.activeCard) resetTilt(swipe.activeCard);
+        }
+        if (swipe.swiping) {
+          swipe.dx = dx;
+          if (swipe.activeCard) {
+            const clamped = Math.max(-140, Math.min(140, dx));
+            const rot = Math.max(-10, Math.min(10, clamped * 0.065));
+            swipe.activeCard.classList.add('is-swiping');
+            swipe.activeCard.style.setProperty('--swipe-x', clamped.toFixed(1) + 'px');
+            swipe.activeCard.style.setProperty('--swipe-rot', rot.toFixed(2) + 'deg');
+          }
+          return;
+        }
+      }
       const card = e.target.closest('.draft-card.is-active');
       if (card) updateTilt(card, e.clientX, e.clientY);
       else scr.querySelectorAll('.draft-card.is-tilting').forEach(resetTilt);
+    });
+    const finishSwipe = (e, canceled) => {
+      if (!swipe || (e.pointerId != null && e.pointerId !== swipe.id)) return;
+      const s = swipe;
+      swipe = null;
+      clearSwipeVisual(s);
+      if (!canceled && s.swiping) {
+        const dx = (e.clientX != null ? e.clientX - s.x0 : s.dx);
+        const dt = Math.max(1, performance.now() - s.t0);
+        const vx = dx / dt;
+        suppressClickUntil = performance.now() + 260;
+        if (Math.abs(dx) >= 34 || Math.abs(vx) >= 0.35) {
+          stepDraftHero(s.stage, dx < 0 ? 1 : -1);
+        }
+      }
+    };
+    scr.addEventListener('pointerup', e => finishSwipe(e, false));
+    scr.addEventListener('pointercancel', e => {
+      finishSwipe(e, true);
+      resetTilt(e.target.closest('.draft-card'));
     });
     scr.addEventListener('pointerout', e => {
       const card = e.target.closest('.draft-card.is-active');
       if (card && (!e.relatedTarget || !card.contains(e.relatedTarget))) resetTilt(card);
     });
-    scr.addEventListener('pointercancel', e => resetTilt(e.target.closest('.draft-card')));
     scr.addEventListener('touchmove', e => {
+      if (swipe && swipe.swiping) return;
       const t = e.touches && e.touches[0];
       const card = t && e.target.closest('.draft-card.is-active');
       if (card && t) updateTilt(card, t.clientX, t.clientY);
@@ -342,6 +433,11 @@
     scr.addEventListener('touchend', resetTouches, { passive: true });
     scr.addEventListener('touchcancel', resetTouches, { passive: true });
     scr.addEventListener('keydown', e => {
+      const stage = document.querySelector('section.draft-stage');
+      if (stage && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        if (stepDraftHero(stage, e.key === 'ArrowRight' ? 1 : -1)) e.preventDefault();
+        return;
+      }
       if (e.key !== 'Enter' && e.key !== ' ') return;
       const card = e.target.closest('.draft-card[role="button"]');
       if (card && !e.target.closest('button.dd-info')) { e.preventDefault(); card.click(); }

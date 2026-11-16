@@ -33,7 +33,7 @@
     drawBoard(v, o, W);
     if (boss && !o.deploy) bossTiles(v, boss.key, now);
     if (o.coach) drawCoach(v, o.coach, now);
-    if (o.slots) drawCoach(v, { hexes: o.slots, color: v.desk ? '#ffd23f' : '#34d399', plain: true }, now);
+    if (o.slots) drawCoach(v, { hexes: o.slots, color: o.slotColor || '#34d399', plain: true }, now);
     if (!W) return;
     for (const z of W.zones) if (z.until > W.t) {
       const owner = z.src && W.byId[z.src], zs = owner && AF && AF.SPEC[owner.abil] && AF.SPEC[owner.abil].zone;
@@ -50,6 +50,22 @@
     }
     if (!o.deploy) spawnFromFx(v, W, T, S);
     if (o.deploy && W && W.units) {
+      if (o.joinedUids && o.joinedUids.length) {
+        const pulse = 0.65 + 0.35 * Math.sin(now * 4.5);
+        for (const ju of W.units) {
+          if (ju.dead || ju.side !== 0 || !o.joinedUids.includes(ju.uid)) continue;
+          const jp = hexScreen(v, ju.c, ju.r);
+          ctx.save();
+          ctx.strokeStyle = `rgba(52, 211, 153, ${(0.82 * pulse).toFixed(2)})`;
+          ctx.fillStyle = `rgba(16, 185, 129, ${(0.18 * pulse).toFixed(2)})`;
+          ctx.lineWidth = 2.4;
+          ctx.beginPath();
+          ctx.ellipse(jp.x, jp.y, size * 0.78, size * 0.78 * K * 0.65, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
       if (!v.desk) {
         const heroes0 = W.units.filter(u => !u.dead && u.side === 0 && u.kind !== 'plant');
         const foes1 = W.units.filter(u => !u.dead && u.side === 1 && u.kind !== 'plant');

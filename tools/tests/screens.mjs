@@ -87,10 +87,19 @@ await click('[data-act=new-run]'); await sleep(200);
 ok(await ev(`!!document.querySelector('.start .ssteps li.on') && !document.querySelector('.start .ssub') && document.querySelectorAll('.draft-card').length === 3 && document.querySelectorAll('.draft-card')[1].classList.contains('is-active') && !document.querySelector('[data-act=start-next]').disabled && !!document.querySelector('[data-act=start-random]') && !document.querySelector('[data-act=start-relic]')`), 'start step 1: center hero pre-selected in accordion spotlight with Pick and Random +2 Gold buttons');
 const fmtOut = await ev(`__bal.fmt('<b>x</b> deals 20% magic damage and stuns for 1.5s')`);
 ok(/&lt;b&gt;/.test(fmtOut) && /class="num">20%/.test(fmtOut) && /kw-ap/.test(fmtOut) && /kw-cc/.test(fmtOut) && /class="dur">1.5s/.test(fmtOut), 'descriptions colour terms, bold numbers, italic durations, and stay escaped');
-ok(await ev(`!!document.querySelector('.draft-card.is-active .dd-desc') && document.querySelectorAll('.draft-card.is-active .dd-stat').length === 3 && !!document.querySelector('.draft-card.is-active [data-act=hero-peek]') && document.querySelector('[data-act=start-next]').textContent.toUpperCase().includes(document.querySelector('.draft-card.is-active').dataset.heroName.toUpperCase())`), 'start step 1: active card drawer shows ability, HP/ATK/RNG stats, Details icon, and dynamic PICK button');
+ok(await ev(`!!document.querySelector('.draft-card.is-active .dd-desc') && document.querySelectorAll('.draft-card.is-active .dd-stat').length === 3 && document.querySelectorAll('.draft-card.is-active .dd-stat em svg.ui').length === 3 && !!document.querySelector('.draft-card.is-active .dd-hp em svg') && !!document.querySelector('.draft-card.is-active .dd-atk em svg') && !!document.querySelector('.draft-card.is-active .dd-rng em svg') && !/\\bRNG\\b/.test(document.querySelector('.draft-card.is-active .dd-stats').textContent) && !!document.querySelector('.draft-card.is-active [data-act=hero-peek]') && document.querySelector('[data-act=start-next]').textContent.toUpperCase().includes(document.querySelector('.draft-card.is-active').dataset.heroName.toUpperCase())`), 'start step 1: active card drawer shows ability, heart/swords/distance SVG stat icons (no RNG text), Details icon, and dynamic PICK button');
 await shot('02a-start-hero'); await noHScroll('start hero'); await noVScroll('start hero');
 await ev(`document.querySelectorAll('[data-act=start-pick]')[2].click()`); await sleep(120);
 ok(await ev(`document.querySelectorAll('.hbanner.spot.on').length === 1 && document.querySelectorAll('.hbanner.spot')[2].classList.contains('on') && !document.querySelectorAll('.hbanner.spot')[0].classList.contains('on') && document.querySelector('[data-act=start-next]').textContent.toUpperCase().includes(document.querySelectorAll('.draft-card')[2].dataset.heroName.toUpperCase())`), 'tapping another hero switches accordion spotlight and updates PICK CTA');
+ok(await ev(`(async () => {
+  const row = document.querySelector('.draft-stage .stage.draft-row');
+  const active = row.querySelector('.draft-card.is-active');
+  const r = active.getBoundingClientRect();
+  const y = r.top + r.height * 0.5, x0 = r.left + r.width * 0.5;
+  const fire = (type, x) => active.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, isPrimary: true, pointerId: 17, pointerType: 'touch', button: 0, clientX: x, clientY: y }));
+  fire('pointerdown', x0); fire('pointermove', x0 + 30); fire('pointermove', x0 + 85); fire('pointerup', x0 + 85);
+  await new Promise(res => setTimeout(res, 60));
+  return document.querySelectorAll('.draft-card')[1].classList.contains('is-active'); })()`), 'swiping right on hero card switches to previous hero like Tinder');
 await pickHero();
 await shot('02-start'); await noHScroll('start'); await noVScroll('start');
 ok(await click('[data-act=start-next]'), 'start the game');
@@ -190,27 +199,13 @@ while (steps++ < 160) {
   }
   if (st.phase === 'deploy' && !st.battle) {
     fightsSeen++;
-    // v126 (review #224): a hero that joined mid-run waits on the bench; the fight is locked until it is placed (by dragging it onto the board)
-    if (await ev(`B.Run.benched(__bal.run).length > 0`)) {
-      if (!globalThis.__sawBench) {
-        globalThis.__sawBench = 1;
-        ok(await ev(`!!document.querySelector('#bench .bnc') && document.querySelector('[data-act=fight]').classList.contains('locked') && document.querySelector('.depban').classList.contains('need') && !!document.querySelector('.pm.benched, #bench')`), 'v126 (review #224): a new hero waits on the bench beside the board; the banner names it and the Fight button is locked');
-        await ev(`__bal.closeVs()`); await sleep(350); await shot('04c-bench'); await noHScroll('deploy with the bench');
-        await click('[data-act=fight]'); await sleep(300);
-        ok(await ev(`!__bal.battle && __bal.run.phase === 'deploy' && !!document.querySelector('#bench')`), 'v126: Fight does not start while a hero is on the bench');
-        const placed = await ev(`(async () => {
-          const card = document.querySelector('#bench .bnc'), uid = +card.dataset.bench, cr = card.getBoundingClientRect(), run = __bal.run;
-          const taken = new Set(run.heroes.filter(h => h.pos).map(h => h.pos.c + ',' + h.pos.r)), tgt = B.Hex.all().find(h => h.r === 7 && !taken.has(h.c + ',' + h.r) && !B.Run.blockedAt(run, h.c, h.r));
-          const a = { x: cr.left + 20, y: cr.top + 20 }, b = __bal.hexScreen(tgt.c, tgt.r);
-          const fire = (type, p) => card.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, clientX: p.x, clientY: p.y, pointerId: 9, pointerType: 'touch' }));
-          fire('pointerdown', a); fire('pointermove', { x: a.x + 25, y: a.y + 25 }); fire('pointermove', b); fire('pointerup', b);
-          await new Promise(r => setTimeout(r, 300));
-          const h = run.heroes.find(x => x.uid === uid);
-          return !!(h && !h.bench && h.pos.c === tgt.c && h.pos.r === tgt.r); })()`);
-        ok(placed, 'v126: dragging the hero from the bench onto a hex places it');
+    // Newly acquired heroes are auto-placed onto appropriate battlefield positions immediately (no bench lock)
+    if (await ev(`__bal.run.heroes.some(h => h.justJoined)`)) {
+      if (!globalThis.__sawAutoJoined) {
+        globalThis.__sawAutoJoined = 1;
+        ok(await ev(`B.Run.benched(__bal.run).length === 0 && !document.querySelector('#bench') && !document.querySelector('[data-act=fight]').classList.contains('locked') && document.querySelector('.depban').classList.contains('joined') && !!document.querySelector('.ms-slot.just-joined') && __bal.run.heroes.every(h => h.pos && h.pos.r >= 4 && h.pos.r <= 7)`), 'a newly acquired hero is auto-placed in an appropriate position with Fight unlocked');
+        await ev(`__bal.closeVs && __bal.closeVs()`); await sleep(350); await shot('04c-autoplaced'); await noHScroll('deploy auto-placed hero');
       }
-      await ev(`__bal.deployBench()`); await sleep(150);
-      ok(await ev(`!document.querySelector('#bench') && !document.querySelector('[data-act=fight]').classList.contains('locked')`), 'v126: with the bench empty the Fight button is unlocked');
     }
     if (fightsSeen === 2) {   // v118 (review #205): the positioning coach: a tip over the board with its hexes glowing; Got it puts it away for good
       const keep = await ev(`localStorage.getItem('balance.starts')`);
@@ -224,7 +219,7 @@ while (steps++ < 160) {
     if (fightsSeen === 1) {
       await shot('04-deploy'); await noHScroll('deploy'); await noVScroll('deploy');
       ok(await ev(`[...document.querySelectorAll('.foes .fo')].every(f => !!f.querySelector('.fw')) && document.querySelectorAll('.foes .fo, .foes .fs').length >= 1`), 'v52: before a fight, only enemies with abilities get a card; plain ones are small chips');
-      ok(await ev(`!!document.querySelector('.tutmove') && /Try moving your hero/.test(document.querySelector('.tutmove').textContent) && !document.querySelector('.tutspeed')`), 'v62 (review #83): the very first deploy screen asks the player to try moving a hero');
+      ok(await ev(`(() => { const tm = document.querySelector('.tutmove'), sub = tm && tm.querySelector('.tutmove-sub'); if (!tm || !sub) return false; const r = tm.getBoundingClientRect(); return /Try moving your hero/.test(tm.textContent) && /FRONT/.test(sub.textContent) && /BACK/.test(sub.textContent) && r.left >= 0 && r.right <= innerWidth + 1 && !document.querySelector('.tutspeed'); })()`), 'the very first deploy screen shows visible positioning help (front vs back) and stays unclipped');
       // drag a hero to another blue hex with real pointer events
       const moved = await ev(`(async () => {
         const cv = document.querySelector('#board'), h = __bal.run.heroes[0], tgt = { c: h.pos.c === 0 ? 1 : 0, r: 6 };
@@ -516,7 +511,7 @@ if (!REMOTE) {
   await pickHero(); await click('[data-act=start-next]'); await sleep(150);
   ok(await ev(`__bal.run.phase === 'deploy' && __bal.run.onb && __bal.run.cur.enemies.length === 1 && __bal.run.cur.enemies[0].key === 'grunt' && !!document.querySelector('.deploy.intro #board') && !document.querySelector('[data-act=fight]') && __bal.run.relics.length === B.CFG.startRelics`), 'v97 (review #179): the first Play goes from the hero straight to the battlefield (one Grunt, no map, no Fight button)');
   for (let k = 0; k < 40 && !(await ev(`__bal.run.onb.stage === 'move'`)); k++) await sleep(100);
-  ok(await ev(`__bal.run.onb.stage === 'move' && /Drag your hero/.test(document.querySelector('.tutmove').textContent)`), 'v97: the hero drops in, then the hint says to drag it');
+  ok(await ev(`(() => { const tm = document.querySelector('.tutmove'), sub = tm && tm.querySelector('.tutmove-sub'); if (!tm || !sub) return false; const r = tm.getBoundingClientRect(); return __bal.run.onb.stage === 'move' && /Drag your hero/.test(tm.textContent) && sub.textContent.trim().length > 10 && r.left >= 0 && r.right <= innerWidth + 1; })()`), 'v97: the hero drops in, then the hint says to drag it with hero-specific positioning advice');
   await shot('40-intro-move'); await noHScroll('intro'); await noVScroll('intro');
   await ev(`(() => { const cv = document.querySelector('#board'), h = __bal.run.heroes[0], tgt = { c: h.pos.c === 0 ? 1 : 0, r: 6 };
     const a = __bal.hexScreen(h.pos.c, h.pos.r), b = __bal.hexScreen(tgt.c, tgt.r), r = cv.getBoundingClientRect();

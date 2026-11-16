@@ -17,6 +17,7 @@
     sword: '<path d="M19.5 3.5l-.6 3.6L9.5 16.5l-2-2 9.4-9.4zM6 13l5 5M7.8 16.2l-3.3 3.3"/>',
     swords: '<path d="M3.5 3.5l.6 3.6 9.4 9.4 2-2-9.4-9.4zM20.5 3.5l-.6 3.6-5.2 5.2M9.3 12.7l-2.8 2.8M18 13l-5 5M6 13l5 5M16.2 16.2l3.3 3.3M7.8 16.2l-3.3 3.3"/>',
     bow: '<path d="M6 3.5c7.5 1.2 13.3 7 14.5 14.5"/><path d="M6 3.5L20.5 18M4 12l6-6M10 6H6.5M10 6v3.5" stroke-width="1.8"/>',
+    range: '<path d="M4 5.5v13M20 5.5v13M7.5 12h9M10.5 9L7.5 12l3 3M13.5 9l3 3-3 3"/>',
     shield: '<path d="M12 3l7.5 2.8v5.7c0 4.6-3.2 7.9-7.5 9.3-4.3-1.4-7.5-4.7-7.5-9.3V5.8z" fill="currentColor" fill-opacity=".25"/><path d="M12 3l7.5 2.8v5.7c0 4.6-3.2 7.9-7.5 9.3-4.3-1.4-7.5-4.7-7.5-9.3V5.8z"/>',
     bag: '<path d="M5.5 8.5h13l-1 11.5h-11z" fill="currentColor" fill-opacity=".25"/><path d="M5.5 8.5h13l-1 11.5h-11zM9 8.5V7a3 3 0 0 1 6 0v1.5"/>',
     cart: '<path d="M3 4.5h2.3l2.3 10.5h10.2L20 7.5H6.5"/><circle cx="9" cy="19" r="1.4" fill="currentColor"/><circle cx="17" cy="19" r="1.4" fill="currentColor"/>',

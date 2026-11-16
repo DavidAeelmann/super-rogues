@@ -37,6 +37,31 @@
     if (f && f.diff && B.DIFF[f.diff]) return `${I('swords')} ${B.DIFF[f.diff].name} Fight`;
     return `${I('swords')} Battle`;
   }
+  function heroPosTip(h) {
+    if (!h) return '🛡 Tanks & Melee in FRONT · 🏹 Ranged & Healers in BACK';
+    const d = HEROES[h.key];
+    const t = Run.heroTier ? Run.heroTier(d) : ((d && d.range <= 1) ? 'fighter' : 'back');
+    if (t === 'tank' || t === 'fighter') return '🛡 Place Tanks & Melee in the FRONT row to block enemies';
+    if (t === 'flank') return '🗡 Place Assassins on the side FLANKS to slip past frontliners';
+    return '🏹 Keep Ranged & Healers in the BACK row behind cover';
+  }
+  function deployBannerState(need, heroes) {
+    if (need.length) return { cls: 'need', text: need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!` };
+    const joined = (heroes || []).filter(h => h.justJoined);
+    if (joined.length) {
+      const names = joined.map(h => HEROES[h.key].name).join(' & ');
+      return { cls: 'joined', text: `✨ ${esc(names)} auto-placed — drag to adjust` };
+    }
+    if (U.tutPosOn && U.tutPosOn()) {
+      const list = heroes || [];
+      const backInFront = list.find(h => h.pos && h.pos.r === 4 && Run.heroTier && Run.heroTier(HEROES[h.key]) === 'back');
+      if (backInFront && list.length > 1) return { cls: 'warn', text: `⚠ ${esc(HEROES[backInFront.key].name)} is fragile in FRONT — drag to Back` };
+      const tankInBack = list.find(h => h.pos && h.pos.r === 7 && Run.heroTier && Run.heroTier(HEROES[h.key]) === 'tank');
+      if (tankInBack) return { cls: 'warn', text: `⚠ Drag Tank ${esc(HEROES[tankInBack.key].name)} to FRONT row to block` };
+      return { cls: 'tut', text: '🛡 Tanks Front · 🏹 Ranged Back · Drag to move' };
+    }
+    return { cls: '', text: 'Drag heroes to reposition' };
+  }
   function deploySquadHTML() {
     if (!U.run) return '';
     const maxS = Run.teamMax(U.run);
@@ -48,9 +73,9 @@
       if (h) {
         const d = HEROES[h.key];
         const sel = ui.selUid === h.uid;
-        slots.push(`<button class="ms-slot filled${h.bench ? ' benched' : ''}${sel ? ' on' : ''}" data-act="deploy-focus" data-arg="${h.uid}" title="${esc(hName(h))} · ${esc(d.role)}">
+        slots.push(`<button class="ms-slot filled${h.bench ? ' benched' : ''}${h.justJoined ? ' just-joined' : ''}${sel ? ' on' : ''}" data-act="deploy-focus" data-arg="${h.uid}" title="${esc(hName(h))} · ${esc(d.role)}">
           <span class="ms-av">${img(h.key, 32, 'por')}<span class="ms-lv">${h.lvl}</span></span>
-          <span class="ms-meta"><b>${esc(d.name)}</b><small>${esc(d.role)}</small></span>
+          <span class="ms-meta"><b>${esc(d.name)}</b><small>${h.justJoined ? 'Auto-placed' : esc(d.role)}</small></span>
         </button>`);
       } else {
         slots.push(`<div class="ms-slot empty"><span class="ms-plus">+</span><small>Open</small></div>`);
@@ -81,15 +106,14 @@
     </div>`;
   }
   // the ribbon over
-  // the board says "Drag heroes to reposition" (with a hand); with heroes on the bench it says "Place <name>!".
+  // the board says "Drag heroes to reposition" (with a hand), or positioning guidance during tutorial / auto-place.
   function deployHTML() {
     const gau = U.run.cur && U.run.cur.type === 'gauntlet';
     const f = U.run.cur;
     const map = Run.mapOf(U.run), need = Run.benched(U.run);
-    if (introStage()) return `<section class="deploy intro"><div class="boardwrap"><canvas id="board"></canvas>${introStage() === 'move' ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Drag your hero to move it ⇉</div>' : ''}</div></section>`;   // only the battlefield
-    const depbanContent = need.length
-      ? (need.length > 1 ? `Place ${need.length} new heroes!` : `Place ${esc(HEROES[need[0].key].name)}!`)
-      : 'Drag heroes to reposition';
+    if (introStage()) return `<section class="deploy intro"><div class="boardwrap"><canvas id="board"></canvas>${introStage() === 'move' ? `<div class="tutmove intro-pos" aria-hidden="true"><div class="tutmove-top">⇇ 👈 Drag your hero to move it ⇉</div><div class="tutmove-sub">${heroPosTip(U.run.heroes[0])}</div></div>` : ''}</div></section>`;   // only the battlefield
+    const depState = deployBannerState(need, U.run.heroes);
+    const depbanContent = depState.text;
     const desk = typeof document !== 'undefined' && document.body && document.body.classList.contains('desk');
     const modBanner = !gau && f && f.challenge
       ? `<p class="hint tight"><span class="nextmod chal">${f.challenge.intro ? esc(f.challenge.intro) + ' ' : ''}${f.solo ? `Only ${esc(HEROES[f.challenge.hero].name)} fights. ` : ''}<b>Win:</b> ${esc(winText(f.challenge.win))}. <b>Lose:</b> the game goes on.</span></p>`
@@ -100,6 +124,7 @@
     const fightLbl = need.length ? (need.length > 1 ? `Place ${need.length} heroes first` : `Place ${esc(HEROES[need[0].key].name)} first`)
       : gau ? (U.run.g.kind === 'final' ? 'Final fight!' : U.run.g.kind === 'tower' ? 'Climb!' : 'Duel!')
       : f && f.diff === 'boss' ? 'Start Boss Fight!' : 'Start Fight!';
+    const tutMoveHTML = '<div class="tutmove" aria-hidden="true"><div class="tutmove-top">⇇ 👈 Try moving your hero ⇉</div><div class="tutmove-sub">🛡 Tanks &amp; Melee in FRONT · 🏹 Ranged &amp; Healers in BACK</div></div>';
 
     if (!desk) {
       return `<section class="deploy m-deploy">
@@ -111,14 +136,14 @@
         ${benchHTML(need)}
         ${formEl}
         <div class="m-boardslot">
-          <div class="depban ${need.length ? 'need' : ''}" aria-hidden="true">
+          <div class="depban ${depState.cls}" aria-hidden="true">
             ${need.length ? I('shield') : '<span class="dbh">✋</span>'}
             <span class="depban-text">${depbanContent}</span>
           </div>
         </div>
         <div class="boardwrap">
           <canvas id="board"></canvas>
-          ${U.tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${coachEl}
+          ${U.tutMoveOn() ? tutMoveHTML : ''}${coachEl}
         </div>
         <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
         ${U.foesHTML(gau, f)}
@@ -134,11 +159,11 @@
       ${formEl}
       <div class="boardwrap">
         <canvas id="board"></canvas>
-        <div class="depban ${need.length ? 'need' : ''}" aria-hidden="true">
+        <div class="depban ${depState.cls}" aria-hidden="true">
           ${need.length ? I('shield') : '<span class="dbh">✋</span>'}
           <span class="depban-text">${depbanContent}</span>
         </div>
-        ${U.tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${U.tutMoveOn() ? '<div class="tutmove" aria-hidden="true">⇇ 👈 Try moving your hero ⇉</div>' : ''}${coachEl}
+        ${U.tutSpeedOn() ? '<div class="tutspeed dep" aria-hidden="true">⬆ Fight speed: set it now or during the fight</div>' : ''}${U.tutMoveOn() ? tutMoveHTML : ''}${coachEl}
       </div>
       <div id="info" class="info mini ${ui.info ? '' : 'empty'}">${infoHTML()}</div>
       ${U.foesHTML(gau, f)}
@@ -728,16 +753,28 @@
     cv.addEventListener('pointerleave', () => { if (ui.hoverHex) { ui.hoverHex = null; if (!U.battle) drawPreview(); } cv.style.cursor = ''; });
     cv.addEventListener('pointercancel', () => { ui.drag = null; ui.hoverHex = null; drawPreview(); });
   }
+  function tutSlotDraw(uid) {
+    if (!U.run || U.run.phase !== 'deploy' || !uid || !(U.tutPosOn && U.tutPosOn())) return {};
+    const h = U.run.heroes.find(x => x.uid === uid); if (!h) return {};
+    const tier = Run.heroTier ? Run.heroTier(HEROES[h.key]) : 'back';
+    const prefR = (tier === 'tank' || tier === 'fighter') ? 4 : tier === 'flank' ? 5 : tier === 'mid' ? 6 : 7;
+    const hexes = B.Hex.all().filter(x => x.r === prefR && !Run.blockedAt(U.run, x.c, x.r) && !(h.pos && h.pos.c === x.c && h.pos.r === x.r));
+    return hexes.length ? { slots: hexes, slotColor: (tier === 'tank' || tier === 'fighter' || tier === 'flank') ? '#34d399' : '#38bdf8' } : {};
+  }
   function drawPreview(extra) {
     if (U.view && U.preview && U.screen !== 'battle') {
+      const activeUid = (ui.drag && ui.drag.uid) || ui.selUid;
+      const joinedUids = (U.run && U.run.heroes ? U.run.heroes.filter(h => h.justJoined).map(h => h.uid) : []);
       Render.draw(U.view, U.preview, performance.now() / 50, Object.assign({
         deploy: true,
         sel: (ui.drag && ui.drag.u && ui.drag.u.uid) || ui.selUid,
         infoId: ui.info,
         hoverHex: ui.hoverHex,
         hoverFoe: ui.hoverFoe,
-        dragging: !!ui.drag
-      }, introDraw(), U.coachDraw(), benchDraw(), extra || {}));
+        dragging: !!ui.drag,
+        tutZones: !!(U.tutPosOn && U.tutPosOn()),
+        joinedUids
+      }, tutSlotDraw(activeUid), introDraw(), U.coachDraw(), benchDraw(), extra || {}));
     }
   }
   // while a hero waits on the bench, the free hexes of your half glow (where it can go)
@@ -794,9 +831,16 @@
       if (!ui.introT0) ui.introT0 = now;
       const k = fast ? 1 : (now - ui.introT0) / 650;
       if (k >= 1 && !ui.introLand) { ui.introLand = true; setTimeout(introLanded, 0); }
-      return { hide: u => u.side === 1, lift: u => u.side === 0 ? (1 - easeOut(k)) * U.view.h : 0 };
+      return { hide: u => u.side === 1, lift: u => u.side === 0 ? (1 - easeOut(k)) * U.view.h : 0, tutZones: true };
     }
-    if (st === 'move') return { hide: u => u.side === 1 };
+    if (st === 'move') {
+      const h = U.run && U.run.heroes && U.run.heroes[0];
+      const tier = h && Run.heroTier ? Run.heroTier(HEROES[h.key]) : 'fighter';
+      const prefR = (tier === 'tank' || tier === 'fighter') ? 4 : tier === 'flank' ? 5 : 7;
+      const slots = B.Hex.all().filter(x => x.r === prefR && !(h && h.pos && h.pos.c === x.c && h.pos.r === x.r));
+      const slotColor = (tier === 'tank' || tier === 'fighter' || tier === 'flank') ? '#34d399' : '#38bdf8';
+      return { hide: u => u.side === 1, tutZones: true, slots, slotColor };
+    }
     const k = fast ? 1 : (now - (ui.introE0 || now)) / 1100;
     return { lift: u => u.side === 1 ? (1 - easeOut(k)) * U.view.h * 0.75 : 0 };
   }
@@ -838,7 +882,21 @@
   function unitBodyAt(W, x, y) { if (!W || !U.view) return null; let best = null, bd = 1e9; for (const u of W.units) { if (u.dead) continue; const p = Render.hexScreen(U.view, u.c, u.r), s = U.view.size * (u.boss ? 1.35 : u.elite ? 1.15 : 1);
     if (Math.abs(x - p.x) < s * 0.7 && y > p.y - s * 1.9 && y < p.y + s * 0.55) { const d = Math.abs(x - p.x) + Math.abs(y - (p.y - s * 0.6)) * 0.5; if (d < bd) { bd = d; best = u; } } } return best; }
   function syncSquadSel() {
-    document.querySelectorAll('.ms-slot[data-act=deploy-focus]').forEach(b => b.classList.toggle('on', +b.dataset.arg === ui.selUid));
+    document.querySelectorAll('.ms-slot[data-act=deploy-focus]').forEach(b => {
+      const uid = +b.dataset.arg;
+      const h = U.run && U.run.heroes && U.run.heroes.find(x => x.uid === uid);
+      b.classList.toggle('on', uid === ui.selUid);
+      b.classList.toggle('just-joined', !!(h && h.justJoined));
+      const sm = b.querySelector('.ms-meta small');
+      if (sm && h && HEROES[h.key]) sm.textContent = h.justJoined ? 'Auto-placed' : HEROES[h.key].role;
+    });
+    const ban = document.querySelector('.depban');
+    if (ban && U.run) {
+      const st = deployBannerState(Run.benched(U.run), U.run.heroes);
+      ban.className = 'depban ' + st.cls;
+      const tx = ban.querySelector('.depban-text');
+      if (tx) tx.textContent = st.text;
+    }
   }
   function onDown(e) {
     if (U.battle && U.battle.W && U.battle.W.over && U.battle.endAt) { U.battle.endAt = performance.now(); return; }
@@ -885,14 +943,16 @@
     const { h } = evHex(e, 1.35); const d = ui.drag; ui.drag = null;
     // a hero set down raises a puff of dust and a soft thud where it lands
     const landed = () => { sfx('place'); try { if (navigator.vibrate) navigator.vibrate(20); } catch (_) {} if (!B.Juice) return; const r = U.view.canvas.getBoundingClientRect(), p = Render.hexScreen(U.view, h.c, h.r); B.Juice.dust(r.left + p.x, r.top + p.y + U.view.size * 0.35); };
-    if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(U.run, d.uid, h.c, h.r); ui.selUid = 0; save(); U.tutMoved(); landed(); } }
+    let movedHero = false;
+    if (d && h && (h.c !== d.from.c || h.r !== d.from.r)) { if (h.r >= 4 && !onTerrain(h)) { Run.setPos(U.run, d.uid, h.c, h.r); ui.selUid = 0; movedHero = true; save(); U.tutMoved(); landed(); } }
     else if (d) { ui.selUid = ui.selUid === d.uid ? 0 : d.uid; if (ui.selUid) { sfx('tap'); if (B.UIAudio) B.UIAudio.pop(); } }
     else if (ui.selUid && h && h.r >= 4 && benchSel()) { if (!onTerrain(h)) benchPlaced(ui.selUid, h); return; }   // a picked bench hero goes here
-    else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(U.run, ui.selUid, h.c, h.r); ui.selUid = 0; save(); U.tutMoved(); landed(); }
+    else if (ui.selUid && h && h.r >= 4 && !onTerrain(h)) { Run.setPos(U.run, ui.selUid, h.c, h.r); ui.selUid = 0; movedHero = true; save(); U.tutMoved(); landed(); }
     U.preview = worldFor(true);
     const fl = $('#formline'); if (fl) fl.innerHTML = formHTML(U.preview);
     syncSquadSel();
     drawPreview();
+    if (movedHero && !introStage() && U.coachTip() && !document.querySelector('.boardwrap .coach')) render();
     const h0 = U.run.heroes[0], o0 = U.run.onb && U.run.onb.from;   // the hero stands somewhere new: the intro goes on
     if (introStage() === 'move' && h0 && h0.pos && (!o0 || h0.pos.c !== o0.c || h0.pos.r !== o0.r)) introEnemy();
   }

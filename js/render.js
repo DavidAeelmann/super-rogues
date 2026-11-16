@@ -180,6 +180,22 @@
         ctx.restore();
       }
     }
+    if (o.deploy && o.tutZones) {
+      ctx.save();
+      for (const rz of [{ r: 4, fill: 'rgba(16, 185, 129, 0.14)', stroke: 'rgba(52, 211, 153, 0.45)' }, { r: 7, fill: 'rgba(56, 189, 248, 0.12)', stroke: 'rgba(56, 189, 248, 0.4)' }]) {
+        for (let c = 0; c < Hx.COLS; c++) {
+          if (tk[Hx.key(c, rz.r)]) continue;
+          const pts = corners(v, c, rz.r, size * 0.90);
+          path(ctx, pts);
+          ctx.fillStyle = rz.fill;
+          ctx.fill();
+          ctx.strokeStyle = rz.stroke;
+          ctx.lineWidth = 1.25;
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
     if (o.deploy) {
       const y = hexScreen(v, 0, 4).y - size * 0.75 * K;
       const x0 = v.desk ? (v.padX || 0) - size * 0.4 : 0, x1 = v.desk ? v.w - (v.padX || 0) + size * 0.4 : v.w;
@@ -188,6 +204,40 @@
       ctx.lineWidth = v.desk ? 2.2 : 2;
       ctx.setLineDash([7, 6]);
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+      ctx.restore();
+    }
+    if (o.deploy && o.tutZones) {
+      ctx.save();
+      const fSize = Math.max(9.5, Math.round(size * 0.34));
+      ctx.font = `800 ${fSize}px system-ui, sans-serif`;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      const drawPill = (label, cx, cy, bg, border, fg) => {
+        const w = ctx.measureText(label).width + 14, h = fSize + 7;
+        const x = Math.max(6, Math.min(v.w - w - 6, cx - w / 2)), y = Math.max(4, Math.min(v.h - h - 4, cy - h / 2));
+        ctx.fillStyle = bg; ctx.strokeStyle = border; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.roundRect(x, y, w, h, h / 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = fg; ctx.fillText(label, x + w / 2, y + h / 2 + 0.5);
+      };
+      const divY = hexScreen(v, 0, 4).y - size * 0.75 * K;
+      const botY = hexScreen(v, 3, 7).y + size * 0.52 * K;
+      const frontLbl = 'FRONT · Tanks & Melee';
+      const fw = ctx.measureText(frontLbl).width + 14;
+      const nearUnits = (W && W.units ? W.units : []).filter(u => !u.dead && !(o.hide && o.hide(u)) && (u.r === 4 || u.r === 5));
+      let bestCx = v.w * 0.5, bestClear = -1e9;
+      for (const frac of [0.5, 0.2, 0.8]) {
+        const rawCx = v.w * frac;
+        const clampedCx = Math.max(6 + fw / 2, Math.min(v.w - 6 - fw / 2, rawCx));
+        let minClear = 1e9;
+        for (const u of nearUnits) {
+          const ux = hexScreen(v, u.c, u.r).x;
+          const dist = Math.abs(ux - clampedCx) - (fw / 2 + size * 0.55);
+          if (dist < minClear) minClear = dist;
+        }
+        if (minClear > bestClear + 1) { bestClear = minClear; bestCx = clampedCx; }
+      }
+      drawPill(frontLbl, bestCx, divY + 1, 'rgba(6, 28, 22, 0.9)', 'rgba(52, 211, 153, 0.85)', '#6ee7b7');
+      drawPill('BACK · Ranged & Healers', v.w * 0.5, botY, 'rgba(8, 24, 44, 0.9)', 'rgba(56, 189, 248, 0.85)', '#7dd3fc');
       ctx.restore();
     }
     if (o.hoverHex && !tk[Hx.key(o.hoverHex.c, o.hoverHex.r)]) {

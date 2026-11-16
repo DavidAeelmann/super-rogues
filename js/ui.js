@@ -25,9 +25,9 @@
     },
     howto: () => openModal(U.HOWTO),
     // the guide tips come back (even on an account with many runs)
-    'guide-again': () => { store.set('balance.guide3', []); store.set('balance.guide.v', 0); closeModal(); toast('The tutorial will show again as you play'); render(); },
+    'guide-again': () => { store.set('balance.guide3', []); store.set('balance.guide.v', 0); store.set('balance.coach', []); store.set('balance.tut.moved', false); store.set('balance.tut.run', null); store.set('balance.tut.speedDismissed', false); store.set('balance.tips.deploy', 0); ui.coachId = null; closeModal(); toast('The tutorial will show again as you play'); render(); },
     // Menu -> Tutorial: on = from the start again, off = no more tips
-    tutorial: () => { if (U.guideOn()) { U.guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); toast('Tutorial on: the tips show again as you play'); } openModal(U.homeMenuHTML()); ui.modal = 'home'; },
+    tutorial: () => { if (U.guideOn()) { U.guideEnd(); toast('Tutorial off'); } else { store.set('balance.guide3', []); store.set('balance.guide.v', 0); store.set('balance.coach', []); store.set('balance.tut.moved', false); store.set('balance.tut.run', null); store.set('balance.tut.speedDismissed', false); store.set('balance.tips.deploy', 0); ui.coachId = null; toast('Tutorial on: the tips show again as you play'); } openModal(U.homeMenuHTML()); ui.modal = 'home'; },
     // Start screens: choose a hero (start-pick), roll random +2 gold (start-random), go on (start-next), go back, choose the starting power (start-relic) and begin (start-go).
     'start-pick': k => {
       if (ui.randomBusy || !HEROES[k]) return;

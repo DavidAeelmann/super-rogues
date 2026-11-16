@@ -1575,9 +1575,12 @@ button.danger { background: linear-gradient(180deg, #ff7a7a, var(--c-danger)) !i
 .xpbar.shine::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -40%; background: linear-gradient(90deg, #fff0, #ffffffcc, #fff0); animation: xpshine 1s ease-out .2s 2; }
 @keyframes xpshine {to { left: 110%; } }
 .losetag { margin: 2px 0 0; font: 700 19px/1.2 var(--fun, system-ui); color: #ffd6d6; text-align: center; text-shadow: 0 2px 0 #0006; }
-.tutmove { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); pointer-events: none; z-index: 6; background: #000c; color: #fff; border: 2px solid #fff; border-radius: 999px; padding: 8px 14px; font: 700 15px/1.2 var(--fun, system-ui); white-space: nowrap; max-width: 96%; animation: tutsway 1.3s ease-in-out infinite; }
+.tutmove { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); pointer-events: none; z-index: 6; background: rgba(10, 14, 26, 0.92); color: #fff; border: 2px solid rgba(56, 189, 248, 0.85); border-radius: 16px; padding: 8px 14px; font: 700 14px/1.22 var(--fun, system-ui); text-align: center; white-space: normal; width: max-content; max-width: calc(100% - 24px); box-sizing: border-box; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65); animation: tutsway 1.3s ease-in-out infinite; }
+.tutmove-top { font: 800 14.5px/1.2 var(--fun, system-ui); color: #ffffff; }
+.tutmove-sub { margin-top: 3px; font: 600 11.5px/1.25 var(--read, system-ui); color: #7dd3fc; }
+.deploy.intro .tutmove { top: 22%; }
 .boardwrap:has(.tutmove) .depban:not(.need) { display: none; }
-@keyframes tutsway {0%, 100% { transform: translate(-50%, -50%) translateX(-10px); }50% { transform: translate(-50%, -50%) translateX(10px); } }
+@keyframes tutsway {0%, 100% { transform: translate(-50%, -50%) translateX(-6px); }50% { transform: translate(-50%, -50%) translateX(6px); } }
 .tutspeed { position: absolute; right: 0; top: 100%; z-index: 6; pointer-events: none; background: #4f7cff; color: #fff; border-radius: 8px; padding: 4px 10px; font: 700 13px/1.2 var(--fun, system-ui); white-space: nowrap; animation: tutblink .9s ease-in-out infinite alternate; box-shadow: 0 2px 10px #0008; }
 @keyframes tutblink {from { opacity: 1; }to { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) {.tutmove, .tutspeed { animation: none; } }
@@ -2443,6 +2446,9 @@ body.side .bench .bnarrow::before, body.landscape .bench .bnarrow::before { cont
 .benchghost { position: fixed; z-index: 60; pointer-events: none; transform: translate(-50%, -60%) scale(1.05); opacity: .9; filter: drop-shadow(0 6px 10px #000a); }
 .benchghost .por { width: 64px; height: 64px; border-radius: 12px; box-shadow: 0 0 0 3px #ffffffaa; }.benchghost.ok .por { box-shadow: 0 0 0 3px #ffd23f, 0 0 16px #ffd23f; }
 .depban.need { background: #4a3500e6; color: #ffe680; box-shadow: 0 0 0 2px #ffd23f, 0 0 18px #ffd23f99; }.depban.need svg.ui { color: #ffd23f; }
+.depban.joined { background: rgba(6, 78, 59, 0.94); color: #d1fae5; box-shadow: 0 0 0 2px #34d399, 0 0 16px rgba(52, 211, 153, 0.5); }
+.depban.tut { background: rgba(12, 74, 110, 0.92); color: #e0f2fe; box-shadow: 0 0 0 1.5px rgba(56, 189, 248, 0.72), 0 0 14px rgba(56, 189, 248, 0.35); }
+.depban.warn { background: rgba(124, 45, 18, 0.94); color: #ffedd5; box-shadow: 0 0 0 1.5px rgba(251, 146, 60, 0.8), 0 0 14px rgba(251, 146, 60, 0.35); }
 @media (prefers-reduced-motion: no-preference) {.depban.need { animation: benchglow 1s ease-in-out infinite alternate; } }
 .bar > button.primary.locked { filter: grayscale(.75) brightness(.8); box-shadow: inset 0 0 0 2px #ffd23f99; cursor: not-allowed; font-size: 15px; }
 .pm.benched { box-shadow: inset 0 0 0 2px #ffd23f; }.pm .pmbench { margin-left: auto; padding: 0 6px; border-radius: 6px; background: #ffd23f; color: #2a1d00; font: 800 10.5px var(--fun); text-transform: uppercase; }

@@ -988,20 +988,20 @@ ok(!B.RELIC.onslaught && !Run.onslaughtWorld && !B.CFG.seq.includes('O'), 'no On
   ok(Run.buy(s, 0) === 'Pick the hero it replaces' && s.gold === 99, 'a full team: buying a hero asks which one it replaces');
   ok(Run.buy(s, 0, old.uid) === null && s.gold === 92 && s.heroes.length === 3 && !s.heroes.includes(old), 'the hero is bought and swapped in');
   const nw = s.heroes.find(h => h.key === key);
-  ok(nw && nw.lvl === 4 && nw.xp === old.xp && nw.specs.length === 3 && nw.specs.every((id, i) => B.HEROES[key].specs[i].some(p => p.id === id)) && nw.items.join() === 'longsword,chainmail' && nw.bench && !nw.pos, 'it takes the level, XP and items of the one it replaces, with powers picked for its levels (v126, review #224: and waits on the bench)');
-  // v126 (review #224): a hero that joins in the middle of a run waits on the bench, off the board, until the player places it; then it keeps that hex
+  ok(nw && nw.lvl === 4 && nw.xp === old.xp && nw.specs.length === 3 && nw.specs.every((id, i) => B.HEROES[key].specs[i].some(p => p.id === id)) && nw.items.join() === 'longsword,chainmail' && !nw.bench && nw.pos && nw.pos.r >= 4 && nw.pos.r <= 7, 'it takes the level, XP and items of the one it replaces, with powers picked for its levels and auto-placed on the board');
+  // a hero that joins in the middle of a run is automatically placed in an appropriate position for its role; manual drag overrides and persists
   { const r = Run.newRun(2424); Run.pickStart(r, ['bastion'], null); const nb = Run.addHero(r, 'lumen', true); r.cur = Run.makeFight(r, 'easy', 1, 0, { keys: ['grunt'] }); r.fightNo = 1; r.phase = 'deploy';
-    ok(nb.bench && !nb.pos && Run.benched(r).length === 1 && Run.fightWorld(r, true).units.filter(u => u.side === 0).length === 1, 'v126 (review #224): a new hero waits on the bench, off the board');
-    Run.setPos(r, nb.uid, 2, 7);
-    ok(!nb.bench && nb.pos.c === 2 && nb.pos.r === 7 && !Run.benched(r).length && Run.fightWorld(r, true).units.filter(u => u.side === 0).length === 2, 'v126: placed once, it leaves the bench');
+    ok(!nb.bench && nb.justJoined && nb.pos && nb.pos.r === 7 && Run.benched(r).length === 0 && Run.fightWorld(r, true).units.filter(u => u.side === 0).length === 2, 'a newly joined ranged/healer hero is auto-placed in the back row (row 7) and joins the board immediately');
+    Run.setPos(r, nb.uid, 2, 6);
+    ok(!nb.bench && !nb.justJoined && nb.pos.c === 2 && nb.pos.r === 6 && Run.fightWorld(r, true).units.filter(u => u.side === 0).length === 2, 'adjusting by hand updates its position and clears the newly-joined badge');
     Run.fightWorld(r, true); Run.fightWorld(r, true);
-    ok(nb.pos.c === 2 && nb.pos.r === 7, 'v126: it keeps its hex fight after fight');
-    const n2 = Run.addHero(r, 'kestrel', true), snap = Run.teamSnapshot(r);
-    ok(snap.length === 3 && snap.every(h => h.pos && h.pos.r >= 4) && n2.bench && !n2.pos, 'v126: the Gauntlet ghost has every hero on a hex; the benched one stays on the bench');
+    ok(nb.pos.c === 2 && nb.pos.r === 6, 'it keeps its chosen hex fight after fight');
+    const n2 = Run.addHero(r, 'brakk', true), snap = Run.teamSnapshot(r);
+    ok(snap.length === 3 && snap.every(h => h.pos && h.pos.r >= 4) && !n2.bench && n2.pos && n2.pos.r === 4, 'a frontline Tank/Fighter auto-places in row 4 and every hero is on a hex in Gauntlet ghosts');
     Run.fightWorld(r, false);
-    ok(!n2.bench && n2.pos && !Run.benched(r).length, 'v126: a real fight started without the deploy screen (tests, tools) places it');
+    ok(!n2.bench && !n2.justJoined && n2.pos && !Run.benched(r).length, 'starting a fight preserves placed positions and clears justJoined');
     const r2 = Run.newRun(2425); Run.pickStart(r2, ['bastion'], null); r2.phase = 'recruit'; r2.recruitOffer = ['lumen']; Run.recruit(r2, 'lumen');
-    ok(r2.heroes[1].bench && !r2.heroes[1].pos, 'v126: a free recruit waits on the bench too'); }
+    ok(!r2.heroes[1].bench && r2.heroes[1].pos && r2.heroes[1].pos.r === 7 && r2.heroes[1].justJoined, 'a free recruit is auto-placed in an appropriate position too'); }
   // victory kinds and league points
   ok(B.victoryOf(1).id === 'perfect' && B.victoryOf(0).id === 'gold' && B.VICTORY.length === 2, 'v101: victory kinds: Perfect (the Ward whole), Gold (broken)');
   ok(B.runLp({ done: true, duels: 2, lost: 0, streak: 3 }, 2) === 43 && B.runLp({ done: true, duels: 1, lost: 1, streak: 1 }, 2) === 23, 'v65 (review #129): a completed run: +10 a duel, +20 the final, -8 a PvP fight lost, +1 per run of the streak');

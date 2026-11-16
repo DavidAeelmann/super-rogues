@@ -510,21 +510,22 @@
       return /radius|all enemies|bounce|chain|splash|nearby|cone|circle/i.test(desc);
     });
   };
+  const tutPosOn = () => !!U.run && U.run.phase === 'deploy' && (guideOn() || tutMoveOn() || (!navigator.webdriver && (+store.get('balance.starts', 0) || 0) <= 2));
   const COACH = [
-    { id: 'c_front', when: () => hasFrontliner(), hexes: () => coachRow(4), color: '#3ddc84', icon: '🛡', arrows: true, text: 'Enemies advance from above. Place resilient Tanks in FRONT to absorb damage.' },
-    { id: 'c_back', when: () => hasBackliner(), hexes: () => coachRow(7), color: '#4aa3ff', icon: '🏹', text: 'Rangers and Healers are vulnerable: position them in the BACK behind your frontline.' },
-    { id: 'c_terrain', when: () => ((Run.mapOf(U.run) || { cells: [] }).cells || []).length > 0, hexes: () => ((Run.mapOf(U.run) || { cells: [] }).cells || []).map(t => ({ c: t.c, r: t.r })), color: '#ffb347', icon: '⛔', text: 'Terrain blocks movement. Enemies must path around: use obstacles as natural barricades.' },
-    { id: 'c_choke', when: () => coachChokes().length > 0 && ((Run.mapOf(U.run) || { cells: [] }).cells || []).length > 0, hexes: coachChokes, color: '#ff5a8a', icon: '🚪', text: 'Gaps create CHOKEPOINTS: one sturdy unit placed here can bottle up multiple attackers.' },
-    { id: 'c_dive', when: () => enemiesHaveDive(), hexes: () => coachRow(7).concat(coachRow(6)), color: '#c77dff', icon: '🗡', text: 'Assassins leap to your backline! Guard fragile heroes with a nearby brawler.' },
-    { id: 'c_spread', when: () => enemiesHaveAoE(), hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#ffd23f', icon: '💥', text: 'Area attacks punish grouping! Spread out formations to minimize splash damage.' },
+    { id: 'c_front', when: () => hasFrontliner(), hexes: () => coachRow(4), color: '#3ddc84', icon: '🛡', arrows: true, text: 'Enemies advance from above! Drag Tanks & Fighters to the FRONT row to shield allies.' },
+    { id: 'c_back', when: () => hasBackliner(), hexes: () => coachRow(7), color: '#4aa3ff', icon: '🏹', text: 'Rangers & Healers are fragile! Keep them in the BACK rows behind your frontline.' },
+    { id: 'c_terrain', when: () => ((Run.mapOf(U.run) || { cells: [] }).cells || []).length > 0, hexes: () => ((Run.mapOf(U.run) || { cells: [] }).cells || []).map(t => ({ c: t.c, r: t.r })), color: '#ffb347', icon: '⛔', text: 'Obstacles block movement. Use Terrain as a barricade to funnel attackers.' },
+    { id: 'c_choke', when: () => coachChokes().length > 0 && ((Run.mapOf(U.run) || { cells: [] }).cells || []).length > 0, hexes: coachChokes, color: '#ff5a8a', icon: '🚪', text: 'Gaps form CHOKEPOINTS: one sturdy Frontliner here stops multiple attackers.' },
+    { id: 'c_dive', when: () => enemiesHaveDive(), hexes: () => coachRow(7).concat(coachRow(6)), color: '#c77dff', icon: '🗡', text: 'Assassins leap to your BACK row! Guard fragile heroes with a nearby fighter.' },
+    { id: 'c_spread', when: () => enemiesHaveAoE(), hexes: () => coachRow(5).filter((h, i) => i % 2 === 0), color: '#fb923c', icon: '💥', text: 'Area attacks punish grouping! Leave space between heroes to limit splash.' },
   ];
   const coachRow = r => B.Hex.all().filter(h => h.r === r && !Run.blockedAt(U.run, h.c, h.r));
   function coachChokes() { const bl = (c, r) => Run.blockedAt(U.run, c, r); return B.Hex.all().filter(h => h.r >= 2 && h.r <= 5 && !bl(h.c, h.r) && B.Hex.neighbors(h.c, h.r).filter(n => bl(n.c, n.r)).length >= 2); }
   const coachSeen = () => { const s = store.get('balance.coach', []); return Array.isArray(s) ? s : []; };
   function coachTip() {
-    if (!U.run || U.run.phase !== 'deploy' || U.introStage() || (+store.get('balance.starts', 0) || 0) > 6 || Run.benched(U.run).length) return null;
-    if ((+store.get('balance.starts', 0) || 0) <= 1 && U.run.step < 1) return null;
-    if (guideOn() && ['t_dep1', 't_dep2', 't_foes', 't_fight'].some(id => !guideSeen().includes(id))) return null;   // one bubble at a time: the tutorial's deploy tips first
+    if (!U.run || U.run.phase !== 'deploy' || U.introStage() || Run.benched(U.run).length) return null;
+    if (!guideOn() && (+store.get('balance.starts', 0) || 0) > 6) return null;
+    if (tutMoveOn()) return null;   // show .tutmove first so board tips never overlap each other
     if (ui.coachId && !coachSeen().includes(ui.coachId)) return COACH.find(t => t.id === ui.coachId) || null;
     const seen = coachSeen(), t = COACH.find(x => !seen.includes(x.id) && (!x.when || x.when()));
     ui.coachId = t ? t.id : null; return t || null;
@@ -554,18 +555,17 @@
   const GUIDE = [
     { id: 't_play', scr: 'title', up: true, when: () => true, at: '.title .playstk, .title [data-act=new-run], .title [data-act=continue-run]', text: 'Tap Play to start your journey.' },
     { id: 't_menu', scr: 'title', when: () => true, at: '#top [data-act=home-menu]', text: 'Game settings, rules and audio.' },
-    { id: 't_hero', up: true, when: () => U.run.phase === 'start' && (ui.startStep || 1) === 1, at: '.draft-actions, [data-act=start-pick]', text: 'Choose your first hero. Two more join you free as you advance.' },
+    { id: 't_hero', up: true, when: () => U.run.phase === 'start' && (ui.startStep || 1) === 1, at: '.draft-actions, [data-act=start-pick]', text: 'Swipe or tap cards to preview heroes. Two more join you free later!' },
     { id: 't_power', when: () => U.run.phase === 'start' && ui.startStep === 2, at: '.srelics', text: 'Powers grant permanent passive bonuses to your whole squad.' },
     { id: 't_goal', when: () => U.run.phase === 'map' && U.run.result !== 'clear', at: '.rday-ribbon', text: 'Your map: one stop each day. Defeat both bosses to conquer the run.' },
     { id: 't_path', when: () => U.run.phase === 'map' && U.run.result !== 'clear', at: '[data-act=choose]', text: 'Choose your path. Harder fights grant richer gold and loot.' },
     { id: 't_ward', when: () => U.run.phase === 'map' && U.run.step >= 1, at: '#top .lives', text: 'Your protective Ward. Defeat breaks it and retries the day; a second loss ends the run.' },
     { id: 't_gaunt', when: () => U.run.phase === 'map' && U.run.step >= 2 && U.run.result !== 'clear', at: '.rn.final', text: 'After the final boss: climb the Gauntlet against saved player teams.' },
-    { id: 't_bench', when: () => U.run.phase === 'deploy' && !U.introStage() && Run.benched(U.run).length > 0, at: '#bench', text: 'Recruited hero waiting. Drag onto the board to unlock the fight.' },
-    { id: 't_dep1', when: () => U.run.phase === 'deploy' && !U.introStage(), at: '#board', text: 'Position heroes on your half of the board before combat starts.' },
-    { id: 't_dep2', when: () => U.run.phase === 'deploy' && !U.introStage(), at: '#board', text: 'Place tough tanks in front; position fragile damage & healers behind.' },
-    { id: 't_foes', when: () => U.run.phase === 'deploy' && !U.introStage(), at: '.foes', text: 'Enemy roster. Tap any unit or card to inspect stats and abilities.' },
-    { id: 't_fight', when: () => U.run.phase === 'deploy' && !U.introStage() && !Run.benched(U.run).length, at: '[data-act=fight]', text: 'Ready? Start combat! Units fight and cast automatically.' },
-    { id: 't_keep', when: () => U.run.phase === 'deploy' && !U.introStage() && U.run.heroes.length > 1 && !Run.benched(U.run).length, at: '#board', text: 'Formations persist across days. Drag any hero to adjust.' },
+    { id: 't_dep1', when: () => U.run.phase === 'deploy' && !U.introStage() && !tutMoveOn(), at: '#board', text: 'Drag heroes across your green Front and blue Back rows to counter enemies.' },
+    { id: 't_dep2', when: () => U.run.phase === 'deploy' && !U.introStage() && !tutMoveOn(), at: '#board', text: 'Place Tanks & Melee in FRONT to block; keep Ranged & Healers safe in BACK.' },
+    { id: 't_foes', when: () => U.run.phase === 'deploy' && !U.introStage() && !tutMoveOn(), at: '.foes', text: 'Enemy roster. Tap any unit to see its target arrow and attack range.' },
+    { id: 't_fight', when: () => U.run.phase === 'deploy' && !U.introStage() && !tutMoveOn(), at: '[data-act=fight]', text: 'Ready? Start combat! Units fight and cast automatically.' },
+    { id: 't_keep', when: () => U.run.phase === 'deploy' && !U.introStage() && U.run.heroes.length > 1 && !tutMoveOn(), at: '#board', text: 'Formations persist across days. New heroes auto-place cleanly — drag to adjust.' },
     { id: 'gear', when: () => (U.run.phase === 'map' || U.run.phase === 'shop') && U.run.bag.length > 0, at: '#top [data-act=team]', text: 'New gear in bag! Tap Team to inspect or equip.' },
     { id: 'shop', when: () => U.run.phase === 'shop', at: '[data-act=reroll]', text: 'Spend gold on upgrades. Use New to refresh stock.' },
     { id: 't_rshop', when: () => U.run.phase === 'shop' && U.run.cur && U.run.cur.kind === 'relicShop', at: '.shop, .stock', text: 'Team-wide powers remain active for the rest of your run.' },
@@ -634,10 +634,5 @@
     }, 650);
   }
   function guideDisarm() { if (guideDisarm.h) { document.removeEventListener('pointerdown', guideDisarm.h, true); guideDisarm.h = null; } }
-  // v126 (, David: "Make it so when you buy a hero it appears in a side menu in battle screen and you must manually deploy it the first time. Fight doesnt
-  // start until you do, include plenty of indicators for that. But after first deployment the hex persists until changed until end of run"): a hero that joined in the
-  // middle of the run waits on the BENCH (Run.benched) until the player puts it on the board. The bench sits beside the board (above it on phones) with a NEW badge
-  // and a bouncing arrow; the banner over the board names who is missing; the free hexes of your half glow; the Fight button is locked (a tap says why and shakes the
-  // bench). Drag a hero from the bench onto a hex, or tap it and then tap a hex. Once placed it keeps its hex for the rest of the run.
-  Object.assign(U, { upgradeHTML, levelHTML, mapHTML, layoutMap, guide, guideOn, trackHTML, tutMoved, modText, tutSpeedOn, tutMoveOn, coachTip, foesHTML, deployLeftHTML, deployPartyHTML, coachDraw, tutSpeedArm, tutSpeedDisarm, guideEnd, coachDone });
+  Object.assign(U, { upgradeHTML, levelHTML, mapHTML, layoutMap, guide, guideOn, trackHTML, tutMoved, modText, tutSpeedOn, tutMoveOn, tutPosOn, coachTip, foesHTML, deployLeftHTML, deployPartyHTML, coachDraw, tutSpeedArm, tutSpeedDisarm, guideEnd, coachDone });
 })();

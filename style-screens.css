@@ -1740,12 +1740,18 @@ body.desk .deploy > .dparty .pm .pmi .dsock.empty {
   background: rgba(18, 25, 38, 0.85) !important;
   border: 1.5px dashed rgba(148, 163, 184, 0.45) !important;
 }
-body.desk .tutmove {
+body.desk .deploy:not(.intro) .tutmove {
   top: auto !important;
   bottom: 12px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   animation: none !important;
+}
+body.desk .deploy.intro .tutmove {
+  top: 22% !important;
+  bottom: auto !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
 }
 
 /* ---------- Shops, Result, Modals, Gauntlet, LP/XP, Card Page ---------- */
@@ -2481,11 +2487,15 @@ body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-a
   filter: none !important;
   opacity: 1 !important;
   z-index: 2 !important;
-  transform: rotateX(calc(var(--py, 0) * -6deg)) rotateY(calc(var(--px, 0) * 6deg)) translateY(-4px) !important;
+  transform: translateX(var(--swipe-x, 0px)) rotateX(calc(var(--py, 0) * -6deg)) rotateY(calc(var(--px, 0) * 6deg)) rotateZ(var(--swipe-rot, 0deg)) translateY(-4px) !important;
 }
 #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active.is-tilting,
 body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active.is-tilting {
   transition: flex 0.38s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s ease, box-shadow 0.3s ease, transform 0.06s linear !important;
+}
+#screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active.is-swiping,
+body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-active.is-swiping {
+  transition: flex 0.38s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s ease, box-shadow 0.3s ease, transform 0s !important;
 }
 
 /* 2.5D Background Image Parallax Layer */
@@ -2659,10 +2669,21 @@ body.desk #screen section.start.v3.draft-stage .stage.draft-row .draft-card.is-a
   line-height: 1;
 }
 #screen .draft-card .dd-stat em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-style: normal;
   font: 700 10px/1 var(--read);
   color: #cbd5e1;
 }
+#screen .draft-card .dd-stat em svg.ui {
+  width: 13px;
+  height: 13px;
+  display: block;
+}
+#screen .draft-card .dd-stat.dd-hp em { color: #fb7185; }
+#screen .draft-card .dd-stat.dd-atk em { color: #fb923c; }
+#screen .draft-card .dd-stat.dd-rng em { color: #38bdf8; }
 #screen .draft-card .dd-stat b {
   font: 800 11.5px/1 var(--fun);
   color: #ffffff;
@@ -3949,8 +3970,23 @@ body:not(.desk) .m-deploy .m-boardslot .depban .dbh {
 }
 body:not(.desk) .m-deploy .m-boardslot .depban.need {
   background: rgba(69, 26, 3, 0.94);
-  border-color: rgba(251, 191, 36, 0.72);
-  color: #fde68a;
+  border-color: rgba(251, 146, 60, 0.78);
+  color: #fed7aa;
+}
+body:not(.desk) .m-deploy .m-boardslot .depban.joined {
+  background: rgba(6, 78, 59, 0.94);
+  border-color: rgba(52, 211, 153, 0.78);
+  color: #d1fae5;
+}
+body:not(.desk) .m-deploy .m-boardslot .depban.tut {
+  background: rgba(12, 74, 110, 0.92);
+  border-color: rgba(56, 189, 248, 0.65);
+  color: #e0f2fe;
+}
+body:not(.desk) .m-deploy .m-boardslot .depban.warn {
+  background: rgba(124, 45, 18, 0.94);
+  border-color: rgba(251, 146, 60, 0.8);
+  color: #ffedd5;
 }
 
 body:not(.desk) .mbossbar {
@@ -4366,8 +4402,12 @@ body:not(.desk) .ms-slot.filled {
   color: #f8fafc !important;
 }
 body:not(.desk) .ms-slot.filled.benched {
-  border-color: rgba(251, 191, 36, 0.72) !important;
+  border-color: rgba(251, 146, 60, 0.72) !important;
   background: rgba(69, 26, 3, 0.85) !important;
+}
+body:not(.desk) .ms-slot.filled.just-joined {
+  border-color: rgba(52, 211, 153, 0.85) !important;
+  background: rgba(6, 78, 59, 0.48) !important;
 }
 body:not(.desk) .ms-slot.filled.on {
   border-color: #38bdf8 !important;
@@ -4438,6 +4478,10 @@ body:not(.desk) .ms-meta small {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+body:not(.desk) .ms-slot.filled.just-joined .ms-meta small {
+  color: #6ee7b7;
+  font-weight: 700;
 }
 
 body:not(.desk) .m-deploy .bar.sticky {
